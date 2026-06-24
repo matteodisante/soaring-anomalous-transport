@@ -1,0 +1,27 @@
+# Configurazione del downloader FFVL CFD.
+# Schema e default: vedi src/soaring/acquisition/ffvl/config.py
+
+# Cartella radice dei dati grezzi. DEVE stare sull'HDD esterno (i dati sono ~65 GB).
+# Sovrascrivibile al volo con la variabile d'ambiente SOARING_FFVL_DATA_ROOT.
+data_root: /Volumes/HDD_DISANTE/ffvl_cfd_igc
+
+# Stagioni da elaborare. L'anno e' l'anno di INIZIO stagione:
+#   1999 -> stagione 1999-2000   |   2025 -> stagione 2025-2026
+seasons:
+  start: 1999
+  end: 2025
+
+# Sorgente dei dati (di norma non serve toccarla).
+source:
+  base_url: https://parapente.ffvl.fr
+  list_path: /cfd/liste/{year}   # pagina umana della lista; {year} = anno stagione
+  xml_query: "?xml=1"            # aggiunto alla lista -> export XML completo
+
+# Rete e cortesia verso il server FFVL.
+http:
+  impersonate: chrome   # fingerprint TLS di curl_cffi: supera il challenge Cloudflare
+  workers: 4            # download paralleli (conservativo: non martellare il server)
+  timeout_s: 60         # timeout per richiesta
+  max_retries: 5        # tentativi per file prima di registrarlo come fallito
+  backoff_base_s: 2.0   # backoff esponenziale tra i tentativi
+  min_delay_s: 0.05     # pausa minima (con jitter) tra richieste dello stesso worker

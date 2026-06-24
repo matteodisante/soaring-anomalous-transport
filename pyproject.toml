@@ -1,0 +1,94 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "soaring"
+version = "0.1.0"
+description = "Tesi: anomalous transport in soaring flights. Monorepo (oggi: acquisizione dati .igc dalla CFD FFVL)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Matteo Di Sante", email = "m.disante06@gmail.com" }]
+keywords = ["soaring", "paragliding", "IGC", "anomalous transport", "FFVL", "CFD"]
+
+# Dipendenze core = cio' che serve OGGI (acquisizione dati). Analisi e simulazioni
+# future andranno aggiunte come extra dedicati (es. [analysis]) per non appesantire.
+dependencies = [
+    "curl_cffi>=0.7",   # client HTTP con impersonation TLS: supera il challenge Cloudflare di FFVL
+    "pyyaml>=6.0",      # lettura del file di configurazione
+    "pandas>=2.0",      # costruzione/lettura del catalogo CSV
+    "tqdm>=4.66",       # barra di avanzamento per i download
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.5",
+    "mypy>=1.8",
+    "interrogate>=1.7",  # gate di copertura docstring: la documentazione non puo' restare indietro
+    "types-PyYAML",
+]
+docs = [
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.25",  # reference API generata dai docstring -> non marcisce
+]
+
+[project.scripts]
+soaring-ffvl = "soaring.acquisition.ffvl.cli:main"
+
+[project.urls]
+Repository = "https://github.com/matteodisante/soaring-anomalous-transport"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/soaring"]
+
+# ---------------------------------------------------------------------------
+# Tooling
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W",   # pycodestyle + pyflakes
+    "I",             # isort (ordinamento import)
+    "N",             # pep8-naming
+    "B",             # flake8-bugbear
+    "UP",            # pyupgrade
+    "C4",            # comprehensions
+    "SIM",           # semplificazioni
+    "PTH",           # usa pathlib
+    "RUF",
+    "D",             # pydocstyle (docstring) -> docs robuste
+]
+ignore = [
+    "D203",  # in conflitto con D211
+    "D213",  # in conflitto con D212
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]            # i test non richiedono docstring
+"docs/gen_ref_pages.py" = ["D", "INP001"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+
+[tool.mypy]
+python_version = "3.10"
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true   # curl_cffi/tqdm non sempre hanno stub
+
+[tool.interrogate]
+fail-under = 90
+ignore-init-module = true
+ignore-magic = true
+exclude = ["tests", "docs/gen_ref_pages.py"]
