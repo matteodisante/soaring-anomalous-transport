@@ -7,6 +7,8 @@ Thesis monorepo. Currently contains the **acquisition of** `.igc` **flight data*
 (package `soaring.acquisition.ffvl`). Analyses and simulations will be added as further
 sub-packages of `soaring`.
 
+📖 **Documentation:** <https://matteodisante.github.io/soaring-anomalous-transport/>
+
 ## Quick start
 
 ```bash
@@ -38,19 +40,13 @@ file without any lookup dictionary (details: [From the .igc file to the flight](
 
 ## Documentation
 
-Guides + API Reference auto-generated from docstrings:
+Guides + API Reference (auto-generated from docstrings) are published at
+**<https://matteodisante.github.io/soaring-anomalous-transport/>**.
+
+To preview locally:
 
 ```bash
 uv run mkdocs serve   # http://127.0.0.1:8000
 ```
 
-## Development
-
-```bash
-uv run ruff check . && uv run ruff format --check .
-uv run pytest
-uv run mkdocs build --strict
-```
-
-Structure: `src/soaring/acquisition/ffvl/` (code), `configs/` (YAML config), `docs/`
-(documentation), `tests/` (offline tests on fixtures). License: MIT.
+License: MIT.
