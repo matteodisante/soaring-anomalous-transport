@@ -1,7 +1,7 @@
-"""Configurazione del downloader FFVL, letta da un file YAML.
+"""FFVL downloader configuration, read from a YAML file.
 
-La configurazione e' una semplice dataclass tipizzata: nessuna magia, valori espliciti.
-Il path di default e' ``configs/ffvl_download.yaml`` nella radice del progetto.
+The configuration is a simple typed dataclass: no magic, explicit values.
+The default path is ``configs/ffvl_download.yaml`` in the project root.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from pathlib import Path
 
 import yaml
 
-# Path di default del file di configurazione, relativo alla radice del repo.
+# Default path of the configuration file, relative to the repository root.
 DEFAULT_CONFIG_PATH = (
     Path(__file__).resolve().parents[4] / "configs" / "ffvl_download.yaml"
 )
@@ -20,15 +20,15 @@ DEFAULT_CONFIG_PATH = (
 
 @dataclass
 class HttpConfig:
-    """Parametri di rete e di cortesia verso il server FFVL.
+    """Network parameters and rate-limiting settings for the FFVL server.
 
     Attributes:
-        impersonate: Fingerprint TLS che ``curl_cffi`` deve imitare (es. ``"chrome"``).
-        workers: Numero di download paralleli.
-        timeout_s: Timeout per singola richiesta, in secondi.
-        max_retries: Tentativi massimi per richiesta prima di arrendersi.
-        backoff_base_s: Base del backoff esponenziale tra i tentativi, in secondi.
-        min_delay_s: Pausa minima (con jitter) tra richieste dello stesso worker.
+        impersonate: TLS fingerprint that ``curl_cffi`` should impersonate (e.g. ``"chrome"``).
+        workers: Number of parallel downloads.
+        timeout_s: Timeout per individual request, in seconds.
+        max_retries: Maximum retry attempts per request before giving up.
+        backoff_base_s: Base of the exponential backoff between attempts, in seconds.
+        min_delay_s: Minimum pause (with jitter) between requests from the same worker.
     """
 
     impersonate: str = "chrome"
@@ -41,16 +41,16 @@ class HttpConfig:
 
 @dataclass
 class Config:
-    """Configurazione completa del downloader.
+    """Complete downloader configuration.
 
     Attributes:
-        data_root: Cartella radice dei dati grezzi (tipicamente sull'HDD esterno).
-        season_start: Primo anno di stagione incluso (1999 = stagione 1999-2000).
-        season_end: Ultimo anno di stagione incluso (2025 = stagione 2025-2026).
-        base_url: Origine del sito FFVL.
-        list_path: Template del path della lista per anno (``{year}`` come segnaposto).
-        xml_query: Query string che attiva l'export XML.
-        http: Parametri di rete (vedi :class:`HttpConfig`).
+        data_root: Root directory for raw data (typically on the external HDD).
+        season_start: First season year included (1999 = season 1999-2000).
+        season_end: Last season year included (2025 = season 2025-2026).
+        base_url: FFVL site base URL.
+        list_path: URL path template for the season list (``{year}`` as placeholder).
+        xml_query: Query string that enables the XML export.
+        http: Network parameters (see :class:`HttpConfig`).
     """
 
     data_root: Path
@@ -61,82 +61,82 @@ class Config:
     xml_query: str = "?xml=1"
     http: HttpConfig = field(default_factory=HttpConfig)
 
-    # --- sottocartelle derivate da data_root ---------------------------------
+    # --- subdirectories derived from data_root ---------------------------------
     @property
     def raw_xml_dir(self) -> Path:
-        """Cartella degli XML di stagione archiviati."""
+        """Directory for archived season XML files."""
         return self.data_root / "raw_xml"
 
     @property
     def igc_dir(self) -> Path:
-        """Cartella radice dei tracciati `.igc` (una sottocartella per stagione)."""
+        """Root directory for `.igc` track files (one subdirectory per season)."""
         return self.data_root / "igc"
 
     @property
     def logs_dir(self) -> Path:
-        """Cartella dei log e del registro dei fallimenti."""
+        """Directory for logs and the failure registry."""
         return self.data_root / "logs"
 
     @property
     def catalog_path(self) -> Path:
-        """Path del catalogo CSV derivato."""
+        """Path to the derived CSV catalog."""
         return self.data_root / "catalog.csv"
 
     @property
     def seasons_index_path(self) -> Path:
-        """Path del riepilogo per stagione (link + conteggi)."""
+        """Path to the per-season summary (links + counts)."""
         return self.data_root / "seasons_index.csv"
 
     @property
     def failures_path(self) -> Path:
-        """Path del CSV dei download falliti (per retry mirato)."""
+        """Path to the CSV of failed downloads (for targeted retry)."""
         return self.logs_dir / "failures.csv"
 
     @property
     def years(self) -> range:
-        """Intervallo di anni di stagione configurati (estremi inclusi)."""
+        """Range of configured season years (endpoints included)."""
         return range(self.season_start, self.season_end + 1)
 
 
 def _expand(path_str: str) -> Path:
-    """Espande ``~`` e le variabili d'ambiente in una stringa di path.
+    """Expands ``~`` and environment variables in a path string.
 
     Args:
-        path_str: Path eventualmente contenente ``~`` o ``$VAR``.
+        path_str: Path potentially containing ``~`` or ``$VAR``.
 
     Returns:
-        Il path assoluto/espanso come :class:`~pathlib.Path`.
+        The absolute/expanded path as a :class:`~pathlib.Path`.
     """
     return Path(os.path.expandvars(path_str)).expanduser()
 
 
 def load_config(path: str | os.PathLike[str] | None = None) -> Config:
-    """Carica la configurazione da YAML.
+    """Loads the configuration from a YAML file.
 
-    ``data_root`` puo' anche essere sovrascritto dalla variabile d'ambiente
-    ``SOARING_FFVL_DATA_ROOT`` (utile su macchine diverse senza toccare il file).
+    ``data_root`` can also be overridden by the environment variable
+    ``SOARING_FFVL_DATA_ROOT`` (useful on different machines without editing the file).
 
     Args:
-        path: Path del file YAML. Se ``None`` usa :data:`DEFAULT_CONFIG_PATH`.
+        path: Path to the YAML file. If ``None`` uses :data:`DEFAULT_CONFIG_PATH`.
 
     Returns:
-        L'oggetto :class:`Config` popolato.
+        The populated :class:`Config` object.
 
     Raises:
-        FileNotFoundError: Se il file di configurazione non esiste.
-        KeyError: Se manca la chiave obbligatoria ``data_root``.
+        FileNotFoundError: If the configuration file does not exist.
+        KeyError: If the mandatory ``data_root`` key is missing.
     """
     cfg_path = Path(path) if path is not None else DEFAULT_CONFIG_PATH
     if not cfg_path.is_file():
-        raise FileNotFoundError(f"File di configurazione non trovato: {cfg_path}")
+        raise FileNotFoundError(f"Configuration file not found: {cfg_path}")
 
     raw = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
 
     data_root_str = os.environ.get("SOARING_FFVL_DATA_ROOT") or raw.get("data_root")
     if not data_root_str:
         raise KeyError(
-            "Manca 'data_root' nel file di configurazione "
-            "(oppure imposta la variabile SOARING_FFVL_DATA_ROOT)."
+            "Missing 'data_root' in the configuration file "
+            "(or set the SOARING_FFVL_DATA_ROOT environment variable)."
         )
 
     seasons = raw.get("seasons", {}) or {}

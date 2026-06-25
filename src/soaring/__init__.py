@@ -1,8 +1,8 @@
-"""Codice della tesi *anomalous transport in soaring flights*.
+"""Code for the master's thesis *anomalous transport in soaring flights*.
 
-Monorepo della tesi. Oggi contiene il solo sotto-pacchetto :mod:`soaring.acquisition`
-(acquisizione dei dati di volo `.igc` dalla CFD FFVL). Analisi e simulazioni verranno
-aggiunte in futuro come ulteriori sotto-pacchetti.
+Thesis monorepo. Currently contains only the :mod:`soaring.acquisition` sub-package
+(acquisition of `.igc` flight data from the CFD FFVL). Analyses and simulations will be
+added in the future as further sub-packages.
 """
 
 __version__ = "0.1.0"

@@ -1,16 +1,16 @@
-"""Recupero HTTP robusto verso FFVL, capace di superare il challenge Cloudflare.
+"""Robust HTTP fetching for FFVL, capable of bypassing the Cloudflare challenge.
 
-Il sito FFVL e' protetto da Cloudflare: una richiesta HTTP "normale" riceve 403
-con una pagina di challenge. ``curl_cffi`` imita il fingerprint TLS di un browser
-reale e supera il filtro.
+The FFVL site is protected by Cloudflare: a 'normal' HTTP request receives 403 with a
+challenge page. ``curl_cffi`` mimics the TLS fingerprint of a real browser and bypasses
+the filter.
 
-La classe :class:`Fetcher` incapsula una sessione ``curl_cffi`` con:
+The :class:`Fetcher` class wraps a ``curl_cffi`` session with:
 
-* retry con backoff esponenziale,
-* rilevamento della pagina di challenge (e rigenerazione della sessione),
-* piccola pausa con jitter tra richieste (cortesia verso il server).
+* retry with exponential backoff,
+* challenge page detection (and session renewal),
+* a small jittered pause between requests (courtesy towards the server).
 
-Una :class:`Fetcher` non e' thread-safe: ogni worker deve usarne una propria.
+A :class:`Fetcher` is not thread-safe: each worker must use its own instance.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ from curl_cffi import requests as cffi_requests
 
 from .config import Config, HttpConfig
 
-# Marcatori tipici della pagina di challenge Cloudflare ("Just a moment...").
+# Typical markers of a Cloudflare challenge page ("Just a moment...").
 CHALLENGE_MARKERS = (
     b"Just a moment",
     b"_cf_chl_opt",
@@ -31,80 +31,80 @@ CHALLENGE_MARKERS = (
     b"cf-browser-verification",
 )
 
-# Stati HTTP che tipicamente indicano blocco/sovraccarico -> conviene ritentare.
+# HTTP statuses that typically indicate blocking/overload -> worth retrying.
 RETRY_STATUS = frozenset({403, 429, 500, 502, 503, 504})
 
 
 class FetchError(RuntimeError):
-    """Recupero fallito dopo aver esaurito i tentativi."""
+    """Fetch failed after exhausting all retry attempts."""
 
 
 def new_session(http_cfg: HttpConfig) -> cffi_requests.Session:
-    """Crea una nuova sessione ``curl_cffi`` con impersonation del browser.
+    """Creates a new ``curl_cffi`` session with browser impersonation.
 
     Args:
-        http_cfg: Parametri di rete (in particolare il fingerprint ``impersonate``).
+        http_cfg: Network parameters (in particular the ``impersonate`` fingerprint).
 
     Returns:
-        Una sessione pronta all'uso.
+        A ready-to-use session.
     """
     return cffi_requests.Session(impersonate=http_cfg.impersonate)
 
 
 def looks_like_challenge(body: bytes) -> bool:
-    """Indica se il corpo della risposta e' una pagina di challenge Cloudflare.
+    """Indicates whether the response body is a Cloudflare challenge page.
 
     Args:
-        body: Byte della risposta.
+        body: Response bytes.
 
     Returns:
-        ``True`` se nei primi KB compare un marcatore di challenge.
+        ``True`` if a challenge marker appears in the first KB.
     """
     head = body[:4096]
     return any(marker in head for marker in CHALLENGE_MARKERS)
 
 
 class Fetcher:
-    """Recupero HTTP con sessione ``curl_cffi``, retry e gestione del challenge.
+    """HTTP fetching with a ``curl_cffi`` session, retry logic and challenge handling.
 
     Attributes:
-        cfg: Configurazione completa.
-        http: Scorciatoia a ``cfg.http``.
+        cfg: Complete configuration.
+        http: Shortcut to ``cfg.http``.
     """
 
     def __init__(self, cfg: Config) -> None:
-        """Inizializza il fetcher creando la prima sessione.
+        """Initialises the fetcher by creating the first session.
 
         Args:
-            cfg: Configurazione completa.
+            cfg: Complete configuration.
         """
         self.cfg = cfg
         self.http: HttpConfig = cfg.http
         self._session = new_session(cfg.http)
 
     def _renew_session(self) -> None:
-        """Chiude e ricrea la sessione (utile dopo un challenge Cloudflare)."""
+        """Closes and recreates the session (useful after a Cloudflare challenge)."""
         with contextlib.suppress(Exception):
             self._session.close()
         self._session = new_session(self.http)
 
     def _polite_pause(self) -> None:
-        """Breve pausa con jitter prima di ogni richiesta (cortesia verso il server)."""
+        """Short jittered pause before each request (courtesy towards the server)."""
         delay = self.http.min_delay_s
         if delay > 0:
             time.sleep(delay + random.uniform(0, delay))
 
     def content(self, url: str) -> bytes:
-        """Scarica un URL e ne restituisce i byte, con retry e gestione del challenge.
+        """Downloads a URL and returns its bytes, with retry and challenge handling.
 
         Args:
-            url: URL da scaricare.
+            url: URL to download.
 
         Returns:
-            Il corpo della risposta in byte.
+            The response body as bytes.
 
         Raises:
-            FetchError: Se tutti i tentativi falliscono.
+            FetchError: If all retry attempts fail.
         """
         last_error: Exception | None = None
         for attempt in range(1, self.http.max_retries + 1):
@@ -114,42 +114,42 @@ class Fetcher:
                 body = resp.content
                 if looks_like_challenge(body):
                     self._renew_session()
-                    raise FetchError(f"challenge Cloudflare su {url}")
+                    raise FetchError(f"Cloudflare challenge at {url}")
                 if resp.status_code in RETRY_STATUS:
-                    raise FetchError(f"HTTP {resp.status_code} su {url}")
+                    raise FetchError(f"HTTP {resp.status_code} at {url}")
                 if resp.status_code != 200:
-                    # Stato non ritentabile (es. 404): inutile insistere.
+                    # Non-retryable status (e.g. 404): no point retrying.
                     raise FetchError(
-                        f"HTTP {resp.status_code} su {url} (non ritentabile)"
+                        f"HTTP {resp.status_code} at {url} (non-retryable)"
                     )
                 return body
             except FetchError as err:
                 last_error = err
-                if "non ritentabile" in str(err):
+                if "non-retryable" in str(err):
                     break
             except Exception as err:
                 last_error = err
-            # Backoff esponenziale con jitter prima del prossimo tentativo.
+            # Exponential backoff with jitter before the next attempt.
             if attempt < self.http.max_retries:
                 backoff = self.http.backoff_base_s**attempt
                 time.sleep(backoff + random.uniform(0, backoff))
         raise FetchError(
-            f"recupero fallito ({self.http.max_retries} tentativi): {last_error}"
+            f"fetch failed ({self.http.max_retries} attempts): {last_error}"
         )
 
     def text(self, url: str, encoding: str = "utf-8") -> str:
-        """Come :meth:`content`, ma decodifica i byte in stringa.
+        """Like :meth:`content`, but decodes the bytes into a string.
 
         Args:
-            url: URL da scaricare.
-            encoding: Codifica usata per la decodifica (default UTF-8).
+            url: URL to download.
+            encoding: Encoding used for decoding (default UTF-8).
 
         Returns:
-            Il corpo della risposta come stringa.
+            The response body as a string.
         """
         return self.content(url).decode(encoding, errors="replace")
 
     def close(self) -> None:
-        """Chiude la sessione sottostante."""
+        """Closes the underlying session."""
         with contextlib.suppress(Exception):
             self._session.close()

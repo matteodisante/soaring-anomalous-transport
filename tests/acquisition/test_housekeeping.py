@@ -1,10 +1,10 @@
-"""Test della pulizia dei file AppleDouble."""
+"""Tests for AppleDouble file cleanup."""
 
 from soaring.acquisition.ffvl import housekeeping
 
 
 def test_skips_when_dot_clean_missing(tmp_path, monkeypatch):
-    # Senza dot_clean (o fuori da macOS) la pulizia e' un no-op che ritorna False.
+    # Without dot_clean (or outside macOS) cleanup is a no-op that returns False.
     monkeypatch.setattr(housekeeping.shutil, "which", lambda _name: None)
     assert housekeeping.clean_appledouble(tmp_path) is False
 

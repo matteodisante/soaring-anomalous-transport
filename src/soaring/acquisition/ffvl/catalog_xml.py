@@ -1,8 +1,8 @@
-"""Recupero e parsing dell'export XML di stagione della CFD FFVL.
+"""Retrieval and parsing of the FFVL CFD season XML export.
 
-L'export ``.../cfd/liste/{anno}?xml=1`` restituisce, in un'unica risposta, un elemento
-``<flight .../>`` per ogni volo, con tutti i metadati come attributi -- compreso il
-link diretto al file `.igc`. Questo modulo lo trasforma in una lista di
+The export ``.../cfd/liste/{year}?xml=1`` returns, in a single response, a
+``<flight .../>`` element for each flight, with all metadata as attributes -- including
+the direct link to the `.igc` file. This module transforms it into a list of
 :class:`FlightRecord`.
 """
 
@@ -19,29 +19,29 @@ from .seasons import season_label, xml_url
 
 @dataclass
 class FlightRecord:
-    """Un volo della CFD, con i metadati utili all'analisi e alla provenienza.
+    """A CFD flight, with metadata useful for analysis and provenance tracking.
 
     Attributes:
-        flight_id: Identificativo univoco del volo (chiave primaria).
-        season: Etichetta stagione, es. ``"1999-2000"``.
-        season_year: Anno di inizio stagione, es. ``1999``.
-        date: Data del volo (ISO, talvolta incompleta come ``2000-00-00``).
-        pilot: Nome del pilota.
-        flight_type: Tipo di volo (es. ``triangle``, ``FAI``, ``Dist 2 pts``).
-        distance_km: Distanza dichiarata in km (``None`` se assente).
-        points: Punteggio CFD (``None`` se assente).
-        duration_s: Durata in secondi (``None`` se assente o zero non significativo).
-        speed: Velocita' media dichiarata (``None`` se assente).
-        takeoff: Sito di decollo.
-        landing: Sito di atterraggio.
-        dept: Numero di dipartimento francese.
-        club: Club del pilota.
-        wing: Modello di ala.
-        wing_class: Classe/categoria dell'ala (es. ``"C ou 2"``).
-        flight_link: URL della pagina del volo.
-        igc_link: URL diretto del file `.igc` (stringa vuota se la traccia non esiste).
-        tracklog_id: Identificativo interno FFVL della traccia.
-        pilot_link: URL della pagina del pilota.
+        flight_id: Unique flight identifier (primary key).
+        season: Season label, e.g. ``"1999-2000"``.
+        season_year: Season start year, e.g. ``1999``.
+        date: Flight date (ISO format, sometimes incomplete such as ``2000-00-00``).
+        pilot: Pilot name.
+        flight_type: Flight type (e.g. ``triangle``, ``FAI``, ``Dist 2 pts``).
+        distance_km: Declared distance in km (``None`` if absent).
+        points: CFD score (``None`` if absent).
+        duration_s: Duration in seconds (``None`` if absent or meaningless zero).
+        speed: Declared average speed (``None`` if absent).
+        takeoff: Takeoff site.
+        landing: Landing site.
+        dept: French department number.
+        club: Pilot's club.
+        wing: Wing model.
+        wing_class: Wing class/category (e.g. ``"C ou 2"``).
+        flight_link: URL of the flight page.
+        igc_link: Direct URL of the `.igc` file (empty string if no track exists).
+        tracklog_id: FFVL internal track identifier.
+        pilot_link: URL of the pilot's page.
     """
 
     flight_id: str
@@ -67,32 +67,32 @@ class FlightRecord:
 
     @property
     def has_igc(self) -> bool:
-        """``True`` se il volo ha un tracciato `.igc` scaricabile.
+        """``True`` if the flight has a downloadable `.igc` track.
 
-        Molti voli (specie storici) espongono un ``igc_tracklog_link`` che e' solo la
-        cartella base ``.../igcfiles/`` senza nome file: un segnaposto, non un file
-        scaricabile. :func:`_clean_igc_link` lo normalizza a stringa vuota, quindi qui
-        basta controllare che il link non sia vuoto.
+        Many flights (especially historical ones) expose an ``igc_tracklog_link`` that is
+        only the base folder ``.../igcfiles/`` without a filename: a placeholder, not a
+        downloadable file. :func:`_clean_igc_link` normalises it to an empty string, so
+        here it is sufficient to check that the link is not empty.
         """
         return bool(self.igc_link)
 
 
 def _clean_igc_link(value: str | None) -> str:
-    """Normalizza il link al tracciato: lo tiene solo se e' un vero file `.igc`.
+    """Normalises the track link: keeps it only if it is a real `.igc` file.
 
     Args:
-        value: Valore grezzo dell'attributo ``igc_tracklog_link``.
+        value: Raw value of the ``igc_tracklog_link`` attribute.
 
     Returns:
-        Il link se termina con ``.igc`` (un file reale), altrimenti stringa vuota
-        (segnaposto: solo la cartella base, nessun tracciato scaricabile).
+        The link if it ends with ``.igc`` (a real file), otherwise an empty string
+        (placeholder: only the base folder, no downloadable track).
     """
     v = (value or "").strip()
     return v if v.lower().endswith(".igc") else ""
 
 
 def _to_float(value: str | None) -> float | None:
-    """Converte una stringa in float, restituendo ``None`` se vuota o non valida."""
+    """Converts a string to float, returning ``None`` if empty or invalid."""
     if value is None or not value.strip():
         return None
     try:
@@ -102,7 +102,7 @@ def _to_float(value: str | None) -> float | None:
 
 
 def _to_int(value: str | None) -> int | None:
-    """Converte una stringa in int, restituendo ``None`` se vuota o non valida."""
+    """Converts a string to int, returning ``None`` if empty or invalid."""
     if value is None or not value.strip():
         return None
     try:
@@ -112,27 +112,27 @@ def _to_int(value: str | None) -> int | None:
 
 
 def season_xml_path(cfg: Config, year: int) -> Path:
-    """Path dell'XML di stagione archiviato sull'HDD.
+    """Path of the season XML archived on the HDD.
 
     Args:
-        cfg: Configurazione.
-        year: Anno di inizio stagione.
+        cfg: Configuration.
+        year: Season start year.
 
     Returns:
-        Il path ``data_root/raw_xml/{year}.xml``.
+        The path ``data_root/raw_xml/{year}.xml``.
     """
     return cfg.raw_xml_dir / f"{year}.xml"
 
 
 def parse_season_xml(xml_bytes: bytes, year: int) -> list[FlightRecord]:
-    """Analizza l'XML di una stagione in una lista di :class:`FlightRecord`.
+    """Parses a season's XML into a list of :class:`FlightRecord`.
 
     Args:
-        xml_bytes: Contenuto grezzo dell'XML.
-        year: Anno di inizio stagione (usato per etichetta e ``season_year``).
+        xml_bytes: Raw XML content.
+        year: Season start year (used for the label and ``season_year``).
 
     Returns:
-        La lista dei voli presenti nell'XML (ordine del documento).
+        The list of flights present in the XML (document order).
     """
     root = ET.fromstring(xml_bytes)
     label = season_label(year)
@@ -167,36 +167,36 @@ def parse_season_xml(xml_bytes: bytes, year: int) -> list[FlightRecord]:
 
 
 def fetch_season_xml(year: int, cfg: Config, fetcher: Fetcher) -> bytes:
-    """Scarica l'XML di una stagione dal sito FFVL.
+    """Downloads a season's XML from the FFVL site.
 
     Args:
-        year: Anno di inizio stagione.
-        cfg: Configurazione (origine e parametri di rete).
-        fetcher: Fetcher HTTP da usare.
+        year: Season start year.
+        cfg: Configuration (base URL and network parameters).
+        fetcher: HTTP Fetcher to use.
 
     Returns:
-        Il contenuto grezzo dell'XML.
+        The raw XML content.
     """
     url = xml_url(year, cfg.base_url, cfg.list_path, cfg.xml_query)
     return fetcher.content(url)
 
 
 def load_season_records(cfg: Config, year: int) -> list[FlightRecord]:
-    """Carica i voli di una stagione dall'XML archiviato sull'HDD.
+    """Loads the flights of a season from the archived XML on the HDD.
 
     Args:
-        cfg: Configurazione.
-        year: Anno di inizio stagione.
+        cfg: Configuration.
+        year: Season start year.
 
     Returns:
-        La lista dei voli.
+        The list of flights.
 
     Raises:
-        FileNotFoundError: Se l'XML della stagione non e' stato archiviato.
+        FileNotFoundError: If the season's XML has not been archived yet.
     """
     path = season_xml_path(cfg, year)
     if not path.is_file():
         raise FileNotFoundError(
-            f"XML della stagione {year} non trovato: {path}. Esegui prima 'fetch-xml'."
+            f"Season {year} XML not found: {path}. Run 'fetch-xml' first."
         )
     return parse_season_xml(path.read_bytes(), year)

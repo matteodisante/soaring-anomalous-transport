@@ -1,4 +1,4 @@
-"""Test del modulo naming (puro, senza rete)."""
+"""Tests for the naming module (pure, no network)."""
 
 from pathlib import Path
 
@@ -18,7 +18,7 @@ def test_sanitize_date_empty():
 
 
 def test_sanitize_date_strange_chars():
-    # caratteri non sicuri sostituiti con '-'
+    # unsafe characters replaced with '-'
     assert naming.sanitize_date("2014/07/12") == "2014-07-12"
 
 

@@ -1,13 +1,13 @@
-"""Download resumibile e parallelo dei file `.igc`.
+"""Resumable and parallel download of `.igc` files.
 
-Garanzie di robustezza (il job e' grande: ~186k file, ore di esecuzione):
+Robustness guarantees (the job is large: ~186k files, hours of execution time):
 
-* **resumibile** -- i file gia' presenti vengono saltati, quindi si puo' interrompere e
-  riprendere liberamente;
-* **scrittura atomica** -- si scrive su ``.part`` e poi si rinomina: un file con il
-  nome definitivo e' sempre completo e valido (importante su exfat, senza journaling);
-* **validazione IGC** -- il contenuto viene accettato solo se sembra un vero file IGC;
-* **parallelismo cortese** -- pool di thread limitato, una sessione HTTP per worker.
+* **resumable** -- already present files are skipped, so the process can be freely
+  interrupted and resumed;
+* **atomic writes** -- written to ``.part`` then renamed: a file with its final name is
+  always complete and valid (important on exfat, which has no journaling);
+* **IGC validation** -- content is accepted only if it looks like a genuine IGC file;
+* **polite parallelism** -- limited thread pool, one HTTP session per worker.
 """
 
 from __future__ import annotations
@@ -29,22 +29,22 @@ from .seasons import season_label
 
 logger = logging.getLogger(__name__)
 
-# Soglia minima di byte sotto la quale un file non puo' essere un IGC plausibile.
+# Minimum byte threshold below which a file cannot be a plausible IGC.
 MIN_IGC_BYTES = 100
 
-# Fetcher per-thread: ogni worker del pool ne crea e riusa uno proprio.
+# Per-thread Fetcher: each pool worker creates and reuses its own instance.
 _thread_local = threading.local()
 
 
 @dataclass
 class FlightFailure:
-    """Un download fallito, registrato per un eventuale retry mirato.
+    """A failed download, recorded for a potential targeted retry.
 
     Attributes:
-        flight_id: Identificativo del volo.
-        season: Etichetta della stagione.
-        igc_link: URL del file `.igc` che non si e' riusciti a scaricare.
-        error: Messaggio d'errore sintetico.
+        flight_id: Flight identifier.
+        season: Season label.
+        igc_link: URL of the `.igc` file that could not be downloaded.
+        error: Concise error message.
     """
 
     flight_id: str
@@ -55,18 +55,18 @@ class FlightFailure:
 
 @dataclass
 class SeasonResult:
-    """Esito del download di una stagione.
+    """Outcome of a season download.
 
     Attributes:
-        year: Anno di inizio stagione.
-        season: Etichetta della stagione.
-        n_flights: Voli totali nella stagione.
-        n_with_igc: Voli con traccia `.igc` disponibile.
-        n_downloaded: File scaricati con successo in questa esecuzione.
-        n_skipped: File gia' presenti e quindi saltati.
-        n_failed: Download falliti.
-        n_no_tracklog: Voli senza traccia (non scaricabili).
-        failures: Dettaglio dei fallimenti.
+        year: Season start year.
+        season: Season label.
+        n_flights: Total flights in the season.
+        n_with_igc: Flights with an available `.igc` track.
+        n_downloaded: Files successfully downloaded in this run.
+        n_skipped: Files already present and therefore skipped.
+        n_failed: Failed downloads.
+        n_no_tracklog: Flights without a track (not downloadable).
+        failures: Detail of failures.
     """
 
     year: int
@@ -81,16 +81,17 @@ class SeasonResult:
 
 
 def is_valid_igc(content: bytes) -> bool:
-    """Verifica sommaria che ``content`` sia un file IGC plausibile.
+    """Basic check that ``content`` is a plausible IGC file.
 
-    Un IGC inizia con un record ``A`` (identificativo del logger) e contiene record
-    ``B`` (i fix GPS). Questo basta a scartare risposte HTML/errore o file troncati.
+    An IGC file starts with an ``A`` record (logger identifier) and contains ``B``
+    records (GPS fixes). This is sufficient to reject HTML/error responses or truncated
+    files.
 
     Args:
-        content: Byte del file scaricato.
+        content: Bytes of the downloaded file.
 
     Returns:
-        ``True`` se il contenuto sembra un IGC valido.
+        ``True`` if the content looks like a valid IGC.
     """
     if len(content) < MIN_IGC_BYTES:
         return False
@@ -103,7 +104,7 @@ def is_valid_igc(content: bytes) -> bool:
         if not has_a_header:
             has_a_header = line[:1] == b"A"
             if not has_a_header:
-                return False  # la prima riga utile deve essere il record A
+                return False  # the first non-empty line must be the A record
         if line[:1] == b"B":
             has_b_record = True
             break
@@ -111,11 +112,11 @@ def is_valid_igc(content: bytes) -> bool:
 
 
 def _atomic_write(path: Path, content: bytes) -> None:
-    """Scrive ``content`` in ``path`` in modo atomico (tmp ``.part`` + rename).
+    """Writes ``content`` to ``path`` atomically (tmp ``.part`` + rename).
 
     Args:
-        path: Path di destinazione finale.
-        content: Byte da scrivere.
+        path: Final destination path.
+        content: Bytes to write.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".part")
@@ -127,7 +128,7 @@ def _atomic_write(path: Path, content: bytes) -> None:
 
 
 def _get_fetcher(cfg: Config) -> Fetcher:
-    """Restituisce il :class:`Fetcher` del thread corrente, creandolo se serve."""
+    """Returns the :class:`Fetcher` for the current thread, creating one if needed."""
     fetcher = getattr(_thread_local, "fetcher", None)
     if fetcher is None:
         fetcher = Fetcher(cfg)
@@ -136,16 +137,16 @@ def _get_fetcher(cfg: Config) -> Fetcher:
 
 
 def _download_one(rec: FlightRecord, cfg: Config) -> tuple[str, FlightRecord, str]:
-    """Scarica un singolo volo.
+    """Downloads a single flight.
 
     Args:
-        rec: Il volo da scaricare.
-        cfg: Configurazione.
+        rec: The flight to download.
+        cfg: Configuration.
 
     Returns:
-        Una tupla ``(status, rec, detail)`` dove ``status`` e' uno tra
-        ``"downloaded"``, ``"skipped"`` o ``"failed"`` e ``detail`` e' un messaggio
-        d'errore (solo per ``"failed"``).
+        A tuple ``(status, rec, detail)`` where ``status`` is one of
+        ``"downloaded"``, ``"skipped"``, or ``"failed"`` and ``detail`` is an error
+        message (only for ``"failed"``).
     """
     target = igc_path(cfg.igc_dir, rec.season_year, rec.date, rec.flight_id)
     if target.exists():
@@ -155,7 +156,7 @@ def _download_one(rec: FlightRecord, cfg: Config) -> tuple[str, FlightRecord, st
     except FetchError as err:
         return "failed", rec, str(err)
     if not is_valid_igc(content):
-        return "failed", rec, "contenuto non valido (non sembra un IGC)"
+        return "failed", rec, "invalid content (does not look like an IGC)"
     _atomic_write(target, content)
     return "downloaded", rec, ""
 
@@ -167,18 +168,18 @@ def download_season(
     limit: int | None = None,
     dry_run: bool = False,
 ) -> SeasonResult:
-    """Scarica i tracciati `.igc` di una stagione (resumibile).
+    """Downloads `.igc` tracks for a season (resumable).
 
-    Richiede che l'XML della stagione sia gia' stato archiviato (comando ``fetch-xml``).
+    Requires the season XML to have already been archived (``fetch-xml`` command).
 
     Args:
-        year: Anno di inizio stagione.
-        cfg: Configurazione.
-        limit: Se indicato, scarica al massimo questo numero di file (utile per test).
-        dry_run: Se ``True`` non scarica nulla: conta soltanto cosa farebbe.
+        year: Season start year.
+        cfg: Configuration.
+        limit: If provided, downloads at most this many files (useful for testing).
+        dry_run: If ``True`` does not download anything: only counts what would be done.
 
     Returns:
-        L'esito della stagione (vedi :class:`SeasonResult`).
+        The season outcome (see :class:`SeasonResult`).
     """
     records = load_season_records(cfg, year)
     result = SeasonResult(year=year, season=season_label(year), n_flights=len(records))
@@ -194,15 +195,15 @@ def download_season(
         to_download = to_download[:limit]
 
     if dry_run:
-        # Conta quanti sarebbero gia' presenti vs da scaricare, senza rete.
+        # Count how many would already be present vs to download, without network access.
         for rec in to_download:
             target = igc_path(cfg.igc_dir, rec.season_year, rec.date, rec.flight_id)
             if target.exists():
                 result.n_skipped += 1
             else:
-                result.n_downloaded += 1  # "da scaricare" in modalita' dry-run
+                result.n_downloaded += 1  # "to download" in dry-run mode
         logger.info(
-            "[%s] dry-run: %d da scaricare, %d gia' presenti, %d senza traccia",
+            "[%s] dry-run: %d to download, %d already present, %d without track",
             result.season,
             result.n_downloaded,
             result.n_skipped,
@@ -228,11 +229,11 @@ def download_season(
                     FlightFailure(rec.flight_id, rec.season, rec.igc_link, detail)
                 )
                 logger.warning(
-                    "[%s] FAIL volo %s: %s", rec.season, rec.flight_id, detail
+                    "[%s] FAIL flight %s: %s", rec.season, rec.flight_id, detail
                 )
 
     logger.info(
-        "[%s] scaricati %d, saltati %d, falliti %d, senza traccia %d (su %d voli)",
+        "[%s] downloaded %d, skipped %d, failed %d, without track %d (out of %d flights)",
         result.season,
         result.n_downloaded,
         result.n_skipped,
@@ -250,15 +251,15 @@ def download_seasons(
     limit: int | None = None,
     dry_run: bool = False,
 ) -> list[SeasonResult]:
-    """Scarica piu' stagioni in sequenza.
+    """Downloads multiple seasons in sequence.
 
     Args:
-        years: Anni di inizio stagione da elaborare.
-        cfg: Configurazione.
-        limit: Limite di file per stagione (utile per test).
-        dry_run: Se ``True`` non scarica nulla.
+        years: Season start years to process.
+        cfg: Configuration.
+        limit: File limit per season (useful for testing).
+        dry_run: If ``True`` does not download anything.
 
     Returns:
-        La lista degli esiti, una per stagione.
+        The list of outcomes, one per season.
     """
     return [download_season(y, cfg, limit=limit, dry_run=dry_run) for y in years]

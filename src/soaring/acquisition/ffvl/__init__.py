@@ -1,12 +1,12 @@
-"""Download dei tracciati `.igc` dalla Coupe Federale de Distance (CFD) della FFVL.
+"""Download of `.igc` tracks from the Coupe Fédérale de Distance (CFD) of the FFVL.
 
-Pipeline in quattro passi, esposti dalla CLI ``soaring-ffvl``:
+Four-step pipeline, exposed by the ``soaring-ffvl`` CLI:
 
-1. :mod:`~.catalog_xml` -- scarica e analizza l'export XML di ogni stagione;
-2. :mod:`~.download` -- scarica i file `.igc` in modo resumibile;
-3. :mod:`~.catalog` -- costruisce il catalogo CSV (metadati + path locali);
-4. :mod:`~.cli` -- interfaccia a riga di comando.
+1. :mod:`~.catalog_xml` -- downloads and parses the XML export for each season;
+2. :mod:`~.download` -- downloads `.igc` files in a resumable manner;
+3. :mod:`~.catalog` -- builds the CSV catalog (metadata + local paths);
+4. :mod:`~.cli` -- command-line interface.
 
-La *fonte di verita'* resta sempre la coppia [nomi file] + [XML archiviati]: il
-catalogo CSV e' un comodo derivato, rigenerabile in qualsiasi momento.
+The *source of truth* is always the pair [filenames] + [archived XMLs]: the CSV catalog
+is a convenient derivative, regenerable at any time.
 """

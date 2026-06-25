@@ -1,8 +1,8 @@
-# Reference API
+# API Reference
 
-Documentazione generata automaticamente dai docstring dei moduli (via
-[mkdocstrings](https://mkdocstrings.github.io/)): cambia il codice e questa pagina si
-aggiorna alla build successiva. Aggiungendo un nuovo modulo, basta una riga `:::` qui.
+Documentation auto-generated from module docstrings (via
+[mkdocstrings](https://mkdocstrings.github.io/)): change the code and this page updates
+on the next build. To add a new module, a single `:::` line here is enough.
 
 ## `config`
 

@@ -1,50 +1,50 @@
 # soaring-anomalous-transport
 
-Codice della tesi magistrale **_anomalous transport in soaring flights_**.
+Code for the master's thesis **_anomalous transport in soaring flights_**.
 
-Monorepo della tesi. Oggi contiene l'**acquisizione dei dati** di volo `.igc` dalla
-**Coupe Fédérale de Distance (CFD)** della [FFVL](https://parapente.ffvl.fr/cfd/liste)
-(pacchetto `soaring.acquisition.ffvl`). Analisi e simulazioni verranno aggiunte come
-ulteriori sotto-pacchetti di `soaring`.
+Thesis monorepo. Currently contains the **acquisition of** `.igc` **flight data** from the
+**Coupe Fédérale de Distance (CFD)** of the [FFVL](https://parapente.ffvl.fr/cfd/liste)
+(package `soaring.acquisition.ffvl`). Analyses and simulations will be added as further
+sub-packages of `soaring`.
 
 ## Quick start
 
 ```bash
-uv sync --all-extras                          # ambiente + dipendenze
-# imposta data_root (HDD esterno) in configs/ffvl_download.yaml
-uv run soaring-ffvl fetch-xml --seasons 1999  # archivia gli XML
-uv run soaring-ffvl download  --seasons 1999  # scarica i .igc (resumibile)
+uv sync --all-extras                          # environment + dependencies
+# set data_root (external HDD) in configs/ffvl_download.yaml
+uv run soaring-ffvl fetch-xml --seasons 1999  # archive the XMLs
+uv run soaring-ffvl download  --seasons 1999  # download the .igc files (resumable)
 uv run soaring-ffvl build-catalog             # catalog.csv + seasons_index.csv
-uv run soaring-ffvl status                    # riepilogo per stagione
+uv run soaring-ffvl status                    # per-season summary
 ```
 
-`--seasons` accetta `all`, un anno (`2014`), un intervallo (`2010-2015`) o un elenco (`2010,2012`).
+`--seasons` accepts `all`, a single year (`2014`), a range (`2010-2015`), or a list (`2010,2012`).
 
-## Dove finiscono i dati
+## Where the data goes
 
-I dati grezzi (~65 GB) **non** stanno nel repo ma in `data_root`, sull'HDD esterno:
+The raw data (~65 GB) is **not** stored in the repo but in `data_root`, on the external HDD:
 
 ```text
 <data_root>/
-├── raw_xml/1999.xml …       # export XML archiviati (provenienza)
-├── igc/1999-2000/…igc       # tracciati, una sottocartella per stagione
-├── catalog.csv              # 1 riga/volo: metadati + local_path
-└── seasons_index.csv        # 1 riga/stagione: link + conteggi
+├── raw_xml/1999.xml …       # archived XML exports (provenance)
+├── igc/1999-2000/…igc       # tracks, one subdirectory per season
+├── catalog.csv              # 1 row/flight: metadata + local_path
+└── seasons_index.csv        # 1 row/season: links + counts
 ```
 
-Nome file `.igc`: **`{date}_{flightID}.igc`**. Il `flightID` apre sempre la pagina del volo
-`https://parapente.ffvl.fr/cfd/liste/vol/{flightID}`, quindi dal file si risale al volo senza
-dizionari (dettagli: [Dal file .igc al volo](docs/guide/igc-to-flight.md)).
+`.igc` filename: **`{date}_{flightID}.igc`**. The `flightID` always opens the flight page at
+`https://parapente.ffvl.fr/cfd/liste/vol/{flightID}`, so the flight can be traced from the
+file without any lookup dictionary (details: [From the .igc file to the flight](docs/guide/igc-to-flight.md)).
 
-## Documentazione
+## Documentation
 
-Guide + Reference API auto-generata dai docstring:
+Guides + API Reference auto-generated from docstrings:
 
 ```bash
 uv run mkdocs serve   # http://127.0.0.1:8000
 ```
 
-## Sviluppo
+## Development
 
 ```bash
 uv run ruff check . && uv run ruff format --check .
@@ -52,5 +52,5 @@ uv run pytest
 uv run mkdocs build --strict
 ```
 
-Struttura: `src/soaring/acquisition/ffvl/` (codice), `configs/` (config YAML), `docs/`
-(documentazione), `tests/` (test offline su fixture). Licenza: MIT.
+Structure: `src/soaring/acquisition/ffvl/` (code), `configs/` (YAML config), `docs/`
+(documentation), `tests/` (offline tests on fixtures). License: MIT.

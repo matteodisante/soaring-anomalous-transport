@@ -1,10 +1,10 @@
 site_name: soaring-anomalous-transport
-site_description: Tesi — anomalous transport in soaring flights. Acquisizione dati .igc CFD FFVL.
+site_description: Master's thesis — anomalous transport in soaring flights. .igc data acquisition from the CFD FFVL.
 docs_dir: docs
 
 theme:
   name: material
-  language: it
+  language: en
   features:
     - navigation.sections
     - navigation.indexes
@@ -17,13 +17,13 @@ theme:
       primary: indigo
       toggle:
         icon: material/weather-night
-        name: Tema scuro
+        name: Dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: indigo
       toggle:
         icon: material/weather-sunny
-        name: Tema chiaro
+        name: Light mode
 
 plugins:
   - search
@@ -43,12 +43,12 @@ plugins:
 
 nav:
   - Home: index.md
-  - Guida:
-      - Installazione: guide/installation.md
-      - Fonte dati (FFVL): guide/data-source.md
-      - Scaricare i dati: guide/downloading.md
-      - Dal file .igc al volo: guide/igc-to-flight.md
-  - Reference API: reference.md
+  - Guide:
+      - Installation: guide/installation.md
+      - Data source (FFVL): guide/data-source.md
+      - Downloading the data: guide/downloading.md
+      - From the .igc file to the flight: guide/igc-to-flight.md
+  - API Reference: reference.md
 
 markdown_extensions:
   - admonition

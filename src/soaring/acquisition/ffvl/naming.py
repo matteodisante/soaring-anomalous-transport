@@ -1,10 +1,10 @@
-"""Naming "funzionale" dei file `.igc` e percorsi su disco.
+"""Functional naming for `.igc` files and on-disk paths.
 
-Schema del nome: ``{date}_{flight_id}.igc`` (es. ``2000-00-00_20150770.igc``).
+Name scheme: ``{date}_{flight_id}.igc`` (e.g. ``2000-00-00_20150770.igc``).
 
-Il nome e' auto-descrittivo: il ``flight_id`` e' univoco e apre sempre la pagina del
-volo (vedi :func:`~.seasons.flight_page_url`); quindi dato un file `.igc` si risale al
-volo *senza* alcun dizionario.
+The name is self-describing: the ``flight_id`` is unique and always links to the flight
+page (see :func:`~.seasons.flight_page_url`); therefore, given a `.igc` file, the flight
+can be traced back *without* any lookup dictionary.
 """
 
 from __future__ import annotations
@@ -17,17 +17,17 @@ _SAFE_DATE_CHARS = set("0123456789-")
 
 
 def sanitize_date(date: str) -> str:
-    """Rende una data sicura per un nome di file.
+    """Makes a date string safe for use in a filename.
 
-    Tiene cifre e trattini; sostituisce ogni altro carattere con ``-``. Le date FFVL
-    sono gia' in forma ISO (``AAAA-MM-GG``), a volte incomplete (``2000-00-00``):
-    vanno bene cosi'.
+    Keeps digits and hyphens; replaces any other character with ``-``. FFVL dates are
+    already in ISO form (``YYYY-MM-DD``), sometimes incomplete (``2000-00-00``):
+    these are left as-is.
 
     Args:
-        date: La stringa di data grezza dall'XML.
+        date: The raw date string from the XML.
 
     Returns:
-        Una data ripulita; ``"0000-00-00"`` se l'input e' vuoto.
+        A sanitised date; ``"0000-00-00"`` if the input is empty.
     """
     date = (date or "").strip()
     if not date:
@@ -36,53 +36,52 @@ def sanitize_date(date: str) -> str:
 
 
 def igc_filename(date: str, flight_id: str | int) -> str:
-    """Costruisce il nome funzionale del file `.igc`.
+    """Builds the functional `.igc` filename.
 
     Args:
-        date: Data del volo (idealmente ISO ``AAAA-MM-GG``).
-        flight_id: Identificativo univoco del volo.
+        date: Flight date (ideally ISO ``YYYY-MM-DD``).
+        flight_id: Unique flight identifier.
 
     Returns:
-        Il nome del file, es. ``"2000-00-00_20150770.igc"``.
+        The filename, e.g. ``"2000-00-00_20150770.igc"``.
     """
     return f"{sanitize_date(date)}_{flight_id}.igc"
 
 
 def parse_igc_filename(name: str) -> tuple[str, str]:
-    """Operazione inversa di :func:`igc_filename`: estrae data e ``flight_id``.
+    """Inverse of :func:`igc_filename`: extracts the date and ``flight_id``.
 
     Args:
-        name: Nome (o path) del file `.igc`.
+        name: Name (or path) of the `.igc` file.
 
     Returns:
-        La coppia ``(date, flight_id)``.
+        The pair ``(date, flight_id)``.
 
     Raises:
-        ValueError: Se il nome non segue lo schema ``{date}_{flight_id}.igc``.
+        ValueError: If the name does not follow the ``{date}_{flight_id}.igc`` scheme.
     """
     stem = Path(name).name
     if not stem.endswith(".igc"):
-        raise ValueError(f"Non e' un file .igc: {name!r}")
+        raise ValueError(f"Not a .igc file: {name!r}")
     stem = stem[: -len(".igc")]
     if "_" not in stem:
-        raise ValueError(f"Nome file non conforme allo schema: {name!r}")
+        raise ValueError(f"Filename does not match the expected scheme: {name!r}")
     date, flight_id = stem.rsplit("_", 1)
     return date, flight_id
 
 
 def igc_path(igc_root: Path, year: int, date: str, flight_id: str | int) -> Path:
-    """Percorso completo del file `.igc` di un volo.
+    """Full path of a flight's `.igc` file.
 
-    I file sono organizzati in ``{igc_root}/{stagione}/{nome}``, una sottocartella
-    per stagione.
+    Files are organised in ``{igc_root}/{season}/{name}``, one subdirectory per season.
 
     Args:
-        igc_root: Cartella radice dei tracciati (``data_root/igc``).
-        year: Anno di inizio stagione.
-        date: Data del volo.
-        flight_id: Identificativo univoco del volo.
+        igc_root: Root directory for track files (``data_root/igc``).
+        year: Season start year.
+        date: Flight date.
+        flight_id: Unique flight identifier.
 
     Returns:
-        Il path del file `.igc`.
+        The `.igc` file path.
     """
     return igc_root / season_label(year) / igc_filename(date, flight_id)

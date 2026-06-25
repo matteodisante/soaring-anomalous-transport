@@ -1,21 +1,21 @@
-# Dal file `.igc` al volo
+# From the `.igc` file to the flight
 
-Requisito centrale: dato un file `.igc`, risalire a *quale volo* è e ai suoi link. Qui non
-serve un dizionario fragile — l'informazione è già nel **nome del file** e negli **XML
-archiviati**.
+Central requirement: given a `.igc` file, trace back to *which flight* it belongs to and its
+URLs. No fragile lookup dictionary is needed — the information is already in the **filename**
+and in the **archived XMLs**.
 
-## 1. Il nome del file è auto-descrittivo
+## 1. The filename is self-describing
 
-Schema: **`{date}_{flightID}.igc`**, es. `2000-00-00_20150770.igc`.
+Scheme: **`{date}_{flightID}.igc`**, e.g. `2000-00-00_20150770.igc`.
 
-Il `flightID` è la chiave univoca del volo e apre *sempre* la sua pagina:
+The `flightID` is the unique flight key and always opens its page:
 
 ```text
 2000-00-00_20150770.igc   →   flight_id = 20150770
                           →   https://parapente.ffvl.fr/cfd/liste/vol/20150770
 ```
 
-In codice:
+In code:
 
 ```python
 from soaring.acquisition.ffvl.naming import parse_igc_filename
@@ -25,29 +25,29 @@ date, flight_id = parse_igc_filename("2000-00-00_20150770.igc")
 print(flight_page_url(flight_id))   # → .../cfd/liste/vol/20150770
 ```
 
-## 2. Metadati completi: il catalogo
+## 2. Full metadata: the catalog
 
-Per i metadati (pilota, distanza, decollo/atterraggio, durata, …) c'è `catalog.csv`, una
-riga per volo, **rigenerabile** in ogni momento dagli XML con `build-catalog`. Include la
-colonna `local_path` che collega il volo al file fisico su disco.
+For metadata (pilot, distance, takeoff/landing, duration, …) there is `catalog.csv`, one
+row per flight, **regenerable** at any time from the XMLs via `build-catalog`. It includes
+the `local_path` column that links the flight to the physical file on disk.
 
 ```python
 import pandas as pd
 cat = pd.read_csv("/Volumes/HDD_DISANTE/ffvl_cfd_igc/catalog.csv")
 
-# dal flight_id alla riga completa
+# from flight_id to the full row
 row = cat.loc[cat.flight_id == 20150770].iloc[0]
 print(row.pilot, row.distance_km, row.takeoff, row.flight_link)
 
-# selezione per l'analisi + path dei file da aprire
-voli = cat[(cat.downloaded) & (cat.distance_km > 50)]
-for p in voli.local_path:
-    ...  # apri il .igc e analizzalo
+# selection for analysis + file paths to open
+flights = cat[(cat.downloaded) & (cat.distance_km > 50)]
+for p in flights.local_path:
+    ...  # open the .igc and analyse it
 ```
 
-!!! info "Fonte di verità vs derivato"
-    La **fonte di verità** è la coppia *[nomi file] + [XML archiviati in `raw_xml/`]*.
-    Il `catalog.csv` è un **derivato comodo**: se lo cancelli, lo ricrei con `build-catalog`.
+!!! info "Source of truth vs derivative"
+    The **source of truth** is the pair *[filenames] + [XMLs archived in `raw_xml/`]*.
+    `catalog.csv` is a **convenient derivative**: if you delete it, recreate it with `build-catalog`.
 
-Colonne del catalogo e logica di costruzione: `soaring.acquisition.ffvl.catalog`
-(vedi [Reference API](../reference.md)).
+Catalog columns and build logic: `soaring.acquisition.ffvl.catalog`
+(see [API Reference](../reference.md)).

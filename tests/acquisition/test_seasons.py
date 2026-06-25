@@ -1,4 +1,4 @@
-"""Test del modulo seasons (puro, senza rete)."""
+"""Tests for the seasons module (pure, no network)."""
 
 import pytest
 

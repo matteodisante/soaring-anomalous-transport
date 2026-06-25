@@ -1,13 +1,13 @@
-"""Costruzione del catalogo CSV derivato (metadati + path locali).
+"""Construction of the derived CSV catalog (metadata + local paths).
 
-Il catalogo e' un *derivato* rigenerabile, non una fonte di verita': si ottiene
-riparsando gli XML archiviati e collegando ogni volo al file `.igc` presente su disco
-(colonne ``local_path``, ``downloaded``, ``file_size``).
+The catalog is a *regenerable derivative*, not a source of truth: it is obtained by
+re-parsing the archived XMLs and linking each flight to the `.igc` file present on disk
+(columns ``local_path``, ``downloaded``, ``file_size``).
 
-Produce due file:
+Produces two files:
 
-* ``catalog.csv`` -- una riga per volo (tutte le stagioni archiviate);
-* ``seasons_index.csv`` -- una riga per stagione, con i link e i conteggi.
+* ``catalog.csv`` -- one row per flight (all archived seasons);
+* ``seasons_index.csv`` -- one row per season, with links and counts.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from .seasons import list_url, season_label, xml_url
 
 logger = logging.getLogger(__name__)
 
-# Colonne del catalogo, in ordine (metadati del volo + collegamento al file fisico).
+# Catalog columns, in order (flight metadata + link to the physical file).
 CATALOG_COLUMNS = [
     "flight_id",
     "season",
@@ -63,13 +63,13 @@ SEASONS_INDEX_COLUMNS = [
 
 
 def archived_years(cfg: Config) -> list[int]:
-    """Anni di stagione il cui XML risulta archiviato sull'HDD.
+    """Season years whose XML is archived on the HDD.
 
     Args:
-        cfg: Configurazione.
+        cfg: Configuration.
 
     Returns:
-        Lista ordinata di anni per cui esiste ``raw_xml/{year}.xml``.
+        Sorted list of years for which ``raw_xml/{year}.xml`` exists.
     """
     if not cfg.raw_xml_dir.is_dir():
         return []
@@ -83,14 +83,14 @@ def archived_years(cfg: Config) -> list[int]:
 
 
 def build_catalog(cfg: Config, years: list[int] | None = None) -> pd.DataFrame:
-    """Costruisce il catalogo dei voli e lo scrive in ``catalog.csv``.
+    """Builds the flight catalog and writes it to ``catalog.csv``.
 
     Args:
-        cfg: Configurazione.
-        years: Anni da includere; se ``None`` usa tutte le stagioni archiviate.
+        cfg: Configuration.
+        years: Years to include; if ``None`` uses all archived seasons.
 
     Returns:
-        Il catalogo come :class:`~pandas.DataFrame`.
+        The catalog as a :class:`~pandas.DataFrame`.
     """
     use_years = years if years is not None else archived_years(cfg)
     rows: list[dict] = []
@@ -99,7 +99,7 @@ def build_catalog(cfg: Config, years: list[int] | None = None) -> pd.DataFrame:
             row = asdict(rec)
             row.pop(
                 "has_igc", None
-            )  # proprieta', non campo: non e' in asdict ma per sicurezza
+            )  # property, not a field: not in asdict but removed for safety
             target = igc_path(cfg.igc_dir, rec.season_year, rec.date, rec.flight_id)
             exists = target.is_file()
             row["local_path"] = str(target) if exists else ""
@@ -110,19 +110,19 @@ def build_catalog(cfg: Config, years: list[int] | None = None) -> pd.DataFrame:
     df = pd.DataFrame(rows, columns=CATALOG_COLUMNS)
     cfg.catalog_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(cfg.catalog_path, index=False)
-    logger.info("Catalogo scritto: %s (%d voli)", cfg.catalog_path, len(df))
+    logger.info("Catalog written: %s (%d flights)", cfg.catalog_path, len(df))
     return df
 
 
 def build_seasons_index(cfg: Config, catalog: pd.DataFrame) -> pd.DataFrame:
-    """Costruisce il riepilogo per stagione e lo scrive in ``seasons_index.csv``.
+    """Builds the per-season summary and writes it to ``seasons_index.csv``.
 
     Args:
-        cfg: Configurazione.
-        catalog: Il catalogo gia' costruito (vedi :func:`build_catalog`).
+        cfg: Configuration.
+        catalog: The already-built catalog (see :func:`build_catalog`).
 
     Returns:
-        Il riepilogo per stagione come :class:`~pandas.DataFrame`.
+        The per-season summary as a :class:`~pandas.DataFrame`.
     """
     rows: list[dict] = []
     if not catalog.empty:
@@ -148,7 +148,7 @@ def build_seasons_index(cfg: Config, catalog: pd.DataFrame) -> pd.DataFrame:
     cfg.seasons_index_path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(cfg.seasons_index_path, index=False)
     logger.info(
-        "Indice stagioni scritto: %s (%d stagioni)", cfg.seasons_index_path, len(df)
+        "Season index written: %s (%d seasons)", cfg.seasons_index_path, len(df)
     )
     return df
 
@@ -156,14 +156,14 @@ def build_seasons_index(cfg: Config, catalog: pd.DataFrame) -> pd.DataFrame:
 def build(
     cfg: Config, years: list[int] | None = None
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Rigenera catalogo e indice stagioni.
+    """Regenerates the catalog and the season index.
 
     Args:
-        cfg: Configurazione.
-        years: Anni da includere; se ``None`` usa tutte le stagioni archiviate.
+        cfg: Configuration.
+        years: Years to include; if ``None`` uses all archived seasons.
 
     Returns:
-        La coppia ``(catalogo, indice_stagioni)``.
+        The pair ``(catalog, season_index)``.
     """
     catalog = build_catalog(cfg, years)
     index = build_seasons_index(cfg, catalog)

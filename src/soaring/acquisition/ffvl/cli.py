@@ -1,13 +1,13 @@
-"""Interfaccia a riga di comando ``soaring-ffvl``.
+"""Command-line interface ``soaring-ffvl``.
 
-Sottocomandi:
+Subcommands:
 
-* ``fetch-xml``     -- scarica e archivia gli export XML di stagione;
-* ``download``      -- scarica i file `.igc` (resumibile);
-* ``build-catalog`` -- rigenera ``catalog.csv`` e ``seasons_index.csv``;
-* ``status``        -- riepilogo per stagione: dichiarati / con-igc / scaricati.
+* ``fetch-xml``     -- downloads and archives the season XML exports;
+* ``download``      -- downloads `.igc` files (resumable);
+* ``build-catalog`` -- regenerates ``catalog.csv`` and ``seasons_index.csv``;
+* ``status``        -- per-season summary: declared / with-igc / downloaded.
 
-Esempi::
+Examples::
 
     soaring-ffvl fetch-xml --seasons all
     soaring-ffvl download --seasons 1999
@@ -37,10 +37,10 @@ logger = logging.getLogger("soaring.ffvl")
 
 
 def _setup_logging(cfg: Config) -> None:
-    """Configura il logging su console e su file (``logs/download.log``).
+    """Configures logging to console and file (``logs/download.log``).
 
     Args:
-        cfg: Configurazione (per individuare la cartella dei log).
+        cfg: Configuration (used to locate the log directory).
     """
     cfg.logs_dir.mkdir(parents=True, exist_ok=True)
     fmt = "%(asctime)s %(levelname)s %(message)s"
@@ -52,19 +52,19 @@ def _setup_logging(cfg: Config) -> None:
 
 
 def _resolve_seasons(cfg: Config, seasons_arg: str) -> list[int]:
-    """Traduce ``--seasons`` in lista di anni, usando i limiti di configurazione."""
+    """Translates ``--seasons`` into a list of years, using the configuration limits."""
     return parse_seasons_arg(seasons_arg, cfg.season_start, cfg.season_end)
 
 
 def cmd_fetch_xml(cfg: Config, args: argparse.Namespace) -> int:
-    """Scarica e archivia gli XML di stagione.
+    """Downloads and archives the season XMLs.
 
     Args:
-        cfg: Configurazione.
-        args: Argomenti del sottocomando.
+        cfg: Configuration.
+        args: Subcommand arguments.
 
     Returns:
-        Codice di uscita del processo.
+        Process exit code.
     """
     years = _resolve_seasons(cfg, args.seasons)
     cfg.raw_xml_dir.mkdir(parents=True, exist_ok=True)
@@ -75,7 +75,7 @@ def cmd_fetch_xml(cfg: Config, args: argparse.Namespace) -> int:
             path = season_xml_path(cfg, year)
             path.write_bytes(xml_bytes)
             logger.info(
-                "[%s] XML archiviato: %s (%d KB)",
+                "[%s] XML archived: %s (%d KB)",
                 season_label(year),
                 path,
                 len(xml_bytes) // 1024,
@@ -87,14 +87,14 @@ def cmd_fetch_xml(cfg: Config, args: argparse.Namespace) -> int:
 
 
 def cmd_download(cfg: Config, args: argparse.Namespace) -> int:
-    """Scarica i file `.igc` delle stagioni richieste.
+    """Downloads `.igc` files for the requested seasons.
 
     Args:
-        cfg: Configurazione.
-        args: Argomenti del sottocomando.
+        cfg: Configuration.
+        args: Subcommand arguments.
 
     Returns:
-        Codice di uscita del processo.
+        Process exit code.
     """
     if args.workers is not None:
         cfg.http.workers = args.workers
@@ -106,52 +106,52 @@ def cmd_download(cfg: Config, args: argparse.Namespace) -> int:
         cfg.failures_path.parent.mkdir(parents=True, exist_ok=True)
         pd.DataFrame([vars(f) for f in failures]).to_csv(cfg.failures_path, index=False)
         logger.warning(
-            "%d fallimenti registrati in %s", len(failures), cfg.failures_path
+            "%d failures recorded in %s", len(failures), cfg.failures_path
         )
 
     tot_dl = sum(r.n_downloaded for r in results)
     tot_skip = sum(r.n_skipped for r in results)
     tot_fail = sum(r.n_failed for r in results)
-    verb = "da scaricare" if args.dry_run else "scaricati"
+    verb = "to download" if args.dry_run else "downloaded"
     logger.info(
-        "TOTALE: %d %s, %d saltati, %d falliti", tot_dl, verb, tot_skip, tot_fail
+        "TOTAL: %d %s, %d skipped, %d failed", tot_dl, verb, tot_skip, tot_fail
     )
     if not args.dry_run:
         clean_appledouble(cfg.data_root)
-        logger.info("Suggerimento: ora esegui 'soaring-ffvl build-catalog'.")
+        logger.info("Hint: now run 'soaring-ffvl build-catalog'.")
     return 1 if tot_fail else 0
 
 
 def cmd_clean(cfg: Config, args: argparse.Namespace) -> int:
-    """Rimuove i file sidecar ``._*`` creati da macOS su exfat.
+    """Removes ``._*`` sidecar files created by macOS on exfat volumes.
 
     Args:
-        cfg: Configurazione.
-        args: Argomenti del sottocomando (non usati).
+        cfg: Configuration.
+        args: Subcommand arguments (unused).
 
     Returns:
-        Codice di uscita del processo.
+        Process exit code.
     """
     done = clean_appledouble(cfg.data_root)
     if not done:
-        logger.info("Pulizia saltata (dot_clean non disponibile o cartella assente).")
+        logger.info("Cleanup skipped (dot_clean not available or directory missing).")
     return 0
 
 
 def cmd_build_catalog(cfg: Config, args: argparse.Namespace) -> int:
-    """Rigenera il catalogo e l'indice delle stagioni.
+    """Regenerates the catalog and the season index.
 
     Args:
-        cfg: Configurazione.
-        args: Argomenti del sottocomando.
+        cfg: Configuration.
+        args: Subcommand arguments.
 
     Returns:
-        Codice di uscita del processo.
+        Process exit code.
     """
     years = _resolve_seasons(cfg, args.seasons) if args.seasons != "all" else None
     catalog, index = catalog_mod.build(cfg, years)
     logger.info(
-        "Fatto: %d voli nel catalogo, %d stagioni nell'indice.",
+        "Done: %d flights in the catalog, %d seasons in the index.",
         len(catalog),
         len(index),
     )
@@ -159,18 +159,18 @@ def cmd_build_catalog(cfg: Config, args: argparse.Namespace) -> int:
 
 
 def cmd_status(cfg: Config, args: argparse.Namespace) -> int:
-    """Mostra lo stato del download per stagione.
+    """Shows the download status per season.
 
     Args:
-        cfg: Configurazione.
-        args: Argomenti del sottocomando.
+        cfg: Configuration.
+        args: Subcommand arguments.
 
     Returns:
-        Codice di uscita del processo.
+        Process exit code.
     """
     years = _resolve_seasons(cfg, args.seasons)
     header = (
-        f"{'stagione':<12}{'voli':>8}{'con_igc':>9}{'scaricati':>11}{'mancanti':>10}"
+        f"{'season':<12}{'flights':>8}{'with_igc':>9}{'downloaded':>11}{'missing':>10}"
     )
     print(header)
     print("-" * len(header))
@@ -178,7 +178,7 @@ def cmd_status(cfg: Config, args: argparse.Namespace) -> int:
     for year in years:
         path = season_xml_path(cfg, year)
         if not path.is_file():
-            print(f"{season_label(year):<12}(XML mancante: esegui 'fetch-xml')")
+            print(f"{season_label(year):<12}(XML missing: run 'fetch-xml')")
             continue
         records = load_season_records(cfg, year)
         n_f = len(records)
@@ -195,64 +195,64 @@ def cmd_status(cfg: Config, args: argparse.Namespace) -> int:
             f"{season_label(year):<12}{n_f:>8}{len(with_igc):>9}{n_dl:>11}{n_missing:>10}"
         )
     print("-" * len(header))
-    print(f"{'TOTALE':<12}{tot_f:>8}{tot_igc:>9}{tot_dl:>11}{tot_igc - tot_dl:>10}")
+    print(f"{'TOTAL':<12}{tot_f:>8}{tot_igc:>9}{tot_dl:>11}{tot_igc - tot_dl:>10}")
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Costruisce il parser degli argomenti della CLI.
+    """Builds the CLI argument parser.
 
     Returns:
-        Il parser configurato con tutti i sottocomandi.
+        The parser configured with all subcommands.
     """
     parser = argparse.ArgumentParser(
         prog="soaring-ffvl",
-        description="Download dei tracciati .igc dalla CFD FFVL.",
+        description="Download of .igc tracks from the CFD FFVL.",
     )
     parser.add_argument(
-        "--config", default=None, help="Path del file di configurazione YAML."
+        "--config", default=None, help="Path to the YAML configuration file."
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_fetch = sub.add_parser(
-        "fetch-xml", help="Scarica e archivia gli XML di stagione."
+        "fetch-xml", help="Download and archive the season XMLs."
     )
     p_fetch.add_argument(
         "--seasons", default="all", help="all | 1999 | 1999-2025 | 2010,2012"
     )
     p_fetch.set_defaults(func=cmd_fetch_xml)
 
-    p_dl = sub.add_parser("download", help="Scarica i file .igc (resumibile).")
+    p_dl = sub.add_parser("download", help="Download .igc files (resumable).")
     p_dl.add_argument(
         "--seasons", default="all", help="all | 1999 | 1999-2025 | 2010,2012"
     )
     p_dl.add_argument(
-        "--workers", type=int, default=None, help="Override del numero di worker."
+        "--workers", type=int, default=None, help="Override the number of workers."
     )
     p_dl.add_argument(
-        "--limit", type=int, default=None, help="Max file per stagione (test)."
+        "--limit", type=int, default=None, help="Max files per season (for testing)."
     )
     p_dl.add_argument(
-        "--dry-run", action="store_true", help="Non scarica: conta soltanto."
+        "--dry-run", action="store_true", help="Do not download: count only."
     )
     p_dl.set_defaults(func=cmd_download)
 
     p_cat = sub.add_parser(
-        "build-catalog", help="Rigenera catalog.csv e seasons_index.csv."
+        "build-catalog", help="Regenerate catalog.csv and seasons_index.csv."
     )
     p_cat.add_argument(
         "--seasons", default="all", help="all | 1999 | 1999-2025 | 2010,2012"
     )
     p_cat.set_defaults(func=cmd_build_catalog)
 
-    p_st = sub.add_parser("status", help="Stato del download per stagione.")
+    p_st = sub.add_parser("status", help="Download status per season.")
     p_st.add_argument(
         "--seasons", default="all", help="all | 1999 | 1999-2025 | 2010,2012"
     )
     p_st.set_defaults(func=cmd_status)
 
     p_clean = sub.add_parser(
-        "clean", help="Rimuove i file sidecar '._*' (macOS/exfat)."
+        "clean", help="Remove '._*' sidecar files (macOS/exfat)."
     )
     p_clean.set_defaults(func=cmd_clean)
 
@@ -260,13 +260,13 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Punto di ingresso della CLI ``soaring-ffvl``.
+    """Entry point for the ``soaring-ffvl`` CLI.
 
     Args:
-        argv: Argomenti (per i test); se ``None`` usa ``sys.argv``.
+        argv: Arguments (for testing); if ``None`` uses ``sys.argv``.
 
     Returns:
-        Il codice di uscita del processo.
+        The process exit code.
     """
     parser = build_parser()
     args = parser.parse_args(argv)

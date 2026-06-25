@@ -1,4 +1,4 @@
-"""Test del parsing dell'XML di stagione, su una fixture reale (stagione 1999-2000)."""
+"""Tests for season XML parsing, using a real fixture (season 1999-2000)."""
 
 from pathlib import Path
 
@@ -15,12 +15,12 @@ def records():
 
 
 def test_count(records):
-    # La stagione 1999-2000 contiene 10 voli.
+    # Season 1999-2000 contains 10 flights.
     assert len(records) == 10
 
 
 def test_all_have_igc(records):
-    # Tutti i 10 voli del 1999 hanno una traccia .igc.
+    # All 10 flights from the 1999 season have a .igc track.
     assert all(r.has_igc for r in records)
 
 
@@ -47,10 +47,10 @@ def test_types(records):
 
 def test_clean_igc_link():
     base = "https://parapente.ffvl.fr/sites/parapente.ffvl.fr/files/igcfiles/"
-    # solo cartella base (segnaposto) -> scartato
+    # base folder only (placeholder) -> discarded
     assert _clean_igc_link(base) == ""
     assert _clean_igc_link("") == ""
     assert _clean_igc_link(None) == ""
-    # vero file .igc -> mantenuto
+    # real .igc file -> kept
     real = base + "2000-00-00-igcfile-115909-53180.igc"
     assert _clean_igc_link(real) == real

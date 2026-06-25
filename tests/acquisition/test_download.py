@@ -1,4 +1,4 @@
-"""Test delle utility di download che non richiedono rete."""
+"""Tests for download utilities that require no network access."""
 
 from soaring.acquisition.ffvl.download import _atomic_write, is_valid_igc
 
@@ -20,7 +20,7 @@ def test_is_valid_igc_rejects_short():
 
 
 def test_is_valid_igc_requires_b_record():
-    # Header A presente ma nessun record B -> non valido.
+    # A header present but no B record -> invalid.
     assert not is_valid_igc(b"AFLY05116\n" + b"HFDTE000000\n" * 30)
 
 
@@ -28,5 +28,5 @@ def test_atomic_write_creates_file(tmp_path):
     target = tmp_path / "sub" / "x.igc"
     _atomic_write(target, b"hello")
     assert target.read_bytes() == b"hello"
-    # nessun file .part residuo
+    # no leftover .part file
     assert not list(tmp_path.rglob("*.part"))

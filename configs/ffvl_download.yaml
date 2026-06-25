@@ -1,27 +1,27 @@
-# Configurazione del downloader FFVL CFD.
-# Schema e default: vedi src/soaring/acquisition/ffvl/config.py
+# FFVL CFD downloader configuration.
+# Schema and defaults: see src/soaring/acquisition/ffvl/config.py
 
-# Cartella radice dei dati grezzi. DEVE stare sull'HDD esterno (i dati sono ~65 GB).
-# Sovrascrivibile al volo con la variabile d'ambiente SOARING_FFVL_DATA_ROOT.
+# Root directory for raw data. MUST be on the external HDD (data is ~65 GB).
+# Can be overridden at runtime with the SOARING_FFVL_DATA_ROOT environment variable.
 data_root: /Volumes/HDD_DISANTE/ffvl_cfd_igc
 
-# Stagioni da elaborare. L'anno e' l'anno di INIZIO stagione:
-#   1999 -> stagione 1999-2000   |   2025 -> stagione 2025-2026
+# Seasons to process. The year is the START year of the season:
+#   1999 -> season 1999-2000   |   2025 -> season 2025-2026
 seasons:
   start: 1999
   end: 2025
 
-# Sorgente dei dati (di norma non serve toccarla).
+# Data source (normally does not need to be changed).
 source:
   base_url: https://parapente.ffvl.fr
-  list_path: /cfd/liste/{year}   # pagina umana della lista; {year} = anno stagione
-  xml_query: "?xml=1"            # aggiunto alla lista -> export XML completo
+  list_path: /cfd/liste/{year}   # human-readable list page; {year} = season start year
+  xml_query: "?xml=1"            # appended to the list URL -> full XML export
 
-# Rete e cortesia verso il server FFVL.
+# Network settings and courtesy towards the FFVL server.
 http:
-  impersonate: chrome   # fingerprint TLS di curl_cffi: supera il challenge Cloudflare
-  workers: 4            # download paralleli (conservativo: non martellare il server)
-  timeout_s: 60         # timeout per richiesta
-  max_retries: 5        # tentativi per file prima di registrarlo come fallito
-  backoff_base_s: 2.0   # backoff esponenziale tra i tentativi
-  min_delay_s: 0.05     # pausa minima (con jitter) tra richieste dello stesso worker
+  impersonate: chrome   # curl_cffi TLS fingerprint: bypasses the Cloudflare challenge
+  workers: 4            # parallel downloads (conservative: do not hammer the server)
+  timeout_s: 60         # per-request timeout
+  max_retries: 5        # attempts per file before recording it as failed
+  backoff_base_s: 2.0   # exponential backoff between attempts
+  min_delay_s: 0.05     # minimum pause (with jitter) between requests from the same worker

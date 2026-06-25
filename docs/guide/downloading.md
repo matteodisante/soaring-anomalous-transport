@@ -1,67 +1,67 @@
-# Scaricare i dati
+# Downloading the data
 
-Tutto passa dalla CLI `soaring-ffvl`. La destinazione dei dati è
+Everything goes through the `soaring-ffvl` CLI. The data destination is
 `data_root` in [`configs/ffvl_download.yaml`](https://github.com/matteodisante/soaring-anomalous-transport)
-— **deve puntare all'HDD esterno** (i dati sono ~65 GB).
+— **it must point to the external HDD** (the data is ~65 GB).
 
 ```yaml
 data_root: /Volumes/HDD_DISANTE/ffvl_cfd_igc
 ```
 
-In alternativa, senza toccare il file: `export SOARING_FFVL_DATA_ROOT=/percorso/su/hdd`.
+Alternatively, without editing the file: `export SOARING_FFVL_DATA_ROOT=/path/on/hdd`.
 
-## I quattro comandi
+## The four commands
 
-Lancia i comandi con `uv run` (oppure attiva prima la venv: `source .venv/bin/activate`,
-poi usa `soaring-ffvl ...` senza prefisso).
+Run commands with `uv run` (or activate the venv first: `source .venv/bin/activate`,
+then use `soaring-ffvl ...` without the prefix).
 
 ```bash
-uv run soaring-ffvl fetch-xml --seasons all   # 1) archivia gli XML di stagione (veloce)
-uv run soaring-ffvl download  --seasons all   # 2) scarica i .igc (lungo, resumibile)
-uv run soaring-ffvl build-catalog             # 3) genera catalog.csv + seasons_index.csv
-uv run soaring-ffvl status                    # 4) riepilogo per stagione
+uv run soaring-ffvl fetch-xml --seasons all   # 1) archive the season XMLs (fast)
+uv run soaring-ffvl download  --seasons all   # 2) download .igc files (long, resumable)
+uv run soaring-ffvl build-catalog             # 3) generate catalog.csv + seasons_index.csv
+uv run soaring-ffvl status                    # 4) per-season summary
 ```
 
-L'argomento `--seasons` accetta: `all`, un anno (`2014`), un intervallo (`2010-2015`) o un
-elenco (`2010,2012,2015`).
+The `--seasons` argument accepts: `all`, a single year (`2014`), a range (`2010-2015`), or a
+list (`2010,2012,2015`).
 
-### Opzioni utili di `download`
+### Useful `download` options
 
-| Opzione | Effetto |
-|---------|---------|
-| `--workers N` | numero di download paralleli (default da config) |
-| `--limit N`   | al massimo N file per stagione (per test) |
-| `--dry-run`   | non scarica: conta soltanto cosa farebbe |
+| Option | Effect |
+|--------|--------|
+| `--workers N` | number of parallel downloads (default from config) |
+| `--limit N`   | at most N files per season (for testing) |
+| `--dry-run`   | does not download: only counts what would be done |
 
-## Robustezza
+## Robustness
 
-!!! tip "È sicuro interrompere e riprendere"
-    Il download è **resumibile**: i file già presenti vengono saltati. Puoi fermarlo
-    (`Ctrl-C`) e rilanciarlo: riparte da dove era. Le scritture sono **atomiche**
-    (file temporaneo `.part` poi rinominato), quindi un file con il nome definitivo è sempre
-    completo e valido — importante su exfat, senza journaling.
+!!! tip "Safe to interrupt and resume"
+    The download is **resumable**: already present files are skipped. You can stop it
+    (`Ctrl-C`) and relaunch it: it picks up where it left off. Writes are **atomic**
+    (temporary `.part` file, then renamed), so a file with its final name is always
+    complete and valid — important on exfat, which has no journaling.
 
-- Ogni file scaricato è **validato** come IGC (record `A` iniziale + record `B`); risposte
-  HTML/troncate vengono scartate e ritentate.
-- I tentativi falliti finiscono in `logs/failures.csv` (per un retry mirato); il log
-  completo è in `logs/download.log`.
+- Every downloaded file is **validated** as IGC (initial `A` record + `B` record); HTML or
+  truncated responses are discarded and retried.
+- Failed attempts are recorded in `logs/failures.csv` (for targeted retry); the full log
+  is in `logs/download.log`.
 
-## File `._*` su exfat (macOS)
+## `._*` files on exfat (macOS)
 
-Su HDD exfat, macOS crea un sidecar `._nome` accanto a ogni file scritto. Per evitarne
-l'accumulo, `download` e `fetch-xml` lanciano automaticamente una pulizia (`dot_clean`) al
-termine. Puoi anche pulire a mano in qualsiasi momento:
+On exfat HDDs, macOS creates a `._name` sidecar next to every file it writes. To prevent
+their accumulation, `download` and `fetch-xml` automatically run a cleanup (`dot_clean`) on
+completion. You can also clean manually at any time:
 
 ```bash
 uv run soaring-ffvl clean
 ```
 
-(Su sistemi non-macOS o senza `dot_clean` la pulizia viene semplicemente saltata.)
+(On non-macOS systems or without `dot_clean`, the cleanup is simply skipped.)
 
-## Stima dei tempi e dello spazio
+## Time and space estimates
 
-~186.000 file, ~342 KB medi → **~65 GB**. Con pochi worker, alcune ore (riprendibile, quindi
-anche overnight). Lo spazio richiesto è ben sotto la capacità di un HDD da ~1 TB.
+~186,000 files, ~342 KB average → **~65 GB**. With few workers, a few hours (resumable, so
+overnight is fine). The required space is well within the capacity of a ~1 TB HDD.
 
-I dettagli implementativi sono in `soaring.acquisition.ffvl.download`
-(vedi [Reference API](../reference.md)).
+Implementation details are in `soaring.acquisition.ffvl.download`
+(see [API Reference](../reference.md)).

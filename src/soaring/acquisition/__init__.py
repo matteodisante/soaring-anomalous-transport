@@ -1,6 +1,6 @@
-"""Acquisizione dei dati grezzi della tesi.
+"""Raw data acquisition for the thesis.
 
-Ogni fonte di dati e' un proprio sotto-pacchetto. Oggi e' presente
-:mod:`soaring.acquisition.ffvl` (Coupe Federale de Distance della FFVL); altre fonti
-(es. XContest) potranno affiancarsi qui.
+Each data source has its own sub-package. Currently :mod:`soaring.acquisition.ffvl`
+(Coupe Fédérale de Distance of the FFVL) is present; other sources (e.g. XContest)
+may be added alongside it.
 """

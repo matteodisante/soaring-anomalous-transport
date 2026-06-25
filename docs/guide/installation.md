@@ -1,22 +1,22 @@
-# Installazione
+# Installation
 
-Il progetto usa [uv](https://docs.astral.sh/uv/) per ambiente e dipendenze (riproducibili
-tramite `uv.lock`). In assenza di uv si può usare `venv` + `pip`.
+The project uses [uv](https://docs.astral.sh/uv/) for environment and dependency management
+(reproducible via `uv.lock`). Without uv, `venv` + `pip` can be used instead.
 
-## Con uv (consigliato)
+## With uv (recommended)
 
 ```bash
 cd soaring-anomalous-transport
-uv sync --all-extras        # crea .venv, installa il pacchetto + extra [dev] e [docs]
+uv sync --all-extras        # creates .venv, installs the package + [dev] and [docs] extras
 ```
 
-I comandi si lanciano con `uv run …` (oppure attivando `.venv`):
+Commands are run with `uv run …` (or by activating `.venv`):
 
 ```bash
 uv run soaring-ffvl --help
 ```
 
-## Con venv + pip
+## With venv + pip
 
 ```bash
 python3 -m venv .venv
@@ -24,18 +24,18 @@ source .venv/bin/activate
 pip install -e ".[dev,docs]"
 ```
 
-## Gruppi di dipendenze
+## Dependency groups
 
-| Gruppo | A cosa serve |
-|--------|--------------|
-| _core_ | `curl_cffi`, `pyyaml`, `pandas`, `tqdm` — l'acquisizione dati |
-| `dev`  | `pytest`, `ruff`, `mypy`, `interrogate` — sviluppo e qualità |
-| `docs` | `mkdocs-material`, `mkdocstrings`, … — questa documentazione |
+| Group  | Purpose |
+|--------|---------|
+| _core_ | `curl_cffi`, `pyyaml`, `pandas`, `tqdm` — data acquisition |
+| `dev`  | `pytest`, `ruff`, `mypy`, `interrogate` — development and quality |
+| `docs` | `mkdocs-material`, `mkdocstrings`, … — this documentation |
 
-## Verifica rapida
+## Quick check
 
 ```bash
 uv run ruff check .
 uv run pytest
-uv run mkdocs serve     # documentazione su http://127.0.0.1:8000
+uv run mkdocs serve     # documentation at http://127.0.0.1:8000
 ```
