@@ -28,6 +28,10 @@ on the next build. To add a new module, a single `:::` line here is enough.
 
 ::: soaring.acquisition.ffvl.download
 
+## `verify`
+
+::: soaring.acquisition.ffvl.verify
+
 ## `catalog`
 
 ::: soaring.acquisition.ffvl.catalog

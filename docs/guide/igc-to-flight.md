@@ -33,7 +33,10 @@ the `local_path` column that links the flight to the physical file on disk.
 
 ```python
 import pandas as pd
-cat = pd.read_csv("/Volumes/HDD_DISANTE/ffvl_cfd_igc/catalog.csv")
+from soaring.acquisition.ffvl.config import load_config
+
+cfg = load_config()  # resolves data_root from SOARING_FFVL_DATA_ROOT or the YAML
+cat = pd.read_csv(cfg.catalog_path)
 
 # from flight_id to the full row
 row = cat.loc[cat.flight_id == 20150770].iloc[0]

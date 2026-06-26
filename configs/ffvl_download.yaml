@@ -1,9 +1,12 @@
 # FFVL CFD downloader configuration.
 # Schema and defaults: see src/soaring/acquisition/ffvl/config.py
 
-# Root directory for raw data. MUST be on the external HDD (data is ~65 GB).
-# Can be overridden at runtime with the SOARING_FFVL_DATA_ROOT environment variable.
-data_root: /Volumes/HDD_DISANTE/ffvl_cfd_igc
+# Root directory for raw data (~65 GB) — keep it on the external disk.
+# The value below is only a PLACEHOLDER. The recommended, machine-independent way to set
+# it (so no path tied to your disk ends up committed) is the environment variable:
+#     export SOARING_FFVL_DATA_ROOT=/Volumes/<YOUR_DISK>/ffvl_cfd_igc
+# which always overrides this line. Otherwise, edit the placeholder below.
+data_root: /Volumes/<YOUR_DISK>/ffvl_cfd_igc
 
 # Seasons to process. The year is the START year of the season:
 #   1999 -> season 1999-2000   |   2025 -> season 2025-2026

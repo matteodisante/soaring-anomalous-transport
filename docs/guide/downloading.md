@@ -1,14 +1,18 @@
 # Downloading the data
 
-Everything goes through the `soaring-ffvl` CLI. The data destination is
-`data_root` in [`configs/ffvl_download.yaml`](https://github.com/matteodisante/soaring-anomalous-transport)
-— **it must point to the external HDD** (the data is ~65 GB).
+Everything goes through the `soaring-ffvl` CLI. The data destination is `data_root`,
+which **must point to the external disk** (the data is ~65 GB).
 
-```yaml
-data_root: /Volumes/HDD_DISANTE/ffvl_cfd_igc
+The recommended way to set it — without committing a path tied to your machine — is the
+environment variable (it always overrides the config file):
+
+```bash
+export SOARING_FFVL_DATA_ROOT=/Volumes/<YOUR_DISK>/ffvl_cfd_igc
 ```
 
-Alternatively, without editing the file: `export SOARING_FFVL_DATA_ROOT=/path/on/hdd`.
+Alternatively, edit `data_root` in
+[`configs/ffvl_download.yaml`](https://github.com/matteodisante/soaring-anomalous-transport)
+(it ships with a placeholder value).
 
 ## The four commands
 

@@ -5,7 +5,8 @@ Subcommands:
 * ``fetch-xml``     -- downloads and archives the season XML exports;
 * ``download``      -- downloads `.igc` files (resumable);
 * ``build-catalog`` -- regenerates ``catalog.csv`` and ``seasons_index.csv``;
-* ``status``        -- per-season summary: declared / with-igc / downloaded.
+* ``status``        -- per-season summary: declared / with-igc / downloaded;
+* ``verify``        -- integrity check of the `.igc` files already on disk.
 
 Examples::
 
@@ -14,6 +15,7 @@ Examples::
     soaring-ffvl download --seasons 2024 --limit 50 --workers 6
     soaring-ffvl build-catalog
     soaring-ffvl status
+    soaring-ffvl verify
 """
 
 from __future__ import annotations
@@ -21,6 +23,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+from collections import Counter
 
 import pandas as pd
 
@@ -32,6 +35,7 @@ from .housekeeping import clean_appledouble
 from .http import Fetcher
 from .naming import igc_path
 from .seasons import parse_seasons_arg, season_label
+from .verify import verify_seasons
 
 logger = logging.getLogger("soaring.ffvl")
 
@@ -105,17 +109,13 @@ def cmd_download(cfg: Config, args: argparse.Namespace) -> int:
     if failures and not args.dry_run:
         cfg.failures_path.parent.mkdir(parents=True, exist_ok=True)
         pd.DataFrame([vars(f) for f in failures]).to_csv(cfg.failures_path, index=False)
-        logger.warning(
-            "%d failures recorded in %s", len(failures), cfg.failures_path
-        )
+        logger.warning("%d failures recorded in %s", len(failures), cfg.failures_path)
 
     tot_dl = sum(r.n_downloaded for r in results)
     tot_skip = sum(r.n_skipped for r in results)
     tot_fail = sum(r.n_failed for r in results)
     verb = "to download" if args.dry_run else "downloaded"
-    logger.info(
-        "TOTAL: %d %s, %d skipped, %d failed", tot_dl, verb, tot_skip, tot_fail
-    )
+    logger.info("TOTAL: %d %s, %d skipped, %d failed", tot_dl, verb, tot_skip, tot_fail)
     if not args.dry_run:
         clean_appledouble(cfg.data_root)
         logger.info("Hint: now run 'soaring-ffvl build-catalog'.")
@@ -199,6 +199,57 @@ def cmd_status(cfg: Config, args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_verify(cfg: Config, args: argparse.Namespace) -> int:
+    """Checks the integrity of the `.igc` files already on disk.
+
+    Prints a per-season summary and, if any problem is found, writes the details to
+    ``logs/verify_problems.csv``. Exits non-zero only on genuine integrity failures
+    (truncated/invalid files, ``*.part`` leftovers, read errors); macOS sidecars and
+    stray files are reported but do not fail the run.
+
+    Args:
+        cfg: Configuration.
+        args: Subcommand arguments.
+
+    Returns:
+        Process exit code (1 if integrity failures were found, else 0).
+    """
+    years = _resolve_seasons(cfg, args.seasons)
+    results = verify_seasons(years, cfg, workers=args.workers)
+
+    header = f"{'season':<12}{'igc':>9}{'problems':>10}{'failures':>10}"
+    print(header)
+    print("-" * len(header))
+    tot_igc = tot_prob = tot_fail = 0
+    for r in results:
+        tot_igc += r.n_igc
+        tot_prob += len(r.problems)
+        tot_fail += r.n_failures
+        flag = "" if r.ok else "  <-- CHECK"
+        print(
+            f"{r.season:<12}{r.n_igc:>9}{len(r.problems):>10}{r.n_failures:>10}{flag}"
+        )
+    print("-" * len(header))
+    print(f"{'TOTAL':<12}{tot_igc:>9}{tot_prob:>10}{tot_fail:>10}")
+
+    problems = [
+        {"season": r.season, "category": p.category, "path": p.path, "detail": p.detail}
+        for r in results
+        for p in r.problems
+    ]
+    if problems:
+        cfg.logs_dir.mkdir(parents=True, exist_ok=True)
+        out = cfg.logs_dir / "verify_problems.csv"
+        pd.DataFrame(problems).to_csv(out, index=False)
+        counts = Counter(p["category"] for p in problems)
+        for category, n in counts.most_common():
+            logger.warning("  %s: %d", category, n)
+        logger.warning("%d problems written to %s", len(problems), out)
+    else:
+        logger.info("All %d .igc files passed validation.", tot_igc)
+    return 1 if tot_fail else 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Builds the CLI argument parser.
 
@@ -214,9 +265,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    p_fetch = sub.add_parser(
-        "fetch-xml", help="Download and archive the season XMLs."
-    )
+    p_fetch = sub.add_parser("fetch-xml", help="Download and archive the season XMLs.")
     p_fetch.add_argument(
         "--seasons", default="all", help="all | 1999 | 1999-2025 | 2010,2012"
     )
@@ -251,9 +300,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_st.set_defaults(func=cmd_status)
 
-    p_clean = sub.add_parser(
-        "clean", help="Remove '._*' sidecar files (macOS/exfat)."
+    p_vfy = sub.add_parser("verify", help="Integrity check of the .igc files on disk.")
+    p_vfy.add_argument(
+        "--seasons", default="all", help="all | 1999 | 1999-2025 | 2010,2012"
     )
+    p_vfy.add_argument(
+        "--workers", type=int, default=None, help="Override the number of workers."
+    )
+    p_vfy.set_defaults(func=cmd_verify)
+
+    p_clean = sub.add_parser("clean", help="Remove '._*' sidecar files (macOS/exfat).")
     p_clean.set_defaults(func=cmd_clean)
 
     return parser
