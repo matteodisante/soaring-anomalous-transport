@@ -5,23 +5,42 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Least-privilege token, plus what the official Pages deploy needs.
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; cancel a superseded run.
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # mkdocs git-revision-date plugin needs full history
 
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
 
-      - name: Install deps
-        run: uv sync --extra docs
+      - name: Build site
+        run: |
+          uv sync --extra docs
+          uv run mkdocs build --strict
 
-      - name: Deploy to GitHub Pages
-        run: uv run mkdocs gh-deploy --force
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
