@@ -13,11 +13,13 @@ sub-packages of `soaring`.
 
 ```bash
 uv sync --all-extras                          # environment + dependencies
-# set data_root (external HDD) in configs/ffvl_download.yaml
+# REQUIRED: point data_root to your mounted external disk (the config ships a placeholder)
+export SOARING_FFVL_DATA_ROOT=/Volumes/<YOUR_DISK>/ffvl_cfd_igc
 uv run soaring-ffvl fetch-xml --seasons 1999  # archive the XMLs
 uv run soaring-ffvl download  --seasons 1999  # download the .igc files (resumable)
 uv run soaring-ffvl build-catalog             # catalog.csv + seasons_index.csv
 uv run soaring-ffvl status                    # per-season summary
+uv run soaring-ffvl verify                    # integrity check of the .igc files
 ```
 
 `--seasons` accepts `all`, a single year (`2014`), a range (`2010-2015`), or a list (`2010,2012`).

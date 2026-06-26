@@ -1,18 +1,38 @@
 # Downloading the data
 
-Everything goes through the `soaring-ffvl` CLI. The data destination is `data_root`,
-which **must point to the external disk** (the data is ~65 GB).
+Everything goes through the `soaring-ffvl` CLI.
 
-The recommended way to set it — without committing a path tied to your machine — is the
-environment variable (it always overrides the config file):
+## First: set `data_root` (required)
+
+`data_root` is where the raw data is written, and it **must point to the external disk**
+(the data is ~65 GB). The repository ships a **placeholder** value on purpose (so no path
+tied to a specific machine is committed), so you must set it before running anything.
+
+The recommended way is the environment variable — it always overrides the config file and
+keeps your machine-specific path out of the repo:
 
 ```bash
 export SOARING_FFVL_DATA_ROOT=/Volumes/<YOUR_DISK>/ffvl_cfd_igc
 ```
 
 Alternatively, edit `data_root` in
-[`configs/ffvl_download.yaml`](https://github.com/matteodisante/soaring-anomalous-transport)
-(it ships with a placeholder value).
+[`configs/ffvl_download.yaml`](https://github.com/matteodisante/soaring-anomalous-transport).
+Either way, make sure the **external disk is mounted** first.
+
+!!! warning "If `data_root` is not set, the CLI stops immediately with a clear message"
+    Every command checks `data_root` at startup. If it still points to the placeholder,
+    to an **unmounted** disk, or to a disk that was **renamed**, the command aborts right
+    away with an explanation and the fix — *before* any download or write:
+
+    ```text
+    ERROR: data_root is not usable: /Volumes/<YOUR_DISK>/ffvl_cfd_igc
+    Its parent directory does not exist. Likely causes: the external disk is not
+    mounted, was renamed, or data_root is still the placeholder.
+    ...
+    ```
+
+    This is safe by design: the macOS mount point `/Volumes` is not user-writable, so a
+    wrong path can never cause a silent download to the wrong place — it fails fast.
 
 ## The four commands
 

@@ -60,6 +60,34 @@ def _resolve_seasons(cfg: Config, seasons_arg: str) -> list[int]:
     return parse_seasons_arg(seasons_arg, cfg.season_start, cfg.season_end)
 
 
+def _check_data_root(cfg: Config) -> None:
+    """Aborts early with a clear message if ``data_root`` is not usable.
+
+    The committed config ships a placeholder and the real data lives on an external
+    disk, so a fresh checkout (or an unmounted/renamed disk) would otherwise crash with
+    a cryptic ``PermissionError`` while creating directories under a non-existent path.
+    We require the *parent* of ``data_root`` to exist (the mounted disk): this also
+    catches the unconfigured placeholder, and we explain how to fix it. ``data_root``
+    itself may legitimately not exist yet on a first run.
+
+    Args:
+        cfg: Configuration.
+
+    Raises:
+        SystemExit: If the parent directory of ``data_root`` does not exist.
+    """
+    if not cfg.data_root.parent.is_dir():
+        raise SystemExit(
+            f"\nERROR: data_root is not usable: {cfg.data_root}\n"
+            "Its parent directory does not exist. Likely causes: the external disk is "
+            "not mounted, was renamed, or data_root is still the placeholder.\n\n"
+            "Set it (the environment variable always overrides the config file):\n"
+            "    export SOARING_FFVL_DATA_ROOT=/Volumes/<your-disk>/ffvl_cfd_igc\n"
+            "or edit 'data_root' in configs/ffvl_download.yaml, then make sure the "
+            "disk is mounted.\n"
+        )
+
+
 def cmd_fetch_xml(cfg: Config, args: argparse.Namespace) -> int:
     """Downloads and archives the season XMLs.
 
@@ -327,6 +355,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     cfg = load_config(args.config)
+    _check_data_root(cfg)
     _setup_logging(cfg)
     logger.info("data_root = %s", cfg.data_root)
     return int(args.func(cfg, args))
