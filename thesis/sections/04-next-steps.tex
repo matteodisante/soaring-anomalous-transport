@@ -4,54 +4,152 @@
 With the dataset in place and verified, the work proceeds as follows.
 
 \section{Trajectory pre-processing}
-Parse the IGC \texttt{B} records into clean trajectories of (time, latitude, longitude,
-altitude); project the geographic coordinates to a local metric frame; resample to a common
-cadence to absorb device heterogeneity; and apply quality filters (drop fixes with bad
-validity flags, implausible speeds, or large gaps). The output is a tidy, analysis-ready
-representation, produced by a future \texttt{soaring.analysis} sub-package. Throughout,
-$r(t)$ denotes the horizontal position and $v(t)=\dot r(t)$ the horizontal velocity.
+Each IGC file is parsed into a sequence of fixes $(t_i,\varphi_i,\lambda_i,h_i)$ -- time,
+geodetic latitude and longitude, and altitude. The format records \emph{two} altitudes per
+fix, a barometric (pressure) altitude and a GNSS (GPS) altitude; they differ in both
+reference and noise (the barometric value is smooth but tied to a pressure setting, the GPS
+value is absolute but vertically noisier). Which one to use -- or whether to combine them --
+matters for the vertical velocity that drives the segmentation; this choice is left open for
+now and will be made at the analysis stage rather than fixed by default. The fixes are then resampled to a common cadence to absorb device
+heterogeneity, and quality-filtered (fixes with a bad validity flag, implausible speeds, or
+large time gaps are dropped). The output is a tidy, analysis-ready representation produced
+by a future \texttt{soaring.analysis} sub-package.
+
+\paragraph{From geographic to local Cartesian coordinates.}
+Latitudes and longitudes are angles on a curved surface and cannot be differenced directly
+to obtain distances; they are mapped to a local Cartesian frame in two steps, following the
+convention of Vilpellet et al. First, each fix is converted to Earth-Centred,
+Earth-Fixed (ECEF) coordinates on the WGS84 ellipsoid (semi-major axis
+$a=\SI{6378137}{\metre}$, flattening $f=1/298.257223563$, $e^2=f(2-f)$),
+\begin{equation}
+N(\varphi)=\frac{a}{\sqrt{1-e^2\sin^2\varphi}},\qquad
+\begin{aligned}
+X &= (N+h)\cos\varphi\cos\lambda,\\
+Y &= (N+h)\cos\varphi\sin\lambda,\\
+Z &= \big(N(1-e^2)+h\big)\sin\varphi,
+\end{aligned}
+\end{equation}
+where $N(\varphi)$ is the prime-vertical radius of curvature. Second, taking the first fix
+$(\varphi_0,\lambda_0,h_0)$ of the flight as the origin, the ECEF displacement
+$\Delta\mathbf{X}=\mathbf{X}-\mathbf{X}_0$ is rotated into the local East--North--Up (ENU)
+frame tangent to the ellipsoid at that point,
+\begin{equation}
+\begin{pmatrix}E\\N\\U\end{pmatrix}=
+\begin{pmatrix}
+-\sin\lambda_0 & \cos\lambda_0 & 0\\
+-\sin\varphi_0\cos\lambda_0 & -\sin\varphi_0\sin\lambda_0 & \cos\varphi_0\\
+\cos\varphi_0\cos\lambda_0 & \cos\varphi_0\sin\lambda_0 & \sin\varphi_0
+\end{pmatrix}
+\Delta\mathbf{X}.
+\end{equation}
+The ENU frame \emph{is} the local Cartesian frame: its horizontal plane $(E,N)$ is the
+``north--east'' plane and $U$ is the local vertical, so there are not two distinct
+coordinate systems but one, reached through the intermediate (global) ECEF representation.
+Over the spatial extent of a single flight (tens of kilometres) the tangent-plane
+approximation is accurate to well below the GPS noise.
+% TODO: add a schematic figure (curved Earth + tangent ENU plane at the take-off point).
+
+\paragraph{Notation.}
+Throughout, $\mathbf{r}(t)=\big(x(t),y(t)\big)=\big(E(t),N(t)\big)$ denotes the
+\emph{horizontal} position in this local frame and $z(t)=U(t)$ the altitude. By
+construction each trajectory starts at the origin, $\mathbf{r}(0)=\mathbf{0}$, with the
+clock reset to $t=0$ at take-off, so $t$ is the elapsed flight time. The horizontal
+velocity is $\mathbf{v}(t)=\dot{\mathbf{r}}(t)$ and the horizontal displacement over a lag
+$t$ is $\Delta\mathbf{r}(t)=\mathbf{r}(t_0+t)-\mathbf{r}(t_0)$.
 
 \section{Observables on the whole trajectory}
 \label{sec:obs-global}
 A first group of observables requires \emph{no} segmentation: it can be measured directly on
 the full trajectories and already probes the transport at the global level. For each, we
-state what it is and what it is for.
+state what it is, how it is computed, and what it is for.
 
 \paragraph{Transport and diffusion.}
 \begin{description}
-  \item[Mean-squared displacement (MSD).] The average squared horizontal displacement over a
-        time lag $t$, $\mathrm{MSD}(t)=\big\langle\,|r(t_0+t)-r(t_0)|^2\big\rangle$, averaged
-        over start times $t_0$ and over flights. Its growth law $\mathrm{MSD}(t)\sim
-        t^{\alpha}$ defines the transport regime ($\alpha=1$ Brownian, $\alpha>1$
-        super-diffusive, $\alpha<1$ sub-diffusive; equivalently the Hurst exponent
+  \item[Mean-squared displacement (MSD).] With every flight starting at the origin
+        ($\mathbf{r}(0)=\mathbf{0}$), the \emph{ensemble-averaged} MSD is the mean squared
+        horizontal distance reached after an elapsed time $t$,
+        \begin{equation}
+          \mathrm{MSD}(t)=\big\langle\,|\mathbf{r}(t)|^2\big\rangle,
+        \end{equation}
+        where $\langle\cdot\rangle$ is an average \emph{over flights} (an ensemble average) at
+        fixed $t$ -- no average over a moving time origin is involved here. Its growth law
+        $\mathrm{MSD}(t)\sim t^{\alpha}$ fixes the transport regime ($\alpha=1$ Brownian,
+        $\alpha>1$ super-diffusive, $\alpha<1$ sub-diffusive; equivalently the Hurst exponent
         $H=\alpha/2$). This is the primary test for anomalous transport.
-  \item[Time- versus ensemble-averaged MSD.] The MSD computed as a time average along a
-        single flight, compared with the average across flights. A systematic gap between the
-        two -- with the time average depending on the observation window -- signals
-        \emph{ergodicity breaking} and aging, hallmarks of trapping (CTRW-type) dynamics, and
-        thus helps discriminate between candidate models.
-  \item[Displacement distribution $P(\Delta r,t)$.] The probability distribution of the
-        horizontal displacement $\Delta r=r(t_0+t)-r(t_0)$ at a fixed lag $t$ (the propagator
-        of the walk). Its shape separates ordinary diffusion (Gaussian) from anomalous
-        transport (heavy, power-law or stretched tails), and the way it rescales with $t$
-        exposes the self-similar, anomalous scaling form.
-  \item[Non-Gaussianity.] The departure of $P(\Delta r,t)$ from a Gaussian, summarized by the
-        excess kurtosis (or the non-Gaussian parameter). A compact scalar that tracks how and
-        when the displacement statistics become intermittent and heavy-tailed across scales.
-  \item[Velocity autocorrelation $C(\tau)$.] $C(\tau)=\langle v(t_0)\cdot v(t_0+\tau)\rangle$,
-        the correlation of the velocity with itself after a delay $\tau$. It measures
-        directional persistence and its memory: the decay time sets the ballistic-to-diffusive
-        crossover, while a slow or sign-changing tail reveals persistence or anti-persistence.
+  \item[Time- versus ensemble-averaged MSD.] The \emph{time-averaged} MSD is instead built
+        \emph{within} a single flight of duration $T$, by sliding the origin $t_0$ along the
+        track,
+        \begin{equation}
+          \overline{\delta^2}(t;T)=\frac{1}{T-t}\int_0^{T-t}
+          \big|\mathbf{r}(t_0+t)-\mathbf{r}(t_0)\big|^2\,\mathrm{d}t_0 .
+        \end{equation}
+        This is where the average over $t_0$ enters. A single flight is too short and noisy to
+        trust on its own -- hence the question is well posed only at the ensemble level: we
+        average the per-flight curves $\overline{\delta^2}(t;T)$ over many flights to obtain a
+        robust mean time-averaged MSD, and compare it with $\mathrm{MSD}(t)$. For an ergodic
+        process the two coincide at long $T$; a persistent gap, with $\overline{\delta^2}$
+        depending on $T$, signals \emph{ergodicity breaking} and aging -- hallmarks of
+        trapping (CTRW-type) dynamics -- and thus discriminates between candidate models.
+  \item[Propagator $P(\Delta\mathbf{r},t)$.] The probability distribution of the horizontal
+        displacement vector $\Delta\mathbf{r}(t)=\mathbf{r}(t_0+t)-\mathbf{r}(t_0)$ at a fixed
+        lag $t$ -- the propagator of the walk. Because each flight starts at the origin, the
+        displacement from take-off coincides with the position, so the displacement and the
+        position distributions are the same object; the genuine choice is \emph{which}
+        projection to study. We will look at the one-dimensional marginal $P(\Delta x,t)$ of a
+        Cartesian component (cleanest for a scaling collapse) and at the radial distribution
+        $P(\rho,t)$ of $\rho=|\Delta\mathbf{r}|$. A self-similar, anomalous process obeys the
+        collapse $P(\Delta x,t)=t^{-H}\,F(\Delta x\,/\,t^{H})$; the shape of the scaling
+        function $F$ separates ordinary diffusion (Gaussian) from anomalous transport (heavy,
+        power-law or stretched tails).
+  \item[Probability of return to the origin.] The value of the propagator at its centre,
+        $P_0(t)\equiv P(\Delta\mathbf{r}=\mathbf{0},t)$, i.e.\ the height of the peak. For a
+        self-similar process it decays as a power law set by the same exponent,
+        $P_0(t)\sim t^{-dH}$ in $d$ dimensions ($t^{-2H}$ in the plane, $t^{-H}$ for a single
+        component). It therefore yields $H$ from the \emph{bulk} of the distribution rather
+        than from its tails, which is valuable when heavy tails make the variance -- and hence
+        the MSD -- ill-defined; a change of slope in $\log P_0$ versus $\log t$ exposes a
+        crossover between regimes, and a peak exponent that disagrees with the MSD exponent is
+        itself informative, pointing to multi-scaling. (This is the route Mantegna and Stanley
+        used to read off the index of L\'evy-like walks.)
+  \item[Non-Gaussianity.] How far the propagator departs from a Gaussian, measured by the
+        non-Gaussian parameter, in the plane
+        \begin{equation}
+          \alpha_2(t)=\frac{\big\langle|\Delta\mathbf{r}(t)|^4\big\rangle}
+          {2\,\big\langle|\Delta\mathbf{r}(t)|^2\big\rangle^{2}}-1 ,
+        \end{equation}
+        which vanishes for a Gaussian and is positive for heavier-than-Gaussian tails. It is
+        evaluated on $P(\Delta\mathbf{r},t)$ \emph{at each lag} $t$: it is therefore a function
+        of $t$, one number per lag, tracing a curve $\alpha_2(t)$ that pinpoints the time
+        scales over which the displacement statistics are non-Gaussian (typically large at the
+        intermediate lags where occasional long glides dominate, and decaying if a
+        central-limit-type Gaussianisation sets in at long lags). It is a compact summary of
+        the shape of $P$, not a substitute for it.
+  \item[Velocity autocorrelation $C(\tau)$.]
+        $C(\tau)=\langle\mathbf{v}(t_0)\cdot\mathbf{v}(t_0+\tau)\rangle$ (often normalised by
+        $C(0)$) is the dot product of the velocity with its later self: it is large and
+        positive when, a delay $\tau$ later, the motion still points the same way, so the
+        scale over which $C(\tau)$ decays \emph{is} the memory time of the heading. It controls
+        the MSD through the Green--Kubo relation
+        $\mathrm{MSD}(t)=2\!\int_0^{t}\!(t-\tau)\,C(\tau)\,\mathrm{d}\tau$: a slowly decaying
+        $C$ produces a faster-growing MSD. We do not presume the motion ends in ordinary
+        diffusion; rather, the functional form of $C(\tau)$ is the diagnostic -- an integrable
+        $C$ relaxes to normal diffusion, a non-integrable (e.g.\ power-law) tail sustains
+        persistent super-diffusion with no crossover, and a sign change reveals the
+        anti-persistence expected from circling.
   \item[Turning-angle distribution.] The distribution of the angle $\theta$ between two
-        successive horizontal displacement vectors along the trajectory -- i.e.\ the change of
+        successive horizontal displacement vectors along the trajectory -- the change of
         heading from one step to the next. A distribution peaked at $\theta=0$ means strong
         forward persistence (a correlated random walk); a flat distribution means memoryless
         reorientation. This is the microscopic origin of the persistence seen in $C(\tau)$ and
         the MSD.
-  \item[First-passage and first-exit times.] The time to first reach a given distance from the
-        start, or to first leave a region of given size, as a function of that length scale. A
-        scale-resolved probe of transport, often more sensitive than the MSD to heavy tails and
-        to crossovers between regimes.
+  \item[First-passage and first-exit times.] The first-passage time $T(L)$ is the first time
+        the horizontal distance from take-off reaches a value $L$ (the first-exit time, the
+        first time the trajectory leaves a disc of radius $L$). For a self-similar transport
+        process the characteristic time scales with the length as
+        $\langle T(L)\rangle\sim L^{1/H}$, with dynamic exponent $z=1/H$, so the slope of
+        $\log\langle T\rangle$ against $\log L$ gives an estimate of $H$ obtained in the space
+        domain, independent of the MSD; the full distribution of $T(L)$ additionally exposes
+        heavy tails coming from long trapping events.
   \item[Speed and vertical-velocity distributions.] The magnitude of the horizontal velocity
         and the vertical velocity. Basic kinematic characterization; the vertical velocity also
         separates climbing from sinking and feeds the segmentation below.
@@ -61,20 +159,38 @@ state what it is and what it is for.
 \begin{description}
   \item[Tortuosity.] How much a path winds, quantified by the ratio between the length actually
         travelled and the straight-line distance between its endpoints over the same interval
-        ($1$ for a straight line, larger for a more convoluted path). It measures how far a
-        flight departs from straight cruising and, as a single number, summarizes flight
-        efficiency and the relative weight of winding versus directed motion.
-  \item[Fractal dimension.] The exponent describing how the apparent length of the trajectory
-        grows as it is measured at finer resolution (estimated e.g.\ by box counting), ranging
-        from $1$ for a smooth straight line to $2$ for a plane-filling, highly convoluted path.
-        It captures the multi-scale convolutedness of the path in one index and is the
-        geometric counterpart of the anomalous scaling seen in the MSD: directed cruising and
-        area-restricted search occupy opposite ends of this scale.
+        ($1$ for a straight line, larger for a more convoluted path). It is a geometric
+        \emph{efficiency} descriptor and does not map one-to-one onto a transport exponent --
+        very different dynamics can share a tortuosity -- so we use it descriptively and to
+        separate phases (close to $1$ in glides, large in search and climb) rather than as an
+        estimator of $H$.
+  \item[Fractal dimension.] The box-counting dimension $d_f$ of the trail, i.e.\ the exponent
+        with which the number of boxes of size $\epsilon$ needed to cover the path grows as
+        $\epsilon\!\to\!0$. For a self-similar walk it is tied to the transport exponent by
+        \begin{equation}
+          d_f=\min\!\big(1/H,\,2\big),
+        \end{equation}
+        so a ballistic line ($H=1$) gives $d_f=1$, a Brownian path ($H=1/2$) gives $d_f=2$,
+        and the reported sub-ballistic soaring ($H\approx0.88$) gives $d_f\approx1.14$. The
+        fractal dimension is thus the geometric counterpart of $H$ and a third, independent
+        route to it, after the MSD slope and the return/first-passage scalings; agreement
+        among the three is a strong internal check, disagreement is evidence of multi-scaling.
   \item[Radius of gyration.] The root-mean-square distance of the trajectory points from their
-        centroid, i.e.\ the characteristic spatial extent of a flight. It sets the natural
-        length scale of each flight and is used to normalize other observables so that flights
-        of very different size can be compared on equal footing.
+        centroid, i.e.\ the characteristic spatial extent of a flight. As a single number it
+        sets the natural length scale of a flight (useful to normalise other observables);
+        measured as it grows with elapsed time, $R_g(t)\sim t^{H}$, it offers yet another
+        reading of the same exponent.
 \end{description}
+
+\paragraph{One number per flight, or a function of scale?}
+The geometric quantities above can be read in two complementary ways. As a \emph{single
+number per flight} -- one tortuosity, one $d_f$, one $R_g$ -- whose distribution over the
+ensemble characterises the population and feeds the stratified comparisons. Or as a
+\emph{function of scale or elapsed time} -- $R_g(t)$ as the trajectory unfolds, tortuosity
+measured on sub-segments of growing duration $t$, the box count as a function of box size --
+which is precisely where the transport exponents live ($R_g(t)\sim t^H$; the box-count slope
+is $d_f$). The scalar is descriptive; the scale dependence is what links geometry back to the
+anomalous exponent, and both views will be used.
 
 \section{Segmentation into flight phases}
 Building on the previous work of Vilpellet et al.~\cite{vilpellet2026}, each flight is
@@ -108,17 +224,33 @@ then as ensemble distributions. These are the building blocks of an intermittent
 description and, unlike those of Section~\ref{sec:obs-global}, cannot be obtained without
 first segmenting the flight.
 \begin{description}
-  \item[Climb.] Duration $\tau_c$ (the \emph{waiting time} of a trapping picture), altitude
-        gained $\Delta z$, mean climb rate, and circling radius and period (the size and
-        duration of one thermalling turn). The tail of the waiting-time distribution
-        $\psi(\tau_c)$ controls whether trapping drives sub-diffusion.
-  \item[Glide (transition).] Horizontal step length $\ell$ (the \emph{jump} of the walk),
-        duration $\tau_g$, ground speed, glide ratio (horizontal distance per unit altitude
-        lost) and sink rate. The tail of the step-length distribution $\lambda(\ell)$ controls
-        super-diffusive contributions.
-  \item[Search.] Duration $\tau_s$, path length and tortuosity within the search, and the net
-        displacement achieved. This quantifies the cost and efficiency of finding the next
-        thermal -- the phase in which prior work locates the signature of pilot skill.
+  \item[The waiting phase: climb and search.] Between two consecutive glides the flier
+        advances little horizontally: it searches for a thermal and climbs in it. For a
+        transport model these two phases together form the \emph{waiting time} between
+        directed steps, so we treat them on an equal footing and build three distributions --
+        the climb duration $\tau_c$, the search duration $\tau_s$, and their sum
+        $\tau_w=\tau_s+\tau_c$, the total time spent essentially stationary between glides.
+        The distinction is not cosmetic: Vilpellet et al.~\cite{vilpellet2026} report the
+        search times to be broadly \emph{power-law} distributed while the climb times are
+        closer to \emph{exponential}, so that the heavy tail of the combined waiting time
+        $\psi(\tau_w)$ -- the quantity that actually decides whether trapping drives
+        sub-diffusion -- would be inherited from the search phase. Whether this still holds on
+        the larger dataset is itself one of the things to re-check once the segmentation is in
+        place. We therefore report $\psi(\tau_w)$ together with the separate $\psi(\tau_c)$ and
+        $\psi(\tau_s)$. Alongside the durations we record the climb kinematics (altitude gained
+        $\Delta z$, mean climb rate, thermalling radius and period) and the search geometry
+        (path length, tortuosity, net displacement) -- the search being the phase in which
+        prior work locates the signature of pilot skill.
+  \item[The directed step: glide (transition).] Each glide contributes a horizontal step of
+        length $\ell$ and duration $\tau_g$, with ground speed, glide ratio (horizontal
+        distance per unit altitude lost) and sink rate. Because a glide is close to ballistic,
+        $\ell\approx v_g\,\tau_g$, step length and duration are expected to be nearly
+        proportional; we test this directly through the joint law of $(\ell,\tau_g)$ -- the
+        $\ell$--$\tau_g$ scatter, the conditional mean $\langle\ell\mid\tau_g\rangle$, and the
+        spread of the ratio $\ell/\tau_g$ (the glide speed). Both marginals matter: the tail of
+        the step-length distribution $\lambda(\ell)$ controls super-diffusive contributions, so
+        we compute the distributions of $\ell$ and $\tau_g$ separately as well as their joint
+        law.
   \item[Anatomy of a flight.] Number of thermals (climbs) per flight, inter-thermal distances,
         and the fraction of both time and along-track distance spent in each phase: the coarse
         composition that sets the weight of each phase in the global transport.
@@ -127,11 +259,26 @@ first segmenting the flight.
         of Section~\ref{sec:obs-global}. How fast successive glide directions decorrelate is
         the key ingredient of the minimal model below.
 \end{description}
-The quantities of central interest are the tails of $\psi(\tau_c)$ and $\lambda(\ell)$ (heavy,
-power-law tails being the signature of anomalous transport), the coupling between consecutive
-$\ell$ and $\tau$ (which discriminates a coupled L\'evy walk from a decoupled CTRW), and the
-memory in the phase sequence (the transition matrix among the three states and
-duration--duration correlations).
+
+Two couplings then decide which transport model applies, and are stated here as explicit
+objects of study. The first is the \emph{step--waiting coupling}: whether a long glide tends
+to be followed by a long wait, i.e.\ whether $\ell$ and $\tau_w$ are correlated. A genuine
+coupling is the defining feature of a L\'evy walk and is what separates it from a decoupled
+CTRW, in which jumps and waiting times are drawn independently.
+
+The second is the \emph{memory in the phase sequence}. A flight is a discrete sequence over
+the three states $\{\text{transition},\text{search},\text{climb}\}$, and memory can hide in
+two places. (i) The \emph{order} of the phases, summarised by the transition matrix
+$P_{ij}=\Pr(\text{next}=j\mid\text{current}=i)$: a perfectly cyclic flight
+($\text{T}\!\to\!\text{S}\!\to\!\text{C}\!\to\!\text{T}$) gives a near-deterministic matrix,
+whereas aborted climbs, repeated searches or skipped phases appear as off-cycle probabilities
+and reveal how stereotyped the soaring cycle actually is. (ii) The \emph{durations}, through
+correlations between consecutive phase durations -- for instance whether a long climb tends to
+precede a long glide. Both probe the \emph{renewal} assumption underlying the textbook CTRW
+and L\'evy-walk results, in which each step and wait is independent of the history: if the
+transition matrix is structured or the durations are correlated, the process is non-renewal
+and those formulas must be amended. Measuring these is therefore what tells us whether a
+memoryless model is admissible at all.
 
 \section{Reproducing the reference results}
 A first objective of the analysis, undertaken once the segmentation is in place, is to check

@@ -5,18 +5,33 @@
 
 A flight track is stored as an IGC file, the standard plain-text format of the
 F\'ed\'eration A\'eronautique Internationale for flight recorders. Each line is a typed
-record identified by its first letter. The relevant ones are:
+record whose \emph{type is fixed by its first letter}, a code defined by the standard rather
+than chosen by the logger. The relevant codes are:
 \begin{description}
   \item[\texttt{A}] the logger/manufacturer identifier (first record);
   \item[\texttt{H}] header records (date of flight, pilot, glider, datum, \dots);
-  \item[\texttt{I}] the declaration of optional fields appended to each fix;
-  \item[\texttt{B}] the GPS fixes -- the core of the file. A \texttt{B} record carries a
-        UTC timestamp, latitude, longitude, a validity flag, and both the pressure
-        (barometric) and GPS altitudes.
+  \item[\texttt{I}] the declaration of optional extra fields appended to each fix;
+  \item[\texttt{B}] the GPS fixes -- the core of the file; ``\texttt{B}'' is simply the code
+        the standard reserves for fix records.
 \end{description}
-The sequence of \texttt{B} records is therefore a time-stamped 3-D trajectory. The
-sampling period is typically a few seconds but is not guaranteed to be uniform and varies
-with the recording device -- a point the analysis stage must handle explicitly.
+A \texttt{B} record packs its fields by fixed character position. For example,
+\begin{center}
+\texttt{B\,094329\,4933044N\,00005193E\,A\,00095\,00149}
+\end{center}
+reads as: UTC time \texttt{09:43:29}; latitude $49^\circ33.044'$N; longitude
+$000^\circ05.193'$E; a fix-validity flag (\texttt{A} for a valid 3-D fix, \texttt{V} for a
+2-D one); and then \emph{two} altitudes, the barometric (pressure) altitude
+(\SI{95}{\metre} here) and the GNSS/GPS altitude (\SI{149}{\metre}). The two differ in both
+reference and noise -- the barometric value is referenced to a standard-atmosphere pressure
+setting and is smooth, the GPS value is absolute (relative to the WGS84 geoid) but
+vertically noisier -- and on older loggers one of them may be missing (recorded as zero).
+Which altitude to use, and how, is left open and will be decided at the analysis stage
+(Chapter~\ref{ch:next-steps}), because the vertical velocity derived from it drives the
+phase segmentation.
+
+The sequence of \texttt{B} records is therefore a time-stamped 3-D trajectory. The sampling
+period is typically a few seconds but is not guaranteed to be uniform and varies with the
+recording device -- a point the analysis stage must handle explicitly.
 
 \section{The catalog}
 
