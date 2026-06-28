@@ -49,5 +49,18 @@ thesis/*.toc
 thesis/*.lof
 thesis/*.lot
 
-# Logbook: PRIVATO, non deve mai finire su GitHub (sorgenti, PDF e timeline generata).
-logbook/
+# Logbook (documento PUBBLICO, come la tesi): teniamo i .tex, la timeline generata
+# e logbook.pdf; ignoriamo solo gli ausiliari di LaTeX.
+logbook/*.aux
+logbook/*.bbl
+logbook/*.bcf
+logbook/*.blg
+logbook/*.fdb_latexmk
+logbook/*.fls
+logbook/*.log
+logbook/*.out
+logbook/*.run.xml
+logbook/*.synctex.gz
+logbook/*.toc
+logbook/*.lof
+logbook/*.lot

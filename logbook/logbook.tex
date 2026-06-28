@@ -1,0 +1,102 @@
+% =============================================================================
+%  Logbook -- Anomalous transport in soaring flights
+%
+%  A running record of the succession of events (what was done, what worked, what
+%  did not, and WHY), as a complement to the state document in ../thesis.
+%
+%  The "Timeline" section is auto-generated from `git log`; the "Narrative notes"
+%  are written by hand and hold the reasoning the timeline cannot.
+%
+%  Build:  make logbook   (or: latexmk -pdf logbook.tex)
+% =============================================================================
+\documentclass[11pt,a4paper]{article}
+
+\ifdefined\pdfinfoomitdate\pdfinfoomitdate=1\fi
+\ifdefined\pdftrailerid\pdftrailerid{}\fi
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage[hidelinks]{hyperref}
+
+\title{Logbook --- Anomalous transport in soaring flights}
+\author{Matteo Di Sante}
+\date{Working log}
+
+\begin{document}
+\maketitle
+
+\noindent\emph{Working notebook. The timeline is regenerated from the git history;
+the narrative notes are written by hand.}
+
+\section{Timeline (auto-generated from git)}
+\input{generated/timeline}
+
+\section{Narrative notes}
+
+\paragraph{2026-06 --- Data acquisition complete.}
+The full FFVL CFD archive (seasons 1999--2000 to 2025--2026) has been scraped: about
+203{,}000 flight records, of which $\sim$186{,}000 carry a GPS track. All
+186{,}052 available tracks were downloaded. This is the \emph{first} source; data
+collection is ongoing (XContest, and possibly other sites, via the same scraping approach).
+\emph{What worked:} impersonating a Chrome TLS fingerprint (\texttt{curl\_cffi}) reliably
+passes the FFVL Cloudflare challenge; the resumable, atomic, validated download survived
+many interruptions without corruption.
+\emph{What did not / gotchas:} 173 tracks could not be obtained --- 172 because the server
+returns something that is not a valid IGC (broken or placeholder links on FFVL's side, so
+a retry does not help), and 1 due to a transient Cloudflare challenge (worth a later
+retry). On macOS/exFAT, the OS scatters \texttt{.\_*} sidecar files next to every written
+file; a \texttt{clean} step removes them.
+
+\paragraph{2026-06 --- Integrity verified.}
+A full on-disk re-scan (\texttt{verify}) confirmed that all 186{,}052 downloaded
+files are structurally valid IGC: no truncated files, no leftover \texttt{.part}, no read
+errors. The verification logic was promoted from a throwaway script to a first-class
+\texttt{soaring-ffvl verify} subcommand (reusing the download-time validator), with tests.
+
+\paragraph{2026-06 --- Robustness of the data path.}
+The external disk remounted under a different name (\texttt{HDD\_DISANTE} $\to$
+\texttt{SSD\_DISANTE}), which would have silently broken a hard-coded path. Fix: removed
+every machine-specific path from the repo (placeholder + \texttt{SOARING\_FFVL\_DATA\_ROOT}
+environment variable) and added a start-up guard that aborts with a clear, actionable
+message when \texttt{data\_root} is unset/unmounted --- and verified that \texttt{/Volumes}
+is not user-writable, so a wrong path can never cause a silent download to the wrong place.
+
+\paragraph{2026-06 --- Documentation.}
+Project docs are built with MkDocs and published on GitHub Pages. Initially deployed with
+\texttt{mkdocs gh-deploy}, which accumulated one built-site commit per deploy on a
+\texttt{gh-pages} branch; migrated to the official GitHub Pages \emph{artifact} workflow
+(build $\to$ upload artifact $\to$ deploy), removing the branch and keeping the git history
+clean.
+
+\paragraph{Operational note.} In this repo \texttt{uv sync} occasionally fails to
+(re)install the editable package; \texttt{uv sync --reinstall-package soaring} fixes it.
+
+\section{Next steps}
+\begin{itemize}
+  \item Extend data collection beyond FFVL (XContest, possibly other sites) via scraping,
+        and merge the sources into the same catalog.
+  \item Pre-process IGC \texttt{B} records into clean, resampled, quality-filtered
+        trajectories in a local metric frame.
+  \item Re-examine the transition/search/climb segmentation of Vilpellet et al. (HMM on
+        binary features: sign of vertical speed, curvature-angle persistence, straightness)
+        --- assess whether those variables hold on our larger dataset and improve if needed;
+        then extract step lengths, waiting times, search durations and per-phase statistics.
+  \item After segmentation, reproduce Vilpellet et al.\ on the enlarged dataset as a
+        validation + universality check: per-phase conditional MSD (their Fig.~3) and
+        per-phase descriptive statistics (their Fig.~4), plus the global $H\approx0.88$.
+  \item Estimate mean-squared-displacement scaling and the step/waiting-time
+        distributions; test for anomalous transport.
+  \item Minimal stochastic model for $H\approx0.88$: resolve transition segments, merge
+        search+climb into one effective state, with angular diffusion between successive
+        transition directions (preliminary idea, to be refined/changed).
+  \item Refresh \texttt{data/seasons\_index.csv} via \texttt{build-catalog} so the public
+        document's statistics stay current.
+\end{itemize}
+
+\end{document}

@@ -4,7 +4,7 @@
 #   scripts/build_docs.sh stats      # regenerate thesis/generated/*.tex from the data
 #   scripts/build_docs.sh timeline   # regenerate logbook/generated/timeline.tex from git
 #   scripts/build_docs.sh thesis     # stats + compile thesis/main.pdf  (public)
-#   scripts/build_docs.sh logbook    # timeline + compile logbook/logbook.pdf  (private)
+#   scripts/build_docs.sh logbook    # timeline + compile logbook/logbook.pdf
 #   scripts/build_docs.sh all        # thesis + logbook  (default)
 #   scripts/build_docs.sh clean      # remove LaTeX aux files
 #

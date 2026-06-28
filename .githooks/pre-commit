@@ -2,9 +2,9 @@
 # Keep the deterministic parts of the documents in sync with each commit.
 #
 #  - regenerate the dataset statistics from data/seasons_index.csv (text, instant)
-#  - regenerate the logbook git timeline (text, instant; private)
+#  - regenerate the logbook git timeline (text, instant)
 #  - if the commit touches the thesis or the data, rebuild thesis/main.pdf and stage it
-#  - rebuild the private logbook PDF locally when its sources change (never staged)
+#  - if the commit touches the logbook, rebuild logbook/logbook.pdf and stage it
 #
 # Best-effort: a missing tool or a LaTeX failure WARNS but never blocks the commit.
 # The narrative prose (logbook notes, thesis text, README/docs) is updated on demand,
@@ -20,6 +20,7 @@ command -v python3 >/dev/null 2>&1 || { echo "pre-commit: python3 not found; ski
 python3 scripts/reporting/generate_stats.py    >/dev/null || echo "pre-commit: stats generation failed" >&2
 python3 scripts/reporting/generate_timeline.py >/dev/null || echo "pre-commit: timeline generation failed" >&2
 git add thesis/generated/stats.tex thesis/generated/seasons_table.tex 2>/dev/null || true
+git add logbook/generated/timeline.tex 2>/dev/null || true
 
 # What is being committed (stats files are already staged above).
 staged="$(git diff --cached --name-only)"
@@ -37,9 +38,17 @@ if grep -qE '^(thesis/|data/seasons_index\.csv)' <<<"$staged"; then
     fi
 fi
 
-# 3) Private logbook PDF: local convenience only (git-ignored, never staged).
-if command -v latexmk >/dev/null 2>&1 && grep -qE '^logbook/' <<<"$staged"; then
-    bash scripts/build_docs.sh logbook >/dev/null 2>&1 || true
+# 3) Public logbook PDF: rebuild only when the logbook changed.
+if grep -qE '^logbook/' <<<"$staged"; then
+    if command -v latexmk >/dev/null 2>&1; then
+        if bash scripts/build_docs.sh logbook >/dev/null 2>&1; then
+            git add logbook/logbook.pdf 2>/dev/null || true
+        else
+            echo "pre-commit: logbook PDF build failed; committing sources without a fresh PDF" >&2
+        fi
+    else
+        echo "pre-commit: latexmk not found; skipping logbook PDF rebuild" >&2
+    fi
 fi
 
 exit 0
