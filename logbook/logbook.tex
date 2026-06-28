@@ -78,25 +78,43 @@ clean.
 (re)install the editable package; \texttt{uv sync --reinstall-package soaring} fixes it.
 
 \section{Next steps}
+These mirror the planning chapter of the state document
+(\texttt{thesis/sections/04-next-steps}) and are kept in sync with it. The near-term plan
+is to analyse the data \emph{in parallel} with studying the segmentation, since many
+observables can be built before any phase splitting.
+
 \begin{itemize}
-  \item Extend data collection beyond FFVL (XContest, possibly other sites) via scraping,
-        and merge the sources into the same catalog.
-  \item Pre-process IGC \texttt{B} records into clean, resampled, quality-filtered
-        trajectories in a local metric frame.
-  \item Re-examine the transition/search/climb segmentation of Vilpellet et al. (HMM on
-        binary features: sign of vertical speed, curvature-angle persistence, straightness)
-        --- assess whether those variables hold on our larger dataset and improve if needed;
-        then extract step lengths, waiting times, search durations and per-phase statistics.
-  \item After segmentation, reproduce Vilpellet et al.\ on the enlarged dataset as a
-        validation + universality check: per-phase conditional MSD (their Fig.~3) and
-        per-phase descriptive statistics (their Fig.~4), plus the global $H\approx0.88$.
-  \item Estimate mean-squared-displacement scaling and the step/waiting-time
-        distributions; test for anomalous transport.
-  \item Minimal stochastic model for $H\approx0.88$: resolve transition segments, merge
-        search+climb into one effective state, with angular diffusion between successive
-        transition directions (preliminary idea, to be refined/changed).
-  \item Refresh \texttt{data/seasons\_index.csv} via \texttt{build-catalog} so the public
-        document's statistics stay current.
+  \item \textbf{Data sources.} Extend collection beyond FFVL (XContest, possibly other
+        sites) via the same scraping approach, merging sources into one catalog and
+        stratifying by source. Refresh \texttt{data/seasons\_index.csv} via
+        \texttt{build-catalog} so the document statistics stay current.
+  \item \textbf{Pre-processing.} Parse the IGC \texttt{B} records into clean, resampled,
+        quality-filtered trajectories in a local metric frame.
+  \item \textbf{Whole-trajectory observables (no segmentation).} Immediate next step:
+        characterise the data with observables that need no phases --- MSD and its scaling
+        exponent, the displacement distribution and its tails, the velocity autocorrelation
+        and turning-angle distribution, the speed/vertical-velocity distributions, and
+        geometric measures (tortuosity, fractal dimension, radius of gyration). Goal: a
+        first physical/statistical picture and some preliminary findings.
+  \item \textbf{Segmentation.} Study J\'er\'emie's internship report and code, then
+        re-examine the transition/search/climb HMM (binary features: sign of vertical
+        speed, curvature-angle persistence, straightness) --- decide whether to keep that
+        approach or add complexity for a better segmentation on our larger, more
+        heterogeneous data.
+  \item \textbf{Phase-resolved observables.} After segmentation, extract step lengths,
+        waiting times, search durations, per-phase kinematics and the angular diffusion
+        between successive glides.
+  \item \textbf{Reproduce the reference.} Check that the enlarged dataset reproduces
+        Vilpellet et al.: per-phase conditional MSD (their Fig.~3) and per-phase
+        descriptive statistics (their Fig.~4), plus the global $H\approx0.88$ ---
+        validation + universality test.
+  \item \textbf{Transport analysis.} Estimate the MSD scaling exponent, fit the tails of
+        the waiting-time and step-length distributions, and perform CTRW-vs-L\'evy-walk
+        model selection.
+  \item \textbf{Minimal model.} A minimal stochastic model for $H\approx0.88$: resolve
+        transition segments, merge search+climb into one effective state, with angular
+        diffusion between successive transition directions (preliminary idea, to be
+        refined/changed).
 \end{itemize}
 
 \end{document}
