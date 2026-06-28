@@ -1,0 +1,61 @@
+\chapter{The dataset}
+\label{ch:dataset}
+
+\section{The IGC tracklog format}
+
+A flight track is stored as an IGC file, the standard plain-text format of the
+F\'ed\'eration A\'eronautique Internationale for flight recorders. Each line is a typed
+record identified by its first letter. The relevant ones are:
+\begin{description}
+  \item[\texttt{A}] the logger/manufacturer identifier (first record);
+  \item[\texttt{H}] header records (date of flight, pilot, glider, datum, \dots);
+  \item[\texttt{I}] the declaration of optional fields appended to each fix;
+  \item[\texttt{B}] the GPS fixes -- the core of the file. A \texttt{B} record carries a
+        UTC timestamp, latitude, longitude, a validity flag, and both the pressure
+        (barometric) and GPS altitudes.
+\end{description}
+The sequence of \texttt{B} records is therefore a time-stamped 3-D trajectory. The
+sampling period is typically a few seconds but is not guaranteed to be uniform and varies
+with the recording device -- a point the analysis stage must handle explicitly.
+
+\section{The catalog}
+
+Two derived tables make the raw files usable. The \textbf{catalog}
+(\texttt{catalog.csv}) has one row per flight: the competition metadata plus a
+\texttt{local\_path} column linking the flight to its file on disk, so a flight can be
+traced to its track (and back, via the flight identifier embedded in the file name)
+without any external lookup. The \textbf{season index} (\texttt{seasons\_index.csv}),
+versioned in the repository, summarizes each season with the number of flights declared,
+the number carrying a GPS track, and the number actually downloaded.
+
+\section{Coverage and statistics}
+
+The statistics below describe the FFVL CFD dataset currently in hand; further sources may
+be added later (Chapter~\ref{ch:acquisition}). The dataset spans \StatNumSeasons\ seasons,
+from \StatSeasonFirst\ to \StatSeasonLast.
+It contains \num{\StatTotalFlights} flights in total; \num{\StatWithIgc} of them
+(\StatPctWithIgc\,\%) carry a GPS tracklog, and of those \num{\StatDownloaded}
+(\StatPctDownloaded\,\%) have been downloaded and verified. The per-season breakdown is
+given in Table~\ref{tab:seasons}. The volume of flights grows by more than three orders of
+magnitude over the period, reflecting the adoption of GPS loggers and online scoring: the
+early seasons contribute a handful of tracks each, while recent seasons contribute well
+over ten thousand.
+
+\input{generated/seasons_table}
+
+\section{Data quality and caveats}
+
+A few limitations are already known and will shape the analysis:
+\begin{itemize}
+  \item \textbf{Flights without a track.} About \SI{8}{\percent} of entries have no IGC
+        file (older or manually declared flights); they carry metadata only.
+  \item \textbf{A small residue of unrecoverable files.} A few flights advertise a track
+        that the server does not actually serve as a valid IGC (broken or placeholder
+        links); these are recorded as failures and excluded.
+  \item \textbf{Heterogeneous logging.} Sampling rate, altitude source, and accuracy
+        depend on the device; trajectories must be resampled and quality-filtered before
+        any ensemble statistic is computed.
+  \item \textbf{Incomplete dates.} Some historical entries have placeholder dates (e.g.\
+        \texttt{0000-00-00}); these are kept but flagged.
+\end{itemize}
+These caveats motivate the pre-processing described in Chapter~\ref{ch:next-steps}.

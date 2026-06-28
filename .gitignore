@@ -32,3 +32,22 @@ site/
 /data/logs/
 /data/catalog.csv
 *.igc
+
+# Tesi (documento PUBBLICO): teniamo i .tex, thesis/generated/*.tex e thesis/main.pdf;
+# ignoriamo solo gli ausiliari di LaTeX.
+thesis/*.aux
+thesis/*.bbl
+thesis/*.bcf
+thesis/*.blg
+thesis/*.fdb_latexmk
+thesis/*.fls
+thesis/*.log
+thesis/*.out
+thesis/*.run.xml
+thesis/*.synctex.gz
+thesis/*.toc
+thesis/*.lof
+thesis/*.lot
+
+# Logbook: PRIVATO, non deve mai finire su GitHub (sorgenti, PDF e timeline generata).
+logbook/

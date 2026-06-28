@@ -1,0 +1,191 @@
+\chapter{Next steps}
+\label{ch:next-steps}
+
+With the dataset in place and verified, the work proceeds as follows.
+
+\section{Trajectory pre-processing}
+Parse the IGC \texttt{B} records into clean trajectories of (time, latitude, longitude,
+altitude); project the geographic coordinates to a local metric frame; resample to a common
+cadence to absorb device heterogeneity; and apply quality filters (drop fixes with bad
+validity flags, implausible speeds, or large gaps). The output is a tidy, analysis-ready
+representation, produced by a future \texttt{soaring.analysis} sub-package. Throughout,
+$r(t)$ denotes the horizontal position and $v(t)=\dot r(t)$ the horizontal velocity.
+
+\section{Observables on the whole trajectory}
+\label{sec:obs-global}
+A first group of observables requires \emph{no} segmentation: it can be measured directly on
+the full trajectories and already probes the transport at the global level. For each, we
+state what it is and what it is for.
+
+\paragraph{Transport and diffusion.}
+\begin{description}
+  \item[Mean-squared displacement (MSD).] The average squared horizontal displacement over a
+        time lag $t$, $\mathrm{MSD}(t)=\big\langle\,|r(t_0+t)-r(t_0)|^2\big\rangle$, averaged
+        over start times $t_0$ and over flights. Its growth law $\mathrm{MSD}(t)\sim
+        t^{\alpha}$ defines the transport regime ($\alpha=1$ Brownian, $\alpha>1$
+        super-diffusive, $\alpha<1$ sub-diffusive; equivalently the Hurst exponent
+        $H=\alpha/2$). This is the primary test for anomalous transport.
+  \item[Time- versus ensemble-averaged MSD.] The MSD computed as a time average along a
+        single flight, compared with the average across flights. A systematic gap between the
+        two -- with the time average depending on the observation window -- signals
+        \emph{ergodicity breaking} and aging, hallmarks of trapping (CTRW-type) dynamics, and
+        thus helps discriminate between candidate models.
+  \item[Displacement distribution $P(\Delta r,t)$.] The probability distribution of the
+        horizontal displacement $\Delta r=r(t_0+t)-r(t_0)$ at a fixed lag $t$ (the propagator
+        of the walk). Its shape separates ordinary diffusion (Gaussian) from anomalous
+        transport (heavy, power-law or stretched tails), and the way it rescales with $t$
+        exposes the self-similar, anomalous scaling form.
+  \item[Non-Gaussianity.] The departure of $P(\Delta r,t)$ from a Gaussian, summarized by the
+        excess kurtosis (or the non-Gaussian parameter). A compact scalar that tracks how and
+        when the displacement statistics become intermittent and heavy-tailed across scales.
+  \item[Velocity autocorrelation $C(\tau)$.] $C(\tau)=\langle v(t_0)\cdot v(t_0+\tau)\rangle$,
+        the correlation of the velocity with itself after a delay $\tau$. It measures
+        directional persistence and its memory: the decay time sets the ballistic-to-diffusive
+        crossover, while a slow or sign-changing tail reveals persistence or anti-persistence.
+  \item[Turning-angle distribution.] The distribution of the angle $\theta$ between two
+        successive horizontal displacement vectors along the trajectory -- i.e.\ the change of
+        heading from one step to the next. A distribution peaked at $\theta=0$ means strong
+        forward persistence (a correlated random walk); a flat distribution means memoryless
+        reorientation. This is the microscopic origin of the persistence seen in $C(\tau)$ and
+        the MSD.
+  \item[First-passage and first-exit times.] The time to first reach a given distance from the
+        start, or to first leave a region of given size, as a function of that length scale. A
+        scale-resolved probe of transport, often more sensitive than the MSD to heavy tails and
+        to crossovers between regimes.
+  \item[Speed and vertical-velocity distributions.] The magnitude of the horizontal velocity
+        and the vertical velocity. Basic kinematic characterization; the vertical velocity also
+        separates climbing from sinking and feeds the segmentation below.
+\end{description}
+
+\paragraph{Trajectory geometry.}
+\begin{description}
+  \item[Tortuosity.] How much a path winds, quantified by the ratio between the length actually
+        travelled and the straight-line distance between its endpoints over the same interval
+        ($1$ for a straight line, larger for a more convoluted path). It measures how far a
+        flight departs from straight cruising and, as a single number, summarizes flight
+        efficiency and the relative weight of winding versus directed motion.
+  \item[Fractal dimension.] The exponent describing how the apparent length of the trajectory
+        grows as it is measured at finer resolution (estimated e.g.\ by box counting), ranging
+        from $1$ for a smooth straight line to $2$ for a plane-filling, highly convoluted path.
+        It captures the multi-scale convolutedness of the path in one index and is the
+        geometric counterpart of the anomalous scaling seen in the MSD: directed cruising and
+        area-restricted search occupy opposite ends of this scale.
+  \item[Radius of gyration.] The root-mean-square distance of the trajectory points from their
+        centroid, i.e.\ the characteristic spatial extent of a flight. It sets the natural
+        length scale of each flight and is used to normalize other observables so that flights
+        of very different size can be compared on equal footing.
+\end{description}
+
+\section{Segmentation into flight phases}
+Building on the previous work of Vilpellet et al.~\cite{vilpellet2026}, each flight is
+segmented into the three phases of the soaring cycle:
+\begin{description}
+  \item[Transition (glide).] The inter-thermal cruise: a near-straight, energy-efficient
+        glide toward the next source of lift (sinking, large directed horizontal
+        displacement). This is the directed ``step''.
+  \item[Search.] The exploratory phase entered when no thermal is found at a comfortable
+        altitude: gentle turns and probing manoeuvres to sample the air mass and locate the
+        next thermal while limiting altitude loss. It mediates the passage from one step to
+        the next trap.
+  \item[Climb (thermalling).] Circling within rising air to regain altitude: persistent
+        turning with small net horizontal displacement. This is the localized ``trap''.
+\end{description}
+That work performs the segmentation with a hidden Markov model whose observations are a
+small set of \emph{binary} trajectory-derived features --- the sign of the vertical speed,
+the persistence of the curvature angle, and indicators of trajectory straightness.
+
+A first task of this thesis is to scrutinize this segmentation rather than take it for
+granted: to assess whether those binary variables are adequate and robust on the larger,
+more heterogeneous dataset assembled here, and whether the feature set or the model should
+be refined, extended, or replaced. The segmentation method is therefore itself an object of
+study, and the specific variables are deliberately left open at this stage. This
+three-state description refines the two-state caricature underlying continuous-time random
+walks and L\'evy walks.
+
+\section{Phase-resolved observables}
+The segmentation unlocks a second group of observables, defined per phase occurrence and
+then as ensemble distributions. These are the building blocks of an intermittent-transport
+description and, unlike those of Section~\ref{sec:obs-global}, cannot be obtained without
+first segmenting the flight.
+\begin{description}
+  \item[Climb.] Duration $\tau_c$ (the \emph{waiting time} of a trapping picture), altitude
+        gained $\Delta z$, mean climb rate, and circling radius and period (the size and
+        duration of one thermalling turn). The tail of the waiting-time distribution
+        $\psi(\tau_c)$ controls whether trapping drives sub-diffusion.
+  \item[Glide (transition).] Horizontal step length $\ell$ (the \emph{jump} of the walk),
+        duration $\tau_g$, ground speed, glide ratio (horizontal distance per unit altitude
+        lost) and sink rate. The tail of the step-length distribution $\lambda(\ell)$ controls
+        super-diffusive contributions.
+  \item[Search.] Duration $\tau_s$, path length and tortuosity within the search, and the net
+        displacement achieved. This quantifies the cost and efficiency of finding the next
+        thermal -- the phase in which prior work locates the signature of pilot skill.
+  \item[Anatomy of a flight.] Number of thermals (climbs) per flight, inter-thermal distances,
+        and the fraction of both time and along-track distance spent in each phase: the coarse
+        composition that sets the weight of each phase in the global transport.
+  \item[Angular diffusion between glides.] The turning angle between the heading of one
+        transition segment and the next -- the segment-level counterpart of the turning angle
+        of Section~\ref{sec:obs-global}. How fast successive glide directions decorrelate is
+        the key ingredient of the minimal model below.
+\end{description}
+The quantities of central interest are the tails of $\psi(\tau_c)$ and $\lambda(\ell)$ (heavy,
+power-law tails being the signature of anomalous transport), the coupling between consecutive
+$\ell$ and $\tau$ (which discriminates a coupled L\'evy walk from a decoupled CTRW), and the
+memory in the phase sequence (the transition matrix among the three states and
+duration--duration correlations).
+
+\section{Reproducing the reference results}
+A first objective of the analysis, undertaken once the segmentation is in place, is to check
+whether the enlarged---and eventually multi-source---dataset reproduces the quantitative and
+graphical results of Vilpellet et al.~\cite{vilpellet2026}. Two figures are the main targets.
+
+The first is the per-phase conditional MSD (their Fig.~3): the transition segments should
+stay ballistic ($\alpha=2$, i.e.\ $H=1$) across time lags; the search phase should be
+strongly sub-diffusive ($H\approx0.3$ for paragliders and hang gliders, $\approx0.2$ for
+sailplanes); and the climb phase should be quasi-ballistic at long lags but with an effective
+velocity about two orders of magnitude smaller, including the transient anti-correlation near
+the $\sim\!30$\,s thermalling period.
+
+The second is the set of per-phase descriptive statistics (their Fig.~4): the glide ratios
+($\approx 8.5$, $10$, and $25$ for paragliders, hang gliders, and sailplanes), the
+horizontal-velocity statistics, the heavy-tailed distribution of transition times, the
+search-time fraction and the effective search radius, the vertical climb velocities, the
+thermalling radii, and the thin, near-exponential distribution of climb times---together with
+the global time budget ($\approx\!60\%$ transition, $\approx\!35\%$ climb, the remainder
+searching) and the global sub-ballistic scaling ($H\approx0.88$).
+
+Recovering these results would validate the acquisition pipeline and the segmentation and
+would test the universality of the reported behaviour on a substantially larger sample;
+systematic departures would be equally informative, pointing to dataset- or method-dependent
+effects to investigate. This comparison is therefore the bridge between the present
+data-acquisition stage and the original analysis that follows.
+
+\section{Transport analysis}
+Using these observables, test for anomalous transport: estimate the MSD scaling exponent
+$\alpha$, fit the tails of $\psi(\tau)$ and $\lambda(\ell)$ with principled methods (e.g.\
+maximum-likelihood power-law fits with goodness-of-fit tests), and perform model selection
+between the continuous-time random walk and the L\'evy-walk
+frameworks~\cite{metzler2000,zaburdaev2015} -- using the step/waiting-time coupling to tell
+them apart. Because logging devices, sites, gliders and weather differ, results will be
+stratified (by season, site, glider class, and data source) and trajectories normalized,
+and finite-size, censoring and sampling biases will be controlled throughout.
+
+\section{Modelling and simulation}
+The aim is a \emph{minimal} stochastic model that reproduces the asymptotic anomalous
+scaling reported for soaring (a Hurst exponent $H \approx 0.88$) with as few ingredients as
+possible. A preliminary working hypothesis---to be made precise, and possibly revised, once
+the empirical phase statistics are available---is that the transport is carried mainly by
+the transition (glide) phases. The model would therefore resolve the transition segments
+explicitly while merging search and climb into a single effective non-transition state, so
+that the soaring cycle reduces to a sequence of directed glides interrupted by
+reorientations. Anomalous transport would then emerge from the directed transition segments
+combined with an \emph{angular diffusion} of the heading from one transition to the next:
+successive glide directions decorrelate gradually rather than abruptly, producing a
+correlated random walk whose persistence controls the long-time exponent. Simulated
+ensembles would be compared with the data to test whether these ingredients suffice. These
+are baseline ideas, to be refined---or changed---as the analysis progresses.
+
+\section{Tooling}
+Mirror the acquisition package with an analysis package, and let the figures and tables of
+this document be generated automatically from the analysis outputs -- as the dataset
+statistics already are -- so that this document stays in step with the work and remains a
+reliable basis for the thesis and for presentations.

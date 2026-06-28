@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Keep the deterministic parts of the documents in sync with each commit.
+#
+#  - regenerate the dataset statistics from data/seasons_index.csv (text, instant)
+#  - regenerate the logbook git timeline (text, instant; private)
+#  - if the commit touches the thesis or the data, rebuild thesis/main.pdf and stage it
+#  - rebuild the private logbook PDF locally when its sources change (never staged)
+#
+# Best-effort: a missing tool or a LaTeX failure WARNS but never blocks the commit.
+# The narrative prose (logbook notes, thesis text, README/docs) is updated on demand,
+# not here. Enable with:  git config core.hooksPath .githooks
+set -uo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+command -v python3 >/dev/null 2>&1 || { echo "pre-commit: python3 not found; skipping doc sync" >&2; exit 0; }
+
+# 1) Stats + timeline sources (cheap, deterministic).
+python3 scripts/reporting/generate_stats.py    >/dev/null || echo "pre-commit: stats generation failed" >&2
+python3 scripts/reporting/generate_timeline.py >/dev/null || echo "pre-commit: timeline generation failed" >&2
+git add thesis/generated/stats.tex thesis/generated/seasons_table.tex 2>/dev/null || true
+
+# What is being committed (stats files are already staged above).
+staged="$(git diff --cached --name-only)"
+
+# 2) Public thesis PDF: rebuild only when the thesis or the data changed.
+if grep -qE '^(thesis/|data/seasons_index\.csv)' <<<"$staged"; then
+    if command -v latexmk >/dev/null 2>&1; then
+        if bash scripts/build_docs.sh thesis >/dev/null 2>&1; then
+            git add thesis/main.pdf 2>/dev/null || true
+        else
+            echo "pre-commit: thesis PDF build failed; committing sources without a fresh PDF" >&2
+        fi
+    else
+        echo "pre-commit: latexmk not found; skipping thesis PDF rebuild" >&2
+    fi
+fi
+
+# 3) Private logbook PDF: local convenience only (git-ignored, never staged).
+if command -v latexmk >/dev/null 2>&1 && grep -qE '^logbook/' <<<"$staged"; then
+    bash scripts/build_docs.sh logbook >/dev/null 2>&1 || true
+fi
+
+exit 0

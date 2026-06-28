@@ -43,4 +43,11 @@ uv run soaring-ffvl status
 └── seasons_index.csv             # 1 row/season: links + counts
 ```
 
+## Thesis document
+
+The repository also hosts `thesis/`, a LaTeX *state-of-the-work* document (set up as a
+master's thesis) describing the acquisition method, the dataset, its statistics, and the
+next steps. Its statistics are generated automatically from `data/seasons_index.csv` and
+the compiled `thesis/main.pdf` is kept in the repository.
+
 Continue with the **[Guide](guide/installation.md)** or consult the **[API Reference](reference.md)**.

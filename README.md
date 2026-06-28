@@ -51,4 +51,21 @@ To preview locally:
 uv run mkdocs serve   # http://127.0.0.1:8000
 ```
 
+## Thesis document
+
+[`thesis/`](thesis/) is the LaTeX **state-of-the-work document** (set up as a master's
+thesis): acquisition method, dataset description, statistics, and next steps. Its
+quantitative parts (`thesis/generated/`) are auto-generated from
+[`data/seasons_index.csv`](data/seasons_index.csv); the compiled `thesis/main.pdf` is
+kept in the repo.
+
+```bash
+scripts/build_docs.sh thesis   # regenerate stats + compile thesis/main.pdf
+```
+
+A pre-commit hook keeps the stats and the PDF in sync on every commit — enable it once
+with `git config core.hooksPath .githooks`. The narrative prose is updated on demand.
+A private working **logbook** (`logbook/`, git-ignored) tracks the chronology and the
+reasoning; it is never published.
+
 License: MIT.

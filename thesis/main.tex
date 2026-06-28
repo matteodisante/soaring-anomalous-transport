@@ -1,0 +1,106 @@
+% =============================================================================
+%  Anomalous transport in soaring flights -- Master's thesis (work in progress)
+%
+%  This document tracks the CURRENT STATE of the thesis/repository: it is meant to
+%  be read by the candidate and the supervisors, to serve as a basis for slides,
+%  and to grow into the final thesis. The quantitative parts (dataset statistics
+%  and tables) are AUTO-GENERATED from data/seasons_index.csv -- do not edit them
+%  by hand; run `make stats` (or just commit: the pre-commit hook regenerates them).
+%
+%  Build:  make thesis   (or: latexmk -pdf main.tex)
+% =============================================================================
+\documentclass[11pt,a4paper]{report}
+
+% ---- Reproducible output: identical bytes when the content is unchanged, so the
+% ---- committed PDF only changes when the document actually changes (clean diffs).
+\ifdefined\pdfinfoomitdate\pdfinfoomitdate=1\fi
+\ifdefined\pdftrailerid\pdftrailerid{}\fi
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage[a4paper,margin=2.7cm]{geometry}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{siunitx}
+\usepackage{xcolor}
+\usepackage{csquotes}
+\usepackage[hidelinks]{hyperref}
+
+\sisetup{group-separator={,}, group-minimum-digits=4}
+
+% Traditional BibTeX (portable: no biber required). latexmk runs bibtex automatically.
+\usepackage{cite}
+
+% Headline numbers (\StatTotalFlights, \StatDownloaded, ...) generated from the data.
+\input{generated/stats}
+
+\title{Anomalous Transport in Soaring: Collective Strategies and Intermittent Search Models}
+\author{Matteo Di Sante}
+
+\begin{document}
+
+% ----------------------------- Title page ------------------------------------
+\begin{titlepage}
+\centering
+{\scshape\large University of Pisa \\ Department of Physics\par}
+{\scshape Master's Degree in Physics of Complex Systems\par}
+\vfill
+{\Huge\bfseries Anomalous Transport in Soaring Flights\par}
+\vspace{0.8em}
+{\LARGE Collective Strategies and Intermittent Search Models\par}
+\vfill
+\begin{minipage}[t]{0.45\textwidth}
+  \raggedright\large
+  \textit{Candidate}\\
+  Matteo Di Sante\par
+\end{minipage}\hfill
+\begin{minipage}[t]{0.45\textwidth}
+  \raggedleft\large
+  \textit{Supervisors}\\
+  Prof.\ Michael Benzaquen\\
+  Dr Alexandre Darmon\\[0.6em]
+  \textit{Internal tutor (Pisa)}\\
+  Prof.\ Riccardo Mannella\par
+\end{minipage}
+\vfill
+{\large Academic year 2025--2026\par}
+\vspace{1em}
+{\small Working draft --- generated on \StatGenerated.\\
+Sources and code: \url{https://github.com/matteodisante/soaring-anomalous-transport}\par}
+\end{titlepage}
+
+% ----------------------------- Abstract --------------------------------------
+\begin{abstract}
+\noindent
+Soaring birds and human pilots stay aloft by extracting energy from atmospheric updrafts,
+producing long, intermittent trajectories that alternate climbs within thermals with
+quasi-ballistic glides. Such motion is a candidate for \emph{anomalous transport}, that is,
+a departure from ordinary Brownian diffusion. This thesis characterizes the transport
+statistics of real soaring flights from a large empirical dataset and compares them with
+stochastic transport models.
+
+This document reports the current state of the project. A first, reproducible acquisition
+has collected \num{\StatTotalFlights} flights spanning \StatNumSeasons\ seasons
+(\StatSeasonFirst\ to \StatSeasonLast) from the FFVL Coupe F\'ed\'erale de Distance, of
+which \num{\StatWithIgc} carry a GPS tracklog and \num{\StatDownloaded} have been
+downloaded and verified. Data collection is ongoing and may be extended to further public
+soaring databases (for example XContest), using the same scraping approach. The remainder
+of the document describes the acquisition method, the dataset and its statistics, and the
+planned analysis and modelling.
+\end{abstract}
+
+\tableofcontents
+
+\input{sections/01-introduction}
+\input{sections/02-data-acquisition}
+\input{sections/03-dataset}
+\input{sections/04-next-steps}
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}

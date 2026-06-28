@@ -1,0 +1,58 @@
+\chapter{Introduction}
+\label{ch:introduction}
+
+\section{Motivation}
+
+Gliders, paragliders, and soaring birds carry no continuous source of propulsion; to remain
+airborne they extract energy from the moving atmosphere, primarily from \emph{thermals},
+the buoyant updrafts that form as sunlight heats the ground. A cross-country flight thus
+proceeds as a repeating cycle of three phases. In the \emph{transition} phase the flyer
+glides along a nearly straight, energy-efficient path toward the next source of lift. If
+none is reached at a safe altitude, a \emph{search} phase follows, during which the flyer
+probes the surrounding air mass to locate lift. Once lift is found, a \emph{climb} phase
+begins, in which the flyer circles within the rising air to regain altitude. The cycle
+alternates long, directed displacements with episodes of slow, localized motion.
+
+Intermittent and directionally persistent motion of this kind is the setting in which
+\emph{anomalous transport} arises. Let $r(t)$ denote the horizontal position of a flight.
+Transport is anomalous when the mean-squared displacement grows as a non-trivial power of
+time, $\langle r^2(t)\rangle \sim t^{\alpha}$ with $\alpha \neq 1$, as opposed to the linear
+growth ($\alpha = 1$) of ordinary Brownian diffusion. Continuous-time random walks and
+L\'evy walks are the standard frameworks for such regimes~\cite{metzler2000,zaburdaev2015},
+which have been reported in animal movement, in disordered media, and in turbulent flows.
+Whether the trajectories of real soaring flights belong to an anomalous regime, and of which
+type, is the question addressed in this thesis.
+
+Soaring has previously been studied mainly as a control problem---how to centre and exploit
+a thermal efficiently, including by reinforcement learning~\cite{reddy2016}. The present
+work is statistical instead: it asks which transport properties emerge at the level of the
+ensemble of observed trajectories. Its direct precedent is the study of Vilpellet et
+al.~\cite{vilpellet2026}, who analysed a large set of human soaring flights, found a
+horizontal transport that is sub-ballistic and approximately independent of aircraft type
+(Hurst exponent $H \approx 0.88$), and introduced a phase-resolved analysis based on the
+transition--search--climb cycle. This thesis builds on that study: it enlarges the dataset
+and re-examines both the phase segmentation and the transport analysis.
+
+\section{Objectives}
+
+The thesis pursues three objectives:
+\begin{enumerate}
+  \item to assemble a large, reproducible, and documented dataset of real soaring flights;
+  \item to reconstruct clean trajectories from the raw GPS logs and define suitable
+        transport observables;
+  \item to test for anomalous transport and to compare the empirical statistics with
+        stochastic transport models.
+\end{enumerate}
+A first dataset---the FFVL CFD archive---has been assembled and verified and is described
+here; data collection is ongoing and may incorporate further sources
+(Chapter~\ref{ch:acquisition}). The second and third objectives define the work ahead
+(Chapter~\ref{ch:next-steps}).
+
+\section{Scope of this document}
+
+This document reports the current state of the project and is revised as the work proceeds.
+Its quantitative content---the summary statistics and tables---is generated directly from
+the dataset, so it remains consistent with the data in hand. Chapter~\ref{ch:acquisition}
+describes the acquisition of the data and the reproducibility of the pipeline;
+Chapter~\ref{ch:dataset} describes the dataset and its statistics; and
+Chapter~\ref{ch:next-steps} sets out the planned analysis and modelling.
