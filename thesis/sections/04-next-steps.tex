@@ -72,24 +72,41 @@ state what it is, how it is computed, and what it is for.
           \mathrm{MSD}(t)=\big\langle\,|\mathbf{r}(t)|^2\big\rangle,
         \end{equation}
         where $\langle\cdot\rangle$ is an average \emph{over flights} (an ensemble average) at
-        fixed $t$ -- no average over a moving time origin is involved here. Its growth law
+        fixed $t$. Its growth law
         $\mathrm{MSD}(t)\sim t^{\alpha}$ fixes the transport regime ($\alpha=1$ Brownian,
         $\alpha>1$ super-diffusive, $\alpha<1$ sub-diffusive; equivalently the Hurst exponent
         $H=\alpha/2$). This is the primary test for anomalous transport.
-  \item[Time- versus ensemble-averaged MSD.] The \emph{time-averaged} MSD is instead built
-        \emph{within} a single flight of duration $T$, by sliding the origin $t_0$ along the
-        track,
+  \item[Time- versus ensemble-averaged MSD.] For a single flight $k$ of duration $T_k$,
+        define the \emph{time-averaged} MSD at lag $t$ by sliding a window of width $t$
+        along that flight's trajectory $\mathbf{r}^{(k)}(\cdot)$ and averaging over all
+        starting times $t_0$ \emph{within that same flight},
         \begin{equation}
-          \overline{\delta^2}(t;T)=\frac{1}{T-t}\int_0^{T-t}
-          \big|\mathbf{r}(t_0+t)-\mathbf{r}(t_0)\big|^2\,\mathrm{d}t_0 .
+          \overline{\delta^2}^{(k)}(t)\equiv
+          \frac{1}{T_k-t}\int_0^{T_k-t}
+          \big|\mathbf{r}^{(k)}(t_0+t)-\mathbf{r}^{(k)}(t_0)\big|^2\,\mathrm{d}t_0 .
         \end{equation}
-        This is where the average over $t_0$ enters. A single flight is too short and noisy to
-        trust on its own -- hence the question is well posed only at the ensemble level: we
-        average the per-flight curves $\overline{\delta^2}(t;T)$ over many flights to obtain a
-        robust mean time-averaged MSD, and compare it with $\mathrm{MSD}(t)$. For an ergodic
-        process the two coincide at long $T$; a persistent gap, with $\overline{\delta^2}$
-        depending on $T$, signals \emph{ergodicity breaking} and aging -- hallmarks of
-        trapping (CTRW-type) dynamics -- and thus discriminates between candidate models.
+        This internal time average (over $t_0$ within flight $k$) is entirely distinct from
+        the ensemble average $\langle\cdots\rangle$ over different flights used in the MSD.
+        A single-flight curve $\overline{\delta^2}^{(k)}(t)$ is noisy; the quantity to compare
+        with the MSD is the ensemble mean of the time-averaged MSD,
+        \begin{equation}
+          \mathrm{TAMSD}(t,T)\equiv
+          \Big\langle\overline{\delta^2}^{(k)}(t)\Big\rangle_{T_k\approx T},
+        \end{equation}
+        i.e.\ $\overline{\delta^2}^{(k)}$ averaged over all flights of comparable duration $T$.
+        Two distinct signatures of \emph{ergodicity breaking} can then appear.
+        \emph{(i) Aging:} $\mathrm{TAMSD}(t,T)$ differs from $\mathrm{MSD}(t)$ and retains a
+        systematic dependence on $T$, so flights of different duration yield different curves.
+        \emph{(ii) Non-self-averaging:} even as $T\to\infty$ the individual values
+        $\overline{\delta^2}^{(k)}(t)$ do not concentrate around a single value -- their
+        distribution across trajectories remains broad and does not collapse to a delta function,
+        unlike what happens for an ergodic process. The $T$-dependence of
+        $\mathrm{TAMSD}(t,T)$ is a sufficient but not necessary condition for non-ergodicity:
+        some non-ergodic processes have a weak $T$-dependence while the non-self-averaging
+        signature persists. For this reason we monitor both the mean $\mathrm{TAMSD}(t,T)$
+        and the distribution of $\overline{\delta^2}^{(k)}(t)$ across trajectories at fixed
+        $t$ and $T$. The canonical example -- a CTRW with power-law waiting times -- is
+        worked out analytically in Appendix~\ref{app:ctrw}.
   \item[Propagator $P(\Delta\mathbf{r},t)$.] The probability distribution of the horizontal
         displacement vector $\Delta\mathbf{r}(t)=\mathbf{r}(t_0+t)-\mathbf{r}(t_0)$ at a fixed
         lag $t$ -- the propagator of the walk. Because each flight starts at the origin, the
@@ -155,7 +172,7 @@ state what it is, how it is computed, and what it is for.
         separates climbing from sinking and feeds the segmentation below.
 \end{description}
 
-\paragraph{Trajectory geometry.}
+\paragraph{\textcolor{red}{Trajectory geometry?????}}
 \begin{description}
   \item[Tortuosity.] How much a path winds, quantified by the ratio between the length actually
         travelled and the straight-line distance between its endpoints over the same interval

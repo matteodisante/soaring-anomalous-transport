@@ -1,0 +1,126 @@
+\chapter{CTRW with power-law waiting times: EA-MSD vs TA-MSD}
+\label{app:ctrw}
+
+This appendix derives the ensemble-averaged MSD (EA-MSD) and the time-averaged MSD
+(TA-MSD) for the continuous-time random walk (CTRW) with heavy-tailed waiting times, and
+shows explicitly that the two differ and that the TA-MSD depends on the observation time
+$T$.
+
+\section*{Model}
+
+A walker takes steps of length $l_i$ (iid, symmetric, $\langle l^2\rangle=\sigma^2<\infty$)
+separated by waiting times $\tau_i$ (iid) drawn from
+\begin{equation}
+  \psi(\tau)\sim \frac{\alpha\,\tau_0^\alpha}{\tau^{1+\alpha}}, \qquad \tau\to\infty,
+  \quad 0<\alpha<1 .
+\end{equation}
+The mean waiting time diverges ($\langle\tau\rangle=\infty$), so the walker is anomalously
+slow. Let $n(t)$ be the number of steps completed by time $t$, $T_n=\sum_{i=1}^n\tau_i$ the
+time of the $n$-th step, and
+\begin{equation}
+  x(t)=\sum_{i=1}^{n(t)} l_i
+\end{equation}
+the position at time $t$.
+
+\section*{Ensemble-averaged MSD}
+
+Since steps and waiting times are independent,
+\begin{equation}
+  \langle x^2(t)\rangle = \sigma^2\,\langle n(t)\rangle .
+\end{equation}
+For large $t$ the mean number of renewals in $[0,t]$ follows from the renewal equation and
+the Tauberian theorem applied to the Laplace transform of $\psi$. Because
+$\hat\psi(s)\equiv\int_0^\infty e^{-s\tau}\psi(\tau)\,\mathrm{d}\tau \simeq
+1-(\tau_0 s)^\alpha+\cdots$ for $s\to 0$ (a consequence of $\psi$ having a power-law
+tail with exponent $1+\alpha$), the renewal theorem gives
+\begin{equation}
+  \langle n(t)\rangle \sim \frac{t^\alpha}{\tau_0^\alpha\,\Gamma(1+\alpha)}, \qquad t\to\infty .
+\end{equation}
+Hence the \textbf{EA-MSD} grows sub-linearly,
+\begin{equation}
+  \mathrm{MSD}(t) = \langle x^2(t)\rangle
+  \sim \frac{\sigma^2}{\tau_0^\alpha\,\Gamma(1+\alpha)}\,t^\alpha
+  \equiv K_\alpha\,t^\alpha , \qquad 0<\alpha<1 .
+  \label{eq:ctrw-enmsd}
+\end{equation}
+The transport is sub-diffusive with Hurst exponent $H=\alpha/2<1/2$.
+
+\section*{Time-averaged MSD and its mean}
+
+For a trajectory of duration $T$, the time-averaged MSD at lag $t\ll T$ is
+\begin{equation}
+  \overline{\delta^2}(t;T)=\frac{1}{T-t}\int_0^{T-t}
+  \bigl[x(t_0+t)-x(t_0)\bigr]^2\,\mathrm{d}t_0 .
+\end{equation}
+Since $\langle[x(t_0+t)-x(t_0)]^2\rangle=\sigma^2\langle n(t_0+t)-n(t_0)\rangle$, the
+mean of the integrand equals $\sigma^2$ times the mean number of steps in any window of
+width $t$. The key observation is that the integral
+$\int_0^{T-t}[n(t_0+t)-n(t_0)]\,\mathrm{d}t_0$ counts, for each step $k$ that lands at
+time $T_k\in[0,T]$, the length of the $t$-wide sliding window that contains $T_k$. For
+$T_k$ deep in the interior ($t\le T_k\le T-t$) this length is exactly $t$; the contributions
+from the two boundary layers of width $t$ are negligible for $t\ll T$. Therefore
+\begin{equation}
+  \int_0^{T-t}\bigl[n(t_0+t)-n(t_0)\bigr]\,\mathrm{d}t_0 \approx t\,n(T),
+  \qquad t\ll T ,
+\end{equation}
+and
+\begin{equation}
+  \overline{\delta^2}(t;T)\approx\frac{\sigma^2\,t\,n(T)}{T} .
+  \label{eq:tamsd-approx}
+\end{equation}
+Taking the ensemble average and using $\langle n(T)\rangle\sim K_\alpha
+T^\alpha/\sigma^2$,
+\begin{equation}
+  \mathrm{TAMSD}(t,T)\equiv\langle\overline{\delta^2}(t;T)\rangle
+  \approx \sigma^2\,\frac{\langle n(T)\rangle}{T}\,t
+  \sim K_\alpha\,T^{\alpha-1}\,t .
+  \label{eq:ctrw-tamsd}
+\end{equation}
+Comparing \eqref{eq:ctrw-enmsd} and \eqref{eq:ctrw-tamsd}:
+\begin{itemize}
+  \item The EA-MSD scales as $t^\alpha$ (sub-diffusive), whereas the TAMSD scales as $t^1$
+        (linear in the lag) -- a qualitatively different dependence on $t$.
+  \item The TAMSD carries an explicit $T^{\alpha-1}$ prefactor: since $\alpha<1$ this is a
+        decreasing function of $T$, so longer flights yield smaller TAMSD at the same lag.
+        This $T$-dependence is the signature of \emph{aging}: the process has not forgotten
+        its past, and the answer depends on how long we have observed it.
+  \item The ratio $\mathrm{TAMSD}(t,T)/\mathrm{MSD}(t)\sim(t/T)^{1-\alpha}\to 0$ as
+        $T\to\infty$ at fixed $t$ -- the two observables diverge.
+\end{itemize}
+
+\section*{Distribution of the TA-MSD: non-self-averaging}
+
+Equation~\eqref{eq:tamsd-approx} shows that $\overline{\delta^2}(t;T)\approx\sigma^2 t\,
+n(T)/T$, so the randomness in the TA-MSD comes entirely from $n(T)$, the total number of
+steps in $[0,T]$. For a power-law renewal process the rescaled count
+\begin{equation}
+  \xi\equiv\frac{n(T)}{\langle n(T)\rangle}
+\end{equation}
+converges in distribution as $T\to\infty$ to a non-degenerate limit law: the
+\emph{Mittag-Leffler distribution} $M_\alpha$, whose probability density function is
+defined through its moments
+$\langle\xi^n\rangle=n!\,\Gamma(1+\alpha)^n/\Gamma(1+n\alpha)$.
+This is a broad, non-Gaussian distribution on $(0,\infty)$ that does \emph{not} concentrate
+around $\xi=1$ for $\alpha<1$: different trajectories give systematically different values
+of $\overline{\delta^2}(t;T)$ even in the limit $T\to\infty$. This is
+\emph{non-self-averaging}: the TA-MSD of a single trajectory is not a reliable estimate of
+any ensemble quantity, regardless of how long the trajectory is.
+
+Quantitatively, the ergodicity-breaking parameter
+\begin{equation}
+  \mathrm{EB}(t,T)\equiv
+  \frac{\langle[\overline{\delta^2}(t;T)]^2\rangle-\langle\overline{\delta^2}(t;T)\rangle^2}
+       {\langle\overline{\delta^2}(t;T)\rangle^2}
+  =\mathrm{Var}(\xi)\sim c_\alpha\, T^{-\alpha}\to 0
+\end{equation}
+does tend to zero (the variance of $\xi$ decreases with $T$), but the \emph{distribution}
+of $\xi$ converges to a non-trivial limit rather than to a delta function. This is why
+monitoring the full distribution of $\overline{\delta^2}^{(k)}(t)$ across trajectories --
+not just its mean -- is the proper diagnostic for non-ergodicity: the collapse (or
+non-collapse) of that distribution as $T$ grows tells us whether we are dealing with a
+self-averaging ergodic process or a non-self-averaging non-ergodic one.
+
+For comparison, an ordinary random walk ($\alpha=1$, finite mean waiting time) has
+$n(T)/\langle n(T)\rangle\to 1$ in probability as $T\to\infty$, so the distribution of the
+TA-MSD collapses to a delta function, $\overline{\delta^2}(t;T)\to\mathrm{MSD}(t)$ almost
+surely, and the process is ergodic.
