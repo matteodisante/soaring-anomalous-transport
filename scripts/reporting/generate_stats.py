@@ -101,7 +101,7 @@ def _write_table(rows: list[dict[str, str]]) -> None:
 def main() -> int:
     """Generate both LaTeX files; return a process exit code."""
     if not CSV_PATH.is_file():
-        raise SystemExit(f"Missing {CSV_PATH}. Refresh it with 'soaring-ffvl build-catalog'.")
+        raise SystemExit(f"Missing {CSV_PATH}. Refresh it with 'soaring-para build-catalog'.")
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     rows = _read_rows()
     _write_macros(rows)

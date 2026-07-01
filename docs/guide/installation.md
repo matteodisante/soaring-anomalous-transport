@@ -13,7 +13,8 @@ uv sync --all-extras        # creates .venv, installs the package + [dev] and [d
 Commands are run with `uv run …` (or by activating `.venv`):
 
 ```bash
-uv run soaring-ffvl --help
+uv run soaring-para --help    # paraglider downloader
+uv run soaring-delta --help   # hang-glider downloader
 ```
 
 ## With venv + pip
@@ -26,11 +27,12 @@ pip install -e ".[dev,docs]"
 
 ## Dependency groups
 
-| Group  | Purpose |
-|--------|---------|
-| _core_ | `curl_cffi`, `pyyaml`, `pandas`, `tqdm` — data acquisition |
-| `dev`  | `pytest`, `ruff`, `mypy`, `interrogate` — development and quality |
-| `docs` | `mkdocs-material`, `mkdocstrings`, … — this documentation |
+| Group      | Purpose |
+|-----------|---------|
+| _core_    | `curl_cffi`, `pyyaml`, `pandas`, `tqdm` — data acquisition |
+| `dev`     | `pytest`, `ruff`, `mypy`, `interrogate` — development and quality |
+| `docs`    | `mkdocs-material`, `mkdocstrings`, … — this documentation |
+| `analysis`| `matplotlib` — preprocessing diagnostics figures |
 
 ## Quick check
 

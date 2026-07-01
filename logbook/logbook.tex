@@ -39,11 +39,10 @@ the narrative notes are written by hand.}
 
 \section{Narrative notes}
 
-\paragraph{2026-06 --- Data acquisition complete.}
-The full FFVL CFD archive (seasons 1999--2000 to 2025--2026) has been scraped: about
-203{,}000 flight records, of which $\sim$186{,}000 carry a GPS track. All
-186{,}052 available tracks were downloaded. This is the \emph{first} source; data
-collection is ongoing (XContest, and possibly other sites, via the same scraping approach).
+\paragraph{2026-06 --- Paraglider data acquisition complete.}
+The full FFVL paraglider CFD archive (\texttt{parapente.ffvl.fr}, seasons 1999--2000 to
+2025--2026) has been scraped: about 203{,}000 flight records, of which $\sim$186{,}000
+carry a GPS track. All 186{,}052 available tracks were downloaded.
 \emph{What worked:} impersonating a Chrome TLS fingerprint (\texttt{curl\_cffi}) reliably
 passes the FFVL Cloudflare challenge; the resumable, atomic, validated download survived
 many interruptions without corruption.
@@ -57,15 +56,28 @@ file; a \texttt{clean} step removes them.
 A full on-disk re-scan (\texttt{verify}) confirmed that all 186{,}052 downloaded
 files are structurally valid IGC: no truncated files, no leftover \texttt{.part}, no read
 errors. The verification logic was promoted from a throwaway script to a first-class
-\texttt{soaring-ffvl verify} subcommand (reusing the download-time validator), with tests.
+\texttt{soaring-para verify} subcommand (reusing the download-time validator), with tests.
 
 \paragraph{2026-06 --- Robustness of the data path.}
 The external disk remounted under a different name (\texttt{HDD\_DISANTE} $\to$
 \texttt{SSD\_DISANTE}), which would have silently broken a hard-coded path. Fix: removed
-every machine-specific path from the repo (placeholder + \texttt{SOARING\_FFVL\_DATA\_ROOT}
+every machine-specific path from the repo (placeholder + \texttt{SOARING\_PARA\_DATA\_ROOT}
 environment variable) and added a start-up guard that aborts with a clear, actionable
 message when \texttt{data\_root} is unset/unmounted --- and verified that \texttt{/Volumes}
 is not user-writable, so a wrong path can never cause a silent download to the wrong place.
+
+\paragraph{2026-07 --- Hang-glider data acquired; naming corrected.}
+The hang-glider CFD (\texttt{delta.ffvl.fr}, seasons 2001--2002 to 2025--2026) was added
+as a second source. The acquisition code (\texttt{soaring.acquisition.ffvl}) is shared; a
+second CLI entry point \texttt{soaring-delta} (config \texttt{delta\_download.yaml}, env
+var \texttt{SOARING\_DELTA\_DATA\_ROOT}) drives it. Data: $\sim$9{,}300 flights,
+6{,}716 tracks downloaded, 30 failures (broken server-side links, same pattern as
+paragliders). Stored on the SSD at \texttt{/Volumes/SSD\_DISANTE/hang\_gliders/delta\_cfd\_igc/}.
+At the same time the paraglider CLI was renamed from the generic \texttt{soaring-ffvl} to
+\texttt{soaring-para} (and \texttt{SOARING\_FFVL\_DATA\_ROOT} $\to$
+\texttt{SOARING\_PARA\_DATA\_ROOT}), and the config was renamed from
+\texttt{ffvl\_download.yaml} to \texttt{para\_download.yaml}, to avoid ambiguity now that
+both sources are present.
 
 \paragraph{2026-06 --- Documentation.}
 Project docs are built with MkDocs and published on GitHub Pages. Initially deployed with
@@ -84,10 +96,11 @@ is to analyse the data \emph{in parallel} with studying the segmentation, since 
 observables can be built before any phase splitting.
 
 \begin{itemize}
-  \item \textbf{Data sources.} Extend collection beyond FFVL (XContest, possibly other
-        sites) via the same scraping approach, merging sources into one catalog and
+  \item \textbf{Data sources.} FFVL paraglider and hang-glider CFD data are collected.
+        Build the hang-glider catalog (\texttt{soaring-delta build-catalog}). Extend to
+        further sources (XContest, possibly others), merging into one catalog and
         stratifying by source. Refresh \texttt{data/seasons\_index.csv} via
-        \texttt{build-catalog} so the document statistics stay current.
+        \texttt{soaring-para build-catalog} so the document statistics stay current.
   \item \textbf{Pre-processing.} Parse the IGC \texttt{B} records into clean, resampled,
         quality-filtered trajectories in a local metric frame.
   \item \textbf{Whole-trajectory observables (no segmentation).} Immediate next step:

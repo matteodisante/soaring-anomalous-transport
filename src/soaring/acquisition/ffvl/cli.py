@@ -1,21 +1,33 @@
-"""Command-line interface ``soaring-ffvl``.
+"""Command-line interfaces ``soaring-para`` and ``soaring-delta``.
 
-Subcommands:
+Two entry points share this module:
+
+* ``soaring-para``  -- paraglider data from ``parapente.ffvl.fr`` (default config:
+  ``configs/para_download.yaml``, env var ``SOARING_PARA_DATA_ROOT``);
+* ``soaring-delta`` -- hang-glider data from ``delta.ffvl.fr`` (default config:
+  ``configs/delta_download.yaml``, env var ``SOARING_DELTA_DATA_ROOT``).
+
+Subcommands (identical for both):
 
 * ``fetch-xml``     -- downloads and archives the season XML exports;
 * ``download``      -- downloads `.igc` files (resumable);
 * ``build-catalog`` -- regenerates ``catalog.csv`` and ``seasons_index.csv``;
 * ``status``        -- per-season summary: declared / with-igc / downloaded;
-* ``verify``        -- integrity check of the `.igc` files already on disk.
+* ``verify``        -- integrity check of the `.igc` files already on disk;
+* ``clean``         -- removes ``._*`` sidecar files (macOS/exfat).
 
 Examples::
 
-    soaring-ffvl fetch-xml --seasons all
-    soaring-ffvl download --seasons 1999
-    soaring-ffvl download --seasons 2024 --limit 50 --workers 6
-    soaring-ffvl build-catalog
-    soaring-ffvl status
-    soaring-ffvl verify
+    soaring-para fetch-xml --seasons all
+    soaring-para download --seasons 1999
+    soaring-para download --seasons 2024 --limit 50 --workers 6
+    soaring-para build-catalog
+    soaring-para status
+    soaring-para verify
+
+    soaring-delta fetch-xml --seasons all
+    soaring-delta download --seasons all
+    soaring-delta build-catalog
 """
 
 from __future__ import annotations
@@ -278,7 +290,7 @@ def cmd_verify(cfg: Config, args: argparse.Namespace) -> int:
     return 1 if tot_fail else 0
 
 
-def build_parser(prog: str = "soaring-ffvl") -> argparse.ArgumentParser:
+def build_parser(prog: str = "soaring-para") -> argparse.ArgumentParser:
     """Builds the CLI argument parser.
 
     Args:
@@ -349,11 +361,11 @@ def build_parser(prog: str = "soaring-ffvl") -> argparse.ArgumentParser:
 def main(
     argv: list[str] | None = None,
     *,
-    prog: str = "soaring-ffvl",
+    prog: str = "soaring-para",
     default_config: str | None = None,
-    data_root_env: str = "SOARING_FFVL_DATA_ROOT",
+    data_root_env: str = "SOARING_PARA_DATA_ROOT",
 ) -> int:
-    """Entry point for the ``soaring-ffvl`` (and ``soaring-delta``) CLI.
+    """Entry point for the ``soaring-para`` (and ``soaring-delta``) CLI.
 
     Args:
         argv: Arguments (for testing); if ``None`` uses ``sys.argv``.

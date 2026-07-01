@@ -1,12 +1,13 @@
-# FFVL CFD downloader configuration.
+# FFVL CFD Parapente (paraglider) downloader configuration.
 # Schema and defaults: see src/soaring/acquisition/ffvl/config.py
+# Use the CLI entry point: soaring-para <subcommand>
 
 # Root directory for raw data (~65 GB) — keep it on the external disk.
 # The value below is only a PLACEHOLDER. The recommended, machine-independent way to set
 # it (so no path tied to your disk ends up committed) is the environment variable:
-#     export SOARING_FFVL_DATA_ROOT=/Volumes/<YOUR_DISK>/ffvl_cfd_igc
+#     export SOARING_PARA_DATA_ROOT=/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc
 # which always overrides this line. Otherwise, edit the placeholder below.
-data_root: /Volumes/<YOUR_DISK>/ffvl_cfd_igc
+data_root: /Volumes/<YOUR_DISK>/paragliders/ffvl_cfd_igc
 
 # Seasons to process. The year is the START year of the season:
 #   1999 -> season 1999-2000   |   2025 -> season 2025-2026
@@ -14,7 +15,7 @@ seasons:
   start: 1999
   end: 2025
 
-# Data source (normally does not need to be changed).
+# Data source — paraglider CFD on parapente.ffvl.fr.
 source:
   base_url: https://parapente.ffvl.fr
   list_path: /cfd/liste/{year}   # human-readable list page; {year} = season start year

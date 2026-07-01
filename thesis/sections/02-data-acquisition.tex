@@ -4,12 +4,15 @@
 \section{Source: the FFVL Coupe F\'ed\'erale de Distance}
 
 The data come from the \emph{Coupe F\'ed\'erale de Distance} (CFD), the cross-country
-competition run by the French free-flight federation (FFVL). Pilots upload their flights;
-each entry carries metadata (pilot, date, take-off and landing sites, scored distance,
-duration, glider) and, in most cases, the raw GPS tracklog in IGC format. The competition
-publishes one public list per season, addressable as a machine-readable XML export. A
-``season'' is identified by its starting year, e.g.\ the year~1999 denotes the
-1999--2000 season.
+competition run by the French free-flight federation (FFVL). The federation operates two
+parallel competitions on separate sites: one for paragliders
+(\texttt{parapente.ffvl.fr}) and one for hang gliders (\texttt{delta.ffvl.fr}). Pilots
+upload their flights; each entry carries metadata (pilot, date, take-off and landing sites,
+scored distance, duration, glider) and, in most cases, the raw GPS tracklog in IGC format.
+Both sites expose identical URL structure and machine-readable XML exports, so the same
+acquisition pipeline handles both. A ``season'' is identified by its starting year,
+e.g.\ the year~1999 denotes the 1999--2000 season; the paraglider archive starts in
+1999--2000 and the hang-glider archive in 2001--2002.
 
 \section{What is collected}
 
@@ -29,12 +32,13 @@ and it is the source of the statistics in Chapter~\ref{ch:dataset}.
 \section{Pipeline and tooling}
 
 Acquisition is performed by a dedicated, installable Python package
-(\texttt{soaring.acquisition.ffvl}) exposed through a command-line tool,
-\texttt{soaring-ffvl}, whose subcommands archive the season XMLs (\texttt{fetch-xml}),
-download the IGC files (\texttt{download}), rebuild the catalog and index
-(\texttt{build-catalog}), report per-season coverage (\texttt{status}), and check the
-integrity of the files on disk (\texttt{verify}). The design favours robustness for a
-long-running, large job:
+(\texttt{soaring.acquisition.ffvl}), exposed through two command-line tools:
+\texttt{soaring-para} for paraglider data and \texttt{soaring-delta} for hang-glider data.
+Both share the same subcommands: \texttt{fetch-xml} archives the season XMLs,
+\texttt{download} downloads the IGC files, \texttt{build-catalog} rebuilds the catalog
+and index, \texttt{status} reports per-season coverage, and \texttt{verify} checks the
+integrity of the files on disk.
+The design favours robustness for a long-running, large job:
 \begin{description}
   \item[Resumable downloads.] Files already present are skipped, so the job can be
         interrupted and resumed freely.
@@ -53,24 +57,28 @@ long-running, large job:
 \section{Reproducibility}
 
 The destination directory (\texttt{data\_root}) is not hard-coded: it is set per machine
-through an environment variable (\texttt{SOARING\_FFVL\_DATA\_ROOT}) or a configuration
-file shipping a placeholder, so no machine-specific path is committed. Every command
-validates this setting at start-up and aborts with an explicit message if the target is
-missing, rather than failing obscurely. Archiving the season XMLs verbatim keeps the full
-provenance: the catalog can always be rebuilt from them with \texttt{build-catalog}.
+through an environment variable (\texttt{SOARING\_PARA\_DATA\_ROOT} for paragliders,
+\texttt{SOARING\_DELTA\_DATA\_ROOT} for hang gliders) or a configuration file shipping a
+placeholder (\texttt{configs/para\_download.yaml} and \texttt{configs/delta\_download.yaml}),
+so no machine-specific path is committed. Every command validates this setting at start-up
+and aborts with an explicit message if the target is missing, rather than failing obscurely.
+Archiving the season XMLs verbatim keeps the full provenance: the catalog can always be
+rebuilt from them with \texttt{build-catalog}.
 
 \section{Integrity}
 
 Because the data sit on an external drive, the \texttt{verify} subcommand re-scans every
 downloaded file on disk, reusing the same IGC validation applied at download time, and
 flags truncated or invalid files, leftover \texttt{.part} fragments, and read errors. The
-FFVL collection has been verified in full: all \num{\StatDownloaded} downloaded tracklogs
-pass validation (Chapter~\ref{ch:dataset}).
+FFVL paraglider collection has been verified in full: all \num{\StatDownloaded} downloaded
+tracklogs pass validation (Chapter~\ref{ch:dataset}).
 
 \section{Further data sources}
-The FFVL CFD is the first and, at present, the primary source, but the dataset is not
-assumed to be final. Additional public soaring repositories are being pursued---notably
-XContest, and possibly others---to enlarge and diversify the sample. These repositories
-expose comparable flight metadata and IGC tracks, so they can be acquired with the same
-scraping approach and merged into the same catalog. The analysis is designed to treat the
-resulting collection uniformly, stratifying by source where this matters.
+The FFVL CFD is the primary source of the present study, but the dataset is not assumed to
+be final. The paraglider data (\textasciitilde203\,000 flights, \textasciitilde186\,000
+tracklogs) are the main analysis target; the hang-glider data (\textasciitilde9\,300
+flights, \textasciitilde6\,750 tracklogs) are collected in parallel and will be used for
+cross-type comparison. Additional public soaring repositories---notably XContest---are
+being pursued to enlarge and diversify the sample. These expose comparable flight metadata
+and IGC tracks and can be acquired with the same scraping approach and merged into the same
+catalog.

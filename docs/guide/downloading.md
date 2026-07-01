@@ -1,49 +1,47 @@
 # Downloading the data
 
-Everything goes through the `soaring-ffvl` CLI.
+Two CLI tools share the same interface: `soaring-para` (paragliders) and `soaring-delta`
+(hang gliders). Everything below applies to both; replace the command name as needed.
 
 ## First: set `data_root` (required)
 
-`data_root` is where the raw data is written, and it **must point to the external disk**
-(the data is ~65 GB). The repository ships a **placeholder** value on purpose (so no path
-tied to a specific machine is committed), so you must set it before running anything.
+`data_root` is where the raw data is written and **must point to the external disk**. The
+repository ships **placeholder** values on purpose, so you must set it before running anything.
 
-The recommended way is the environment variable — it always overrides the config file and
-keeps your machine-specific path out of the repo:
+The recommended way is the environment variable — it always overrides the config file:
 
 ```bash
-export SOARING_FFVL_DATA_ROOT=/Volumes/<YOUR_DISK>/ffvl_cfd_igc
+# Paragliders
+export SOARING_PARA_DATA_ROOT=/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc
+
+# Hang gliders
+export SOARING_DELTA_DATA_ROOT=/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc
 ```
 
-Alternatively, edit `data_root` in
-[`configs/ffvl_download.yaml`](https://github.com/matteodisante/soaring-anomalous-transport).
+Alternatively, edit `data_root` in the corresponding config file:
+[`configs/para_download.yaml`](https://github.com/matteodisante/soaring-anomalous-transport)
+or [`configs/delta_download.yaml`](https://github.com/matteodisante/soaring-anomalous-transport).
 Either way, make sure the **external disk is mounted** first.
 
 !!! warning "If `data_root` is not set, the CLI stops immediately with a clear message"
     Every command checks `data_root` at startup. If it still points to the placeholder,
     to an **unmounted** disk, or to a disk that was **renamed**, the command aborts right
-    away with an explanation and the fix — *before* any download or write:
-
-    ```text
-    ERROR: data_root is not usable: /Volumes/<YOUR_DISK>/ffvl_cfd_igc
-    Its parent directory does not exist. Likely causes: the external disk is not
-    mounted, was renamed, or data_root is still the placeholder.
-    ...
-    ```
+    away with an explanation and the fix — *before* any download or write.
 
     This is safe by design: the macOS mount point `/Volumes` is not user-writable, so a
-    wrong path can never cause a silent download to the wrong place — it fails fast.
+    wrong path can never cause a silent download to the wrong place.
 
-## The four commands
+## The commands
 
-Run commands with `uv run` (or activate the venv first: `source .venv/bin/activate`,
-then use `soaring-ffvl ...` without the prefix).
+Run commands with `uv run` (or activate the venv first with `source .venv/bin/activate`).
 
 ```bash
-uv run soaring-ffvl fetch-xml --seasons all   # 1) archive the season XMLs (fast)
-uv run soaring-ffvl download  --seasons all   # 2) download .igc files (long, resumable)
-uv run soaring-ffvl build-catalog             # 3) generate catalog.csv + seasons_index.csv
-uv run soaring-ffvl status                    # 4) per-season summary
+# Replace soaring-para with soaring-delta for hang-glider data.
+uv run soaring-para fetch-xml --seasons all   # 1) archive the season XMLs (fast)
+uv run soaring-para download  --seasons all   # 2) download .igc files (long, resumable)
+uv run soaring-para build-catalog             # 3) generate catalog.csv + seasons_index.csv
+uv run soaring-para status                    # 4) per-season summary
+uv run soaring-para verify                    # 5) integrity check of .igc files on disk
 ```
 
 The `--seasons` argument accepts: `all`, a single year (`2014`), a range (`2010-2015`), or a
@@ -72,20 +70,19 @@ list (`2010,2012,2015`).
 
 ## `._*` files on exfat (macOS)
 
-On exfat HDDs, macOS creates a `._name` sidecar next to every file it writes. To prevent
+On exfat volumes, macOS creates a `._name` sidecar next to every file it writes. To prevent
 their accumulation, `download` and `fetch-xml` automatically run a cleanup (`dot_clean`) on
 completion. You can also clean manually at any time:
 
 ```bash
-uv run soaring-ffvl clean
+uv run soaring-para clean    # or soaring-delta clean
 ```
-
-(On non-macOS systems or without `dot_clean`, the cleanup is simply skipped.)
 
 ## Time and space estimates
 
-~186,000 files, ~342 KB average → **~65 GB**. With few workers, a few hours (resumable, so
-overnight is fine). The required space is well within the capacity of a ~1 TB HDD.
+| Source | Files | Avg size | Total |
+|--------|-------|----------|-------|
+| Paragliders (`soaring-para`) | ~186,000 | ~342 KB | ~65 GB |
+| Hang gliders (`soaring-delta`) | ~6,750 | ~200 KB | ~1–2 GB |
 
-Implementation details are in `soaring.acquisition.ffvl.download`
-(see [API Reference](../reference.md)).
+Implementation details: `soaring.acquisition.ffvl.download` (see [API Reference](../reference.md)).

@@ -11,8 +11,13 @@ Scheme: **`{date}_{flightID}.igc`**, e.g. `2000-00-00_20150770.igc`.
 The `flightID` is the unique flight key and always opens its page:
 
 ```text
+# Paraglider file:
 2000-00-00_20150770.igc   →   flight_id = 20150770
                           →   https://parapente.ffvl.fr/cfd/liste/vol/20150770
+
+# Hang-glider file (same scheme, different base URL):
+2014-07-15_99876.igc      →   flight_id = 99876
+                          →   https://delta.ffvl.fr/cfd/liste/vol/99876
 ```
 
 In code:
@@ -22,7 +27,10 @@ from soaring.acquisition.ffvl.naming import parse_igc_filename
 from soaring.acquisition.ffvl.seasons import flight_page_url
 
 date, flight_id = parse_igc_filename("2000-00-00_20150770.igc")
-print(flight_page_url(flight_id))   # → .../cfd/liste/vol/20150770
+# Paraglider base URL:
+print(flight_page_url(flight_id, base_url="https://parapente.ffvl.fr"))
+# Hang-glider base URL:
+print(flight_page_url(flight_id, base_url="https://delta.ffvl.fr"))
 ```
 
 ## 2. Full metadata: the catalog
@@ -35,14 +43,16 @@ the `local_path` column that links the flight to the physical file on disk.
 import pandas as pd
 from soaring.acquisition.ffvl.config import load_config
 
-cfg = load_config()  # resolves data_root from SOARING_FFVL_DATA_ROOT or the YAML
-cat = pd.read_csv(cfg.catalog_path)
+# Paragliders (default config + SOARING_PARA_DATA_ROOT):
+cfg = load_config()
+# Hang gliders:
+# from soaring.acquisition.ffvl.config import DEFAULT_DELTA_CONFIG_PATH
+# cfg = load_config(DEFAULT_DELTA_CONFIG_PATH, data_root_env="SOARING_DELTA_DATA_ROOT")
 
-# from flight_id to the full row
+cat = pd.read_csv(cfg.catalog_path)
 row = cat.loc[cat.flight_id == 20150770].iloc[0]
 print(row.pilot, row.distance_km, row.takeoff, row.flight_link)
 
-# selection for analysis + file paths to open
 flights = cat[(cat.downloaded) & (cat.distance_km > 50)]
 for p in flights.local_path:
     ...  # open the .igc and analyse it

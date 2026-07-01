@@ -14,7 +14,7 @@ import yaml
 
 # Default configuration file paths (repository root / configs/).
 _CONFIGS_DIR = Path(__file__).resolve().parents[4] / "configs"
-DEFAULT_CONFIG_PATH = _CONFIGS_DIR / "ffvl_download.yaml"
+DEFAULT_CONFIG_PATH = _CONFIGS_DIR / "para_download.yaml"
 DEFAULT_DELTA_CONFIG_PATH = _CONFIGS_DIR / "delta_download.yaml"
 
 
@@ -113,7 +113,7 @@ def _expand(path_str: str) -> Path:
 def load_config(
     path: str | os.PathLike[str] | None = None,
     *,
-    data_root_env: str = "SOARING_FFVL_DATA_ROOT",
+    data_root_env: str = "SOARING_PARA_DATA_ROOT",
 ) -> Config:
     """Loads the configuration from a YAML file.
 
@@ -123,7 +123,8 @@ def load_config(
     Args:
         path: Path to the YAML file. If ``None`` uses :data:`DEFAULT_CONFIG_PATH`.
         data_root_env: Name of the environment variable that overrides ``data_root``.
-            Use ``"SOARING_DELTA_DATA_ROOT"`` for the hang-glider downloader.
+            ``"SOARING_PARA_DATA_ROOT"`` for paragliders (default),
+            ``"SOARING_DELTA_DATA_ROOT"`` for hang gliders.
 
     Returns:
         The populated :class:`Config` object.
