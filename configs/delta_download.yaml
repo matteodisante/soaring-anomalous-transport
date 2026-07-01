@@ -5,14 +5,14 @@
 # Root directory for raw data — keep it on the external disk, separate from
 # the paraglider data (ffvl_cfd_igc/).
 # The recommended, machine-independent way to set it is the environment variable:
-#     export SOARING_DELTA_DATA_ROOT=/Volumes/<YOUR_DISK>/delta_cfd_igc
+#     export SOARING_DELTA_DATA_ROOT=/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc
 # which always overrides this line. Otherwise, edit the placeholder below.
-data_root: /Volumes/<YOUR_DISK>/delta_cfd_igc
+data_root: /Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc
 
 # Seasons to process. The year is the START year of the season:
-#   1999 -> season 1999-2000   |   2025 -> season 2025-2026
+#   2001 -> season 2001-2002   |   2025 -> season 2025-2026
 seasons:
-  start: 1999
+  start: 2001
   end: 2025
 
 # Data source — hang-glider CFD uses the same URL structure as the paraglider
