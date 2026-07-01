@@ -1,0 +1,32 @@
+# FFVL CFD Deltaplane (hang-glider) downloader configuration.
+# Schema and defaults: see src/soaring/acquisition/ffvl/config.py
+# Use the CLI entry point: soaring-delta <subcommand>
+
+# Root directory for raw data — keep it on the external disk, separate from
+# the paraglider data (ffvl_cfd_igc/).
+# The recommended, machine-independent way to set it is the environment variable:
+#     export SOARING_DELTA_DATA_ROOT=/Volumes/<YOUR_DISK>/delta_cfd_igc
+# which always overrides this line. Otherwise, edit the placeholder below.
+data_root: /Volumes/<YOUR_DISK>/delta_cfd_igc
+
+# Seasons to process. The year is the START year of the season:
+#   1999 -> season 1999-2000   |   2025 -> season 2025-2026
+seasons:
+  start: 1999
+  end: 2025
+
+# Data source — hang-glider CFD uses the same URL structure as the paraglider
+# site, only the base domain differs.
+source:
+  base_url: https://delta.ffvl.fr
+  list_path: /cfd/liste/{year}   # human-readable list page; {year} = season start year
+  xml_query: "?xml=1"            # appended to the list URL -> full XML export
+
+# Network settings and courtesy towards the FFVL server.
+http:
+  impersonate: chrome   # curl_cffi TLS fingerprint: bypasses the Cloudflare challenge
+  workers: 4            # parallel downloads (conservative: do not hammer the server)
+  timeout_s: 60         # per-request timeout
+  max_retries: 5        # attempts per file before recording it as failed
+  backoff_base_s: 2.0   # exponential backoff between attempts
+  min_delay_s: 0.05     # minimum pause (with jitter) between requests from the same worker

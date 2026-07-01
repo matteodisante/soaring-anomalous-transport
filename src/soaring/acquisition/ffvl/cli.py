@@ -29,7 +29,7 @@ import pandas as pd
 
 from . import catalog as catalog_mod
 from .catalog_xml import fetch_season_xml, load_season_records, season_xml_path
-from .config import Config, load_config
+from .config import Config, DEFAULT_DELTA_CONFIG_PATH, load_config
 from .download import download_seasons
 from .housekeeping import clean_appledouble
 from .http import Fetcher
@@ -60,7 +60,7 @@ def _resolve_seasons(cfg: Config, seasons_arg: str) -> list[int]:
     return parse_seasons_arg(seasons_arg, cfg.season_start, cfg.season_end)
 
 
-def _check_data_root(cfg: Config) -> None:
+def _check_data_root(cfg: Config, data_root_env: str = "SOARING_FFVL_DATA_ROOT") -> None:
     """Aborts early with a clear message if ``data_root`` is not usable.
 
     The committed config ships a placeholder and the real data lives on an external
@@ -72,6 +72,7 @@ def _check_data_root(cfg: Config) -> None:
 
     Args:
         cfg: Configuration.
+        data_root_env: Name of the environment variable that overrides ``data_root``.
 
     Raises:
         SystemExit: If the parent directory of ``data_root`` does not exist.
@@ -82,9 +83,8 @@ def _check_data_root(cfg: Config) -> None:
             "Its parent directory does not exist. Likely causes: the external disk is "
             "not mounted, was renamed, or data_root is still the placeholder.\n\n"
             "Set it (the environment variable always overrides the config file):\n"
-            "    export SOARING_FFVL_DATA_ROOT=/Volumes/<your-disk>/ffvl_cfd_igc\n"
-            "or edit 'data_root' in configs/ffvl_download.yaml, then make sure the "
-            "disk is mounted.\n"
+            f"    export {data_root_env}=/Volumes/<your-disk>/<data-dir>\n"
+            f"or edit 'data_root' in the config YAML, then make sure the disk is mounted.\n"
         )
 
 
@@ -278,14 +278,17 @@ def cmd_verify(cfg: Config, args: argparse.Namespace) -> int:
     return 1 if tot_fail else 0
 
 
-def build_parser() -> argparse.ArgumentParser:
+def build_parser(prog: str = "soaring-ffvl") -> argparse.ArgumentParser:
     """Builds the CLI argument parser.
+
+    Args:
+        prog: Program name shown in ``--help`` (``"soaring-ffvl"`` or ``"soaring-delta"``).
 
     Returns:
         The parser configured with all subcommands.
     """
     parser = argparse.ArgumentParser(
-        prog="soaring-ffvl",
+        prog=prog,
         description="Download of .igc tracks from the CFD FFVL.",
     )
     parser.add_argument(
@@ -343,8 +346,40 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
-    """Entry point for the ``soaring-ffvl`` CLI.
+def main(
+    argv: list[str] | None = None,
+    *,
+    prog: str = "soaring-ffvl",
+    default_config: str | None = None,
+    data_root_env: str = "SOARING_FFVL_DATA_ROOT",
+) -> int:
+    """Entry point for the ``soaring-ffvl`` (and ``soaring-delta``) CLI.
+
+    Args:
+        argv: Arguments (for testing); if ``None`` uses ``sys.argv``.
+        prog: Program name shown in ``--help``.
+        default_config: Path to the default configuration file; overridden by
+            ``--config`` on the command line. ``None`` falls back to
+            :data:`~.config.DEFAULT_CONFIG_PATH`.
+        data_root_env: Name of the environment variable that overrides ``data_root``.
+
+    Returns:
+        The process exit code.
+    """
+    parser = build_parser(prog=prog)
+    args = parser.parse_args(argv)
+    cfg = load_config(args.config or default_config, data_root_env=data_root_env)
+    _check_data_root(cfg, data_root_env=data_root_env)
+    _setup_logging(cfg)
+    logger.info("data_root = %s", cfg.data_root)
+    return int(args.func(cfg, args))
+
+
+def delta_main(argv: list[str] | None = None) -> int:
+    """Entry point for the ``soaring-delta`` CLI (hang-glider CFD data).
+
+    Identical to :func:`main` but defaults to ``configs/delta_download.yaml`` and
+    reads ``data_root`` from ``SOARING_DELTA_DATA_ROOT``.
 
     Args:
         argv: Arguments (for testing); if ``None`` uses ``sys.argv``.
@@ -352,13 +387,12 @@ def main(argv: list[str] | None = None) -> int:
     Returns:
         The process exit code.
     """
-    parser = build_parser()
-    args = parser.parse_args(argv)
-    cfg = load_config(args.config)
-    _check_data_root(cfg)
-    _setup_logging(cfg)
-    logger.info("data_root = %s", cfg.data_root)
-    return int(args.func(cfg, args))
+    return main(
+        argv,
+        prog="soaring-delta",
+        default_config=str(DEFAULT_DELTA_CONFIG_PATH),
+        data_root_env="SOARING_DELTA_DATA_ROOT",
+    )
 
 
 if __name__ == "__main__":

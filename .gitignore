@@ -27,10 +27,12 @@ site/
 
 # Dati grezzi: NON vanno mai nel repo (stanno sull'HDD esterno).
 # Qui versioniamo solo data/seasons_index.csv (piccolo indice dei link per stagione).
+# La stessa struttura vale per i deltaplanisti (data/delta/).
 /data/igc/
 /data/raw_xml/
 /data/logs/
 /data/catalog.csv
+/data/delta/
 *.igc
 
 # Tesi (documento PUBBLICO): teniamo i .tex, thesis/generated/*.tex e thesis/main.pdf;
