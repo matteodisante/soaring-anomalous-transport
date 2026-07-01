@@ -89,14 +89,20 @@ If isotropy fails, the two marginals $P(E(t)=x)$ and $P(N(t)=x)$ are analysed
 scaling exponents $H_E\neq H_N$ or equal exponents but different scaling functions signal
 geometrically anisotropic transport.
 
-\paragraph{Stationarity across seasons and glider types.}
+\paragraph{Compatibility across seasons and glider types.}
 The dataset spans more than two decades and three glider categories (paraglider, hang
-glider, sailplane) with very different kinematics. Before pooling all flights into a single
-ensemble one should check that the basic statistics are compatible. A lightweight check:
-compare the per-component variance $\langle E(t)^2\rangle$ as a function of $t$, stratified
-by season and by glider type. Systematic differences would indicate that the transport
-statistics are not universal -- which is itself a result -- and that the main analysis must
-be run separately per stratum rather than on the pooled dataset.
+glider, sailplane) with very different kinematics. Before treating all flights as draws from
+a single statistical process -- i.e.\ before computing ensemble averages over the full
+dataset -- one must check that the subpopulations are statistically compatible.
+
+A lightweight way to do this: for each stratum of interest (e.g.\ paragliders only,
+sailplanes only, or the flights of a single season), compute $\langle E(t)^2\rangle$ as a
+function of $t$ and overlay all the curves on the same plot. If they coincide, the
+transport statistics are compatible across strata and pooling is valid. If one category
+shows systematically larger (or differently shaped) growth -- sailplanes, for instance,
+cruise much faster than paragliders -- the strata must be analysed separately, and the
+agreement or disagreement is itself a scientific result about the universality of the
+transport regime across glider classes.
 
 \paragraph{Spatial coverage.}
 A map of take-off coordinates and displacement end-points at fixed $t$ reveals geographic
