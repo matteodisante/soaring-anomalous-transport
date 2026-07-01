@@ -76,37 +76,52 @@ state what it is, how it is computed, and what it is for.
         $\mathrm{MSD}(t)\sim t^{\alpha}$ fixes the transport regime ($\alpha=1$ Brownian,
         $\alpha>1$ super-diffusive, $\alpha<1$ sub-diffusive; equivalently the Hurst exponent
         $H=\alpha/2$). This is the primary test for anomalous transport.
-  \item[Time- versus ensemble-averaged MSD.] For a single flight $k$ of duration $T_k$,
-        define the \emph{time-averaged} MSD at lag $t$ by sliding a window of width $t$
-        along that flight's trajectory $\mathbf{r}^{(k)}(\cdot)$ and averaging over all
-        starting times $t_0$ \emph{within that same flight},
+  \item[Time-averaged MSD (TA-MSD).] A second MSD estimator is built entirely
+        \emph{within} a single flight. For flight $k$ of duration $T_k$, one slides a window
+        of width $t$ along the trajectory $\mathbf{r}^{(k)}$ and averages the squared
+        displacement over all starting times $t_0$ \emph{inside that flight}:
         \begin{equation}
-          \overline{\delta^2}^{(k)}(t)\equiv
+          \overline{\delta^2}^{(k)}(t)\;\equiv\;
           \frac{1}{T_k-t}\int_0^{T_k-t}
-          \big|\mathbf{r}^{(k)}(t_0+t)-\mathbf{r}^{(k)}(t_0)\big|^2\,\mathrm{d}t_0 .
+          \bigl|\mathbf{r}^{(k)}(t_0+t)-\mathbf{r}^{(k)}(t_0)\bigr|^2\,\mathrm{d}t_0 .
         \end{equation}
-        This internal time average (over $t_0$ within flight $k$) is entirely distinct from
-        the ensemble average $\langle\cdots\rangle$ over different flights used in the MSD.
-        A single-flight curve $\overline{\delta^2}^{(k)}(t)$ is noisy; the quantity to compare
-        with the MSD is the ensemble mean of the time-averaged MSD,
+        The average over $t_0$ here is a \emph{time} average internal to flight $k$; it has
+        nothing to do with the ensemble average $\langle\cdots\rangle$ over different flights
+        used in the MSD. Because a single-flight curve $\overline{\delta^2}^{(k)}(t)$ is
+        noisy, the operationally useful quantity is its mean over all flights of comparable
+        duration $T$:
         \begin{equation}
-          \mathrm{TAMSD}(t,T)\equiv
-          \Big\langle\overline{\delta^2}^{(k)}(t)\Big\rangle_{T_k\approx T},
+          \mathrm{TAMSD}(t,T)\;\equiv\;
+          \Bigl\langle\overline{\delta^2}^{(k)}(t)\Bigr\rangle_{T_k\approx T}.
         \end{equation}
-        i.e.\ $\overline{\delta^2}^{(k)}$ averaged over all flights of comparable duration $T$.
-        Two distinct signatures of \emph{ergodicity breaking} can then appear.
-        \emph{(i) Aging:} $\mathrm{TAMSD}(t,T)$ differs from $\mathrm{MSD}(t)$ and retains a
-        systematic dependence on $T$, so flights of different duration yield different curves.
-        \emph{(ii) Non-self-averaging:} even as $T\to\infty$ the individual values
-        $\overline{\delta^2}^{(k)}(t)$ do not concentrate around a single value -- their
-        distribution across trajectories remains broad and does not collapse to a delta function,
-        unlike what happens for an ergodic process. The $T$-dependence of
-        $\mathrm{TAMSD}(t,T)$ is a sufficient but not necessary condition for non-ergodicity:
-        some non-ergodic processes have a weak $T$-dependence while the non-self-averaging
-        signature persists. For this reason we monitor both the mean $\mathrm{TAMSD}(t,T)$
-        and the distribution of $\overline{\delta^2}^{(k)}(t)$ across trajectories at fixed
-        $t$ and $T$. The canonical example -- a CTRW with power-law waiting times -- is
-        worked out analytically in Appendix~\ref{app:ctrw}.
+
+        \smallskip
+        \textbf{Ergodic case.} For an ergodic process,
+        $\mathrm{TAMSD}(t,T)\to\mathrm{MSD}(t)$ as $T\to\infty$, independently of $T$, and
+        the individual values $\overline{\delta^2}^{(k)}(t)$ concentrate around the common
+        limit (the distribution collapses to a delta function).
+
+        \smallskip
+        \textbf{Non-ergodic case: two independent signatures.}
+        \begin{enumerate}[label=(\roman*)]
+          \item \emph{Aging.} $\mathrm{TAMSD}(t,T)$ differs from $\mathrm{MSD}(t)$ and
+                retains a systematic dependence on $T$: flights of different duration yield
+                different curves. This is a strong indicator of non-ergodicity, but it is
+                sufficient, not necessary -- some non-ergodic processes show only a weak
+                $T$-dependence.
+          \item \emph{Non-self-averaging.} The distribution of
+                $\overline{\delta^2}^{(k)}(t)$ across trajectories remains broad even as
+                $T\to\infty$: individual flights give systematically different TA-MSD values
+                and the distribution does not collapse. This is the more fundamental
+                signature: it persists even when aging is weak.
+        \end{enumerate}
+
+        \smallskip
+        We therefore monitor both $\mathrm{TAMSD}(t,T)$ and the full distribution of
+        $\overline{\delta^2}^{(k)}(t)$ across trajectories at fixed $t$ and $T$. The
+        canonical illustration -- a CTRW with power-law waiting times -- is worked out
+        analytically in Appendix~\ref{app:ctrw}, where both EA-MSD$\neq$TA-MSD and the
+        $T$-dependence are derived explicitly.
   \item[Propagator $P(\Delta\mathbf{r},t)$.] The probability distribution of the horizontal
         displacement vector $\Delta\mathbf{r}(t)=\mathbf{r}(t_0+t)-\mathbf{r}(t_0)$ at a fixed
         lag $t$ -- the propagator of the walk. Because each flight starts at the origin, the
