@@ -131,15 +131,13 @@ state what it is, how it is computed, and what it is for.
           P(\mathbf{x},t)\,\mathrm{d}^2x
           = \Pr\!\bigl(\mathbf{r}(t)\in[\mathbf{x},\,\mathbf{x}+\mathrm{d}\mathbf{x}]\bigr).
         \end{equation}
-        For a \emph{self-similar} process with exponent $H$ -- including ordinary Brownian
-        motion ($H=\tfrac{1}{2}$) as a special case -- the propagator obeys the scaling form
+        For a \emph{self-similar} process with exponent $H$ the propagator obeys the scaling form
         \begin{equation}
           P(\mathbf{x},t) = t^{-2H}\,G\!\left(\frac{\mathbf{x}}{t^H}\right),
           \label{eq:prop-scaling-2d}
         \end{equation}
         where $G:\mathbb{R}^2\to\mathbb{R}_{>0}$ is a time-independent scaling function
-        (normalised, $\int G\,\mathrm{d}^2u=1$). The single number $H$ controls the spread:
-        $\langle|\mathbf{r}(t)|^2\rangle\sim t^{2H}$, consistently with the MSD definition.
+        (normalised, $\int G\,\mathrm{d}^2u=1$). 
 
         In practice one works with the \textbf{one-dimensional marginal} obtained by
         projecting onto a single Cartesian component $x$,
@@ -161,9 +159,33 @@ state what it is, how it is computed, and what it is for.
         characterises ordinary diffusion, while heavy power-law or stretched-exponential tails
         signal anomalous transport.
 
-        The marginal $P(x,t)$ is the most practical object to estimate from data (use either
-        the East or the North component, or both for an isotropy check) and to collapse onto
-        the scaling form~\eqref{eq:marginal-scaling} by rescaling the axis by $t^H$.
+        The marginal $P(x,t)$ is the most practical object to estimate from data and to
+        collapse onto the scaling form~\eqref{eq:marginal-scaling} by rescaling the axis by
+        $t^H$.
+
+        \smallskip
+        \textbf{Isotropy is an assumption, not a given, and must be tested.}
+        Competition flights have preferred directions (race goal, orography, prevailing
+        winds), so isotropy may fail. Four complementary tests are available directly from
+        the data:
+        \begin{enumerate}[label=(\roman*)]
+          \item \emph{Variance ratio.} For an isotropic process
+                $\mathrm{Var}(E(t))=\mathrm{Var}(N(t))=\mathrm{MSD}(t)/2$ for all $t$.
+                The ratio $\mathrm{Var}(E(t))/\mathrm{Var}(N(t))$ should be identically $1$.
+          \item \emph{Marginal comparison.} The distributions $P(E(t)=x)$ and $P(N(t)=x)$
+                should coincide for all $t$; a Kolmogorov--Smirnov test provides a formal
+                check.
+          \item \emph{Cross-covariance.} For an isotropic process
+                $\mathrm{Cov}(E(t),N(t))=0$; a non-zero value signals a preferred direction.
+          \item \emph{PCA of the covariance matrix.} Diagonalise
+                $\Sigma(t)=\langle\mathbf{r}(t)\mathbf{r}(t)^\top\rangle$. The eigenvalue
+                ratio $\lambda_1(t)/\lambda_2(t)$ measures anisotropy ($=1$ if isotropic);
+                the eigenvectors reveal the dominant axis.
+        \end{enumerate}
+        If isotropy fails, the derivation above is no longer valid: the two components may
+        have different scaling functions or even different exponents. In that case one works
+        with each component separately, or rotates to the principal axes of $\Sigma(t)$
+        before applying the scaling collapse.
   \item[Probability of return to the origin.] The value of the propagator at its centre,
         $P_0(t)\equiv P(\Delta\mathbf{r}=\mathbf{0},t)$, i.e.\ the height of the peak. For a
         self-similar process it decays as a power law set by the same exponent,
