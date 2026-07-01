@@ -122,17 +122,48 @@ state what it is, how it is computed, and what it is for.
         canonical illustration -- a CTRW with power-law waiting times -- is worked out
         analytically in Appendix~\ref{app:ctrw}, where both EA-MSD$\neq$TA-MSD and the
         $T$-dependence are derived explicitly.
-  \item[Propagator $P(\Delta\mathbf{r},t)$.] The probability distribution of the horizontal
-        displacement vector $\Delta\mathbf{r}(t)=\mathbf{r}(t_0+t)-\mathbf{r}(t_0)$ at a fixed
-        lag $t$ -- the propagator of the walk. Because each flight starts at the origin, the
-        displacement from take-off coincides with the position, so the displacement and the
-        position distributions are the same object; the genuine choice is \emph{which}
-        projection to study. We will look at the one-dimensional marginal $P(\Delta x,t)$ of a
-        Cartesian component (cleanest for a scaling collapse) and at the radial distribution
-        $P(\rho,t)$ of $\rho=|\Delta\mathbf{r}|$. A self-similar, anomalous process obeys the
-        collapse $P(\Delta x,t)=t^{-H}\,F(\Delta x\,/\,t^{H})$; the shape of the scaling
-        function $F$ separates ordinary diffusion (Gaussian) from anomalous transport (heavy,
-        power-law or stretched tails).
+  \item[Propagator.] Since each flight starts at the origin,
+        $\mathbf{r}(0)=\mathbf{0}$, the position at time $t$ and the displacement from the
+        start coincide: $\mathbf{r}(t)=\mathbf{r}(t)-\mathbf{r}(0)$. We therefore define the
+        propagator as the probability density of the position vector $\mathbf{x}\in\mathbb{R}^2$
+        at time $t$,
+        \begin{equation}
+          P(\mathbf{x},t)\,\mathrm{d}^2x
+          = \Pr\!\bigl(\mathbf{r}(t)\in[\mathbf{x},\,\mathbf{x}+\mathrm{d}\mathbf{x}]\bigr).
+        \end{equation}
+        For a \emph{self-similar} process with exponent $H$ -- including ordinary Brownian
+        motion ($H=\tfrac{1}{2}$) as a special case -- the propagator obeys the scaling form
+        \begin{equation}
+          P(\mathbf{x},t) = t^{-2H}\,G\!\left(\frac{\mathbf{x}}{t^H}\right),
+          \label{eq:prop-scaling-2d}
+        \end{equation}
+        where $G:\mathbb{R}^2\to\mathbb{R}_{>0}$ is a time-independent scaling function
+        (normalised, $\int G\,\mathrm{d}^2u=1$). The single number $H$ controls the spread:
+        $\langle|\mathbf{r}(t)|^2\rangle\sim t^{2H}$, consistently with the MSD definition.
+
+        In practice one works with the \textbf{one-dimensional marginal} obtained by
+        projecting onto a single Cartesian component $x$,
+        \begin{equation}
+          P(x,t) \equiv \int_{-\infty}^{+\infty} P\!\left((x,y),t\right)\mathrm{d}y .
+        \end{equation}
+        Assuming the process is \emph{isotropic}, $G(\mathbf{u})=G(|\mathbf{u}|)$, the
+        integral can be evaluated by the substitution $y=t^H v$:
+        \begin{equation}
+          P(x,t) = t^{-2H}\int_{-\infty}^{+\infty}
+          G\!\left(\sqrt{\!\left(\tfrac{x}{t^H}\right)^{\!2}+v^2}\right)t^H\,\mathrm{d}v
+          = t^{-H}\,F\!\left(\frac{x}{t^H}\right),
+          \label{eq:marginal-scaling}
+        \end{equation}
+        where $F(u)\equiv\int_{-\infty}^{+\infty}G(\sqrt{u^2+v^2})\,\mathrm{d}v$ inherits
+        the normalisation $\int F\,\mathrm{d}u=1$ from $G$. The marginal therefore satisfies
+        the same scaling form as the 2D propagator, with the same exponent $H$ but in one
+        dimension. The shape of $F$ distinguishes transport regimes: a Gaussian $F$
+        characterises ordinary diffusion, while heavy power-law or stretched-exponential tails
+        signal anomalous transport.
+
+        The marginal $P(x,t)$ is the most practical object to estimate from data (use either
+        the East or the North component, or both for an isotropy check) and to collapse onto
+        the scaling form~\eqref{eq:marginal-scaling} by rescaling the axis by $t^H$.
   \item[Probability of return to the origin.] The value of the propagator at its centre,
         $P_0(t)\equiv P(\Delta\mathbf{r}=\mathbf{0},t)$, i.e.\ the height of the peak. For a
         self-similar process it decays as a power law set by the same exponent,
