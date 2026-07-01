@@ -13,31 +13,40 @@ output is a tidy, analysis-ready representation produced by a future
 \texttt{soaring.analysis} sub-package.
 
 \paragraph{Fix-level cleaning.}
-The goal is to remove individual fixes that are physically impossible or corrupted, without
-discarding whole flights. The criteria are applied in sequence, each removing fixes that
-survive all previous steps.
+Individual fixes that are physically impossible or corrupted are removed without discarding
+the whole flight. Table~\ref{tab:cleaning} collects the criteria and their nominal
+thresholds; the checks are applied in order, each acting only on the fixes that survived the
+previous ones.
 
-\begin{enumerate}[label=(\arabic*)]
-  \item \emph{Validity flag.} Drop any B record with validity code \texttt{V} (2-D fix,
-        no GPS altitude, degraded horizontal accuracy); retain only \texttt{A} (3-D fix).
-  \item \emph{Duplicate timestamps.} If two consecutive records share the same UTC second,
-        keep the first and discard the duplicate.
-  \item \emph{Altitude range.} Drop fixes with GPS altitude outside a physically plausible
-        range for soaring in France (e.g.\ $[-100,\,6000]$\,m); extreme values indicate
-        receiver faults.
-  \item \emph{Horizontal speed.} Compute the horizontal distance between consecutive valid
-        fixes divided by their time interval; if this implied speed exceeds a glider-class
-        maximum (e.g.\ $\sim\!120$\,m/s for a sailplane, $\sim\!50$\,m/s for a paraglider),
-        the later fix is a GPS jump and is removed.
-  \item \emph{Vertical speed.} Similarly, if the altitude difference between consecutive
-        fixes implies a vertical speed above a physical bound (e.g.\ $|w|>30$\,m/s), the
-        fix is discarded. This criterion depends on the chosen altitude channel and is one
-        more reason to make that choice explicit.
-  \item \emph{Time-gap flagging.} If the interval between two consecutive valid fixes
-        exceeds a threshold (e.g.\ 60\,s), the gap is flagged. Short gaps can be
-        interpolated; long ones split the trajectory into independent segments or disqualify
-        the flight from analyses that require continuity.
-\end{enumerate}
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}llp{5.6cm}@{}}
+\toprule
+Quantity & Reject / flag the fix when & Rationale \\
+\midrule
+Fix validity     & flag is \texttt{V}                             & 2-D fix / GNSS-altitude drop-out \\
+Duplicate time   & two fixes share the UTC second                & keep the first (logger double-write) \\
+GNSS altitude    & outside $[-100,\,6000]\,\si{\metre}$           & receiver fault \\
+Horizontal speed & $>\SI{40}{\metre\per\second}$ between consecutive fixes          & GPS position jump \\
+Vertical speed   & $|w|>\SI{10}{\metre\per\second}$              & beyond the soaring climb/sink range \\
+Time gap         & $>\SI{60}{\second}$ between consecutive fixes  & loss of temporal continuity \\
+\bottomrule
+\end{tabular}
+\caption{Fix-level cleaning criteria, applied in the order listed. The values are
+\emph{physical bounds}, fixed a priori and not tuned to the data; the speed bounds are for
+paragliders (the present dataset, Chapter~\ref{ch:dataset}) and scale up for the faster
+gliders of future sources. The vertical bound targets the soaring climb/sink regime and
+GNSS-altitude spikes and depends on the altitude channel used.}
+\label{tab:cleaning}
+\end{table}
+
+Two of these criteria carry subtleties a table cannot convey. The validity flag certifies
+the GNSS altitude, not the horizontal position (Chapter~\ref{ch:dataset}): a \texttt{V} fix
+is dropped only when the GNSS-altitude channel is in use, and is kept but marked when the
+barometric channel is used. And a time gap is not itself an error -- short gaps can be
+interpolated, whereas long ones split the trajectory into independent segments or disqualify
+the flight from analyses that require continuity.
 
 \paragraph{Trimming of ground phases.}
 The logger starts recording before take-off and stops after landing; the ground phases must
@@ -58,28 +67,65 @@ The guiding principle is that a criterion is justified only if the excluded flig
 \emph{corrupt} the analysis, not merely because they are unusual. Concretely:
 
 \begin{enumerate}[label=(\arabic*)]
-  \item \emph{Minimum number of valid fixes.} After cleaning, flights with fewer than a
-        minimum number of valid fixes (e.g.\ 200) cannot support reliable estimation of
-        velocity-derived quantities; they are excluded.
-  \item \emph{Minimum airborne duration.} The MSD at lag $t$ requires trajectories
-        of duration $T \gg t$. A minimum duration $T_{\min}$ is set relative to the maximum
-        lag of interest; it must be documented explicitly, as it determines which flights
-        contribute to each portion of the MSD curve. Note that $T_{\min}$ should not be set
-        so large as to exclude a majority of flights: the effective sample size decreases
-        with $T_{\min}$ and the surviving population becomes increasingly unrepresentative.
-  \item \emph{Minimum spatial extent.} Flights that remain within a very small area
-        (e.g.\ net displacement $< 1$\,km throughout) are likely tow flights, aborted
-        attempts, or data artifacts, and do not constitute soaring trajectories.
-  \item \emph{Glider type.} For stratified analysis by glider category (paraglider, hang
-        glider, sailplane), flights without a declared or recognisable type are excluded from
-        the category-specific sub-analyses but retained in the pooled analysis.
+  \item \emph{Minimum airborne duration.} $T_{\min}=\SI{1800}{\second}$ ($\SI{30}{\minute}$).
+        A cross-country flight must span many climb--glide cycles; shorter logs are sled runs
+        or aborted attempts. This cut retains \SI{99.5}{\percent} of the flights that carry a
+        recorded duration and lies on the flat part of the retention curve
+        (Section~\ref{sec:prelim}), so the outcome is insensitive to its exact value. It is
+        deliberately \emph{decoupled} from the maximum MSD lag: the ensemble at lag $t$
+        already uses only flights with $T>t$, and the $T$-dependence (aging) is diagnosed by
+        stratifying in $T$, so large-lag analyses restrict to the long-duration stratum
+        rather than raising this global cut.
+  \item \emph{Minimum number of valid fixes.} $\geq 200$ after cleaning. This guarantees
+        enough points for velocity- and curvature-derived quantities and, with the duration
+        cut, removes truncated tracks; it discards a negligible fraction here, the
+        track-length distribution being concentrated around $\sim\!10^4$ fixes
+        (Section~\ref{sec:prelim}).
+  \item \emph{Minimum spatial extent.} Net displacement (or bounding-box diagonal)
+        $\geq\SI{2}{\kilo\metre}$, computed from the cleaned track. This removes tows, ground
+        logs and non-flights. In the curated CFD it removes almost nothing --
+        \SI{99.9}{\percent} of declared distances exceed \SI{5}{\kilo\metre} -- but it will
+        matter for the less curated further sources.
+  \item \emph{Glider class.} The present dataset is entirely paragliders
+        (Chapter~\ref{ch:dataset}); for analyses stratified by performance class, flights
+        whose \texttt{aile\_class} cannot be normalised onto the certification ladder are
+        dropped from the class-resolved sub-analyses but kept in the pooled one.
+        Stratification by glider \emph{type} (paraglider / hang glider / sailplane) becomes
+        possible only once the other sources are added.
 \end{enumerate}
 
-All threshold values are \emph{analysis parameters}, not ground truths. A robustness check
--- repeating the main results (MSD exponent, distribution tails) with the thresholds varied
-within physically plausible ranges -- is part of the analysis and must be reported. If the
-conclusions are stable across reasonable threshold choices, the filtering is robust; if they
-are sensitive, the sensitivity must be disclosed and understood.
+These cuts are read off the flight catalog (\texttt{catalog.csv}, Chapter~\ref{ch:dataset}),
+whose relevant distributions are shown in Figure~\ref{fig:preproc} with the adopted
+thresholds marked. They are placed where they bind least: because the CFD is curated --
+pilots submit completed cross-country flights -- these distributions sit far above the
+thresholds, so the retained fraction is insensitive to the exact values (the
+minimum-duration cut lies on the flat part of the retention curve,
+Figure~\ref{fig:preproc}b) and the analysis need not be repeated for alternative choices.
+The declared metadata carry occasional gross outliers (a declared distance of thousands of
+kilometres, say), so all kinematic quantities are recomputed from the track and the declared
+fields serve only for coarse pre-filtering and provenance. The same diagnostics must be
+re-examined when the further, less curated sources are merged.
+
+\begin{figure}[t]
+  \centering
+  \IfFileExists{generated/preproc_diagnostics.pdf}{%
+    \includegraphics[width=\linewidth]{generated/preproc_diagnostics}%
+  }{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/generate\_preproc\_figure.py} from \texttt{data/catalog.csv}
+    (not versioned). Run it to render this figure.}}%
+  }
+  \caption{Catalog diagnostics behind the flight-level filtering thresholds, computed from
+  \texttt{data/catalog.csv} (\num{\StatTotalFlights} flights). (a)~Flight-duration
+  distribution and (b)~fraction of flights retained versus the minimum-duration cut
+  $T_{\min}$: the adopted $T_{\min}=\SI{30}{\minute}$ lies on the flat part of the curve
+  (\SI{99.5}{\percent} retained). (c)~Declared cross-country distance, a proxy for spatial
+  extent, with the \SI{2}{\kilo\metre} cut. (d)~Approximate track length (file size over
+  ${\sim}40$ bytes) with the 200-fix cut. Dashed lines mark the adopted thresholds;
+  durations are the declared values (available for \SI{86}{\percent} of flights), and the
+  true fix count and extent will be recomputed from the tracks.}
+  \label{fig:preproc}
+\end{figure}
 
 \paragraph{Resampling to a common cadence.}
 After filtering, the surviving trajectories are resampled to a uniform time grid to absorb
@@ -144,7 +190,10 @@ For each flight record: duration $T$, total horizontal path length, number of GP
 inferred sampling rate (from the median inter-fix interval). Their ensemble distributions
 inform the resampling cadence (the common resolution after regularisation must be coarser
 than the slowest device), identify outliers to flag or exclude, and characterise what the
-dataset actually contains before any aggregate statistic is formed.
+dataset actually contains before any aggregate statistic is formed. In the present data these
+distributions are what fixes the flight-level cuts of the previous section: durations are
+centred on a few hours with very few flights below \SI{30}{\minute}, and track lengths on
+$\sim\!10^4$ fixes, so the cuts fall in an essentially empty tail.
 
 \paragraph{Isotropy check.}
 The scaling of the 1D marginal propagator (Section~\ref{sec:obs-global}) requires the
@@ -163,20 +212,21 @@ If isotropy fails, the two marginals $P(E(t)=x)$ and $P(N(t)=x)$ are analysed
 scaling exponents $H_E\neq H_N$ or equal exponents but different scaling functions signal
 geometrically anisotropic transport.
 
-\paragraph{Compatibility across seasons and glider types.}
-The dataset spans more than two decades and three glider categories (paraglider, hang
-glider, sailplane) with very different kinematics. Before treating all flights as draws from
-a single statistical process -- i.e.\ before computing ensemble averages over the full
-dataset -- one must check that the subpopulations are statistically compatible.
+\paragraph{Compatibility across strata.}
+The dataset spans more than two decades and a range of paraglider performance classes
+(Chapter~\ref{ch:dataset}), from recreational EN\,A/B wings to CCC racing wings, whose
+kinematics differ substantially; once further sources are added it will also span glider
+types. Before treating all flights as draws from a single statistical process -- i.e.\
+before computing ensemble averages over the pooled dataset -- the subpopulations must be
+checked for statistical compatibility.
 
-A lightweight way to do this: for each stratum of interest (e.g.\ paragliders only,
-sailplanes only, or the flights of a single season), compute $\langle E(t)^2\rangle$ as a
-function of $t$ and overlay all the curves on the same plot. If they coincide, the
-transport statistics are compatible across strata and pooling is valid. If one category
-shows systematically larger (or differently shaped) growth -- sailplanes, for instance,
-cruise much faster than paragliders -- the strata must be analysed separately, and the
-agreement or disagreement is itself a scientific result about the universality of the
-transport regime across glider classes.
+A lightweight way to do this: for each stratum (e.g.\ a single wing class, or the flights
+of a single season) compute the per-component displacement variance $\langle E(t)^2\rangle$
+as a function of the elapsed time $t$ and overlay the curves on one plot. If they coincide,
+the transport statistics are compatible and pooling is justified. If one stratum grows
+systematically faster or with a different shape -- competition wings, say, cover ground
+faster than recreational ones -- the strata must be analysed separately, and that difference
+is itself a result about the universality of the transport regime.
 
 \paragraph{Spatial coverage.}
 A map of take-off coordinates and displacement end-points at fixed $t$ reveals geographic
@@ -292,7 +342,7 @@ state what it is, how it is computed, and what it is for.
         scaling collapse consists in plotting $t^H P(x,t)$ against $x/t^H$ for several
         values of $t$: all curves should fall on the single function $F$.
   \item[Probability of return to the origin.] The value of the propagator at its centre,
-        $P_0(t)\equiv P(\Delta\mathbf{r}=\mathbf{0},t)$, i.e.\ the height of the peak. For a
+        $P_0(t)\equiv P(\mathbf{0},t)$, i.e.\ the height of the peak. For a
         self-similar process it decays as a power law set by the same exponent,
         $P_0(t)\sim t^{-dH}$ in $d$ dimensions ($t^{-2H}$ in the plane, $t^{-H}$ for a single
         component). It therefore yields $H$ from the \emph{bulk} of the distribution rather
@@ -302,24 +352,26 @@ state what it is, how it is computed, and what it is for.
         itself informative, pointing to multi-scaling. (This is the route Mantegna and Stanley
         used to read off the index of L\'evy-like walks.)
   \item[Non-Gaussianity.] How far the propagator departs from a Gaussian, measured by the
-        non-Gaussian parameter, in the plane
+        non-Gaussian parameter (in the plane)
         \begin{equation}
-          \alpha_2(t)=\frac{\big\langle|\Delta\mathbf{r}(t)|^4\big\rangle}
-          {2\,\big\langle|\Delta\mathbf{r}(t)|^2\big\rangle^{2}}-1 ,
+          \alpha_2(t)=\frac{\big\langle|\mathbf{r}(t)|^4\big\rangle}
+          {2\,\big\langle|\mathbf{r}(t)|^2\big\rangle^{2}}-1 ,
         \end{equation}
-        which vanishes for a Gaussian and is positive for heavier-than-Gaussian tails. It is
-        evaluated on $P(\Delta\mathbf{r},t)$ \emph{at each lag} $t$: it is therefore a function
-        of $t$, one number per lag, tracing a curve $\alpha_2(t)$ that pinpoints the time
-        scales over which the displacement statistics are non-Gaussian (typically large at the
-        intermediate lags where occasional long glides dominate, and decaying if a
-        central-limit-type Gaussianisation sets in at long lags). It is a compact summary of
-        the shape of $P$, not a substitute for it.
+        which vanishes for a Gaussian and is positive for heavier-than-Gaussian tails (the
+        factor $2$ is the two-dimensional Gaussian value of
+        $\langle|\mathbf{r}|^4\rangle/\langle|\mathbf{r}|^2\rangle^{2}$). Evaluated on the
+        propagator $P(\mathbf{x},t)$ at each elapsed time $t$, it is a function of $t$ -- one
+        number per time -- tracing a curve $\alpha_2(t)$ that pinpoints the scales over which
+        the displacement statistics are non-Gaussian (typically largest at intermediate
+        times, where occasional long glides dominate, and decaying if a central-limit
+        Gaussianisation sets in at long times). It summarises the shape of $P$, it does not
+        replace it.
   \item[Velocity autocorrelation $C(\tau)$.]
         $C(\tau)=\langle\mathbf{v}(t_0)\cdot\mathbf{v}(t_0+\tau)\rangle$ (often normalised by
         $C(0)$) is the dot product of the velocity with its later self: it is large and
         positive when, a delay $\tau$ later, the motion still points the same way, so the
         scale over which $C(\tau)$ decays \emph{is} the memory time of the heading. It controls
-        the MSD through the Green--Kubo relation
+        the MSD through the Green--Kubo relation (for a stationary velocity)
         $\mathrm{MSD}(t)=2\!\int_0^{t}\!(t-\tau)\,C(\tau)\,\mathrm{d}\tau$: a slowly decaying
         $C$ produces a faster-growing MSD. We do not presume the motion ends in ordinary
         diffusion; rather, the functional form of $C(\tau)$ is the diagnostic -- an integrable
@@ -345,7 +397,7 @@ state what it is, how it is computed, and what it is for.
         separates climbing from sinking and feeds the segmentation below.
 \end{description}
 
-\paragraph{\textcolor{red}{Trajectory geometry?????}}
+\paragraph{\textcolor{red}{Trajectory geometry.}}
 \begin{description}
   \item[Tortuosity.] How much a path winds, quantified by the ratio between the length actually
         travelled and the straight-line distance between its endpoints over the same interval
@@ -473,7 +525,11 @@ memoryless model is admissible at all.
 \section{Reproducing the reference results}
 A first objective of the analysis, undertaken once the segmentation is in place, is to check
 whether the enlarged---and eventually multi-source---dataset reproduces the quantitative and
-graphical results of Vilpellet et al.~\cite{vilpellet2026}. Two figures are the main targets.
+graphical results of Vilpellet et al.~\cite{vilpellet2026}. Because that study covers
+paragliders, hang gliders and sailplanes whereas the present data are paragliders only
+(Chapter~\ref{ch:dataset}), the immediate comparison is with its paraglider results; the
+hang-glider and sailplane figures become reachable once the corresponding sources are added.
+Two figures are the main targets.
 
 The first is the per-phase conditional MSD (their Fig.~3): the transition segments should
 stay ballistic ($\alpha=2$, i.e.\ $H=1$) across time lags; the search phase should be

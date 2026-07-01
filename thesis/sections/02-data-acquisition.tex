@@ -30,11 +30,11 @@ and it is the source of the statistics in Chapter~\ref{ch:dataset}.
 
 Acquisition is performed by a dedicated, installable Python package
 (\texttt{soaring.acquisition.ffvl}) exposed through a command-line tool,
-\texttt{soaring-ffvl}, with five subcommands:
-\texttt{fetch-xml} (archive the season XMLs), \texttt{download} (fetch the IGC files),
-\texttt{build-catalog} (regenerate the catalog and the index), \texttt{status}
-(per-season coverage), and \texttt{verify} (on-disk integrity check). The design favours
-robustness for a long-running, large job:
+\texttt{soaring-ffvl}, whose subcommands archive the season XMLs (\texttt{fetch-xml}),
+download the IGC files (\texttt{download}), rebuild the catalog and index
+(\texttt{build-catalog}), report per-season coverage (\texttt{status}), and check the
+integrity of the files on disk (\texttt{verify}). The design favours robustness for a
+long-running, large job:
 \begin{description}
   \item[Resumable downloads.] Files already present are skipped, so the job can be
         interrupted and resumed freely.

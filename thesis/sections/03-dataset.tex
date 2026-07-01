@@ -3,45 +3,105 @@
 
 \section{The IGC tracklog format}
 
-A flight track is stored as an IGC file, the standard plain-text format of the
-F\'ed\'eration A\'eronautique Internationale for flight recorders. Each line is a typed
-record whose \emph{type is fixed by its first letter}, a code defined by the standard rather
-than chosen by the logger. The relevant codes are:
+A flight track is stored as an \emph{IGC file}, the plain-text format defined by the
+FAI/IGC Technical Specification for IGC-approved GNSS flight recorders~\cite{fai_igc_spec};
+it is the standard output of the recorders used in free-flight competitions. Its layout is
+therefore fixed by that standard, not inferred from the files, and the acquisition
+validates every downloaded track against it (Chapter~\ref{ch:acquisition}), so conformance
+is checked across the whole archive.
+
+Each line is a \emph{record} whose type is set by its first character -- a code assigned by
+the standard, not chosen by the logger. The records relevant here are:
 \begin{description}
-  \item[\texttt{A}] the logger/manufacturer identifier (first record);
-  \item[\texttt{H}] header records (date of flight, pilot, glider, datum, \dots);
-  \item[\texttt{I}] the declaration of optional extra fields appended to each fix;
-  \item[\texttt{B}] the GPS fixes -- the core of the file; ``\texttt{B}'' is simply the code
-        the standard reserves for fix records.
+  \item[\texttt{A}] the flight-recorder/manufacturer identifier (first line of the file);
+  \item[\texttt{H}] header records (flight date, pilot, glider, geodetic datum, \dots);
+  \item[\texttt{I}] the declaration of the optional extra fields appended to every fix;
+  \item[\texttt{B}] the GPS fixes -- the body of the file.
 \end{description}
-A \texttt{B} record packs its fields by fixed character position. For example,
+A \texttt{B} record stores its fields at fixed character positions. Decoded against the
+standard, the example
 \begin{center}
 \texttt{B\,094329\,4933044N\,00005193E\,A\,00095\,00149}
 \end{center}
-reads as: UTC time \texttt{09:43:29}; latitude $49^\circ33.044'$N; longitude
-$000^\circ05.193'$E; a fix-validity flag (\texttt{A} for a valid 3-D fix, \texttt{V} for a
-2-D one); and then \emph{two} altitudes, the barometric (pressure) altitude
-(\SI{95}{\metre} here) and the GNSS/GPS altitude (\SI{149}{\metre}). The two differ in both
-reference and noise -- the barometric value is referenced to a standard-atmosphere pressure
-setting and is smooth, the GPS value is absolute (relative to the WGS84 geoid) but
-vertically noisier -- and on older loggers one of them may be missing (recorded as zero).
-Which altitude to use, and how, is left open and will be decided at the analysis stage
-(Chapter~\ref{ch:next-steps}), because the vertical velocity derived from it drives the
-phase segmentation.
+reads as: UTC time \texttt{09:43:29}; latitude $49^\circ33.044'$\,N and longitude
+$000^\circ05.193'$\,E on the WGS84 datum; a fix-validity flag; and \emph{two} altitudes in
+metres -- the barometric (pressure) altitude (\SI{95}{\metre}) followed by the GNSS
+altitude (\SI{149}{\metre}).
 
-The sequence of \texttt{B} records is therefore a time-stamped 3-D trajectory. The sampling
-period is typically a few seconds but is not guaranteed to be uniform and varies with the
-recording device -- a point the analysis stage must handle explicitly.
+The validity flag is fixed by the standard to two values and certifies the \emph{GNSS
+altitude} rather than the horizontal position: \texttt{A} marks a valid three-dimensional
+fix (usable GNSS altitude), whereas \texttt{V} marks a two-dimensional fix or a GNSS
+drop-out, in which case the standard requires the GNSS-altitude field to be written as
+zero. A \texttt{V} fix can thus still carry a usable latitude/longitude and a valid
+barometric altitude. The two altitude channels differ in reference and in noise -- the
+barometric value is referenced to the ICAO standard atmosphere and is smooth, the GNSS
+value is referenced to the WGS84 ellipsoid and is vertically noisier -- and on older
+loggers one channel may be absent (recorded as zero). Which altitude to use, and how, is
+left open and decided at the analysis stage (Chapter~\ref{ch:next-steps}), because the
+vertical velocity derived from it drives the phase segmentation.
 
-\section{The catalog}
+The sequence of \texttt{B} records is thus a time-stamped three-dimensional trajectory. The
+sampling period is typically a few seconds, is not guaranteed to be uniform, and varies
+across recording devices -- a point the analysis must handle explicitly.
 
-Two derived tables make the raw files usable. The \textbf{catalog}
-(\texttt{catalog.csv}) has one row per flight: the competition metadata plus a
-\texttt{local\_path} column linking the flight to its file on disk, so a flight can be
-traced to its track (and back, via the flight identifier embedded in the file name)
-without any external lookup. The \textbf{season index} (\texttt{seasons\_index.csv}),
-versioned in the repository, summarizes each season with the number of flights declared,
-the number carrying a GPS track, and the number actually downloaded.
+\section{Flight metadata and the catalog}
+
+Every flight in the season XML carries a set of metadata as record attributes, which the
+acquisition preserves. Beyond the identifiers and links, the fields used downstream are:
+the \textbf{date}; the \textbf{pilot} and \textbf{club}; the \textbf{take-off} and
+\textbf{landing} sites and the French \textbf{department}; the glider, given as both a model
+name (\texttt{aile}) and a class (\texttt{aile\_class}, Section~\ref{sec:glider}); and the
+competition quantities -- the \textbf{flight type} (the \emph{scoring} category: free
+distance, out-and-return, flat or FAI triangle, hike-and-fly, \dots), the scored
+\textbf{distance} and \textbf{points}, and, where present, the \textbf{duration} and average
+\textbf{speed}. The flight type is a scoring label and must not be read as a glider or
+manoeuvre type.
+
+From these, the pipeline builds a single derived table, the \textbf{catalog}
+(\texttt{catalog.csv}), with \emph{one row per flight} across all seasons: the metadata
+above plus a \texttt{local\_path} linking each flight to its track on disk and a
+\texttt{downloaded} flag. It is the working index of the project -- a flight can be traced
+to its file, and back (through the identifier embedded in the file name) to its metadata and
+public page, without any external lookup. A smaller \textbf{season index}
+(\texttt{seasons\_index.csv}), versioned in the repository, summarises each season by the
+number of flights declared, carrying a track, and downloaded; it is the source of the
+statistics below. Both tables are regenerated from the archived XMLs on demand
+(\texttt{build-catalog}).
+
+\section{Glider categories}
+\label{sec:glider}
+
+Soaring kinematics depend strongly on the aircraft, so the glider must be identifiable for
+any stratified analysis. Three broad categories exist, in increasing order of performance:
+\textbf{paragliders} (flexible canopy; slowest, glide ratio $\sim\!8$--$11$, tight turns),
+\textbf{hang gliders} (rigid-framed delta wing; faster, glide ratio $\sim\!10$--$15$), and
+\textbf{sailplanes} (rigid aircraft; fastest, glide ratio $\gtrsim\!25$). They differ
+several-fold in cruise speed and turn radius -- which is why the reference
+study~\cite{vilpellet2026} reports its transport statistics separately for each.
+
+In practice the category is set by the \emph{data source}, since the public databases are
+organised by discipline. The FFVL Coupe F\'ed\'erale de Distance is the cross-country
+competition for \emph{paragliders}: every flight in the present dataset is a paraglider
+flight. Hang gliders and sailplanes are collected by different federations and portals, so
+reproducing the reference paper's cross-category comparison requires the additional sources
+of Chapter~\ref{ch:acquisition}; within the present data the glider-type stratum is
+constant.
+
+Paragliders can still be stratified by \emph{performance class}, recorded in
+\texttt{aile\_class}. FFVL labels wings on the EN/AFNOR certification ladder -- EN\,A
+(\enquote{A ou 1}, most stable, recreational), EN\,B (\enquote{B ou 1-2}), EN\,C
+(\enquote{C ou 2}), EN\,D (\enquote{D ou 2-3}), the \enquote{CIVL Competition Class} (CCC)
+racing wings, plus tandem (\enquote{biplace}) and non-certified (\enquote{non
+homologu\'ee}) entries. The ladder tracks performance -- higher classes fly faster and
+flatter -- so it is the natural within-source stratification variable, playing the role
+that glider type plays across sources.
+
+Two caveats bear on any use of \texttt{aile\_class}. First, the field is not clean: in a
+minority of rows it contains a wing \emph{model} (e.g.\ \enquote{Enzo 3}, \enquote{Zeno})
+rather than a class, so it must be normalised onto the certification ladder -- using the
+model name where needed -- before it can serve as a stratum. Second, the class certifies the
+wing, not the pilot. Both points are handled at the pre-processing stage
+(Chapter~\ref{ch:next-steps}).
 
 \section{Coverage and statistics}
 
@@ -70,6 +130,9 @@ A few limitations are already known and will shape the analysis:
   \item \textbf{Heterogeneous logging.} Sampling rate, altitude source, and accuracy
         depend on the device; trajectories must be resampled and quality-filtered before
         any ensemble statistic is computed.
+  \item \textbf{Glider metadata.} All flights are paragliders (Section~\ref{sec:glider});
+        the class field \texttt{aile\_class} is occasionally filled with a wing model
+        instead of a class and must be normalised before it is used to stratify.
   \item \textbf{Incomplete dates.} Some historical entries have placeholder dates (e.g.\
         \texttt{0000-00-00}); these are kept but flagged.
 \end{itemize}

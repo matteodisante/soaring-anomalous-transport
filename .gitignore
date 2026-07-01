@@ -49,6 +49,11 @@ thesis/*.toc
 thesis/*.lof
 thesis/*.lot
 
+# Figure di diagnostica: generate in locale da scripts/reporting/generate_preproc_figure.py
+# (dipendono da data/catalog.csv, non versionato). NON committate; la tesi le include con
+# \IfFileExists, quindi compila comunque anche quando la figura non c'e'.
+thesis/generated/*.pdf
+
 # Logbook (documento PUBBLICO, come la tesi): teniamo i .tex, la timeline generata
 # e logbook.pdf; ignoriamo solo gli ausiliari di LaTeX.
 logbook/*.aux

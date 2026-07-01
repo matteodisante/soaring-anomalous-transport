@@ -34,6 +34,9 @@ docs = [
     "mkdocs-material>=9.5",
     "mkdocstrings[python]>=0.25",  # reference API generata dai docstring -> non marcisce
 ]
+analysis = [
+    "matplotlib>=3.7",  # figure di diagnostica (pre-processing); numpy/pandas sono gia' core
+]
 
 [project.scripts]
 soaring-ffvl = "soaring.acquisition.ffvl.cli:main"
