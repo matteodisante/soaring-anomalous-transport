@@ -57,6 +57,53 @@ clock reset to $t=0$ at take-off, so $t$ is the elapsed flight time. The horizon
 velocity is $\mathbf{v}(t)=\dot{\mathbf{r}}(t)$ and the horizontal displacement over a lag
 $t$ is $\Delta\mathbf{r}(t)=\mathbf{r}(t_0+t)-\mathbf{r}(t_0)$.
 
+\section{Preliminary characterization}
+\label{sec:prelim}
+Before the main transport analysis it is useful to run a set of lightweight checks that
+validate basic assumptions, reveal potential stratification needs, and characterize the
+dataset at the level of individual trajectories. These do not require segmentation and are
+conceptually simpler than the transport observables, but they are prerequisites for a
+well-founded analysis.
+
+\paragraph{Trajectory statistics.}
+For each flight record: duration $T$, total horizontal path length, number of GPS fixes, and
+inferred sampling rate (from the median inter-fix interval). Their ensemble distributions
+inform the resampling cadence (the common resolution after regularisation must be coarser
+than the slowest device), identify outliers to flag or exclude, and characterise what the
+dataset actually contains before any aggregate statistic is formed.
+
+\paragraph{Isotropy check.}
+The scaling of the 1D marginal propagator (Section~\ref{sec:obs-global}) requires the
+process to be isotropic. Competition flights have preferred directions (race goal,
+orography, prevailing winds), so isotropy must be tested rather than assumed.
+
+The primary test is the \textbf{per-component variance ratio}: for an isotropic process
+$\langle E(t)^2\rangle = \langle N(t)^2\rangle = \mathrm{MSD}(t)/2$ for all $t$, so the
+ratio $\langle E(t)^2\rangle / \langle N(t)^2\rangle$ should be identically $1$. Plotting
+it as a function of $t$ reveals both the degree and the scale-dependence of any anisotropy.
+A complementary check is a Kolmogorov--Smirnov test comparing the empirical distributions
+of $E(t)$ and $N(t)$ at a few selected lags.
+
+If isotropy fails, the two marginals $P(E(t)=x)$ and $P(N(t)=x)$ are analysed
+\emph{separately}: this is both the natural fallback and, in itself, informative -- unequal
+scaling exponents $H_E\neq H_N$ or equal exponents but different scaling functions signal
+geometrically anisotropic transport.
+
+\paragraph{Stationarity across seasons and glider types.}
+The dataset spans more than two decades and three glider categories (paraglider, hang
+glider, sailplane) with very different kinematics. Before pooling all flights into a single
+ensemble one should check that the basic statistics are compatible. A lightweight check:
+compare the per-component variance $\langle E(t)^2\rangle$ as a function of $t$, stratified
+by season and by glider type. Systematic differences would indicate that the transport
+statistics are not universal -- which is itself a result -- and that the main analysis must
+be run separately per stratum rather than on the pooled dataset.
+
+\paragraph{Spatial coverage.}
+A map of take-off coordinates and displacement end-points at fixed $t$ reveals geographic
+clustering (France has distinct orographic zones: Alps, Pyrenees, Massif Central, plains).
+If flights from mountainous terrain differ markedly from flatland flights, geographic
+stratification may be needed alongside temporal and aeronautical stratification.
+
 \section{Observables on the whole trajectory}
 \label{sec:obs-global}
 A first group of observables requires \emph{no} segmentation: it can be measured directly on
@@ -159,33 +206,11 @@ state what it is, how it is computed, and what it is for.
         characterises ordinary diffusion, while heavy power-law or stretched-exponential tails
         signal anomalous transport.
 
-        The marginal $P(x,t)$ is the most practical object to estimate from data and to
-        collapse onto the scaling form~\eqref{eq:marginal-scaling} by rescaling the axis by
-        $t^H$.
-
-        \smallskip
-        \textbf{Isotropy is an assumption, not a given, and must be tested.}
-        Competition flights have preferred directions (race goal, orography, prevailing
-        winds), so isotropy may fail. Four complementary tests are available directly from
-        the data:
-        \begin{enumerate}[label=(\roman*)]
-          \item \emph{Variance ratio.} For an isotropic process
-                $\mathrm{Var}(E(t))=\mathrm{Var}(N(t))=\mathrm{MSD}(t)/2$ for all $t$.
-                The ratio $\mathrm{Var}(E(t))/\mathrm{Var}(N(t))$ should be identically $1$.
-          \item \emph{Marginal comparison.} The distributions $P(E(t)=x)$ and $P(N(t)=x)$
-                should coincide for all $t$; a Kolmogorov--Smirnov test provides a formal
-                check.
-          \item \emph{Cross-covariance.} For an isotropic process
-                $\mathrm{Cov}(E(t),N(t))=0$; a non-zero value signals a preferred direction.
-          \item \emph{PCA of the covariance matrix.} Diagonalise
-                $\Sigma(t)=\langle\mathbf{r}(t)\mathbf{r}(t)^\top\rangle$. The eigenvalue
-                ratio $\lambda_1(t)/\lambda_2(t)$ measures anisotropy ($=1$ if isotropic);
-                the eigenvectors reveal the dominant axis.
-        \end{enumerate}
-        If isotropy fails, the derivation above is no longer valid: the two components may
-        have different scaling functions or even different exponents. In that case one works
-        with each component separately, or rotates to the principal axes of $\Sigma(t)$
-        before applying the scaling collapse.
+        The marginal $P(x,t)$ is the object actually estimated from data: use the East
+        component, the North component, or both (if isotropy holds, they coincide and can be
+        pooled; if not, they are analysed separately -- see Section~\ref{sec:prelim}). The
+        scaling collapse consists in plotting $t^H P(x,t)$ against $x/t^H$ for several
+        values of $t$: all curves should fall on the single function $F$.
   \item[Probability of return to the origin.] The value of the propagator at its centre,
         $P_0(t)\equiv P(\Delta\mathbf{r}=\mathbf{0},t)$, i.e.\ the height of the peak. For a
         self-similar process it decays as a power law set by the same exponent,
