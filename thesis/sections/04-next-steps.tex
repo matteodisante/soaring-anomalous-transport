@@ -4,16 +4,90 @@
 With the dataset in place and verified, the work proceeds as follows.
 
 \section{Trajectory pre-processing}
-Each IGC file is parsed into a sequence of fixes $(t_i,\varphi_i,\lambda_i,h_i)$ -- time,
-geodetic latitude and longitude, and altitude. The format records \emph{two} altitudes per
-fix, a barometric (pressure) altitude and a GNSS (GPS) altitude; they differ in both
-reference and noise (the barometric value is smooth but tied to a pressure setting, the GPS
-value is absolute but vertically noisier). Which one to use -- or whether to combine them --
-matters for the vertical velocity that drives the segmentation; this choice is left open for
-now and will be made at the analysis stage rather than fixed by default. The fixes are then resampled to a common cadence to absorb device
-heterogeneity, and quality-filtered (fixes with a bad validity flag, implausible speeds, or
-large time gaps are dropped). The output is a tidy, analysis-ready representation produced
-by a future \texttt{soaring.analysis} sub-package.
+Each IGC file is parsed into a sequence of fixes $(t_i,\varphi_i,\lambda_i,h_i)$ -- UTC
+time, geodetic latitude and longitude, and altitude. The format records two altitudes per
+fix (barometric and GNSS; see Chapter~\ref{ch:dataset}); the choice of which to use is left
+open to the analysis stage. The pipeline then proceeds in four steps: fix-level cleaning,
+trimming of ground phases, flight-level filtering, and resampling to a common cadence. The
+output is a tidy, analysis-ready representation produced by a future
+\texttt{soaring.analysis} sub-package.
+
+\paragraph{Fix-level cleaning.}
+The goal is to remove individual fixes that are physically impossible or corrupted, without
+discarding whole flights. The criteria are applied in sequence, each removing fixes that
+survive all previous steps.
+
+\begin{enumerate}[label=(\arabic*)]
+  \item \emph{Validity flag.} Drop any B record with validity code \texttt{V} (2-D fix,
+        no GPS altitude, degraded horizontal accuracy); retain only \texttt{A} (3-D fix).
+  \item \emph{Duplicate timestamps.} If two consecutive records share the same UTC second,
+        keep the first and discard the duplicate.
+  \item \emph{Altitude range.} Drop fixes with GPS altitude outside a physically plausible
+        range for soaring in France (e.g.\ $[-100,\,6000]$\,m); extreme values indicate
+        receiver faults.
+  \item \emph{Horizontal speed.} Compute the horizontal distance between consecutive valid
+        fixes divided by their time interval; if this implied speed exceeds a glider-class
+        maximum (e.g.\ $\sim\!120$\,m/s for a sailplane, $\sim\!50$\,m/s for a paraglider),
+        the later fix is a GPS jump and is removed.
+  \item \emph{Vertical speed.} Similarly, if the altitude difference between consecutive
+        fixes implies a vertical speed above a physical bound (e.g.\ $|w|>30$\,m/s), the
+        fix is discarded. This criterion depends on the chosen altitude channel and is one
+        more reason to make that choice explicit.
+  \item \emph{Time-gap flagging.} If the interval between two consecutive valid fixes
+        exceeds a threshold (e.g.\ 60\,s), the gap is flagged. Short gaps can be
+        interpolated; long ones split the trajectory into independent segments or disqualify
+        the flight from analyses that require continuity.
+\end{enumerate}
+
+\paragraph{Trimming of ground phases.}
+The logger starts recording before take-off and stops after landing; the ground phases must
+be stripped before any kinematic analysis. Detection: the airborne segment begins and ends
+when the horizontal speed exceeds (resp.\ falls below) a sustained threshold appropriate for
+the glider class. The threshold and the required persistence (e.g.\ speed $> 5$\,m/s for at
+least 30 consecutive seconds) must be chosen explicitly, as they affect what fraction of
+each trajectory is retained.
+
+\paragraph{Flight-level filtering.}
+After cleaning and trimming, some flights will not be suitable for the ensemble analysis.
+Flight-level filtering removes them. This step is \emph{delicate}: every threshold is a
+parameter, and a poorly chosen one introduces selection biases that distort the transport
+statistics -- for example, requiring a minimum duration preferentially retains successful
+long-distance flights, biasing the MSD toward more persistent behavior.
+
+The guiding principle is that a criterion is justified only if the excluded flights would
+\emph{corrupt} the analysis, not merely because they are unusual. Concretely:
+
+\begin{enumerate}[label=(\arabic*)]
+  \item \emph{Minimum number of valid fixes.} After cleaning, flights with fewer than a
+        minimum number of valid fixes (e.g.\ 200) cannot support reliable estimation of
+        velocity-derived quantities; they are excluded.
+  \item \emph{Minimum airborne duration.} The MSD at lag $t$ requires trajectories
+        of duration $T \gg t$. A minimum duration $T_{\min}$ is set relative to the maximum
+        lag of interest; it must be documented explicitly, as it determines which flights
+        contribute to each portion of the MSD curve. Note that $T_{\min}$ should not be set
+        so large as to exclude a majority of flights: the effective sample size decreases
+        with $T_{\min}$ and the surviving population becomes increasingly unrepresentative.
+  \item \emph{Minimum spatial extent.} Flights that remain within a very small area
+        (e.g.\ net displacement $< 1$\,km throughout) are likely tow flights, aborted
+        attempts, or data artifacts, and do not constitute soaring trajectories.
+  \item \emph{Glider type.} For stratified analysis by glider category (paraglider, hang
+        glider, sailplane), flights without a declared or recognisable type are excluded from
+        the category-specific sub-analyses but retained in the pooled analysis.
+\end{enumerate}
+
+All threshold values are \emph{analysis parameters}, not ground truths. A robustness check
+-- repeating the main results (MSD exponent, distribution tails) with the thresholds varied
+within physically plausible ranges -- is part of the analysis and must be reported. If the
+conclusions are stable across reasonable threshold choices, the filtering is robust; if they
+are sensitive, the sensitivity must be disclosed and understood.
+
+\paragraph{Resampling to a common cadence.}
+After filtering, the surviving trajectories are resampled to a uniform time grid to absorb
+device heterogeneity (sampling rates range from $\sim\!1$\,Hz on modern loggers to
+$\sim\!1/30$\,Hz on the oldest ones). The resampling cadence must be coarser than the
+slowest device included in the analysis; any analysis that requires fine temporal resolution
+(e.g.\ curvature for the segmentation) may therefore need to restrict the sample to
+higher-rate devices.
 
 \paragraph{From geographic to local Cartesian coordinates.}
 Latitudes and longitudes are angles on a curved surface and cannot be differenced directly
