@@ -1,0 +1,69 @@
+\chapter{Power spectral density and Welch's method}
+\label{app:psd}
+
+This appendix explains the tool used in Chapter~\ref{ch:next-steps} to compare the two
+altitude channels of an IGC file, namely the \emph{power spectral density} (PSD) estimated
+with \emph{Welch's method}. It is written so the reader need not already know what these are.
+
+\section*{What the power spectral density is}
+
+Take a signal sampled at a fixed rate, here an altitude series $z_n=z(n\,\Delta t)$,
+$n=0,\dots,N-1$, with sampling interval $\Delta t$ (so the sampling frequency is
+$f_s=1/\Delta t$). Any such finite signal can be written as a sum of sinusoids of different
+frequencies (its discrete Fourier transform). The \textbf{power spectral density} answers a
+simple question: \emph{how is the ``power'' (the variance) of the signal distributed across
+frequencies?} A slow drift puts its power at low frequency; rapid jitter puts its power at
+high frequency. Formally the PSD $S(f)$ is the Fourier transform of the autocovariance of
+the signal, and it is normalised so that the total area under it equals the variance of the
+signal,
+\begin{equation}
+  \int_0^{f_s/2} S(f)\,\mathrm{d}f \;=\; \operatorname{Var}(z),
+\end{equation}
+with units of (metres)$^2$ per hertz. The upper limit $f_s/2$ is the \emph{Nyquist
+frequency}: a series sampled every $\Delta t$ cannot resolve anything faster than one
+oscillation per two samples. Reading a PSD is therefore reading \emph{where in frequency}
+the signal lives: this is exactly what separates a slowly drifting but locally clean channel
+(power concentrated at low $f$) from a channel with a high-frequency noise floor (power that
+stays large up to the Nyquist frequency).
+
+\section*{The periodogram and why it is noisy}
+
+The naive estimator of $S(f)$ is the \textbf{periodogram}: take the discrete Fourier
+transform $\hat z(f)=\sum_n z_n\,e^{-2\pi i f n\Delta t}$ and form $|\hat z(f)|^2$
+(suitably normalised). It is unbiased but \emph{not consistent}: its variance does not
+shrink as the record gets longer -- a longer signal gives more frequency points, each still
+as noisy as before. Plotted directly it is a spiky, unreadable curve, from which one cannot
+reliably compare two channels.
+
+\section*{Welch's method: segment, window, average}
+
+Welch's method turns the noisy periodogram into a usable estimate by \emph{averaging}. The
+recipe is:
+\begin{enumerate}[label=(\roman*)]
+  \item \textbf{Segment.} Split the record into several shorter, overlapping segments (here
+        of length $N_{\text{seg}}=256$ samples, the standard $50\%$ overlap).
+  \item \textbf{Window.} Multiply each segment by a smooth taper (a Hann window) that falls
+        to zero at its ends. This suppresses the spurious high-frequency power (\emph{spectral
+        leakage}) that an abrupt segment boundary would otherwise inject.
+  \item \textbf{Average.} Compute the periodogram of each windowed segment and average them.
+\end{enumerate}
+Averaging $K$ segments cuts the variance of the estimate by roughly a factor $K$, at the
+cost of coarser frequency resolution (set by the segment length rather than the whole
+record). The result is a smooth PSD estimate whose \emph{level} can be compared meaningfully
+between two signals. This is the standard, robust spectral estimator; here it is provided by
+\texttt{scipy.signal.welch}. Before the transform each segment is \emph{linearly detrended},
+which removes the mean and the overall climb/drift ramp so that the estimate reflects the
+fluctuations about the trend -- the part where sensor noise lives -- rather than the trend
+itself.
+
+\section*{Reading the altitude spectra}
+
+In Figure~\ref{fig:altnoise}(b) the PSD is computed this way for the barometric and the GNSS
+altitude of each flight and averaged over the sampled ensemble, at the common sampling
+cadence. Two features carry the argument of Chapter~\ref{ch:next-steps}. First, both channels
+agree at \emph{low} frequency, where the real vertical motion (climbs and glides) lives.
+Second, towards the \emph{Nyquist} frequency the GNSS curve flattens into a high plateau --
+a white-ish noise floor -- lying about two to three orders of magnitude above the barometric
+curve, which keeps falling. That gap is the high-frequency GNSS jitter, precisely the band
+that a time derivative (vertical velocity) or a displacement increment amplifies, and it is
+the quantitative reason the vertical dynamics are taken from the barometric channel.

@@ -1,11 +1,16 @@
 """Pre-processing thresholds and the catalog diagnostics that justify them.
 
-Trajectory pre-processing applies two kinds of thresholds (see the thesis chapter
-"Next steps"):
+Trajectory pre-processing will use two kinds of thresholds (see the thesis chapter
+"Next steps"); this module defines their *values* and, for the second kind, the
+diagnostics that justify them -- it does not yet implement the filtering itself:
 
-* **fix-level cleaning** -- *physical* bounds that reject impossible or corrupted GPS
-  fixes. They do not depend on the dataset and are fixed a priori
-  (:class:`FixLevelThresholds`);
+* **fix-level cleaning** -- *physical* bounds meant to reject impossible or corrupted
+  GPS fixes (dynamics plausibility: speed jumps, altitude range, ...). They do not
+  depend on the dataset and are fixed a priori (:class:`FixLevelThresholds`), but no
+  function in this module yet walks a trajectory and applies them; that is still to be
+  written. (A related but distinct check -- whether a fix even *decodes* to a legal
+  record, e.g. a valid UTC time and in-range latitude/longitude -- is already enforced
+  by the parser itself, :mod:`soaring.analysis.igc`.)
 * **flight-level filtering** -- *population* thresholds that drop whole flights unfit
   for the ensemble analysis (:class:`FlightLevelThresholds`). These are read off the
   empirical distributions of the flight catalog rather than guessed: the helpers here
@@ -41,15 +46,19 @@ APPROX_BYTES_PER_FIX = 40
 class FixLevelThresholds:
     """Physical bounds for fix-level cleaning (fixed a priori, not data-driven).
 
-    The speed bounds are for paragliders (the current FFVL dataset) and scale up for
-    the faster gliders of future sources.
+    The speed bounds are for paragliders and hang gliders (the current FFVL dataset) and
+    scale up for the faster gliders of future sources. The vertical-speed and altitude
+    bounds apply to the **barometric** channel, which the thesis adopts for the vertical
+    dynamics (Chapter "Next steps"): the horizontal ``v_xy`` and the vertical ``v_z``
+    are kept distinct, and only ``v_xy`` is used later for take-off/landing trimming.
 
     Attributes:
-        max_horizontal_speed_mps: Ground speed above which a step is a GPS jump.
-        max_vertical_speed_mps: Vertical speed beyond the soaring climb/sink range
-            (also catches GNSS-altitude spikes); depends on the altitude channel.
-        min_altitude_m: Lower plausible GNSS-altitude bound.
-        max_altitude_m: Upper plausible GNSS-altitude bound.
+        max_horizontal_speed_mps: Horizontal ground speed ``v_xy`` above which a step
+            is a GPS position jump.
+        max_vertical_speed_mps: Vertical speed ``v_z`` (from the barometric channel)
+            beyond the soaring climb/sink range; also catches barometric spikes.
+        min_altitude_m: Lower plausible barometric-altitude bound.
+        max_altitude_m: Upper plausible barometric-altitude bound.
         max_time_gap_s: Inter-fix interval above which the gap is flagged or split.
     """
 

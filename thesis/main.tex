@@ -38,7 +38,7 @@
 % Traditional BibTeX (portable: no biber required). latexmk runs bibtex automatically.
 \usepackage{cite}
 
-% Headline numbers (\StatTotalFlights, \StatDownloaded, ...) generated from the data.
+% Headline numbers (\StatParaTotalFlights, \StatHangTotalFlights, ...) generated from the data.
 \input{generated/stats}
 
 \title{Anomalous Transport in Soaring: Collective Strategies and Intermittent Search Models}
@@ -87,13 +87,15 @@ statistics of real soaring flights from a large empirical dataset and compares t
 stochastic transport models.
 
 This document reports the current state of the project. A first, reproducible acquisition
-has collected \num{\StatTotalFlights} flights spanning \StatNumSeasons\ seasons
-(\StatSeasonFirst\ to \StatSeasonLast) from the FFVL Coupe F\'ed\'erale de Distance, of
-which \num{\StatWithIgc} carry a GPS tracklog and \num{\StatDownloaded} have been
-downloaded and verified. Data collection is ongoing and may be extended to further public
-soaring databases (for example XContest), using the same scraping approach. The remainder
-of the document describes the acquisition method, the dataset and its statistics, and the
-planned analysis and modelling.
+has collected \num{\StatTotalFlights} flights from the FFVL Coupe F\'ed\'erale de Distance
+across two disciplines: \num{\StatParaTotalFlights} paraglider flights (seasons
+\StatParaSeasonFirst\ to \StatParaSeasonLast) and \num{\StatHangTotalFlights} hang-glider
+flights (\StatHangSeasonFirst\ to \StatHangSeasonLast). Of these, \num{\StatTotalWithIgc}
+carry a GPS tracklog and \num{\StatTotalDownloaded} have been downloaded and verified. Data
+collection is ongoing and may be extended to further public soaring databases -- notably
+WeGlide for sailplanes, and XContest -- using the same approach. The remainder of the
+document describes the acquisition method, the dataset and its statistics, and the planned
+analysis and modelling.
 \end{abstract}
 
 \tableofcontents
@@ -108,5 +110,6 @@ planned analysis and modelling.
 
 \appendix
 \input{appendices/A-ctrw}
+\input{appendices/B-psd}
 
 \end{document}

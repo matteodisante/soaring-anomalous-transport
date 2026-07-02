@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Regenerate the pre-processing diagnostics figure for the thesis.
 
-Reads the flight catalog ``data/catalog.csv`` and writes
+Reads the paraglider flight catalog ``data/paragliders/catalog.csv`` and writes
 
 * ``thesis/generated/preproc_diagnostics.pdf`` -- the distributions of flight
   duration, declared distance and track length, each marked with the flight-level
@@ -21,7 +21,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-CATALOG_PATH = ROOT / "data" / "catalog.csv"
+CATALOG_PATH = ROOT / "data" / "paragliders" / "catalog.csv"
 OUT_PATH = ROOT / "thesis" / "generated" / "preproc_diagnostics.pdf"
 
 # Make ``soaring`` importable from the source tree even when it is not installed in the

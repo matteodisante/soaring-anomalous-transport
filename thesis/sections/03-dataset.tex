@@ -33,12 +33,30 @@ altitude} rather than the horizontal position: \texttt{A} marks a valid three-di
 fix (usable GNSS altitude), whereas \texttt{V} marks a two-dimensional fix or a GNSS
 drop-out, in which case the standard requires the GNSS-altitude field to be written as
 zero. A \texttt{V} fix can thus still carry a usable latitude/longitude and a valid
-barometric altitude. The two altitude channels differ in reference and in noise -- the
+barometric altitude.
+
+Decoding a \texttt{B} record from fixed character positions can succeed numerically while
+the result is not a valid encoding at all -- a corrupted byte can still parse as a digit.
+The parser therefore checks, at decode time and independently of any flight-dynamics
+judgement, that the time is a valid 24-hour \texttt{hh:mm:ss}, that the arc-minutes field of
+latitude and longitude is \texttt{<\,60} (the \texttt{DDMM.mmm} encoding is undefined
+otherwise), that the hemisphere letter is one of the two valid characters, and that the
+decoded latitude/longitude fall within $[-90,90]$/$[-180,180]$ degrees; a record failing any
+of these is dropped as unparseable, on the same footing as a record with the wrong length or
+a non-numeric field; this check is implemented in the parser now and covered by unit tests.
+It is a \emph{format}-validity check -- is the record even a legal encoding -- distinct from
+the \emph{plausibility} checks of fix-level cleaning (Chapter~\ref{ch:next-steps}, e.g.\ the
+inter-fix speed bound), which are designed and thresholded but not yet implemented: they
+target fixes that decode validly but would be physically implausible given the rest of the
+trajectory.
+
+The two altitude channels differ in reference and in noise -- the
 barometric value is referenced to the ICAO standard atmosphere and is smooth, the GNSS
 value is referenced to the WGS84 ellipsoid and is vertically noisier -- and on older
-loggers one channel may be absent (recorded as zero). Which altitude to use, and how, is
-left open and decided at the analysis stage (Chapter~\ref{ch:next-steps}), because the
-vertical velocity derived from it drives the phase segmentation.
+loggers one channel may be absent (recorded as zero). The analysis adopts the
+\emph{barometric} channel for the vertical dynamics, for the signal-quality reasons set out
+and quantified in Chapter~\ref{ch:next-steps}; this choice matters because the vertical
+velocity derived from it drives the phase segmentation.
 
 The sequence of \texttt{B} records is thus a time-stamped three-dimensional trajectory. The
 sampling period is typically a few seconds, is not guaranteed to be uniform, and varies
@@ -80,59 +98,77 @@ several-fold in cruise speed and turn radius -- which is why the reference
 study~\cite{vilpellet2026} reports its transport statistics separately for each.
 
 In practice the category is set by the \emph{data source}, since the public databases are
-organised by discipline. The FFVL Coupe F\'ed\'erale de Distance is the cross-country
-competition for \emph{paragliders}: every flight in the present dataset is a paraglider
-flight. Hang gliders and sailplanes are collected by different federations and portals, so
-reproducing the reference paper's cross-category comparison requires the additional sources
-of Chapter~\ref{ch:acquisition}; within the present data the glider-type stratum is
-constant.
+organised by discipline. The FFVL runs the Coupe F\'ed\'erale de Distance as two parallel
+competitions -- one for \emph{paragliders} and one for \emph{hang gliders} -- so the present
+dataset spans \emph{both} glider types: the glider-type stratum has two levels, and the
+cross-type comparison of the reference study~\cite{vilpellet2026} is therefore already
+possible between paragliders and hang gliders. The third category, \emph{sailplanes}, is
+collected by different portals and is not yet in hand (Chapter~\ref{ch:acquisition}); until
+it is added the cross-type analysis is limited to the two FFVL disciplines.
 
-Paragliders can still be stratified by \emph{performance class}, recorded in
-\texttt{aile\_class}. FFVL labels wings on the EN/AFNOR certification ladder -- EN\,A
-(\enquote{A ou 1}, most stable, recreational), EN\,B (\enquote{B ou 1-2}), EN\,C
-(\enquote{C ou 2}), EN\,D (\enquote{D ou 2-3}), the \enquote{CIVL Competition Class} (CCC)
-racing wings, plus tandem (\enquote{biplace}) and non-certified (\enquote{non
-homologu\'ee}) entries. The ladder tracks performance -- higher classes fly faster and
-flatter -- so it is the natural within-source stratification variable, playing the role
-that glider type plays across sources.
+Within each discipline the flights can be further stratified by \emph{performance class},
+recorded in \texttt{aile\_class}; the two disciplines use different class systems. FFVL
+labels \emph{paragliders} on the EN/AFNOR certification ladder -- EN\,A (\enquote{A ou 1},
+most stable, recreational), EN\,B (\enquote{B ou 1-2}), EN\,C (\enquote{C ou 2}), EN\,D
+(\enquote{D ou 2-3}), the \enquote{CIVL Competition Class} (CCC) racing wings, plus tandem
+(\enquote{biplace}) and non-certified (\enquote{non homologu\'ee}) entries. \emph{Hang
+gliders} follow the FAI/CIVL class system, which in this data reduces to flexible wings
+(\enquote{Delta Class 1} and the intermediate \enquote{Delta Class Sport}) and rigid wings
+(\enquote{Rigide Class 2} and \enquote{Rigide Class 5}). In both cases the ladder tracks
+performance -- higher classes fly faster and flatter -- so it is the natural within-source
+stratification variable, playing the role that glider type plays across sources.
 
-Two caveats bear on any use of \texttt{aile\_class}. First, the field is not clean: in a
-minority of rows it contains a wing \emph{model} (e.g.\ \enquote{Enzo 3}, \enquote{Zeno})
-rather than a class, so it must be normalised onto the certification ladder -- using the
-model name where needed -- before it can serve as a stratum. Second, the class certifies the
-wing, not the pilot. Both points are handled at the pre-processing stage
-(Chapter~\ref{ch:next-steps}).
+Two caveats bear on any use of \texttt{aile\_class}. First, the field must be normalised
+before it can serve as a stratum: label variants are merged, and a small fraction of rows
+carry a blank or a placeholder (\enquote{0}) class, for which the class is recovered from the
+wing model (\texttt{aile}) where possible. Second, the class certifies the wing, not the
+pilot. Both points are handled at the pre-processing stage (Chapter~\ref{ch:next-steps}).
 
 \section{Coverage and statistics}
 
-The statistics below describe the FFVL CFD dataset currently in hand; further sources may
-be added later (Chapter~\ref{ch:acquisition}). The dataset spans \StatNumSeasons\ seasons,
-from \StatSeasonFirst\ to \StatSeasonLast.
-It contains \num{\StatTotalFlights} flights in total; \num{\StatWithIgc} of them
-(\StatPctWithIgc\,\%) carry a GPS tracklog, and of those \num{\StatDownloaded}
-(\StatPctDownloaded\,\%) have been downloaded and verified. The per-season breakdown is
-given in Table~\ref{tab:seasons}. The volume of flights grows by more than three orders of
-magnitude over the period, reflecting the adoption of GPS loggers and online scoring: the
-early seasons contribute a handful of tracks each, while recent seasons contribute well
-over ten thousand.
+The statistics below describe the FFVL CFD dataset currently in hand; further sources may be
+added later (Chapter~\ref{ch:acquisition}). It comprises \num{\StatTotalFlights} flights in
+total, of which \num{\StatTotalWithIgc} carry a GPS tracklog and \num{\StatTotalDownloaded}
+have been downloaded and verified, split across two disciplines.
 
-\input{generated/seasons_table}
+The \emph{paraglider} collection spans \StatParaNumSeasons\ seasons, from
+\StatParaSeasonFirst\ to \StatParaSeasonLast: \num{\StatParaTotalFlights} flights, of which
+\num{\StatParaWithIgc} (\StatParaPctWithIgc\,\%) carry a tracklog and
+\num{\StatParaDownloaded} (\StatParaPctDownloaded\,\%) are downloaded and verified
+(Table~\ref{tab:seasons-para}). The \emph{hang-glider} collection spans \StatHangNumSeasons\
+seasons, from \StatHangSeasonFirst\ to \StatHangSeasonLast: \num{\StatHangTotalFlights}
+flights, of which \num{\StatHangWithIgc} (\StatHangPctWithIgc\,\%) carry a tracklog and
+\num{\StatHangDownloaded} (\StatHangPctDownloaded\,\%) are downloaded and verified
+(Table~\ref{tab:seasons-hang}). The hang-glider archive is roughly twenty times smaller,
+reflecting the smaller active population of the discipline.
+
+In both disciplines the volume of flights grows by orders of magnitude over the period,
+reflecting the adoption of GPS loggers and online scoring: the early seasons contribute a
+handful of tracks each, while recent seasons contribute thousands.
+
+\input{generated/seasons_table_para}
+\input{generated/seasons_table_hang}
 
 \section{Data quality and caveats}
 
 A few limitations are already known and will shape the analysis:
 \begin{itemize}
-  \item \textbf{Flights without a track.} About \SI{8}{\percent} of entries have no IGC
-        file (older or manually declared flights); they carry metadata only.
+  \item \textbf{Flights without a track.} About \SI{8}{\percent} of paraglider entries and
+        about \SI{27}{\percent} of hang-glider entries have no IGC file (older or manually
+        declared flights); they carry metadata only.
   \item \textbf{A small residue of unrecoverable files.} A few flights advertise a track
         that the server does not actually serve as a valid IGC (broken or placeholder
         links); these are recorded as failures and excluded.
-  \item \textbf{Heterogeneous logging.} Sampling rate, altitude source, and accuracy
-        depend on the device; trajectories must be resampled and quality-filtered before
-        any ensemble statistic is computed.
-  \item \textbf{Glider metadata.} All flights are paragliders (Section~\ref{sec:glider});
-        the class field \texttt{aile\_class} is occasionally filled with a wing model
-        instead of a class and must be normalised before it is used to stratify.
+  \item \textbf{Heterogeneous logging.} Sampling rate, altitude source, and accuracy depend
+        on the device; trajectories must be resampled and quality-filtered before any
+        ensemble statistic is computed.
+  \item \textbf{Altitude channel.} The barometric channel is adopted for the vertical
+        dynamics (Chapter~\ref{ch:next-steps}), but a sizeable minority of loggers record no
+        pressure altitude -- over a quarter of paraglider and roughly a sixth of hang-glider
+        flights -- which fall back to the GNSS altitude, flagged as such.
+  \item \textbf{Glider metadata.} Flights are paragliders or hang gliders, tagged by source
+        (Section~\ref{sec:glider}); the class field \texttt{aile\_class} uses a different
+        system in each discipline and must be normalised before it is used to stratify.
   \item \textbf{Incomplete dates.} Some historical entries have placeholder dates (e.g.\
         \texttt{0000-00-00}); these are kept but flagged.
 \end{itemize}

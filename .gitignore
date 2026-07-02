@@ -25,15 +25,16 @@ site/
 .vscode/
 *.swp
 
-# Dati grezzi: NON vanno mai nel repo (stanno sull'HDD esterno).
-# Qui versioniamo solo data/seasons_index.csv (piccolo indice dei link per stagione).
-# La stessa struttura vale per i deltaplanisti (data/delta/).
-/data/igc/
-/data/raw_xml/
-/data/logs/
-/data/catalog.csv
-/data/delta/
+# Dati grezzi: NON vanno mai nel repo (stanno sull'SSD esterno).
+# Struttura: data/<disciplina>/ (paragliders/, hang_gliders/). Versioniamo SOLO i piccoli
+# data/<disciplina>/seasons_index.csv; i catalog.csv (grandi, derivati) restano locali.
+/data/*/catalog.csv
+/data/*/igc/
+/data/*/raw_xml/
+/data/*/logs/
 *.igc
+# ...eccetto la piccola fixture di test del parser IGC, che va versionata.
+!/tests/fixtures/*.igc
 
 # Tesi (documento PUBBLICO): teniamo i .tex, thesis/generated/*.tex e thesis/main.pdf;
 # ignoriamo solo gli ausiliari di LaTeX.

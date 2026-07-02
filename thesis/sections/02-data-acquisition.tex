@@ -69,16 +69,22 @@ rebuilt from them with \texttt{build-catalog}.
 
 Because the data sit on an external drive, the \texttt{verify} subcommand re-scans every
 downloaded file on disk, reusing the same IGC validation applied at download time, and
-flags truncated or invalid files, leftover \texttt{.part} fragments, and read errors. The
-FFVL paraglider collection has been verified in full: all \num{\StatDownloaded} downloaded
-tracklogs pass validation (Chapter~\ref{ch:dataset}).
+flags truncated or invalid files, leftover \texttt{.part} fragments, and read errors. Both
+FFVL collections have been verified in full: all \num{\StatParaDownloaded} paraglider and
+\num{\StatHangDownloaded} hang-glider downloaded tracklogs pass validation
+(Chapter~\ref{ch:dataset}).
 
 \section{Further data sources}
 The FFVL CFD is the primary source of the present study, but the dataset is not assumed to
 be final. The paraglider data (\textasciitilde203\,000 flights, \textasciitilde186\,000
 tracklogs) are the main analysis target; the hang-glider data (\textasciitilde9\,300
-flights, \textasciitilde6\,750 tracklogs) are collected in parallel and will be used for
-cross-type comparison. Additional public soaring repositories---notably XContest---are
-being pursued to enlarge and diversify the sample. These expose comparable flight metadata
-and IGC tracks and can be acquired with the same scraping approach and merged into the same
-catalog.
+flights, \textasciitilde6\,700 tracklogs) are collected in parallel and enable the
+cross-type comparison of Chapter~\ref{ch:dataset}. Additional public soaring repositories are
+being pursued to enlarge and diversify the sample and, above all, to add the third glider
+category, \emph{sailplanes} (Section~\ref{sec:glider}). The most complete sailplane source is
+\emph{WeGlide}: it exposes flight metadata and IGC tracks through an API, but the default
+access is rate-limited (of order sixty requests per day), so a bulk export of the archive is
+not feasible under it; a request for research access with a higher quota has been sent and is
+pending. Paraglider and hang-glider coverage may likewise be broadened through further
+portals such as XContest. These sources expose comparable flight metadata and IGC tracks and
+can be acquired with the same approach and merged into the same catalog.

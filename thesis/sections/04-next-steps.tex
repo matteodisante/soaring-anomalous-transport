@@ -5,58 +5,171 @@ With the dataset in place and verified, the work proceeds as follows.
 
 \section{Trajectory pre-processing}
 Each IGC file is parsed into a sequence of fixes $(t_i,\varphi_i,\lambda_i,h_i)$ -- UTC
-time, geodetic latitude and longitude, and altitude. The format records two altitudes per
-fix (barometric and GNSS; see Chapter~\ref{ch:dataset}); the choice of which to use is left
-open to the analysis stage. The pipeline then proceeds in four steps: fix-level cleaning,
-trimming of ground phases, flight-level filtering, and resampling to a common cadence. The
-output is a tidy, analysis-ready representation produced by a future
-\texttt{soaring.analysis} sub-package.
+time, geodetic latitude and longitude, and altitude -- by the \texttt{soaring.analysis.igc}
+parser, which reads the \texttt{B} records at their fixed character positions and returns
+both altitude channels. The pipeline then proceeds in a definite order: choose the altitude
+channel, clean individual fixes, trim the ground phases, filter whole flights, resample to a
+common cadence, and -- as the \emph{last} step -- convert to a local Cartesian frame
+(Sec.~\ref{sec:enu}).
 
-\paragraph{Fix-level cleaning.}
-Individual fixes that are physically impossible or corrupted are removed without discarding
-the whole flight. Table~\ref{tab:cleaning} collects the criteria and their nominal
-thresholds; the checks are applied in order, each acting only on the fixes that survived the
-previous ones.
+The ordering matters. All the steps up to the conversion act on the \emph{raw geographic}
+coordinates: the horizontal speeds they need are obtained from the great-circle (haversine)
+distance between consecutive fixes and the spatial extent from the same, so no coordinate
+conversion is required yet. The conversion is applied last, to the already cleaned and
+trimmed track, with the origin placed at the take-off fix so that $\mathbf{r}(0)=\mathbf{0}$;
+this way the tangent-plane frame is built from good data and referred to the right origin,
+rather than from raw fixes that may still contain a bad take-off point. The output is a tidy,
+analysis-ready representation in a growing \texttt{soaring.analysis} sub-package.
+
+\subsection{Choice of altitude channel}
+\label{sec:altchannel}
+The vertical dynamics -- vertical velocity, climb/sink, and the phase segmentation that rests
+on them -- are taken from the \emph{barometric} altitude rather than the GNSS altitude. The
+reason is one of signal quality in the frequency band that matters. The barometric (pressure)
+altitude has sub-metre relative precision and very little high-frequency noise; its errors are
+slow -- a constant offset from the ICAO reference and a gradual drift with the synoptic
+pressure over a multi-hour flight -- and slow errors are annihilated by the differencing that
+every dynamical quantity involves (a vertical velocity, a displacement increment, an
+autocorrelation). The GNSS altitude, by contrast, is geometrically referenced but vertically
+noisier: the vertical dilution of precision makes it $1.5$--$2$ times worse than the
+horizontal, and multipath adds high-frequency jitter of a few metres -- exactly the band that
+differencing \emph{amplifies}. This is also why the variometers used in free flight derive the
+climb rate from the pressure sensor, not from GNSS.
+
+This is confirmed empirically on our data. Figure~\ref{fig:altnoise} compares the two
+channels. Panels~(a)/(b) use a seeded random subsample of 400 flights per discipline --
+a deliberate choice, since the Welch PSD is an ensemble-average spectral \emph{shape}, not a
+headline number, so a moderate, explicitly sized subsample is the appropriate and standard
+tool (Appendix~\ref{app:psd}). Their power spectra agree at low frequency, where the real
+climbs and glides live, but towards the Nyquist frequency the GNSS spectrum flattens into a
+noise floor two to three orders of magnitude above the barometric one; the channel difference
+for a single flight (panel~a) shows the same jitter directly. It is worth being explicit that
+this choice \emph{departs from the reference study}~\cite{vilpellet2026}, whose pipeline
+derives the vertical coordinate and vertical velocity from the GNSS altitude (it reads the
+barometric channel but does not use it); the divergence is deliberate and is one of the points
+re-examined here.
+
+\begin{figure}[t]
+  \centering
+  \IfFileExists{generated/altitude_noise.pdf}{%
+    \includegraphics[width=\linewidth]{generated/altitude_noise}%
+  }{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/generate\_altitude\_noise\_figure.py} from the raw IGC tracks on
+    the SSD (not versioned). Run it to render this figure.}}%
+  }
+  \caption{Barometric vs GNSS altitude noise. Panels (a)/(b) use a seeded random subsample
+  of 400 flights per discipline, sized for a stable ensemble-average PSD rather than as an
+  estimate of a headline number (Sec.~\ref{sec:altchannel}). (a)~For one representative
+  flight, the channel difference GNSS$-$barometric (mean removed): the shared climb signal
+  cancels, exposing the several-metre GNSS jitter that the barometric reference lacks.
+  (b)~Mean Welch power spectra (Appendix~\ref{app:psd}) of the two channels, per discipline:
+  they agree at low frequency but the GNSS spectrum sits two to three orders of magnitude
+  higher near the Nyquist frequency. (d)~Fraction of flights whose barometric channel is
+  absent (no pressure sensor), per discipline -- the flights that must fall back to GNSS.
+  Unlike (a)/(b), this is a headline number, and its precision is sized rather than assumed
+  (\texttt{soaring.analysis.altitude\_noise.required\_sample\_size}): the hang-glider archive
+  ($N=\num{6716}$) is small enough to census exactly in a couple of minutes -- \SI{17.5}{\percent}
+  carry no barometric channel. The paraglider archive ($N=\num{186052}$) is not, so it is
+  instead estimated from a simple random sample of $n=\num{2401}$ flights (the standard
+  proportion sample-size formula $n=z^2p(1-p)/e^2$, conservative $p=0.5$, population
+  treated as effectively infinite -- at this sample size, a mere \SI{1.3}{\percent} of the
+  \num{186052}-flight archive, the finite-population correction would change $n$ by only
+  about \num{30} and is not worth the extra parameter), sized for a target 95\%-confidence
+  margin of error of $\pm 2$ percentage points: the observed estimate is
+  $(28.4\pm1.8)\,\si{\percent}$ (95\% CI).}
+  \label{fig:altnoise}
+\end{figure}
+
+Several practical points follow. \textbf{One channel per flight.} A trajectory uses a single
+altitude channel end-to-end; the barometric and GNSS values are never spliced within a flight,
+since a mid-flight switch between two channels offset by tens of metres would inject a spurious
+jump. \textbf{The source is recorded.} Which channel a flight uses is stored as a per-flight
+field -- an \texttt{alt\_source} column (\texttt{baro} or \texttt{gnss}) in the processed
+dataset, alongside duration, fix count and the like; the raw IGC files are never modified.
+\textbf{Availability.} A flight is used with its barometric channel when it has one, and the
+few individual fixes with a missing barometric value are dropped rather than back-filled from
+GNSS. A logger with \emph{no} pressure sensor writes the whole barometric channel as zero (the
+presence is essentially all-or-nothing, not a scattering of gaps); such a flight falls back to
+the GNSS altitude, unfiltered. This affects a non-negligible minority of flights -- about
+\SI{28}{\percent} of paragliders and \SI{17}{\percent} of hang gliders
+(Figure~\ref{fig:altnoise}d; see its caption for how these figures were measured and their
+precision).
+
+\textbf{Is a mixed dataset a problem?} Not much, for two reasons. The \emph{horizontal}
+transport analysis -- the primary result (MSD and its scaling) -- does not use the altitude at
+all, so every flight is usable there regardless of channel. Altitude enters only the vertical
+velocity, hence the segmentation and the phase-resolved observables; there the two source
+groups are kept distinct through \texttt{alt\_source} and their statistics checked for
+compatibility (Sec.~\ref{sec:prelim}). If the noisier GNSS-only flights were to bias a
+vertical statistic, that analysis is restricted to the barometric flights -- still the large
+majority -- while the horizontal analyses keep the full sample. Forcing GNSS on \emph{all}
+flights, to avoid the mix, would be the wrong trade: it would needlessly degrade the vertical
+signal of the barometric majority to match the worst loggers.
+
+\subsection{Fix-level cleaning}
+Individual fixes that are physically impossible or corrupted must be removed without
+discarding the whole flight. This happens in two layers, at two different stages of
+maturity. The first, \emph{format validity}, is already implemented: the
+\texttt{soaring.analysis.igc} parser rejects, at decode time, any fix that does not decode
+to a \emph{legal} record -- an invalid UTC time, or a latitude/longitude whose arc-minutes,
+hemisphere letter or resulting value are not a valid encoding (Chapter~\ref{ch:dataset}) --
+since such a fix carries no meaningful position or time at all; this is covered by unit
+tests. The second, \emph{dynamics plausibility}, is design work still to be implemented:
+Table~\ref{tab:cleaning} specifies the criteria and their nominal thresholds -- fixes that
+decode to a legal record but are implausible given the rest of the trajectory, such as an
+impossible speed jump, an out-of-range altitude, or a stale duplicate -- and the
+corresponding numeric thresholds already exist in code
+(\texttt{soaring.analysis.preprocessing.FixLevelThresholds}), but the function that
+actually walks a trajectory and applies them, fix by fix, does not yet exist; building it
+is part of this pre-processing stage. The checks are meant to apply in the order listed,
+each acting only on the fixes that survived the previous ones.
 
 \begin{table}[t]
 \centering
 \small
-\begin{tabular}{@{}llp{5.6cm}@{}}
+\begin{tabular}{@{}llp{5.4cm}@{}}
 \toprule
 Quantity & Reject / flag the fix when & Rationale \\
 \midrule
-Fix validity     & flag is \texttt{V}                             & 2-D fix / GNSS-altitude drop-out \\
+Missing altitude & the adopted-channel value is absent            & no usable vertical coordinate (Sec.~\ref{sec:altchannel}) \\
 Duplicate time   & two fixes share the UTC second                & keep the first (logger double-write) \\
-GNSS altitude    & outside $[-100,\,6000]\,\si{\metre}$           & receiver fault \\
-Horizontal speed & $>\SI{40}{\metre\per\second}$ between consecutive fixes          & GPS position jump \\
-Vertical speed   & $|w|>\SI{10}{\metre\per\second}$              & beyond the soaring climb/sink range \\
+Altitude range   & outside $[-100,\,6000]\,\si{\metre}$           & sensor fault \\
+Horizontal speed & $v_{xy}>\SI{40}{\metre\per\second}$ between consecutive fixes & GPS position jump \\
+Vertical speed   & $|v_z|>\SI{10}{\metre\per\second}$            & beyond the soaring climb/sink range \\
 Time gap         & $>\SI{60}{\second}$ between consecutive fixes  & loss of temporal continuity \\
 \bottomrule
 \end{tabular}
 \caption{Fix-level cleaning criteria, applied in the order listed. The values are
-\emph{physical bounds}, fixed a priori and not tuned to the data; the speed bounds are for
-paragliders (the present dataset, Chapter~\ref{ch:dataset}) and scale up for the faster
-gliders of future sources. The vertical bound targets the soaring climb/sink regime and
-GNSS-altitude spikes and depends on the altitude channel used.}
+\emph{physical bounds}, fixed a priori and not tuned to the data; the speed bounds suit
+paragliders and hang gliders (the present dataset, Chapter~\ref{ch:dataset}) and scale up for
+the faster gliders of future sources. The altitude-range and vertical-speed bounds apply to
+the adopted barometric channel (Sec.~\ref{sec:altchannel}) and catch its spikes.}
 \label{tab:cleaning}
 \end{table}
 
-Two of these criteria carry subtleties a table cannot convey. The validity flag certifies
-the GNSS altitude, not the horizontal position (Chapter~\ref{ch:dataset}): a \texttt{V} fix
-is dropped only when the GNSS-altitude channel is in use, and is kept but marked when the
-barometric channel is used. And a time gap is not itself an error -- short gaps can be
-interpolated, whereas long ones split the trajectory into independent segments or disqualify
-the flight from analyses that require continuity.
+Two points a table cannot convey. First, the IGC validity flag (\texttt{A}/\texttt{V}) is not
+a separate criterion but is \emph{subsumed} by the missing-altitude rule applied to the adopted
+channel. The flag certifies the GNSS altitude only: a \texttt{V} fix has the GNSS altitude
+zeroed but keeps a valid position and, if present, a valid barometric altitude
+(Chapter~\ref{ch:dataset}). Its effect is therefore channel-dependent -- on a barometric flight
+a \texttt{V} fix is kept (the barometric value is intact), whereas on a GNSS-fallback flight it
+has no usable altitude and is dropped as a missing-altitude fix -- and needs no handling of its
+own. Second, a time gap is not itself an error -- short gaps can be interpolated, whereas long
+ones split the trajectory into independent segments or disqualify the flight from analyses that
+require continuity.
 
-\paragraph{Trimming of ground phases.}
-The logger starts recording before take-off and stops after landing; the ground phases must
-be stripped before any kinematic analysis. Detection: the airborne segment begins and ends
-when the horizontal speed exceeds (resp.\ falls below) a sustained threshold appropriate for
-the glider class. The threshold and the required persistence (e.g.\ speed $> 5$\,m/s for at
-least 30 consecutive seconds) must be chosen explicitly, as they affect what fraction of
-each trajectory is retained.
+\subsection{Trimming of ground phases}
+The logger starts recording before take-off and stops after landing; these ground phases must
+be stripped before any kinematic analysis. Detection uses the \emph{horizontal} speed
+$v_{xy}$ alone -- the vertical speed plays no role here: the airborne segment begins when
+$v_{xy}$ rises above \SI{5}{\metre\per\second} and stays above it for at least
+\SI{30}{\second}, and ends symmetrically when it falls back below. The sustained-speed
+requirement prevents a gust or a GPS glitch on the ground from being mistaken for take-off;
+both the threshold and the persistence affect what fraction of each trajectory is retained, so
+they are stated explicitly rather than left implicit.
 
-\paragraph{Flight-level filtering.}
+\subsection{Flight-level filtering}
 After cleaning and trimming, some flights will not be suitable for the ensemble analysis.
 Flight-level filtering removes them. This step is \emph{delicate}: every threshold is a
 parameter, and a poorly chosen one introduces selection biases that distort the transport
@@ -86,12 +199,12 @@ The guiding principle is that a criterion is justified only if the excluded flig
         logs and non-flights. In the curated CFD it removes almost nothing --
         \SI{99.9}{\percent} of declared distances exceed \SI{5}{\kilo\metre} -- but it will
         matter for the less curated further sources.
-  \item \emph{Glider class.} The present dataset is entirely paragliders
+  \item \emph{Glider class.} The dataset spans paragliders and hang gliders
         (Chapter~\ref{ch:dataset}); for analyses stratified by performance class, flights
-        whose \texttt{aile\_class} cannot be normalised onto the certification ladder are
+        whose \texttt{aile\_class} cannot be normalised onto the discipline's class system are
         dropped from the class-resolved sub-analyses but kept in the pooled one.
-        Stratification by glider \emph{type} (paraglider / hang glider / sailplane) becomes
-        possible only once the other sources are added.
+        Stratification by glider \emph{type} is now possible between paraglider and hang
+        glider; the sailplane stratum is added once that source is in hand.
 \end{enumerate}
 
 These cuts are read off the flight catalog (\texttt{catalog.csv}, Chapter~\ref{ch:dataset}),
@@ -112,11 +225,12 @@ re-examined when the further, less curated sources are merged.
     \includegraphics[width=\linewidth]{generated/preproc_diagnostics}%
   }{%
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/generate\_preproc\_figure.py} from \texttt{data/catalog.csv}
-    (not versioned). Run it to render this figure.}}%
+    \texttt{scripts/reporting/generate\_preproc\_figure.py} from
+    \texttt{data/paragliders/catalog.csv} (not versioned). Run it to render this figure.}}%
   }
   \caption{Catalog diagnostics behind the flight-level filtering thresholds, computed from
-  \texttt{data/catalog.csv} (\num{\StatTotalFlights} flights). (a)~Flight-duration
+  \texttt{data/paragliders/catalog.csv} (\num{\StatParaTotalFlights} paraglider flights).
+  (a)~Flight-duration
   distribution and (b)~fraction of flights retained versus the minimum-duration cut
   $T_{\min}$: the adopted $T_{\min}=\SI{30}{\minute}$ lies on the flat part of the curve
   (\SI{99.5}{\percent} retained). (c)~Declared cross-country distance, a proxy for spatial
@@ -127,7 +241,7 @@ re-examined when the further, less curated sources are merged.
   \label{fig:preproc}
 \end{figure}
 
-\paragraph{Resampling to a common cadence.}
+\subsection{Resampling to a common cadence}
 After filtering, the surviving trajectories are resampled to a uniform time grid to absorb
 device heterogeneity (sampling rates range from $\sim\!1$\,Hz on modern loggers to
 $\sim\!1/30$\,Hz on the oldest ones). The resampling cadence must be coarser than the
@@ -135,10 +249,13 @@ slowest device included in the analysis; any analysis that requires fine tempora
 (e.g.\ curvature for the segmentation) may therefore need to restrict the sample to
 higher-rate devices.
 
-\paragraph{From geographic to local Cartesian coordinates.}
-Latitudes and longitudes are angles on a curved surface and cannot be differenced directly
-to obtain distances; they are mapped to a local Cartesian frame in two steps, following the
-convention of Vilpellet et al. First, each fix is converted to Earth-Centred,
+\subsection{From geographic to local Cartesian coordinates}
+\label{sec:enu}
+As the final pre-processing step, the cleaned, trimmed and resampled track is mapped from
+geographic to local Cartesian coordinates. Latitudes and longitudes are angles on a curved
+surface and cannot be differenced directly to obtain distances; the mapping proceeds in two
+steps, following the convention of Vilpellet et al. First, each fix is converted to
+Earth-Centred,
 Earth-Fixed (ECEF) coordinates on the WGS84 ellipsoid (semi-major axis
 $a=\SI{6378137}{\metre}$, flattening $f=1/298.257223563$, $e^2=f(2-f)$),
 \begin{equation}
@@ -150,7 +267,8 @@ Z &= \big(N(1-e^2)+h\big)\sin\varphi,
 \end{aligned}
 \end{equation}
 where $N(\varphi)$ is the prime-vertical radius of curvature. Second, taking the first fix
-$(\varphi_0,\lambda_0,h_0)$ of the flight as the origin, the ECEF displacement
+$(\varphi_0,\lambda_0,h_0)$ of the flight -- the take-off fix, since the ground phase has
+already been trimmed -- as the origin, the ECEF displacement
 $\Delta\mathbf{X}=\mathbf{X}-\mathbf{X}_0$ is rotated into the local East--North--Up (ENU)
 frame tangent to the ellipsoid at that point,
 \begin{equation}
@@ -169,13 +287,21 @@ Over the spatial extent of a single flight (tens of kilometres) the tangent-plan
 approximation is accurate to well below the GPS noise.
 % TODO: add a schematic figure (curved Earth + tangent ENU plane at the take-off point).
 
-\paragraph{Notation.}
+The altitude $h$ that enters this transform is the adopted barometric channel
+(Sec.~\ref{sec:altchannel}); changing channel would move $(E,N)$ by a relative
+$h/(N+h)\sim10^{-5}$, i.e.\ negligibly, so the horizontal coordinates are insensitive to the
+altitude source. The vertical coordinate $z=U$ is therefore, up to the small deterministic
+tangent-plane curvature term, just the barometric height referred to the take-off value,
+$z\approx h-h_0$ -- exactly the quantity whose dynamics were argued above to be cleanest.
+
+\subsection{Notation}
 Throughout, $\mathbf{r}(t)=\big(x(t),y(t)\big)=\big(E(t),N(t)\big)$ denotes the
-\emph{horizontal} position in this local frame and $z(t)=U(t)$ the altitude. By
-construction each trajectory starts at the origin, $\mathbf{r}(0)=\mathbf{0}$, with the
-clock reset to $t=0$ at take-off, so $t$ is the elapsed flight time. The horizontal
-velocity is $\mathbf{v}(t)=\dot{\mathbf{r}}(t)$ and the horizontal displacement over a lag
-$t$ is $\Delta\mathbf{r}(t)=\mathbf{r}(t_0+t)-\mathbf{r}(t_0)$.
+\emph{horizontal} position in this local frame and $z(t)=U(t)$ the (barometric) altitude. By
+construction each trajectory starts at the origin, $\mathbf{r}(0)=\mathbf{0}$, with the clock
+reset to $t=0$ at take-off, so $t$ is the elapsed flight time. The horizontal velocity is
+$\mathbf{v}(t)=\dot{\mathbf{r}}(t)$, with magnitude the horizontal speed
+$v_{xy}=|\mathbf{v}|$; the vertical velocity is $v_z=\dot z$. The horizontal displacement over
+a lag $t$ is $\Delta\mathbf{r}(t)=\mathbf{r}(t_0+t)-\mathbf{r}(t_0)$.
 
 \section{Preliminary characterization}
 \label{sec:prelim}
@@ -213,10 +339,10 @@ scaling exponents $H_E\neq H_N$ or equal exponents but different scaling functio
 geometrically anisotropic transport.
 
 \paragraph{Compatibility across strata.}
-The dataset spans more than two decades and a range of paraglider performance classes
-(Chapter~\ref{ch:dataset}), from recreational EN\,A/B wings to CCC racing wings, whose
-kinematics differ substantially; once further sources are added it will also span glider
-types. Before treating all flights as draws from a single statistical process -- i.e.\
+The dataset spans more than two decades, two glider types (paragliders and hang gliders), and
+a range of performance classes (Chapter~\ref{ch:dataset}) -- from recreational EN\,A/B
+paraglider wings to CCC racing wings and the flexible/rigid hang-glider classes -- whose
+kinematics differ substantially; sailplanes will later add a third type. Before treating all flights as draws from a single statistical process -- i.e.\
 before computing ensemble averages over the pooled dataset -- the subpopulations must be
 checked for statistical compatibility.
 
@@ -525,11 +651,10 @@ memoryless model is admissible at all.
 \section{Reproducing the reference results}
 A first objective of the analysis, undertaken once the segmentation is in place, is to check
 whether the enlarged---and eventually multi-source---dataset reproduces the quantitative and
-graphical results of Vilpellet et al.~\cite{vilpellet2026}. Because that study covers
-paragliders, hang gliders and sailplanes whereas the present data are paragliders only
-(Chapter~\ref{ch:dataset}), the immediate comparison is with its paraglider results; the
-hang-glider and sailplane figures become reachable once the corresponding sources are added.
-Two figures are the main targets.
+graphical results of Vilpellet et al.~\cite{vilpellet2026}. That study covers paragliders,
+hang gliders and sailplanes; the present data cover the first two (Chapter~\ref{ch:dataset}),
+so both the paraglider and the hang-glider comparisons are within reach, while the sailplane
+figures become reachable once that source is added. Two figures are the main targets.
 
 The first is the per-phase conditional MSD (their Fig.~3): the transition segments should
 stay ballistic ($\alpha=2$, i.e.\ $H=1$) across time lags; the search phase should be

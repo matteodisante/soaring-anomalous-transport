@@ -79,6 +79,64 @@ At the same time the paraglider CLI was renamed from the generic \texttt{soaring
 \texttt{ffvl\_download.yaml} to \texttt{para\_download.yaml}, to avoid ambiguity now that
 both sources are present.
 
+\paragraph{2026-07 --- Hang-glider catalog built; datasets reorganized symmetrically.}
+Ran the full pipeline on the hang-glider data (\texttt{soaring-delta clean}, \texttt{verify},
+\texttt{build-catalog}, \texttt{status}), which so far had only been downloaded: 9{,}259
+flights, 6{,}746 with a track, 6{,}716 downloaded and all verified (0 integrity failures), 30
+unrecoverable server-side links. The local \texttt{data/} folder was reorganized to mirror the
+SSD -- one directory per discipline (\texttt{paragliders/}, \texttt{hang\_gliders/}), each with
+a versioned \texttt{seasons\_index.csv} and a git-ignored \texttt{catalog.csv}.
+\texttt{generate\_stats.py} now reads both indices and emits per-discipline macros
+(\texttt{\textbackslash StatPara*}, \texttt{\textbackslash StatHang*}) and two per-season
+tables, and the first three thesis chapters were made symmetric across the two disciplines.
+
+\paragraph{2026-07 --- Altitude channel decision: barometric.}
+Decided to take the vertical dynamics from the \emph{barometric} altitude rather than the GNSS
+altitude, diverging from the reference pipeline (J\'er\'emie's code derives $z$ and $v_z$ from
+\texttt{AltGNSS}, reading but not using \texttt{AltPre}). Rationale: the pressure altitude has
+sub-metre relative precision and low high-frequency noise, its errors being slow (offset,
+drift) and killed by differencing, whereas the GNSS vertical carries a high-frequency noise
+floor that derivatives amplify. Confirmed empirically with a new noise diagnostic -- an IGC
+\texttt{B}-record parser (\texttt{soaring.analysis.igc}) and an altitude-noise analysis
+(\texttt{soaring.analysis.altitude\_noise}) whose Welch power spectra show the GNSS floor two
+to three orders of magnitude above the barometric one near Nyquist (with a thesis appendix on
+the method). \emph{Consequences:} the \texttt{A}/\texttt{V}
+validity flag is not a separate rule but is subsumed by the missing-altitude check on the
+adopted channel (a \texttt{V} fix keeps position + baro on a baro flight, but is dropped on a
+GNSS-fallback flight); one altitude channel per trajectory, no baro/GNSS splicing; flights
+with no pressure sensor fall back to unfiltered GNSS, tagged by a per-flight
+\texttt{alt\_source} column (fractions --- a substantial minority, larger for paragliders ---
+to confirm on a larger sample once the SSD is remounted); the trimming threshold is on the
+horizontal speed only ($v_{xy}>5$\,m/s, sustained); and the cleaning/trimming run on the raw
+geographic coordinates (great-circle speeds), with the ENU conversion done \emph{last},
+origin at take-off. Also redesigned the noise figure (dropped the redundant HF-index panel;
+panel (a) now shows the GNSS$-$baro difference).
+
+\paragraph{2026-07 --- Baro-absence fraction: sized sampling, not a full sweep.}
+A full-population parse of the paraglider archive (186{,}052 files) for the
+baro-channel-absence figure took an unacceptable $\sim$45\,min serially; a first fix
+(parallelising across 8 processes) cut this to $\sim$15\,min, still too slow to be run
+routinely. Replaced it with a properly justified \emph{simple random sample}: the standard
+proportion sample-size formula ($n=z^2p(1-p)/e^2$, conservative $p=0.5$) gives $n=2401$ for
+a target 95\%-confidence margin of error of $\pm2$ percentage points --
+\texttt{required\_sample\_size} in \texttt{soaring.analysis.altitude\_noise}, with
+\texttt{proportion\_ci} reporting the resulting point estimate and interval. The population
+is treated as effectively infinite (no finite-population correction): at $n=2401$ out of
+$186{,}052$ paraglider flights ($\sim$1.3\% sampled), the correction would move $n$ by only
+about 30, not worth the extra parameter. The hang-glider archive (6716 files) stays a full
+census: cheap enough (under two minutes) that there is nothing to gain from sampling it.
+Total runtime: $\sim$50\,s. Final figures: paragliders $(28.4\pm1.8)\,\%$ (95\% CI,
+sampled), hang gliders $17.5\,\%$ (exact, census) -- consistent with the earlier, less
+rigorously sized
+estimates. \emph{Also caught mid-flight:} the IGC parser accepted syntactically
+well-formed but semantically invalid \texttt{B} records (e.g.\ minute $\geq 60$, hour
+$\geq 24$, out-of-range latitude/longitude) without rejecting them; added explicit
+format-validity checks (9 new tests) and corrected the thesis wording that had
+conflated this \emph{implemented} format-validity layer with the fix-level
+\emph{dynamics-plausibility} layer of Table~4.1, which is designed (thresholds exist as
+a dataclass) but not yet implemented as code -- an important distinction the thesis now
+states explicitly rather than glossing over.
+
 \paragraph{2026-06 --- Documentation.}
 Project docs are built with MkDocs and published on GitHub Pages. Initially deployed with
 \texttt{mkdocs gh-deploy}, which accumulated one built-site commit per deploy on a
@@ -96,13 +154,16 @@ is to analyse the data \emph{in parallel} with studying the segmentation, since 
 observables can be built before any phase splitting.
 
 \begin{itemize}
-  \item \textbf{Data sources.} FFVL paraglider and hang-glider CFD data are collected.
-        Build the hang-glider catalog (\texttt{soaring-delta build-catalog}). Extend to
-        further sources (XContest, possibly others), merging into one catalog and
-        stratifying by source. Refresh \texttt{data/seasons\_index.csv} via
-        \texttt{soaring-para build-catalog} so the document statistics stay current.
-  \item \textbf{Pre-processing.} Parse the IGC \texttt{B} records into clean, resampled,
-        quality-filtered trajectories in a local metric frame.
+  \item \textbf{Data sources.} FFVL paraglider and hang-glider CFD data are collected,
+        cataloged and verified. Extend to further sources -- notably WeGlide for sailplanes
+        (a higher-quota request is pending) and possibly XContest -- merging into one catalog
+        and stratifying by source. Refresh the per-discipline \texttt{seasons\_index.csv} via
+        \texttt{build-catalog} so the document statistics stay current.
+  \item \textbf{Pre-processing.} The IGC \texttt{B}-record parser is in place
+        (\texttt{soaring.analysis.igc}); next, turn parsed fixes into clean, resampled,
+        quality-filtered trajectories in a local metric frame, using the barometric altitude
+        for the vertical channel (fix-level cleaning, $v_{xy}$-based trimming, flight-level
+        filtering, resampling).
   \item \textbf{Whole-trajectory observables (no segmentation).} Immediate next step:
         characterise the data with observables that need no phases --- MSD and its scaling
         exponent, the displacement distribution and its tails, the velocity autocorrelation
