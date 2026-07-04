@@ -32,8 +32,15 @@
 \usepackage{xcolor}
 \usepackage{csquotes}
 \usepackage[hidelinks]{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, calc, angles, quotes}
 
 \sisetup{group-separator={,}, group-minimum-digits=4}
+
+% Palette shared with the matplotlib figures (soaring.analysis), for visual consistency.
+\definecolor{figblue}{HTML}{3477A8}
+\definecolor{figred}{HTML}{B5482A}
+\definecolor{figgreen}{HTML}{4E8A5B}
 
 % Traditional BibTeX (portable: no biber required). latexmk runs bibtex automatically.
 \usepackage{cite}

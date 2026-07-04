@@ -137,6 +137,30 @@ conflated this \emph{implemented} format-validity layer with the fix-level
 a dataclass) but not yet implemented as code -- an important distinction the thesis now
 states explicitly rather than glossing over.
 
+\paragraph{2026-07 --- Pre-processing made data-driven and config-driven.}
+Reworked Chapter~4 so the flight-level filtering is computed from the \emph{full parsed
+dataset} (paragliders and hang gliders), not the declared catalog metadata: a track scan
+(\texttt{soaring.analysis.preprocessing.scan\_tracks}) parses every downloaded track, and
+Figure~4.2 shows the real duration and flown-path-length distributions with per-variable
+\emph{marginal} retention curves. The cuts are duration $\geq 40$ min and path length
+$\geq 30$ km (a minimal cut, $\sim$95\% retained); the earlier min-fix-count cut was dropped as
+redundant with the duration cut, and the \emph{extent} proxy was replaced by the total flown
+\emph{path length} (median 86 km para, 158 km hang). \emph{Key decision:} every pre-processing
+threshold now lives in
+\texttt{configs/preprocessing.yaml} (never hard-coded), loaded via
+\texttt{load\_preproc\_config} into typed dataclasses. Also added: the great-circle (haversine)
+formulas giving inter-fix speed and distance \emph{before} the ENU conversion; a
+Savitzky--Golay smoothing/differentiation section with a noise-matched procedure for its two
+hyperparameters; and the switch from a common resampling cadence to native per-flight
+$\Delta t$ (Figure~4.5). An implementation blueprint
+(\texttt{docs/guide/preprocessing-pipeline.md}) records the exact schema and steps, to retire
+into code once the pipeline is built.
+
+\paragraph{2026-07 --- Coordinate/geodesy figures.}
+Redrew the coordinate-transformation figures: Figure~4.3 (WGS84 ellipsoid; geodetic vs
+geocentric latitude) and Figure~4.4 (the ECEF$\to$ENU rotation, in our notation), and added the
+ESA Navipedia citation for the ECEF conversion.
+
 \paragraph{2026-06 --- Documentation.}
 Project docs are built with MkDocs and published on GitHub Pages. Initially deployed with
 \texttt{mkdocs gh-deploy}, which accumulated one built-site commit per deploy on a
@@ -159,11 +183,14 @@ observables can be built before any phase splitting.
         (a higher-quota request is pending) and possibly XContest -- merging into one catalog
         and stratifying by source. Refresh the per-discipline \texttt{seasons\_index.csv} via
         \texttt{build-catalog} so the document statistics stay current.
-  \item \textbf{Pre-processing.} The IGC \texttt{B}-record parser is in place
-        (\texttt{soaring.analysis.igc}); next, turn parsed fixes into clean, resampled,
-        quality-filtered trajectories in a local metric frame, using the barometric altitude
-        for the vertical channel (fix-level cleaning, $v_{xy}$-based trimming, flight-level
-        filtering, resampling).
+  \item \textbf{Pre-processing.} The parser is in place (\texttt{soaring.analysis.igc}) and
+        the pipeline is designed and thresholded (\texttt{configs/preprocessing.yaml}):
+        fix-level cleaning (great-circle speeds), $v_{xy}$-based trimming, data-driven
+        flight-level filtering (duration $+$ path length), ENU conversion (barometric
+        vertical), native-$\Delta t$ uniformity, and Savitzky--Golay
+        smoothing/differentiation. Next: implement it end-to-end (parser $\to\dots\to$ Parquet
+        \texttt{fixes} table) per the blueprint, and measure the ENU power spectra to fix the
+        Savitzky--Golay window.
   \item \textbf{Whole-trajectory observables (no segmentation).} Immediate next step:
         characterise the data with observables that need no phases --- MSD and its scaling
         exponent, the displacement distribution and its tails, the velocity autocorrelation

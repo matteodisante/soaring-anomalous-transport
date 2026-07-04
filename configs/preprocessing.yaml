@@ -1,0 +1,45 @@
+# =============================================================================
+#  Pre-processing thresholds -- the AUTHORITATIVE source.
+#
+#  Every numeric threshold of the trajectory pre-processing lives here, never
+#  hard-coded in Python. To change a cut, edit the value here: nothing else needs
+#  touching. Loaded by `soaring.analysis.preprocessing.load_preproc_config`.
+#
+#  Grouped by the pipeline level at which each acts (see the thesis chapter
+#  "Next steps", Sec. 4.1, and docs/guide/preprocessing-pipeline.md). All speeds in
+#  m/s, distances in km unless the name says otherwise; altitudes are barometric.
+# =============================================================================
+
+# --- fix level: applied PER FIX, on the raw geographic coordinates -----------
+# Speeds here are great-circle (haversine) speeds between consecutive fixes
+# (no coordinate conversion yet); see the thesis for the formula.
+fix_level:
+  max_horizontal_speed_mps: 40.0   # v_xy above this between two fixes => GPS position jump
+  max_vertical_speed_mps: 10.0     # |v_z| (barometric) beyond the soaring climb/sink range
+  min_altitude_m: -100.0           # plausible barometric-altitude range: lower bound
+  max_altitude_m: 6000.0           # ... upper bound
+  max_time_gap_s: 60.0             # inter-fix gap above which the track is split/flagged
+
+# --- trimming: strip ground phases (take-off / landing), on v_xy alone --------
+trimming:
+  takeoff_speed_mps: 5.0           # airborne once v_xy exceeds this...
+  sustained_s: 30.0                # ...continuously for at least this long
+
+# --- flight level: applied PER FLIGHT (drops whole flights), from the track --
+flight_level:
+  min_duration_s: 2400.0           # 40 min: shortest genuine XC flight; the SMALLEST cut
+                                   #   that clears sled runs / tows / aborted logs
+  min_path_km: 30.0                # total flown path length (sum of great-circle steps);
+                                   #   30 km removes non-flights, minimal bias on real XC
+
+# --- sampling: intra-flight uniformity, a prerequisite for Savitzky-Golay -----
+sampling:
+  max_gap_factor: 5.0              # exclude the flight if its largest gap > this * native dt
+  max_missing_fraction: 0.10       # exclude if > this fraction of the uniform grid is missing
+
+# --- Savitzky-Golay smoothing + differentiation (per ENU component) ----------
+# window is set PER FLIGHT from the noise timescale: window = odd(tau_c / dt).
+savgol:
+  polyorder: 3                     # >=2 for a clean 2nd derivative; insensitive within {2,3,4}
+  tau_c_horizontal_s: 12.0         # PLACEHOLDER: smoothing timescale for E,N (from PSD knee)
+  tau_c_vertical_s: 20.0           # PLACEHOLDER: smoothing timescale for U (vertical noisier)

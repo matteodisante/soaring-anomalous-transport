@@ -1,38 +1,45 @@
 #!/usr/bin/env python3
-"""Regenerate the pre-processing diagnostics figure for the thesis.
+"""Regenerate the flight-level filtering and sampling-interval figures for the thesis.
 
-Reads the paraglider flight catalog ``data/paragliders/catalog.csv`` and writes
+Writes two figures to ``thesis/generated/``:
 
-* ``thesis/generated/preproc_diagnostics.pdf`` -- the distributions of flight
-  duration, declared distance and track length, each marked with the flight-level
-  filtering threshold adopted in the thesis.
+* ``preproc_diagnostics.pdf`` -- recorded flight duration and total flown path length,
+  each with its distribution and its *marginal* retention curve (that cut alone), with
+  the adopted flight-level thresholds marked;
+* ``sampling_intervals.pdf`` -- the native sampling interval per flight.
 
-Unlike ``generate_stats.py``, the catalog is large and *not* versioned, so it may be
-absent (a fresh checkout, or CI). In that case the script leaves the committed figure
-untouched and exits successfully. It also needs the ``analysis`` extra
-(``matplotlib``); if that is missing it likewise exits without failing. The figure is
-therefore refreshed on demand -- on a machine that has the catalog -- and committed as
-an asset. PDF metadata is pinned so re-runs on unchanged data give clean diffs.
+Both are computed on the **full dataset** (every downloaded track, no sub-sampling) and
+for **every discipline** present (paragliders and hang gliders today; sailplanes later),
+overlaid per discipline. All quantities come from the parsed tracks, not the declared
+catalog metadata. The adopted thresholds are read from ``configs/preprocessing.yaml``.
+
+The raw data lives on an external disk and may be absent (a fresh checkout, or CI); the
+data roots come from ``SOARING_PARA_DATA_ROOT`` / ``SOARING_DELTA_DATA_ROOT`` or config
+placeholders. A discipline whose ``igc/`` directory is missing is skipped; if none are
+reachable, or matplotlib is missing, the committed figures are left untouched and the
+script exits cleanly. A full paraglider census parses ~186k files and takes several
+minutes even across processes. Run it with, e.g.::
+
+    SOARING_PARA_DATA_ROOT=/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc \
+    uv run --with matplotlib python scripts/reporting/generate_preproc_figure.py
 """
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-CATALOG_PATH = ROOT / "data" / "paragliders" / "catalog.csv"
-OUT_PATH = ROOT / "thesis" / "generated" / "preproc_diagnostics.pdf"
+OUT_DIAG = ROOT / "thesis" / "generated" / "preproc_diagnostics.pdf"
+OUT_DT = ROOT / "thesis" / "generated" / "sampling_intervals.pdf"
+N_JOBS = min(8, os.cpu_count() or 1)
 
-# Make ``soaring`` importable from the source tree even when it is not installed in the
-# active environment (``uv`` does not reinstall the editable package when switching
-# extras). This keeps the script runnable with, e.g.,
-# ``uv run --with matplotlib python scripts/reporting/generate_preproc_figure.py``.
 _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
 
-# Deterministic PDF metadata -> committing the figure produces clean diffs.
+# Deterministic PDF metadata -> committing the figures produces clean diffs.
 _PDF_METADATA = {
     "Creator": "soaring.analysis",
     "Producer": "soaring.analysis",
@@ -40,25 +47,70 @@ _PDF_METADATA = {
 }
 
 
+def _igc_dir(default_config: str, env: str):
+    """Locate a discipline's ``igc/`` directory, or ``None`` if it is not reachable."""
+    from soaring.acquisition.ffvl.config import load_config
+
+    try:
+        cfg = load_config(default_config, data_root_env=env)
+    except (FileNotFoundError, KeyError):
+        return None
+    return cfg.igc_dir if cfg.igc_dir.is_dir() else None
+
+
 def main() -> int:
-    """Regenerate the figure when the catalog and matplotlib are both available."""
-    if not CATALOG_PATH.is_file():
-        print(f"Catalog not found ({CATALOG_PATH}); keeping the committed figure.")
-        return 0
+    """Regenerate both figures from the full census when data and matplotlib exist."""
     try:
         import matplotlib
     except ImportError:
-        print("matplotlib missing (extra 'analysis'); keeping the committed figure.")
+        print("matplotlib missing (extra 'analysis'); keeping the committed figures.")
         return 0
     matplotlib.use("Agg")
 
-    from soaring.analysis.preprocessing import load_catalog, make_diagnostics_figure
+    from soaring.acquisition.ffvl.config import (
+        DEFAULT_CONFIG_PATH,
+        DEFAULT_DELTA_CONFIG_PATH,
+    )
+    from soaring.analysis.preprocessing import (
+        load_preproc_config,
+        make_diagnostics_figure,
+        make_sampling_figure,
+        scan_tracks,
+    )
 
-    catalog = load_catalog(CATALOG_PATH)
-    fig = make_diagnostics_figure(catalog)
-    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(OUT_PATH, metadata=_PDF_METADATA, bbox_inches="tight")
-    print(f"Wrote {OUT_PATH} from {len(catalog)} catalog rows.")
+    dirs = {
+        "paragliders": _igc_dir(str(DEFAULT_CONFIG_PATH), "SOARING_PARA_DATA_ROOT"),
+        "hang gliders": _igc_dir(
+            str(DEFAULT_DELTA_CONFIG_PATH), "SOARING_DELTA_DATA_ROOT"
+        ),
+    }
+    dirs = {d: p for d, p in dirs.items() if p is not None}
+    if not dirs:
+        print("No IGC data reachable on the SSD; keeping the committed figures.")
+        return 0
+
+    scans = {}
+    for disc, igc_dir in dirs.items():
+        paths = sorted(igc_dir.rglob("*.igc"))
+        print(f"[{disc}] full census: parsing {len(paths)} tracks, {N_JOBS} workers...")
+        scans[disc] = scan_tracks(paths, n_jobs=N_JOBS)
+        s = scans[disc]
+        print(
+            f"[{disc}] {len(s)} readable; median duration "
+            f"{s['duration_s'].median() / 60:.0f} min, median path "
+            f"{s['path_km'].median():.0f} km."
+        )
+
+    cfg = load_preproc_config()
+    OUT_DIAG.parent.mkdir(parents=True, exist_ok=True)
+    make_diagnostics_figure(scans, cfg.flight).savefig(
+        OUT_DIAG, metadata=_PDF_METADATA, bbox_inches="tight"
+    )
+    make_sampling_figure(scans).savefig(
+        OUT_DT, metadata=_PDF_METADATA, bbox_inches="tight"
+    )
+    counts = ", ".join(f"{d}={len(s)}" for d, s in scans.items())
+    print(f"Wrote {OUT_DIAG.name} and {OUT_DT.name} from full census ({counts}).")
     return 0
 
 
