@@ -131,3 +131,23 @@ def test_midnight_rollover(tmp_path):
     df = igc.parse_igc(p)
     assert df["t"].tolist() == [0.0, 20.0]
     assert np.all(np.diff(df["t"].to_numpy()) > 0)
+
+
+def test_backward_jitter_is_not_a_new_day(tmp_path):
+    # A few-second backward step is an out-of-order / corrupted fix, NOT a midnight
+    # roll-over. The old "any decrease adds a day" logic turned such a glitch into a
+    # +86400 s jump, manufacturing a spurious multi-hour span (the "30 h on 1100 fixes"
+    # pathology). Elapsed time must stay a few seconds and non-decreasing.
+    lines = [
+        "AXXX",
+        "B1000004432469N00542796EA014700155600",  # 10:00:00
+        "B1000034432469N00542796EA014700155600",  # 10:00:03
+        "B1000014432469N00542796EA014700155600",  # 10:00:01  <- 2 s backward glitch
+        "B1000054432469N00542796EA014700155600",  # 10:00:05
+    ]
+    p = tmp_path / "jitter.igc"
+    p.write_bytes(("\r\n".join(lines) + "\r\n").encode("latin-1"))
+    t = igc.parse_igc(p)["t"].to_numpy()
+    assert t[0] == 0.0
+    assert t[-1] < 60.0  # a handful of seconds, NOT ~86400+
+    assert np.all(np.diff(t) >= 0.0)  # clamped to a non-decreasing series

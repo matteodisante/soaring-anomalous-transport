@@ -30,6 +30,11 @@ import pandas as pd
 # Column layout of the returned table.
 COLUMNS = ["t", "lat", "lon", "valid", "baro_alt", "gnss_alt"]
 
+# A UTC midnight roll-over makes the time of day drop by (almost) a whole day. Only a
+# drop this large is treated as a new day; a smaller backward step is an out-of-order or
+# corrupted fix, not a roll-over (see the unwrap logic in :func:`parse_igc`).
+_MIDNIGHT_WRAP_MIN_DROP_S = 43200
+
 
 def _lat(token: str) -> float:
     """Decode an 8-char latitude token ``DDMMmmmH`` into signed degrees.
@@ -139,9 +144,17 @@ def parse_igc(path: str | Path) -> pd.DataFrame:
         return pd.DataFrame({c: pd.Series(dtype="float64") for c in COLUMNS})
 
     sod = np.asarray(sec_of_day, dtype=np.int64)
-    # Unwrap the midnight roll-over: when the time of day decreases, a day has passed.
-    day_wraps = np.concatenate([[0], np.cumsum(np.diff(sod) < 0)])
+    # Rebuild a monotonic elapsed time from the wall-clock time of day, which resets to
+    # 0 at each UTC midnight. Only a drop of (nearly) a whole day is a real roll-over; a
+    # *small* backward step is an out-of-order or corrupted fix, not a new day. The
+    # naive "any decrease adds a day" would turn a few-second GPS glitch into a spurious
+    # +86400 s jump, manufacturing a multi-hour gap and a wildly wrong duration. So only
+    # large drops advance the day counter; any residual backward jitter is then clamped
+    # (:func:`numpy.maximum.accumulate`) so the series is non-decreasing as promised.
+    diffs = np.diff(sod)
+    day_wraps = np.concatenate([[0], np.cumsum(diffs < -_MIDNIGHT_WRAP_MIN_DROP_S)])
     t = (sod + 86400 * day_wraps).astype(float)
+    t = np.maximum.accumulate(t)
     t -= t[0]
 
     return pd.DataFrame(
