@@ -12,13 +12,15 @@
 
 # --- fix level: applied PER FIX, on the raw geographic coordinates -----------
 # Speeds here are great-circle (haversine) speeds between consecutive fixes
-# (no coordinate conversion yet); see the thesis for the formula.
+# (no coordinate conversion yet); see the thesis for the formula. Each bound sits in
+# the physically-implausible tail of its per-fix distribution, so it removes GPS errors
+# rather than signal (audited in the thesis, fig:fixlevel). Inter-fix gaps are handled
+# once, at the flight level, by `sampling` below -- not with a second absolute bound here.
 fix_level:
   max_horizontal_speed_mps: 40.0   # v_xy above this between two fixes => GPS position jump
   max_vertical_speed_mps: 10.0     # |v_z| (barometric) beyond the soaring climb/sink range
   min_altitude_m: -100.0           # plausible barometric-altitude range: lower bound
   max_altitude_m: 6000.0           # ... upper bound
-  max_time_gap_s: 60.0             # inter-fix gap above which the track is split/flagged
 
 # --- trimming: strip ground phases (take-off / landing), on v_xy alone --------
 trimming:
@@ -33,9 +35,16 @@ flight_level:
                                    #   30 km removes non-flights, minimal bias on real XC
 
 # --- sampling: intra-flight uniformity, a prerequisite for Savitzky-Golay -----
+# Flight-level cuts: a flight too irregular to resample onto a uniform grid is excluded
+# (audited in the thesis, fig:gaps).
 sampling:
-  max_gap_factor: 5.0              # exclude the flight if its largest gap > this * native dt
-  max_missing_fraction: 0.10       # exclude if > this fraction of the uniform grid is missing
+  max_gap_factor: 10.0             # exclude if the largest inter-fix gap exceeds this
+                                   #   multiple of the flight's own native dt. RELATIVE to
+                                   #   native dt, so the tolerated absolute gap scales with
+                                   #   the logger's rate; raising it much further would
+                                   #   interpolate over ever-longer spans.
+  max_missing_fraction: 0.10       # exclude if more than this fraction of the uniform grid
+                                   #   at the native dt is left uncovered
 
 # --- Savitzky-Golay smoothing + differentiation (per ENU component) ----------
 # window is set PER FLIGHT from the noise timescale: window = odd(tau_c / dt).
