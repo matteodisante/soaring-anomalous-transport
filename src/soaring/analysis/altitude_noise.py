@@ -398,19 +398,20 @@ def make_altitude_noise_figure(
 def render_altitude_noise_figure(acc: _Accumulator, disciplines: list[str]) -> Figure:
     """Render the barometric-vs-GNSS altitude noise figure from collected diagnostics.
 
-    Four panels. For one representative flight, over the same window: (a) the two raw
-    channels overlaid -- long enough (30 min) that the two curves' separation visibly
-    grows over time, showing the offset's drift directly rather than only after
-    processing; (b) their difference GNSS minus barometric (mean removed), which puts a
-    number on that same drift (plausibly the barometric channel's departure from the
-    ICAO standard atmosphere as altitude changes) alongside the residual jitter --
-    deliberately *not* detrended, so the drift stays visible rather than hidden. Neither
-    panel is where the jitter claim rests: that is (c) below, the ensemble PSD, which
-    shows it unambiguously (a two-to-three-orders-of-magnitude gap at high frequency) --
-    a single flight's raw trace is not the right evidence for it, since real vertical
-    motion at these timescales dwarfs a few metres of jitter on the plotted scale. Over
-    the ensemble: (c) the mean
-    Welch PSD of the two
+    Four panels. For one representative flight, over the same, 30-minute window: (a) the
+    two raw channels, each on its *own* y-axis (barometric left, GNSS right,
+    independently auto-scaled) so both curves' own shape is fully resolved rather than
+    competing for space on one axis spanning their ~100 m mutual offset; (b) their
+    difference GNSS minus barometric (mean removed), which puts a number on that offset
+    and its drift (plausibly the barometric channel's departure from the ICAO standard
+    atmosphere as altitude changes) alongside the residual jitter -- deliberately *not*
+    detrended, so the drift stays visible rather than hidden; since panel (a)'s
+    independent axes no longer make the raw vertical gap a direct reading of the offset,
+    panel (b) is where that number lives. Neither raw-trace panel is where the jitter
+    claim rests: that is (c) below, the ensemble PSD, which shows it unambiguously (a
+    two-to-three-orders-of-magnitude gap at high frequency) -- a single flight's raw
+    trace, at this timescale, is not the right evidence for it. Over the ensemble: (c)
+    the mean Welch PSD of the two
     channels (log-log), per discipline; (d) the fraction of flights whose barometric
     channel is absent, per discipline (a census or a sized-sample estimate, depending on
     how ``acc`` was built -- see :func:`collect`).
@@ -444,12 +445,24 @@ def render_altitude_noise_figure(acc: _Accumulator, disciplines: list[str]) -> F
         tw = t[window] - t[0]
         zb_w, zg_w = zb[window], zg[window]
 
-        # (a) both raw channels, one shared y-axis: the growing vertical gap between
-        # the two curves IS the point (the offset drifting), so nothing should
-        # normalise it away.
-        axd["a"].plot(tw, zg_w, color=ch_color["gnss"], lw=0.9, label="GNSS")
-        axd["a"].plot(tw, zb_w, color=ch_color["baro"], lw=1.0, label="barometric")
-        axd["a"].legend(fontsize=7, loc="best")
+        # (a) both raw channels, dual y-axis: each channel independently auto-scaled to
+        # its own range, so its own climb/jitter shape is fully resolved instead of
+        # sharing one axis that must span both curves plus their mutual offset. The
+        # trade-off is that the raw vertical gap between the curves no longer reads as
+        # the true offset in metres -- that number lives in panel (b) instead.
+        ax_baro = axd["a"]
+        ax_gnss = ax_baro.twinx()
+        (line_baro,) = ax_baro.plot(
+            tw, zb_w, color=ch_color["baro"], lw=1.0, label="barometric"
+        )
+        (line_gnss,) = ax_gnss.plot(
+            tw, zg_w, color=ch_color["gnss"], lw=0.9, label="GNSS"
+        )
+        ax_baro.legend(handles=[line_gnss, line_baro], fontsize=7, loc="best")
+        ax_baro.set_ylabel("barometric altitude [m]", color=ch_color["baro"])
+        ax_gnss.set_ylabel("GNSS altitude [m]", color=ch_color["gnss"])
+        ax_baro.tick_params(axis="y", labelcolor=ch_color["baro"])
+        ax_gnss.tick_params(axis="y", labelcolor=ch_color["gnss"])
 
         # (b) their difference: mean removed (not detrended), so the slow drift of the
         # offset remains visible next to the residual jitter -- the drift is a real,
@@ -468,7 +481,6 @@ def render_altitude_noise_figure(acc: _Accumulator, disciplines: list[str]) -> F
             va="bottom",
         )
     axd["a"].set_xlabel("time [s]")
-    axd["a"].set_ylabel("altitude [m]")
     axd["a"].set_title(f"(a) Both channels (one flight, first {window_s / 60:.0f} min)")
     axd["b"].set_xlabel("time [s]")
     axd["b"].set_ylabel(r"GNSS $-$ barometric [m]")

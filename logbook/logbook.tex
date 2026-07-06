@@ -395,15 +395,18 @@ suite (only the docs-deploy one).
 A line-by-line pass over the altitude-noise figure, the fix-level figure, and the PSD
 appendix, prompted by direct questions about what they actually show.
 \begin{description}
-  \item[Fig.~4.1 panel~(a), second look] The dual-axis, short-window version (see the
-        entry above) still did not read, on the page, as clearly showing GNSS is the
-        noisier channel. Rather than push that design further, panel~(a) now shares one
-        window and one $y$-axis with panel~(b) again (30\,min) and is
-        re-purposed: it shows the two curves' separation \emph{visibly growing} over the
-        window (the offset drift), which panel~(b) then quantifies. The noise-floor
-        claim itself was moved to rest explicitly on panel~(c) (the ensemble PSD) alone,
-        where it is actually unambiguous -- a single flight's raw trace was never the
-        right evidence for it at this timescale.
+  \item[Fig.~4.1 panel~(a), third look] The dual-axis, short-window version (see the
+        entry above) did not read, on the page, as clearly showing GNSS is the noisier
+        channel, so it was dropped for a shared axis over the full 30\,min window
+        instead -- which showed the offset drift directly, but on request the panel went
+        back to a dual axis once more, this time over that same 30\,min window rather
+        than a short one. Net result: each channel is independently auto-scaled
+        (barometric left, GNSS right), so the two curves track almost on top of each
+        other (both are the same $\sim$500\,m climb, just at a different baseline) --
+        good for reading each channel's own shape, but it means the raw vertical gap is
+        no longer a literal reading of the offset. That number was never really this
+        panel's to carry: it lives in panel~(b), and the noise-floor claim in panel~(c),
+        regardless of which of these three versions panel~(a) went through.
   \item[Appendix~B (PSD) bug] Two cross-references pointed at ``Figure~4.1(b)'' for the
         PSD, which has been panel~(c) since the four-panel redesign; fixed. Also added
         the actual flight yield of the $\Delta t$-matching step, which the text described
@@ -431,6 +434,38 @@ appendix, prompted by direct questions about what they actually show.
         non-QNH-corrected offset (Figure~4.1 measures this directly, $\sim$100\,m
         for the flight shown there), so a genuine sea-level take-off can log
         slightly negative without being cut.
+\end{description}
+
+\paragraph{2026-07 --- Fix-level bounds: an experiment in progress (uncommitted).}
+Prompted by the discussion above, \texttt{configs/preprocessing.yaml}'s
+\texttt{max\_horizontal\_speed\_mps}/\texttt{max\_vertical\_speed\_mps} are being tried
+much looser (120/80\,m/s, from 40/10) to see the fix-level tails unclipped -- not yet
+committed, still an open experiment.
+\begin{description}
+  \item[Bigger sample needed] At the wider range the tail is sparse; the fix-level
+        figure's sample was raised from 800 to 3000 flights per discipline
+        (\texttt{FIXLEVEL\_SAMPLE\_PER\_DISCIPLINE}) -- 25.6M/17.2M fix pairs, still well
+        under a minute to compute.
+  \item[What the wider view found] Horizontal speed now shows, for hang gliders only, a
+        genuine second bump around 45--90\,m/s ($\sim$0.13\% of hang-glider fixes,
+        $\sim$22\,000 pairs) -- not a smoothly decaying tail. A sustained
+        \emph{ground} speed in that range (162--324\,km/h) has no credible airborne
+        explanation for a hang glider, so this reads as a real, distinct artefact
+        population (a logger/GPS pathology), not rare-but-genuine manoeuvres -- and the
+        old 40\,m/s bound happened to sit right at its edge, excluding it. Loosening the
+        bound to 120 lets it through untouched. Vertical speed shows no comparable bump
+        at the wider range. \emph{Tentative conclusion: the horizontal bound probably
+        should not stay this loose; the old value was doing real work.} Not acted on
+        yet, pending a decision.
+  \item[$-100\,$m altitude bound, empirical check] Computed the per-flight mean
+        GNSS$-$barometric offset over a sample of 1500 flights per discipline (broader
+        than the single Figure~4.1 example): median $\approx\!90\,$m, 25th--75th
+        percentile roughly $43$--$135\,$m, but this is a \emph{whole-flight} average and
+        the offset itself grows with altitude (Sec.~4.1.1), so it likely
+        \emph{overstates} the offset specifically near the ground -- not the same thing
+        as directly checking take-off-altitude fixes, which would be needed to pin the
+        bound down precisely rather than just confirm its order of magnitude. No error
+        found in Figure~4.2 itself.
 \end{description}
 
 \paragraph{2026-06 --- Documentation.}

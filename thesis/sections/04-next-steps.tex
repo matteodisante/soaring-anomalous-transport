@@ -65,19 +65,21 @@ re-examined here.
   }
   \caption{Barometric vs GNSS altitude noise. For one representative flight (the one with
   the most fixes in the subsample), over the same \SI{30}{\minute} window: (a)~the two
-  raw channels overlaid on one shared $y$-axis. The two curves start about
-  \SI{130}{\metre} apart and separate further as the flight climbs -- that growing gap
-  \emph{is} the point of this panel, so nothing here renormalises it away; it is not,
-  however, where the claim that GNSS is the noisier channel rests -- at this timescale a
-  climb of hundreds of metres dwarfs a jitter of a few metres on the plotted scale, so a
-  single flight's raw trace is the wrong place to look for it; that evidence is
-  panel~(c). (b)~Their difference GNSS$-$barometric (mean removed, \emph{not} detrended):
-  the same growing gap as in panel~(a), quantified. That drift, of order several tens of
-  metres over the window, is a real, physically meaningful feature -- plausibly the
-  barometric channel's progressive departure from the ICAO standard atmosphere as
-  altitude changes -- not noise to be filtered out, so only the constant part of the
-  offset is subtracted; its value for this flight (\SI{139}{\metre}) is annotated on the
-  panel, matching the vertical gap seen directly in panel~(a). Over
+  raw channels, each on its \emph{own}, independently auto-scaled $y$-axis (barometric
+  left, GNSS right): the two curves then track almost on top of each other, since each
+  is stretched to fill the panel with its own $\sim$\SI{500}{\metre} climb -- the point
+  of this panel is that shared shape, not their offset, which two independent axes no
+  longer render as a literal vertical gap (that number is panel~(b)'s job). Nor is this
+  panel where the claim that GNSS is the noisier channel rests -- at this timescale a
+  climb of hundreds of metres dwarfs a jitter of a few metres on the plotted scale
+  regardless of axis choice, so a single flight's raw trace is the wrong place to look
+  for it; that evidence is panel~(c). (b)~Their difference GNSS$-$barometric (mean
+  removed, \emph{not} detrended): the offset and its drift, of order several tens of
+  metres over the window, put on a single shared scale. That drift is a real, physically
+  meaningful feature -- plausibly the barometric channel's progressive departure from
+  the ICAO standard atmosphere as altitude changes -- not noise to be filtered out, so
+  only the constant part of the offset is subtracted; its value for this flight
+  (\SI{139}{\metre}) is annotated on the panel. Over
   the ensemble: (c)~mean Welch power spectra of the two channels, per discipline
   (Appendix~\ref{app:psd}; \num{212}/\num{400} paraglider and \num{114}/\num{400}
   hang-glider sampled flights actually contribute, after the common-cadence selection
