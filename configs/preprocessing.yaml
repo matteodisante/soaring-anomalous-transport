@@ -21,13 +21,16 @@ fix_level:
   # envelopes (thesis fig:fixlevel), so one shared bound is either too loose for the
   # slower type or clips real dynamics of the faster one. Values set from the full
   # per-fix distribution at a large sample (15000 paragliders, the full 6716-flight
-  # hang-glider population): each sits where the real, steeply-decaying population
-  # ends and a much shallower, physically-implausible tail begins (a GPS/logger
-  # artifact -- e.g. hang gliders show a distinct plateau from ~45 to ~90 m/s that no
-  # credible ground speed explains). Add a "sailplanes" key once that source is in.
+  # hang-glider population), placed where the bin-to-bin ratio of a fine (2.5 m/s)
+  # histogram actually settles near 1 -- i.e. where the decay stops, not just slows --
+  # since a shallower-but-still-decreasing stretch beyond the steepest part of the
+  # curve can still be genuine (rare but real) dynamics; only a genuinely flat tail
+  # reads as a GPS/logger artifact with no credible speed explanation (hang gliders:
+  # a distinct plateau from ~45 to ~90 m/s). Add a "sailplanes" key once that source
+  # is in.
   max_horizontal_speed_mps:        # v_xy above this between two fixes => GPS position jump
-    paragliders: 25.0
-    "hang gliders": 40.0
+    paragliders: 45.0
+    "hang gliders": 55.0
   max_vertical_speed_mps:          # |v_z| (barometric) beyond the soaring climb/sink range
     paragliders: 12.0
     "hang gliders": 14.0

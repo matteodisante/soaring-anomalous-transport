@@ -23,8 +23,8 @@ def test_load_preproc_config_from_yaml():
     # The authoritative values live in configs/preprocessing.yaml, not in code defaults.
     cfg = load_preproc_config()
     assert cfg.fix.max_horizontal_speed_mps == {
-        "paragliders": 25.0,
-        "hang gliders": 40.0,
+        "paragliders": 45.0,
+        "hang gliders": 55.0,
     }
     assert cfg.fix.max_vertical_speed_mps == {
         "paragliders": 12.0,

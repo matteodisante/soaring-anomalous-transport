@@ -725,7 +725,9 @@ def make_fixlevel_diagnostics_figure(
     shared_line_kw = {"color": "0.25", "ls": "--", "lw": 1.2}
     fig, axes = plt.subplots(1, 3, figsize=(11.0, 3.7))
 
-    def _hist_panel(ax, key, xlabel, title, *, all_cut_values, wide_tail):
+    def _hist_panel(
+        ax, key, xlabel, title, *, all_cut_values, wide_tail, integer_aligned=False
+    ):
         # x-range fitted to the data and extended to keep every cut in view. Two
         # regimes: the per-discipline speed panels default to a WIDE tail (see
         # _per_discipline_panel) -- the 99.9th percentile of the pooled sample sits
@@ -752,7 +754,17 @@ def make_fixlevel_diagnostics_figure(
             )
         span = (hi - lo) or 1.0
         lo, hi = lo - 0.02 * span, hi + 0.02 * span
-        bins = np.linspace(lo, hi, 60)
+        if integer_aligned:
+            # The underlying quantity is itself quantised to whole units (barometric
+            # vertical speed, from an integer-metre altitude log): a fine, arbitrarily
+            # placed grid of bins picks up an inconsistent share of each integer's
+            # spike depending on where the bin edges happen to fall relative to it,
+            # which reads as random-looking noise rather than the smooth envelope the
+            # data actually has. One bin per integer -- centred on it, not edged on it
+            # -- removes that artefact instead of just resampling it differently.
+            bins = np.arange(np.floor(lo) - 0.5, np.ceil(hi) + 1.5, 1.0)
+        else:
+            bins = np.linspace(lo, hi, 60)
         for disc, d in distributions.items():
             v = d.get(key, np.empty(0))
             if v.size:
@@ -770,7 +782,9 @@ def make_fixlevel_diagnostics_figure(
         )
         return pooled
 
-    def _per_discipline_panel(ax, key, cuts_by_disc, xlabel, title):
+    def _per_discipline_panel(
+        ax, key, cuts_by_disc, xlabel, title, *, integer_aligned=False
+    ):
         """One upper cut per discipline, colour-matched, each with its own fraction."""
         _hist_panel(
             ax,
@@ -779,6 +793,7 @@ def make_fixlevel_diagnostics_figure(
             title,
             all_cut_values=cuts_by_disc.values(),
             wide_tail=True,
+            integer_aligned=integer_aligned,
         )
         for i, (disc, cut) in enumerate(cuts_by_disc.items()):
             color = _DISC_COLOR.get(disc, "gray")
@@ -829,6 +844,7 @@ def make_fixlevel_diagnostics_figure(
         fix_level.max_vertical_speed_mps,
         r"barometric $|v_z|$ [m/s]",
         "(b) Vertical speed",
+        integer_aligned=True,
     )
     _shared_band_panel(
         axes[2],

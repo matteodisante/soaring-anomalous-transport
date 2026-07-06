@@ -189,8 +189,8 @@ Quantity & Reject / flag the fix when & Rationale \\
 Missing altitude & the adopted-channel value is absent            & no usable vertical coordinate (Sec.~\ref{sec:altchannel}) \\
 Duplicate time   & two fixes share the UTC second                & keep the first (logger double-write) \\
 Altitude range   & outside $[-100,\,6000]\,\si{\metre}$           & sensor fault, allowing for the channel's own offset \\
-Horizontal speed (paragliders)  & $v_{xy}>\SI{25}{\metre\per\second}$ between consecutive fixes & GPS position jump \\
-Horizontal speed (hang gliders) & $v_{xy}>\SI{40}{\metre\per\second}$ between consecutive fixes & GPS position jump \\
+Horizontal speed (paragliders)  & $v_{xy}>\SI{45}{\metre\per\second}$ between consecutive fixes & GPS position jump \\
+Horizontal speed (hang gliders) & $v_{xy}>\SI{55}{\metre\per\second}$ between consecutive fixes & GPS position jump \\
 Vertical speed (paragliders)    & $|v_z|>\SI{12}{\metre\per\second}$            & beyond the soaring climb/sink range \\
 Vertical speed (hang gliders)   & $|v_z|>\SI{14}{\metre\per\second}$            & beyond the soaring climb/sink range \\
 \bottomrule
@@ -241,26 +241,33 @@ that offset and not just true altitude. Inter-fix gaps are handled once, at the 
   unimodal distribution and widening it the same way would mostly shrink the
   informative part of the panel. Panel (a) is why the speed bounds are per-discipline
   and not a shared value: at this sample size, hang gliders show a distinct, much more
-  slowly-decaying plateau from about \SIrange{45}{90}{\metre\per\second} sitting on top
+  slowly-decaying plateau from about \SIrange{55}{90}{\metre\per\second} sitting on top
   of the steeply-decaying real distribution -- a sustained \emph{ground} speed of
-  \SIrange{160}{320}{\kilo\metre\per\hour} has no credible airborne explanation for a
+  \SIrange{200}{320}{\kilo\metre\per\hour} has no credible airborne explanation for a
   hang glider, so this reads as a real, distinct artefact population (most likely a
-  logger/GPS pathology), not rare-but-genuine manoeuvres. The adopted
-  \SI{40}{\metre\per\second} hang-glider bound sits exactly where the decay visibly
-  changes rate, i.e.\ where the real population ends and the artefact plateau begins;
-  paragliders show an analogous, if less extreme, change of slope around
-  \SI{25}{\metre\per\second}, the adopted bound for that discipline. Panel (b) is a comb
-  because barometric altitude is logged to the metre: differencing an integer-metre
-  series over a \SI{1}{\second} step can only return an integer number of
-  \si{\metre\per\second}. But the gaps between consecutive integers are not empty, only
-  sparse -- because not every flight samples at \SI{1}{\second} (Figure~\ref{fig:sampling}
-  shows hang gliders spread across several native rates); differencing over a longer
-  step returns a finer-grained set of values (e.g.\ multiples of \SI{0.2}{
-  \metre\per\second} at a \SI{5}{\second} native cadence), which is what fills the
-  gaps once every native cadence is pooled together. Checked directly: among fixes from
-  \SI{1}{\second}-native flights, about 99\% land within \SI{0.05}{\metre\per\second} of
-  an integer (the comb, essentially pure); among fixes from every other native cadence,
-  only 34--42\% do -- the other 58--66\% is exactly what is seen between the teeth.}
+  logger/GPS pathology), not rare-but-genuine manoeuvres. Placing the bound is a choice
+  between two candidates: the point where the decay first visibly \emph{slows}
+  ($\approx\!\SI{40}{\metre\per\second}$) and the point where it actually
+  \emph{stops}, i.e.\ the bin-to-bin ratio of a fine histogram settles at $\approx\!1$
+  ($\approx\!\SI{55}{\metre\per\second}$). The former still includes a shallow-but-real
+  stretch of decreasing density -- rare, wind-assisted glides or steep spirals do not
+  vanish abruptly -- so only the latter is a safe marker of ``this is now the
+  artefact, not the tail of real dynamics''; \SI{55}{\metre\per\second} is adopted for
+  that reason. Paragliders show the analogous pattern at a lower speed, adopted at
+  \SI{45}{\metre\per\second}. Panel (b) would be a comb, not a smooth curve, on a
+  naively-binned axis, because barometric altitude is logged to the metre:
+  differencing an integer-metre series over a \SI{1}{\second} step can only return an
+  integer number of \si{\metre\per\second}, and an arbitrarily placed fine grid of bins
+  then picks up an inconsistent share of each integer's spike. One bin per integer
+  (used here) removes that artefact instead of just re-sampling it. The comb would not
+  in any case be perfectly clean: not every flight samples at \SI{1}{\second}
+  (Figure~\ref{fig:sampling} shows hang gliders spread across several native rates),
+  and differencing over a longer native step returns a finer-grained set of values
+  (e.g.\ multiples of \SI{0.2}{\metre\per\second} at a \SI{5}{\second} cadence) that
+  partially fill the gaps once every cadence is pooled together. Checked directly:
+  among fixes from \SI{1}{\second}-native flights, about 99\% land within
+  \SI{0.05}{\metre\per\second} of an integer; among fixes from every other native
+  cadence, only 34--42\% do.}
   \label{fig:fixlevel}
 \end{figure}
 

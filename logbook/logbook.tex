@@ -455,16 +455,24 @@ Chasing the loosened-threshold experiment of the previous entry to a conclusion.
         manoeuvres.
   \item[Decision: per-discipline bounds, not one shared value] Paragliders and hang
         gliders have different performance envelopes, confirmed by their different
-        tail shapes (paraglider $v_{xy}$ knee $\approx\!23\,$m/s vs.\ the hang-glider
-        artefact boundary at $\approx\!40\,$m/s) -- a shared bound is either too loose
-        for one or clips real dynamics of the other. \texttt{FixLevelThresholds.max\_}
-        \texttt{horizontal\_speed\_mps}/\texttt{max\_vertical\_speed\_mps} are now
-        \texttt{dict[str, float]} keyed by discipline (\texttt{configs/preprocessing.%
-        yaml}, a nested mapping; a \texttt{"sailplanes"} entry can be added later with
-        no code change). Adopted, from the fine-grained tail inspection: horizontal
-        speed 25\,m/s (para) / 40\,m/s (hang, at the plateau's edge); vertical speed
-        12\,m/s (para) / 14\,m/s (hang). The altitude-range bound stays shared -- it
-        bounds the barometric sensor's own reading range, not glider performance.
+        tail shapes -- a shared bound is either too loose for one or clips real
+        dynamics of the other. \texttt{FixLevelThresholds.max\_horizontal\_speed\_mps}/
+        \texttt{max\_vertical\_speed\_mps} are now \texttt{dict[str, float]} keyed by
+        discipline (\texttt{configs/preprocessing.yaml}, a nested mapping; a
+        \texttt{"sailplanes"} entry can be added later with no code change). Vertical
+        speed: 12\,m/s (para) / 14\,m/s (hang).
+  \item[Horizontal speed bound, revised again: 40 was still ``slowing'', not
+        ``stopped''] First adopted at 25/40\,m/s (para/hang), where the fine-binned
+        decay rate first visibly changes. On review, with the panel's $x$-range
+        widened (next entry) to actually show the far tail, that point turned out to
+        still be on the shoulder of the decline, not the flat artefact itself: the
+        bin-to-bin ratio only settles at $\approx\!1$ (a genuine plateau, decay
+        actually stopped) around 55\,m/s for hang gliders, and the analogous point for
+        paragliders is $\approx\!45$, not 25. The 25/40\,m/s pair was therefore
+        cutting into the tail-end of real (if rare) dynamics -- a wind-assisted
+        glide, a steep spiral -- rather than sitting cleanly past it. Revised to
+        \textbf{45\,m/s (para) / 55\,m/s (hang)}, both now Table~4.1's and the
+        config's adopted values.
   \item[Figure and table updated] \texttt{make\_fixlevel\_diagnostics\_figure} now
         draws one dashed cut per discipline, colour-matched to its histogram, with a
         per-discipline removed-fraction annotation (previously one shared cut and
@@ -496,6 +504,17 @@ Chasing the loosened-threshold experiment of the previous entry to a conclusion.
         1\,s-native fixes, $\sim$99\% land within 0.05\,m/s of an integer (the comb,
         essentially pure); among every other native cadence, only 34--42\% do -- the
         other 58--66\% is exactly what shows up between the teeth.
+  \item[Panel (b)'s jagged comb, fixed] Separately from explaining \emph{why} the
+        valleys were not empty: the comb itself looked bad -- an arbitrary, fine
+        (linspace) grid of bins straddles the integer spikes inconsistently depending
+        on where each bin edge happens to fall, which reads as noisy up-down jitter
+        rather than the smooth decaying envelope the data actually has. Fix: one bin
+        per integer, centred on it (edges at half-integers) rather than an arbitrary
+        edge grid -- \texttt{make\_fixlevel\_diagnostics\_figure} now takes an
+        \texttt{integer\_aligned} flag, set for panel (b) only (vxy is not similarly
+        quantised). The panel is now a clean, monotonically-decaying curve; the
+        removed-fraction numbers are unaffected (computed from the raw data, not the
+        histogram).
 \end{description}
 
 \paragraph{2026-06 --- Documentation.}
