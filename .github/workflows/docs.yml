@@ -1,9 +1,18 @@
 name: Deploy docs
 
-# Manual only: deploy on request (Actions tab -> Deploy docs -> Run workflow, or
-# `gh workflow run docs.yml`), not on every push. The published site otherwise stays
-# exactly as it is until you explicitly ask for an update.
+# Auto-deploy on push, but ONLY when something that actually feeds the built site
+# changes (docs pages, nav/config, or the source docstrings mkdocstrings renders into
+# the API reference) -- not on every push, e.g. a change to the acquisition/analysis
+# logic with no docstring change, or to the thesis/logbook. `workflow_dispatch` is kept
+# for an on-demand redeploy (Actions tab -> Deploy docs -> Run workflow, or
+# `gh workflow run docs.yml`).
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'src/soaring/**'
   workflow_dispatch:
 
 # Least-privilege token, plus what the official Pages deploy needs.

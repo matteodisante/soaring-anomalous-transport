@@ -354,12 +354,17 @@ Three unrelated loose ends, tidied together.
         observables; the step--waiting coupling and phase-sequence memory; the
         stratification and bias-control plan). Re-synced against the current chapter.
   \item[Docs deploy] The GitHub Pages workflow redeployed on every push to \texttt{main},
-        which was not wanted (and one such deploy failed with a generic, transient
-        ``try again later'' from GitHub's Pages API --- confirmed via the Actions log
-        that only that one run failed out of the last ten, and only at the deploy step,
-        after a successful build). Switched the trigger to \texttt{workflow\_dispatch}
-        only: the published site now changes only when explicitly requested (Actions tab,
-        or \texttt{gh workflow run docs.yml}).
+        including pushes with nothing to do with the site (e.g.\ acquisition/analysis
+        code with no docstring change) --- not wanted. One such deploy had also failed
+        with a generic, transient ``try again later'' from GitHub's Pages API, but that
+        was an isolated glitch, not a config problem (confirmed via the Actions log: only
+        that one run failed out of the last ten, and only at the deploy step, after a
+        successful build). Fix: the \texttt{push} trigger is now scoped with
+        \texttt{paths} to what actually feeds the built site (\texttt{docs/**},
+        \texttt{mkdocs.yml}, \texttt{src/soaring/**}, whose docstrings mkdocstrings
+        renders into the API reference), so the site still updates itself automatically
+        but only for changes that matter to it; \texttt{workflow\_dispatch} stays
+        available for an on-demand redeploy.
 \end{description}
 
 \paragraph{2026-06 --- Documentation.}
