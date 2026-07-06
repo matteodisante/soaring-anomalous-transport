@@ -31,9 +31,10 @@ fix_level:
   max_horizontal_speed_mps:        # v_xy above this between two fixes => GPS position jump
     paragliders: 45.0
     "hang gliders": 55.0
-  max_vertical_speed_mps:          # |v_z| (barometric) beyond the soaring climb/sink range
-    paragliders: 12.0
-    "hang gliders": 14.0
+  max_vertical_speed_mps: 13.0     # |v_z| (barometric) beyond the soaring climb/sink range --
+                                   #   shared: the two disciplines' vz distributions are close
+                                   #   enough that splitting it, unlike horizontal speed, buys
+                                   #   nothing (thesis fig:fixlevel)
   min_altitude_m: -100.0           # plausible barometric-altitude range: lower bound
                                    #   (not per-discipline: bounds the barometric sensor's
                                    #   own reading range, not glider performance -- see thesis)

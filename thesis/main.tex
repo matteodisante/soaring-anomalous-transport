@@ -26,6 +26,14 @@
 \usepackage[a4paper,margin=2.7cm]{geometry}
 \usepackage{microtype}
 \usepackage{graphicx}
+% Replaces plain LaTeX's \@makecaption, whose one-line-fit test measures the whole
+% caption as a single unbroken hbox: past a few thousand characters (several figures
+% here have long, data-justified captions) that pre-measurement itself overflows
+% TeX's max dimension ("Dimension too large") even though the wrapped caption would
+% render fine. `caption` has the same single-line check by default (to centre a
+% caption short enough to need no wrapping); singlelinecheck=false disables it, since
+% it is what overflows, not anything about the wrapped result.
+\usepackage[singlelinecheck=false]{caption}
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{siunitx}

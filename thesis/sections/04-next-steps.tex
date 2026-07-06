@@ -191,21 +191,22 @@ Duplicate time   & two fixes share the UTC second                & keep the firs
 Altitude range   & outside $[-100,\,6000]\,\si{\metre}$           & sensor fault, allowing for the channel's own offset \\
 Horizontal speed (paragliders)  & $v_{xy}>\SI{45}{\metre\per\second}$ between consecutive fixes & GPS position jump \\
 Horizontal speed (hang gliders) & $v_{xy}>\SI{55}{\metre\per\second}$ between consecutive fixes & GPS position jump \\
-Vertical speed (paragliders)    & $|v_z|>\SI{12}{\metre\per\second}$            & beyond the soaring climb/sink range \\
-Vertical speed (hang gliders)   & $|v_z|>\SI{14}{\metre\per\second}$            & beyond the soaring climb/sink range \\
+Vertical speed   & $|v_z|>\SI{13}{\metre\per\second}$            & beyond the soaring climb/sink range \\
 \bottomrule
 \end{tabular}
 \caption{Fix-level cleaning criteria, applied in the order listed. Each bound marks the
 physically-implausible tail of its per-fix distribution (Figure~\ref{fig:fixlevel}), so it
 removes GPS errors rather than signal; the values are set in
-\texttt{configs/preprocessing.yaml} (never hard-coded), one per discipline for the two
-speed bounds -- paragliders and hang gliders have different performance envelopes
+\texttt{configs/preprocessing.yaml} (never hard-coded). Horizontal speed is set one per
+discipline -- paragliders and hang gliders have different horizontal-speed envelopes
 (the present dataset, Chapter~\ref{ch:dataset}), so a single shared bound is either too
 loose for the slower type or clips real dynamics of the faster one; a
-\texttt{"sailplanes"} entry will be added once that source is in. The altitude-range
-bound is not split by discipline: it bounds the barometric sensor's plausible reading
-range, not glider performance, and applies to the adopted channel
-(Sec.~\ref{sec:altchannel}). The lower bound is $\SI{-100}{\metre}$ rather than
+\texttt{"sailplanes"} entry will be added once that source is in. Vertical speed and
+the altitude range are \emph{not} split by discipline: the two disciplines' vertical-speed
+distributions are close enough that splitting it buys nothing (Figure~\ref{fig:fixlevel}),
+and the altitude bound is about the barometric sensor's plausible reading
+range, not glider performance; both apply to the adopted channel
+(Sec.~\ref{sec:altchannel}). The lower altitude bound is $\SI{-100}{\metre}$ rather than
 $0$ because the barometric channel is not QNH-corrected: its offset from true altitude
 (Figure~\ref{fig:altnoise}, of order \SI{100}{\metre} in the flight shown there) means a
 take-off at sea level can legitimately read slightly negative, so the bound must clear
@@ -231,9 +232,11 @@ that offset and not just true altitude. Inter-fix gaps are handled once, at the 
   \num{37915334} pairs, $\sim$25\,s) -- deliberately large, so that the sparse tail where
   the bounds act is resolved well enough to tell real dynamics from a rare logger
   artifact, at a computational cost of under two minutes. Dashed lines mark the adopted
-  bounds (Table~\ref{tab:cleaning}), one per discipline and colour-matched to it, since
-  paragliders and hang gliders have different performance envelopes; the fraction of
-  fixes each would remove is annotated per discipline. The $y$-axis is logarithmic so
+  bounds (Table~\ref{tab:cleaning}). In (a), horizontal speed, the cut is one per
+  discipline and colour-matched to it, since paragliders and hang gliders have
+  different horizontal-speed envelopes, with the fraction of fixes each would remove
+  annotated per discipline; in (b)/(c) the cut/band is shared, since neither vertical
+  speed nor altitude is meant to track a discipline-specific limit. The $y$-axis is logarithmic so
   that tail is visible; in (a)/(b) the $x$-range is deliberately wide (out to each
   discipline's own 99.99th percentile) rather than cropped just past the bound, so the
   excluded tail is actually shown, not merely implied by the removed-fraction number --

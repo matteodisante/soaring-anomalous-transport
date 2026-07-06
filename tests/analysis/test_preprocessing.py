@@ -26,10 +26,7 @@ def test_load_preproc_config_from_yaml():
         "paragliders": 45.0,
         "hang gliders": 55.0,
     }
-    assert cfg.fix.max_vertical_speed_mps == {
-        "paragliders": 12.0,
-        "hang gliders": 14.0,
-    }
+    assert cfg.fix.max_vertical_speed_mps == 13.0
     assert cfg.trimming.takeoff_speed_mps == 5.0
     assert cfg.trimming.sustained_s == 30.0
     assert cfg.flight.min_duration_s == 2400.0  # 40 min

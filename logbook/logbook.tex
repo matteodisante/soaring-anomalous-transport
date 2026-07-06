@@ -515,6 +515,31 @@ Chasing the loosened-threshold experiment of the previous entry to a conclusion.
         quantised). The panel is now a clean, monotonically-decaying curve; the
         removed-fraction numbers are unaffected (computed from the raw data, not the
         histogram).
+  \item[Vertical speed reverted to one shared bound: 13\,m/s] Unlike horizontal speed,
+        paragliders' and hang gliders' $|v_z|$ distributions sit close enough together
+        (panel (b)) that a per-discipline split buys nothing; a single 13\,m/s bound
+        (between the previous 12/14 split) covers both, with one shared grey dashed
+        line and one pooled removed-fraction annotation, mirroring how the altitude
+        band already works. \texttt{FixLevelThresholds.max\_vertical\_speed\_mps}
+        reverted from \texttt{dict[str, float]} to a plain \texttt{float}; the figure's
+        two shared-cut helpers (band and single-cut) were merged into one
+        \texttt{\_shared\_cut\_panel} that handles either, so panel (b) still gets the
+        \texttt{integer\_aligned} treatment above.
+  \item[A LaTeX limit hit, and fixed for good: very long captions] Rebuilding after the
+        above changes hit \texttt{! Dimension too large} / ``I can't work with sizes
+        bigger than about 19 feet'', deep in \texttt{\textbackslash @makecaption}.
+        Bisected the Figure~4.2 caption by half repeatedly to isolate it -- not a typo
+        (braces and math-mode \$ were balanced throughout), but the caption's sheer
+        length ($\sim$3900 characters): plain \LaTeX{}'s single-line-fit check for
+        captions measures the \emph{whole, unwrapped} caption as one hbox before
+        deciding whether to wrap it, and past a few thousand characters that
+        measurement alone overflows \TeX's $\sim$19-foot maximum dimension, even though
+        the wrapped result would render fine. Loading the \texttt{caption} package does
+        the same check by default (to centre genuinely short captions), so
+        \texttt{singlelinecheck=false} was needed on top of it. This is a general limit
+        of this document now that several figures carry long, data-justified
+        captions -- not specific to this one -- so the fix (\texttt{main.tex} preamble)
+        covers all of them going forward, not just Figure~4.2.
 \end{description}
 
 \paragraph{2026-06 --- Documentation.}

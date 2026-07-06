@@ -58,16 +58,18 @@ class FixLevelThresholds:
     apply to the adopted barometric channel. Inter-fix gaps are not bounded here: they
     are handled once, at the flight level, by :class:`SamplingThresholds`.
 
-    The two speed bounds are keyed by discipline (``"paragliders"``, ``"hang gliders"``,
-    later ``"sailplanes"``): the two types have markedly different performance
-    envelopes (thesis Figure 4.2), so one shared speed bound is either too loose for
-    the slower type or clips real dynamics of the faster one. The altitude bounds are
-    *not* split by discipline: they bound the barometric sensor's plausible reading
-    range, not a discipline-specific performance limit.
+    ``max_horizontal_speed_mps`` is keyed by discipline (``"paragliders"``,
+    ``"hang gliders"``, later ``"sailplanes"``): the two types have markedly different
+    horizontal-speed envelopes (thesis Figure 4.2), so one shared bound is either too
+    loose for the slower type or clips real dynamics of the faster one.
+    ``max_vertical_speed_mps`` and the altitude bounds are *not* split by discipline:
+    the two disciplines' vertical-speed distributions are close enough that splitting
+    it buys nothing, and the altitude bounds are about the barometric sensor's
+    plausible reading range, not a discipline-specific performance limit.
     """
 
     max_horizontal_speed_mps: dict[str, float]
-    max_vertical_speed_mps: dict[str, float]
+    max_vertical_speed_mps: float
     min_altitude_m: float
     max_altitude_m: float
 
@@ -707,10 +709,11 @@ def make_fixlevel_diagnostics_figure(
     flight, so what justifies it is that it sits in the physically-implausible tail
     (a GPS error, not signal) and removes a negligible fraction of fixes, annotated on
     each panel. The y-axis is logarithmic so that tail, where the cuts act, is visible.
-    Panels (a)/(b) mark one cut *per discipline*, colour-matched to that discipline's
-    histogram (their performance envelopes differ too much for one shared speed bound);
-    panel (c) marks one shared band, since the altitude bounds are about the sensor, not
-    the glider.
+    Panel (a) marks one cut *per discipline*, colour-matched to that discipline's
+    histogram (horizontal-speed envelopes differ too much between paragliders and hang
+    gliders for one shared bound); panels (b)/(c) mark one shared cut/band instead,
+    since neither the vertical-speed nor the altitude bounds are meant to track a
+    discipline-specific performance limit.
 
     Args:
         distributions: Mapping ``discipline -> {quantity -> per-fix values}`` from
@@ -811,18 +814,34 @@ def make_fixlevel_diagnostics_figure(
                 color=color,
             )
 
-    def _shared_band_panel(ax, key, cuts, xlabel, title):
-        """One shared band (e.g. altitude), same cut for every discipline."""
+    def _shared_cut_panel(
+        ax, key, cuts, xlabel, title, *, wide_tail, integer_aligned=False
+    ):
+        """One shared cut/band, the same for every discipline.
+
+        E.g. vertical speed (one upper-bound cut) or altitude (a lower+upper band).
+        """
         pooled = _hist_panel(
-            ax, key, xlabel, title, all_cut_values=cuts, wide_tail=False
+            ax,
+            key,
+            xlabel,
+            title,
+            all_cut_values=cuts,
+            wide_tail=wide_tail,
+            integer_aligned=integer_aligned,
         )
         for c in cuts:
             ax.axvline(c, **shared_line_kw)
-        frac = float(np.mean((pooled < cuts[0]) | (pooled > cuts[1]))) * 100.0
+        if len(cuts) == 1:
+            frac = float(np.mean(pooled > cuts[0])) * 100.0
+            note = f"cut removes {frac:.2g}% of fixes"
+        else:
+            frac = float(np.mean((pooled < cuts[0]) | (pooled > cuts[1]))) * 100.0
+            note = f"band removes {frac:.2g}% of fixes"
         ax.text(
             0.97,
             0.95,
-            f"band removes {frac:.2g}% of fixes",
+            note,
             transform=ax.transAxes,
             fontsize=7.5,
             ha="right",
@@ -838,20 +857,22 @@ def make_fixlevel_diagnostics_figure(
         "(a) Horizontal speed",
     )
     axes[0].legend(fontsize=8)
-    _per_discipline_panel(
+    _shared_cut_panel(
         axes[1],
         "v_z",
-        fix_level.max_vertical_speed_mps,
+        (fix_level.max_vertical_speed_mps,),
         r"barometric $|v_z|$ [m/s]",
         "(b) Vertical speed",
+        wide_tail=True,
         integer_aligned=True,
     )
-    _shared_band_panel(
+    _shared_cut_panel(
         axes[2],
         "altitude",
         (fix_level.min_altitude_m, fix_level.max_altitude_m),
         "barometric altitude [m]",
         "(c) Altitude",
+        wide_tail=False,
     )
     fig.tight_layout()
     return fig
