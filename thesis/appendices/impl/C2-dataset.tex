@@ -7,10 +7,10 @@ Chapter~\ref{ch:next-steps}.}
 
 \section{The IGC tracklog format}
 \label{impl:igcformat}
-The parser (\texttt{soaring.analysis.igc.parse\_igc}) checks, at decode time and
+The parser (\path{soaring.analysis.igc.parse_igc}) checks, at decode time and
 independently of any flight-dynamics judgement: that the time is a valid 24-hour
 \texttt{hh:mm:ss}; that the arc-minutes field of latitude and longitude is
-\texttt{<\,60} (the \texttt{DDMM.mmm} encoding is undefined otherwise); that the
+\texttt{<\,60} (the \path{DDMM.mmm} encoding is undefined otherwise); that the
 hemisphere letter is one of the two valid characters; and that the decoded
 latitude/longitude fall within $[-90,90]$/$[-180,180]$ degrees. A record failing any of
 these is dropped as unparseable, on the same footing as a record with the wrong length or
@@ -20,13 +20,13 @@ tests; the fix-level dynamics-plausibility checks it is distinct from
 
 \section{Flight metadata and the catalog}
 \label{impl:catalog}
-Both \texttt{catalog.csv} and \texttt{seasons\_index.csv} are regenerated from the
+Both \path{catalog.csv} and \path{seasons_index.csv} are regenerated from the
 archived season XMLs on demand, via the acquisition CLI's \texttt{build-catalog}
 subcommand (Sec.~\ref{impl:acqpipeline}) -- never hand-edited.
 
 \section{Glider categories}
 \label{impl:glider}
-Label normalisation (not yet implemented) will merge \texttt{aile\_class} variants and
+Label normalisation (not yet implemented) will merge \path{aile_class} variants and
 recover a blank or placeholder (\enquote{0}) class from the wing model (\texttt{aile})
 where possible, at the fix-level/pre-processing stage (Sec.~\ref{impl:fixlevel}).
 
@@ -74,7 +74,7 @@ runs on every flight before the transform.
   \item \textbf{Uniform resampling.} The altitude series $z(t)$ is linearly interpolated
         onto a grid $t_0,t_0+\Delta t,t_0+2\Delta t,\ldots$ spanning the flight, without
         introducing frequency content beyond $f_{\text{Nyq}}$.
-  \item \textbf{Welch on the resampled series.} \texttt{scipy.signal.welch} is called
+  \item \textbf{Welch on the resampled series.} \path{scipy.signal.welch} is called
         with $f_s=1/\Delta t$, $N_{\text{seg}}=256$, 50\% overlap, a Hann window, and
         linear detrending per segment.
   \item \textbf{Ensemble average.} The PSD of each qualifying flight is added to a
@@ -97,20 +97,20 @@ paid for elsewhere; it is not needed here.)
 \label{impl:fixlevel}
 
 \paragraph{Status.} Format-validity rejection is implemented in
-\texttt{soaring.analysis.igc.parse\_igc} and covered by unit tests. Dynamics-plausibility
+\path{soaring.analysis.igc.parse_igc} and covered by unit tests. Dynamics-plausibility
 rejection is designed and thresholded (Table~\ref{tab:cleaning}), but the routine that
 walks a trajectory applying the bounds fix by fix does not yet exist; building it is the
 next step at this stage.
 
 \paragraph{Configuration.} All six bounds of Table~\ref{tab:cleaning} are the
 \texttt{FixLevelThresholds} dataclass, loaded by
-\texttt{soaring.analysis.preprocessing.load\_preproc\_config} from
-\texttt{configs/preprocessing.yaml} (key \texttt{fix\_level}); nothing is hard-coded in
+\path{soaring.analysis.preprocessing.load_preproc_config} from
+\path{configs/preprocessing.yaml} (key \path{fix_level}); nothing is hard-coded in
 Python.
 
 \paragraph{Diagnostic sample (Figure~\ref{fig:fixlevel}).} Computed by
-\texttt{fix\_level\_distributions} and rendered by
-\texttt{make\_fixlevel\_diagnostics\_figure} (Table~\ref{tab:impl-repro}). Panels~(a)--(c)
+\path{fix_level_distributions} and rendered by
+\path{make_fixlevel_diagnostics_figure} (Table~\ref{tab:impl-repro}). Panels~(a)--(c)
 pool a seeded random sample of \num{15000} paraglider flights (\num{126723499}
 consecutive-fix pairs, $\sim$\SI{73}{\second} to compute) and the complete
 \num{6716}-flight hang-glider population (a full census at this size, \num{37915334}
@@ -136,7 +136,7 @@ Checked directly: among fixes from \SI{1}{\second}-native flights, about 99\% la
 within \SI{0.05}{\metre\per\second} of an integer; among fixes from every other native
 cadence, only 34--42\% do.
 
-\paragraph{Reproduce.} Table~\ref{tab:impl-repro}, row \texttt{generate\_preproc\_figure.py}
+\paragraph{Reproduce.} Table~\ref{tab:impl-repro}, row \path{generate_preproc_figure.py}
 (one run also regenerates Figures~\ref{fig:preproc}, \ref{fig:gaps}, \ref{fig:sampling}
 from a shared full-census scan; the fix-level panels use a separate sampled pass).
 
@@ -144,26 +144,26 @@ from a shared full-census scan; the fix-level panels use a separate sampled pass
 \label{impl:trimming}
 The take-off speed (\SI{5}{\metre\per\second}) and sustained duration (\SI{30}{\second})
 are the \texttt{TrimmingThresholds} dataclass, loaded from
-\texttt{configs/preprocessing.yaml} (key \texttt{trimming}); as with every threshold in
+\path{configs/preprocessing.yaml} (key \texttt{trimming}); as with every threshold in
 this pipeline, nothing is hard-coded in Python.
 
 \subsection{Flight-level filtering}
 \label{impl:flightfilter}
 The duration ($T\geq\SI{40}{\minute}$) and path-length ($L\geq\SI{30}{\kilo\metre}$) cuts
-are the \texttt{FlightLevelThresholds} dataclass, from \texttt{configs/preprocessing.yaml}
-(key \texttt{flight\_level}).
+are the \texttt{FlightLevelThresholds} dataclass, from \path{configs/preprocessing.yaml}
+(key \path{flight_level}).
 
 \paragraph{Diagnostic sample (Figure~\ref{fig:preproc}).} Computed by
-\texttt{load\_or\_scan\_tracks} (via \texttt{scan\_tracks}/\texttt{track\_stats}) and
-rendered by \texttt{make\_flightlevel\_diagnostics\_figure}, on the full census -- every
+\path{load_or_scan_tracks} (via \path{scan_tracks}/\path{track_stats}) and
+rendered by \path{make_flightlevel_diagnostics_figure}, on the full census -- every
 parsed track, no sub-sampling: \num{186025} paraglider and \num{6716} hang-glider tracks.
 Median duration and path length are \SI{2.7}{\hour}/\SI{86}{\kilo\metre} for paragliders
 and \SI{3.1}{\hour}/\SI{158}{\kilo\metre} for hang gliders -- the latter flying faster and
-farther. This same scan (cached at \texttt{<data\_root>/derived/track\_scan.parquet}) also
+farther. This same scan (cached at \path{<data_root>/derived/track_scan.parquet}) also
 feeds Figures~\ref{fig:gaps} and~\ref{fig:sampling}, so all three share one full-census
 pass.
 
-\paragraph{Reproduce.} Table~\ref{tab:impl-repro}, row \texttt{generate\_preproc\_figure.py}.
+\paragraph{Reproduce.} Table~\ref{tab:impl-repro}, row \path{generate_preproc_figure.py}.
 
 \subsection{From geographic to local Cartesian coordinates}
 \label{impl:enu}
@@ -174,13 +174,13 @@ are hand-drawn \textsc{TikZ} diagrams, not data plots.
 \subsection{Uniform sampling within a flight}
 \label{impl:uniform}
 The gap bound ($10\times$ native $\Delta t$) and maximum missing fraction ($0.10$) are the
-\texttt{SamplingThresholds} dataclass, from \texttt{configs/preprocessing.yaml} (key
+\texttt{SamplingThresholds} dataclass, from \path{configs/preprocessing.yaml} (key
 \texttt{sampling}).
 
 \paragraph{Figures~\ref{fig:gaps} and~\ref{fig:sampling}.} Both rendered by
-\texttt{make\_gap\_diagnostics\_figure}/\texttt{make\_sampling\_figure} from the same
+\path{make_gap_diagnostics_figure}/\path{make_sampling_figure} from the same
 full-census scan as Figure~\ref{fig:preproc} (Table~\ref{tab:impl-repro}, row
-\texttt{generate\_preproc\_figure.py}) -- no separate parse needed.
+\path{generate_preproc_figure.py}) -- no separate parse needed.
 
 \paragraph{Gap-ratio discreteness (Figure~\ref{fig:gaps}).} Checked directly: only
 86\%/63\% (para/hang) of largest-gap-ratio values are exact integers, the rest a
@@ -197,7 +197,7 @@ gliders spread across \SI{1}{\second} (30\%), \SI{5}{\second} (27\%), \SI{10}{\s
 \label{impl:savgol}
 Not yet implemented. The polynomial order ($p=3$) and the two smoothing timescales
 $\tau_c$ (horizontal/vertical) are the \texttt{SavgolParams} dataclass in
-\texttt{configs/preprocessing.yaml} (key \texttt{savgol}), but today hold placeholder
+\path{configs/preprocessing.yaml} (key \texttt{savgol}), but today hold placeholder
 values -- $\tau_c$ is to be fixed once the ENU power spectra are measured, reusing the
 Welch procedure of Sec.~\ref{impl:altchannel} applied to $E,N,U$ instead of altitude.
 

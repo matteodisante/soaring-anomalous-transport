@@ -4,7 +4,7 @@
 
 \section{Pipeline and tooling}
 \label{impl:acqpipeline}
-Package \texttt{soaring.acquisition.ffvl}, exposed as two CLI entry points,
+Package \path{soaring.acquisition.ffvl}, exposed as two CLI entry points,
 \texttt{soaring-para} and \texttt{soaring-delta}, sharing subcommands: \texttt{fetch-xml}
 (archive season XMLs), \texttt{download} (fetch IGC files), \texttt{build-catalog}
 (rebuild catalog/index), \texttt{status} (per-season coverage), \texttt{verify}
@@ -13,7 +13,7 @@ Package \texttt{soaring.acquisition.ffvl}, exposed as two CLI entry points,
 \paragraph{Resumable downloads.} Files already present on disk are skipped, so an
 interrupted job resumes freely without re-fetching.
 
-\paragraph{Atomic writes.} Each file is written to a temporary \texttt{.part} and then
+\paragraph{Atomic writes.} Each file is written to a temporary \path{.part} and then
 renamed, so a file under its final name is always complete -- important on the exFAT
 external disk, which has no journaling.
 
@@ -27,13 +27,13 @@ browser TLS fingerprint is impersonated to pass the site's Cloudflare challenge.
 
 \section{Reproducibility}
 \label{impl:acqrepro}
-Destination directory (\texttt{data\_root}) set per machine through an environment
-variable (\texttt{SOARING\_PARA\_DATA\_ROOT}/\texttt{SOARING\_DELTA\_DATA\_ROOT}) or a
-config file shipping a placeholder (\texttt{configs/para\_download.yaml}/
-\texttt{configs/delta\_download.yaml}); every command validates the setting at start-up.
+Destination directory (\path{data_root}) set per machine through an environment
+variable (\path{SOARING_PARA_DATA_ROOT}/\path{SOARING_DELTA_DATA_ROOT}) or a config file
+shipping a placeholder (\path{configs/para_download.yaml}/
+\path{configs/delta_download.yaml}); every command validates the setting at start-up.
 
 \section{Integrity}
 \label{impl:acqintegrity}
 The \texttt{verify} subcommand re-scans every downloaded file on disk, reusing the same
 IGC validation applied at download time, and flags truncated or invalid files, leftover
-\texttt{.part} fragments, and read errors.
+\path{.part} fragments, and read errors.

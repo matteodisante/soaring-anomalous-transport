@@ -26,11 +26,6 @@
 \usepackage[a4paper,margin=2.7cm]{geometry}
 \usepackage{microtype}
 \usepackage{graphicx}
-% [H] below (float package) pins figures/tables exactly where they occur in the
-% source instead of letting LaTeX's float algorithm defer them to wherever the
-% next allowed spot is -- with several large figures in sequence, that algorithm
-% was pushing them many pages away from the discussing text.
-\usepackage{float}
 % Replaces plain LaTeX's \@makecaption, whose one-line-fit test measures the whole
 % caption as a single unbroken hbox: past a few thousand characters (several figures
 % here have long, data-justified captions) that pre-measurement itself overflows
@@ -53,6 +48,16 @@
 \usepackage{titletoc}
 
 \sisetup{group-separator={,}, group-minimum-digits=4}
+
+% Float placement: with several large figures (and a few tall, long-captioned ones),
+% LaTeX's default fractions were too conservative -- a figure that didn't quite fit
+% "here" but wasn't judged to fill a whole page either was routinely deferred to its
+% own near-empty page. Loosening these lets a big figure share a page with text
+% whenever there is room, rather than defaulting to an isolated float page.
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.7}
+\renewcommand{\textfraction}{0.15}
+\renewcommand{\floatpagefraction}{0.75}
 
 % Palette shared with the matplotlib figures (soaring.analysis), for visual consistency.
 \definecolor{figblue}{HTML}{3477A8}

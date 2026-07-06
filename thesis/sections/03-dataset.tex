@@ -224,7 +224,7 @@ vertical coordinate and vertical velocity from the GNSS altitude (it reads the b
 channel but does not use it); the divergence is deliberate and is one of the points
 re-examined here.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \IfFileExists{generated/altitude_noise.pdf}{%
     \includegraphics[width=\linewidth]{generated/altitude_noise}%
@@ -333,7 +333,7 @@ otherwise good flight, so what matters is the fraction of \emph{fixes} it remove
 number of flights it touches. The checks apply in the order listed, each acting only on
 the fixes the previous ones spared \impldetails{impl:fixlevel}.
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
 \small
 \begin{tabular}{@{}llp{5.4cm}@{}}
@@ -368,7 +368,7 @@ that offset and not just true altitude. Inter-fix gaps are handled once, at the 
 \label{tab:cleaning}
 \end{table}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \IfFileExists{generated/fixlevel_diagnostics.pdf}{%
     \includegraphics[width=\linewidth]{generated/fixlevel_diagnostics}%
@@ -398,19 +398,24 @@ that offset and not just true altitude. Inter-fix gaps are handled once, at the 
   \label{fig:fixlevel}
 \end{figure}
 
-Two points a table cannot convey. First, the IGC validity flag (\texttt{A}/\texttt{V}) is not
-a separate criterion but is \emph{subsumed} by the missing-altitude rule applied to the adopted
-channel. The flag certifies the GNSS altitude only: a \texttt{V} fix has the GNSS altitude
-zeroed but keeps a valid position and, if present, a valid barometric altitude
-(Sec.~\ref{sec:igcformat}). Its effect is therefore channel-dependent -- on a barometric flight
-a \texttt{V} fix is kept (the barometric value is intact), whereas on a GNSS-fallback flight it
-has no usable altitude and is dropped as a missing-altitude fix -- and needs no handling of its
-own. Second, inter-fix time gaps are deliberately \emph{not} a fix-level criterion. A gap is
-not itself an error -- short ones interpolate cleanly, long ones do not -- and, unlike a speed
-or altitude spike, it is a property of the sampling rather than of a single fix. It is therefore
-handled once, at the flight level (Sec.~\ref{sec:uniform}): a flight whose largest gap is too
-large \emph{relative to its own native cadence} is excluded there. A second, absolute gap bound
-at the fix level would only duplicate that test with a differently-scaled threshold.
+\paragraph{The validity flag needs no separate rule.}
+The IGC validity flag (\texttt{A}/\texttt{V}) is not a separate fix-level criterion: its
+effect is already \emph{subsumed} by the missing-altitude rule applied to the adopted
+channel. The flag certifies the GNSS altitude only -- a \texttt{V} fix has the GNSS
+altitude zeroed but keeps a valid position and, if present, a valid barometric altitude
+(Sec.~\ref{sec:igcformat}) -- so its effect is channel-dependent: on a barometric flight a
+\texttt{V} fix is kept (the barometric value is intact), whereas on a GNSS-fallback flight
+it has no usable altitude and is dropped as a missing-altitude fix. Neither case needs
+handling of its own.
+
+\paragraph{Time gaps are handled at the flight level, not here.}
+Inter-fix time gaps are deliberately \emph{not} a fix-level criterion. A gap is not
+itself an error -- short ones interpolate cleanly, long ones do not -- and, unlike a
+speed or altitude spike, it is a property of the sampling rather than of a single fix. It
+is therefore handled once, at the flight level (Sec.~\ref{sec:uniform}): a flight whose
+largest gap is too large \emph{relative to its own native cadence} is excluded there. A
+second, absolute gap bound at the fix level would only duplicate that test with a
+differently-scaled threshold.
 
 \subsection{Trimming of ground phases}
 \label{sec:trimming}
@@ -464,7 +469,7 @@ fraction of flights that cut \emph{alone} would retain -- its marginal effect, n
 Both cuts sit far out in the tail, so the retained fraction is insensitive to their exact
 value; the diagnostics must be re-examined for the less curated further sources.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \IfFileExists{generated/preproc_diagnostics.pdf}{%
     \includegraphics[width=\linewidth]{generated/preproc_diagnostics}%
@@ -519,7 +524,7 @@ both conventions, since the ellipsoid is a surface of revolution about the polar
 geodetic latitude and longitude are exactly the $(\varphi,\lambda)$ that orient the local
 frame below.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \begin{tikzpicture}[
       >=Latex,
@@ -616,7 +621,7 @@ approximation is accurate to well below the GPS noise. What the rotation matrix 
 \emph{does} -- turning a vector's global ECEF components into local East/North/Up ones --
 is shown in Figure~\ref{fig:enu-rotation}.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \begin{minipage}{0.59\linewidth}
     \centering
@@ -842,7 +847,7 @@ velocity, a turning angle), so where they are compared across flights the ensemb
 stratified by rate or restricted to the dominant one, rather than pretending a single
 cadence.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \IfFileExists{generated/gap_diagnostics.pdf}{%
     \includegraphics[width=\linewidth]{generated/gap_diagnostics}%
@@ -871,7 +876,7 @@ cadence.
   \label{fig:gaps}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
   \IfFileExists{generated/sampling_intervals.pdf}{%
     \includegraphics[width=0.62\linewidth]{generated/sampling_intervals}%
