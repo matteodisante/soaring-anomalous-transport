@@ -265,6 +265,62 @@ Redrew the coordinate-transformation figures: Figure~4.3 (WGS84 ellipsoid; geode
 geocentric latitude) and Figure~4.4 (the ECEF$\to$ENU rotation, in our notation), and added the
 ESA Navipedia citation for the ECEF conversion.
 
+\paragraph{2026-07 --- Altitude-noise figure (Fig.~4.1): panels (a)/(b) redesigned.}
+A closer look at the rendered figure (not caught by any test, since nothing there errors)
+found two compounding problems in the one-flight time-series panels, both traced to a
+single shared 30-minute window. First, the several-hundred-metre climb dominated the
+vertical scale, so the GNSS jitter the panel exists to show was invisible. Second,
+panel~(b) subtracted only the scalar \emph{mean} of the GNSS$-$barometric difference, and
+its resulting $\pm20$\,m scale looked inconsistent with the $\sim$130\,m gap plainly
+visible between the two raw curves in panel~(a). \emph{First attempt (reverted):}
+shortened the shared window to 2 minutes and switched panel~(b) to a \emph{linear}
+detrend (matching \texttt{\_welch}'s), which resolved both symptoms but destroyed
+something worth keeping: the GNSS$-$barometric difference actually drifts by tens of
+metres over a full flight (plausibly the barometric channel's departure from the ICAO
+standard atmosphere as altitude changes) -- a real, physically meaningful feature that a
+2-minute window is too short to show and a linear detrend actively removes.
+\emph{Final design}: decoupled the two panels' windows and mechanisms instead of forcing
+one compromise on both. Panel~(a) keeps a short (2-minute) window, but now plots
+barometric and GNSS on \emph{two independent $y$-axes} (same numeric span, different
+baseline) rather than one shared axis -- a shared axis has to stretch from one channel's
+minimum to the other's maximum, wasting on blank space exactly the room needed to
+compare the two channels' roughness; with matched spans the GNSS trace is visibly more
+jagged than the barometric one, and no window shortening was even the real fix for that
+particular symptom. Panel~(b) reverts to the original 30-minute window with only the
+\emph{mean} removed (no detrend), so the slow drift is visible again alongside the
+residual jitter, with the removed mean offset (139\,m for this flight) annotated
+directly on the panel so it can be reconciled with the gap seen in panel~(a). Both
+panels' wording was also generalised from ``climb'' to ``vertical motion'', since a
+short window can just as well land on a glide.
+
+\paragraph{2026-07 --- \texttt{dev}/\texttt{analysis} moved from pip extras to uv default
+dependency groups.}
+Chasing the figure fix above, a bare \texttt{uv sync --reinstall-package soaring} (no
+\texttt{--extra} flags) silently reset the environment to the core-only dependency set,
+uninstalling \texttt{pytest}/\texttt{ruff}/\texttt{mypy}/\texttt{matplotlib}/
+\texttt{scipy}/\texttt{pyarrow} -- and, on the way, hit a pre-existing \texttt{uv} bug
+(uninstall failing on a handful of packages whose \texttt{RECORD} file was missing,
+leaving only their \texttt{.dist-info} behind and breaking imports) that required
+deleting and rebuilding \texttt{.venv} from scratch. Root cause: \texttt{dev} and
+\texttt{analysis} were plain PEP~621 \texttt{optional-dependencies}, so \emph{any}
+\texttt{uv sync}/\texttt{uv run} invocation without matching \texttt{--extra} flags
+resyncs the venv down to exactly what was requested, silently dropping whichever extras
+the previous invocation had added -- and alternating between flagged and unflagged
+commands across a session (or across tool calls in an assistant session) means constant
+install/uninstall churn. Fix: moved both to \texttt{[dependency-groups]} (PEP~735) with
+\texttt{[tool.uv] default-groups = ["dev", "analysis"]}, so every \texttt{uv sync}/
+\texttt{uv run} includes them unconditionally, no flags to remember or forget. Neither
+group was ever meant to be pip-installed by an external consumer of \texttt{soaring} in
+practice (this repo is not published), so the loss of \texttt{pip install .[dev]}-style
+installability is immaterial; \texttt{docs} remains a real \texttt{optional-dependency}
+since it is genuinely on-demand. The docs-deploy CI workflow was updated to
+\texttt{uv sync --no-default-groups --extra docs}, so it stays minimal and does not
+pull in \texttt{matplotlib}/\texttt{scipy}/\texttt{pyarrow} it never needed. Updated
+accordingly: \texttt{README.md}, \texttt{docs/guide/installation.md} (dependency-groups
+table, pip fallback instructions), the two reporting scripts' now-unnecessary
+\texttt{uv run --with matplotlib --with scipy} incantations, and the
+\texttt{soaring.analysis} package docstring.
+
 \paragraph{2026-06 --- Documentation.}
 Project docs are built with MkDocs and published on GitHub Pages. Initially deployed with
 \texttt{mkdocs gh-deploy}, which accumulated one built-site commit per deploy on a

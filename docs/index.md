@@ -23,7 +23,7 @@ linking each flight to its file and its URLs.
 
 ```bash
 # 1. environment (see Guide → Installation)
-uv sync --all-extras
+uv sync
 
 # 2. set the destination in the config or via env var (see Guide → Downloading)
 export SOARING_PARA_DATA_ROOT=/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc

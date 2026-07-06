@@ -35,10 +35,12 @@ data roots come from ``SOARING_PARA_DATA_ROOT`` / ``SOARING_DELTA_DATA_ROOT`` or
 placeholders. A discipline whose ``igc/`` directory is missing is skipped; if none are
 reachable, or matplotlib is missing, the committed figures are left untouched and the
 script exits cleanly. A full census of a large archive parses hundreds of thousands of
-files and takes several minutes even across processes. Run it with, e.g.::
+files and takes several minutes even across processes. Run it with, e.g. (``uv run``
+already includes the ``analysis`` dependency group -- matplotlib/scipy/pyarrow -- by
+default, see ``pyproject.toml``)::
 
     SOARING_PARA_DATA_ROOT=/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc \
-    uv run --with matplotlib python scripts/reporting/generate_preproc_figure.py
+    uv run python scripts/reporting/generate_preproc_figure.py
 """
 
 from __future__ import annotations
@@ -86,7 +88,7 @@ def main() -> int:
     try:
         import matplotlib
     except ImportError:
-        print("matplotlib missing (extra 'analysis'); keeping the committed figures.")
+        print("matplotlib missing ('analysis' dependency group); keeping the figures.")
         return 0
     matplotlib.use("Agg")
 

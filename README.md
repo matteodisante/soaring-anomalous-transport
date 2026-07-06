@@ -18,7 +18,7 @@ Analyses and simulations will be added as further sub-packages of `soaring`.
 ## Quick start
 
 ```bash
-uv sync --all-extras                          # environment + dependencies
+uv sync                                        # environment + dependencies
 
 # --- Paragliders (parapente.ffvl.fr, seasons 1999–2025) ---
 export SOARING_PARA_DATA_ROOT=/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc

@@ -26,12 +26,12 @@ absent (a fresh checkout, or CI). The data roots come from the same environment
 variables used by the downloaders (``SOARING_PARA_DATA_ROOT`` /
 ``SOARING_DELTA_DATA_ROOT``) or the config placeholders; a discipline whose ``igc/``
 directory is missing is skipped, and if no data at all is reachable the committed figure
-is left untouched and the script exits cleanly. It also needs the ``analysis`` extra
-(``matplotlib`` + ``scipy``); if either is missing it also exits without failing. Run it
-with, e.g.::
+is left untouched and the script exits cleanly. It also needs the ``analysis``
+dependency group (``matplotlib`` + ``scipy``; on by default in ``uv run``, see
+``pyproject.toml``); if either is missing it also exits without failing. Run it with,
+e.g.::
 
-    uv run --with matplotlib --with scipy \
-        python scripts/reporting/generate_altitude_noise_figure.py
+    uv run python scripts/reporting/generate_altitude_noise_figure.py
 """
 
 from __future__ import annotations
@@ -80,16 +80,16 @@ def _resolve_config(default_config: str, env: str):
 
 
 def main() -> int:
-    """Regenerate the figure when the raw data and the analysis extra are available."""
+    """Regenerate the figure when the raw data and the analysis group are available."""
     try:
         import matplotlib
     except ImportError:
-        print("matplotlib missing (extra 'analysis'); keeping the committed figure.")
+        print("matplotlib missing ('analysis' dependency group); keeping the figure.")
         return 0
     try:
         import scipy  # noqa: F401
     except ImportError:
-        print("scipy missing (extra 'analysis'); keeping the committed figure.")
+        print("scipy missing ('analysis' dependency group); keeping the figure.")
         return 0
     matplotlib.use("Agg")
 

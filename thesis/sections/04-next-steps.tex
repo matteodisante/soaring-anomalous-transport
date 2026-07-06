@@ -54,7 +54,7 @@ derives the vertical coordinate and vertical velocity from the GNSS altitude (it
 barometric channel but does not use it); the divergence is deliberate and is one of the points
 re-examined here.
 
-\begin{figure}[t]
+\begin{figure}[!]
   \centering
   \IfFileExists{generated/altitude_noise.pdf}{%
     \includegraphics[width=\linewidth]{generated/altitude_noise}%
@@ -64,9 +64,24 @@ re-examined here.
     the SSD (not versioned). Run it to render this figure.}}%
   }
   \caption{Barometric vs GNSS altitude noise. For one representative flight (the one with
-  the most fixes in the subsample), over its first \SI{30}{\minute}: (a)~the two raw
-  channels overlaid -- they track the same climb, but the GNSS trace is visibly noisier;
-  (b)~their difference GNSS$-$barometric (mean removed), which isolates that noise. Over
+  the most fixes in the subsample): (a)~the two raw channels over a short, \SI{120}{s}
+  window -- short on purpose, so the jitter is visible at all; over a longer window the
+  altitude excursion itself spans hundreds of metres and swamps a jitter of a few metres
+  on the plotted scale. The two channels are \emph{each on their own $y$-axis}
+  (barometric left, GNSS right), with the same numeric span but a different baseline: a
+  shared axis would need to span from one channel's minimum to the other's maximum --
+  the real vertical motion \emph{plus} their mutual offset (of order \SI{100}{\metre},
+  see below) -- wasting on blank space the room needed to actually compare the two
+  channels' roughness. With matched spans, the GNSS trace is visibly more jagged than
+  the barometric one. (b)~Their difference GNSS$-$barometric (mean removed, \emph{not}
+  detrended) over a much longer, \SI{30}{\minute} window: long enough for the slow drift
+  of the offset between the channels to show up alongside the residual jitter. That
+  drift, of order several tens of metres over the window, is a real, physically
+  meaningful feature -- plausibly the barometric channel's progressive departure from
+  the ICAO standard atmosphere as altitude changes -- not noise to be filtered out, so
+  only the constant part of the offset is subtracted; its value for this flight is
+  annotated on the panel, to be read alongside the vertical gap between the two curves
+  in panel~a. Over
   the ensemble: (c)~mean Welch power spectra of the two channels, per discipline
   (Appendix~\ref{app:psd}); the dotted line is the Nyquist frequency
   $f_{\mathrm{Nyq}}=1/(2\Delta t)$, the highest frequency the sampling can resolve. It is a
@@ -187,7 +202,7 @@ channel (Sec.~\ref{sec:altchannel}). Inter-fix gaps are handled once, at the fli
 \label{tab:cleaning}
 \end{table}
 
-\begin{figure}[t]
+\begin{figure}[!]
   \centering
   \IfFileExists{generated/fixlevel_diagnostics.pdf}{%
     \includegraphics[width=\linewidth]{generated/fixlevel_diagnostics}%

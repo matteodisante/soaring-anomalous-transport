@@ -12,8 +12,8 @@ license = { text = "MIT" }
 authors = [{ name = "Matteo Di Sante", email = "m.disante06@gmail.com" }]
 keywords = ["soaring", "paragliding", "IGC", "anomalous transport", "FFVL", "CFD"]
 
-# Dipendenze core = cio' che serve OGGI (acquisizione dati). Analisi e simulazioni
-# future andranno aggiunte come extra dedicati (es. [analysis]) per non appesantire.
+# Dipendenze core = cio' che serve per l'acquisizione dati, installato sempre (anche
+# da chi consuma il pacchetto pubblicato, es. `pip install soaring`).
 dependencies = [
     "curl_cffi>=0.7",   # client HTTP con impersonation TLS: supera il challenge Cloudflare di FFVL
     "pyyaml>=6.0",      # lettura del file di configurazione
@@ -21,7 +21,20 @@ dependencies = [
     "tqdm>=4.66",       # barra di avanzamento per i download
 ]
 
+# `docs` e' l'unico vero extra pip-installabile rimasto (`pip install soaring[docs]`):
+# non serve durante lo sviluppo quotidiano, quindi resta on-demand.
 [project.optional-dependencies]
+docs = [
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.25",  # reference API generata dai docstring -> non marcisce
+]
+
+# `dev` e `analysis` sono dependency-group locali (PEP 735, capiti da uv): mai
+# pip-installabili da un consumatore esterno del pacchetto (nessuno lo e' mai stato in
+# pratica, essendo questo un repo di tesi non pubblicato), ma sempre presenti in questo
+# repo grazie a `default-groups` sotto -- niente piu' `--extra dev --extra analysis` da
+# ricordare, e niente piu' disinstallazioni a sorpresa quando un comando li omette.
+[dependency-groups]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
@@ -30,15 +43,14 @@ dev = [
     "interrogate>=1.7",  # gate di copertura docstring: la documentazione non puo' restare indietro
     "types-PyYAML",
 ]
-docs = [
-    "mkdocs-material>=9.5",
-    "mkdocstrings[python]>=0.25",  # reference API generata dai docstring -> non marcisce
-]
 analysis = [
     "matplotlib>=3.7",  # figure di diagnostica (pre-processing); numpy/pandas sono gia' core
     "scipy>=1.11",      # signal.welch per la PSD (analisi del rumore delle quote baro/GNSS)
     "pyarrow>=14.0",    # DataFrame.to_parquet/read_parquet per la cache dello scan tracce
 ]
+
+[tool.uv]
+default-groups = ["dev", "analysis"]
 
 [project.scripts]
 soaring-para = "soaring.acquisition.ffvl.cli:main"
