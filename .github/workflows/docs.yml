@@ -1,8 +1,9 @@
 name: Deploy docs
 
+# Manual only: deploy on request (Actions tab -> Deploy docs -> Run workflow, or
+# `gh workflow run docs.yml`), not on every push. The published site otherwise stays
+# exactly as it is until you explicitly ask for an update.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 # Least-privilege token, plus what the official Pages deploy needs.
