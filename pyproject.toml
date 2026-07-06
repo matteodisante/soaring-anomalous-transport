@@ -37,6 +37,7 @@ docs = [
 analysis = [
     "matplotlib>=3.7",  # figure di diagnostica (pre-processing); numpy/pandas sono gia' core
     "scipy>=1.11",      # signal.welch per la PSD (analisi del rumore delle quote baro/GNSS)
+    "pyarrow>=14.0",    # DataFrame.to_parquet/read_parquet per la cache dello scan tracce
 ]
 
 [project.scripts]

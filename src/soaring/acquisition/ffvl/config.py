@@ -62,15 +62,21 @@ class Config:
     http: HttpConfig = field(default_factory=HttpConfig)
 
     # --- subdirectories derived from data_root ---------------------------------
+    # Layout: data_root/{raw/{igc,raw_xml}, catalog/{catalog.csv,seasons_index.csv},
+    # logs/, derived/}. "raw" groups the untouched acquisition output (tracks + their
+    # XML provenance); "catalog" groups the tables derived from it; "derived" holds
+    # further byproducts of analysing the raw tracks (e.g. the pre-processing track
+    # scan cache) that are not themselves raw or catalog data. All on the external
+    # disk -- nothing here is ever stored in the repo.
     @property
     def raw_xml_dir(self) -> Path:
         """Directory for archived season XML files."""
-        return self.data_root / "raw_xml"
+        return self.data_root / "raw" / "raw_xml"
 
     @property
     def igc_dir(self) -> Path:
         """Root directory for `.igc` track files (one subdirectory per season)."""
-        return self.data_root / "igc"
+        return self.data_root / "raw" / "igc"
 
     @property
     def logs_dir(self) -> Path:
@@ -80,12 +86,17 @@ class Config:
     @property
     def catalog_path(self) -> Path:
         """Path to the derived CSV catalog."""
-        return self.data_root / "catalog.csv"
+        return self.data_root / "catalog" / "catalog.csv"
 
     @property
     def seasons_index_path(self) -> Path:
         """Path to the per-season summary (links + counts)."""
-        return self.data_root / "seasons_index.csv"
+        return self.data_root / "catalog" / "seasons_index.csv"
+
+    @property
+    def derived_dir(self) -> Path:
+        """Directory for analysis byproducts of the raw tracks (e.g. scan caches)."""
+        return self.data_root / "derived"
 
     @property
     def failures_path(self) -> Path:
