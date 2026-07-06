@@ -1,0 +1,33 @@
+name: Tests
+
+# Runs the test suite on every push to main and every PR. `uv run` alone is enough to get
+# the right environment: `dev` (pytest/pytest-cov) and `analysis` (matplotlib/scipy/
+# pyarrow, needed by a few tests) are uv default dependency groups (pyproject.toml), so
+# no --extra flags are needed here.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Run tests with coverage
+        run: uv run pytest --cov=soaring --cov-report=xml
+
+      # Coverage upload is best-effort: a Codecov hiccup (or the repo not being linked
+      # there yet) must never fail the test job / redden the Tests badge.
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+          fail_ci_if_error: false

@@ -367,6 +367,30 @@ Three unrelated loose ends, tidied together.
         available for an on-demand redeploy.
 \end{description}
 
+\paragraph{2026-07 --- License added; README badges; a real test-running CI.}
+\texttt{pyproject.toml} had declared \texttt{license = MIT} since the project's start, but
+no \texttt{LICENSE} file existed, and the repo had no workflow that actually ran the test
+suite (only the docs-deploy one).
+\begin{description}
+  \item[License] Added \texttt{LICENSE} (MIT): permissive, minimal text, the de facto
+        standard for research Python code, and consistent with what \texttt{pyproject.toml}
+        already declared -- no reason to pick something more restrictive for code meant to
+        be freely reused.
+  \item[New CI: \texttt{tests.yml}] Runs \texttt{uv run pytest} with coverage on every push
+        to \texttt{main} and every PR. Needed no \texttt{--extra} flags to get
+        \texttt{pytest-cov}/\texttt{matplotlib}/\texttt{scipy}/\texttt{pyarrow} -- a direct
+        payoff of making \texttt{dev}/\texttt{analysis} uv default groups earlier. Coverage
+        XML uploads to Codecov as a best-effort step (\texttt{fail\_ci\_if\_error: false}):
+        a Codecov hiccup, or the repo not being linked there yet, must never redden the
+        Tests badge.
+  \item[README badges] Added five badges (python version, Tests workflow status, Codecov
+        coverage, docs-online link, license) at the top of \texttt{README.md}. The Codecov
+        one needs a one-time manual step outside this repo -- linking
+        \texttt{matteodisante/soaring-anomalous-transport} on \texttt{codecov.io} (GitHub
+        login) and, if it asks for one, adding \texttt{CODECOV\_TOKEN} as a repo secret --
+        which cannot be done from here.
+\end{description}
+
 \paragraph{2026-06 --- Documentation.}
 Project docs are built with MkDocs and published on GitHub Pages. Initially deployed with
 \texttt{mkdocs gh-deploy}, which accumulated one built-site commit per deploy on a

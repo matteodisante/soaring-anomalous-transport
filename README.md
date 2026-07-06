@@ -1,5 +1,11 @@
 # soaring-anomalous-transport
 
+[![python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
+[![Tests](https://github.com/matteodisante/soaring-anomalous-transport/actions/workflows/tests.yml/badge.svg)](https://github.com/matteodisante/soaring-anomalous-transport/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/matteodisante/soaring-anomalous-transport/branch/main/graph/badge.svg)](https://codecov.io/gh/matteodisante/soaring-anomalous-transport)
+[![docs](https://img.shields.io/badge/docs-online-brightgreen)](https://matteodisante.github.io/soaring-anomalous-transport/)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 Code for the master's thesis **_anomalous transport in soaring flights_**.
 
 Thesis monorepo. Currently contains the **acquisition of** `.igc` **flight data** from the
