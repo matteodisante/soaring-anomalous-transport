@@ -16,7 +16,9 @@ and writes the auto-generated LaTeX files included by ``thesis/main.tex``:
 
 The script is deterministic and has no third-party dependencies, so it can run both in a
 git hook and in CI. It reads only the committed CSVs (never the external disk), so the
-numbers always match what is in the repository.
+numbers always match what is in the repository. Those committed CSVs are the offline
+snapshot of the canonical SSD indices; ``refresh_seasons_index.py`` re-copies them from
+the SSD (when mounted) so the snapshot does not drift.
 """
 
 from __future__ import annotations
@@ -80,8 +82,8 @@ def _read_rows(csv_path: Path) -> list[dict[str, str]]:
     """Read and return the rows of a ``seasons_index.csv``."""
     if not csv_path.is_file():
         raise SystemExit(
-            f"Missing {csv_path}. Refresh it with the matching 'build-catalog' "
-            "(soaring-para / soaring-delta) and copy it under data/<discipline>/."
+            f"Missing {csv_path}. With the SSD mounted, refresh the committed snapshot "
+            "with: uv run python scripts/reporting/refresh_seasons_index.py"
         )
     with csv_path.open(newline="", encoding="utf-8") as fh:
         return list(csv.DictReader(fh))

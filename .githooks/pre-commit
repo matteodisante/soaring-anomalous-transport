@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Keep the deterministic parts of the documents in sync with each commit.
 #
-#  - regenerate the dataset statistics from data/seasons_index.csv (text, instant)
+#  - refresh the committed seasons_index snapshots from the SSD when it is mounted
+#  - regenerate the dataset statistics from those snapshots (text, instant)
 #  - regenerate the logbook git timeline (text, instant)
-#  - if the commit touches the thesis or the data, rebuild thesis/main.pdf and stage it
+#  - if the commit touches the thesis, rebuild thesis/main.pdf and stage it
 #  - if the commit touches the logbook, rebuild logbook/logbook.pdf and stage it
 #
 # Best-effort: a missing tool or a LaTeX failure WARNS but never blocks the commit.
@@ -16,17 +17,24 @@ cd "$ROOT"
 
 command -v python3 >/dev/null 2>&1 || { echo "pre-commit: python3 not found; skipping doc sync" >&2; exit 0; }
 
+# 0) Refresh the committed seasons_index snapshots from the SSD when it is mounted
+#    (best-effort; a fresh checkout / CI has no SSD and keeps the committed copies).
+python3 scripts/reporting/refresh_seasons_index.py >/dev/null 2>&1 || true
+
 # 1) Stats + timeline sources (cheap, deterministic).
 python3 scripts/reporting/generate_stats.py    >/dev/null || echo "pre-commit: stats generation failed" >&2
 python3 scripts/reporting/generate_timeline.py >/dev/null || echo "pre-commit: timeline generation failed" >&2
-git add thesis/generated/stats.tex thesis/generated/seasons_table.tex 2>/dev/null || true
+git add thesis/generated/stats.tex \
+    thesis/generated/seasons_table_para.tex thesis/generated/seasons_table_hang.tex \
+    data/paragliders/seasons_index.csv data/hang_gliders/seasons_index.csv 2>/dev/null || true
 git add logbook/generated/timeline.tex 2>/dev/null || true
 
 # What is being committed (stats files are already staged above).
 staged="$(git diff --cached --name-only)"
 
-# 2) Public thesis PDF: rebuild only when the thesis or the data changed.
-if grep -qE '^(thesis/|data/seasons_index\.csv)' <<<"$staged"; then
+# 2) Public thesis PDF: rebuild only when the thesis changed (a data change flows through
+#    the regenerated, staged thesis/generated/stats.tex, so it is covered by ^thesis/).
+if grep -qE '^thesis/' <<<"$staged"; then
     if command -v latexmk >/dev/null 2>&1; then
         if bash scripts/build_docs.sh thesis >/dev/null 2>&1; then
             git add thesis/main.pdf 2>/dev/null || true
