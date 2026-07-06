@@ -18,9 +18,9 @@ here rather than left implicit:
 
 * The **barometric-presence fraction** is a headline number quoted in the thesis, so its
   precision must be justified, not asserted. When the population is small enough that a
-  full census is cheap (the hang-glider archive, ~6,700 files, a couple of minutes), it
-  is censused exactly -- there is then nothing to estimate. When it is not (the
-  paraglider archive, ~186,000 files, the better part of an hour to parse serially), the
+  full census is cheap (a small archive, parsed exactly in a couple of minutes), it
+  is censused exactly -- there is then nothing to estimate. When it is not (a large
+  archive that would take the better part of an hour to parse serially), the
   fraction is instead estimated from a **simple random sample sized to a stated
   precision target**: :func:`required_sample_size` gives the sample size ``n`` needed
   for a 95%-confidence margin of error of a chosen number of percentage points, using
@@ -77,13 +77,12 @@ def required_sample_size(
 
     Standard normal-approximation formula for a proportion,
     ``n = z^2 p(1-p) / e^2``. The population is treated as effectively infinite (no
-    finite-population correction): the archives sampled here (paragliders,
-    ~186,000 flights) are always large enough, at the sample sizes this formula
-    returns, that the correction would change ``n`` by a percent or two -- not worth
-    the extra parameter. The default ``p=0.5`` is the conservative
-    (variance-maximising) choice: with it, the *actual* margin of error at the returned
-    sample size is guaranteed to be at most ``margin_of_error``, whatever the true
-    proportion turns out to be, so no prior guess about it is needed.
+    finite-population correction): the archives sampled here are always large enough, at
+    the sample sizes this formula returns, that the correction would change ``n`` by a
+    percent or two -- not worth the extra parameter. The default ``p=0.5`` is the
+    conservative (variance-maximising) choice: with it, the *actual* margin of error at
+    the returned sample size is guaranteed to be at most ``margin_of_error``, whatever
+    the true proportion turns out to be, so no prior guess about it is needed.
 
     Args:
         margin_of_error: Desired confidence-interval half-width (e.g. ``0.02`` for a
@@ -182,9 +181,8 @@ def baro_presence_stats(
 
     Intended to be run as a full-population census (see the module docstring): each
     file is parsed once and checked with :func:`baro_present_fraction`, with no PSD
-    computed. ``n_jobs`` parallelises this scan across processes, which matters for the
-    paraglider archive (tens of minutes serially, single-digit minutes with ``n_jobs=8``
-    on a modern machine).
+    computed. ``n_jobs`` parallelises this scan across processes, which matters for a
+    large archive (tens of minutes serially, a few minutes across several workers).
 
     Args:
         samples: Mapping ``discipline -> list of .igc paths``.
@@ -205,6 +203,28 @@ def baro_presence_stats(
         n_flights[disc] = len(judged)
         baro_absent[disc] = sum(judged)
     return baro_absent, n_flights
+
+
+def baro_presence_from_scan(scan) -> tuple[int, int]:
+    """Barometric-absence count from an already-parsed track scan (no re-parsing).
+
+    Uses the ``baro_present_frac`` column that
+    :func:`soaring.analysis.preprocessing.track_stats` computes as a byproduct of its
+    own full-dataset scan
+    (:func:`soaring.analysis.preprocessing.load_or_scan_tracks`). When that scan is a
+    full census -- as it is for the flight-level filtering diagnostics -- this gives
+    the *exact* population fraction, with no sampling needed.
+
+    Args:
+        scan: Per-flight table with a ``baro_present_frac`` column.
+
+    Returns:
+        A pair ``(baro_absent, n_flights)``, matching :func:`baro_presence_stats`'s
+        per-discipline values.
+    """
+    frac = scan["baro_present_frac"].to_numpy()
+    absent = int(np.sum(frac < BARO_PRESENT_MIN))
+    return absent, len(scan)
 
 
 class _Accumulator:
@@ -247,6 +267,7 @@ def collect(
     *,
     stat_samples: dict[str, list[Path]] | None = None,
     stat_n_jobs: int = 1,
+    precomputed_baro_stats: dict[str, tuple[int, int]] | None = None,
 ) -> _Accumulator:
     """Parse the sampled flights and accumulate the noise diagnostics.
 
@@ -257,23 +278,42 @@ def collect(
             used only for the barometric-presence fraction (see
             :func:`baro_presence_stats`); defaults to ``samples``.
         stat_n_jobs: Worker processes for the barometric-presence census.
+        precomputed_baro_stats: Optional mapping ``discipline -> (baro_absent,
+            n_flights)`` to use instead of scanning -- e.g. from
+            :func:`baro_presence_from_scan` on an already-cached full census
+            (:mod:`soaring.analysis.preprocessing`). Disciplines not present here still
+            fall back to :func:`baro_presence_stats`.
 
     Returns:
         The populated :class:`_Accumulator`.
     """
     acc = _Accumulator()
-    acc.baro_absent, acc.n_flights = baro_presence_stats(
-        stat_samples or samples, n_jobs=stat_n_jobs
+    precomputed_baro_stats = precomputed_baro_stats or {}
+    base = stat_samples or samples
+    to_scan = {d: paths for d, paths in base.items() if d not in precomputed_baro_stats}
+    scanned_absent, scanned_n = (
+        baro_presence_stats(to_scan, n_jobs=stat_n_jobs) if to_scan else ({}, {})
     )
+    for disc in base:
+        if disc in precomputed_baro_stats:
+            acc.baro_absent[disc], acc.n_flights[disc] = precomputed_baro_stats[disc]
+        else:
+            acc.baro_absent[disc] = scanned_absent[disc]
+            acc.n_flights[disc] = scanned_n[disc]
 
-    # First pass over all disciplines: find the modal sampling period, so the pooled PSD
-    # uses one sampling frequency.
+    # First pass over all disciplines: find the modal sampling period, so the pooled
+    # PSD uses one sampling frequency. A single unreadable file (e.g. a transient
+    # external-disk hiccup) is skipped rather than aborting the whole batch.
     periods: list[float] = []
     parsed: dict[str, list[pd.DataFrame]] = {}
     for disc, paths in samples.items():
         parsed[disc] = []
         for p in paths:
-            fixes = parse_igc(p)
+            try:
+                fixes = parse_igc(p)
+            except OSError as exc:
+                print(f"[{disc}] skipping unreadable file {p}: {exc}")
+                continue
             parsed[disc].append(fixes)
             dt = median_sampling_period(fixes)
             if np.isfinite(dt) and dt > 0:
@@ -304,7 +344,12 @@ def collect(
             _, pxx_g = _welch(zg, fs)
             acc.add_psd(disc, "baro", f, pxx_b)
             acc.add_psd(disc, "gnss", f, pxx_g)
-            if acc.representative is None:
+            # Keep the qualifying flight with the MOST fixes seen so far (not just the
+            # first): panels (a)/(b) show a window of it, and more fixes means a longer,
+            # more densely covered window. Fix count, not elapsed time (t[-1]-t[0]), is
+            # the robust criterion: a corrupted or genuinely huge inter-fix gap can make
+            # elapsed time enormous without the flight having much continuous data.
+            if acc.representative is None or len(t) > len(acc.representative[1]):
                 acc.representative = (
                     disc,
                     t,
@@ -320,6 +365,7 @@ def make_altitude_noise_figure(
     *,
     stat_samples: dict[str, list[Path]] | None = None,
     stat_n_jobs: int = 1,
+    precomputed_baro_stats: dict[str, tuple[int, int]] | None = None,
 ) -> Figure:
     """Collect the diagnostics and build the altitude noise figure in one call.
 
@@ -335,22 +381,31 @@ def make_altitude_noise_figure(
         samples: Mapping ``discipline -> list of .igc paths``, used for panels (a)/(b).
         stat_samples: Optional, typically much larger mapping used only for panel (d).
         stat_n_jobs: Worker processes for the panel-(d) census/sample.
+        precomputed_baro_stats: See :func:`collect`.
 
     Returns:
         The Matplotlib figure (not saved).
     """
-    acc = collect(samples, stat_samples=stat_samples, stat_n_jobs=stat_n_jobs)
+    acc = collect(
+        samples,
+        stat_samples=stat_samples,
+        stat_n_jobs=stat_n_jobs,
+        precomputed_baro_stats=precomputed_baro_stats,
+    )
     return render_altitude_noise_figure(acc, list(samples))
 
 
 def render_altitude_noise_figure(acc: _Accumulator, disciplines: list[str]) -> Figure:
     """Render the barometric-vs-GNSS altitude noise figure from collected diagnostics.
 
-    Panels: (a) for one representative flight, the channel difference GNSS minus
-    barometric (mean removed), isolating the GNSS noise from the shared climb signal;
-    (b) the mean Welch PSD of the two channels (log-log), per discipline; (d) the
-    fraction of flights whose barometric channel is absent, per discipline (a census or
-    a sized-sample estimate, depending on how ``acc`` was built -- see :func:`collect`).
+    Four panels. For one representative flight, over the same time window: (a) the two
+    raw channels overlaid -- they track the same climb, but the GNSS trace is visibly
+    jittery; (b) their difference GNSS minus barometric (mean removed), isolating that
+    jitter from the shared climb signal. Then, over the ensemble: (c) the mean Welch PSD
+    of the two
+    channels (log-log), per discipline; (d) the fraction of flights whose barometric
+    channel is absent, per discipline (a census or a sized-sample estimate, depending on
+    how ``acc`` was built -- see :func:`collect`).
 
     Args:
         acc: Diagnostics already accumulated by :func:`collect`.
@@ -362,24 +417,37 @@ def render_altitude_noise_figure(acc: _Accumulator, disciplines: list[str]) -> F
     import matplotlib.pyplot as plt
 
     ch_color = {"baro": "#3477a8", "gnss": "#b5482a"}
+    diff_color = "#4e8a5b"  # distinct from both baro (blue) and gnss (red)
     disc_style = {disc: ["-", "--", ":"][i % 3] for i, disc in enumerate(disciplines)}
+    window_s = 1800.0  # 30 min: long enough to show drift, not so long jitter vanishes
 
-    fig, axd = plt.subplot_mosaic([["a", "b"], ["d", "d"]], figsize=(9.4, 6.6))
+    fig, axd = plt.subplot_mosaic([["a", "b"], ["c", "d"]], figsize=(9.4, 6.8))
 
-    # (a) channel difference for one representative flight ------------------------
-    ax = axd["a"]
-    if acc.representative is not None:
-        _, t, zb, zg = acc.representative
-        window = t <= t[0] + 600.0  # first 10 minutes
+    # (a)/(b) one representative flight over the same window: the two raw channels, then
+    # their difference. Showing both raw makes the point directly -- they track the same
+    # climb, but the GNSS trace carries visible high-frequency jitter that (b) isolates.
+    rep = acc.representative
+    if rep is not None:
+        _, t, zb, zg = rep
+        window = t <= t[0] + window_s
+        tw = t[window] - t[0]
+        axd["a"].plot(tw, zg[window], color=ch_color["gnss"], lw=0.9, label="GNSS")
+        axd["a"].plot(
+            tw, zb[window], color=ch_color["baro"], lw=1.0, label="barometric"
+        )
+        axd["a"].legend(fontsize=7, loc="best")
         diff = (zg - zb)[window]
-        ax.axhline(0.0, color="0.6", lw=0.8)
-        ax.plot(t[window] - t[0], diff - diff.mean(), color=ch_color["gnss"], lw=1.0)
-    ax.set_xlabel("time [s]")
-    ax.set_ylabel(r"GNSS $-$ barometric altitude [m]")
-    ax.set_title("(a) Channel difference (one flight, mean removed)")
+        axd["b"].axhline(0.0, color="0.6", lw=0.8)
+        axd["b"].plot(tw, diff - diff.mean(), color=diff_color, lw=1.0)
+    axd["a"].set_xlabel("time [s]")
+    axd["a"].set_ylabel("altitude [m]")
+    axd["a"].set_title(f"(a) Both channels (one flight, first {window_s / 60:.0f} min)")
+    axd["b"].set_xlabel("time [s]")
+    axd["b"].set_ylabel(r"GNSS $-$ barometric [m]")
+    axd["b"].set_title("(b) Channel difference (mean removed)")
 
-    # (b) mean PSD ---------------------------------------------------------------
-    ax = axd["b"]
+    # (c) mean PSD ---------------------------------------------------------------
+    ax = axd["c"]
     for disc in disciplines:
         for channel in ("baro", "gnss"):
             res = acc.mean_psd(disc, channel)
@@ -394,9 +462,20 @@ def render_altitude_noise_figure(acc: _Accumulator, disciplines: list[str]) -> F
                 lw=1.2,
                 label=f"{channel}, {disc}",
             )
+    f_nyquist = 1.0 / (2.0 * acc.target_dt)
+    ax.axvline(f_nyquist, color="0.3", ls=":", lw=1.2)
+    ax.text(
+        f_nyquist,
+        ax.get_ylim()[0],
+        r"$f_{\mathrm{Nyq}}$",
+        fontsize=8,
+        color="0.3",
+        ha="right",
+        va="bottom",
+    )
     ax.set_xlabel("frequency [Hz]")
     ax.set_ylabel(r"PSD [m$^2$/Hz]")
-    ax.set_title(f"(b) Altitude PSD (Welch, $\\Delta t={acc.target_dt:.0f}$ s)")
+    ax.set_title(f"(c) Altitude PSD (Welch, $\\Delta t={acc.target_dt:.0f}$ s)")
     ax.legend(fontsize=7)
     ax.grid(alpha=0.3, which="both")
 

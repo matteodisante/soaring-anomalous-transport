@@ -8,14 +8,18 @@ The three panels have different precision needs, so they use different data volu
 ``soaring.analysis.altitude_noise`` for the full rationale):
 
 * Panel (d), the barometric-presence fraction, is a headline number, so its precision is
-  justified rather than asserted. A population up to ``CENSUS_MAX_POPULATION`` files is
-  censused exactly (fast enough to just do it); a larger one (the paraglider archive,
-  ~186,000 files) is instead estimated from a simple random sample whose size is
-  computed by ``required_sample_size`` for a stated 95%-confidence margin of error
-  (``TARGET_MARGIN_OF_ERROR``) -- a few thousand files, parsed in well under a minute.
+  justified rather than asserted. **Preferred path**: if
+  ``generate_preproc_figure.py`` has already cached a full-dataset scan at
+  ``<data_root>/derived/track_scan.parquet`` (on the SSD), this reuses it -- an *exact*
+  population fraction, no scanning here at all. **Fallback** (no cache yet): a
+  population up to ``CENSUS_MAX_POPULATION`` files is censused exactly (fast enough); a
+  larger one (the paraglider archive, ~186,000 files) is instead estimated from a simple
+  random sample whose size is computed by ``required_sample_size`` for a stated
+  95%-confidence margin of error (``TARGET_MARGIN_OF_ERROR``).
 * Panels (a)/(b), the PSD and the representative flight, use a smaller, fixed-size
   random subsample (``PSD_SAMPLE_PER_DISCIPLINE``): an ensemble-average spectral shape,
-  not a headline statistic, so a moderate sample is the standard and adequate tool.
+  not a headline statistic, so a moderate sample is the standard and adequate tool. This
+  always needs an actual scan (the cache only carries summary stats, not full spectra).
 
 Like ``generate_preproc_figure.py``, the raw data lives on an external disk and may be
 absent (a fresh checkout, or CI). The data roots come from the same environment
@@ -64,15 +68,15 @@ _PDF_METADATA = {
 }
 
 
-def _igc_dir(default_config: str, env: str) -> Path | None:
-    """Locate a discipline's ``igc/`` directory, or ``None`` if it is not reachable."""
+def _resolve_config(default_config: str, env: str):
+    """Load a discipline's config, or ``None`` if its ``igc/`` dir is not reachable."""
     from soaring.acquisition.ffvl.config import load_config
 
     try:
         cfg = load_config(default_config, data_root_env=env)
     except (FileNotFoundError, KeyError):
         return None
-    return cfg.igc_dir if cfg.igc_dir.is_dir() else None
+    return cfg if cfg.igc_dir.is_dir() else None
 
 
 def main() -> int:
@@ -94,6 +98,7 @@ def main() -> int:
         DEFAULT_DELTA_CONFIG_PATH,
     )
     from soaring.analysis.altitude_noise import (
+        baro_presence_from_scan,
         collect,
         proportion_ci,
         render_altitude_noise_figure,
@@ -101,16 +106,39 @@ def main() -> int:
         sample_igc_paths,
     )
 
-    para_dir = _igc_dir(str(DEFAULT_CONFIG_PATH), "SOARING_PARA_DATA_ROOT")
-    hang_dir = _igc_dir(str(DEFAULT_DELTA_CONFIG_PATH), "SOARING_DELTA_DATA_ROOT")
-    disciplines = {"paragliders": para_dir, "hang gliders": hang_dir}
-    disciplines = {d: p for d, p in disciplines.items() if p is not None}
+    configs = {
+        "paragliders": _resolve_config(
+            str(DEFAULT_CONFIG_PATH), "SOARING_PARA_DATA_ROOT"
+        ),
+        "hang gliders": _resolve_config(
+            str(DEFAULT_DELTA_CONFIG_PATH), "SOARING_DELTA_DATA_ROOT"
+        ),
+    }
+    configs = {d: c for d, c in configs.items() if c is not None}
+    disciplines = {d: c.igc_dir for d, c in configs.items()}
     if not disciplines:
         print("No IGC data reachable on the SSD; keeping the committed figure.")
         return 0
 
+    # Prefer generate_preproc_figure.py's cached full-census scan for panel (d): an
+    # EXACT population fraction at zero extra parsing, in place of a sampled estimate.
+    precomputed_baro_stats: dict[str, tuple[int, int]] = {}
+    for disc, cfg_disc in configs.items():
+        cache_path = cfg_disc.derived_dir / "track_scan.parquet"
+        if cache_path.is_file():
+            import pandas as pd
+
+            scan = pd.read_parquet(cache_path)
+            precomputed_baro_stats[disc] = baro_presence_from_scan(scan)
+            print(
+                f"[{disc}] using cached full-census scan at {cache_path} for the "
+                f"barometric-presence fraction (exact, no sampling here)."
+            )
+
     stat_samples: dict[str, list[Path]] = {}
     for disc, igc_dir in disciplines.items():
+        if disc in precomputed_baro_stats:
+            continue  # exact count already in hand from the cache; no scan needed
         population = sorted(igc_dir.rglob("*.igc"))
         n_pop = len(population)
         if n_pop <= CENSUS_MAX_POPULATION:
@@ -134,14 +162,25 @@ def main() -> int:
         print("No IGC data reachable on the SSD; keeping the committed figure.")
         return 0
 
-    acc = collect(samples, stat_samples=stat_samples, stat_n_jobs=STAT_N_JOBS)
+    acc = collect(
+        samples,
+        stat_samples=stat_samples or None,
+        stat_n_jobs=STAT_N_JOBS,
+        precomputed_baro_stats=precomputed_baro_stats,
+    )
     for disc in disciplines:
         p_hat, half_width = proportion_ci(acc.baro_absent[disc], acc.n_flights[disc])
-        print(
-            f"[{disc}] barometric-absent fraction: "
-            f"{p_hat * 100:.1f}% +/- {half_width * 100:.1f} pts "
-            f"(95% CI, n={acc.n_flights[disc]})."
-        )
+        if disc in precomputed_baro_stats:
+            print(
+                f"[{disc}] barometric-absent fraction: {p_hat * 100:.1f}% "
+                f"(exact, full census, n={acc.n_flights[disc]})."
+            )
+        else:
+            print(
+                f"[{disc}] barometric-absent fraction: "
+                f"{p_hat * 100:.1f}% +/- {half_width * 100:.1f} pts "
+                f"(95% CI, n={acc.n_flights[disc]})."
+            )
 
     fig = render_altitude_noise_figure(acc, list(samples))
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
