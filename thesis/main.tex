@@ -47,6 +47,10 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta, calc, angles, quotes}
+% Local, per-part "Contents" listing (titletoc): used once, for the implementation-details
+% part at the back of the document, so that block reads as a self-contained "document within
+% the document" with its own index rather than just another appendix.
+\usepackage{titletoc}
 
 \sisetup{group-separator={,}, group-minimum-digits=4}
 
@@ -54,6 +58,12 @@
 \definecolor{figblue}{HTML}{3477A8}
 \definecolor{figred}{HTML}{B5482A}
 \definecolor{figgreen}{HTML}{4E8A5B}
+
+% Cross-reference from body prose to the implementation-details appendix (App. C): used
+% at the point where an implementation/reproducibility fact was trimmed out of the body,
+% so the pointer follows the fact rather than the fact sitting in both places. impl:*
+% labels mirror the corresponding sec:*/ch:* label 1:1 (sec:altchannel <-> impl:altchannel).
+\newcommand{\impldetails}[1]{(implementation details: Sec.~\ref{#1})}
 
 % Traditional BibTeX (portable: no biber required). latexmk runs bibtex automatically.
 \usepackage{cite}
@@ -131,5 +141,6 @@ analysis and modelling.
 \appendix
 \input{appendices/A-ctrw}
 \input{appendices/B-psd}
+\input{appendices/C-implementation}
 
 \end{document}

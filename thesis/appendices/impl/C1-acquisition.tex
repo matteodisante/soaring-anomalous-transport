@@ -1,0 +1,39 @@
+\chapter{Data acquisition}
+\label{impl:acquisition}
+\emph{Mirrors Chapter~\ref{ch:acquisition}.}
+
+\section{Pipeline and tooling}
+\label{impl:acqpipeline}
+Package \texttt{soaring.acquisition.ffvl}, exposed as two CLI entry points,
+\texttt{soaring-para} and \texttt{soaring-delta}, sharing subcommands: \texttt{fetch-xml}
+(archive season XMLs), \texttt{download} (fetch IGC files), \texttt{build-catalog}
+(rebuild catalog/index), \texttt{status} (per-season coverage), \texttt{verify}
+(post-hoc integrity scan, Sec.~\ref{impl:acqintegrity}).
+
+\paragraph{Resumable downloads.} Files already present on disk are skipped, so an
+interrupted job resumes freely without re-fetching.
+
+\paragraph{Atomic writes.} Each file is written to a temporary \texttt{.part} and then
+renamed, so a file under its final name is always complete -- important on the exFAT
+external disk, which has no journaling.
+
+\paragraph{Content validation.} A response is accepted only if it looks like a real IGC
+file (an \texttt{A} header record followed by at least one \texttt{B} fix record); HTML
+error pages and truncated responses are rejected and retried.
+
+\paragraph{Courteous networking.} A small bounded thread pool, per-request timeouts,
+exponential backoff, and a minimum delay between requests avoid hammering the server; a
+browser TLS fingerprint is impersonated to pass the site's Cloudflare challenge.
+
+\section{Reproducibility}
+\label{impl:acqrepro}
+Destination directory (\texttt{data\_root}) set per machine through an environment
+variable (\texttt{SOARING\_PARA\_DATA\_ROOT}/\texttt{SOARING\_DELTA\_DATA\_ROOT}) or a
+config file shipping a placeholder (\texttt{configs/para\_download.yaml}/
+\texttt{configs/delta\_download.yaml}); every command validates the setting at start-up.
+
+\section{Integrity}
+\label{impl:acqintegrity}
+The \texttt{verify} subcommand re-scans every downloaded file on disk, reusing the same
+IGC validation applied at download time, and flags truncated or invalid files, leftover
+\texttt{.part} fragments, and read errors.

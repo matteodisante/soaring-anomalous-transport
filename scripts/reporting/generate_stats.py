@@ -52,7 +52,7 @@ DATASETS = [
         caption=(
             "FFVL CFD \\emph{paraglider} flights per season "
             "(\\texttt{parapente.ffvl.fr}): total declared, with a GPS track, and "
-            "downloaded. Source: \\texttt{data/paragliders/seasons\\_index.csv}."
+            "downloaded. \\impldetails{impl:coverage}"
         ),
     ),
     Dataset(
@@ -62,7 +62,7 @@ DATASETS = [
         caption=(
             "FFVL CFD \\emph{hang-glider} flights per season "
             "(\\texttt{delta.ffvl.fr}): total declared, with a GPS track, and "
-            "downloaded. Source: \\texttt{data/hang\\_gliders/seasons\\_index.csv}."
+            "downloaded. \\impldetails{impl:coverage}"
         ),
     ),
 ]

@@ -641,6 +641,49 @@ full rebuild: text and figure land on the same page throughout, including the tw
 checked directly (Figures~4.6 and~4.7, immediately after the paragraphs that introduce
 them).
 
+\paragraph{2026-07 --- Thesis restructured: narrative body, implementation appendix.}
+The body had grown heavy: captions and prose mixed physical/statistical reasoning with
+code module names, exact config values, sample sizes and computation times (worst case,
+Fig.~4.2's caption, 3898 characters). Restructured so the body reads like an ordinary
+thesis and every implementation-level fact moves to one place, cross-referenced tersely
+from where it used to sit.
+\begin{description}
+  \item[New back-matter part.] ``Implementation and Computational Details,'' a
+        document-within-the-document at the very end: unnumbered part divider (a
+        numbered ``Part I'' would have implied a nonexistent ``Part II''), its own local
+        ``Contents of this part'' listing (\texttt{titletoc}), and its own independent
+        chapter numbering (plain arabic, reset -- continuing the A/B appendix lettering
+        would have made it read as ``just more appendices''). Mirrors the body chapter
+        by chapter: Overview, Data acquisition, The dataset (incl.\ pre-processing and
+        preliminary characterization), Next steps.
+  \item[One macro, used throughout.] \verb|\impldetails{impl:x}| renders
+        ``(implementation details: Sec.~X)'' wherever a fact was trimmed out of the body;
+        \texttt{impl:*} labels mirror \texttt{sec:*} 1:1.
+  \item[Chapter 3/4 boundary moved.] Trajectory pre-processing and preliminary
+        characterization are dataset description, not planned analysis -- moved from
+        ``Next steps'' into ``The dataset'' (which now runs to Sec.~3.6); ``Next steps''
+        starts at ``Observables on the whole trajectory.'' Five cross-references that
+        would otherwise have become circular self-references were updated in the same
+        pass.
+  \item[Every pre-processing figure/table slimmed.] Fig.~4.2's caption: 3898 to
+        $\sim$1500 characters, keeping the artefact argument (hang-glider plateau,
+        physically-absurd km/h translation) and moving exact sample sizes/timings/bin
+        mechanics. Table~4.1, Figs.~4.1/4.6/4.7 similarly. \texttt{B-psd.tex}: three
+        clauses extracted from ``Welch's method'' (segment length, \texttt{scipy} name,
+        overly specific detrending framing), its whole ``Computational details'' section
+        relocated, one genuine external-validity caveat (hang-glider PSD averages a
+        1\,s-logger minority) preserved in ``Reading the altitude spectra.''
+        \texttt{02-data-acquisition.tex}: CLI/subcommand names, atomic-write/retry
+        mechanics, env-var names relocated; two hardcoded approximate flight counts
+        fixed to use the \texttt{\textbackslash Stat*} macros instead (drift risk).
+  \item[One Python edit.] The two season-table captions
+        (\texttt{scripts/reporting/generate\_stats.py}) had their provenance clause
+        replaced with the macro; regenerated, \texttt{ruff} clean.
+\end{description}
+Verified throughout: every \texttt{impl:*} label matches an \texttt{impldetails} call (no
+dangling cross-reference), full rebuilds clean at each stage (no undefined references),
+official build script (\texttt{scripts/build\_docs.sh thesis}) green.
+
 \paragraph{2026-06 --- Documentation.}
 Project docs are built with MkDocs and published on GitHub Pages. Initially deployed with
 \texttt{mkdocs gh-deploy}, which accumulated one built-site commit per deploy on a
