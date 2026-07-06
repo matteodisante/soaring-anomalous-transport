@@ -17,9 +17,23 @@
 # rather than signal (audited in the thesis, fig:fixlevel). Inter-fix gaps are handled
 # once, at the flight level, by `sampling` below -- not with a second absolute bound here.
 fix_level:
-  max_horizontal_speed_mps: 40.0   # v_xy above this between two fixes => GPS position jump
-  max_vertical_speed_mps: 10.0     # |v_z| (barometric) beyond the soaring climb/sink range
+  # Per discipline: paragliders and hang gliders have markedly different speed
+  # envelopes (thesis fig:fixlevel), so one shared bound is either too loose for the
+  # slower type or clips real dynamics of the faster one. Values set from the full
+  # per-fix distribution at a large sample (15000 paragliders, the full 6716-flight
+  # hang-glider population): each sits where the real, steeply-decaying population
+  # ends and a much shallower, physically-implausible tail begins (a GPS/logger
+  # artifact -- e.g. hang gliders show a distinct plateau from ~45 to ~90 m/s that no
+  # credible ground speed explains). Add a "sailplanes" key once that source is in.
+  max_horizontal_speed_mps:        # v_xy above this between two fixes => GPS position jump
+    paragliders: 25.0
+    "hang gliders": 40.0
+  max_vertical_speed_mps:          # |v_z| (barometric) beyond the soaring climb/sink range
+    paragliders: 12.0
+    "hang gliders": 14.0
   min_altitude_m: -100.0           # plausible barometric-altitude range: lower bound
+                                   #   (not per-discipline: bounds the barometric sensor's
+                                   #   own reading range, not glider performance -- see thesis)
   max_altitude_m: 6000.0           # ... upper bound
 
 # --- trimming: strip ground phases (take-off / landing), on v_xy alone --------

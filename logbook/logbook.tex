@@ -436,36 +436,47 @@ appendix, prompted by direct questions about what they actually show.
         slightly negative without being cut.
 \end{description}
 
-\paragraph{2026-07 --- Fix-level bounds: an experiment in progress (uncommitted).}
-Prompted by the discussion above, \texttt{configs/preprocessing.yaml}'s
-\texttt{max\_horizontal\_speed\_mps}/\texttt{max\_vertical\_speed\_mps} are being tried
-much looser (120/80\,m/s, from 40/10) to see the fix-level tails unclipped -- not yet
-committed, still an open experiment.
+\paragraph{2026-07 --- Fix-level speed bounds made per-discipline, on a much larger sample.}
+Chasing the loosened-threshold experiment of the previous entry to a conclusion.
 \begin{description}
-  \item[Bigger sample needed] At the wider range the tail is sparse; the fix-level
-        figure's sample was raised from 800 to 3000 flights per discipline
-        (\texttt{FIXLEVEL\_SAMPLE\_PER\_DISCIPLINE}) -- 25.6M/17.2M fix pairs, still well
-        under a minute to compute.
-  \item[What the wider view found] Horizontal speed now shows, for hang gliders only, a
-        genuine second bump around 45--90\,m/s ($\sim$0.13\% of hang-glider fixes,
-        $\sim$22\,000 pairs) -- not a smoothly decaying tail. A sustained
-        \emph{ground} speed in that range (162--324\,km/h) has no credible airborne
-        explanation for a hang glider, so this reads as a real, distinct artefact
-        population (a logger/GPS pathology), not rare-but-genuine manoeuvres -- and the
-        old 40\,m/s bound happened to sit right at its edge, excluding it. Loosening the
-        bound to 120 lets it through untouched. Vertical speed shows no comparable bump
-        at the wider range. \emph{Tentative conclusion: the horizontal bound probably
-        should not stay this loose; the old value was doing real work.} Not acted on
-        yet, pending a decision.
-  \item[$-100\,$m altitude bound, empirical check] Computed the per-flight mean
-        GNSS$-$barometric offset over a sample of 1500 flights per discipline (broader
-        than the single Figure~4.1 example): median $\approx\!90\,$m, 25th--75th
-        percentile roughly $43$--$135\,$m, but this is a \emph{whole-flight} average and
-        the offset itself grows with altitude (Sec.~4.1.1), so it likely
-        \emph{overstates} the offset specifically near the ground -- not the same thing
-        as directly checking take-off-altitude fixes, which would be needed to pin the
-        bound down precisely rather than just confirm its order of magnitude. No error
-        found in Figure~4.2 itself.
+  \item[Sample size] \texttt{FIXLEVEL\_SAMPLE\_PER\_DISCIPLINE} raised from 800 to
+        15{,}000: 15{,}000 paragliders (126{,}723{,}499 fix pairs, $\sim$73\,s) and
+        all 6{,}716 hang gliders (a full census at this population size,
+        37{,}915{,}334 pairs, $\sim$25\,s) -- under two minutes total, and it resolves
+        the sparse tail well enough to distinguish real dynamics from a rare artefact,
+        which the 800-flight sample could not.
+  \item[The hang-glider bump, confirmed and explained] At this sample size the
+        45--90\,m/s feature is unambiguous: not a smoothly decaying tail but a distinct,
+        much more slowly-decaying plateau (confirmed with a fine, 2.5\,m/s-binned
+        histogram -- the decay rate visibly changes between 37.5 and 42.5\,m/s, from a
+        steep real decline to a near-flat plateau lasting to $\sim$90\,m/s). A sustained
+        \emph{ground} speed of 160--324\,km/h has no credible airborne explanation for a
+        hang glider: read as a logger/GPS artefact population, not rare-but-genuine
+        manoeuvres.
+  \item[Decision: per-discipline bounds, not one shared value] Paragliders and hang
+        gliders have different performance envelopes, confirmed by their different
+        tail shapes (paraglider $v_{xy}$ knee $\approx\!23\,$m/s vs.\ the hang-glider
+        artefact boundary at $\approx\!40\,$m/s) -- a shared bound is either too loose
+        for one or clips real dynamics of the other. \texttt{FixLevelThresholds.max\_}
+        \texttt{horizontal\_speed\_mps}/\texttt{max\_vertical\_speed\_mps} are now
+        \texttt{dict[str, float]} keyed by discipline (\texttt{configs/preprocessing.%
+        yaml}, a nested mapping; a \texttt{"sailplanes"} entry can be added later with
+        no code change). Adopted, from the fine-grained tail inspection: horizontal
+        speed 25\,m/s (para) / 40\,m/s (hang, at the plateau's edge); vertical speed
+        12\,m/s (para) / 14\,m/s (hang). The altitude-range bound stays shared -- it
+        bounds the barometric sensor's own reading range, not glider performance.
+  \item[Figure and table updated] \texttt{make\_fixlevel\_diagnostics\_figure} now
+        draws one dashed cut per discipline, colour-matched to its histogram, with a
+        per-discipline removed-fraction annotation (previously one shared cut and
+        fraction). Table~4.1 gained a row per discipline for the two speed bounds.
+  \item[$-100\,$m altitude bound, empirical check (unchanged, kept for the record)]
+        Computed the per-flight mean GNSS$-$barometric offset over 1500 flights per
+        discipline (broader than the single Figure~4.1 example): median
+        $\approx\!90\,$m, 25th--75th percentile roughly $43$--$135\,$m. This is a
+        \emph{whole-flight} average, and the offset itself grows with altitude
+        (Sec.~4.1.1), so it likely \emph{overstates} the offset specifically near the
+        ground; confirms the order of magnitude of $-100\,$m without pinning it down
+        precisely. No error found in Figure~4.2 itself.
 \end{description}
 
 \paragraph{2026-06 --- Documentation.}

@@ -47,6 +47,7 @@ from __future__ import annotations
 
 import os
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -57,8 +58,12 @@ OUT_FIX = ROOT / "thesis" / "generated" / "fixlevel_diagnostics.pdf"
 N_JOBS = min(8, os.cpu_count() or 1)
 FORCE_RESCAN = False  # set True (or delete <data_root>/derived/track_scan.parquet)
 # Flights sampled per discipline for the fix-level distributions: a seeded random
-# subsample (millions of fixes), the same tool the altitude PSD uses.
-FIXLEVEL_SAMPLE_PER_DISCIPLINE = 800
+# subsample, the same tool the altitude PSD uses. Deliberately large (tens of millions
+# of fixes): resolving the sparse tail well enough to tell real dynamics from a rare
+# logger/GPS artifact needs it, and it is cheap (well under two minutes total; each
+# discipline is capped at its own population, so this already IS the full census for
+# any discipline smaller than this number, e.g. today's hang gliders).
+FIXLEVEL_SAMPLE_PER_DISCIPLINE = 15_000
 
 _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
@@ -149,10 +154,15 @@ def main() -> int:
     # Fix-level per-fix distributions, pooled over a seeded sample per discipline.
     distributions = {}
     for disc, cfg_disc in configs.items():
+        t0 = time.perf_counter()
         paths = sample_igc_paths(cfg_disc.igc_dir, FIXLEVEL_SAMPLE_PER_DISCIPLINE)
         distributions[disc] = fix_level_distributions(paths, n_jobs=N_JOBS)
+        elapsed = time.perf_counter() - t0
         n_fix = int(distributions[disc]["v_xy"].size)
-        print(f"[{disc}] fix-level sample: {len(paths)} flights, {n_fix} fix pairs.")
+        print(
+            f"[{disc}] fix-level sample: {len(paths)} flights, {n_fix} fix pairs, "
+            f"{elapsed:.0f} s."
+        )
     make_fixlevel_diagnostics_figure(distributions, cfg.fix).savefig(
         OUT_FIX, metadata=_PDF_METADATA, bbox_inches="tight"
     )

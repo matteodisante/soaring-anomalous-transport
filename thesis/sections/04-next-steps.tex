@@ -189,17 +189,23 @@ Quantity & Reject / flag the fix when & Rationale \\
 Missing altitude & the adopted-channel value is absent            & no usable vertical coordinate (Sec.~\ref{sec:altchannel}) \\
 Duplicate time   & two fixes share the UTC second                & keep the first (logger double-write) \\
 Altitude range   & outside $[-100,\,6000]\,\si{\metre}$           & sensor fault, allowing for the channel's own offset \\
-Horizontal speed & $v_{xy}>\SI{40}{\metre\per\second}$ between consecutive fixes & GPS position jump \\
-Vertical speed   & $|v_z|>\SI{10}{\metre\per\second}$            & beyond the soaring climb/sink range \\
+Horizontal speed (paragliders)  & $v_{xy}>\SI{25}{\metre\per\second}$ between consecutive fixes & GPS position jump \\
+Horizontal speed (hang gliders) & $v_{xy}>\SI{40}{\metre\per\second}$ between consecutive fixes & GPS position jump \\
+Vertical speed (paragliders)    & $|v_z|>\SI{12}{\metre\per\second}$            & beyond the soaring climb/sink range \\
+Vertical speed (hang gliders)   & $|v_z|>\SI{14}{\metre\per\second}$            & beyond the soaring climb/sink range \\
 \bottomrule
 \end{tabular}
 \caption{Fix-level cleaning criteria, applied in the order listed. Each bound marks the
 physically-implausible tail of its per-fix distribution (Figure~\ref{fig:fixlevel}), so it
 removes GPS errors rather than signal; the values are set in
-\texttt{configs/preprocessing.yaml} (never hard-coded) and suit paragliders and hang gliders
-(the present dataset, Chapter~\ref{ch:dataset}), scaling up for the faster gliders of future
-sources. The altitude-range and vertical-speed bounds apply to the adopted barometric
-channel (Sec.~\ref{sec:altchannel}). The lower bound is $\SI{-100}{\metre}$ rather than
+\texttt{configs/preprocessing.yaml} (never hard-coded), one per discipline for the two
+speed bounds -- paragliders and hang gliders have different performance envelopes
+(the present dataset, Chapter~\ref{ch:dataset}), so a single shared bound is either too
+loose for the slower type or clips real dynamics of the faster one; a
+\texttt{"sailplanes"} entry will be added once that source is in. The altitude-range
+bound is not split by discipline: it bounds the barometric sensor's plausible reading
+range, not glider performance, and applies to the adopted channel
+(Sec.~\ref{sec:altchannel}). The lower bound is $\SI{-100}{\metre}$ rather than
 $0$ because the barometric channel is not QNH-corrected: its offset from true altitude
 (Figure~\ref{fig:altnoise}, of order \SI{100}{\metre} in the flight shown there) means a
 take-off at sea level can legitimately read slightly negative, so the bound must clear
@@ -220,21 +226,30 @@ that offset and not just true altitude. Inter-fix gaps are handled once, at the 
   \caption{Fix-level cleaning, audited on the data. Per-\emph{fix} distributions of the
   quantities the dynamics-plausibility bounds test -- (a)~horizontal speed $v_{xy}$,
   (b)~barometric $|v_z|$, (c)~barometric altitude -- pooled over a seeded random sample of
-  \num{800} flights per discipline (\num{6633923} paraglider and \num{4541511}
-  hang-glider consecutive-fix pairs). Dashed lines mark the adopted bounds
-  (Table~\ref{tab:cleaning}); each sits in the sparse, physically-implausible tail, and the
-  fraction of fixes it would remove is annotated on the panel. The $y$-axis is logarithmic so
-  that tail is visible. In (a), both distributions show a knee (around
-  \SI{23}{\metre\per\second} for paragliders, \SI{35}{\metre\per\second} for hang gliders)
-  well below the adopted \SI{40}{\metre\per\second} bound: plausibly the transition from
-  normal gliding speeds to rarer but real high-energy manoeuvres (a wind-assisted glide, a
-  steep spiral descent), not GPS error, so the bound is deliberately left above it rather
-  than moved down to it -- doing so would discard genuine flight dynamics along with any
-  noise. Panel (b) is a comb rather than a smooth curve because barometric altitude is
-  logged to the metre and most flights sample once per second (Figure~\ref{fig:sampling}):
-  differencing an integer-metre series over a \SI{1}{\second} step can only return an
-  integer number of \si{\metre\per\second}, so the density is exactly zero between
-  consecutive integers -- a quantisation artefact of the raw log, not a plotting error.}
+  \num{15000} paraglider (\num{126723499} consecutive-fix pairs, $\sim$73\,s to compute)
+  and all \num{6716} hang-glider flights (a full census at this population size,
+  \num{37915334} pairs, $\sim$25\,s) -- deliberately large, so that the sparse tail where
+  the bounds act is resolved well enough to tell real dynamics from a rare logger
+  artifact, at a computational cost of under two minutes. Dashed lines mark the adopted
+  bounds (Table~\ref{tab:cleaning}), one per discipline and colour-matched to it, since
+  paragliders and hang gliders have different performance envelopes; the fraction of
+  fixes each would remove is annotated per discipline. The $y$-axis is logarithmic so
+  that tail is visible. Panel (a) is why the bounds are per-discipline and not a shared
+  value: at this sample size, hang gliders show a distinct, much more slowly-decaying
+  plateau from about \SIrange{45}{90}{\metre\per\second} sitting on top of the
+  steeply-decaying real distribution -- a sustained \emph{ground} speed of
+  \SIrange{160}{320}{\kilo\metre\per\hour} has no credible airborne explanation for a
+  hang glider, so this reads as a real, distinct artefact population (most likely a
+  logger/GPS pathology), not rare-but-genuine manoeuvres. The adopted
+  \SI{40}{\metre\per\second} hang-glider bound sits exactly where the decay visibly
+  changes rate, i.e.\ where the real population ends and the artefact plateau begins;
+  paragliders show an analogous, if less extreme, change of slope around
+  \SI{25}{\metre\per\second}, the adopted bound for that discipline. Panel (b) is a comb
+  rather than a smooth curve because barometric altitude is logged to the metre and most
+  flights sample once per second (Figure~\ref{fig:sampling}): differencing an
+  integer-metre series over a \SI{1}{\second} step can only return an integer number of
+  \si{\metre\per\second}, so the density is exactly zero between consecutive integers --
+  a quantisation artefact of the raw log, not a plotting error.}
   \label{fig:fixlevel}
 \end{figure}
 

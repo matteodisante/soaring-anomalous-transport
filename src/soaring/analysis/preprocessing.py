@@ -57,10 +57,17 @@ class FixLevelThresholds:
     geographic coordinates (no conversion yet). The vertical-speed and altitude bounds
     apply to the adopted barometric channel. Inter-fix gaps are not bounded here: they
     are handled once, at the flight level, by :class:`SamplingThresholds`.
+
+    The two speed bounds are keyed by discipline (``"paragliders"``, ``"hang gliders"``,
+    later ``"sailplanes"``): the two types have markedly different performance
+    envelopes (thesis Figure 4.2), so one shared speed bound is either too loose for
+    the slower type or clips real dynamics of the faster one. The altitude bounds are
+    *not* split by discipline: they bound the barometric sensor's plausible reading
+    range, not a discipline-specific performance limit.
     """
 
-    max_horizontal_speed_mps: float
-    max_vertical_speed_mps: float
+    max_horizontal_speed_mps: dict[str, float]
+    max_vertical_speed_mps: dict[str, float]
     min_altitude_m: float
     max_altitude_m: float
 
@@ -700,6 +707,10 @@ def make_fixlevel_diagnostics_figure(
     flight, so what justifies it is that it sits in the physically-implausible tail
     (a GPS error, not signal) and removes a negligible fraction of fixes, annotated on
     each panel. The y-axis is logarithmic so that tail, where the cuts act, is visible.
+    Panels (a)/(b) mark one cut *per discipline*, colour-matched to that discipline's
+    histogram (their performance envelopes differ too much for one shared speed bound);
+    panel (c) marks one shared band, since the altitude bounds are about the sensor, not
+    the glider.
 
     Args:
         distributions: Mapping ``discipline -> {quantity -> per-fix values}`` from
@@ -711,18 +722,18 @@ def make_fixlevel_diagnostics_figure(
     """
     import matplotlib.pyplot as plt
 
-    line_kw = {"color": "0.25", "ls": "--", "lw": 1.2}
+    shared_line_kw = {"color": "0.25", "ls": "--", "lw": 1.2}
     fig, axes = plt.subplots(1, 3, figsize=(11.0, 3.7))
 
-    def _panel(ax, key, cuts, xlabel, title):
+    def _hist_panel(ax, key, xlabel, title, *, all_cut_values):
         # x-range fitted to the data (a high percentile of the pooled sample) and
         # extended to keep every cut in view; no fixed constant, dataset-agnostic.
         pooled = np.concatenate(
             [d[key] for d in distributions.values() if d.get(key, np.empty(0)).size]
             or [np.array([0.0])]
         )
-        lo = min(float(np.quantile(pooled, 0.001)), *cuts)
-        hi = max(float(np.quantile(pooled, 0.999)), *(c * 1.05 for c in cuts))
+        lo = min(float(np.quantile(pooled, 0.001)), *all_cut_values)
+        hi = max(float(np.quantile(pooled, 0.999)), *(c * 1.05 for c in all_cut_values))
         span = (hi - lo) or 1.0
         lo, hi = lo - 0.02 * span, hi + 0.02 * span
         bins = np.linspace(lo, hi, 60)
@@ -738,22 +749,40 @@ def make_fixlevel_diagnostics_figure(
                     color=_DISC_COLOR.get(disc, "gray"),
                     label=disc,
                 )
-        for c in cuts:
-            ax.axvline(c, **line_kw)
-        # Fraction of fixes each cut removes (pooled): the number that justifies it.
-        if len(cuts) == 1:
-            frac = float(np.mean(pooled > cuts[0])) * 100.0
-            note = f"cut removes {frac:.2g}% of fixes"
-        else:
-            frac = float(np.mean((pooled < cuts[0]) | (pooled > cuts[1]))) * 100.0
-            note = f"band removes {frac:.2g}% of fixes"
         ax.set(
             xlabel=xlabel, ylabel="density", title=title, yscale="log", xlim=(lo, hi)
         )
+        return pooled
+
+    def _per_discipline_panel(ax, key, cuts_by_disc, xlabel, title):
+        """One upper cut per discipline, colour-matched, each with its own fraction."""
+        _hist_panel(ax, key, xlabel, title, all_cut_values=cuts_by_disc.values())
+        for i, (disc, cut) in enumerate(cuts_by_disc.items()):
+            color = _DISC_COLOR.get(disc, "gray")
+            ax.axvline(cut, color=color, ls="--", lw=1.2)
+            v = distributions.get(disc, {}).get(key, np.empty(0))
+            frac = float(np.mean(v > cut)) * 100.0 if v.size else float("nan")
+            ax.text(
+                0.97,
+                0.95 - 0.09 * i,
+                f"{disc}: cut removes {frac:.2g}%",
+                transform=ax.transAxes,
+                fontsize=7.5,
+                ha="right",
+                va="top",
+                color=color,
+            )
+
+    def _shared_band_panel(ax, key, cuts, xlabel, title):
+        """One shared band (e.g. altitude), same cut for every discipline."""
+        pooled = _hist_panel(ax, key, xlabel, title, all_cut_values=cuts)
+        for c in cuts:
+            ax.axvline(c, **shared_line_kw)
+        frac = float(np.mean((pooled < cuts[0]) | (pooled > cuts[1]))) * 100.0
         ax.text(
             0.97,
             0.95,
-            note,
+            f"band removes {frac:.2g}% of fixes",
             transform=ax.transAxes,
             fontsize=7.5,
             ha="right",
@@ -761,22 +790,22 @@ def make_fixlevel_diagnostics_figure(
             color="0.25",
         )
 
-    _panel(
+    _per_discipline_panel(
         axes[0],
         "v_xy",
-        (fix_level.max_horizontal_speed_mps,),
+        fix_level.max_horizontal_speed_mps,
         r"horizontal speed $v_{xy}$ [m/s]",
         "(a) Horizontal speed",
     )
     axes[0].legend(fontsize=8)
-    _panel(
+    _per_discipline_panel(
         axes[1],
         "v_z",
-        (fix_level.max_vertical_speed_mps,),
+        fix_level.max_vertical_speed_mps,
         r"barometric $|v_z|$ [m/s]",
         "(b) Vertical speed",
     )
-    _panel(
+    _shared_band_panel(
         axes[2],
         "altitude",
         (fix_level.min_altitude_m, fix_level.max_altitude_m),

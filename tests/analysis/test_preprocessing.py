@@ -22,8 +22,14 @@ FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "sample_flight.igc"
 def test_load_preproc_config_from_yaml():
     # The authoritative values live in configs/preprocessing.yaml, not in code defaults.
     cfg = load_preproc_config()
-    assert cfg.fix.max_horizontal_speed_mps == 40.0
-    assert cfg.fix.max_vertical_speed_mps == 10.0
+    assert cfg.fix.max_horizontal_speed_mps == {
+        "paragliders": 25.0,
+        "hang gliders": 40.0,
+    }
+    assert cfg.fix.max_vertical_speed_mps == {
+        "paragliders": 12.0,
+        "hang gliders": 14.0,
+    }
     assert cfg.trimming.takeoff_speed_mps == 5.0
     assert cfg.trimming.sustained_s == 30.0
     assert cfg.flight.min_duration_s == 2400.0  # 40 min
