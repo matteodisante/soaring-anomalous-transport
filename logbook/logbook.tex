@@ -477,6 +477,25 @@ Chasing the loosened-threshold experiment of the previous entry to a conclusion.
         (Sec.~4.1.1), so it likely \emph{overstates} the offset specifically near the
         ground; confirms the order of magnitude of $-100\,$m without pinning it down
         precisely. No error found in Figure~4.2 itself.
+  \item[$x$-range widened for (a)/(b)] The panels' range was cropping the view almost
+        exactly at the cut (the 99.9th percentile of the pooled sample sits right
+        there, by construction), hiding how much -- and what -- the bound leaves out.
+        Panels (a)/(b) now extend to each discipline's own 99.99th percentile (computed
+        per discipline, not pooled, so hang gliders' heavier tail is not swamped by
+        paragliders' larger sample); panel (c) (altitude) keeps the original, narrower
+        range on purpose -- its cuts sit far out in an otherwise tight, unimodal
+        distribution, and widening it the same way mostly shrinks the informative part
+        of the panel.
+  \item[Panel (b)'s non-empty valleys, explained and checked] The comb (spikes at
+        integer m/s) was expected; that the valleys \emph{between} integers were not
+        exactly zero was not, and looked like a bug. It is not: not every flight
+        samples at 1\,s (Figure~4.7 -- hang gliders spread across several native
+        rates), and differencing over a longer native step returns a finer-grained set
+        of values (e.g.\ multiples of 0.2\,m/s at a 5\,s cadence) that fill the gaps
+        once every cadence is pooled. Checked directly, split by native rate: among
+        1\,s-native fixes, $\sim$99\% land within 0.05\,m/s of an integer (the comb,
+        essentially pure); among every other native cadence, only 34--42\% do -- the
+        other 58--66\% is exactly what shows up between the teeth.
 \end{description}
 
 \paragraph{2026-06 --- Documentation.}

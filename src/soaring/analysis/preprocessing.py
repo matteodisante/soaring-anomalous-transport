@@ -725,15 +725,31 @@ def make_fixlevel_diagnostics_figure(
     shared_line_kw = {"color": "0.25", "ls": "--", "lw": 1.2}
     fig, axes = plt.subplots(1, 3, figsize=(11.0, 3.7))
 
-    def _hist_panel(ax, key, xlabel, title, *, all_cut_values):
-        # x-range fitted to the data (a high percentile of the pooled sample) and
-        # extended to keep every cut in view; no fixed constant, dataset-agnostic.
-        pooled = np.concatenate(
-            [d[key] for d in distributions.values() if d.get(key, np.empty(0)).size]
-            or [np.array([0.0])]
-        )
+    def _hist_panel(ax, key, xlabel, title, *, all_cut_values, wide_tail):
+        # x-range fitted to the data and extended to keep every cut in view. Two
+        # regimes: the per-discipline speed panels default to a WIDE tail (see
+        # _per_discipline_panel) -- the 99.9th percentile of the pooled sample sits
+        # right at the cut by construction (that is where the cuts were chosen), so it
+        # would crop the view almost exactly at the line, hiding how much, and what, is
+        # left out. The shared-band panel (altitude) keeps the narrower, original
+        # calculation instead: its cuts sit far out in an otherwise tight, unimodal
+        # distribution, and widening it the same way mostly shrinks the informative
+        # part of the panel to make room for a rare secondary population already
+        # visible at the narrower range.
+        per_disc = [
+            d[key] for d in distributions.values() if d.get(key, np.empty(0)).size
+        ]
+        pooled = np.concatenate(per_disc or [np.array([0.0])])
         lo = min(float(np.quantile(pooled, 0.001)), *all_cut_values)
-        hi = max(float(np.quantile(pooled, 0.999)), *(c * 1.05 for c in all_cut_values))
+        if wide_tail:
+            tail_hi = max(
+                (float(np.quantile(v, 0.9999)) for v in per_disc), default=0.0
+            )
+            hi = max(tail_hi, *(c * 1.8 for c in all_cut_values))
+        else:
+            hi = max(
+                float(np.quantile(pooled, 0.999)), *(c * 1.05 for c in all_cut_values)
+            )
         span = (hi - lo) or 1.0
         lo, hi = lo - 0.02 * span, hi + 0.02 * span
         bins = np.linspace(lo, hi, 60)
@@ -756,7 +772,14 @@ def make_fixlevel_diagnostics_figure(
 
     def _per_discipline_panel(ax, key, cuts_by_disc, xlabel, title):
         """One upper cut per discipline, colour-matched, each with its own fraction."""
-        _hist_panel(ax, key, xlabel, title, all_cut_values=cuts_by_disc.values())
+        _hist_panel(
+            ax,
+            key,
+            xlabel,
+            title,
+            all_cut_values=cuts_by_disc.values(),
+            wide_tail=True,
+        )
         for i, (disc, cut) in enumerate(cuts_by_disc.items()):
             color = _DISC_COLOR.get(disc, "gray")
             ax.axvline(cut, color=color, ls="--", lw=1.2)
@@ -775,7 +798,9 @@ def make_fixlevel_diagnostics_figure(
 
     def _shared_band_panel(ax, key, cuts, xlabel, title):
         """One shared band (e.g. altitude), same cut for every discipline."""
-        pooled = _hist_panel(ax, key, xlabel, title, all_cut_values=cuts)
+        pooled = _hist_panel(
+            ax, key, xlabel, title, all_cut_values=cuts, wide_tail=False
+        )
         for c in cuts:
             ax.axvline(c, **shared_line_kw)
         frac = float(np.mean((pooled < cuts[0]) | (pooled > cuts[1]))) * 100.0

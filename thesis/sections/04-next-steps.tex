@@ -234,10 +234,15 @@ that offset and not just true altitude. Inter-fix gaps are handled once, at the 
   bounds (Table~\ref{tab:cleaning}), one per discipline and colour-matched to it, since
   paragliders and hang gliders have different performance envelopes; the fraction of
   fixes each would remove is annotated per discipline. The $y$-axis is logarithmic so
-  that tail is visible. Panel (a) is why the bounds are per-discipline and not a shared
-  value: at this sample size, hang gliders show a distinct, much more slowly-decaying
-  plateau from about \SIrange{45}{90}{\metre\per\second} sitting on top of the
-  steeply-decaying real distribution -- a sustained \emph{ground} speed of
+  that tail is visible; in (a)/(b) the $x$-range is deliberately wide (out to each
+  discipline's own 99.99th percentile) rather than cropped just past the bound, so the
+  excluded tail is actually shown, not merely implied by the removed-fraction number --
+  panel (c) keeps a narrower range, since its cuts sit far out in an otherwise tight,
+  unimodal distribution and widening it the same way would mostly shrink the
+  informative part of the panel. Panel (a) is why the speed bounds are per-discipline
+  and not a shared value: at this sample size, hang gliders show a distinct, much more
+  slowly-decaying plateau from about \SIrange{45}{90}{\metre\per\second} sitting on top
+  of the steeply-decaying real distribution -- a sustained \emph{ground} speed of
   \SIrange{160}{320}{\kilo\metre\per\hour} has no credible airborne explanation for a
   hang glider, so this reads as a real, distinct artefact population (most likely a
   logger/GPS pathology), not rare-but-genuine manoeuvres. The adopted
@@ -245,11 +250,17 @@ that offset and not just true altitude. Inter-fix gaps are handled once, at the 
   changes rate, i.e.\ where the real population ends and the artefact plateau begins;
   paragliders show an analogous, if less extreme, change of slope around
   \SI{25}{\metre\per\second}, the adopted bound for that discipline. Panel (b) is a comb
-  rather than a smooth curve because barometric altitude is logged to the metre and most
-  flights sample once per second (Figure~\ref{fig:sampling}): differencing an
-  integer-metre series over a \SI{1}{\second} step can only return an integer number of
-  \si{\metre\per\second}, so the density is exactly zero between consecutive integers --
-  a quantisation artefact of the raw log, not a plotting error.}
+  because barometric altitude is logged to the metre: differencing an integer-metre
+  series over a \SI{1}{\second} step can only return an integer number of
+  \si{\metre\per\second}. But the gaps between consecutive integers are not empty, only
+  sparse -- because not every flight samples at \SI{1}{\second} (Figure~\ref{fig:sampling}
+  shows hang gliders spread across several native rates); differencing over a longer
+  step returns a finer-grained set of values (e.g.\ multiples of \SI{0.2}{
+  \metre\per\second} at a \SI{5}{\second} native cadence), which is what fills the
+  gaps once every native cadence is pooled together. Checked directly: among fixes from
+  \SI{1}{\second}-native flights, about 99\% land within \SI{0.05}{\metre\per\second} of
+  an integer (the comb, essentially pure); among fixes from every other native cadence,
+  only 34--42\% do -- the other 58--66\% is exactly what is seen between the teeth.}
   \label{fig:fixlevel}
 \end{figure}
 
