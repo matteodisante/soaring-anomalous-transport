@@ -42,13 +42,13 @@ climb rate from the pressure sensor, not from GNSS.
 
 \paragraph{Empirical confirmation.}
 This is confirmed empirically on our data. Figure~\ref{fig:altnoise} compares the two
-channels. Panels~(a)/(b) use a seeded random subsample of 400 flights per discipline --
+channels. Panels~(a)--(c) use a seeded random subsample of 400 flights per discipline --
 a deliberate choice, since the Welch PSD is an ensemble-average spectral \emph{shape}, not a
 headline number, so a moderate, explicitly sized subsample is the appropriate and standard
 tool (Appendix~\ref{app:psd}). Their power spectra agree at low frequency, where the real
 climbs and glides live, but towards the Nyquist frequency the GNSS spectrum flattens into a
-noise floor two to three orders of magnitude above the barometric one; the channel difference
-for a single flight (panel~a) shows the same jitter directly. It is worth being explicit that
+noise floor two to three orders of magnitude above the barometric one; for a single flight, the
+two raw channels (panel~a) and their difference (panel~b) show the same jitter directly. It is worth being explicit that
 this choice \emph{departs from the reference study}~\cite{vilpellet2026}, whose pipeline
 derives the vertical coordinate and vertical velocity from the GNSS altitude (it reads the
 barometric channel but does not use it); the divergence is deliberate and is one of the points
@@ -63,11 +63,17 @@ re-examined here.
     \texttt{scripts/reporting/generate\_altitude\_noise\_figure.py} from the raw IGC tracks on
     the SSD (not versioned). Run it to render this figure.}}%
   }
-  \caption{Barometric vs GNSS altitude noise. (a)~Channel difference GNSS$-$barometric for
-  one representative flight (mean removed). (b)~Mean Welch power spectra of the two
-  channels, per discipline (Appendix~\ref{app:psd}). (d)~Fraction of flights whose
-  barometric channel is absent, per discipline; see the main text for how these figures
-  were measured and their precision.}
+  \caption{Barometric vs GNSS altitude noise. For one representative flight (the one with
+  the most fixes in the subsample), over its first \SI{30}{\minute}: (a)~the two raw
+  channels overlaid -- they track the same climb, but the GNSS trace is visibly noisier;
+  (b)~their difference GNSS$-$barometric (mean removed), which isolates that noise. Over
+  the ensemble: (c)~mean Welch power spectra of the two channels, per discipline
+  (Appendix~\ref{app:psd}); the dotted line is the Nyquist frequency
+  $f_{\mathrm{Nyq}}=1/(2\Delta t)$, the highest frequency the sampling can resolve. It is a
+  single line because the pooled flights are all resampled to the same modal $\Delta t$
+  before averaging, so they share one $\Delta t$ -- hence one $f_{\mathrm{Nyq}}$.
+  (d)~Fraction of flights whose barometric channel is absent, per discipline; see the main
+  text for how these were measured and their precision.}
   \label{fig:altnoise}
 \end{figure}
 
@@ -90,16 +96,16 @@ Several practical points follow.
 \end{description}
 
 \paragraph{Measuring the fallback rate.}
-Because it is a headline number, its precision is sized rather than assumed
-(\texttt{soaring.analysis.altitude\_noise.required\_sample\_size}). The hang-glider
-archive ($N=\num{6716}$) is small enough to census exactly in a couple of minutes:
-\SI{17.5}{\percent} carry no barometric channel. The paraglider archive
-($N=\num{186052}$) is not, so it is instead estimated from a simple random sample of
-$n=\num{2401}$ flights -- the standard proportion sample-size formula
-$n=z^2p(1-p)/e^2$, conservative $p=0.5$, population treated as effectively infinite (at this
-sample size, a mere \SI{1.3}{\percent} of the archive, the finite-population correction would
-change $n$ by only about \num{30}) -- sized for a target 95\%-confidence margin of error of
-$\pm 2$ percentage points: the observed estimate is $(28.4\pm1.8)\,\si{\percent}$ (95\% CI).
+Because it is a headline number, its precision is exact rather than estimated: both
+archives are now full-censused --
+\SI{17.5}{\percent} of \num{6716} hang-glider flights and \SI{30.1}{\percent} of
+\num{186025} paraglider flights carry no barometric channel. This exactness is a
+byproduct, not extra work: the same full parse of every track is needed anyway for the
+flight-level filtering diagnostics of Sec.~\ref{sec:flightfilter}
+(Figure~\ref{fig:preproc}), so the barometric-presence fraction is read off that one scan
+rather than measured separately. (A sized random sample -- the standard proportion
+formula $n=z^2p(1-p)/e^2$ -- remains the right tool when a full census is not already
+being paid for elsewhere; it is not needed here.)
 
 \paragraph{Is a mixed dataset a problem?}
 Not much, for two reasons. The \emph{horizontal}
@@ -141,14 +147,20 @@ to a \emph{legal} record -- an invalid UTC time, or a latitude/longitude whose a
 hemisphere letter or resulting value are not a valid encoding (Chapter~\ref{ch:dataset}) --
 since such a fix carries no meaningful position or time at all; this is covered by unit
 tests. The second, \emph{dynamics plausibility}, is design work still to be implemented:
-Table~\ref{tab:cleaning} specifies the criteria and their nominal thresholds -- fixes that
-decode to a legal record but are implausible given the rest of the trajectory, such as an
-impossible speed jump (via $v_{xy}$ from~\eqref{eq:haversine}), an out-of-range altitude, or
-a stale duplicate -- and their numeric values live in the pre-processing config
-(\texttt{configs/preprocessing.yaml}, loaded into \texttt{FixLevelThresholds}), but the
-function that actually walks a trajectory and applies them, fix by fix, does not yet exist;
-building it is part of this pre-processing stage. The checks are meant to apply in the order listed,
-each acting only on the fixes that survived the previous ones.
+Table~\ref{tab:cleaning} lists the criteria -- fixes that decode to a legal record but are
+implausible given the trajectory, such as an impossible speed jump (via $v_{xy}$
+from~\eqref{eq:haversine}), an out-of-range altitude, or a stale duplicate. The bounds are
+not guessed but read off the \emph{per-fix} distributions of these quantities on the real
+tracks (Figure~\ref{fig:fixlevel}): each sits in the sparse, physically-implausible tail --
+a GPS error, not signal -- and removes only a negligible fraction of fixes, so the cut
+cleans the trajectory without eroding it. This mirrors the flight-level audit of
+Sec.~\ref{sec:flightfilter}, with one twist: a fix-level bound drops single fixes from an
+otherwise good flight, so what matters is the fraction of \emph{fixes} it removes, not the
+number of flights it touches -- a bound may legitimately touch many flights. The numeric
+values live in the config (\texttt{configs/preprocessing.yaml},
+\texttt{FixLevelThresholds}); the routine that walks a trajectory applying them, fix by fix,
+does not yet exist -- building it is part of this stage. The checks apply in the order
+listed, each acting only on the fixes the previous ones spared.
 
 \begin{table}[t]
 \centering
@@ -162,17 +174,37 @@ Duplicate time   & two fixes share the UTC second                & keep the firs
 Altitude range   & outside $[-100,\,6000]\,\si{\metre}$           & sensor fault \\
 Horizontal speed & $v_{xy}>\SI{40}{\metre\per\second}$ between consecutive fixes & GPS position jump \\
 Vertical speed   & $|v_z|>\SI{10}{\metre\per\second}$            & beyond the soaring climb/sink range \\
-Time gap         & $>\SI{60}{\second}$ between consecutive fixes  & loss of temporal continuity \\
 \bottomrule
 \end{tabular}
-\caption{Fix-level cleaning criteria, applied in the order listed. The values are
-\emph{physical bounds}, fixed a priori and not tuned to the data, and are set in
-\texttt{configs/preprocessing.yaml} (never hard-coded); the speed bounds suit paragliders and
-hang gliders (the present dataset, Chapter~\ref{ch:dataset}) and scale up for the faster
-gliders of future sources. The altitude-range and vertical-speed bounds apply to the adopted
-barometric channel (Sec.~\ref{sec:altchannel}) and catch its spikes.}
+\caption{Fix-level cleaning criteria, applied in the order listed. Each bound marks the
+physically-implausible tail of its per-fix distribution (Figure~\ref{fig:fixlevel}), so it
+removes GPS errors rather than signal; the values are set in
+\texttt{configs/preprocessing.yaml} (never hard-coded) and suit paragliders and hang gliders
+(the present dataset, Chapter~\ref{ch:dataset}), scaling up for the faster gliders of future
+sources. The altitude-range and vertical-speed bounds apply to the adopted barometric
+channel (Sec.~\ref{sec:altchannel}). Inter-fix gaps are handled once, at the flight level
+(Sec.~\ref{sec:uniform}), not with a second absolute bound here.}
 \label{tab:cleaning}
 \end{table}
+
+\begin{figure}[t]
+  \centering
+  \IfFileExists{generated/fixlevel_diagnostics.pdf}{%
+    \includegraphics[width=\linewidth]{generated/fixlevel_diagnostics}%
+  }{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/generate\_preproc\_figure.py} from the raw IGC tracks on the
+    SSD (not versioned). Run it to render this figure.}}%
+  }
+  \caption{Fix-level cleaning, audited on the data. Per-\emph{fix} distributions of the
+  quantities the dynamics-plausibility bounds test -- (a)~horizontal speed $v_{xy}$,
+  (b)~barometric $|v_z|$, (c)~barometric altitude -- pooled over a seeded random sample of
+  flights per discipline (millions of fixes). Dashed lines mark the adopted bounds
+  (Table~\ref{tab:cleaning}); each sits in the sparse, physically-implausible tail, and the
+  fraction of fixes it would remove is annotated on the panel. The $y$-axis is logarithmic so
+  that tail is visible.}
+  \label{fig:fixlevel}
+\end{figure}
 
 Two points a table cannot convey. First, the IGC validity flag (\texttt{A}/\texttt{V}) is not
 a separate criterion but is \emph{subsumed} by the missing-altitude rule applied to the adopted
@@ -181,9 +213,12 @@ zeroed but keeps a valid position and, if present, a valid barometric altitude
 (Chapter~\ref{ch:dataset}). Its effect is therefore channel-dependent -- on a barometric flight
 a \texttt{V} fix is kept (the barometric value is intact), whereas on a GNSS-fallback flight it
 has no usable altitude and is dropped as a missing-altitude fix -- and needs no handling of its
-own. Second, a time gap is not itself an error -- short gaps can be interpolated, whereas long
-ones split the trajectory into independent segments or disqualify the flight from analyses that
-require continuity.
+own. Second, inter-fix time gaps are deliberately \emph{not} a fix-level criterion. A gap is
+not itself an error -- short ones interpolate cleanly, long ones do not -- and, unlike a speed
+or altitude spike, it is a property of the sampling rather than of a single fix. It is therefore
+handled once, at the flight level (Sec.~\ref{sec:uniform}): a flight whose largest gap is too
+large \emph{relative to its own native cadence} is excluded there. A second, absolute gap bound
+at the fix level would only duplicate that test with a differently-scaled threshold.
 
 \subsection{Trimming of ground phases}
 The logger starts recording before take-off and stops after landing; these ground phases must
@@ -199,19 +234,16 @@ retained, so they are made explicit -- and, like every threshold, set in
 \subsection{Flight-level filtering}
 \label{sec:flightfilter}
 After cleaning and trimming, some flights are still unfit for the ensemble analysis and are
-dropped whole. The step is \emph{delicate}: too aggressive a cut biases the transport
-statistics -- a high minimum duration, for instance, preferentially keeps successful long
-flights and inflates the apparent persistence of the MSD. So the aim is narrow and concrete:
-remove only what is \emph{not a genuine cross-country flight} -- sled runs, tows, aborted or
-truncated logs -- with the \emph{smallest} cut that clears this junk, so the ensemble is
-disturbed as little as possible. Each cut is placed in the empty tail of its distribution
-(Fig.~\ref{fig:preproc}), where moving it changes almost nothing.
-
-Every quantity that gates a flight is \textbf{computed from its parsed track}, not read from
-the declared catalog metadata: the metadata carry gross outliers and placeholder dates
-(Chapter~\ref{ch:dataset}), so they serve only as a cheap coarse pre-filter (skip an entry
-with no track at all) and for provenance; the cut itself is always made on the real
-trajectory. Two track quantities gate a flight, plus a metadata stratifier:
+dropped whole. The step is delicate: too aggressive a cut biases the transport statistics -- a
+high minimum duration, for instance, preferentially keeps successful long flights and inflates
+the apparent persistence of the MSD. The flight-level filtering therefore uses a
+\textbf{minimal-threshold strategy}: for each criterion, the threshold is set to the smallest
+value that still clears non-genuine flights (sled runs, tows, aborted or truncated logs), so
+the ensemble is disturbed as little as possible. Once chosen, each cut is verified by the
+full-distribution diagnostics in Fig.~\ref{fig:preproc}: it sits in the empty tail of its
+distribution, where moving it changes almost nothing. All flight-level quantities are
+computed directly from the parsed tracks; the thresholds follow the minimal-threshold
+strategy just described. Two track quantities gate a flight, plus a metadata stratifier:
 \begin{enumerate}[label=(\arabic*)]
   \item \emph{Recorded duration} $T\geq\SI{40}{\minute}$. A cross-country flight spans many
         climb--glide cycles; shorter logs are sled runs or aborted attempts. The cut is
@@ -617,11 +649,30 @@ Per flight, let $\Delta t$ be the median inter-fix interval. Three cases arise:
 \end{description}
 The gap bound and the maximum missing fraction are the two thresholds of this step (in
 \texttt{configs/preprocessing.yaml}); the exclusion is the further flight-level cut promised
-in Sec.~\ref{sec:flightfilter}, its retained fraction reported with the others. One caveat
-carries downstream: a few observables are intrinsically $\Delta t$-dependent (a
-finite-difference velocity, a turning angle), so where they are compared across flights the
-ensemble is stratified by rate or restricted to the dominant one, rather than pretending a
-single cadence.
+in Sec.~\ref{sec:flightfilter}, and Figure~\ref{fig:gaps} makes its retained fraction
+auditable in the same way as the duration and path-length cuts. One caveat carries
+downstream: a few observables are intrinsically $\Delta t$-dependent (a finite-difference
+velocity, a turning angle), so where they are compared across flights the ensemble is
+stratified by rate or restricted to the dominant one, rather than pretending a single
+cadence.
+
+\begin{figure}[t]
+  \centering
+  \IfFileExists{generated/gap_diagnostics.pdf}{%
+    \includegraphics[width=\linewidth]{generated/gap_diagnostics}%
+  }{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/generate\_preproc\_figure.py} from the raw IGC tracks on the
+    SSD (not versioned). Run it to render this figure.}}%
+  }
+  \caption{Sampling-regularity diagnostics, computed on the full dataset per discipline, on
+  the \emph{same} track scan as Figure~\ref{fig:preproc} (so every parsed flight is included,
+  not only the ones that survive the duration/path-length cuts). (a)/(b)~Distribution of the
+  largest single gap (relative to that flight's own native $\Delta t$) and of the missing
+  fraction of a uniform grid at that interval. (c)/(d)~The fraction of flights each cut would
+  retain \emph{on its own} (marginal, not cascaded), with the adopted thresholds marked.}
+  \label{fig:gaps}
+\end{figure}
 
 \begin{figure}[t]
   \centering

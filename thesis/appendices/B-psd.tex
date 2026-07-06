@@ -56,6 +56,42 @@ which removes the mean and the overall climb/drift ramp so that the estimate ref
 fluctuations about the trend -- the part where sensor noise lives -- rather than the trend
 itself.
 
+\section*{Computational details for the IGC dataset}
+
+IGC loggers record one fix per second nominally, but the timestamps are not guaranteed to
+be perfectly regular: small gaps (a missed fix, a logger that writes at 1.05\,s instead of
+1.00\,s) are common. Welch's method requires a \emph{uniformly sampled} signal. The
+following procedure is applied to every flight before the transform.
+
+\begin{enumerate}[label=(\roman*)]
+  \item \textbf{Modal sampling period.} For each flight the median inter-fix interval is
+        computed and rounded to the nearest integer second. The value that appears most often
+        across all flights in the subsample -- the \emph{mode} -- is taken as the common
+        target $\Delta t$ (in practice $\Delta t = 1\,\text{s}$ for both disciplines, giving
+        $f_s = 1\,\text{Hz}$ and $f_{\text{Nyq}} = 0.5\,\text{Hz}$).
+  \item \textbf{Flight selection.} Only flights whose own median period lies within
+        $0.25\,\text{s}$ of the modal $\Delta t$ are retained, so that the pooled spectra
+        all share one frequency axis. Flights with fewer than $N_{\text{seg}} = 256$ fixes
+        (roughly 4 minutes at $\Delta t=1\,\text{s}$) are also excluded, since at least one
+        full segment is needed.
+  \item \textbf{Uniform resampling.} The altitude series $z(t)$ is linearly interpolated
+        onto a grid $t_0, t_0+\Delta t, t_0+2\,\Delta t, \ldots$ spanning the flight. This
+        replaces the mildly irregular original timestamps with a perfectly uniform series
+        at the modal cadence, without introducing frequency content beyond $f_{\text{Nyq}}$.
+  \item \textbf{Welch on the resampled series.} \texttt{scipy.signal.welch} is called with
+        $f_s = 1/\Delta t$, $N_{\text{seg}} = 256$, 50\,\% overlap, a Hann window, and
+        linear detrending per segment (as described above). The resulting
+        $f$-axis runs from $0$ to $f_{\text{Nyq}} = f_s/2$, the last
+        resolvable frequency.
+  \item \textbf{Ensemble average.} The PSD of each qualifying flight is added to a running
+        sum, separately for each discipline and channel (barometric / GNSS). The mean over
+        all contributing flights is the curve shown in Figure~\ref{fig:altnoise}(b).
+\end{enumerate}
+
+Because the frequency axis is determined entirely by $\Delta t$ -- which is the same for
+every retained flight by construction -- the dotted line in the figure marking
+$f_{\text{Nyq}} = 1/(2\,\Delta t)$ is a single fixed value, not a flight-by-flight average.
+
 \section*{Reading the altitude spectra}
 
 In Figure~\ref{fig:altnoise}(b) the PSD is computed this way for the barometric and the GNSS

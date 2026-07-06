@@ -156,6 +156,110 @@ $\Delta t$ (Figure~4.5). An implementation blueprint
 (\texttt{docs/guide/preprocessing-pipeline.md}) records the exact schema and steps, to retire
 into code once the pipeline is built.
 
+\paragraph{2026-07 --- Gap diagnostics; scan cache; baro-presence consolidated.}
+Added Figure~4.5, the sampling-regularity diagnostics (largest gap relative to native
+$\Delta t$, missing fraction of a uniform grid, each with its marginal retention curve),
+fulfilling a promise Sec.~4.1.6 already made (``its retained fraction reported with the
+others'') but had not yet delivered. Since a fresh full parse for this would have repeated
+the $\sim$15--20\,min paraglider census just done for Figure~4.2, the per-flight scan is now
+\textbf{cached} to \texttt{data/<discipline>/track\_scan.parquet} (gitignored, like
+\texttt{catalog.csv}; \texttt{load\_or\_scan\_tracks} reads it if present, else scans and
+writes it) -- later moved to the SSD, see below. While at it, \texttt{track\_stats} was
+extended with a few near-free byproducts
+of the same scan -- barometric-presence fraction, max horizontal/vertical speed, barometric
+altitude range -- available for future validation of Table~4.1's fix-level bounds against
+real data.
+
+\emph{Consolidation:} the barometric-presence fraction (Sec.~4.1.1) now reads from this same
+cache (\texttt{altitude\_noise.baro\_presence\_from\_scan}) instead of running its own
+separate scan, turning the paraglider number from a sized sample into an exact census at no
+extra cost: $30.1\,\%$ (exact, $n=186{,}025$) -- consistent with the earlier
+sampled estimate, $(28.4\pm1.8)\,\%$, which correctly bracketed it. \emph{Also caught}: a
+pre-existing fragility in \texttt{altitude\_noise.collect} where a single unreadable file
+(a transient external-disk hiccup surfaced by two heavy scans back to back) aborted the
+whole PSD sample; it now skips and logs the file instead.
+
+\paragraph{2026-07 --- SSD reorganised; no data kept locally; figure fixes.}
+\emph{Policy going forward: raw data, catalogs and every analysis byproduct live only on
+the external SSD, never in the local repo.} Reorganised both discipline's \texttt{data\_root}
+by maturity -- \texttt{raw/\{igc,raw\_xml\}} (untouched acquisition output),
+\texttt{catalog/\{catalog.csv,seasons\_index.csv\}} (tables derived from it),
+\texttt{derived/} (further byproducts, today just \texttt{track\_scan.parquet}; future
+cleaned/filtered data and analysis results will get their own \texttt{processed/} and
+\texttt{analysis/} siblings) -- and updated \texttt{Config} accordingly (new
+\texttt{derived\_dir} property). Verified file counts before/after the move on both SSDs
+(paraglider: 186{,}052 tracks, 27 XMLs; hang glider: 6{,}716 tracks, 25 XMLs -- all
+matched) and that both acquisition CLIs (\texttt{soaring-para}/\texttt{soaring-delta
+status}) still work against the new layout, since every acquisition module already went
+through \texttt{Config}'s path properties with no hard-coded paths elsewhere. The
+previously-local \texttt{track\_scan.parquet} copies moved to
+\texttt{<data\_root>/derived/} (read back and row/column-checked after the move); the
+orphaned local \texttt{catalog.csv} copies (superseded by the track-based scan months
+ago, confirmed unreferenced by any code) were removed.
+
+\emph{Figure fixes, from a closer look at the newly-cached data.} Figure~4.5 (gaps): the
+adopted \texttt{max\_gap\_factor} was raised from 5 to 10 -- at 5 it retained only
+77.8\,\%/65.0\,\% of para/hang flights (nowhere near the near-full retention of the
+duration/path cuts), at 10 it reaches 86.9\,\%/85.1\,\%. Considered 20 (90.8\,\%/90.6\,\%,
+little further gain) and rejected it: the cut is \emph{relative} to each flight's own
+native $\Delta t$, so for the slower hang-glider loggers (up to 10 s native) a
+factor of 20 would tolerate interpolating across a $\sim$200\,s gap -- long enough to
+span a thermal climb, not a sane linear-interpolation span. Also tightened the
+distribution panels' axis range (most mass sits under the 90th percentile; the old
+0--200/0--0.6 range was mostly empty). Figure~4.1 (altitude noise): panel (a)'s
+difference trace now uses a colour distinct from both channels (was reusing GNSS's red);
+its window grew from 10 to 30 minutes; and a Nyquist-frequency line was added to panel
+(b) (previously discussed in the caption but never drawn). Along the way, found and fixed
+a real bug in the ``representative flight'' selection: it picked the first flight
+matching the PSD criteria, later changed to the \emph{longest} by elapsed time -- until a
+30-hour, 1{,}100-fix outlier (one corrupted timestamp gap) exposed that elapsed time
+is not robust to a single bad gap. Fixed to select by \emph{fix count} instead, which
+does not have this failure mode.
+
+\paragraph{2026-07 --- Fix-level cleaning made data-driven; parser roll-over bug; figure and data-folder cleanups.}
+\emph{Fix-level cleaning (Table~4.1) is now audited on the data, like the flight-level cuts.}
+Added a figure to Sec.~4.1.2 (fix-level cleaning): the per-\emph{fix} distributions of
+horizontal speed, barometric vertical speed and barometric altitude
+(\texttt{make\_fixlevel\_diagnostics\_figure}, from \texttt{fix\_level\_distributions} over a
+seeded per-fix sample -- millions of fixes). The point that is easy to get wrong: a fix-level
+bound removes single fixes from an otherwise good flight, so what justifies it is the fraction
+of \emph{fixes} it removes, not the number of flights it touches (a bound may touch many flights
+harmlessly). Each bound sits in the sparse, implausible tail. The per-flight \emph{maxima}
+already in the scan (\texttt{max\_vxy\_mps} and friends) answer the wrong question -- flights
+touched -- so they do not place the cuts.
+
+\emph{Removed the absolute 60 s inter-fix time-gap from the fix-level table.} It duplicated the
+sampling-regularity cut of Sec.~4.1.6, which is more principled: relative to each flight's own
+native $\Delta t$, so it scales with the logger's rate. Gaps are now handled in exactly one
+place. Neither was ever an enforced filter (both are declared thresholds for the still-to-build
+cleaning routine), so this is a spec simplification, not a behaviour change.
+
+\emph{Found and fixed the root cause of the ``30-hour, 1{,}100-fix'' pathology} worked around in
+the previous entry. The real bug was in the IGC parser's midnight roll-over unwrap, which
+treated \emph{any} backward step in the time-of-day as a new day and added 86{,}400 s: a
+few-second GPS glitch became a spurious multi-hour gap and a wildly wrong duration. Now only a
+drop of (nearly) a whole day counts as a roll-over, and residual backward jitter is clamped so
+the series stays monotonic. Added regression tests for both the true roll-over and the glitch.
+
+\emph{Figure and config cleanups.} The altitude-noise figure (Sec.~4.1.1) is now four panels:
+(a) the two raw channels overlaid on one window -- they track the same climb, GNSS visibly
+noisier -- beside (b) their difference, then (c) the PSD and (d) the fallback rate; this also
+fixed the old a/b/d panel labelling. The gap-diagnostics figure (Sec.~4.1.6): the distribution
+panels no longer clip the tail into an artificial spike at the edge, and their x-range is fitted
+to the data's own percentiles instead of a fixed constant. On principle -- the code runs on
+datasets of different sources and rates -- result-specific numbers (retention percentages,
+one-off anecdotes) were pruned from the YAML and code comments; such numbers belong in the
+thesis, not in reusable config.
+
+\emph{Local data folder clarified.} The two versioned \texttt{seasons\_index.csv} are the
+offline reproducibility anchor for the thesis's dataset counts -- they let the document build
+with no SSD mounted -- not stray local data. Their sync from the canonical SSD copy is now
+explicit and automatic (\texttt{refresh\_seasons\_index.py}, run best-effort by the pre-commit
+hook), so the snapshot cannot silently drift; running it immediately caught a stale paraglider
+snapshot (only the line endings differed -- the counts were identical). Rewrote
+\texttt{data/README.md} and fixed several stale references to a flat
+\texttt{data/seasons\_index.csv} path that never existed.
+
 \paragraph{2026-07 --- Coordinate/geodesy figures.}
 Redrew the coordinate-transformation figures: Figure~4.3 (WGS84 ellipsoid; geodetic vs
 geocentric latitude) and Figure~4.4 (the ECEF$\to$ENU rotation, in our notation), and added the

@@ -40,27 +40,41 @@ uv run soaring-para status
 
 - **Code** (this repo): installable package `soaring`, under
   `soaring.acquisition.ffvl` (see [API Reference](reference.md)).
-- **Raw data** (on the SSD, `data_root`): never in the repo.
+- **Raw data** (on the SSD, `data_root`): never in the repo -- and nothing is kept
+  locally instead. Layout groups by maturity: `raw/` (untouched acquisition output),
+  `catalog/` (tables derived from it), `derived/` (further analysis byproducts, e.g. the
+  pre-processing scan cache); future cleaned/filtered data and analysis results follow
+  the same pattern.
 
 ```text
 /Volumes/SSD_DISANTE/
 ├── paragliders/ffvl_cfd_igc/
-│   ├── raw_xml/1999.xml …            # archived XML exports (provenance)
-│   ├── igc/1999-2000/….igc           # tracks, one directory per season
-│   ├── catalog.csv                   # 1 row/flight: metadata + local_path
-│   └── seasons_index.csv             # 1 row/season: links + counts
+│   ├── raw/
+│   │   ├── raw_xml/1999.xml …        # archived XML exports (provenance)
+│   │   └── igc/1999-2000/….igc       # tracks, one directory per season
+│   ├── catalog/
+│   │   ├── catalog.csv               # 1 row/flight: metadata + local_path
+│   │   └── seasons_index.csv         # 1 row/season: links + counts
+│   ├── derived/
+│   │   └── track_scan.parquet        # pre-processing scan cache
+│   └── logs/
 └── hang_gliders/delta_cfd_igc/
-    ├── raw_xml/2001.xml …
-    ├── igc/2001-2002/….igc
-    ├── catalog.csv
-    └── seasons_index.csv
+    ├── raw/
+    │   ├── raw_xml/2001.xml …
+    │   └── igc/2001-2002/….igc
+    ├── catalog/
+    │   ├── catalog.csv
+    │   └── seasons_index.csv
+    ├── derived/
+    │   └── track_scan.parquet
+    └── logs/
 ```
 
 ## Thesis document
 
 The repository also hosts `thesis/`, a LaTeX *state-of-the-work* document describing the
 acquisition method, the dataset, its statistics, and the next steps. Its statistics are
-generated automatically from `data/seasons_index.csv` and the compiled `thesis/main.pdf`
-is kept in the repository.
+generated automatically from the per-discipline `data/<discipline>/seasons_index.csv`
+indices and the compiled `thesis/main.pdf` is kept in the repository.
 
 Continue with the **[Guide](guide/installation.md)** or consult the **[API Reference](reference.md)**.

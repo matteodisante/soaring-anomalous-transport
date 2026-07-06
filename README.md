@@ -40,21 +40,34 @@ uv run soaring-delta status
 
 ## Where the data goes
 
-Raw data is **not** stored in the repo; it lives in `data_root` on the external SSD. Each
-source has its own directory:
+Raw data is **not** stored in the repo; it lives in `data_root` on the external SSD, and
+nothing is ever kept locally instead. Each source has its own directory, grouped by
+maturity -- `raw/` (untouched acquisition output), `catalog/` (tables derived from it),
+`derived/` (further analysis byproducts, e.g. the pre-processing scan cache); future
+cleaned/filtered data and analysis results will follow the same pattern:
 
 ```text
 /Volumes/SSD_DISANTE/
 ├── paragliders/ffvl_cfd_igc/
-│   ├── raw_xml/1999.xml …       # archived XML exports (provenance)
-│   ├── igc/1999-2000/….igc      # tracks, one subdirectory per season
-│   ├── catalog.csv              # 1 row/flight: metadata + local_path
-│   └── seasons_index.csv
+│   ├── raw/
+│   │   ├── raw_xml/1999.xml …        # archived XML exports (provenance)
+│   │   └── igc/1999-2000/….igc       # tracks, one subdirectory per season
+│   ├── catalog/
+│   │   ├── catalog.csv               # 1 row/flight: metadata + local_path
+│   │   └── seasons_index.csv
+│   ├── derived/
+│   │   └── track_scan.parquet        # pre-processing scan cache (duration, path length, …)
+│   └── logs/
 └── hang_gliders/delta_cfd_igc/
-    ├── raw_xml/2001.xml …
-    ├── igc/2001-2002/….igc
-    ├── catalog.csv
-    └── seasons_index.csv
+    ├── raw/
+    │   ├── raw_xml/2001.xml …
+    │   └── igc/2001-2002/….igc
+    ├── catalog/
+    │   ├── catalog.csv
+    │   └── seasons_index.csv
+    ├── derived/
+    │   └── track_scan.parquet
+    └── logs/
 ```
 
 `.igc` filename scheme: **`{date}_{flightID}.igc`**. The `flightID` opens the flight page
@@ -77,9 +90,8 @@ uv run mkdocs serve   # http://127.0.0.1:8000
 
 [`thesis/`](thesis/) is the LaTeX **state-of-the-work document** (set up as a master's
 thesis): acquisition method, dataset description, statistics, and next steps. Its
-quantitative parts (`thesis/generated/`) are auto-generated from
-[`data/seasons_index.csv`](data/seasons_index.csv); the compiled `thesis/main.pdf` is
-kept in the repo.
+quantitative parts (`thesis/generated/`) are auto-generated from the per-discipline
+season indices in [`data/`](data/); the compiled `thesis/main.pdf` is kept in the repo.
 
 ```bash
 scripts/build_docs.sh thesis   # regenerate stats + compile thesis/main.pdf

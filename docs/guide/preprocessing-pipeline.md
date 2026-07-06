@@ -35,8 +35,13 @@
 
 | Input | Location | Notes |
 |---|---|---|
-| Raw IGC tracks | `<data_root>/igc/` per source (SSD) | `source ∈ {paraglider, hangglider, sailplane}`; on-disk dirs are `paragliders/`, `hang_gliders/` (values ≠ dir names by design) |
-| Raw catalog | `data/<discipline>/catalog.csv` | pandas + CSV, 23 columns (`soaring.acquisition.ffvl.catalog.CATALOG_COLUMNS`), regenerable via `build-catalog` |
+| Raw IGC tracks | `<data_root>/raw/igc/` per source (SSD) | `source ∈ {paraglider, hangglider, sailplane}`; on-disk dirs are `paragliders/`, `hang_gliders/` (values ≠ dir names by design) |
+| Raw catalog | `<data_root>/catalog/catalog.csv` (SSD) | pandas + CSV, 23 columns (`soaring.acquisition.ffvl.catalog.CATALOG_COLUMNS`), regenerable via `build-catalog`; **never stored locally** -- see `Config.catalog_path` |
+
+All raw and derived data lives only on the SSD, under `data_root`, organised by maturity
+(`raw/`, `catalog/`, `derived/`, and in future `processed/`, `analysis/` -- see
+`soaring.acquisition.ffvl.config.Config`); nothing is duplicated in the local repo `data/`
+folder, which holds only the small, versioned `seasons_index.csv` per discipline.
 
 The catalog is **metadata only** and can be wrong (see [Catalog quirks](#catalog-quirks));
 it is a coarse pre-filter and provenance source, never the basis of a scientific cut.
@@ -51,7 +56,7 @@ Order and rationale: thesis §4.1. Steps (i)–(iv) act on **raw geographic** co
 | 0 | Ingest catalogs, add `source`, coarse pre-filter (no track ⇒ skip) | catalog | candidate flight list | `acquisition.ffvl.catalog` | §3 |
 | 1 | Parse IGC `B`/`H` records | `.igc` | fixes `[t,lat,lon,valid,baro_alt,gnss_alt]` | `analysis.igc.parse_igc` | §3, §4.1 |
 | i | Choose altitude channel per flight | fixes | `alt_source ∈ {baro,gnss}` + chosen `alt` | *(to build)* | §4.1.1 |
-| ii | Fix-level cleaning (dynamics plausibility) | raw geo | cleaned fixes | `FixLevelThresholds` ← YAML | §4.1.2 |
+| ii | Fix-level cleaning (dynamics plausibility) | raw geo | cleaned fixes | `FixLevelThresholds` ← YAML; `fix_level_distributions` | §4.1.2 |
 | iii | Trim ground phases (`v_xy` sustained) | raw geo | airborne segment | `TrimmingThresholds` ← YAML | §4.1.3 |
 | iv | Flight-level filtering (duration + path length) | parsed tracks | keep/drop + reason | `FlightLevelThresholds` ← YAML, `scan_tracks` | §4.1.4 |
 | v | Geographic → ECEF → ENU (origin = take-off) | geo | `E,N,U` | *(to build; formula in thesis)* | §4.1.5 |
@@ -68,17 +73,48 @@ Key mechanics that reconcile the blueprint with the repo:
 - **ENU (v).** Origin at the take-off fix; `E,N` zeroed there; **`U` is not re-zeroed**
   (absolute barometric altitude retained; the take-off height `U_origin` is stored in
   `flights_meta`). (Thesis §4.1.5, Notation.)
+- **Fix-level cleaning (ii).** Bounds on per-fix `v_xy`, `|v_z|` and barometric altitude
+  (Table 4.1). Placed data-driven: each sits in the implausible tail of its **per-fix**
+  distribution and removes a negligible fraction of *fixes* — audited by
+  `make_fixlevel_diagnostics_figure` on a seeded per-fix sample (`fix_level_distributions`),
+  the fix-level analogue of the flight-level figure. What matters is the fraction of *fixes*
+  removed, not of flights touched. No absolute inter-fix time-gap bound here — gaps are
+  handled once at step (vi). (Thesis §4.1.2.)
 - **Flight-level cuts (iv).** Duration ≥ 40 min and flown **path length** ≥ 30 km, both
   computed from the track. Path length = sum of great-circle steps (not extent/displacement);
   30 km is a *minimal* cut (a real XC flies far more). A minimum-fix-count cut is dropped as
   redundant with the duration cut. (Thesis §4.1.4.)
 - **Uniform Δt (vi).** Native `Δt` per flight (no common cadence). Uniform ⇒ use as is;
   mildly irregular ⇒ resample onto the native grid across small gaps; badly sampled ⇒
-  **exclude**. Thresholds `max_gap_factor`, `max_missing_fraction` (in the YAML).
+  **exclude**. Thresholds `max_gap_factor`, `max_missing_fraction` (in the YAML), made
+  auditable by `make_gap_diagnostics_figure`. This is the *only* gap handling — the gap is
+  relative to each flight's own native cadence, so no second absolute bound is needed.
 - **Savitzky–Golay (vii).** Two hyperparameters: `window_length` (odd) and `polyorder`.
   Set by the noise-matched procedure of thesis §4.1.7 (PSD knee `f_c` → smoothing scale
   `τ_c` → `window = odd(τ_c/Δt)` per flight; `polyorder` fixed at 3; horizontal and
   vertical treated separately). `deriv=0,1,2` and `delta=Δt` are not tuning knobs.
+
+## Reporting-stage scan cache (not the production `fixes`/`flights_meta` tables)
+
+Ahead of the real pipeline, the thesis-figure scripts already run a full-dataset scan
+(`soaring.analysis.preprocessing.scan_tracks`, driven by `track_stats` per flight) to
+compute the flight-level filtering, gap and sampling diagnostics (steps iii/iv/vi above).
+Since a full paraglider census takes tens of minutes, this scan is **cached** to a flat
+Parquet on the SSD, `<data_root>/derived/track_scan.parquet` (`Config.derived_dir` --
+never in the repo; `load_or_scan_tracks` reads it if present, else scans and writes it —
+no invalidation beyond presence, delete the file to force a refresh). This is a
+lightweight *preview* of `flights_meta`, not a substitute for it: same spirit (per-flight
+summary, Parquet), far fewer columns, no `alt_source`/provenance/versioning.
+
+`track_stats` also computes a few per-flight QC fields, free byproducts of the same scan:
+`baro_present_frac`, `max_vxy_mps`, `max_vz_mps`, `baro_alt_min_m`, `baro_alt_max_m`.
+`baro_present_frac` is consumed by the altitude-noise figure's fallback-rate panel (thesis
+§4.1.1), which prefers this cache (`altitude_noise.baro_presence_from_scan`) over its own
+separate scan when it exists, turning a sampled estimate into an exact census at no extra
+parsing cost. The speed/altitude fields are per-flight *maxima*, so they only say which
+*flights* a fix-level bound would touch; the fix-level figure (step ii) instead uses genuine
+**per-fix** distributions (`fix_level_distributions`, a seeded sample), because what
+justifies a fix-level cut is the fraction of *fixes* it removes, not of flights it touches.
 
 ## Output schema
 
@@ -135,8 +171,12 @@ Handle at ingestion (empirically observed on the real files):
 
 ## Open items
 
-- The Savitzky–Golay `τ_c` (horizontal/vertical) and the sampling `max_*` values are
-  **placeholders** in `configs/preprocessing.yaml` → finalize from the real PSD study on
-  `E,N,U`. (`polyorder`, the filtering and trimming cuts are set.)
+- The Savitzky–Golay `τ_c` (horizontal/vertical) are **placeholders** in
+  `configs/preprocessing.yaml` → finalize from the real PSD study on `E,N,U`.
+  (`polyorder`, the filtering and trimming cuts are set.)
+- The `sampling` cuts (`max_gap_factor`/`max_missing_fraction`) and the fix-level bounds
+  (Table 4.1) are set and now **audited** on the real data (`make_gap_diagnostics_figure`,
+  thesis §4.1.6; `make_fixlevel_diagnostics_figure`, §4.1.2). Revisit only if a future
+  source's distributions place a cut outside its implausible tail.
 - Actual `flight_id` cross-source intersection check → confirms the `(source, flight_id)` key.
 - Sailplane catalog schema → document as above once the source is in hand.
