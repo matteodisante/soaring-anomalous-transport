@@ -692,8 +692,8 @@ $z\approx h-h_0$ -- exactly the quantity whose dynamics were argued above to be 
 \label{sec:uniform}
 The smoothing and differentiation below assume a \emph{uniform} sampling interval, so each
 surviving flight's time base is examined next. Loggers record at a fixed nominal rate --
-paragliders almost all at \SI{1}{\second}, hang gliders spread more widely up to
-\SI{8}{\second} (Fig.~\ref{fig:sampling}) -- but the realised series can carry jitter and
+paragliders almost all at \SI{1}{\second}, hang gliders spread more widely across several
+rates up to \SI{10}{\second} (Fig.~\ref{fig:sampling}) -- but the realised series can carry jitter and
 drop-outs. We keep
 each flight at its \emph{native} rate rather
 than resampling to a common cadence: a common grid would either upsample slow loggers
@@ -752,11 +752,18 @@ cadence.
     SSD (not versioned). Run it to render this figure.}}%
   }
   \caption{Native sampling interval $\Delta t$ (median inter-fix time) per flight, on the full
-  dataset per discipline. The fleet is multi-rate: paragliders are almost all at
-  \SI{1}{\second}, whereas hang gliders spread across $1$, $2$, $5$ and $\geq\SI{8}{\second}$
-  loggers (last bin clipped). A single common cadence would waste the fast loggers; instead
-  each flight keeps its own $\Delta t$, which the smoothing step consumes directly
-  (Sec.~\ref{sec:savgol}).}
+  dataset per discipline. $\Delta t$ is, in practice, a \emph{discrete} quantity, not a
+  continuous one: it lands on an exact whole second for 99.9\% of paragliders and
+  100\% of hang gliders (a logger reports at one of a handful of fixed configured
+  rates), so bins are one second wide and centred on each integer -- each bar is the
+  fraction of flights at exactly that rate, not a density (with unit-width bins the two
+  coincide numerically, but only ``fraction'' describes what is actually being
+  counted). The fleet is multi-rate: paragliders are overwhelmingly (69\%) at
+  \SI{1}{\second}, whereas hang gliders spread across several rates -- \SI{1}{\second}
+  (30\%), \SI{5}{\second} (27\%), \SI{10}{\second} (15\%), \SI{2}{\second} (13\%), and a
+  long thin tail beyond \SI{11}{\second} (last bin, aggregated). A single common
+  cadence would waste the fast loggers; instead each flight keeps its own $\Delta t$,
+  which the smoothing step consumes directly (Sec.~\ref{sec:savgol}).}
   \label{fig:sampling}
 \end{figure}
 

@@ -542,6 +542,27 @@ Chasing the loosened-threshold experiment of the previous entry to a conclusion.
         covers all of them going forward, not just Figure~4.2.
 \end{description}
 
+\paragraph{2026-07 --- Figure~4.7 (native sampling interval): discrete data, discrete plot.}
+Raised independently: the density in Figure~4.7 rose above 1, and native $\Delta t$ is a
+discrete quantity, so why plot a density at all. Checked on the full census: $\Delta t$
+lands on an exact whole second for 99.9\% of paragliders and 100\% of hang gliders --
+essentially a categorical variable (one of a handful of configured logger rates), not a
+continuous one. The previous plot used arbitrary 0.5\,s-wide bins on this discrete data
+(\texttt{np.arange(0.25, 8.75, 0.5)}): most paragliders' mass concentrated in the single
+bin straddling $\Delta t=1$, and \texttt{density=True} divides a large fraction by that
+narrow bin width, which is exactly how it exceeded 1 -- a real number, not a bug, but a
+genuinely confusing one for data this concentrated. Fixed the same way as the
+vertical-speed comb: bins one full second wide, centred on each integer ($1,\dots,10$,
+plus a $\geq\!11$ bin for the long thin tail), so each bar reads directly as ``fraction
+of flights at exactly this rate.'' With unit-width bins \texttt{density=True} is
+numerically identical to that fraction (dividing by a width of 1 changes nothing), so
+the axis is now labelled \emph{fraction of flights}, not \emph{density} -- accurate
+either way, but only one of the two labels says what is actually being counted. Real
+distribution, now stated precisely in the caption instead of the vaguer ``$1,2,5,\geq\!
+8$'' before: paragliders overwhelmingly (69\%) at 1\,s; hang gliders spread across
+1\,s (30\%), 5\,s (27\%), 10\,s (15\%), 2\,s (13\%), and a long thin tail beyond 11\,s --
+a fuller picture than the old caption's ``up to 8\,s,'' corrected in Sec.~4.1.6 too.
+
 \paragraph{2026-06 --- Documentation.}
 Project docs are built with MkDocs and published on GitHub Pages. Initially deployed with
 \texttt{mkdocs gh-deploy}, which accumulated one built-site commit per deploy on a

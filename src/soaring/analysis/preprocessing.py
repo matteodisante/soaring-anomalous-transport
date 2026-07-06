@@ -601,6 +601,18 @@ def make_gap_diagnostics_figure(
 def make_sampling_figure(scans: dict[str, pd.DataFrame]) -> Figure:
     """Native sampling-interval distribution per discipline (full-census track data).
 
+    The native interval (the flight's own median inter-fix time) is, in practice, a
+    *discrete* quantity, not a continuous one: checked on the full census, it lands on
+    an exact whole second for 99.9% of paragliders and 100% of hang gliders (a
+    logger reports at one of a handful of fixed configured rates; the rare
+    non-integer values are single flights with genuinely mixed cadence). The bins are
+    therefore one full second wide, centred on each integer, so each bar reads as
+    "the fraction of flights at exactly this rate" rather than as an arbitrary,
+    sub-integer slice of a smooth curve the data does not have. With unit-width bins,
+    ``density=True`` (kept for symmetry with the other diagnostics) is numerically the
+    same thing as that fraction, since dividing by a bin width of 1 changes nothing --
+    the axis is labelled accordingly.
+
     Args:
         scans: Mapping ``discipline -> per-flight table`` with a ``dt_s`` column.
 
@@ -610,20 +622,25 @@ def make_sampling_figure(scans: dict[str, pd.DataFrame]) -> Figure:
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(6.6, 4.0))
+    upper = 11  # aggregates the long, thin tail beyond it (up to a few tens of
+    # seconds for a handful of flights) into one bin, rather than stretching the axis
+    bins = np.arange(0.5, upper + 1.5, 1.0)
     for disc, s in scans.items():
         dt = pd.to_numeric(s["dt_s"], errors="coerce")
         dt = dt[(dt > 0) & np.isfinite(dt)]
         ax.hist(
-            dt.clip(upper=8),
-            bins=np.arange(0.25, 8.75, 0.5),
+            dt.clip(upper=upper),
+            bins=bins,
             density=True,
             histtype="step",
             lw=1.5,
             color=_DISC_COLOR.get(disc, "gray"),
             label=disc,
         )
+    ax.set_xticks(range(1, upper + 1))
+    ax.set_xticklabels([str(i) for i in range(1, upper)] + [f"$\\geq${upper}"])
     ax.set_xlabel(r"native sampling interval $\Delta t$ [s]")
-    ax.set_ylabel("density")
+    ax.set_ylabel("fraction of flights")
     ax.set_title("Native sampling interval, per flight")
     ax.legend(fontsize=8)
     fig.tight_layout()
