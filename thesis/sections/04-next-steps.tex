@@ -737,8 +737,20 @@ cadence.
   the \emph{same} track scan as Figure~\ref{fig:preproc} (so every parsed flight is included,
   not only the ones that survive the duration/path-length cuts). (a)/(b)~Distribution of the
   largest single gap (relative to that flight's own native $\Delta t$) and of the missing
-  fraction of a uniform grid at that interval. (c)/(d)~The fraction of flights each cut would
-  retain \emph{on its own} (marginal, not cascaded), with the adopted thresholds marked.}
+  fraction of a uniform grid at that interval, both on linear bins and a linear axis, over
+  the bulk of the distribution (the heavy tail is not lost: (c)/(d) sweep the full range).
+  Unlike native $\Delta t$ (Figure~\ref{fig:sampling}) the largest-gap ratio is not purely
+  discrete -- only 86\%/63\% (para/hang) of values are exact integers, the rest a genuinely
+  continuous scatter -- but a missed fix or two at the native rate is the single most
+  common cause of a large gap, so integer ratios (a gap of exactly $k$ native intervals)
+  are still visibly the dominant, common values, especially for hang gliders (peaks around
+  $k=3,6,10,15$); a logarithmic axis, appropriate for a quantity spanning orders of
+  magnitude, would have stretched precisely this small-integer structure into invisibility
+  -- it matters here because it is where the adopted cut (dashed) sits.
+  (c)/(d)~The fraction of flights each cut would
+  retain \emph{on its own} (marginal, not cascaded), with the adopted thresholds marked; here
+  the cut ranges over orders of magnitude to show the full saturating shape, so (c) keeps a
+  logarithmic axis.}
   \label{fig:gaps}
 \end{figure}
 

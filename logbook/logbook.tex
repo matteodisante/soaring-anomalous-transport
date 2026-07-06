@@ -563,6 +563,37 @@ distribution, now stated precisely in the caption instead of the vaguer ``$1,2,5
 1\,s (30\%), 5\,s (27\%), 10\,s (15\%), 2\,s (13\%), and a long thin tail beyond 11\,s --
 a fuller picture than the old caption's ``up to 8\,s,'' corrected in Sec.~4.1.6 too.
 
+\paragraph{2026-07 --- Figure~4.6 (gap diagnostics), panel~(a): dropped the log axis.}
+Same family of question as the two entries above, this time about the largest-gap-to-
+native-$\Delta t$ ratio: is it also discrete, why a density, and (specifically here) is
+a log $x$-axis actually needed.
+\begin{description}
+  \item[Not as clean-cut as native $\Delta t$] Checked directly: only 86\% of
+        paraglider and 63\% of hang-glider values are exact integers (thousands of
+        distinct values in all, tail out to $>\!50{,}000$) -- a missed fix or two at
+        the native rate is the single most common cause of a large gap (hence the
+        pull towards small integers), but plenty of gaps are not a clean multiple of
+        it. So, unlike Figure~4.7, this is not purely categorical; integer-only bins
+        would have thrown away a genuine continuous component.
+  \item[The log axis, though, was not earning its keep] Panel~(a) only ever displays
+        the \emph{bulk} of the distribution (up to \texttt{gap\_hi}, a modest
+        $\sim$1--20 here) -- the heavy tail is deliberately left to the retention
+        panels (c)/(d), which already sweep the full range on a log axis, justified
+        there since the cut spans orders of magnitude. Over the narrow, already-cropped
+        range panel~(a) actually shows, a log axis buys nothing and actively hides
+        structure: log-spaced bins are extremely narrow near 1, so the large mass
+        sitting at small integers -- a real, common failure mode, not noise -- gets
+        compressed into a sliver.
+  \item[Fix] Panel~(a) switched to a linear axis with linear, evenly-spaced bins over
+        the same \texttt{gap\_hi}-bounded range. This did not just fix the axis choice:
+        it revealed a real pattern that the log/narrow-bin combination had been
+        washing out -- visible peaks at small-integer ratios, most clearly for hang
+        gliders (around $k=3,6,10,15$), consistent with the ``missed native-rate
+        fixes'' mechanism. Panel~(c)'s log axis is unaffected and still the right
+        choice there, for the opposite reason: it has to show a cut ranging over
+        orders of magnitude.
+\end{description}
+
 \paragraph{2026-06 --- Documentation.}
 Project docs are built with MkDocs and published on GitHub Pages. Initially deployed with
 \texttt{mkdocs gh-deploy}, which accumulated one built-site commit per deploy on a

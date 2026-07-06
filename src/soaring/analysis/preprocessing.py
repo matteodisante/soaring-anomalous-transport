@@ -517,7 +517,12 @@ def make_gap_diagnostics_figure(
     miss_hi = float(
         max(np.quantile(pooled_miss, 0.90), sampling.max_missing_fraction * 2.0)
     )
-    gap_bins = np.logspace(0.0, np.log10(gap_hi), 50)
+    # Linear, not log: panel (a) only shows the bulk (up to gap_hi, a modest ~1-20
+    # here), and unlike the retention curve below it does not need to span orders of
+    # magnitude. A log-spaced grid would also make the bins vary widely in width,
+    # which is a bad match for a quantity whose common values sit at small integers
+    # (a gap of exactly k missed native-rate fixes).
+    gap_bins = np.linspace(1.0, gap_hi, 50)
     miss_bins = np.linspace(0.0, miss_hi, 50)
 
     # Retention curves (c)/(d) sweep a wide range to show the full saturating shape.
@@ -564,7 +569,6 @@ def make_gap_diagnostics_figure(
         xlabel=r"largest gap / native $\Delta t$",
         ylabel="density",
         title="(a) Largest gap (relative)",
-        xscale="log",
         xlim=(1.0, gap_hi),
     )
     axes[0, 0].legend(fontsize=8)
