@@ -64,26 +64,26 @@ re-examined here.
     the SSD (not versioned). Run it to render this figure.}}%
   }
   \caption{Barometric vs GNSS altitude noise. For one representative flight (the one with
-  the most fixes in the subsample): (a)~the two raw channels over a short, \SI{120}{s}
-  window -- short on purpose, so the jitter is visible at all; over a longer window the
-  altitude excursion itself spans hundreds of metres and swamps a jitter of a few metres
-  on the plotted scale. The two channels are \emph{each on their own $y$-axis}
-  (barometric left, GNSS right), with the same numeric span but a different baseline: a
-  shared axis would need to span from one channel's minimum to the other's maximum --
-  the real vertical motion \emph{plus} their mutual offset (of order \SI{100}{\metre},
-  see below) -- wasting on blank space the room needed to actually compare the two
-  channels' roughness. With matched spans, the GNSS trace is visibly more jagged than
-  the barometric one. (b)~Their difference GNSS$-$barometric (mean removed, \emph{not}
-  detrended) over a much longer, \SI{30}{\minute} window: long enough for the slow drift
-  of the offset between the channels to show up alongside the residual jitter. That
-  drift, of order several tens of metres over the window, is a real, physically
-  meaningful feature -- plausibly the barometric channel's progressive departure from
-  the ICAO standard atmosphere as altitude changes -- not noise to be filtered out, so
-  only the constant part of the offset is subtracted; its value for this flight is
-  annotated on the panel, to be read alongside the vertical gap between the two curves
-  in panel~a. Over
+  the most fixes in the subsample), over the same \SI{30}{\minute} window: (a)~the two
+  raw channels overlaid on one shared $y$-axis. The two curves start about
+  \SI{130}{\metre} apart and separate further as the flight climbs -- that growing gap
+  \emph{is} the point of this panel, so nothing here renormalises it away; it is not,
+  however, where the claim that GNSS is the noisier channel rests -- at this timescale a
+  climb of hundreds of metres dwarfs a jitter of a few metres on the plotted scale, so a
+  single flight's raw trace is the wrong place to look for it; that evidence is
+  panel~(c). (b)~Their difference GNSS$-$barometric (mean removed, \emph{not} detrended):
+  the same growing gap as in panel~(a), quantified. That drift, of order several tens of
+  metres over the window, is a real, physically meaningful feature -- plausibly the
+  barometric channel's progressive departure from the ICAO standard atmosphere as
+  altitude changes -- not noise to be filtered out, so only the constant part of the
+  offset is subtracted; its value for this flight (\SI{139}{\metre}) is annotated on the
+  panel, matching the vertical gap seen directly in panel~(a). Over
   the ensemble: (c)~mean Welch power spectra of the two channels, per discipline
-  (Appendix~\ref{app:psd}); the dotted line is the Nyquist frequency
+  (Appendix~\ref{app:psd}; \num{212}/\num{400} paraglider and \num{114}/\num{400}
+  hang-glider sampled flights actually contribute, after the common-cadence selection
+  described there) -- here, and only here, does the two-to-three-orders-of-magnitude gap
+  between the channels at high frequency make the noise-floor claim; the dotted line is
+  the Nyquist frequency
   $f_{\mathrm{Nyq}}=1/(2\Delta t)$, the highest frequency the sampling can resolve. It is a
   single line because the pooled flights are all resampled to the same modal $\Delta t$
   before averaging, so they share one $\Delta t$ -- hence one $f_{\mathrm{Nyq}}$.
@@ -186,7 +186,7 @@ Quantity & Reject / flag the fix when & Rationale \\
 \midrule
 Missing altitude & the adopted-channel value is absent            & no usable vertical coordinate (Sec.~\ref{sec:altchannel}) \\
 Duplicate time   & two fixes share the UTC second                & keep the first (logger double-write) \\
-Altitude range   & outside $[-100,\,6000]\,\si{\metre}$           & sensor fault \\
+Altitude range   & outside $[-100,\,6000]\,\si{\metre}$           & sensor fault, allowing for the channel's own offset \\
 Horizontal speed & $v_{xy}>\SI{40}{\metre\per\second}$ between consecutive fixes & GPS position jump \\
 Vertical speed   & $|v_z|>\SI{10}{\metre\per\second}$            & beyond the soaring climb/sink range \\
 \bottomrule
@@ -197,7 +197,11 @@ removes GPS errors rather than signal; the values are set in
 \texttt{configs/preprocessing.yaml} (never hard-coded) and suit paragliders and hang gliders
 (the present dataset, Chapter~\ref{ch:dataset}), scaling up for the faster gliders of future
 sources. The altitude-range and vertical-speed bounds apply to the adopted barometric
-channel (Sec.~\ref{sec:altchannel}). Inter-fix gaps are handled once, at the flight level
+channel (Sec.~\ref{sec:altchannel}). The lower bound is $\SI{-100}{\metre}$ rather than
+$0$ because the barometric channel is not QNH-corrected: its offset from true altitude
+(Figure~\ref{fig:altnoise}, of order \SI{100}{\metre} in the flight shown there) means a
+take-off at sea level can legitimately read slightly negative, so the bound must clear
+that offset and not just true altitude. Inter-fix gaps are handled once, at the flight level
 (Sec.~\ref{sec:uniform}), not with a second absolute bound here.}
 \label{tab:cleaning}
 \end{table}
@@ -214,10 +218,21 @@ channel (Sec.~\ref{sec:altchannel}). Inter-fix gaps are handled once, at the fli
   \caption{Fix-level cleaning, audited on the data. Per-\emph{fix} distributions of the
   quantities the dynamics-plausibility bounds test -- (a)~horizontal speed $v_{xy}$,
   (b)~barometric $|v_z|$, (c)~barometric altitude -- pooled over a seeded random sample of
-  flights per discipline (millions of fixes). Dashed lines mark the adopted bounds
+  \num{800} flights per discipline (\num{6633923} paraglider and \num{4541511}
+  hang-glider consecutive-fix pairs). Dashed lines mark the adopted bounds
   (Table~\ref{tab:cleaning}); each sits in the sparse, physically-implausible tail, and the
   fraction of fixes it would remove is annotated on the panel. The $y$-axis is logarithmic so
-  that tail is visible.}
+  that tail is visible. In (a), both distributions show a knee (around
+  \SI{23}{\metre\per\second} for paragliders, \SI{35}{\metre\per\second} for hang gliders)
+  well below the adopted \SI{40}{\metre\per\second} bound: plausibly the transition from
+  normal gliding speeds to rarer but real high-energy manoeuvres (a wind-assisted glide, a
+  steep spiral descent), not GPS error, so the bound is deliberately left above it rather
+  than moved down to it -- doing so would discard genuine flight dynamics along with any
+  noise. Panel (b) is a comb rather than a smooth curve because barometric altitude is
+  logged to the metre and most flights sample once per second (Figure~\ref{fig:sampling}):
+  differencing an integer-metre series over a \SI{1}{\second} step can only return an
+  integer number of \si{\metre\per\second}, so the density is exactly zero between
+  consecutive integers -- a quantisation artefact of the raw log, not a plotting error.}
   \label{fig:fixlevel}
 \end{figure}
 

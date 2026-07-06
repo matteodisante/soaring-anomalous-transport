@@ -398,16 +398,18 @@ def make_altitude_noise_figure(
 def render_altitude_noise_figure(acc: _Accumulator, disciplines: list[str]) -> Figure:
     """Render the barometric-vs-GNSS altitude noise figure from collected diagnostics.
 
-    Four panels. For one representative flight: (a) the two raw channels overlaid on a
-    short window -- long enough to see real vertical motion, short enough that the
-    jitter is not swamped by it -- each on its *own* y-axis (barometric left, GNSS
-    right), same numeric span but a different baseline, so the two channels' relative
-    jitter is directly comparable without wasting vertical space on their ~100 m mutual
-    offset; (b) their difference GNSS minus barometric (mean removed) over a much
-    longer window, long enough for the slow drift of that offset (plausibly the
-    barometric channel's departure from the ICAO standard atmosphere as altitude
-    changes) to show alongside the residual jitter -- deliberately *not* detrended, so
-    the drift stays visible rather than hidden. Then, over the ensemble: (c) the mean
+    Four panels. For one representative flight, over the same window: (a) the two raw
+    channels overlaid -- long enough (30 min) that the two curves' separation visibly
+    grows over time, showing the offset's drift directly rather than only after
+    processing; (b) their difference GNSS minus barometric (mean removed), which puts a
+    number on that same drift (plausibly the barometric channel's departure from the
+    ICAO standard atmosphere as altitude changes) alongside the residual jitter --
+    deliberately *not* detrended, so the drift stays visible rather than hidden. Neither
+    panel is where the jitter claim rests: that is (c) below, the ensemble PSD, which
+    shows it unambiguously (a two-to-three-orders-of-magnitude gap at high frequency) --
+    a single flight's raw trace is not the right evidence for it, since real vertical
+    motion at these timescales dwarfs a few metres of jitter on the plotted scale. Over
+    the ensemble: (c) the mean
     Welch PSD of the two
     channels (log-log), per discipline; (d) the fraction of flights whose barometric
     channel is absent, per discipline (a census or a sized-sample estimate, depending on
@@ -425,59 +427,36 @@ def render_altitude_noise_figure(acc: _Accumulator, disciplines: list[str]) -> F
     ch_color = {"baro": "#3477a8", "gnss": "#b5482a"}
     diff_color = "#4e8a5b"  # distinct from both baro (blue) and gnss (red)
     disc_style = {disc: ["-", "--", ":"][i % 3] for i, disc in enumerate(disciplines)}
-    # Panel (a) needs a SHORT window: a window long enough to see the whole climb (as
-    # panel b uses) makes the jitter invisible, since an altitude excursion of hundreds
-    # of metres dwarfs a jitter of a few metres on the plotted scale. Panel (b) needs a
-    # LONG window instead: the offset between channels drifts slowly (order 10s of
-    # metres) as altitude changes, and that drift is only visible if the window is long
-    # enough to cover a meaningful altitude change.
-    window_a_s = 120.0
-    window_b_s = 1800.0
+    # One shared window for (a) and (b): long enough (30 min) for the offset between
+    # the channels to visibly drift -- both directly in panel (a)'s raw traces and,
+    # quantified, in panel (b)'s difference. A window this long would swamp the jitter
+    # on a raw-trace plot (an altitude excursion of hundreds of metres dwarfs a jitter
+    # of a few metres), which is exactly why panel (a) does not carry the jitter claim
+    # -- panel (c)'s ensemble PSD does.
+    window_s = 1800.0
 
     fig, axd = plt.subplot_mosaic([["a", "b"], ["c", "d"]], figsize=(9.4, 6.8))
 
     rep = acc.representative
     if rep is not None:
         _, t, zb, zg = rep
+        window = t <= t[0] + window_s
+        tw = t[window] - t[0]
+        zb_w, zg_w = zb[window], zg[window]
 
-        # (a) both raw channels, dual y-axis. A shared axis would need to span from the
-        # lower channel's minimum to the upper channel's maximum -- i.e. the real
-        # climb/descent PLUS the ~100 m mutual offset -- wasting a good third of the
-        # panel's height on blank space that carries no information. Two axes with the
-        # same span but a different baseline (one per channel, chosen from that
-        # channel's own range) remove that waste while keeping the metres-per-pixel
-        # scale identical, so the two channels' jitter remains directly comparable by
-        # eye; only their baseline differs, exactly like the offset itself.
-        window_a = t <= t[0] + window_a_s
-        tw_a = t[window_a] - t[0]
-        zb_a, zg_a = zb[window_a], zg[window_a]
-        span = 1.15 * max(zb_a.max() - zb_a.min(), zg_a.max() - zg_a.min())
-        ax_baro = axd["a"]
-        ax_gnss = ax_baro.twinx()
-        for ax, z in ((ax_baro, zb_a), (ax_gnss, zg_a)):
-            mid = 0.5 * (z.max() + z.min())
-            ax.set_ylim(mid - 0.5 * span, mid + 0.5 * span)
-        (line_baro,) = ax_baro.plot(
-            tw_a, zb_a, color=ch_color["baro"], lw=1.0, label="barometric"
-        )
-        (line_gnss,) = ax_gnss.plot(
-            tw_a, zg_a, color=ch_color["gnss"], lw=0.9, label="GNSS"
-        )
-        ax_baro.legend(handles=[line_gnss, line_baro], fontsize=7, loc="best")
-        ax_baro.set_ylabel("barometric altitude [m]", color=ch_color["baro"])
-        ax_gnss.set_ylabel("GNSS altitude [m]", color=ch_color["gnss"])
-        ax_baro.tick_params(axis="y", labelcolor=ch_color["baro"])
-        ax_gnss.tick_params(axis="y", labelcolor=ch_color["gnss"])
+        # (a) both raw channels, one shared y-axis: the growing vertical gap between
+        # the two curves IS the point (the offset drifting), so nothing should
+        # normalise it away.
+        axd["a"].plot(tw, zg_w, color=ch_color["gnss"], lw=0.9, label="GNSS")
+        axd["a"].plot(tw, zb_w, color=ch_color["baro"], lw=1.0, label="barometric")
+        axd["a"].legend(fontsize=7, loc="best")
 
-        # (b) their difference, over the much longer window: mean removed (not
-        # detrended), so the slow drift of the offset remains visible next to the
-        # residual jitter -- the drift is a real, physically meaningful feature (see
-        # the module docstring), not noise to hide.
-        window_b = t <= t[0] + window_b_s
-        tw_b = t[window_b] - t[0]
-        diff = (zg - zb)[window_b]
+        # (b) their difference: mean removed (not detrended), so the slow drift of the
+        # offset remains visible next to the residual jitter -- the drift is a real,
+        # physically meaningful feature (see the module docstring), not noise to hide.
+        diff = zg_w - zb_w
         axd["b"].axhline(0.0, color="0.6", lw=0.8)
-        axd["b"].plot(tw_b, diff - diff.mean(), color=diff_color, lw=1.0)
+        axd["b"].plot(tw, diff - diff.mean(), color=diff_color, lw=1.0)
         axd["b"].text(
             0.02,
             0.03,
@@ -489,12 +468,11 @@ def render_altitude_noise_figure(acc: _Accumulator, disciplines: list[str]) -> F
             va="bottom",
         )
     axd["a"].set_xlabel("time [s]")
-    axd["a"].set_title(f"(a) Both channels (one flight, first {window_a_s:.0f} s)")
+    axd["a"].set_ylabel("altitude [m]")
+    axd["a"].set_title(f"(a) Both channels (one flight, first {window_s / 60:.0f} min)")
     axd["b"].set_xlabel("time [s]")
     axd["b"].set_ylabel(r"GNSS $-$ barometric [m]")
-    axd["b"].set_title(
-        f"(b) Channel difference (mean removed, first {window_b_s / 60:.0f} min)"
-    )
+    axd["b"].set_title("(b) Channel difference (mean removed)")
 
     # (c) mean PSD ---------------------------------------------------------------
     ax = axd["c"]

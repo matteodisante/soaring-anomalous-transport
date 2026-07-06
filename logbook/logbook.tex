@@ -391,6 +391,48 @@ suite (only the docs-deploy one).
         which cannot be done from here.
 \end{description}
 
+\paragraph{2026-07 --- Fig.~4.1/4.2 and Appendix~B: closer reading, several fixes.}
+A line-by-line pass over the altitude-noise figure, the fix-level figure, and the PSD
+appendix, prompted by direct questions about what they actually show.
+\begin{description}
+  \item[Fig.~4.1 panel~(a), second look] The dual-axis, short-window version (see the
+        entry above) still did not read, on the page, as clearly showing GNSS is the
+        noisier channel. Rather than push that design further, panel~(a) now shares one
+        window and one $y$-axis with panel~(b) again (30\,min) and is
+        re-purposed: it shows the two curves' separation \emph{visibly growing} over the
+        window (the offset drift), which panel~(b) then quantifies. The noise-floor
+        claim itself was moved to rest explicitly on panel~(c) (the ensemble PSD) alone,
+        where it is actually unambiguous -- a single flight's raw trace was never the
+        right evidence for it at this timescale.
+  \item[Appendix~B (PSD) bug] Two cross-references pointed at ``Figure~4.1(b)'' for the
+        PSD, which has been panel~(c) since the four-panel redesign; fixed. Also added
+        the actual flight yield of the $\Delta t$-matching step, which the text described
+        only qualitatively: of 400 sampled flights per discipline, 212
+        paragliders but only 114 hang gliders pass it, because hang gliders split
+        across several native rates while paragliders are overwhelmingly
+        1-second loggers -- so the hang-glider PSD curve is honestly an average
+        over that 1-second minority, not the full hang-glider population, now
+        stated as such.
+  \item[Fig.~4.2 (fix-level), added] The exact sample (800 flights per discipline,
+        6{,}633{,}923/4{,}541{,}511 paraglider/hang-glider fix pairs) was missing from
+        the caption; added. Also explained two things a reader flagged as confusing on
+        sight: panel~(a) (horizontal speed) shows a knee well below the adopted
+        40\,m/s bound ($\sim$23/35\,m/s for
+        para/hang) -- read as the transition from ordinary gliding speeds to rarer but
+        real high-energy manoeuvres (wind-assisted glides, steep spirals) rather than
+        GPS error, hence the bound is deliberately kept above it, not moved down to it,
+        so as not to discard genuine dynamics; and panel~(b) (vertical speed)'s
+        comb-like histogram is a quantisation artefact (integer-metre barometric
+        altitude differenced over a 1-second native step can only return an
+        integer m/s), not a plotting bug.
+  \item[Table~4.1, added] A one-sentence justification for the $-100$\,m
+        lower altitude bound, which read as arbitrary: it is not a claim about true
+        terrain elevation, but headroom for the barometric channel's own
+        non-QNH-corrected offset (Figure~4.1 measures this directly, $\sim$100\,m
+        for the flight shown there), so a genuine sea-level take-off can log
+        slightly negative without being cut.
+\end{description}
+
 \paragraph{2026-06 --- Documentation.}
 Project docs are built with MkDocs and published on GitHub Pages. Initially deployed with
 \texttt{mkdocs gh-deploy}, which accumulated one built-site commit per deploy on a
