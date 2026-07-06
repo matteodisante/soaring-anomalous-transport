@@ -54,7 +54,7 @@ derives the vertical coordinate and vertical velocity from the GNSS altitude (it
 barometric channel but does not use it); the divergence is deliberate and is one of the points
 re-examined here.
 
-\begin{figure}[!]
+\begin{figure}[H]
   \centering
   \IfFileExists{generated/altitude_noise.pdf}{%
     \includegraphics[width=\linewidth]{generated/altitude_noise}%
@@ -179,7 +179,7 @@ values live in the config (\texttt{configs/preprocessing.yaml},
 does not yet exist -- building it is part of this stage. The checks apply in the order
 listed, each acting only on the fixes the previous ones spared.
 
-\begin{table}[t]
+\begin{table}[H]
 \centering
 \small
 \begin{tabular}{@{}llp{5.4cm}@{}}
@@ -215,7 +215,7 @@ that offset and not just true altitude. Inter-fix gaps are handled once, at the 
 \label{tab:cleaning}
 \end{table}
 
-\begin{figure}[!]
+\begin{figure}[H]
   \centering
   \IfFileExists{generated/fixlevel_diagnostics.pdf}{%
     \includegraphics[width=\linewidth]{generated/fixlevel_diagnostics}%
@@ -341,7 +341,7 @@ fraction of flights that cut \emph{alone} would retain -- its marginal effect, n
 Both cuts sit far out in the tail, so the retained fraction is insensitive to their exact
 value; the diagnostics must be re-examined for the less curated further sources.
 
-\begin{figure}[t]
+\begin{figure}[H]
   \centering
   \IfFileExists{generated/preproc_diagnostics.pdf}{%
     \includegraphics[width=\linewidth]{generated/preproc_diagnostics}%
@@ -400,7 +400,7 @@ both conventions, since the ellipsoid is a surface of revolution about the polar
 geodetic latitude and longitude are exactly the $(\varphi,\lambda)$ that orient the local
 frame below.
 
-\begin{figure}[t]
+\begin{figure}[H]
   \centering
   \begin{tikzpicture}[
       >=Latex,
@@ -497,7 +497,7 @@ approximation is accurate to well below the GPS noise. What the rotation matrix 
 \emph{does} -- turning a vector's global ECEF components into local East/North/Up ones --
 is shown in Figure~\ref{fig:enu-rotation}.
 
-\begin{figure}[t]
+\begin{figure}[H]
   \centering
   \begin{minipage}{0.59\linewidth}
     \centering
@@ -724,7 +724,7 @@ velocity, a turning angle), so where they are compared across flights the ensemb
 stratified by rate or restricted to the dominant one, rather than pretending a single
 cadence.
 
-\begin{figure}[t]
+\begin{figure}[H]
   \centering
   \IfFileExists{generated/gap_diagnostics.pdf}{%
     \includegraphics[width=\linewidth]{generated/gap_diagnostics}%
@@ -754,7 +754,7 @@ cadence.
   \label{fig:gaps}
 \end{figure}
 
-\begin{figure}[t]
+\begin{figure}[H]
   \centering
   \IfFileExists{generated/sampling_intervals.pdf}{%
     \includegraphics[width=0.62\linewidth]{generated/sampling_intervals}%

@@ -594,6 +594,53 @@ a log $x$-axis actually needed.
         orders of magnitude.
 \end{description}
 
+\paragraph{2026-07 --- Why gap ratios aren't integers: stratified by native rate.}
+Follow-up on the panel~(a) entry above: if a missed native-rate fix is the single most
+common cause of a large gap, why is the largest-gap ratio an exact integer only 86\%/63\%
+of the time, not effectively always? Stratifying the full census by native $\Delta t$
+answers it.
+\begin{description}
+  \item[$\Delta t=1$\,s is trivially always integer] Every IGC timestamp already has
+        whole-second resolution, so the largest gap itself is always a whole number of
+        seconds; dividing it by $\Delta t=1$ cannot produce anything but an integer.
+        Checked directly: 100\% for both disciplines at this rate. Since 1\,s is also the
+        dominant paraglider rate (69\% of flights, Figure~4.7), it alone pulls the
+        paraglider-wide fraction up to 86\%.
+  \item[Slower configured rates are only about half integer] At $\Delta t=2/5/10$\,s the
+        integer-ratio fraction is 60\%/58\%/51\% for paragliders and 34\%/61\%/39\% for
+        hang gliders -- no rate stands out, none close to 100\%. The mechanism from the
+        panel~(a) entry still holds (a missed fix is still the main driver of a large
+        gap), but the gap itself is a real elapsed duration -- GPS reacquisition time,
+        logger buffering, a signal dropout -- set by whatever caused the interruption,
+        not by the logger's configured cadence. Nothing requires that duration to land
+        on a multiple of $\Delta t$; it does so about half the time by chance, not by
+        construction.
+  \item[So the headline 86\%/63\% is a mixture effect] Paragliders are predominantly 1\,s
+        loggers (trivially integer), hang gliders are spread across several slower rates
+        (mostly not) -- the two overall percentages mainly reflect which rate dominates
+        each fleet, not some fleet-wide regularity in how gaps occur.
+\end{description}
+
+\paragraph{2026-07 --- Figure~4.6, panel~(b): tightened the missing-fraction axis.}
+The $x$-axis ran out to roughly twice the adopted cut ($0.10$), leaving the right half of
+the panel empty: the 90th percentile of the pooled missing fraction sits at $\approx
+0.09995$, essentially at the cut itself, so nothing of substance lives beyond it. Changed
+the margin past the cut from $2\times$ to $1.1\times$, i.e.\ \texttt{miss\_hi = max(p90,
+cut * 1.1)}, giving a $0$--$0.11$ range that still clears the 90th percentile with a
+little headroom but no longer wastes half the panel on empty axis.
+
+\paragraph{2026-07 --- Figures now stay where they are placed in the source.}
+Plain \LaTeX{}'s float algorithm was free to defer any figure past its ideal spot to the
+next page it judged to have room, and with several large figures placed close together in
+Sec.~4.1 it was pushing some many pages away from the text discussing them -- annoying
+for anyone reading top to bottom rather than jumping via cross-references. Added the
+\texttt{float} package and switched every \texttt{figure}/\texttt{table} placement
+specifier (previously \texttt{[t]}/\texttt{[!]}) to \texttt{[H]} (``here, literally''),
+which pins each one to its position in the source, full stop. No layout regressions on a
+full rebuild: text and figure land on the same page throughout, including the two cases
+checked directly (Figures~4.6 and~4.7, immediately after the paragraphs that introduce
+them).
+
 \paragraph{2026-06 --- Documentation.}
 Project docs are built with MkDocs and published on GitHub Pages. Initially deployed with
 \texttt{mkdocs gh-deploy}, which accumulated one built-site commit per deploy on a

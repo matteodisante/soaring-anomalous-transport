@@ -514,8 +514,10 @@ def make_gap_diagnostics_figure(
         [m for m in misses.values() if m.size] or [np.array([0.0])]
     )
     gap_hi = float(max(np.quantile(pooled_gap, 0.90), sampling.max_gap_factor * 2.0))
+    # Only a little past the cut (not 2x): the 90th percentile already sits almost
+    # exactly at the cut, so a wider margin would just add empty axis past it.
     miss_hi = float(
-        max(np.quantile(pooled_miss, 0.90), sampling.max_missing_fraction * 2.0)
+        max(np.quantile(pooled_miss, 0.90), sampling.max_missing_fraction * 1.1)
     )
     # Linear, not log: panel (a) only shows the bulk (up to gap_hi, a modest ~1-20
     # here), and unlike the retention curve below it does not need to span orders of
