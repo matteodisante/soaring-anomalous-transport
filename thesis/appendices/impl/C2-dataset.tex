@@ -63,7 +63,7 @@ runs on every flight before the transform.
 \begin{enumerate}[label=(\roman*)]
   \item \textbf{Modal sampling period.} For each flight the median inter-fix interval is
         computed and rounded to the nearest integer second. The value that appears most
-        often across all flights in the subsample -- the \emph{mode} -- is taken as the
+        often across all flights in the subsample (the \emph{mode}) is taken as the
         common target $\Delta t$ (in practice $\Delta t=\SI{1}{\second}$ for both
         disciplines, giving $f_s=\SI{1}{\hertz}$ and $f_{\text{Nyq}}=\SI{0.5}{\hertz}$).
   \item \textbf{Flight selection.} Only flights whose own median period lies within
@@ -101,11 +101,11 @@ format rounds every altitude: the white-noise floor of a \SI{1}{\metre} quantise
 $\tfrac{1}{12}/f_{\text{Nyq}}\approx\SI{0.17}{\metre\squared\per\hertz}$, sits just below where
 the measured medians level off ($\approx\SI{0.3}{\metre\squared\per\hertz}$). The channels
 part only in the \emph{tail}: at the 90th percentile the high-frequency GNSS floor is
-\num{4}$\times$ the barometric one for paragliders and \num{108}$\times$ for hang gliders --
-the worse GNSS multipath of the hang-glider fleet, and the reason its GNSS band is the wider
--- and \SIrange{13}{20}{\percent} of flights carry a GNSS floor above three times their own
-barometric one. That heterogeneity, not a uniform gap, is what motivates preferring the
-uniformly-clean barometric channel (Sec.~\ref{sec:altchannel}).
+\num{4}$\times$ the barometric one for paragliders and \num{108}$\times$ for hang gliders
+(the worse GNSS multipath of the hang-glider fleet, and the reason its band is wider), and
+\SIrange{13}{20}{\percent} of flights carry a GNSS floor above three times their own
+barometric one. This heterogeneity, rather than a uniform gap, motivates the choice of the
+barometric channel (Sec.~\ref{sec:altchannel}).
 
 \paragraph{Fallback-rate census (panel d).} A full census, not a sample: the same full
 parse of every track is needed anyway for the flight-level filtering diagnostics of
@@ -196,9 +196,9 @@ bound -- so that the one benign false positive, a genuine under-sampled tight tu
 flagged fix still moves at ordinary flying speed), is flagged but \emph{kept}. The gate
 deliberately narrows the identifier's \emph{deletions} to what the absolute bound already
 deems impossible: on its own, the local test attributes and audits. A locally anomalous but
-physically possible fix is kept by design -- its residual harm is bounded and absorbed by
-the smoother, whereas deleting it would risk real dynamics -- the same asymmetric-risk
-argument that shapes the whole step.
+physically possible fix is kept by design: its residual effect is bounded and absorbed by
+the smoother, whereas deleting it would risk real dynamics. This is the same
+asymmetric-risk argument as in Sec.~\ref{sec:fixlevel}.
 
 A flagged \emph{altitude} is treated more permissively, marked missing on the flag alone,
 because a dropped altitude is not a deletion but a deferral: it is restored by the
@@ -219,7 +219,7 @@ enough -- and the pass defaults to keeping the data otherwise.
         alone, whereas a step-based test would fire on every \SI{1}{\hertz} climb (step
         $v_{xy}\Delta t\approx\SI{10}{\metre}\sim\varepsilon$).
   \item \emph{Independent witness.} Over the run the barometric altitude must also be
-        flat -- $|\Delta z_{\mathrm{baro}}|$ below a few metres -- since a real thermalling
+        flat ($|\Delta z_{\mathrm{baro}}|$ below a few metres), since a real thermalling
         climb gains tens of metres in that time on a sensor independent of the GNSS, so a
         horizontally-still run whose baro altitude is still climbing is a tight climb and
         is kept.
@@ -274,7 +274,7 @@ Table~\ref{tab:cleaning} are the \texttt{FixLevelThresholds} dataclass, loaded b
 They are the context-free floor of the design, and are placed on the real per-fix
 distributions (Figure~\ref{fig:fixlevel}) rather than guessed. The horizontal-speed bound is
 set where the bin-to-bin ratio of a finely binned (\SI{2.5}{\metre\per\second}) histogram
-settles at $\approx 1$ -- where the decay has actually stopped -- not where it first visibly
+settles at $\approx 1$, i.e.\ where the decay has actually stopped, not where it first visibly
 slows ($\approx\SI{40}{\metre\per\second}$ for hang gliders, versus the adopted
 \SI{55}{\metre\per\second}), since a shallow but real decreasing stretch can still be genuine
 rare dynamics.
@@ -294,7 +294,7 @@ Panel~(b) bins one integer \si{\metre\per\second} per bin because barometric alt
 logged to the metre: differencing at a \SI{1}{\second} cadence returns integer rates, and a
 finer grid would alias them into a spurious comb. (Not every flight samples at
 \SI{1}{\second}, Figure~\ref{fig:sampling}, and differencing over a longer native step
-returns finer values -- multiples of \SI{0.2}{\metre\per\second} at \SI{5}{\second} -- that
+returns finer values (multiples of \SI{0.2}{\metre\per\second} at \SI{5}{\second}) that
 partly fill the gaps once cadences are pooled: among \SI{1}{\second}-native fixes about
 99\%\ land within \SI{0.05}{\metre\per\second} of an integer, against only 34--42\%\ at every
 other cadence.)
@@ -425,7 +425,7 @@ are the \texttt{FlightLevelThresholds} dataclass, from \path{configs/preprocessi
 by \path{make_flightlevel_diagnostics_figure}, on the full census -- every
 parsed track, no sub-sampling: \num{\StatScanParaTracks} paraglider and
 \num{\StatScanHangTracks} hang-glider tracks.
-(The totals -- like every census number in this document -- are generated macros quoting
+(The totals, like every census number in this document, are generated macros quoting
 the cached scan (\path{generate_census_stats.py}); the live archive grows by a trickle, so
 they can trail the download counts of the season tables -- \num{\StatParaDownloaded}
 paragliders at the last stats regeneration -- until the cache is refreshed.)

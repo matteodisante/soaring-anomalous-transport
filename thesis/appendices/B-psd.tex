@@ -10,9 +10,8 @@ with \emph{Welch's method}~\cite{welch1967}. It is written so the reader need no
 Take a signal sampled at a fixed rate, here an altitude series $z_n=z(n\,\Delta t)$,
 $n=0,\dots,N-1$, with sampling interval $\Delta t$ (so the sampling frequency is
 $f_s=1/\Delta t$). Any such finite signal can be written as a sum of sinusoids of different
-frequencies (its discrete Fourier transform). The \textbf{power spectral density} answers a
-simple question: \emph{how is the ``power'' (the variance) of the signal distributed across
-frequencies?} A slow drift puts its power at low frequency; rapid jitter puts its power at
+frequencies (its discrete Fourier transform). The \textbf{power spectral density} describes how the power (the variance) of the signal
+is distributed across frequencies. A slow drift puts its power at low frequency; rapid jitter puts its power at
 high frequency. Formally the PSD $S(f)$ is the Fourier transform of the autocovariance of
 the signal, and it is normalised so that the total area under it equals the variance of the
 signal,
@@ -21,17 +20,16 @@ signal,
 \end{equation}
 with units of (metres)$^2$ per hertz. The upper limit $f_s/2$ is the \emph{Nyquist
 frequency}: a series sampled every $\Delta t$ cannot resolve anything faster than one
-oscillation per two samples. Reading a PSD is therefore reading \emph{where in frequency}
-the signal lives: this is exactly what separates a slowly drifting but locally clean channel
-(power concentrated at low $f$) from a channel with a high-frequency noise floor (power that
-stays large up to the Nyquist frequency).
+oscillation per two samples. A PSD thus shows where in frequency the signal's power lies, which is what separates a
+slowly drifting but locally clean channel (power concentrated at low $f$) from a channel
+with a high-frequency noise floor (power that stays large up to the Nyquist frequency).
 
 \section*{The periodogram and why it is noisy}
 
 The naive estimator of $S(f)$ is the \textbf{periodogram}: take the discrete Fourier
 transform $\hat z(f)=\sum_n z_n\,e^{-2\pi i f n\Delta t}$ and form $|\hat z(f)|^2$
 (suitably normalised). It is asymptotically unbiased but \emph{not consistent}: its variance does not
-shrink as the record gets longer -- a longer signal gives more frequency points, each still
+shrink as the record gets longer: a longer signal gives more frequency points, each still
 as noisy as before. Plotted directly it is a spiky, unreadable curve, from which one cannot
 reliably compare two channels.
 
@@ -49,11 +47,11 @@ recipe is:
 Averaging $K$ segments cuts the variance of the estimate by roughly a factor $K$, at the
 cost of coarser frequency resolution (set by the segment length rather than the whole
 record). The result is a smooth PSD estimate whose \emph{level} can be compared meaningfully
-between two signals -- the standard, robust spectral estimator. Each segment is typically
-detrended before transforming -- e.g.\ by removing a linear fit -- so that the estimate
-reflects the fluctuations about the trend -- the part where sensor noise lives -- rather
+between two signals; it is the standard, robust spectral estimator. Each segment is
+typically detrended before transforming (e.g.\ by removing a linear fit), so that the
+estimate reflects the fluctuations about the trend, where the sensor noise lives, rather
 than the trend itself \impldetails{impl:altchannel}.
 
-How these spectra read for the two altitude channels -- and what the comparison implies for
-the choice of channel -- is discussed where that choice is made
-(Sec.~\ref{sec:altchannel}), not here; this appendix covers only the method.
+How these spectra read for the two altitude channels, and what the comparison implies for
+the choice of channel, is discussed where that choice is made
+(Sec.~\ref{sec:altchannel}); this appendix covers only the method.
