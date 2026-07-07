@@ -96,49 +96,149 @@ paid for elsewhere; it is not needed here.)
 \subsection{Fix-level cleaning}
 \label{impl:fixlevel}
 
-\paragraph{Status.} Format-validity rejection is implemented in
-\path{soaring.analysis.igc.parse_igc} and covered by unit tests. Dynamics-plausibility
-rejection is designed and thresholded (Table~\ref{tab:cleaning}), but the routine that
-walks a trajectory applying the bounds fix by fix does not yet exist; building it is the
-next step at this stage.
+This section gives the working definitions the narrative (Sec.~\ref{sec:fixlevel}) states in
+words: the three detectors, their parameters, the order they run in, and how the whole step
+is validated. The three families of Table~\ref{tab:cleaning} map onto three detectors of
+increasing context: an absolute bound (no context), a robust local test (a short window of
+context), and a structural rule (a whole run).
 
-\paragraph{Configuration.} All six bounds of Table~\ref{tab:cleaning} are the
-\texttt{FixLevelThresholds} dataclass, loaded by
+\paragraph{Status.} The format-validity rejection is implemented in
+\path{soaring.analysis.igc.parse_igc} and covered by unit tests. The dynamics and structural
+cleaning below is designed, and its absolute bounds are thresholded on the data
+(Table~\ref{tab:cleaning}, Figure~\ref{fig:fixlevel}); the routine that walks a trajectory
+applying all three detectors, and the robust-test and frozen-lock parameters it needs, are
+the next step. The parameter names introduced here are the config keys that step will add.
+
+\paragraph{Robust local-outlier test (off-the-trend defects).} For a fix $P_k$ at time
+$t_k$, take the fixes lying within a window of $\pm w$ seconds of $t_k$ (a \emph{time}
+window, so it adapts to the native cadence and to irregular sampling), excluding $P_k$
+itself. Fit a robust local estimate of the position there -- the component-wise median of the
+windowed fixes, or a degree-one Theil--Sen fit -- and evaluate it at $t_k$; the residual
+$r_k$ is the great-circle distance from $P_k$ to that estimate. Scale it by a robust local
+spread $\sigma_k = 1.4826\,\operatorname{MAD}$ of the windowed residuals (the factor makes
+$\sigma_k$ a Gaussian-consistent standard deviation), and flag $P_k$ when
+\[
+  r_k > k\,\sigma_k \quad\text{and}\quad r_k > \varepsilon_{\min}.
+\]
+This is a Hampel identifier: a median centre, a MAD scale, a threshold in robust standard
+deviations. Working defaults, to be finalized by the injected-defect test below:
+$k\approx 4$--$5$, a window $w$ of a few native intervals (order \SIrange{15}{30}{\second}),
+and an absolute floor $\varepsilon_{\min}\approx\SI{15}{\metre}$, a few times the horizontal
+GPS noise.
+
+Three points earn the test its place over the bare speed bound. \emph{The floor
+$\varepsilon_{\min}$ is not cosmetic}: on a very smooth stretch $\sigma_k\to 0$, so without
+it any sub-metre wiggle would exceed $k\sigma_k$ and the test would chase GPS noise where
+there is no outlier. \emph{It is local}: the scale is rebuilt at each fix, so it flags a
+\SI{30}{\metre\per\second} step for a wing that has been flying at \SI{12}{\metre\per\second}
+-- a value the \SI{45}{\metre\per\second} absolute bound passes -- while leaving the same
+\SI{30}{\metre\per\second} untouched where it is ordinary. \emph{It does not clip real
+manoeuvres}: a genuine sharp turn is drawn by consecutive, mutually consistent fixes, each
+well predicted by its neighbours and so of small residual; only an isolated point off the
+local trend scores large. The one failure mode -- a turn so tight it is under-sampled at the
+native cadence -- is rare at these rates and is exactly what the injected-defect test
+measures. A short burst of consecutive spikes inflates the windowed MAD only mildly, so it is
+still flagged, and is removed as the block whose bracketing neighbours rejoin within scale.
+The identical test runs on the horizontal position and, independently, on the adopted
+altitude channel, so a vertical spike invalidates the altitude alone and the horizontal
+position stays (the channel decoupling of Sec.~\ref{sec:fixlevel}).
+
+\paragraph{Frozen-lock detection (on-the-trend).} A maximal run of consecutive fixes whose
+pairwise great-circle displacement stays below $\varepsilon$ while the timestamps advance
+normally, of total span at least $\tau_{\mathrm{freeze}}$ (equivalently $M$ fixes at the
+native cadence), is a lost-lock episode. Working values: $\varepsilon$ a few times the GPS
+noise ($\sim$\SIrange{10}{15}{\metre}), $\tau_{\mathrm{freeze}}$ some tens of seconds -- long
+enough that a real slow hover of that duration would still drift several metres, short enough
+to catch the defect before it distorts a waiting time. A circling glider is not caught: its
+turn radius is tens of metres, well above $\varepsilon$, so its displacement never collapses
+to the logger's quantization. The run is marked as a data gap; the split it induces is
+realized at the uniform-sampling stage (Sec.~\ref{impl:uniform}), on the same footing as a
+native long gap.
+
+\paragraph{Duplicate and backward timestamps (on-the-trend).} The parser already rebuilds a
+monotone clock: it unwraps the UTC-midnight roll-over (a drop of $\sim$\SI{86400}{\second}
+advances the day count) and clamps residual backward jitter with a running maximum
+(Sec.~\ref{impl:igcformat}). The redesign promotes a backward step that is \emph{not} a
+roll-over from a silent clamp to an explicit structural removal -- the fix with the corrupt
+time is deleted as a node -- for the reason a corrupt position is deleted: a falsified
+timestamp is a defect to record, not a repair to hide. Fixes sharing one UTC second are
+collapsed to a single representative at that second's centroid position. This replaces the
+provisional \enquote{keep the first} of the earlier design: keeping the first privileges an
+arbitrary member and, for a genuine $\ge\!\SI{2}{\hertz}$ logger, would silently halve the
+cadence, whereas the centroid is order-independent and the sub-second resolution it discards
+is discarded anyway once the flight is resampled to a common $\Delta t$
+(Sec.~\ref{impl:uniform}).
+
+\paragraph{Absolute bounds (out-of-range, the backstop).} The six numbers of
+Table~\ref{tab:cleaning} are the \texttt{FixLevelThresholds} dataclass, loaded by
 \path{soaring.analysis.preprocessing.load_preproc_config} from
-\path{configs/preprocessing.yaml} (key \path{fix_level}); nothing is hard-coded in
-Python.
+\path{configs/preprocessing.yaml} (key \path{fix_level}); nothing is hard-coded in Python.
+They are the context-free floor of the design, and are placed on the real per-fix
+distributions (Figure~\ref{fig:fixlevel}) rather than guessed. The horizontal-speed floor is
+set where the bin-to-bin ratio of a finely binned (\SI{2.5}{\metre\per\second}) histogram
+settles at $\approx 1$ -- where the decay has actually stopped -- not where it first visibly
+slows ($\approx\SI{40}{\metre\per\second}$ for hang gliders, versus the adopted
+\SI{55}{\metre\per\second}), since a shallow but real decreasing stretch can still be genuine
+rare dynamics.
 
 \paragraph{Diagnostic sample (Figure~\ref{fig:fixlevel}).} Computed by
-\path{fix_level_distributions} and rendered by
-\path{make_fixlevel_diagnostics_figure} (Table~\ref{tab:impl-repro}). Panels~(a)--(c)
-pool a seeded random sample of \num{15000} paraglider flights (\num{126723499}
-consecutive-fix pairs, $\sim$\SI{73}{\second} to compute) and the complete
-\num{6716}-flight hang-glider population (a full census at this size, \num{37915334}
-pairs, $\sim$\SI{25}{\second}) -- under two minutes total. The large sample is
-deliberate: resolving the sparse artefact tail well enough to distinguish it from real
-dynamics needs far more points than a headline statistic would.
+\path{fix_level_distributions} and rendered by \path{make_fixlevel_diagnostics_figure}
+(Table~\ref{tab:impl-repro}). Panels~(a)--(c) pool a seeded random sample of \num{15000}
+paraglider flights (\num{126723499} consecutive-fix pairs, $\sim$\SI{73}{\second} to compute)
+and the complete \num{6716}-flight hang-glider population (a full census at this size,
+\num{37915334} pairs, $\sim$\SI{25}{\second}) -- under two minutes total. The large sample is
+deliberate: resolving the sparse artefact tail well enough to tell it from real dynamics
+needs far more points than a headline statistic would. The $x$-range in (a)/(b) extends to
+each discipline's own 99.99th percentile rather than cropping just past the bound; panel~(c)
+keeps a narrower range, its cut sitting far out in an otherwise tight, unimodal distribution.
+Panel~(b) bins one integer \si{\metre\per\second} per bin because barometric altitude is
+logged to the metre: differencing at a \SI{1}{\second} cadence returns integer rates, and a
+finer grid would alias them into a spurious comb. (Not every flight samples at
+\SI{1}{\second}, Figure~\ref{fig:sampling}, and differencing over a longer native step
+returns finer values -- multiples of \SI{0.2}{\metre\per\second} at \SI{5}{\second} -- that
+partly fill the gaps once cadences are pooled: among \SI{1}{\second}-native fixes about
+99\%\ land within \SI{0.05}{\metre\per\second} of an integer, against only 34--42\%\ at every
+other cadence.)
 
-\paragraph{Bound-placement procedure.} The horizontal-speed bound is placed at the point
-where the bin-to-bin ratio of a finely binned (\SI{2.5}{\metre\per\second}) histogram
-settles at $\approx 1$ (decay has stopped), not at the point where the decay first
-visibly slows ($\approx\SI{40}{\metre\per\second}$ for hang gliders, versus the adopted
-\SI{55}{\metre\per\second}).
+\paragraph{Order, and a single pass.} The detectors run in a fixed order -- format, then the
+time defects (backward, duplicate), then position outliers, then frozen-lock, then altitude
+-- because a speed or a residual is only meaningful once the time base is monotone and free of
+duplicates. The position-outlier and frozen-lock passes are one left-to-right scan that
+carries the last accepted fix as an anchor: it never re-walks the whole track, and it absorbs
+a run by extending the anchor across the flagged block, so the cost is $O(N)$ in the number
+of fixes.
 
-\paragraph{Axis choices.} The $x$-range in (a)/(b) extends to each discipline's own
-99.99th percentile rather than cropping just past the bound; panel~(c) keeps a narrower
-range since its cut sits far out in an otherwise tight, unimodal distribution.
+\paragraph{Flight-level integrity gate.} The pass records how much it changed each flight (or
+segment) -- \path{n_fix_raw}, \path{n_fix_clean} and \path{frac_interpolated} in
+\path{flights_meta}. A flight whose deleted-plus-reconstructed fraction exceeds a small $f$
+(order \numrange{0.05}{0.10}) is dropped whole: beyond that point the trajectory is more
+interpolation than measurement. This is the cleaning counterpart of the sampling-regularity
+cut (Sec.~\ref{impl:uniform}).
 
-\paragraph{Integer-quantization check (panel b).} Not every flight samples at
-\SI{1}{\second} (Figure~\ref{fig:sampling}), and differencing over a longer native step
-returns a finer-grained set of values (e.g.\ multiples of \SI{0.2}{\metre\per\second} at
-a \SI{5}{\second} cadence) that partially fill the gaps once every cadence is pooled.
-Checked directly: among fixes from \SI{1}{\second}-native flights, about 99\% land
-within \SI{0.05}{\metre\per\second} of an integer; among fixes from every other native
-cadence, only 34--42\% do.
+\paragraph{Configuration.} The absolute bounds are already the \texttt{FixLevelThresholds}
+group above. The robust-test parameters ($w$, $k$, $\varepsilon_{\min}$), the frozen-lock
+parameters ($\varepsilon$, $\tau_{\mathrm{freeze}}$) and the integrity fraction $f$ join that
+group in \path{configs/preprocessing.yaml} when the routine is built; as with every threshold
+in this pipeline they live in the config, never in Python.
 
-\paragraph{Reproduce.} Table~\ref{tab:impl-repro}, row \path{generate_preproc_figure.py}
-(one run also regenerates Figures~\ref{fig:preproc}, \ref{fig:gaps}, \ref{fig:sampling}
-from a shared full-census scan; the fix-level panels use a separate sampled pass).
+\paragraph{Validating the cleaning.} The removed-fraction count of Figure~\ref{fig:fixlevel}
+bounds only the false positives (over-cleaning). Two further checks, part of the same planned
+step, bound the false negatives and the bias. \emph{Injected defects}: on tracks the cleaning
+leaves untouched, plant synthetic defects of known type and size -- position spikes of
+amplitude $a$, frozen runs of length $\tau$, backward-time glitches -- and measure the
+recovered fraction against size. This gives the detection floor (the smallest spike caught)
+and calibrates $k$, $w$, $\varepsilon$ and $\tau_{\mathrm{freeze}}$ to a target rate, the only
+direct measurement of what the cleaning misses. \emph{Downstream invariance}: recompute the
+transport estimators -- the displacement-scaling exponent and the waiting-time-tail exponent
+-- over a grid of cleaning strengths, and take the operating point on the plateau where they
+stop moving; movement under stricter cleaning is the signature of a cut biting into signal.
+A cheap third check guards against a missed defect class: the fixes flagged by the absolute
+bound should nest inside those flagged by the local test (the impossible is a subset of the
+locally anomalous), so a large disagreement points to a defect neither was designed for.
+
+\paragraph{Reproduce.} Table~\ref{tab:impl-repro}, row \path{generate_preproc_figure.py} (one
+run also regenerates Figures~\ref{fig:preproc}, \ref{fig:gaps} and~\ref{fig:sampling} from a
+shared full-census scan; the fix-level panels use a separate sampled pass).
 
 \subsection{Trimming of ground phases}
 \label{impl:trimming}

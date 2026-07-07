@@ -314,57 +314,91 @@ the farthest a fix gets from take-off. The spherical approximation is ample here
 ellipsoidal correction to an inter-fix distance is $\lesssim\SI{0.3}{\percent}$, far below the
 GPS noise -- and it avoids converting coordinates before the trajectory has been cleaned.
 
-\paragraph{Two layers of cleaning.}
-Individual fixes that are physically impossible or corrupted must be removed without
-discarding the whole flight. This happens in two layers. The first, \emph{format
-validity}, rejects at decode time any fix that does not decode to a legal record -- an
-invalid UTC time, or a latitude/longitude whose arc-minutes, hemisphere letter or
-resulting value are not a valid encoding (Sec.~\ref{sec:igcformat}) -- since such a fix
-carries no meaningful position or time at all. The second, \emph{dynamics plausibility},
-targets fixes that decode validly but are implausible given the trajectory: an impossible
-speed jump (via $v_{xy}$ from~\eqref{eq:haversine}), an out-of-range altitude, or a stale
-duplicate (Table~\ref{tab:cleaning}). The bounds are not guessed but read off the
-\emph{per-fix} distributions of these quantities on the real tracks
-(Figure~\ref{fig:fixlevel}): each sits in the sparse, physically-implausible tail -- a GPS
-error, not signal -- and removes only a negligible fraction of fixes, so the cut cleans
-the trajectory without eroding it. This mirrors the flight-level audit of
-Sec.~\ref{sec:flightfilter}, with one twist: a fix-level bound drops single fixes from an
-otherwise good flight, so what matters is the fraction of \emph{fixes} it removes, not the
-number of flights it touches. The checks apply in the order listed, each acting only on
-the fixes the previous ones spared \impldetails{impl:fixlevel}.
+\paragraph{One rule: clean without biasing the transport.}
+Individual fixes that are corrupt or physically impossible must be removed without
+discarding the flight around them. Every removed or altered fix is, though, an intervention
+on the trajectory whose statistics the analysis is about to measure, so an over-eager
+cleaning can bias the result as surely as dirty data can. The design follows from a single
+rule: assume as little as possible about the motion. It assumes only that a real trajectory
+is smooth at the scale of the sampling -- an aircraft cannot jump between fixes a few seconds
+apart -- and never a model of the transport itself. A model-based smoother would reject
+outliers more aggressively, but at an unacceptable price: fitting a constant-velocity or
+diffusive model to the track would write the behaviour under study into the cleaned data.
+
+\paragraph{Three kinds of defect, three tests.}
+Past the format-validity check already made at decode time (Sec.~\ref{sec:igcformat}), which
+rejects any record that is not a legal encoding, a surviving fix can still be wrong in one of
+three ways, each caught differently (Table~\ref{tab:cleaning}). A fix \emph{off the trend} --
+a GPS position spike, or a jump out and back within one step -- is found by a robust
+local-outlier test: it is compared with a median estimate built from the fixes around it and
+flagged when it departs by more than a few robust standard deviations, an absolute speed
+bound serving as a floor on the plainly impossible. A fix \emph{on the trend} agrees with its
+neighbours yet is still wrong as a record -- a duplicated or backward timestamp, or a run of
+frozen positions from a lost GNSS lock -- and, its local residual being near zero, escapes
+the outlier test and needs a structural rule. A value \emph{out of range}, an impossible
+altitude or climb rate, is removed by an absolute bound that needs no context.
+
+\paragraph{Which fix is removed, and what happens to it.}
+This is where a raw speed bound falls short: a speed belongs to the segment \emph{between}
+two fixes and cannot say which endpoint is at fault. The local-outlier test settles it by
+asking, of each fix alone, whether it strays from what its neighbours predict, so the culprit
+is named directly -- a lone spike is removed without dragging a good neighbour with it, and a
+short burst goes as the block whose removal restores the trend. What follows depends on the
+fault. A corrupt \emph{position or time} deletes the fix as a node: it leaves the sequence,
+its neighbours close up, and the small gap is bridged once, later, at resampling
+(Sec.~\ref{sec:uniform}). A corrupt \emph{altitude} keeps the position and time and marks
+only the altitude missing; since the horizontal analysis -- the primary result -- never uses
+altitude, clearing a barometric spike costs it nothing (Sec.~\ref{sec:altchannel}).
+
+\paragraph{The frozen-lock case.}
+One structural defect deserves singling out, because it strikes the observable itself. When
+the GNSS loses lock, many loggers repeat the last position for tens of seconds while the
+clock runs on: speed zero, altitude in range, timestamps valid, every bound above satisfied.
+No local test separates such a run from a real hover, and it mimics a long \emph{waiting
+time} -- the very quantity a continuous-time random-walk reading of the flight measures
+(Ch.~\ref{ch:next-steps}) -- so, left in, it would plant false trapping events in the tail
+where the anomalous exponent is most fragile. A frozen run is instead read as a loss of
+signal and marked as a gap, and the trajectory is split there rather than interpolated
+across, inventing no motion over an interval whose true path is unknown
+(Sec.~\ref{sec:uniform}).
 
 \begin{table}[htbp]
 \centering
 \small
-\begin{tabular}{@{}llp{5.4cm}@{}}
+\begin{tabular}{@{}p{3.3cm}p{6.1cm}p{3.2cm}@{}}
 \toprule
-Quantity & Reject / flag the fix when & Rationale \\
+Defect & Detected by & Action \\
 \midrule
-Missing altitude & the adopted-channel value is absent            & no usable vertical coordinate (Sec.~\ref{sec:altchannel}) \\
-Duplicate time   & two fixes share the UTC second                & keep the first (logger double-write) \\
-Altitude range   & outside $[-100,\,6000]\,\si{\metre}$           & sensor fault, allowing for the channel's own offset \\
-Horizontal speed (paragliders)  & $v_{xy}>\SI{45}{\metre\per\second}$ between consecutive fixes & GPS position jump \\
-Horizontal speed (hang gliders) & $v_{xy}>\SI{55}{\metre\per\second}$ between consecutive fixes & GPS position jump \\
-Vertical speed   & $|v_z|>\SI{13}{\metre\per\second}$            & beyond the soaring climb/sink range \\
+\multicolumn{3}{@{}l}{\itshape Off the trend -- corrupt position}\\[1pt]
+Position spike, out-and-back jump & robust local-outlier test; absolute $v_{xy}$ floor
+  (\num{45}/\SI{55}{\metre\per\second}, para/hang) & delete fix, rejoin neighbours \\[3pt]
+\multicolumn{3}{@{}l}{\itshape On the trend -- structural}\\[1pt]
+Duplicate timestamp & two or more fixes in one UTC second & merge to one (centroid) \\
+Backward timestamp & time decreases, and not a midnight roll-over & delete fix \\
+Frozen-lock run & $\ge M$ fixes, pairwise move $<\varepsilon$, clock still advancing & mark
+  as gap, split there \\[3pt]
+\multicolumn{3}{@{}l}{\itshape Out of range -- corrupt altitude, position kept}\\[1pt]
+Missing altitude & adopted channel absent at the fix & drop altitude only \\
+Altitude out of band & outside $[-100,6000]\,\si{\metre}$ & drop altitude only \\
+Vertical-speed spike & barometric $|v_z|>\SI{13}{\metre\per\second}$ & drop altitude only \\
 \bottomrule
 \end{tabular}
-\caption{Fix-level cleaning criteria, applied in the order listed. Each bound marks the
-physically-implausible tail of its per-fix distribution (Figure~\ref{fig:fixlevel}), so it
-removes GPS errors rather than signal. Horizontal speed is set one per
-discipline -- paragliders and hang gliders have different horizontal-speed envelopes
-(the present dataset, Sec.~\ref{sec:glider}), so a single shared bound is either too
-loose for the slower type or clips real dynamics of the faster one; a
-\texttt{"sailplanes"} entry will be added once that source is in. Vertical speed and
-the altitude range are \emph{not} split by discipline: the two disciplines' vertical-speed
-distributions are close enough that splitting it buys nothing (Figure~\ref{fig:fixlevel}),
-and the altitude bound is about the barometric sensor's plausible reading
-range, not glider performance; both apply to the adopted channel
-(Sec.~\ref{sec:altchannel}). The lower altitude bound is $\SI{-100}{\metre}$ rather than
-$0$ because the barometric channel is not QNH-corrected: its offset from true altitude
-(Figure~\ref{fig:altnoise}, of order \SI{100}{\metre} in the flight shown there) means a
-take-off at sea level can legitimately read slightly negative, so the bound must clear
-that offset and not just true altitude. Inter-fix gaps are handled once, at the flight level
-(Sec.~\ref{sec:uniform}), not with a second absolute bound here. \impldetails{impl:fixlevel}}
+\caption{Fix-level cleaning, grouped by how each defect presents. \emph{Off the trend}: an
+isolated fix its neighbours do not predict; the robust local-outlier test
+(Sec.~\ref{impl:fixlevel}) names it, and the absolute horizontal-speed floor is a
+per-discipline backstop -- paragliders and hang gliders have different speed envelopes
+(Fig.~\ref{fig:fixlevel}), so one shared value would either clip the faster type or spare the
+slower one; a \texttt{sailplanes} entry follows once that source is in.
+\emph{On the trend}: defects consistent with the local motion, invisible to the outlier test,
+each with a structural rule; the frozen-lock run (its length $M$ and tolerance $\varepsilon$
+in Sec.~\ref{impl:fixlevel}) is split, not bridged, so no motion is invented
+(Sec.~\ref{sec:uniform}). \emph{Out of range}: absolute sensor bounds on the adopted altitude
+channel (Sec.~\ref{sec:altchannel}); the lower bound is $\SI{-100}{\metre}$, not $0$, because
+the barometric channel is not QNH-corrected and its offset (Fig.~\ref{fig:altnoise}, of order
+\SI{100}{\metre}) lets a sea-level take-off read slightly negative. A corrupt altitude never
+discards the fix's horizontal position. Inter-fix time gaps are not a criterion here: a gap
+is a property of the sampling, handled once at the flight level (Sec.~\ref{sec:uniform}).
+\impldetails{impl:fixlevel}}
 \label{tab:cleaning}
 \end{table}
 
@@ -377,45 +411,51 @@ that offset and not just true altitude. Inter-fix gaps are handled once, at the 
     \texttt{scripts/reporting/generate\_preproc\_figure.py} from the raw IGC tracks on the
     SSD (not versioned). Run it to render this figure.}}%
   }
-  \caption{Fix-level cleaning, audited on the data. Per-\emph{fix} distributions of the
-  quantities the dynamics-plausibility bounds test: (a)~horizontal speed $v_{xy}$,
-  (b)~barometric $|v_z|$, (c)~barometric altitude, pooled over a large paraglider
-  subsample and the complete hang-glider population. Dashed lines mark the adopted
-  bounds (Table~\ref{tab:cleaning}); the $y$-axis is logarithmic so the sparse tail the
-  bounds act on is visible. Panel~(a) is why the speed bounds are per-discipline: hang
-  gliders show a distinct, non-decaying plateau from about
-  \SIrange{55}{90}{\metre\per\second} sitting on top of the steeply-decaying real
-  distribution -- a sustained \emph{ground} speed of \SIrange{200}{320}{\kilo\metre\per\hour}
-  has no credible airborne explanation for a hang glider, so this reads as a
-  logger/GPS artefact rather than a rare-but-genuine manoeuvre; the bound is placed
-  where the decay actually \emph{stops} rather than where it first slows, since a
-  shallow-but-real decreasing stretch can still be genuine rare dynamics. Paragliders
-  show the same pattern at a lower speed. Panel~(b) bins one bin per integer
-  \si{\metre\per\second}: barometric altitude is logged to the metre, so a finite
-  difference can only return an integer rate, and a naively placed fine grid would
-  alias that into a spurious comb. Panel~(c) uses a narrower range than (a)/(b), since
-  its cut sits in an otherwise tight, unimodal distribution. \impldetails{impl:fixlevel}}
+  \caption{Fix-level cleaning: auditing the absolute bounds. Per-\emph{fix} distributions of
+  the quantities the out-of-range bounds test -- (a)~horizontal speed $v_{xy}$,
+  (b)~barometric $|v_z|$, (c)~barometric altitude -- pooled over a large paraglider subsample
+  and the complete hang-glider population, with the adopted bounds dashed
+  (Table~\ref{tab:cleaning}); the $y$-axis is logarithmic so the sparse tail the bounds act
+  on is visible. These are the \emph{context-free} cuts, the floor on the plainly impossible;
+  the robust local-outlier and frozen-lock tests act on structure a marginal distribution
+  cannot show and are validated separately (Sec.~\ref{impl:fixlevel}). Panel~(a) is why the
+  speed floor is per-discipline: hang gliders show a distinct, non-decaying plateau from about
+  \SIrange{55}{90}{\metre\per\second} on top of the steeply decaying real distribution -- a
+  sustained \emph{ground} speed of \SIrange{200}{320}{\kilo\metre\per\hour} has no airborne
+  explanation for a hang glider and reads as a logger artefact; the bound is placed where the
+  decay \emph{stops}, not where it first slows, since a shallow but real decreasing stretch
+  can still be genuine rare dynamics. Paragliders show the same pattern lower down. Panel~(b)
+  uses one bin per integer \si{\metre\per\second}: barometric altitude is logged to the metre,
+  so a finite difference returns integer rates and a finer grid would alias them into a
+  spurious comb. Panel~(c) uses a narrower range, its cut sitting in an otherwise tight,
+  unimodal distribution. \impldetails{impl:fixlevel}}
   \label{fig:fixlevel}
 \end{figure}
 
-\paragraph{The validity flag needs no separate rule.}
-The IGC validity flag (\texttt{A}/\texttt{V}) is not a separate fix-level criterion: its
-effect is already \emph{subsumed} by the missing-altitude rule applied to the adopted
-channel. The flag certifies the GNSS altitude only -- a \texttt{V} fix has the GNSS
-altitude zeroed but keeps a valid position and, if present, a valid barometric altitude
-(Sec.~\ref{sec:igcformat}) -- so its effect is channel-dependent: on a barometric flight a
-\texttt{V} fix is kept (the barometric value is intact), whereas on a GNSS-fallback flight
-it has no usable altitude and is dropped as a missing-altitude fix. Neither case needs
-handling of its own.
+\paragraph{The validity flag needs no rule of its own.}
+The IGC validity flag (\texttt{A}/\texttt{V}) certifies the GNSS altitude only, so its effect
+is already covered by the missing-altitude rule on the adopted channel. A \texttt{V} fix
+keeps a valid position and, where present, a valid barometric altitude
+(Sec.~\ref{sec:igcformat}): on a barometric flight it is kept, on a GNSS-fallback flight it
+has no usable altitude and drops out as missing. Neither case needs handling of its own.
 
-\paragraph{Time gaps are handled at the flight level, not here.}
-Inter-fix time gaps are deliberately \emph{not} a fix-level criterion. A gap is not
-itself an error -- short ones interpolate cleanly, long ones do not -- and, unlike a
-speed or altitude spike, it is a property of the sampling rather than of a single fix. It
-is therefore handled once, at the flight level (Sec.~\ref{sec:uniform}): a flight whose
-largest gap is too large \emph{relative to its own native cadence} is excluded there. A
-second, absolute gap bound at the fix level would only duplicate that test with a
-differently-scaled threshold.
+\paragraph{A flight-level backstop.}
+Cleaning acts fix by fix, but it also keeps count of how much it had to do. If it has removed
+or reconstructed more than a small fraction of a flight's fixes, the flight is no longer being
+cleaned but rebuilt, and it is dropped whole -- the cleaning counterpart of the
+sampling-regularity cut (Sec.~\ref{sec:uniform}).
+
+\paragraph{Validating the cleaning.}
+That each bound removes only a negligible fraction of fixes shows the cleaning is not too
+aggressive; it says nothing about what the cleaning \emph{misses}. Two checks address that,
+and both belong to the planned implementation
+(Ch.~\ref{ch:next-steps})~\impldetails{impl:fixlevel}. \emph{Injected defects}: spikes,
+frozen runs and time glitches of known size are planted in clean tracks, and the fraction
+recovered as a function of size measures the false-negative rate directly. \emph{Invariance
+of the result}: the transport estimators -- the displacement-scaling exponent and the
+waiting-time tail -- are recomputed as the cleaning is tightened, and the operating point is
+taken on the plateau where they stop moving. A cut that removes error and not signal leaves
+the physics unchanged; one that has begun to bite into real dynamics does not.
 
 \subsection{Trimming of ground phases}
 \label{sec:trimming}
@@ -833,15 +873,17 @@ Per flight, let $\Delta t$ be the median inter-fix interval. Three cases arise:
         few $\Delta t$ and the missing fraction is small: the flight is resampled onto the
         uniform grid at its native $\Delta t$, interpolating across the small gaps only, and
         the interpolated fraction is recorded.
-  \item[Badly sampled.] A gap longer than a set bound, or too large a missing fraction: the
-        flight is \emph{excluded} (and logged). Interpolating across a long hole would
-        fabricate dynamics the smoothing could not tell from real motion; splitting such a
-        flight at its gaps into independently analysed segments is a possible future
-        refinement.
+  \item[Broken by a long gap.] A gap longer than a set bound -- native, or opened where
+        cleaning excised a frozen-lock run (Sec.~\ref{sec:fixlevel}) -- is not bridged:
+        interpolating across a long hole would fabricate dynamics the smoothing could not tell
+        from real motion. The flight is \emph{split} at the gap into independently analysed
+        segments, each carried forward on its own; a segment left too short by the split falls
+        to the flight-level cuts (Sec.~\ref{sec:flightfilter}). A missing fraction too large
+        even between gaps excludes the flight outright.
 \end{description}
-The exclusion is the further flight-level cut promised in Sec.~\ref{sec:flightfilter}, and
-Figure~\ref{fig:gaps} makes its retained fraction auditable in the same way as the duration
-and path-length cuts \impldetails{impl:uniform}. One caveat carries
+The gap bound is the further flight-level control promised in Sec.~\ref{sec:flightfilter};
+Figure~\ref{fig:gaps} makes the fraction of flights it leaves whole auditable in the same way
+as the duration and path-length cuts \impldetails{impl:uniform}. One caveat carries
 downstream: a few observables are intrinsically $\Delta t$-dependent (a finite-difference
 velocity, a turning angle), so where they are compared across flights the ensemble is
 stratified by rate or restricted to the dominant one, rather than pretending a single

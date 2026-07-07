@@ -56,7 +56,7 @@ Order and rationale: thesis §4.1. Steps (i)–(iv) act on **raw geographic** co
 | 0 | Ingest catalogs, add `source`, coarse pre-filter (no track ⇒ skip) | catalog | candidate flight list | `acquisition.ffvl.catalog` | §3 |
 | 1 | Parse IGC `B`/`H` records | `.igc` | fixes `[t,lat,lon,valid,baro_alt,gnss_alt]` | `analysis.igc.parse_igc` | §3, §4.1 |
 | i | Choose altitude channel per flight | fixes | `alt_source ∈ {baro,gnss}` + chosen `alt` | *(to build)* | §4.1.1 |
-| ii | Fix-level cleaning (dynamics plausibility) | raw geo | cleaned fixes | `FixLevelThresholds` ← YAML; `fix_level_distributions` | §4.1.2 |
+| ii | Fix-level cleaning: absolute bounds + robust local test + structural rules | raw geo | cleaned fixes | `FixLevelThresholds` ← YAML; `fix_level_distributions` | §4.1.2 |
 | iii | Trim ground phases (`v_xy` sustained) | raw geo | airborne segment | `TrimmingThresholds` ← YAML | §4.1.3 |
 | iv | Flight-level filtering (duration + path length) | parsed tracks | keep/drop + reason | `FlightLevelThresholds` ← YAML, `scan_tracks` | §4.1.4 |
 | v | Geographic → ECEF → ENU (origin = take-off) | geo | `E,N,U` | *(to build; formula in thesis)* | §4.1.5 |
@@ -73,22 +73,33 @@ Key mechanics that reconcile the blueprint with the repo:
 - **ENU (v).** Origin at the take-off fix; `E,N` zeroed there; **`U` is not re-zeroed**
   (absolute barometric altitude retained; the take-off height `U_origin` is stored in
   `flights_meta`). (Thesis §4.1.5, Notation.)
-- **Fix-level cleaning (ii).** Bounds on per-fix `v_xy`, `|v_z|` and barometric altitude
-  (Table 4.1). Placed data-driven: each sits in the implausible tail of its **per-fix**
-  distribution and removes a negligible fraction of *fixes* — audited by
-  `make_fixlevel_diagnostics_figure` on a seeded per-fix sample (`fix_level_distributions`),
-  the fix-level analogue of the flight-level figure. What matters is the fraction of *fixes*
-  removed, not of flights touched. No absolute inter-fix time-gap bound here — gaps are
-  handled once at step (vi). (Thesis §4.1.2.)
+- **Fix-level cleaning (ii).** Three detectors, by how much context each needs (Table 4.1).
+  *Absolute bounds* on per-fix `v_xy`, `|v_z|`, barometric altitude (`FixLevelThresholds` ←
+  YAML): the context-free floor, each placed in the implausible tail of its **per-fix**
+  distribution (audited by `make_fixlevel_diagnostics_figure` on a seeded sample,
+  `fix_level_distributions`; what matters is the fraction of *fixes* removed, not of flights
+  touched). *Robust local-outlier test* (Hampel: median/MAD over a ±`w`-second window; flag
+  when residual > `k`·σ and > `ε_min`): catches locally-anomalous spikes the absolute bound
+  passes; runs per channel, so a vertical spike drops altitude only. *Structural rules*:
+  duplicate timestamp → centroid; non-wrap backward time → delete; frozen-lock run (`≥M`
+  fixes, pairwise move < `ε`, clock advancing) → mark as gap, split at step (vi). **Removal
+  semantics:** position/time defect → delete node (gap bridged at vi); altitude defect →
+  invalidate the altitude channel only (horizontal position kept). A **flight-level integrity
+  gate** drops any flight that cleaning had to rebuild past a small fraction `f`. New config
+  keys (`w, k, ε_min, ε, τ_freeze, f`) join `fix_level` in the YAML when built. No inter-fix
+  time-gap bound here — gaps handled once at (vi). (Thesis §4.1.2.)
 - **Flight-level cuts (iv).** Duration ≥ 40 min and flown **path length** ≥ 30 km, both
   computed from the track. Path length = sum of great-circle steps (not extent/displacement);
   30 km is a *minimal* cut (a real XC flies far more). A minimum-fix-count cut is dropped as
   redundant with the duration cut. (Thesis §4.1.4.)
 - **Uniform Δt (vi).** Native `Δt` per flight (no common cadence). Uniform ⇒ use as is;
-  mildly irregular ⇒ resample onto the native grid across small gaps; badly sampled ⇒
-  **exclude**. Thresholds `max_gap_factor`, `max_missing_fraction` (in the YAML), made
-  auditable by `make_gap_diagnostics_figure`. This is the *only* gap handling — the gap is
-  relative to each flight's own native cadence, so no second absolute bound is needed.
+  mildly irregular ⇒ resample onto the native grid across small gaps; a gap past
+  `max_gap_factor` (native or opened by an excised frozen-lock run, step ii) ⇒ **split** the
+  flight at the gap into independently analysed segments (not bridged: interpolating a long
+  hole fabricates motion); a `missing_fraction` too large even between gaps ⇒ **exclude**.
+  Thresholds `max_gap_factor`, `max_missing_fraction` (in the YAML), audited by
+  `make_gap_diagnostics_figure`. This is the *only* gap handling — the gap is relative to each
+  flight's own native cadence, so no second absolute bound is needed.
 - **Savitzky–Golay (vii).** Two hyperparameters: `window_length` (odd) and `polyorder`.
   Set by the noise-matched procedure of thesis §4.1.7 (PSD knee `f_c` → smoothing scale
   `τ_c` → `window = odd(τ_c/Δt)` per flight; `polyorder` fixed at 3; horizontal and
@@ -174,9 +185,14 @@ Handle at ingestion (empirically observed on the real files):
 - The Savitzky–Golay `τ_c` (horizontal/vertical) are **placeholders** in
   `configs/preprocessing.yaml` → finalize from the real PSD study on `E,N,U`.
   (`polyorder`, the filtering and trimming cuts are set.)
-- The `sampling` cuts (`max_gap_factor`/`max_missing_fraction`) and the fix-level bounds
-  (Table 4.1) are set and now **audited** on the real data (`make_gap_diagnostics_figure`,
+- The `sampling` cuts (`max_gap_factor`/`max_missing_fraction`) and the fix-level **absolute
+  bounds** (Table 4.1) are set and **audited** on the real data (`make_gap_diagnostics_figure`,
   thesis §4.1.6; `make_fixlevel_diagnostics_figure`, §4.1.2). Revisit only if a future
   source's distributions place a cut outside its implausible tail.
+- The fix-level **robust-outlier** (`w, k, ε_min`) and **frozen-lock** (`ε, τ_freeze`)
+  parameters, plus the integrity fraction `f`, are designed but not yet set or audited →
+  calibrate via the injected-defect + downstream-invariance tests (thesis §4.1.2) once the
+  cleaning routine is built. These are false-*negative* / bias checks; the removed-fraction
+  audit above only bounds false positives.
 - Actual `flight_id` cross-source intersection check → confirms the `(source, flight_id)` key.
 - Sailplane catalog schema → document as above once the source is in hand.
