@@ -200,7 +200,7 @@ both altitude channels. The pipeline then proceeds in a fixed order:
 The output is a tidy, analysis-ready representation in a growing
 \texttt{soaring.analysis} sub-package.
 
-The ordering follows one rule: work in the frame that makes each step exact and cheap.
+The ordering is chosen so that each step runs in the frame where it is exact and cheap.
 Steps~(i)--(iv) act on the \emph{raw geographic} coordinates, since the only geometric
 quantities they need -- inter-fix speed and spatial extent -- follow from the great-circle
 (haversine) distance between fixes, with no coordinate conversion. The conversion~(v) to the
@@ -269,10 +269,10 @@ of the points re-examined here.
   disciplines (whose spectra coincide), with a shaded \numrange{10}{90} percentile band
   across flights. The median lines nearly coincide: for the \emph{typical} flight the two
   channels are comparable at high frequency, both near the floor set by the shared
-  metre-resolution logging. The \emph{bands} carry the real story -- the barometric band
-  stays tight (uniformly clean), whereas the GNSS band fans out by one to two orders of
+  metre-resolution logging. The relevant difference is in the \emph{bands}: the barometric
+  band stays tight (uniformly clean), whereas the GNSS band fans out by one to two orders of
   magnitude towards Nyquist, driven by a minority of flights with heavy multipath noise. The
-  median, not the mean, precisely because these per-flight spectra are heavy-tailed and a
+  median is used rather than the mean because these per-flight spectra are heavy-tailed and a
   mean is dominated by that noisy minority (Sec.~\ref{impl:altchannel}). The dotted line is
   the Nyquist frequency $f_{\mathrm{Nyq}}=1/(2\Delta t)$. (d)~Fraction of flights whose
   barometric channel is absent, per discipline. \impldetails{impl:altchannel}}
@@ -307,8 +307,8 @@ scan directly, through generated macros; the archive keeps growing by a trickle,
 can trail the live download totals of Sec.~\ref{sec:coverage} slightly until the scan is
 refreshed.)
 
-\paragraph{Is a mixed dataset a problem?}
-Not much, for two reasons. The \emph{horizontal}
+\paragraph{Mixed altitude sources.}
+The mix is acceptable, for two reasons. The \emph{horizontal}
 transport analysis -- the primary result (MSD and its scaling) -- does not use the altitude at
 all, so every flight is usable there regardless of channel. Altitude enters only the vertical
 velocity, hence the segmentation and the phase-resolved observables; there the two source
@@ -339,37 +339,35 @@ the farthest a fix gets from take-off. The spherical approximation is ample here
 ellipsoidal correction to an inter-fix distance is $\lesssim\SI{0.3}{\percent}$, far below the
 GPS noise -- and it avoids converting coordinates before the trajectory has been cleaned.
 
-\paragraph{One rule: clean without biasing the transport.}
-Individual fixes that are corrupt or physically impossible must be removed without
-discarding the flight around them. But every fix removed or altered is an intervention on
-the trajectory whose statistics the analysis is about to measure, and an over-eager cleaning
-biases the result as surely as dirty data does. The design rests on a single rule: assume as
-little as possible about the motion. The only assumption used is smoothness at the scale of
-the sampling -- an aircraft cannot jump between fixes a few seconds apart -- never a model of
-the transport itself. A model-based smoother would reject
-outliers more aggressively, but at an unacceptable price: fitting a constant-velocity or
-diffusive model to the track would write the behaviour under study into the cleaned data.
+\paragraph{Design principle.}
+Corrupt or physically impossible fixes must be removed without discarding the flight around
+them. At the same time, every removed or altered fix modifies the trajectory whose
+statistics are about to be measured, and an over-aggressive cleaning biases the result as
+much as dirty data would. The cleaning therefore assumes as little as possible about the
+motion: only smoothness at the sampling scale (an aircraft cannot jump between fixes a few
+seconds apart), never a model of the transport itself. A model-based smoother would reject
+outliers more effectively, but fitting a constant-velocity or diffusive model to the track
+would imprint the behaviour under study onto the cleaned data.
 
-The two errors this rule guards against are not symmetric, and the cleaning is deliberately
-asymmetric in response. The slow, localized phases of a flight -- search and climb -- are
-precisely the \emph{waiting times} of the transport model (Ch.~\ref{ch:next-steps}), and their
-durations populate the tail of $\psi(\tau)$ where the anomalous exponent is decided. Leaving a
-spurious fix in a slow phase has a \emph{bounded}, recoverable effect: to survive the tests
-below it must sit within tens of metres of the true track (at most the speed bound times the
-native step, $\approx\SI{45}{\metre}$ at \SI{1}{\hertz}, and typically within the outlier
-floor $\varepsilon_{\min}\approx\SI{15}{\metre}$), and the smoother absorbs that. Whereas
-\emph{removing} a genuine slow-phase fix has no such bound: it erases a real trapping event
-and biases that tail irreversibly.
+The two possible errors have different costs, and the cleaning treats them asymmetrically.
+The slow, localized phases of a flight (search and climb) correspond to the \emph{waiting
+times} of the transport model (Ch.~\ref{ch:next-steps}), and their durations populate the
+tail of $\psi(\tau)$, where the anomalous exponent is determined. A spurious fix left in a
+slow phase has a bounded effect: to survive the tests below it must lie within tens of
+metres of the true track (at most the speed bound times the native step,
+$\approx\SI{45}{\metre}$ at \SI{1}{\hertz}, and typically within the outlier floor
+$\varepsilon_{\min}\approx\SI{15}{\metre}$), a displacement the smoothing absorbs. Removing
+a genuine slow-phase fix, by contrast, erases a real trapping event, and nothing downstream
+can restore it.
 
-The cleaning therefore defaults to \emph{keep}: a fix is removed only on positive, corroborated evidence of a defect, never on
-suspicion, and no detector may delete a fix that still carries a usable horizontal position
-(it may at most mark a channel missing, to be restored downstream). This is what lets the
-procedure strip the plainly broken without ever eating a search or climb fix.
+The cleaning therefore defaults to keeping the data: a fix is removed only on positive
+evidence of a defect, and no detector deletes a fix that still carries a usable horizontal
+position (at most, a corrupt channel is marked missing and restored downstream).
 
-\paragraph{Three kinds of defect, three tests.}
-Past the format-validity check already made at decode time (Sec.~\ref{sec:igcformat}), which
-rejects any record that is not a legal encoding, a surviving fix can still be wrong in one of
-three ways, each caught differently (Table~\ref{tab:cleaning}). A fix \emph{off the trend} --
+\paragraph{Three classes of defect.}
+Past the format-validity check made at decode time (Sec.~\ref{sec:igcformat}), which
+rejects any record that is not a legal encoding, a surviving fix can still be wrong in one
+of three ways, summarized in Table~\ref{tab:cleaning}. A fix \emph{off the trend} --
 a GPS position spike, or a jump out and back within one step -- is found by a robust
 local-outlier test -- the \emph{Hampel identifier}~\cite{hampel1974}: its residual $r_k$ from a
 median estimate built on the fixes around it
@@ -395,31 +393,28 @@ bounds are thresholded on the data; the detectors themselves are designed but th
 that walks a trajectory applying them is still to be built -- Sec.~\ref{impl:fixlevel}
 tracks this precisely.)
 
-\paragraph{Which fix is removed, and what happens to it.}
-This is where a raw speed bound falls short: a speed belongs to the segment \emph{between}
-two fixes and cannot say which endpoint is at fault. The local-outlier test settles it by
-asking, of each fix alone, whether it strays from what its neighbours predict, so the culprit
-is named directly -- a lone spike is removed without dragging a good neighbour with it, and a
-short burst is taken out as one block, the smallest whose removal restores the trend. What
-follows depends on the fault. A corrupt \emph{position or time} deletes the fix as a node --
-it is removed, \emph{not} overwritten with the local median: detection is the outlier test's
-only job, and reconstruction is left to the single resampling step, so the two never mix. It
-leaves the sequence, its neighbours close up, and the small gap is bridged later, at
-resampling (Sec.~\ref{sec:uniform}). A corrupt \emph{altitude} keeps the position and time and marks
-only the altitude missing; since the horizontal analysis -- the primary result -- never uses
-altitude, clearing a barometric spike costs it nothing (Sec.~\ref{sec:altchannel}).
+\paragraph{Removal policy.}
+A speed bound alone cannot attribute a defect: the speed belongs to the segment
+\emph{between} two fixes and does not identify which endpoint is wrong. The local-outlier
+test resolves the attribution, because the residual is a property of a single fix; an
+isolated spike is removed without touching its neighbours, and a short burst is removed as
+one block, the smallest whose removal restores the trend. The action then depends on the
+channel affected. A corrupt \emph{position or time} deletes the fix entirely; the value is
+not replaced with the local median, because all reconstruction is deferred to the single
+resampling step (Sec.~\ref{sec:uniform}), which bridges the resulting short gap. A corrupt
+\emph{altitude} keeps position and time and marks only the altitude as missing; the
+horizontal analysis, which is the primary result, does not use the altitude, so dropping a
+barometric spike costs it nothing (Sec.~\ref{sec:altchannel}).
 
-\paragraph{The frozen-lock case, and why it never catches a climb.}
-One structural defect strikes the observable itself. When the GNSS loses lock, many loggers
-repeat the last position for tens of seconds while the clock runs on: horizontal speed zero,
-altitude in range, timestamps valid, every bound above satisfied. Read into the flight as a
-long \emph{waiting time} such a run would plant a false trapping event in the tail of
-$\psi(\tau)$, where the anomalous exponent is most fragile; but here the \emph{opposite} error
-is the one to fear, because a tight thermalling climb is also slow and localized, and wrongly
-splitting it would \emph{destroy} a real trapping event. The detector is therefore built to
-fire only on positive, corroborated evidence of a lost lock and to keep the data otherwise.
-Three independent signatures separate a true freeze from a real climb; how they combine, and
-which may overrule which, is fixed by Eq.~\eqref{eq:frozenlock} below:
+\paragraph{Frozen-position runs (GNSS lock loss).}
+When the receiver loses its GNSS lock, many loggers repeat the last position for tens of
+seconds while the clock keeps running. Such a run passes every test above: horizontal speed
+zero, altitude in range, valid timestamps. If kept, it enters the analysis as a long
+\emph{waiting time} and contaminates the tail of $\psi(\tau)$; if the detector is too
+aggressive, however, it splits tight thermalling climbs, which are also slow and localized,
+and destroys real trapping events. The second error is the more damaging of the two, so a
+run is cut only when three independent signatures agree, combined as in
+Eq.~\eqref{eq:frozenlock} below:
 \begin{enumerate}[label=(\roman*)]
   \item \emph{Spatial extent, not step.} A lost lock collapses the whole run into the logger's
         quantization: \emph{every} fix of the run lies within $\varepsilon$ (a few times the
@@ -437,8 +432,8 @@ which may overrule which, is fixed by Eq.~\eqref{eq:frozenlock} below:
         is still changing at a plausible rate is a (tight) climb, and is \emph{kept} --
         unless its coordinates repeat byte-identically, the one signature allowed to
         overrule this witness~(iii).
-  \item \emph{The recorder's own declarations -- ranked.} Two signatures self-declare a
-        defect, and they are not equal. A \emph{byte-identical} repeat of the coordinates is
+  \item \emph{Recorder declarations.} Two signatures declare a defect directly, and they
+        carry different weight. A \emph{byte-identical} repeat of the coordinates is
         conclusive on its own: no moving receiver rewrites the very same bits, so the
         positions are invented whatever the barometer says. The \texttt{V} flag and the
         zeroed GNSS altitude are weaker: they certify a degraded \emph{GNSS altitude}, not a
@@ -446,8 +441,8 @@ which may overrule which, is fixed by Eq.~\eqref{eq:frozenlock} below:
         (Sec.~\ref{sec:igcformat}) -- so they decide only where no barometric witness
         exists, i.e.\ on a GNSS-fallback flight.
 \end{enumerate}
-The rule, in one line: a run is read as a loss of signal only when it is spatially
-collapsed, \emph{witnessed}, and long enough,
+A run is classified as a loss of signal only when it is spatially collapsed,
+\emph{witnessed}, and sufficiently long,
 \begin{equation}
 \label{eq:frozenlock}
 \begin{gathered}
@@ -467,30 +462,30 @@ collapsed, \emph{witnessed}, and long enough,
 \end{gathered}
 \end{equation}
 The run is then marked as a gap and the trajectory is \emph{split} there rather than
-interpolated across, inventing no motion over an interval whose true path is unknown
-(Sec.~\ref{sec:uniform}). The witness $W$ is \emph{ranked}, and the ranking is the point: on
-a barometric flight no declaration may overrule a live barometer -- a \texttt{V} flag
-certifies the GNSS altitude, not the horizontal fix (Sec.~\ref{sec:igcformat}) -- and the
-single exception is the byte-identical repeat, conclusive by itself. Such a run is cut even
-while the barometric altitude climbs -- a freeze that happened \emph{during} a climb --
-because the positions are invented even where the height gain is real, and splitting there
-loses only the wind drift the receiver never recorded.
+interpolated across (Sec.~\ref{sec:uniform}), so that no motion is invented over an
+interval whose true path is unknown. The witness $W$ is hierarchical. On a barometric
+flight no declaration can overrule a climbing barometer, because a \texttt{V} flag
+certifies the GNSS altitude and not the horizontal fix (Sec.~\ref{sec:igcformat}); the one
+exception is the byte-identical repeat, which is conclusive on its own. Coordinates
+repeated bit for bit are invented positions even when the height gain is real, so such a
+run is cut even while the barometric altitude climbs, and only the wind drift the receiver
+never recorded is lost.
 
-The guarantee is checkable on the numbers. A real thermalling climb fails the cut on two
-\emph{independent} instruments at once: its circle spans $2R\approx\SIrange{40}{100}{\metre}$
-against $\varepsilon\approx\SIrange{10}{15}{\metre}$, so test~(i) misses by a factor of
-$3$--$10$; and a climb of order \SI{1}{\metre\per\second} sustained over
+Quantitatively, a real thermalling climb fails the cut on two independent instruments at
+once: its circle spans $2R\approx\SIrange{40}{100}{\metre}$ against
+$\varepsilon\approx\SIrange{10}{15}{\metre}$, so test~(i) misses by a factor of $3$--$10$;
+and a climb of order \SI{1}{\metre\per\second} sustained over
 $\tau_{\mathrm{freeze}}\gtrsim\SIrange{60}{90}{\second}$ moves the barometer by
-$\gtrsim\SI{60}{\metre}$ against a flatness tolerance $\delta_z$ of a few metres, so the
-witness misses by an order of magnitude. Cutting a genuine climb on a barometric flight
-therefore requires two independent order-of-magnitude failures at once -- or coordinates
-repeated bit-for-bit, which no moving receiver writes.
+$\gtrsim\SI{60}{\metre}$ against a flatness tolerance $\delta_z$ of a few metres. Cutting a
+genuine climb on a barometric flight therefore requires two simultaneous
+order-of-magnitude failures, or coordinates repeated bit for bit, which no moving receiver
+writes.
 
-The guarantee rests on one stated assumption, a functioning barometric witness, and
-degrades gracefully where that witness is absent: on the GNSS-fallback minority (Sec.~\ref{sec:altchannel}) the declared signatures
+The rule assumes a functioning barometric channel, and
+degrades where that channel is absent: on the GNSS-fallback minority (Sec.~\ref{sec:altchannel}) the declared signatures
 decide, and both residual corner cases are confined there -- a sub-$\varepsilon$ circling
 climb carrying a \texttt{V} flag (cut wrongly) and an undeclared, jittering freeze (kept
-wrongly), each a near-empty set in which the default to keep errs toward preserving real
+wrongly), each a near-empty set in which the default to keep favours preserving real
 dynamics. One benign miss remains on barometric flights: a freeze whose repeats are jittered
 rather than byte-identical under a climbing barometer is kept -- at bounded cost, since
 within a sub-$\varepsilon$ run the true position is nearly stationary, and only the
@@ -505,8 +500,8 @@ unrecorded wind drift is lost.
 \textbf{Defect} & \textbf{Detected by} & \textbf{Action} \\
 \midrule
 \addlinespace[2pt]
-\multicolumn{3}{@{}p{12.6cm}}{\textbf{Off the trend} --- \emph{the horizontal position itself
-  is corrupt, so the node is gone}}\\
+\multicolumn{3}{@{}p{12.6cm}}{\textbf{Off the trend} --- \emph{the horizontal position
+  itself is corrupt}}\\
 \addlinespace[3pt]
 Position spike, out-and-back jump
   & robust local-outlier test (Hampel identifier~\cite{hampel1974}), \emph{corroborated by} an
@@ -532,10 +527,10 @@ Missing / out-of-band altitude, or $|v_z|$ spike
   & drop the altitude only; the fix stays \\
 \addlinespace[6pt]
 \midrule
-\multicolumn{3}{@{}p{12.6cm}@{}}{\footnotesize\textbf{One invariant across every row:} a usable
-  horizontal position is never discarded. A fix is deleted only when its \emph{own} position is
-  corrupt or invented (frozen lock); when merely a sensor value is wrong the fix survives and
-  that channel is marked missing, to be restored at resampling (Sec.~\ref{sec:uniform}).}\\
+\multicolumn{3}{@{}p{12.6cm}@{}}{\footnotesize\textbf{Invariant:} a usable horizontal
+  position is never discarded. A fix is deleted only when its \emph{own} position is corrupt
+  or invented (frozen lock); when only a sensor value is wrong, the fix is kept and that
+  channel is marked missing, to be restored at resampling (Sec.~\ref{sec:uniform}).}\\
 \bottomrule
 \end{tabular}
 \caption{Fix-level cleaning, grouped by how each defect presents; the three groups map onto
@@ -583,14 +578,14 @@ $\SI{-100}{\metre}$, not $0$, because the un-QNH-corrected barometric offset
   \label{fig:fixlevel}
 \end{figure}
 
-\paragraph{The validity flag needs no rule of its own.}
+\paragraph{The IGC validity flag.}
 The IGC validity flag (\texttt{A}/\texttt{V}) certifies the GNSS altitude only, so its effect
 is already covered by the missing-altitude rule on the adopted channel. A \texttt{V} fix
 keeps a valid position and, where present, a valid barometric altitude
 (Sec.~\ref{sec:igcformat}): on a barometric flight it is kept, on a GNSS-fallback flight it
 has no usable altitude and drops out as missing. Neither case needs handling of its own.
 
-\paragraph{Every fix keeps a full $(x,y,z)$ -- eventually.}
+\paragraph{Completeness of the resampled trajectory.}
 The segmentation (Ch.~\ref{ch:next-steps}) needs a defined horizontal position \emph{and}
 altitude at every time, since the vertical velocity is its discriminant. Cleaning does not
 guarantee this fix by fix -- it may delete a node (a corrupt position) or mark a channel
@@ -603,7 +598,7 @@ flag, and the missing-altitude rule it feeds, need no repair of their own here: 
 altitude is not a lost altitude but a \emph{deferred} one, reconstructed downstream where a
 single, audited interpolation does all the filling.
 
-\paragraph{A flight-level backstop.}
+\paragraph{Flight-level integrity gate.}
 Cleaning acts fix by fix, but it also keeps count of how much it had to do. If it has removed
 or reconstructed more than a small fraction of a flight's fixes, the flight is no longer being
 cleaned but rebuilt, and it is dropped whole -- the cleaning counterpart of the
@@ -729,7 +724,7 @@ Z &= \big(N(1-e^2)+h\big)\sin\varphi,
 where $N(\varphi)$ is the prime-vertical radius of curvature and $h$ the ellipsoidal height,
 measured along the ellipsoid normal.
 
-\paragraph{The latitude is geodetic, not geocentric.} The latitude $\varphi$
+\paragraph{Geodetic versus geocentric latitude.} The latitude $\varphi$
 in~\eqref{eq:ecef} is the \emph{geodetic} latitude --
 the angle between the equatorial plane and the ellipsoid \emph{normal} at the point
 (Figure~\ref{fig:ellipsoid}), \emph{not} the geocentric latitude $\psi$, which is the angle to
@@ -1068,7 +1063,7 @@ Per flight, let $\Delta t$ be the median inter-fix interval. Three cases arise:
         above \SI{10}{\percent} even between gaps excludes the flight outright.
 \end{description}
 
-\paragraph{What is interpolated, and how.}
+\paragraph{Interpolation across short gaps.}
 The fill is done per channel on the uniform grid. The horizontal position, which the transport
 analysis measures directly, is interpolated shape-preservingly (a monotone piecewise-cubic)
 and only ever across the short gaps a split has left behind; the barometric altitude, a smooth,

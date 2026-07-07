@@ -110,8 +110,7 @@ uniformly-clean barometric channel (Sec.~\ref{sec:altchannel}).
 \paragraph{Fallback-rate census (panel d).} A full census, not a sample: the same full
 parse of every track is needed anyway for the flight-level filtering diagnostics of
 Sec.~\ref{impl:flightfilter} (Figure~\ref{fig:preproc}), so the barometric-presence
-fraction is read off that one scan rather than measured separately -- exactness is a
-byproduct, not extra work. (A sized random sample -- the standard proportion formula
+fraction is read off that one scan rather than measured separately, at no extra cost. (A sized random sample -- the standard proportion formula
 $n=z^2p(1-p)/e^2$ -- would be the right tool if a full census were not already being
 paid for elsewhere; it is not needed here.)
 
@@ -163,8 +162,8 @@ Three points earn the test its place over the bare speed bound:
         the test would chase GPS noise where there is no outlier.
   \item \emph{It is local, and locality buys attribution.} A speed belongs to the segment
         \emph{between} two fixes and cannot say which endpoint is at fault, whereas the
-        residual belongs to one fix: when the absolute bound does fire, the identifier
-        names the culprit, and a burst is removed as one block -- a short burst of
+        residual belongs to one fix: when the absolute bound fires, the identifier
+        attributes the defect to a single fix, and a burst is removed as one block -- a short burst of
         consecutive spikes inflates the windowed MAD only mildly, so it is still flagged,
         and is removed as the block whose bracketing neighbours rejoin within scale.
   \item \emph{It does not clip real manoeuvres.} A genuine sharp turn is drawn by
@@ -182,7 +181,7 @@ horizontal position and, independently, on the adopted altitude channel, so a ve
 spike invalidates the altitude alone and the horizontal position stays (the channel
 decoupling of Sec.~\ref{sec:fixlevel}).
 
-\paragraph{From flag to action: detect here, reconstruct later.} The identifier only
+\paragraph{From flag to action.} The identifier only
 \emph{flags}; it never repairs. A flagged horizontal fix is \emph{deleted} as a node -- not
 overwritten with the local median -- so that all reconstruction is done by the single
 resampling step (Sec.~\ref{impl:uniform}), under one policy and one accounting, rather than by
@@ -191,7 +190,7 @@ the \emph{Hampel identifier}~\cite{hampel1974}, the detection half of the eponym
 the median-substituting filter itself: the local median/Theil--Sen enters only as the reference
 for the residual $r_k$, never as an output value.
 
-Deletion is gated twice: a fix is removed only when it is flagged \emph{and} corroborated
+Deletion requires two conditions: the fix must be flagged \emph{and} corroborated
 as physically impossible -- its implied in-and-out speed exceeding the absolute $v_{xy}$
 bound -- so that the one benign false positive, a genuine under-sampled tight turn (whose
 flagged fix still moves at ordinary flying speed), is flagged but \emph{kept}. The gate
@@ -204,8 +203,8 @@ argument that shapes the whole step.
 A flagged \emph{altitude} is treated more permissively, marked missing on the flag alone,
 because a dropped altitude is not a deletion but a deferral: it is restored by the
 single audited interpolation at resampling, so the stakes are far lower than for a position
-node. This is the fix-level face of the \emph{default to keep}
-rule of Sec.~\ref{sec:fixlevel}: removal needs positive, corroborated evidence.
+node. This is the same \emph{default to keep}
+rule of Sec.~\ref{sec:fixlevel}: removal requires positive, corroborated evidence.
 
 \paragraph{Frozen-lock detection (on-the-trend).} A run is a lost-lock episode only under the
 rule of Eq.~\eqref{eq:frozenlock} -- spatially collapsed, \emph{and} witnessed (barometrically
@@ -224,7 +223,7 @@ enough -- and the pass defaults to keeping the data otherwise.
         climb gains tens of metres in that time on a sensor independent of the GNSS, so a
         horizontally-still run whose baro altitude is still climbing is a tight climb and
         is kept.
-  \item \emph{Corroboration, ranked.} Of the declared signatures, only the
+  \item \emph{Corroboration.} Of the declared signatures, only the
         \emph{byte-identical} repeat may override the witness -- a run of byte-identical
         coordinates under a climbing barometric altitude is a freeze that happened
         \emph{during} a climb (no real circling wing rewrites the same coordinates), and
@@ -251,8 +250,8 @@ monotone clock: it unwraps the UTC-midnight roll-over (a drop of $\sim$\SI{86400
 advances the day count) and clamps residual backward jitter with a running maximum
 (Sec.~\ref{impl:igcformat}). The redesign changes one behaviour: a backward step that is
 \emph{not} a roll-over is no longer silently clamped but removed -- the fix with the corrupt
-time is deleted as a node, just as a fix with a corrupt position is. A falsified timestamp is
-a defect to record, not a repair to hide. This requires moving the clamp out of the parser:
+time is deleted as a node, just as a fix with a corrupt position is. A corrupted timestamp
+is recorded as a defect rather than silently repaired. This requires moving the clamp out of the parser:
 \path{parse_igc} keeps the roll-over unwrap (a format concern, needing the raw time of day)
 but stops flattening backward jitter with the running maximum -- flattened, the evidence the
 cleaning must act on no longer exists downstream.
@@ -300,7 +299,7 @@ partly fill the gaps once cadences are pooled: among \SI{1}{\second}-native fixe
 99\%\ land within \SI{0.05}{\metre\per\second} of an integer, against only 34--42\%\ at every
 other cadence.)
 
-\paragraph{Order, and a single pass.} The detectors run in a fixed order:
+\paragraph{Detector order and complexity.} The detectors run in a fixed order:
 \begin{enumerate}[label=(\arabic*), itemsep=0pt, topsep=3pt]
   \item format validity, at decode time (Sec.~\ref{impl:igcformat});
   \item time defects: backward steps, then duplicates;
