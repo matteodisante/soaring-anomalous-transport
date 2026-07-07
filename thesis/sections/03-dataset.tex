@@ -712,8 +712,9 @@ The cleaned, trimmed track is next mapped from geographic to local Cartesian coo
 the two remaining steps -- resampling and smoothing -- are naturally metric and run on the
 result. Latitudes and longitudes are angles on a curved
 surface and cannot be differenced directly to obtain distances; the mapping proceeds in two
-steps, following the convention of Vilpellet et al. First, each fix is converted to
-Earth-Centred,
+steps, following the convention of Vilpellet et al.
+
+\paragraph{Step 1: geodetic to ECEF.} Each fix is converted to Earth-Centred,
 Earth-Fixed (ECEF) coordinates on the WGS84 ellipsoid (semi-major axis
 $a=\SI{6378137}{\metre}$, flattening $f=1/298.257223563$, $e^2=f(2-f)$)~\cite{nga_wgs84,esa_navipedia_ellipsoidal_cartesian},
 \begin{equation}
@@ -728,14 +729,16 @@ Z &= \big(N(1-e^2)+h\big)\sin\varphi,
 where $N(\varphi)$ is the prime-vertical radius of curvature and $h$ the ellipsoidal height,
 measured along the ellipsoid normal.
 
-A point of care: the latitude $\varphi$ in~\eqref{eq:ecef} is the \emph{geodetic} latitude --
+\paragraph{The latitude is geodetic, not geocentric.} The latitude $\varphi$
+in~\eqref{eq:ecef} is the \emph{geodetic} latitude --
 the angle between the equatorial plane and the ellipsoid \emph{normal} at the point
 (Figure~\ref{fig:ellipsoid}), \emph{not} the geocentric latitude $\psi$, which is the angle to
 the line from the Earth's centre $O$. On an ellipsoid the two differ, because the normal does
 not pass through $O$ (Figure~\ref{fig:ellipsoid}): the gap $\varphi-\psi$ reaches
 $\approx\!0.19^\circ$ (about $11'$) near $45^\circ$, which if the two were confused
-would misplace a fix by up to ${\sim}\SI{20}{\kilo\metre}$. We use the geodetic latitude
-throughout, and no conversion is needed: WGS84 -- hence the GPS receiver and the IGC
+would misplace a fix by up to ${\sim}\SI{20}{\kilo\metre}$.
+
+We use the geodetic latitude throughout, and no conversion is needed: WGS84 -- hence the GPS receiver and the IGC
 \texttt{B} records (Sec.~\ref{sec:igcformat}) -- reports geodetic latitude, and
 \eqref{eq:ecef} with $N(\varphi)$ is precisely the geodetic-to-ECEF transform
 that consumes it. The longitude $\lambda$ carries no such ambiguity: it is the same angle in
@@ -818,7 +821,7 @@ frame below.
   \label{fig:ellipsoid}
 \end{figure}
 
-Second, taking the first fix
+\paragraph{Step 2: ECEF to local ENU.} Taking the first fix
 $(\varphi_0,\lambda_0,h_0)$ of the flight -- the take-off fix, since the ground phase has
 already been trimmed -- as the origin, the ECEF displacement
 $\Delta\mathbf{X}=\mathbf{X}-\mathbf{X}_0$ is rotated into the local East--North--Up (ENU)
