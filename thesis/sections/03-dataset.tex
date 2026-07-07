@@ -142,7 +142,8 @@ reflecting the smaller active population of the discipline.
 
 In both disciplines the volume of flights grows by orders of magnitude over the period,
 reflecting the adoption of GPS loggers and online scoring: the early seasons contribute a
-handful of tracks each, while recent seasons contribute thousands.
+handful of tracks each, while recent seasons contribute thousands of tracks for
+paragliders and several hundred for hang gliders.
 
 \input{generated/seasons_table_para}
 \input{generated/seasons_table_hang}
@@ -281,9 +282,13 @@ Several practical points follow.
 
 \paragraph{Measuring the fallback rate.}
 Because it is a headline number, its precision is exact rather than estimated: both
-archives are now full-censused --
-\SI{17.5}{\percent} of \num{6716} hang-glider flights and \SI{30.1}{\percent} of
-\num{186025} paraglider flights carry no barometric channel \impldetails{impl:altchannel}.
+archives are full-censused --
+\StatScanHangNoBaroPct\,\% of the \num{\StatScanHangTracks} hang-glider and
+\StatScanParaNoBaroPct\,\% of the \num{\StatScanParaTracks} paraglider flights scanned
+carry no barometric channel \impldetails{impl:altchannel}. (The counts quote the census
+scan directly, through generated macros; the archive keeps growing by a trickle, so they
+can trail the live download totals of Sec.~\ref{sec:coverage} slightly until the scan is
+refreshed.)
 
 \paragraph{Is a mixed dataset a problem?}
 Not much, for two reasons. The \emph{horizontal}
@@ -345,13 +350,25 @@ Past the format-validity check already made at decode time (Sec.~\ref{sec:igcfor
 rejects any record that is not a legal encoding, a surviving fix can still be wrong in one of
 three ways, each caught differently (Table~\ref{tab:cleaning}). A fix \emph{off the trend} --
 a GPS position spike, or a jump out and back within one step -- is found by a robust
-local-outlier test: it is compared with a median estimate built from the fixes around it and
-flagged when it departs by more than a few robust standard deviations; an absolute speed
+local-outlier test: its residual $r_k$ from a median estimate built on the fixes around it
+is scaled by the robust local spread of those residuals, and the fix is flagged when
+\begin{equation}
+\label{eq:hampel}
+  r_k > \max\!\big(k\,\sigma_k,\ \varepsilon_{\min}\big),
+  \qquad \sigma_k = 1.4826\operatorname{MAD}_k,
+\end{equation}
+i.e.\ when it departs by more than $k$ robust standard deviations \emph{and} by more than
+an absolute floor $\varepsilon_{\min}$ of a few times the GPS noise (parameters and
+rationale in Sec.~\ref{impl:fixlevel}); an absolute speed
 bound stays underneath as a backstop. A fix \emph{on the trend} agrees with its
 neighbours yet is still wrong as a record -- a duplicated or backward timestamp, or a run of
 frozen positions from a lost GNSS lock; its residual is near zero, so it escapes
 the outlier test and needs a structural rule instead. A value \emph{out of range}, an
 impossible altitude or climb rate, is caught by an absolute bound that needs no context.
+(Status: the decode-time format check is implemented and unit-tested, and the absolute
+bounds are thresholded on the data; the detectors themselves are designed but the routine
+that walks a trajectory applying them is still to be built -- Sec.~\ref{impl:fixlevel}
+tracks this precisely.)
 
 \paragraph{Which fix is removed, and what happens to it.}
 This is where a raw speed bound falls short: a speed belongs to the segment \emph{between}
@@ -399,10 +416,25 @@ when they agree:
         displacement, not merely small). Both corroborate a freeze; neither occurs in real
         motion.
 \end{enumerate}
-Only a run that is spatially collapsed \emph{and} barometrically flat (or explicitly flagged),
-lasting at least $\tau_{\mathrm{freeze}}$, is read as a loss of signal: it is marked as a gap
+The rule, in one line: a run is read as a loss of signal only when
+\begin{equation}
+\label{eq:frozenlock}
+  \underbrace{\operatorname{diam}(\mathrm{run})<\varepsilon}_{\text{(i) collapsed}}
+  \;\wedge\;
+  \Big(\underbrace{|\Delta z_{\mathrm{baro}}|<\delta_z}_{\text{(ii) baro flat}}
+  \,\vee\,
+  \underbrace{\texttt{V}/\text{zero-alt}/\text{byte-identical}}_{\text{(iii) declared}}\Big)
+  \;\wedge\;
+  \underbrace{\Delta t_{\mathrm{run}}\geq\tau_{\mathrm{freeze}}}_{\text{duration}},
+\end{equation}
+i.e.\ spatially collapsed \emph{and} (barometrically flat \emph{or} explicitly declared),
+lasting at least $\tau_{\mathrm{freeze}}$: it is then marked as a gap
 and the trajectory is \emph{split} there rather than interpolated across, inventing no motion
-over an interval whose true path is unknown (Sec.~\ref{sec:uniform}). The sole residual blind
+over an interval whose true path is unknown (Sec.~\ref{sec:uniform}). One corner case falls
+out of~\eqref{eq:frozenlock} correctly: a run whose coordinates repeat \emph{byte-identically}
+while the barometric altitude climbs is cut, not kept -- no real circling wing rewrites the
+same coordinates, so the positions are invented even where the height gain is real, and
+splitting there loses only the wind drift the receiver never recorded. The sole residual blind
 spot -- a GNSS-fallback flight (no barometric witness) circling so tightly that its diameter
 drops below $\varepsilon$, and with no \texttt{V} flag -- is a near-empty set, and there the
 default to keep errs on the safe side, preserving a rare true freeze rather than risking a real
@@ -416,13 +448,13 @@ climb.
 Defect & Detected by & Action \\
 \midrule
 \multicolumn{3}{@{}l}{\itshape Off the trend -- corrupt position}\\[1pt]
-Position spike, out-and-back jump & robust local-outlier test; absolute $v_{xy}$ floor
+Position spike, out-and-back jump & robust local-outlier test; absolute $v_{xy}$ bound
   (\num{45}/\SI{55}{\metre\per\second}, para/hang) & delete fix, rejoin neighbours \\[3pt]
 \multicolumn{3}{@{}l}{\itshape On the trend -- structural}\\[1pt]
 Duplicate timestamp & two or more fixes in one UTC second & merge to one (centroid) \\
 Backward timestamp & time decreases, and not a midnight roll-over & delete fix \\
 Frozen-lock run & run extent $<\varepsilon$ \emph{and} baro.\ altitude flat (or \texttt{V}/zero-alt
-  flag), span $\ge\tau_{\mathrm{freeze}}$ & mark as gap, split there \\[3pt]
+  flag, byte-identical repeats), span $\ge\tau_{\mathrm{freeze}}$ & mark as gap, split there \\[3pt]
 \multicolumn{3}{@{}l}{\itshape Out of range -- corrupt altitude, position kept}\\[1pt]
 Missing altitude & adopted channel absent at the fix & drop altitude only \\
 Altitude out of band & outside $[-100,6000]\,\si{\metre}$ & drop altitude only \\
@@ -431,14 +463,15 @@ Vertical-speed spike & barometric $|v_z|>\SI{13}{\metre\per\second}$ & drop alti
 \end{tabular}
 \caption{Fix-level cleaning, grouped by how each defect presents. \emph{Off the trend}: an
 isolated fix its neighbours do not predict; the robust local-outlier test
-(Sec.~\ref{impl:fixlevel}) names it, and the absolute horizontal-speed floor is a
+(Sec.~\ref{impl:fixlevel}) names it, and the absolute horizontal-speed bound is a
 per-discipline backstop -- paragliders and hang gliders have different speed envelopes
 (Fig.~\ref{fig:fixlevel}), so one shared value would either clip the faster type or spare the
 slower one; a \texttt{sailplanes} entry follows once that source is in.
 \emph{On the trend}: defects consistent with the local motion, invisible to the outlier test,
 each with a structural rule; the frozen-lock run (its extent tolerance $\varepsilon$, minimum
 span $\tau_{\mathrm{freeze}}$ and independent barometric witness in Sec.~\ref{impl:fixlevel})
-must clear all three tests before it is cut, so a tight climb is never split, and is then
+must satisfy Eq.~\eqref{eq:frozenlock} -- collapsed, \emph{and} flat or declared, \emph{and}
+long enough -- before it is cut, so a tight climb is never split, and is then
 split, not bridged, so no motion is invented (Sec.~\ref{sec:uniform}). \emph{Out of range}: absolute sensor bounds on the adopted altitude
 channel (Sec.~\ref{sec:altchannel}); the lower bound is $\SI{-100}{\metre}$, not $0$, because
 the barometric channel is not QNH-corrected and its offset (Fig.~\ref{fig:altnoise}, of order
@@ -466,7 +499,7 @@ is a property of the sampling, handled once at the flight level (Sec.~\ref{sec:u
   on is visible. These are the \emph{context-free} cuts, the floor on the plainly impossible;
   the robust local-outlier and frozen-lock tests act on structure a marginal distribution
   cannot show and are validated separately (Sec.~\ref{impl:fixlevel}). Panel~(a) is why the
-  speed floor is per-discipline: hang gliders show a distinct, non-decaying plateau from about
+  speed bound is per-discipline: hang gliders show a distinct, non-decaying plateau from about
   \SIrange{55}{90}{\metre\per\second} on top of the steeply decaying real distribution -- a
   sustained \emph{ground} speed of \SIrange{200}{320}{\kilo\metre\per\hour} has no airborne
   explanation for a hang glider and reads as a logger artefact; the bound is placed where the
@@ -474,7 +507,10 @@ is a property of the sampling, handled once at the flight level (Sec.~\ref{sec:u
   can still be genuine rare dynamics. Paragliders show the same pattern lower down. Panel~(b)
   uses one bin per integer \si{\metre\per\second}: barometric altitude is logged to the metre,
   so a finite difference returns integer rates and a finer grid would alias them into a
-  spurious comb. Panel~(c) uses a narrower range, its cut sitting in an otherwise tight,
+  spurious comb; its \SI{13}{\metre\per\second} bound sits above the strongest thermals and
+  ordinary sink but below what a sustained spiral dive can reach, so the validation checks
+  that the fixes it cuts are isolated, not run-shaped (Sec.~\ref{impl:fixlevel}). Panel~(c)
+  uses a narrower range, its cut sitting in an otherwise tight,
   unimodal distribution. \impldetails{impl:fixlevel}}
   \label{fig:fixlevel}
 \end{figure}
@@ -523,11 +559,18 @@ the physics unchanged; one that has begun to bite into real dynamics does not
 The logger starts recording before take-off and stops after landing; these ground phases must
 be stripped before any kinematic analysis. Detection uses the \emph{horizontal} speed
 $v_{xy}$ alone (from~\eqref{eq:haversine}) -- the vertical speed plays no role here: the
-airborne segment begins when $v_{xy}$ rises above \SI{5}{\metre\per\second} and stays above it
-for at least \SI{30}{\second}, and ends symmetrically when it falls back below. The
+airborne segment begins at the \emph{first} time $v_{xy}$ rises above
+\SI{5}{\metre\per\second} and stays above it for at least \SI{30}{\second}, and ends where
+the \emph{last} such sustained-above stretch ends -- the same rule applied to the
+time-reversed track, \emph{not} a cut at the first sustained drop, which a slow soaring
+phase (ground speed near
+zero when hovering into wind) would otherwise trigger mid-flight. The
 sustained-speed requirement prevents a gust or a GPS glitch on the ground from being mistaken
-for take-off; both the threshold and the persistence affect what fraction of each trajectory is
-retained, so they are made explicit \impldetails{impl:trimming}.
+for take-off. One caveat is structural: the criterion is a \emph{ground} speed, so a slow
+phase adjacent to take-off or landing (a launch straight into ridge lift, say) can still be
+clipped; the trimmed fraction is recorded per flight so this failure mode is auditable
+rather than hidden. Both the threshold and the persistence affect what fraction of each
+trajectory is retained, so they are made explicit \impldetails{impl:trimming}.
 
 \subsection{Flight-level filtering}
 \label{sec:flightfilter}
@@ -559,9 +602,11 @@ strategy just described. Two track quantities gate a flight, plus a metadata str
         \emph{type} (paraglider vs hang glider) is already possible; the sailplane stratum
         follows once that source is in hand.
 \end{enumerate}
-A separate minimum-fix-count cut would be redundant: at $T\geq\SI{40}{\minute}$ even the
-slowest logger (\SI{5}{\second}) already records several hundred fixes, well above what the
-kinematics need. A further criterion -- sampling regularity -- is applied later, where a
+A separate minimum-fix-count cut would be redundant: at $T\geq\SI{40}{\minute}$ even a
+\SI{10}{\second} logger -- the slowest common hang-glider rate
+(Fig.~\ref{fig:sampling}) -- already records ${\sim}240$ fixes, ample for the kinematics;
+the thin tail of still slower loggers is handled by the $\Delta t$ stratification
+(Sec.~\ref{sec:uniform}), not by a fix-count cut. A further criterion -- sampling regularity -- is applied later, where a
 flight's time base is examined (Sec.~\ref{sec:uniform}) \impldetails{impl:flightfilter}.
 
 Figure~\ref{fig:preproc} shows, for every discipline and computed on the \emph{full} dataset
@@ -591,8 +636,9 @@ value; the diagnostics must be re-examined for the less curated further sources.
 
 \subsection{From geographic to local Cartesian coordinates}
 \label{sec:enu}
-As the final pre-processing step, the cleaned, trimmed and resampled track is mapped from
-geographic to local Cartesian coordinates. Latitudes and longitudes are angles on a curved
+The cleaned, trimmed track is next mapped from geographic to local Cartesian coordinates;
+the two remaining steps -- resampling and smoothing -- are naturally metric and run on the
+result. Latitudes and longitudes are angles on a curved
 surface and cannot be differenced directly to obtain distances; the mapping proceeds in two
 steps, following the convention of Vilpellet et al. First, each fix is converted to
 Earth-Centred,
@@ -917,8 +963,10 @@ $z\approx h-h_0$ -- exactly the quantity whose dynamics were argued above to be 
 \label{sec:uniform}
 The smoothing and differentiation below assume a \emph{uniform} sampling interval, so each
 surviving flight's time base is examined next. Loggers record at a fixed nominal rate --
-paragliders almost all at \SI{1}{\second}, hang gliders spread more widely across several
-rates up to \SI{10}{\second} (Fig.~\ref{fig:sampling}) -- but the realised series can carry jitter and
+paragliders mostly at \SI{1}{\second} (\StatScanParaDtOneSecPct\,\% of flights), hang
+gliders
+spread across several rates from \SIrange{1}{10}{\second} with a thin tail beyond
+(Fig.~\ref{fig:sampling}) -- but the realised series can carry jitter and
 drop-outs. We keep
 each flight at its \emph{native} rate rather
 than resampling to a common cadence: a common grid would either upsample slow loggers
@@ -1079,7 +1127,8 @@ property of the data rather than to a guess \impldetails{impl:savgol}.
 Throughout, $\mathbf{r}(t)=\big(x(t),y(t)\big)=\big(E(t),N(t)\big)$ denotes the
 \emph{horizontal} position in this local frame and $z(t)=U(t)$ the (barometric) altitude. By
 construction each trajectory starts at the horizontal origin, $\mathbf{r}(0)=\mathbf{0}$, with
-the clock reset to $t=0$ at take-off, so $t$ is the elapsed flight time. The vertical is
+the clock reset to $t=0$ at take-off, so $t$ is the elapsed flight time (a segment created by
+a split at a long gap, Sec.~\ref{sec:uniform}, keeps its parent flight's origin and clock). The vertical is
 \emph{not} re-zeroed: the take-off height is retained, so the analysis keeps both the
 increment that drives the dynamics (invariant to any offset) and the absolute altitude for
 interpretation (potential energy, convective-boundary-layer structure). The horizontal

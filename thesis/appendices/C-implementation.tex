@@ -48,6 +48,10 @@ Figure/Table & Script & Notes \\
 Stats macros; Tables~\ref{tab:seasons-para},~\ref{tab:seasons-hang} &
   \path{generate_stats.py} &
   Reads committed \path{data/*/seasons_index.csv}; instant; part of the pre-commit hook. \\
+Census macros (\texttt{\textbackslash StatScan\dots}) &
+  \path{generate_census_stats.py} &
+  Reads the cached track scans on the SSD (never rescans); instant; best-effort in the
+  pre-commit hook, so the committed macros refresh whenever the SSD is mounted. \\
 Figure~\ref{fig:altnoise} &
   \path{generate_altitude_noise_figure.py} &
   Needs the raw IGC archive (env.\ \path{SOARING_PARA_DATA_ROOT}/\path{SOARING_DELTA_DATA_ROOT}). \\

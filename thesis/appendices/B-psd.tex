@@ -30,7 +30,7 @@ stays large up to the Nyquist frequency).
 
 The naive estimator of $S(f)$ is the \textbf{periodogram}: take the discrete Fourier
 transform $\hat z(f)=\sum_n z_n\,e^{-2\pi i f n\Delta t}$ and form $|\hat z(f)|^2$
-(suitably normalised). It is unbiased but \emph{not consistent}: its variance does not
+(suitably normalised). It is asymptotically unbiased but \emph{not consistent}: its variance does not
 shrink as the record gets longer -- a longer signal gives more frequency points, each still
 as noisy as before. Plotted directly it is a spiky, unreadable curve, from which one cannot
 reliably compare two channels.

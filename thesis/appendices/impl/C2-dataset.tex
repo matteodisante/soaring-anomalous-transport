@@ -69,7 +69,8 @@ runs on every flight before the transform.
         ($\sim$\SI{4}{\minute} at $\Delta t=\SI{1}{\second}$) are also excluded, since at
         least one full segment is needed. Of the \num{3000} sampled flights per
         discipline, this leaves \num{1641} paragliders but \num{727} hang gliders:
-        paragliders are overwhelmingly \SI{1}{\second} loggers, so the population mode is
+        paragliders are predominantly \SI{1}{\second} loggers
+        (\StatScanParaDtOneSecPct\,\%, Sec.~\ref{impl:uniform}), so the population mode is
         a good match for most of them, whereas hang gliders split across several native
         rates ($1$, $2$, $5$, $\geq\!8\,\text{s}$, Figure~\ref{fig:sampling}) and only
         their \SI{1}{\second}-logger minority survives this cut.
@@ -113,8 +114,9 @@ paid for elsewhere; it is not needed here.)
 
 \paragraph{Presence is whole-file (panel d).} The barometric channel is all-or-nothing at the
 file level, checked on the same census: when it is absent it reads exactly zero for
-\SI{99.7}{\percent} (paragliders) / \SI{100}{\percent} (hang gliders) of those flights, and
-when present it covers every fix for \SIrange{96}{98}{\percent} of them (the rest miss only a
+\StatScanParaBaroZeroPct\,\% (paragliders) / \StatScanHangBaroZeroPct\,\% (hang gliders) of
+those flights, and when present it covers every fix for \StatScanParaBaroFullPct\,\% /
+\StatScanHangBaroFullPct\,\% of them (the rest miss only a
 handful of individual fixes, dropped one by one, Sec.~\ref{sec:fixlevel}). A logger either has
 a pressure sensor for the whole track or none at all, so the \texttt{alt\_source} decision is
 per flight, never per fix.
@@ -155,10 +157,16 @@ GPS noise.
 Three points earn the test its place over the bare speed bound. \emph{The floor
 $\varepsilon_{\min}$ is not cosmetic}: on a very smooth stretch $\sigma_k\to 0$, so without
 it any sub-metre wiggle would exceed $k\sigma_k$ and the test would chase GPS noise where
-there is no outlier. \emph{It is local}: the scale is rebuilt at each fix, so it flags a
-\SI{30}{\metre\per\second} step for a wing that has been flying at \SI{12}{\metre\per\second}
--- a value the \SI{45}{\metre\per\second} absolute bound passes -- while leaving the same
-\SI{30}{\metre\per\second} untouched where it is ordinary. \emph{It does not clip real
+there is no outlier. \emph{It is local, and locality buys attribution}: a speed belongs to
+the segment \emph{between} two fixes and cannot say which endpoint is at fault, whereas the
+residual belongs to one fix -- when the absolute bound does fire, the identifier names the
+culprit, and a burst is removed as one block. The flag itself is context-sensitive -- a
+\SI{30}{\metre\per\second} step out of a \SI{12}{\metre\per\second} glide is flagged while
+the same step passes unremarked where it is ordinary -- but a flag alone does not delete
+(next paragraph): such a flagged-but-physically-possible fix is \emph{kept}, and the flag
+survives as a per-flight anomaly count, recorded alongside the integrity-gate counters as
+a diagnostic. \emph{It does not
+clip real
 manoeuvres}: a genuine sharp turn is drawn by consecutive, mutually consistent fixes, each
 well predicted by its neighbours and so of small residual; only an isolated point off the
 local trend scores large. The one failure mode -- a turn so tight it is under-sampled at the
@@ -180,12 +188,21 @@ for the residual $r_k$, never as an output value. And a flag alone does not dele
 removed, a fix must be flagged \emph{and} corroborated as physically impossible -- its implied
 in-and-out speed exceeding the absolute $v_{xy}$ bound -- so that the one benign false positive,
 a genuine under-sampled tight turn (whose flagged fix still moves at ordinary flying speed), is
-flagged but \emph{kept}. A flagged altitude is symmetrically marked missing, not replaced, and
-restored with the rest at resampling. This is the fix-level face of the \emph{default to keep}
+flagged but \emph{kept}. The gate deliberately narrows the identifier's \emph{deletions} to
+what the absolute bound already deems impossible: on its own, the local test attributes and
+audits. A locally anomalous but physically possible fix is kept by design -- its residual harm
+is bounded and absorbed by the smoother, whereas deleting it would risk real dynamics -- the
+same asymmetric-risk argument that shapes the whole step. A flagged altitude is treated more
+permissively, marked missing on the flag alone,
+because a dropped altitude is not a deletion but a deferral: it is restored by the
+single audited interpolation at resampling, so the stakes are far lower than for a position
+node. This is the fix-level face of the \emph{default to keep}
 rule of Sec.~\ref{sec:fixlevel}: removal needs positive, corroborated evidence.
 
-\paragraph{Frozen-lock detection (on-the-trend).} A run is a lost-lock episode only when three
-independent tests agree, and the pass defaults to keeping the data otherwise. (i)~\emph{Extent}:
+\paragraph{Frozen-lock detection (on-the-trend).} A run is a lost-lock episode only under the
+rule of Eq.~\eqref{eq:frozenlock} -- spatially collapsed, \emph{and} either barometrically
+flat \emph{or} explicitly declared, \emph{and} long enough -- and the pass defaults to keeping
+the data otherwise. (i)~\emph{Extent}:
 the run's bounding diameter -- the maximum great-circle distance between \emph{any} two of its
 fixes, not the fix-to-fix step -- stays below $\varepsilon$ (a few times the GPS noise,
 $\sim$\SIrange{10}{15}{\metre}); a circling climb spans its disc, $2R\approx\SIrange{40}{100}
@@ -196,7 +213,11 @@ $|\Delta z_{\mathrm{baro}}|$ below a few metres -- since a real thermalling clim
 metres in that time on a sensor independent of the GNSS, so a horizontally-still run whose baro
 altitude is still climbing is a tight climb and is kept. (iii)~\emph{Corroboration}: a declared
 lost lock (the \texttt{V} flag, GNSS altitude \texttt{00000}) or byte-identical repeated
-coordinates confirm it. The run must also span at least $\tau_{\mathrm{freeze}}$, set to a few
+coordinates confirm it -- and, being an \emph{or}-branch of Eq.~\eqref{eq:frozenlock},
+override the witness: a run of byte-identical coordinates under a climbing barometric
+altitude is a freeze that happened \emph{during} a climb (no real circling wing rewrites the
+same coordinates), and is cut -- the positions are invented even where the height gain is
+real. The run must also span at least $\tau_{\mathrm{freeze}}$, set to a few
 thermalling periods ($\gtrsim\SIrange{60}{90}{\second}$), so that a long, slow, tight climb is
 never mistaken for a freeze. Only then is the run marked as a data gap; the split it induces is
 realized at the uniform-sampling stage (Sec.~\ref{impl:uniform}), on the same footing as a
@@ -210,20 +231,26 @@ advances the day count) and clamps residual backward jitter with a running maxim
 (Sec.~\ref{impl:igcformat}). The redesign changes one behaviour: a backward step that is
 \emph{not} a roll-over is no longer silently clamped but removed -- the fix with the corrupt
 time is deleted as a node, just as a fix with a corrupt position is. A falsified timestamp is
-a defect to record, not a repair to hide. Fixes sharing one UTC second are
+a defect to record, not a repair to hide. This requires moving the clamp out of the parser:
+\path{parse_igc} keeps the roll-over unwrap (a format concern, needing the raw time of day)
+but stops flattening backward jitter with the running maximum -- flattened, the evidence the
+cleaning must act on no longer exists downstream. Fixes sharing one UTC second are
 collapsed to a single representative at that second's centroid position. This replaces the
 provisional \enquote{keep the first} of the earlier design: keeping the first privileges an
 arbitrary member and, for a genuine $\ge\!\SI{2}{\hertz}$ logger, would silently halve the
 cadence, whereas the centroid is order-independent and the sub-second resolution it discards
 is discarded anyway once the flight is resampled to a common $\Delta t$
-(Sec.~\ref{impl:uniform}).
+(Sec.~\ref{impl:uniform}). One dilution case is accepted: if one member of a duplicate pair
+is itself a position spike, the centroid halves its amplitude before the outlier pass (which
+runs after the time defects) sees it; a large spike is still flagged at half size, and one
+small enough to slip under $k\sigma_k$ after halving is within what the smoother absorbs.
 
 \paragraph{Absolute bounds (out-of-range, the backstop).} The six numbers of
 Table~\ref{tab:cleaning} are the \texttt{FixLevelThresholds} dataclass, loaded by
 \path{soaring.analysis.preprocessing.load_preproc_config} from
 \path{configs/preprocessing.yaml} (key \path{fix_level}); nothing is hard-coded in Python.
 They are the context-free floor of the design, and are placed on the real per-fix
-distributions (Figure~\ref{fig:fixlevel}) rather than guessed. The horizontal-speed floor is
+distributions (Figure~\ref{fig:fixlevel}) rather than guessed. The horizontal-speed bound is
 set where the bin-to-bin ratio of a finely binned (\SI{2.5}{\metre\per\second}) histogram
 settles at $\approx 1$ -- where the decay has actually stopped -- not where it first visibly
 slows ($\approx\SI{40}{\metre\per\second}$ for hang gliders, versus the adopted
@@ -234,7 +261,8 @@ rare dynamics.
 \path{fix_level_distributions} and rendered by \path{make_fixlevel_diagnostics_figure}
 (Table~\ref{tab:impl-repro}). Panels~(a)--(c) pool a seeded random sample of \num{15000}
 paraglider flights (\num{126723499} consecutive-fix pairs, $\sim$\SI{73}{\second} to compute)
-and the complete \num{6716}-flight hang-glider population (a full census at this size,
+and the complete \num{\StatScanHangTracks}-flight hang-glider population (a full census
+at this size,
 \num{37915334} pairs, $\sim$\SI{25}{\second}) -- under two minutes total. The large sample is
 deliberate: resolving the sparse artefact tail well enough to tell it from real dynamics
 needs far more points than a headline statistic would. The $x$-range in (a)/(b) extends to
@@ -294,7 +322,12 @@ over a range of radii and wind drift -- planted in otherwise clean tracks confir
 that the frozen-lock detector never splits a real climb. This is the false-\emph{positive}
 complement of the injected-defect test, and its natural readout is the tail of
 $\psi(\tau_w)$: a cut biting into climb or search would thin that tail before it moved
-anything else.
+anything else. A fifth check targets the vertical bound specifically: the fixes cut by
+$|v_z|>\SI{13}{\metre\per\second}$ must be \emph{isolated}, not consecutive -- a sustained
+spiral dive holds \SIrange{15}{20}{\metre\per\second} of real sink, so a run-shaped excess
+is the signature of a genuine manoeuvre, calling for a raised bound or a coherent-run
+exemption rather than censoring; an isolated super-threshold difference, bracketed by
+ordinary rates, is a sensor error and safe to cut.
 
 \paragraph{Reproduce.} Table~\ref{tab:impl-repro}, row \path{generate_preproc_figure.py} (one
 run also regenerates Figures~\ref{fig:preproc}, \ref{fig:gaps} and~\ref{fig:sampling} from a
@@ -316,9 +349,17 @@ are the \texttt{FlightLevelThresholds} dataclass, from \path{configs/preprocessi
 \paragraph{Diagnostic sample (Figure~\ref{fig:preproc}).} Computed by
 \path{load_or_scan_tracks} (via \path{scan_tracks} and \path{track_stats}), rendered
 by \path{make_flightlevel_diagnostics_figure}, on the full census -- every
-parsed track, no sub-sampling: \num{186025} paraglider and \num{6716} hang-glider tracks.
-Median duration and path length are \SI{2.7}{\hour}/\SI{86}{\kilo\metre} for paragliders
-and \SI{3.1}{\hour}/\SI{158}{\kilo\metre} for hang gliders -- the latter flying faster and
+parsed track, no sub-sampling: \num{\StatScanParaTracks} paraglider and
+\num{\StatScanHangTracks} hang-glider tracks.
+(The totals -- like every census number in this document -- are generated macros quoting
+the cached scan (\path{generate_census_stats.py}); the live archive grows by a trickle, so
+they can trail the download counts of the season tables -- \num{\StatParaDownloaded}
+paragliders at the last stats regeneration -- until the cache is refreshed.)
+Median duration and path length are
+\SI{\StatScanParaMedianDurH}{\hour}/\SI{\StatScanParaMedianPathKm}{\kilo\metre} for
+paragliders and
+\SI{\StatScanHangMedianDurH}{\hour}/\SI{\StatScanHangMedianPathKm}{\kilo\metre} for hang
+gliders -- the latter flying faster and
 farther. This same scan (cached at \path{<data_root>/derived/track_scan.parquet}) also
 feeds Figures~\ref{fig:gaps} and~\ref{fig:sampling}, so all three share one full-census
 pass.
@@ -355,28 +396,35 @@ full-census scan as Figure~\ref{fig:preproc} (Table~\ref{tab:impl-repro}, row
 \path{generate_preproc_figure.py}) -- no separate parse needed.
 
 \paragraph{Gap-ratio discreteness (Figure~\ref{fig:gaps}).} Checked directly: only
-86\%/63\% (para/hang) of largest-gap-ratio values are exact integers, the rest a
+\StatScanParaGapIntPct\,\%/\StatScanHangGapIntPct\,\% (para/hang) of largest-gap-ratio
+values are exact integers, the rest a
 genuinely continuous scatter; the integer peaks visible for hang gliders sit around
 $k=3,6,10,15$.
 
 \paragraph{Native-rate discreteness (Figure~\ref{fig:sampling}).} Checked directly:
-$\Delta t$ lands on an exact whole second for 99.9\% of paragliders and 100\% of hang
-gliders. Per-rate breakdown: paragliders overwhelmingly (69\%) at \SI{1}{\second}; hang
-gliders spread across \SI{1}{\second} (30\%), \SI{5}{\second} (27\%), \SI{10}{\second}
-(15\%), \SI{2}{\second} (13\%), and a long thin tail beyond \SI{11}{\second}.
+$\Delta t$ lands on an exact whole second for \StatScanParaDtIntPct\,\% of paragliders
+and \StatScanHangDtIntPct\,\% of hang
+gliders. Per-rate breakdown: paragliders mostly (\StatScanParaDtOneSecPct\,\%) at
+\SI{1}{\second}; hang
+gliders spread across \SI{1}{\second} (\StatScanHangDtOneSecPct\,\%), \SI{5}{\second}
+(\StatScanHangDtFiveSecPct\,\%), \SI{10}{\second}
+(\StatScanHangDtTenSecPct\,\%), \SI{2}{\second} (\StatScanHangDtTwoSecPct\,\%), and a
+long thin tail beyond \SI{11}{\second}.
 
 \subsection{Smoothing and differentiation}
 \label{impl:savgol}
-Not yet implemented. The polynomial order ($p=3$) and the two smoothing timescales
-$\tau_c$ (horizontal/vertical) are the \texttt{SavgolParams} dataclass in
+Not yet implemented. The polynomial order ($p=3$) and the three smoothing timescales --
+\path{tau_c_horizontal_s} for $(E,N)$, \path{tau_c_vertical_baro_s} and
+\path{tau_c_vertical_gnss_s} for $U$ -- are the \texttt{SavgolParams} dataclass in
 \path{configs/preprocessing.yaml} (key \texttt{savgol}), but today hold placeholder
-values -- $\tau_c$ is to be fixed once the ENU power spectra are measured, reusing the
+values -- each $\tau_c$ is to be fixed once the ENU power spectra are measured, reusing the
 Welch procedure of Sec.~\ref{impl:altchannel} applied to $E,N,U$ instead of altitude.
 The vertical timescale is read from the spectrum of the altitude channel \emph{actually in
 use}: a barometric flight, being the smoother channel, takes a shorter window than $(E,N)$,
-a GNSS-fallback flight (noisier by vertical dilution of precision) a longer one -- so the
-two $\tau_c$ values are not fixed once but conditioned on \path{alt_source}
-(Sec.~\ref{sec:savgol}). The filter runs on the resampled grid, so the small interpolated
+a GNSS-fallback flight (noisier by vertical dilution of precision) a longer one -- which is
+why the config carries the conditioning on \path{alt_source} as two explicit vertical keys
+rather than one value (Sec.~\ref{sec:savgol}). The filter runs on the resampled grid, so
+the small interpolated
 fraction (\path{frac_interpolated}) is already in place when it reads its window.
 
 \section{Preliminary characterization}

@@ -8,7 +8,8 @@
     short usage guide — it is **not** maintained as a second copy forever.
 
     The **why** (justification, method, hyperparameter reasoning) lives in the thesis,
-    chapter *Next steps*, §4.1 — not here. The **numbers** (all thresholds) live in
+    chapter *The dataset*, section *Trajectory pre-processing* (`sec:preproc`) — not here.
+    The **numbers** (all thresholds) live in
     `configs/preprocessing.yaml` (loaded via `load_preproc_config`) — not here. This page
     never restates either; it links to them. That is how we avoid a thesis/doc that drift.
 
@@ -48,20 +49,20 @@ it is a coarse pre-filter and provenance source, never the basis of a scientific
 
 ## Pipeline steps
 
-Order and rationale: thesis §4.1. Steps (i)–(iv) act on **raw geographic** coordinates
-(great-circle speeds); (v) converts to the metric ENU frame; (vi)–(vii) are metric.
+Order and rationale: thesis `sec:preproc`. Steps (i)–(iv) act on **raw geographic**
+coordinates (great-circle speeds); (v) converts to the metric ENU frame; (vi)–(vii) are metric.
 
 | # | Step | Acts on | Produces | Code home | Thesis |
 |---|---|---|---|---|---|
-| 0 | Ingest catalogs, add `source`, coarse pre-filter (no track ⇒ skip) | catalog | candidate flight list | `acquisition.ffvl.catalog` | §3 |
-| 1 | Parse IGC `B`/`H` records | `.igc` | fixes `[t,lat,lon,valid,baro_alt,gnss_alt]` | `analysis.igc.parse_igc` | §3, §4.1 |
-| i | Choose altitude channel per flight | fixes | `alt_source ∈ {baro,gnss}` + chosen `alt` | *(to build)* | §4.1.1 |
-| ii | Fix-level cleaning: absolute bounds + robust local test + structural rules | raw geo | cleaned fixes | `FixLevelThresholds` ← YAML; `fix_level_distributions` | §4.1.2 |
-| iii | Trim ground phases (`v_xy` sustained) | raw geo | airborne segment | `TrimmingThresholds` ← YAML | §4.1.3 |
-| iv | Flight-level filtering (duration + path length) | parsed tracks | keep/drop + reason | `FlightLevelThresholds` ← YAML, `scan_tracks` | §4.1.4 |
-| v | Geographic → ECEF → ENU (origin = take-off) | geo | `E,N,U` | *(to build; formula in thesis)* | §4.1.5 |
-| vi | Enforce uniform `Δt` within flight | ENU | uniform series or exclusion | *(to build)* | §4.1.6 |
-| vii | Savitzky–Golay smooth + differentiate | ENU | pos/vel/acc | *(to build; `scipy.signal.savgol_filter`)* | §4.1.7 |
+| 0 | Ingest catalogs, add `source`, coarse pre-filter (no track ⇒ skip) | catalog | candidate flight list | `acquisition.ffvl.catalog` | `sec:catalog` |
+| 1 | Parse IGC `B`/`H` records | `.igc` | fixes `[t,lat,lon,valid,baro_alt,gnss_alt]` | `analysis.igc.parse_igc` | `sec:igcformat` |
+| i | Choose altitude channel per flight | fixes | `alt_source ∈ {baro,gnss}` + chosen `alt` | *(to build)* | `sec:altchannel` |
+| ii | Fix-level cleaning: absolute bounds + robust local test + structural rules | raw geo | cleaned fixes | `FixLevelThresholds` ← YAML; `fix_level_distributions` | `sec:fixlevel` |
+| iii | Trim ground phases (`v_xy` sustained) | raw geo | airborne segment | `TrimmingThresholds` ← YAML | `sec:trimming` |
+| iv | Flight-level filtering (duration + path length) | parsed tracks | keep/drop + reason | `FlightLevelThresholds` ← YAML, `scan_tracks` | `sec:flightfilter` |
+| v | Geographic → ECEF → ENU (origin = take-off) | geo | `E,N,U` | *(to build; formula in thesis)* | `sec:enu` |
+| vi | Enforce uniform `Δt` within flight | ENU | uniform series or exclusion | *(to build)* | `sec:uniform` |
+| vii | Savitzky–Golay smooth + differentiate | ENU | pos/vel/acc | *(to build; `scipy.signal.savgol_filter`)* | `sec:savgol` |
 | viii | Write `fixes` + `flights_meta` | all | Parquet | *(to build)* | — |
 
 Key mechanics that reconcile the blueprint with the repo:
@@ -69,29 +70,38 @@ Key mechanics that reconcile the blueprint with the repo:
 - **Altitude channel (i).** The parser returns *both* channels; the pipeline picks one per
   flight (`alt_source`), never splices. Barometric where present; whole-channel-absent
   flights fall back to unfiltered GNSS. The `A`/`V` flag is subsumed by the
-  missing-altitude check on the chosen channel. (Thesis §4.1.1.)
+  missing-altitude check on the chosen channel. (Thesis `sec:altchannel`.)
 - **ENU (v).** Origin at the take-off fix; `E,N` zeroed there; **`U` is not re-zeroed**
   (absolute barometric altitude retained; the take-off height `U_origin` is stored in
-  `flights_meta`). (Thesis §4.1.5, Notation.)
-- **Fix-level cleaning (ii).** Three detectors, by how much context each needs (Table 4.1).
-  *Absolute bounds* on per-fix `v_xy`, `|v_z|`, barometric altitude (`FixLevelThresholds` ←
+  `flights_meta`). (Thesis `sec:enu`, Notation.)
+- **Fix-level cleaning (ii).** Three detectors, by how much context each needs (thesis
+  `tab:cleaning`). *Absolute bounds* on per-fix `v_xy`, `|v_z|`, barometric altitude
+  (`FixLevelThresholds` ←
   YAML): the context-free floor, each placed in the implausible tail of its **per-fix**
   distribution (audited by `make_fixlevel_diagnostics_figure` on a seeded sample,
   `fix_level_distributions`; what matters is the fraction of *fixes* removed, not of flights
-  touched). *Robust local-outlier test* (Hampel: median/MAD over a ±`w`-second window; flag
-  when residual > `k`·σ and > `ε_min`): catches locally-anomalous spikes the absolute bound
-  passes; runs per channel, so a vertical spike drops altitude only. *Structural rules*:
-  duplicate timestamp → centroid; non-wrap backward time → delete; frozen-lock run (`≥M`
-  fixes, pairwise move < `ε`, clock advancing) → mark as gap, split at step (vi). **Removal
+  touched). *Robust local-outlier test* (Hampel identifier: median/MAD over a ±`w`-second
+  window; flag when residual > max(`k`·σ, `ε_min`), thesis `eq:hampel`): detection and
+  **attribution** only — a flag alone never deletes. A horizontal fix is deleted only when
+  flagged **and** its implied in-and-out speed breaks the absolute `v_xy` bound
+  (impossibility gate); a flagged-but-possible fix is kept, its flag recorded per flight.
+  Runs per channel, so a vertical spike drops the altitude only (invalidated on the flag
+  alone: a dropped altitude is a deferral, restored at (vi), not a deletion). *Structural
+  rules*: duplicate timestamp → merge to that second's centroid; non-wrap backward time →
+  delete the fix (the parser stops clamping backward jitter — `parse_igc` keeps only the
+  midnight-rollover unwrap — so the cleaning pass sees the defect); frozen-lock run, cut
+  only per thesis `eq:frozenlock`: bounding diameter < `ε` **and** (baro flat **or**
+  declared: `V` flag / zero GNSS alt / byte-identical repeats) **and** span ≥ `τ_freeze` →
+  mark as gap, split at step (vi). **Removal
   semantics:** position/time defect → delete node (gap bridged at vi); altitude defect →
   invalidate the altitude channel only (horizontal position kept). A **flight-level integrity
   gate** drops any flight that cleaning had to rebuild past a small fraction `f`. New config
   keys (`w, k, ε_min, ε, τ_freeze, f`) join `fix_level` in the YAML when built. No inter-fix
-  time-gap bound here — gaps handled once at (vi). (Thesis §4.1.2.)
+  time-gap bound here — gaps handled once at (vi). (Thesis `sec:fixlevel`.)
 - **Flight-level cuts (iv).** Duration ≥ 40 min and flown **path length** ≥ 30 km, both
   computed from the track. Path length = sum of great-circle steps (not extent/displacement);
   30 km is a *minimal* cut (a real XC flies far more). A minimum-fix-count cut is dropped as
-  redundant with the duration cut. (Thesis §4.1.4.)
+  redundant with the duration cut. (Thesis `sec:flightfilter`.)
 - **Uniform Δt (vi).** Native `Δt` per flight (no common cadence). Uniform ⇒ use as is;
   mildly irregular ⇒ resample onto the native grid across small gaps; a gap past
   `max_gap_factor` (native or opened by an excised frozen-lock run, step ii) ⇒ **split** the
@@ -101,9 +111,11 @@ Key mechanics that reconcile the blueprint with the repo:
   `make_gap_diagnostics_figure`. This is the *only* gap handling — the gap is relative to each
   flight's own native cadence, so no second absolute bound is needed.
 - **Savitzky–Golay (vii).** Two hyperparameters: `window_length` (odd) and `polyorder`.
-  Set by the noise-matched procedure of thesis §4.1.7 (PSD knee `f_c` → smoothing scale
+  Set by the noise-matched procedure of thesis `sec:savgol` (PSD knee `f_c` → smoothing scale
   `τ_c` → `window = odd(τ_c/Δt)` per flight; `polyorder` fixed at 3; horizontal and
-  vertical treated separately). `deriv=0,1,2` and `delta=Δt` are not tuning knobs.
+  vertical treated separately, the vertical conditioned on `alt_source` via the two config
+  keys `tau_c_vertical_baro_s`/`tau_c_vertical_gnss_s`). `deriv=0,1,2` and `delta=Δt` are
+  not tuning knobs.
 
 ## Reporting-stage scan cache (not the production `fixes`/`flights_meta` tables)
 
@@ -120,7 +132,7 @@ summary, Parquet), far fewer columns, no `alt_source`/provenance/versioning.
 `track_stats` also computes a few per-flight QC fields, free byproducts of the same scan:
 `baro_present_frac`, `max_vxy_mps`, `max_vz_mps`, `baro_alt_min_m`, `baro_alt_max_m`.
 `baro_present_frac` is consumed by the altitude-noise figure's fallback-rate panel (thesis
-§4.1.1), which prefers this cache (`altitude_noise.baro_presence_from_scan`) over its own
+`sec:altchannel`), which prefers this cache (`altitude_noise.baro_presence_from_scan`) over its own
 separate scan when it exists, turning a sampled estimate into an exact census at no extra
 parsing cost. The speed/altitude fields are per-flight *maxima*, so they only say which
 *flights* a fix-level bound would touch; the fix-level figure (step ii) instead uses genuine
@@ -186,12 +198,13 @@ Handle at ingestion (empirically observed on the real files):
   `configs/preprocessing.yaml` → finalize from the real PSD study on `E,N,U`.
   (`polyorder`, the filtering and trimming cuts are set.)
 - The `sampling` cuts (`max_gap_factor`/`max_missing_fraction`) and the fix-level **absolute
-  bounds** (Table 4.1) are set and **audited** on the real data (`make_gap_diagnostics_figure`,
-  thesis §4.1.6; `make_fixlevel_diagnostics_figure`, §4.1.2). Revisit only if a future
+  bounds** (thesis `tab:cleaning`) are set and **audited** on the real data
+  (`make_gap_diagnostics_figure`,
+  thesis `sec:uniform`; `make_fixlevel_diagnostics_figure`, `sec:fixlevel`). Revisit only if a future
   source's distributions place a cut outside its implausible tail.
 - The fix-level **robust-outlier** (`w, k, ε_min`) and **frozen-lock** (`ε, τ_freeze`)
   parameters, plus the integrity fraction `f`, are designed but not yet set or audited →
-  calibrate via the injected-defect + downstream-invariance tests (thesis §4.1.2) once the
+  calibrate via the injected-defect + downstream-invariance tests (thesis `sec:fixlevel`) once the
   cleaning routine is built. These are false-*negative* / bias checks; the removed-fraction
   audit above only bounds false positives.
 - Actual `flight_id` cross-source intersection check → confirms the `(source, flight_id)` key.

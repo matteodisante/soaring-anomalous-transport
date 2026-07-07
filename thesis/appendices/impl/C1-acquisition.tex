@@ -27,8 +27,9 @@ browser TLS fingerprint is impersonated to pass the site's Cloudflare challenge.
 
 \section{Reproducibility}
 \label{impl:acqrepro}
-Destination directory (\path{data_root}) set per machine through an environment
-variable (\path{SOARING_PARA_DATA_ROOT}/\path{SOARING_DELTA_DATA_ROOT}) or a config file
+Destination directory (\path{data_root}) set per machine via an environment
+variable -- \path{SOARING_PARA_DATA_ROOT} for paragliders,
+\path{SOARING_DELTA_DATA_ROOT} for hang gliders -- or a config file
 shipping a placeholder (\path{configs/para_download.yaml}/
 \path{configs/delta_download.yaml}); every command validates the setting at start-up.
 
