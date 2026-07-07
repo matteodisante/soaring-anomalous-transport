@@ -537,7 +537,7 @@ surface and cannot be differenced directly to obtain distances; the mapping proc
 steps, following the convention of Vilpellet et al. First, each fix is converted to
 Earth-Centred,
 Earth-Fixed (ECEF) coordinates on the WGS84 ellipsoid (semi-major axis
-$a=\SI{6378137}{\metre}$, flattening $f=1/298.257223563$, $e^2=f(2-f)$)~\cite{esa_navipedia_ellipsoidal_cartesian},
+$a=\SI{6378137}{\metre}$, flattening $f=1/298.257223563$, $e^2=f(2-f)$)~\cite{nga_wgs84,esa_navipedia_ellipsoidal_cartesian},
 \begin{equation}
 \label{eq:ecef}
 N(\varphi)=\frac{a}{\sqrt{1-e^2\sin^2\varphi}},\qquad
@@ -947,7 +947,7 @@ cadence.
 \label{sec:savgol}
 Velocity and acceleration drive the kinematics and the segmentation, but differencing raw GPS
 positions amplifies the high-frequency noise characterised in Sec.~\ref{sec:altchannel}. A
-\textbf{Savitzky--Golay} filter solves both problems at once: it fits a low-order polynomial
+\textbf{Savitzky--Golay} filter~\cite{savitzky1964} solves both problems at once: it fits a low-order polynomial
 to a sliding window by least squares and reads off that polynomial -- or its derivatives -- at
 the window centre, returning smoothed position, velocity and acceleration
 ($\mathrm{deriv}=0,1,2$) in one pass per component. The derivative outputs are scaled by the

@@ -116,11 +116,11 @@ itself. Fit a robust local estimate of the position there -- the component-wise 
 windowed fixes, or a degree-one Theil--Sen fit -- and evaluate it at $t_k$; the residual
 $r_k$ is the great-circle distance from $P_k$ to that estimate. Scale it by a robust local
 spread $\sigma_k = 1.4826\,\operatorname{MAD}$ of the windowed residuals (the factor makes
-$\sigma_k$ a Gaussian-consistent standard deviation), and flag $P_k$ when
+$\sigma_k$ a Gaussian-consistent standard deviation~\cite{rousseeuw1993}), and flag $P_k$ when
 \[
   r_k > k\,\sigma_k \quad\text{and}\quad r_k > \varepsilon_{\min}.
 \]
-This is a Hampel identifier: a median centre, a MAD scale, a threshold in robust standard
+This is a Hampel identifier~\cite{hampel1974}: a median centre, a MAD scale, a threshold in robust standard
 deviations. Working defaults, to be finalized by the injected-defect test below:
 $k\approx 4$--$5$, a window $w$ of a few native intervals (order \SIrange{15}{30}{\second}),
 and an absolute floor $\varepsilon_{\min}\approx\SI{15}{\metre}$, a few times the horizontal
