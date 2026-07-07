@@ -13,8 +13,10 @@ The macros cover, per discipline: the number of scanned tracks; the barometric-a
 fraction and its all-or-nothing structure (channel exactly zero when absent, complete
 when present); the median recorded duration and flown path length; the native-rate
 discreteness (fraction at an exact whole second, and the per-rate breakdown quoted in
-the text); and the fraction of largest-gap ratios that are exact integer multiples of
-the native interval.
+the text); the fraction of largest-gap ratios that are exact integer multiples of
+the native interval; and the share of flights whose largest gap exceeds the relative
+gap rule alone versus the combined two-scale split bound (thesis ``sec:uniform``),
+computed with the thresholds read from ``configs/preprocessing.yaml``.
 
 Definitions mirror the analysis code, not ad-hoc re-derivations: barometric absence is
 ``baro_present_frac < BARO_PRESENT_MIN`` (imported from ``soaring.analysis
@@ -68,7 +70,7 @@ def _pct(mask) -> float:
     return 100.0 * float(m.mean()) if m.size else 0.0
 
 
-def _scan_macros(prefix: str, scan) -> dict[str, str]:
+def _scan_macros(prefix: str, scan, sampling) -> dict[str, str]:
     """The census macros for one discipline's scan table (see module docstring)."""
     import numpy as np
 
@@ -82,6 +84,19 @@ def _scan_macros(prefix: str, scan) -> dict[str, str]:
 
     gap = scan["max_gap_ratio"].to_numpy()
     gap = gap[np.isfinite(gap) & (gap > 0)]
+
+    # Gap-split shares under the sampling bound (thesis sec:uniform). Paired filtering
+    # (dt AND ratio finite together), since the two-scale bound couples them.
+    both = (
+        np.isfinite(scan["dt_s"]).to_numpy()
+        & (scan["dt_s"].to_numpy() > 0)
+        & np.isfinite(scan["max_gap_ratio"]).to_numpy()
+        & (scan["max_gap_ratio"].to_numpy() > 0)
+    )
+    dt_p = scan["dt_s"].to_numpy()[both]
+    gap_s = scan["max_gap_ratio"].to_numpy()[both] * dt_p
+    g_rel = sampling.max_gap_factor * dt_p
+    g_comb = np.minimum(g_rel, np.maximum(sampling.max_gap_seconds, 2.0 * dt_p))
 
     return {
         f"StatScan{prefix}Tracks": str(len(scan)),
@@ -98,6 +113,8 @@ def _scan_macros(prefix: str, scan) -> dict[str, str]:
         f"StatScan{prefix}DtFiveSecPct": _fmt(_pct(dt == 5.0), 0),
         f"StatScan{prefix}DtTenSecPct": _fmt(_pct(dt == 10.0), 0),
         f"StatScan{prefix}GapIntPct": _fmt(_pct(np.abs(gap - np.round(gap)) < 1e-9), 0),
+        f"StatScan{prefix}GapSplitRelPct": _fmt(_pct(gap_s > g_rel), 1),
+        f"StatScan{prefix}GapSplitCombPct": _fmt(_pct(gap_s > g_comb), 1),
     }
 
 
@@ -107,9 +124,12 @@ def main() -> int:
         import pandas as pd
 
         from soaring.acquisition.ffvl.config import load_config
+        from soaring.analysis.preprocessing import load_preproc_config
     except ImportError as exc:
         print(f"census stats: missing dependency ({exc}); keeping the committed file.")
         return 0
+
+    sampling = load_preproc_config().sampling
 
     scans = {}
     for prefix, (config_path, env) in _DISCIPLINES.items():
@@ -131,7 +151,7 @@ def main() -> int:
         "% generate_preproc_figure.py (full rescan), then rerun this script.",
     ]
     for prefix, scan in scans.items():
-        for name, value in _scan_macros(prefix, scan).items():
+        for name, value in _scan_macros(prefix, scan, sampling).items():
             lines.append(f"\\newcommand{{\\{name}}}{{{value}}}")
 
     OUT.parent.mkdir(parents=True, exist_ok=True)

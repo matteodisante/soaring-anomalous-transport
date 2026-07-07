@@ -17,7 +17,9 @@ types via the package `soaring.acquisition.ffvl`:
 | [parapente.ffvl.fr](https://parapente.ffvl.fr/cfd/liste) | Paragliders | `soaring-para` | `SOARING_PARA_DATA_ROOT` |
 | [delta.ffvl.fr](https://delta.ffvl.fr/cfd/liste) | Hang gliders | `soaring-delta` | `SOARING_DELTA_DATA_ROOT` |
 
-Analyses and simulations will be added as further sub-packages of `soaring`.
+Analysis lives in `soaring.analysis` (IGC parsing, pre-processing thresholds and
+diagnostics, the altitude-noise/PSD study); simulations will follow as further
+sub-packages.
 
 📖 **Documentation:** <https://matteodisante.github.io/soaring-anomalous-transport/>
 
@@ -105,7 +107,7 @@ scripts/build_docs.sh thesis   # regenerate stats + compile thesis/main.pdf
 
 A pre-commit hook keeps the stats and the PDF in sync on every commit — enable it once
 with `git config core.hooksPath .githooks`. The narrative prose is updated on demand.
-A private working **logbook** (`logbook/`, git-ignored) tracks the chronology and the
-reasoning; it is never published.
+A working **logbook** (`logbook/`) tracks the chronology and the reasoning; its timeline
+is auto-generated from the git history by the same pre-commit hook.
 
 License: MIT.

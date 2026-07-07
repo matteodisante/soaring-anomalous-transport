@@ -419,7 +419,9 @@ this pipeline, nothing is hard-coded in Python.
 The interior-ground guard of Sec.~\ref{sec:trimming} adds two keys when built:
 \texttt{interior\_ground\_s} ($T_{\mathrm{ground}}$, order \SI{600}{\second}) and a
 barometric flatness tolerance. A detected stint is excised and handed to the split
-machinery of Sec.~\ref{impl:uniform}, so it needs no removal semantics of its own.
+machinery of Sec.~\ref{impl:uniform}, so it needs no removal semantics of its own; below
+$T_{\mathrm{ground}}$ the same predicate only sets a suspect-wait flag on the enclosing
+phase, consumed by the $\psi(\tau)$ sensitivity re-fits.
 
 \subsection{Flight-level filtering}
 \label{impl:flightfilter}

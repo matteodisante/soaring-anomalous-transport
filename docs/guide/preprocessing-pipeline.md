@@ -13,6 +13,11 @@
     `configs/preprocessing.yaml` (loaded via `load_preproc_config`) — not here. This page
     never restates either; it links to them. That is how we avoid a thesis/doc that drift.
 
+    **During implementation, follow this page** for steps, schemas, keys and storage;
+    open the thesis only when the *behaviour* is ambiguous. On any conflict, the thesis
+    is normative and this page must be corrected — the two are kept aligned by the same
+    design audits that produced them.
+
 ## Design principles
 
 1. **Raw is immutable.** Original `.igc` files and the raw catalogs are never modified.
@@ -118,11 +123,15 @@ Key mechanics that reconcile the blueprint with the repo:
   `missing_fraction` too large within a segment ⇒ **drop the segment** (the flight only if
   none survives).
   Thresholds `max_gap_factor`, `max_gap_seconds`, `max_missing_fraction` (in the YAML), audited by
-  `make_gap_diagnostics_figure`. This is the *only* gap handling — the gap is relative to each
-  flight's own native cadence, so no second absolute bound is needed.
+  `make_gap_diagnostics_figure` and quoted by the `StatScan*GapSplit*` census macros. The
+  bound is two-scale by design — relative to cadence, capped in seconds (thesis
+  `sec:uniform`) — and the cap's working value enters the downstream-invariance sweep
+  before being frozen. This is the *only* gap handling: no other step bounds inter-fix
+  time gaps.
 - **Savitzky–Golay (vii).** Two hyperparameters: `window_length` (odd) and `polyorder`.
   Set by the noise-matched procedure of thesis `sec:savgol` (PSD knee `f_c` → smoothing scale
-  `τ_c` → `window = odd(τ_c/Δt)` per flight; `polyorder` fixed at 3; horizontal and
+  `τ_c` → `window = odd(τ_c/Δt)` per flight; runs **per segment**, never across a boundary,
+  with `mode='interp'`; `polyorder` fixed at 3; horizontal and
   vertical treated separately, the vertical conditioned on `alt_source` via the two config
   keys `tau_c_vertical_baro_s`/`tau_c_vertical_gnss_s`). `deriv=0,1,2` and `delta=Δt` are
   not tuning knobs.
@@ -160,7 +169,9 @@ everything else is lazy.
 |---|---|---|
 | `source` | categorical | `paraglider` / `hangglider` / `sailplane` |
 | `flight_id` | int32 | key is `(source, flight_id)` — see [flight_id](#catalog-quirks) |
-| `t` | float32 | s; `t=0` at first airborne fix |
+| `segment_id` | int16 | 0-based within the flight; a split at a long gap / excised run increments it (thesis `sec:uniform`) |
+| `interpolated` | bool | grid point reconstructed at resampling, not measured |
+| `t` | float32 | s; `t=0` at first airborne fix of the **parent flight** (segments keep the parent clock) |
 | `E`, `N` | float32 | ENU, smoothed (`deriv=0`); `E=N=0` at take-off |
 | `U` | float32 | ENU up, smoothed; **not** re-zeroed |
 | `v_E`, `v_N`, `v_U` | float32 | velocity (`deriv=1`) |
@@ -168,6 +179,12 @@ everything else is lazy.
 
 Lazy (never stored), e.g. `v_tot=√(v_E²+v_N²+v_U²)`, `θ_xy=atan2(v_N,v_E)`,
 `ω=(v_E a_N − v_N a_E)/(v_E²+v_N²)`, `z_abs=U+U_origin`.
+
+### `segments` (one row per segment)
+
+Single Parquet. Key `(source, flight_id, segment_id)`: `t_start`, `t_end`, `n_fix`,
+`frac_interpolated`, and the boundary-censoring flags for phases truncated at either end
+(thesis `sec:uniform`). Per-flight aggregates stay in `flights_meta`.
 
 ### `flights_meta` (one row per flight)
 
@@ -207,13 +224,18 @@ Handle at ingestion (empirically observed on the real files):
 - The Savitzky–Golay `τ_c` (horizontal/vertical) are **placeholders** in
   `configs/preprocessing.yaml` → finalize from the real PSD study on `E,N,U`.
   (`polyorder`, the filtering and trimming cuts are set.)
-- The `sampling` cuts (`max_gap_factor`/`max_missing_fraction`) and the fix-level **absolute
-  bounds** (thesis `tab:cleaning`) are set and **audited** on the real data
-  (`make_gap_diagnostics_figure`,
+- The `sampling` cuts (`max_gap_factor`/`max_gap_seconds`/`max_missing_fraction`) and the
+  fix-level **absolute bounds** (thesis `tab:cleaning`) are set and **audited** on the real
+  data (`make_gap_diagnostics_figure`,
   thesis `sec:uniform`; `make_fixlevel_diagnostics_figure`, `sec:fixlevel`). Revisit only if a future
-  source's distributions place a cut outside its implausible tail.
-- The fix-level **robust-outlier** (`w, k, ε_min`) and **frozen-lock** (`ε, τ_freeze`)
-  parameters, plus the integrity fraction `f`, are designed but not yet set or audited →
+  source's distributions place a cut outside its implausible tail. `max_gap_seconds` is a
+  **working value** (census impact in the `StatScan*GapSplit*` macros: the cap mostly
+  affects the slow-cadence hang-glider half) → freeze it via the downstream-invariance
+  sweep.
+- The fix-level **robust-outlier** (`w, k, ε_min`) and **frozen-lock** (`ε, δ_z, τ_freeze`)
+  parameters, the integrity fraction `f`, the segment gate `min_segment_duration`, and the
+  interior-ground guard (`T_ground`, flatness tolerance, sub-threshold suspect-wait flag)
+  are designed but not yet set or audited →
   calibrate via the injected-defect + downstream-invariance tests (thesis `sec:fixlevel`) once the
   cleaning routine is built. These are false-*negative* / bias checks; the removed-fraction
   audit above only bounds false positives.

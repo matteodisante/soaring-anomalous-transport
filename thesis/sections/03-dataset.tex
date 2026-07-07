@@ -649,11 +649,13 @@ independent-sensor argument as Eq.~\eqref{eq:frozenlock}. On a GNSS-fallback fli
 vertical witness uses the noisier GNSS channel with a wider tolerance, and in doubt the
 stint is kept. A cut stint is treated exactly like a long gap: excised and split
 (Sec.~\ref{sec:uniform}), inheriting the segment rules -- boundary censoring, no second
-pass of the flight-level cuts. Stints shorter than $T_{\mathrm{ground}}$ survive by
-design; whether any do is auditable in the waiting-time distribution, where a cluster of
-long waits with a flat barometric trace would show. The two parameters
-($T_{\mathrm{ground}}$ and the flatness tolerance) join \texttt{trimming} in the
-configuration when the guard is built \impldetails{impl:trimming}. One caveat is structural: the criterion is a \emph{ground} speed, so a slow
+pass of the flight-level cuts. Stints shorter than $T_{\mathrm{ground}}$ are not cut but
+\emph{flagged}: a wait with sustained $v_{xy}<v_0$ and a flat barometric trace is marked
+suspect whatever its length, and the $\psi(\tau)$ fits are re-run with and without the
+suspect waits as a sensitivity check -- the same flag-without-deleting pattern as the
+outlier identifier. The parameters ($T_{\mathrm{ground}}$ and the flatness tolerance)
+join \texttt{trimming} in the configuration when the guard is built
+\impldetails{impl:trimming}. One caveat is structural: the criterion is a \emph{ground} speed, so a slow
 phase adjacent to take-off or landing (a launch straight into ridge lift, say) can still be
 clipped; the trimmed fraction is recorded per flight so this failure mode is auditable
 rather than hidden. Both the threshold and the persistence affect what fraction of each
@@ -1107,6 +1109,15 @@ fix; at those cadences a bridged gap inserts at most two grid points. At the dom
 \SI{1}{\second} cadence the relative bound binds ($g_{\max}=\SI{10}{\second}$); from
 $\Delta t=\SI{2}{\second}$ to \SI{10}{\second} the \SI{20}{\second} cap does; beyond,
 the $2\,\Delta t$ floor.
+
+On the census, the combined bound leaves \StatScanParaGapSplitCombPct\,\% of paraglider
+and \StatScanHangGapSplitCombPct\,\% of hang-glider flights with at least one split,
+against \StatScanParaGapSplitRelPct\,\%/\StatScanHangGapSplitRelPct\,\% under the
+relative rule alone; the increase sits at the slow cadences, where a \SI{20}{\second}
+hole is only a few missed fixes. A split is cheap for the ensemble observables (below)
+but fragments the within-segment statistics, so the cap's working value is one of the
+parameters swept in the downstream-invariance check of Sec.~\ref{sec:fixlevel} before
+being frozen.
 
 \paragraph{Consequences of a split.}
 The observables of Ch.~\ref{ch:next-steps} are affected differently by a split, and the

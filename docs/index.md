@@ -5,7 +5,8 @@ Code for the master's thesis **_anomalous transport in soaring flights_**.
 Thesis monorepo: currently contains the **acquisition of** `.igc` **flight data** from the
 **Coupe Fédérale de Distance (CFD)** of the [FFVL](https://www.ffvl.fr), covering both
 paragliders (`parapente.ffvl.fr`) and hang gliders (`delta.ffvl.fr`).
-Data analyses and numerical simulations will be added in the future as further
+Analysis lives in `soaring.analysis` (IGC parsing, pre-processing thresholds and
+diagnostics, the altitude-noise/PSD study); numerical simulations will follow as further
 sub-packages of `soaring`.
 
 ## What it does, in brief
