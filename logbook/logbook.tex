@@ -45,6 +45,10 @@ the narrative notes are written by hand.}
 
 \section{Narrative notes}
 
+\noindent\emph{Section and figure numbers inside dated entries refer to the document
+layout at the time of writing; the thesis has since been restructured (the dataset
+chapter is now Ch.~2, ``Next steps'' Ch.~3).}
+
 \paragraph{2026-06 --- Paraglider data acquisition complete.}
 The full FFVL paraglider CFD archive (\texttt{parapente.ffvl.fr}, seasons 1999--2000 to
 2025--2026) has been scraped: about 203{,}000 flight records, of which $\sim$186{,}000
@@ -737,6 +741,65 @@ not the flight-level filtering.
         boxes).
 \end{description}
 
+\paragraph{2026-07 --- Frozen-lock witness ranked; the cleaning spec quantified.}
+A consistency audit of the frozen-lock rule found a real flaw: the \texttt{V}/zero-alt
+flags sat in a plain or-branch and could overrule a climbing barometer, while the IGC
+standard says \texttt{V} certifies the GNSS \emph{altitude}, not the horizontal fix.
+\begin{description}
+  \item[Fix] The witness of \texttt{eq:frozenlock} is now ranked and case-split by
+        \texttt{alt\_source}: on a barometric flight, baro-flat or byte-identical repeats
+        (the only baro-independent override, since no moving receiver rewrites identical
+        bits); \texttt{V}/zero-alt decide only on GNSS-fallback flights. All four contract
+        locations updated together (thesis body, implementation appendix, blueprint,
+        \texttt{preprocessing.yaml} comment).
+  \item[Guarantee quantified] A real climb misses the cut on two independent instruments:
+        $2R\approx40$--$100$\,m against $\varepsilon\approx10$--$15$\,m, and at least
+        $60$\,m of barometric gain over $\tau_{\mathrm{freeze}}$ against a few
+        metres of $\delta_z$. The one assumption (a working barometric channel) is now
+        stated, with the residual corner cases confined to the GNSS-fallback minority.
+  \item[Presentation] Hampel identifier named and cited in the body; the speed bound
+        reframed from ``backstop'' to corroboration gate, matching the appendix;
+        \texttt{tab:cleaning} regrouped with an invariant row; the seven detector
+        parameters collected in a working-defaults table (\texttt{tab:fixlevel-params});
+        thresholds stated inline where each decision is made (the prose said ``a few
+        $\Delta t$'' where the adopted bound is $10\,\Delta t$).
+\end{description}
+
+\paragraph{2026-07 --- Acquisition folded into the dataset chapter.}
+Data acquisition is no longer a chapter: it opens ``The dataset'' as Sec.~2.1 (the file is
+\verb|\input| there), its implementation mirror folded into the dataset mirror the same
+way, and the introduction roadmap rewritten; the thesis now has three chapters. In the
+same pass the pre-processing order (i)--(vii) became an enumerate mapping the chapter, the
+trimming rule became an equation ($t_{\mathrm{on}}/t_{\mathrm{off}}$ as min/max of
+sustained $v_{xy}>v_0$ windows), and the implementation appendix's worst walls of text
+were rewritten in recipe form (Hampel test as numbered steps, detector order and the five
+validation checks as lists).
+
+\paragraph{2026-07 --- Voice pass: the document must read human.}
+The prose had accumulated a generated-sounding register, partly from the AI-assisted
+sessions themselves: narrativized headings (``One rule: clean without biasing the
+transport''), aphorism setups, meta-commentary (``the ranking is the point''), a courtroom
+metaphor sustained across the cleaning section, and dense em-dash chains. Swept the whole
+document: headings are now nominal (Design principle, Removal policy, Frozen-position
+runs), the cleaning narrative rewritten plainly with content and numbers unchanged, the
+metaphor kept only where it is notation (the witness $W$), a duplicated variometer
+sentence removed, prose dash pairs roughly halved. Appendix~A already read plain and was
+left untouched.
+
+\paragraph{2026-07 --- Split semantics pinned down.}
+Asked directly whether splitting a flight at a long gap can bias the analysis. The split
+itself is the right call (interpolating fabricates motion, dropping the flight wastes
+data), and ensemble observables are safe by construction: a segment keeps its parent's
+origin and clock, and GPS positions are absolute, so $\mathbf{r}(t)$ after the gap is
+valid and the flight merely contributes nothing at the missing lags. Three cautions were
+previously unstated and are now in the spec: phase durations truncated at a segment
+boundary are censored, not complete (else every split reads as a spuriously short wait
+and thins the $\psi(\tau)$ tail); a segment is an aged observation window, not a fresh
+flight, for the time-averaged MSD; and the flight-level cuts are \emph{not} re-applied to
+segments --- the earlier draft said they were, which would have preferentially discarded
+the data behind late-flight gaps --- replaced by a minimal segment-duration gate (config
+key with the routine).
+
 \paragraph{2026-06 --- Documentation.}
 Project docs are built with MkDocs and published on GitHub Pages. Initially deployed with
 \texttt{mkdocs gh-deploy}, which accumulated one built-site commit per deploy on a
@@ -762,7 +825,7 @@ phase splitting.
         bulk export infeasible) and possibly XContest -- merging into one catalog and
         stratifying by source. Refresh the per-discipline \texttt{seasons\_index.csv} via
         \texttt{build-catalog} so the document statistics stay current.
-  \item \textbf{Pre-processing (thesis Sec.~4.1).} The parser is in place
+  \item \textbf{Pre-processing (thesis Sec.~2.7).} The parser is in place
         (\texttt{soaring.analysis.igc}) and the pipeline is designed, thresholded
         (\texttt{configs/preprocessing.yaml}) and audited on real data: fix-level
         cleaning (great-circle speeds), $v_{xy}$-based trimming, data-driven
@@ -772,7 +835,7 @@ phase splitting.
         (parser $\to\dots\to$ Parquet \texttt{fixes}/\texttt{flights\_meta} tables) per
         the blueprint, and measure the real ENU power spectra to finalize the two
         Savitzky--Golay smoothing timescales (still placeholders in the config).
-  \item \textbf{Preliminary characterization (Sec.~4.2).} Lightweight, segmentation-free
+  \item \textbf{Preliminary characterization (Sec.~2.8).} Lightweight, segmentation-free
         checks before the main analysis: per-flight trajectory statistics (duration, path
         length, fix count, native $\Delta t$); an isotropy check (the per-component
         variance ratio $\langle E(t)^2\rangle/\langle N(t)^2\rangle$, expected identically
@@ -781,7 +844,7 @@ phase splitting.
         overlaid per-component displacement-variance curves, to justify -- or rule out --
         pooling them; and a spatial-coverage check (take-off and displacement maps) for
         possible geographic stratification.
-  \item \textbf{Whole-trajectory observables (Sec.~4.3, no segmentation).} Characterise
+  \item \textbf{Whole-trajectory observables (Sec.~3.1, no segmentation).} Characterise
         the data with observables that need no phases: the MSD and its scaling exponent
         $\alpha$ (the primary anomalous-transport test); the time-averaged MSD, whose
         agreement or disagreement with the ensemble MSD is an ergodicity test; the
@@ -792,12 +855,12 @@ phase splitting.
         fractal dimension, radius of gyration), read both as one number per flight and as
         functions of scale. Goal: a first physical/statistical picture, independent of
         any phase splitting.
-  \item \textbf{Segmentation (Sec.~4.4).} Study J\'er\'emie's internship report and code,
+  \item \textbf{Segmentation (Sec.~3.2).} Study J\'er\'emie's internship report and code,
         then re-examine the transition/search/climb HMM (binary features: sign of
         vertical speed, curvature-angle persistence, straightness) --- decide whether to
         keep that approach or add complexity for a better segmentation on our larger,
         more heterogeneous data.
-  \item \textbf{Phase-resolved observables (Sec.~4.5).} After segmentation: the
+  \item \textbf{Phase-resolved observables (Sec.~3.3).} After segmentation: the
         waiting-time decomposition (climb $\tau_c$, search $\tau_s$, and their sum
         $\tau_w$), the glide step-length/duration joint law, per-flight anatomy (thermal
         count, phase time/distance budget), and the angular diffusion between successive
@@ -805,23 +868,23 @@ phase splitting.
         step--waiting coupling ($\ell$ vs $\tau_w$, the L\'evy-walk signature) and memory
         in the phase sequence (transition-matrix structure, duration correlations), which
         test the renewal assumption behind the textbook CTRW/L\'evy-walk results.
-  \item \textbf{Reproduce the reference (Sec.~4.6).} Check that the enlarged
+  \item \textbf{Reproduce the reference (Sec.~3.4).} Check that the enlarged
         paraglider-and-hang-glider dataset reproduces Vilpellet et al.: per-phase
         conditional MSD (their Fig.~3) and per-phase descriptive statistics (their
         Fig.~4), plus the global $H\approx0.88$ --- validation and universality test (the
         sailplane comparison becomes reachable once that source is in hand).
-  \item \textbf{Transport analysis (Sec.~4.7).} Estimate the MSD scaling exponent, fit
+  \item \textbf{Transport analysis (Sec.~3.5).} Estimate the MSD scaling exponent, fit
         the tails of the waiting-time and step-length distributions with principled
         methods (e.g.\ maximum-likelihood power-law fits with goodness-of-fit tests), and
         perform CTRW-vs-L\'evy-walk model selection using the step--waiting coupling.
         Results will be stratified (season, site, glider class, data source) and
         trajectories normalized, with finite-size, censoring and sampling biases
         controlled throughout.
-  \item \textbf{Minimal model (Sec.~4.8).} A minimal stochastic model for
+  \item \textbf{Minimal model (Sec.~3.6).} A minimal stochastic model for
         $H\approx0.88$: resolve transition segments, merge search+climb into one
         effective state, with angular diffusion between successive transition
         directions (preliminary idea, to be refined/changed).
-  \item \textbf{Tooling (Sec.~4.9).} Largely underway already: the analysis package
+  \item \textbf{Tooling (Sec.~3.7).} Largely underway already: the analysis package
         mirrors acquisition, and the dataset statistics plus several diagnostic figures
         (pre-processing, altitude noise) already regenerate automatically from the data
         rather than being pasted in by hand. Remaining: extend the same treatment to
