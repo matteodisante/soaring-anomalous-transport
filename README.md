@@ -9,7 +9,7 @@
 Code for the master's thesis **_anomalous transport in soaring flights_**.
 
 Thesis monorepo. Currently contains the **acquisition of** `.igc` **flight data** from the
-**Coupe Fédérale de Distance (CFD)** of the [FFVL](https://www.ffvl.fr), covering two glider
+**Coupe Fédérale de Distance (CFD)** of the [FFVL](https://federation.ffvl.fr), covering two glider
 types via the package `soaring.acquisition.ffvl`:
 
 | Source | Glider | CLI | Env var |
