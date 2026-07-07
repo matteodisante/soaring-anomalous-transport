@@ -316,12 +316,12 @@ GPS noise -- and it avoids converting coordinates before the trajectory has been
 
 \paragraph{One rule: clean without biasing the transport.}
 Individual fixes that are corrupt or physically impossible must be removed without
-discarding the flight around them. Every removed or altered fix is, though, an intervention
-on the trajectory whose statistics the analysis is about to measure, so an over-eager
-cleaning can bias the result as surely as dirty data can. The design follows from a single
-rule: assume as little as possible about the motion. It assumes only that a real trajectory
-is smooth at the scale of the sampling -- an aircraft cannot jump between fixes a few seconds
-apart -- and never a model of the transport itself. A model-based smoother would reject
+discarding the flight around them. But every fix removed or altered is an intervention on
+the trajectory whose statistics the analysis is about to measure, and an over-eager cleaning
+biases the result as surely as dirty data does. The design rests on a single rule: assume as
+little as possible about the motion. The only assumption used is smoothness at the scale of
+the sampling -- an aircraft cannot jump between fixes a few seconds apart -- never a model of
+the transport itself. A model-based smoother would reject
 outliers more aggressively, but at an unacceptable price: fitting a constant-velocity or
 diffusive model to the track would write the behaviour under study into the cleaned data.
 
@@ -331,32 +331,32 @@ rejects any record that is not a legal encoding, a surviving fix can still be wr
 three ways, each caught differently (Table~\ref{tab:cleaning}). A fix \emph{off the trend} --
 a GPS position spike, or a jump out and back within one step -- is found by a robust
 local-outlier test: it is compared with a median estimate built from the fixes around it and
-flagged when it departs by more than a few robust standard deviations, an absolute speed
-bound serving as a floor on the plainly impossible. A fix \emph{on the trend} agrees with its
+flagged when it departs by more than a few robust standard deviations; an absolute speed
+bound stays underneath as a backstop. A fix \emph{on the trend} agrees with its
 neighbours yet is still wrong as a record -- a duplicated or backward timestamp, or a run of
-frozen positions from a lost GNSS lock -- and, its local residual being near zero, escapes
-the outlier test and needs a structural rule. A value \emph{out of range}, an impossible
-altitude or climb rate, is removed by an absolute bound that needs no context.
+frozen positions from a lost GNSS lock; its residual is near zero, so it escapes
+the outlier test and needs a structural rule instead. A value \emph{out of range}, an
+impossible altitude or climb rate, is caught by an absolute bound that needs no context.
 
 \paragraph{Which fix is removed, and what happens to it.}
 This is where a raw speed bound falls short: a speed belongs to the segment \emph{between}
 two fixes and cannot say which endpoint is at fault. The local-outlier test settles it by
 asking, of each fix alone, whether it strays from what its neighbours predict, so the culprit
 is named directly -- a lone spike is removed without dragging a good neighbour with it, and a
-short burst goes as the block whose removal restores the trend. What follows depends on the
-fault. A corrupt \emph{position or time} deletes the fix as a node: it leaves the sequence,
-its neighbours close up, and the small gap is bridged once, later, at resampling
-(Sec.~\ref{sec:uniform}). A corrupt \emph{altitude} keeps the position and time and marks
+short burst is taken out as one block, the smallest whose removal restores the trend. What
+follows depends on the fault. A corrupt \emph{position or time} deletes the fix as a node: it
+leaves the sequence, its neighbours close up, and the small gap is bridged later, at
+resampling (Sec.~\ref{sec:uniform}). A corrupt \emph{altitude} keeps the position and time and marks
 only the altitude missing; since the horizontal analysis -- the primary result -- never uses
 altitude, clearing a barometric spike costs it nothing (Sec.~\ref{sec:altchannel}).
 
 \paragraph{The frozen-lock case.}
-One structural defect deserves singling out, because it strikes the observable itself. When
+One structural defect strikes the observable itself. When
 the GNSS loses lock, many loggers repeat the last position for tens of seconds while the
 clock runs on: speed zero, altitude in range, timestamps valid, every bound above satisfied.
-No local test separates such a run from a real hover, and it mimics a long \emph{waiting
-time} -- the very quantity a continuous-time random-walk reading of the flight measures
-(Ch.~\ref{ch:next-steps}) -- so, left in, it would plant false trapping events in the tail
+No local test separates such a run from a real hover, and to a continuous-time random-walk
+reading of the flight (Ch.~\ref{ch:next-steps}) it is indistinguishable from a long
+\emph{waiting time}: left in, frozen runs plant false trapping events in the tail,
 where the anomalous exponent is most fragile. A frozen run is instead read as a loss of
 signal and marked as a gap, and the trajectory is split there rather than interpolated
 across, inventing no motion over an interval whose true path is unknown
@@ -449,13 +449,14 @@ sampling-regularity cut (Sec.~\ref{sec:uniform}).
 That each bound removes only a negligible fraction of fixes shows the cleaning is not too
 aggressive; it says nothing about what the cleaning \emph{misses}. Two checks address that,
 and both belong to the planned implementation
-(Ch.~\ref{ch:next-steps})~\impldetails{impl:fixlevel}. \emph{Injected defects}: spikes,
+(Ch.~\ref{ch:next-steps}). \emph{Injected defects}: spikes,
 frozen runs and time glitches of known size are planted in clean tracks, and the fraction
 recovered as a function of size measures the false-negative rate directly. \emph{Invariance
 of the result}: the transport estimators -- the displacement-scaling exponent and the
 waiting-time tail -- are recomputed as the cleaning is tightened, and the operating point is
 taken on the plateau where they stop moving. A cut that removes error and not signal leaves
-the physics unchanged; one that has begun to bite into real dynamics does not.
+the physics unchanged; one that has begun to bite into real dynamics does not
+\impldetails{impl:fixlevel}.
 
 \subsection{Trimming of ground phases}
 \label{sec:trimming}
@@ -874,11 +875,11 @@ Per flight, let $\Delta t$ be the median inter-fix interval. Three cases arise:
         uniform grid at its native $\Delta t$, interpolating across the small gaps only, and
         the interpolated fraction is recorded.
   \item[Broken by a long gap.] A gap longer than a set bound -- native, or opened where
-        cleaning excised a frozen-lock run (Sec.~\ref{sec:fixlevel}) -- is not bridged:
+        cleaning removed a frozen-lock run (Sec.~\ref{sec:fixlevel}) -- is not bridged:
         interpolating across a long hole would fabricate dynamics the smoothing could not tell
         from real motion. The flight is \emph{split} at the gap into independently analysed
-        segments, each carried forward on its own; a segment left too short by the split falls
-        to the flight-level cuts (Sec.~\ref{sec:flightfilter}). A missing fraction too large
+        segments, each carried forward on its own; a segment left too short by the split is
+        caught by the flight-level cuts (Sec.~\ref{sec:flightfilter}). A missing fraction too large
         even between gaps excludes the flight outright.
 \end{description}
 The gap bound is the further flight-level control promised in Sec.~\ref{sec:flightfilter};

@@ -136,8 +136,8 @@ there is no outlier. \emph{It is local}: the scale is rebuilt at each fix, so it
 manoeuvres}: a genuine sharp turn is drawn by consecutive, mutually consistent fixes, each
 well predicted by its neighbours and so of small residual; only an isolated point off the
 local trend scores large. The one failure mode -- a turn so tight it is under-sampled at the
-native cadence -- is rare at these rates and is exactly what the injected-defect test
-measures. A short burst of consecutive spikes inflates the windowed MAD only mildly, so it is
+native cadence -- is rare at these rates, and the injected-defect test below measures it
+directly. A short burst of consecutive spikes inflates the windowed MAD only mildly, so it is
 still flagged, and is removed as the block whose bracketing neighbours rejoin within scale.
 The identical test runs on the horizontal position and, independently, on the adopted
 altitude channel, so a vertical spike invalidates the altitude alone and the horizontal
@@ -158,10 +158,10 @@ native long gap.
 \paragraph{Duplicate and backward timestamps (on-the-trend).} The parser already rebuilds a
 monotone clock: it unwraps the UTC-midnight roll-over (a drop of $\sim$\SI{86400}{\second}
 advances the day count) and clamps residual backward jitter with a running maximum
-(Sec.~\ref{impl:igcformat}). The redesign promotes a backward step that is \emph{not} a
-roll-over from a silent clamp to an explicit structural removal -- the fix with the corrupt
-time is deleted as a node -- for the reason a corrupt position is deleted: a falsified
-timestamp is a defect to record, not a repair to hide. Fixes sharing one UTC second are
+(Sec.~\ref{impl:igcformat}). The redesign changes one behaviour: a backward step that is
+\emph{not} a roll-over is no longer silently clamped but removed -- the fix with the corrupt
+time is deleted as a node, just as a fix with a corrupt position is. A falsified timestamp is
+a defect to record, not a repair to hide. Fixes sharing one UTC second are
 collapsed to a single representative at that second's centroid position. This replaces the
 provisional \enquote{keep the first} of the earlier design: keeping the first privileges an
 arbitrary member and, for a genuine $\ge\!\SI{2}{\hertz}$ logger, would silently halve the
@@ -254,8 +254,8 @@ are the \texttt{FlightLevelThresholds} dataclass, from \path{configs/preprocessi
 (key \path{flight_level}).
 
 \paragraph{Diagnostic sample (Figure~\ref{fig:preproc}).} Computed by
-\path{load_or_scan_tracks} (via \path{scan_tracks}/\path{track_stats}) and
-rendered by \path{make_flightlevel_diagnostics_figure}, on the full census -- every
+\path{load_or_scan_tracks} (via \path{scan_tracks} and \path{track_stats}), rendered
+by \path{make_flightlevel_diagnostics_figure}, on the full census -- every
 parsed track, no sub-sampling: \num{186025} paraglider and \num{6716} hang-glider tracks.
 Median duration and path length are \SI{2.7}{\hour}/\SI{86}{\kilo\metre} for paragliders
 and \SI{3.1}{\hour}/\SI{158}{\kilo\metre} for hang gliders -- the latter flying faster and
@@ -273,9 +273,9 @@ are hand-drawn \textsc{TikZ} diagrams, not data plots.
 
 \subsection{Uniform sampling within a flight}
 \label{impl:uniform}
-The gap bound ($10\times$ native $\Delta t$) and maximum missing fraction ($0.10$) are the
-\texttt{SamplingThresholds} dataclass, from \path{configs/preprocessing.yaml} (key
-\texttt{sampling}).
+The gap bound ($10\times$ native $\Delta t$) and the maximum missing fraction ($0.10$) are
+loaded from \path{configs/preprocessing.yaml} (key \texttt{sampling}) as the
+\texttt{SamplingThresholds} dataclass.
 
 \paragraph{Figures~\ref{fig:gaps} and~\ref{fig:sampling}.} Both rendered by
 \path{make_gap_diagnostics_figure}/\path{make_sampling_figure} from the same
