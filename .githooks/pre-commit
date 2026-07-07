@@ -24,7 +24,11 @@ python3 scripts/reporting/refresh_seasons_index.py >/dev/null 2>&1 || true
 # 1) Stats + timeline sources (cheap, deterministic).
 python3 scripts/reporting/generate_stats.py    >/dev/null || echo "pre-commit: stats generation failed" >&2
 python3 scripts/reporting/generate_timeline.py >/dev/null || echo "pre-commit: timeline generation failed" >&2
-git add thesis/generated/stats.tex \
+# Census macros: reads the cached track scans on the SSD (instant, never rescans);
+# a missing SSD/cache/dependency keeps the committed census.tex (best-effort, like
+# the seasons_index refresh above).
+python3 scripts/reporting/generate_census_stats.py >/dev/null 2>&1 || true
+git add thesis/generated/stats.tex thesis/generated/census.tex \
     thesis/generated/seasons_table_para.tex thesis/generated/seasons_table_hang.tex \
     data/paragliders/seasons_index.csv data/hang_gliders/seasons_index.csv 2>/dev/null || true
 git add logbook/generated/timeline.tex 2>/dev/null || true
