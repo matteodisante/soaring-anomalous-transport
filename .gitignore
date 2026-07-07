@@ -55,6 +55,11 @@ thesis/*.lof
 thesis/*.lot
 thesis/*.ptc
 
+# Archivio locale dei PDF/snapshot delle opere citate (una copia per chiave BibTeX):
+# NON va mai versionato ne' pushato. Inventario e provenienza di ogni file:
+# docs/guide/bibliography.md
+thesis/references/
+
 # Figure di diagnostica: generate in locale da scripts/reporting/generate_preproc_figure.py
 # (dipendono da data/catalog.csv, non versionato). NON committate; la tesi le include con
 # \IfFileExists, quindi compila comunque anche quando la figura non c'e'.
