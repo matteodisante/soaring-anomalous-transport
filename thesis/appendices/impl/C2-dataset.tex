@@ -154,10 +154,7 @@ $t_k$:
   \item flag $P_k$ when $r_k > k\,\sigma_k$ \emph{and} $r_k > \varepsilon_{\min}$.
 \end{enumerate}
 This is a Hampel identifier~\cite{hampel1974}: a median centre, a MAD scale, a threshold in
-robust standard deviations. Working defaults, to be finalized by the injected-defect test
-below: $k\approx 4$--$5$, a window $w$ of a few native intervals (order
-\SIrange{15}{30}{\second}), and an absolute floor
-$\varepsilon_{\min}\approx\SI{15}{\metre}$, a few times the horizontal GPS noise.
+robust standard deviations; working defaults in Table~\ref{tab:fixlevel-params}.
 
 Three points earn the test its place over the bare speed bound:
 \begin{itemize}[itemsep=2pt, topsep=3pt]
@@ -326,11 +323,48 @@ interpolation than measurement. This is the cleaning counterpart of the sampling
 cut (Sec.~\ref{impl:uniform}).
 
 \paragraph{Configuration.} The absolute bounds are already the \texttt{FixLevelThresholds}
-group above. The robust-test parameters ($w$, $k$, $\varepsilon_{\min}$), the frozen-lock
-parameters (the extent tolerance $\varepsilon$, the minimum span $\tau_{\mathrm{freeze}}$ and
-the barometric-flatness threshold of the witness test) and the integrity fraction $f$ join that
-group in \path{configs/preprocessing.yaml} when the routine is built; as with every threshold
-in this pipeline they live in the config, never in Python.
+group above. The remaining parameters are collected in Table~\ref{tab:fixlevel-params}: they
+join that group in \path{configs/preprocessing.yaml} when the routine is built and, as with
+every threshold in this pipeline, they live in the config, never in Python.
+
+\begin{table}[htbp]
+\centering
+\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}llp{6.9cm}@{}}
+\toprule
+\textbf{Parameter} & \textbf{Working default} & \textbf{Role, and the scale that sets it} \\
+\midrule
+\multicolumn{3}{@{}l}{\itshape Robust local-outlier test (Hampel)}\\
+\addlinespace[2pt]
+$w$ & \SIrange{15}{30}{\second} & half-width of the local time window; a few native
+  intervals \\
+$k$ & $4$--$5$ & flag threshold, in robust standard deviations $\sigma_k$ \\
+$\varepsilon_{\min}$ & $\approx\SI{15}{\metre}$ & absolute residual floor; a few times the
+  horizontal GPS noise, so a smooth stretch ($\sigma_k\to0$) is not chased \\
+\addlinespace[6pt]
+\multicolumn{3}{@{}l}{\itshape Frozen-lock rule (Eq.~\ref{eq:frozenlock})}\\
+\addlinespace[2pt]
+$\varepsilon$ & \SIrange{10}{15}{\metre} & run-extent tolerance; a few times the GPS noise,
+  $\ll 2R\approx\SIrange{40}{100}{\metre}$ of a circling climb \\
+$\delta_z$ & a few \si{\metre} & barometric-flatness witness; $\ll$ the
+  $\gtrsim\SI{60}{\metre}$ a real climb gains over $\tau_{\mathrm{freeze}}$ \\
+$\tau_{\mathrm{freeze}}$ & \SIrange{60}{90}{\second} & minimum span of a cut run; a few
+  thermalling periods, so a slow, tight climb is never mistaken for a freeze \\
+\addlinespace[6pt]
+\multicolumn{3}{@{}l}{\itshape Flight-level integrity gate}\\
+\addlinespace[2pt]
+$f$ & \numrange{0.05}{0.10} & maximum deleted-plus-reconstructed fraction; past it the
+  flight is being rebuilt, not cleaned, and is dropped whole \\
+\bottomrule
+\end{tabular}
+\caption{Fix-level cleaning: parameters of the robust and structural detectors, with their
+working defaults -- to be finalized by the injected-defect calibration, check~(1) of the
+validation list below -- and the physical scale that sets each. They become config keys
+under \texttt{fix\_level} in \texttt{configs/preprocessing.yaml} when the cleaning routine
+is built; the absolute bounds of Table~\ref{tab:cleaning} already live there.}%
+\label{tab:fixlevel-params}
+\end{table}
 
 \paragraph{Validating the cleaning.} The removed-fraction count of Figure~\ref{fig:fixlevel}
 bounds only the false positives (over-cleaning). Five checks, part of the same planned step,
