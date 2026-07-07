@@ -50,14 +50,14 @@ The parser therefore checks, at decode time and independently of any flight-dyna
 judgement, that the record is actually a legal encoding -- a valid time, valid
 latitude/longitude fields, a valid hemisphere letter -- dropping it otherwise, on the same
 footing as a record with the wrong length or a non-numeric field \impldetails{impl:igcformat}.
-It is a \emph{format}-validity check -- is the record even a legal encoding -- distinct from
+This is a check of \emph{format} validity, distinct from
 the \emph{plausibility} checks of fix-level cleaning (Sec.~\ref{sec:fixlevel}, e.g.\ the
 inter-fix speed bound), which target fixes that decode validly but would be physically
 implausible given the rest of the trajectory.
 
-The two altitude channels differ in reference and in noise -- the
+The two altitude channels differ in reference and in noise: the
 barometric value is referenced to the ICAO standard atmosphere and is smooth, the GNSS
-value is referenced to the WGS84 ellipsoid and is vertically noisier -- and on older
+value is referenced to the WGS84 ellipsoid and is vertically noisier. On older
 loggers one channel may be absent (recorded as zero). The analysis adopts the
 \emph{barometric} channel for the vertical dynamics, for the signal-quality reasons set out
 and quantified in Sec.~\ref{sec:altchannel}; this choice matters because the vertical
@@ -105,7 +105,7 @@ study~\cite{vilpellet2026} reports its transport statistics separately for each.
 
 In practice the category is set by the \emph{data source}, since the public databases are
 organised by discipline. The FFVL runs the Coupe F\'ed\'erale de Distance as two parallel
-competitions -- one for \emph{paragliders} and one for \emph{hang gliders} -- so the present
+competitions (one for \emph{paragliders}, one for \emph{hang gliders}), so the present
 dataset spans \emph{both} glider types: the glider-type stratum has two levels, and the
 cross-type comparison of the reference study~\cite{vilpellet2026} is therefore already
 possible between paragliders and hang gliders. The third category, \emph{sailplanes}, is
@@ -121,7 +121,7 @@ most stable, recreational), EN\,B (\enquote{B ou 1-2}), EN\,C (\enquote{C ou 2})
 gliders} follow the FAI/CIVL class system, which in this data reduces to flexible wings
 (\enquote{Delta Class 1} and the intermediate \enquote{Delta Class Sport}) and rigid wings
 (\enquote{Rigide Class 2} and \enquote{Rigide Class 5}). In both cases the ladder tracks
-performance -- higher classes fly faster and flatter -- so it is the natural within-source
+performance (higher classes fly faster and flatter), so it is the natural within-source
 stratification variable, playing the role that glider type plays across sources.
 
 Two caveats bear on any use of \texttt{aile\_class}. First, the field must be normalised
@@ -202,7 +202,7 @@ The output is a tidy, analysis-ready representation in a growing
 
 The ordering is chosen so that each step runs in the frame where it is exact and cheap.
 Steps~(i)--(iv) act on the \emph{raw geographic} coordinates, since the only geometric
-quantities they need -- inter-fix speed and spatial extent -- follow from the great-circle
+quantities they need (inter-fix speed and spatial extent) follow from the great-circle
 (haversine) distance between fixes, with no coordinate conversion. The conversion~(v) to the
 metric East--North--Up frame (Sec.~\ref{sec:enu}) is then done on the cleaned, trimmed track,
 with the origin at the take-off fix ($\mathbf{r}(0)=\mathbf{0}$), so the tangent-plane frame
@@ -215,35 +215,34 @@ produce filtered position, velocity and acceleration, are naturally metric and s
 The vertical dynamics -- vertical velocity, climb/sink, and the phase segmentation that rests
 on them -- are taken from the \emph{barometric} altitude rather than the GNSS altitude. The
 reason is one of signal quality in the frequency band that matters. The barometric (pressure)
-altitude has sub-metre relative precision and very little high-frequency noise; its errors are
-slow -- a constant offset from the ICAO reference, tens of metres up to order
+altitude has sub-metre relative precision and very little high-frequency noise; its errors
+are slow: a constant offset from the ICAO reference, tens of metres up to order
 \SI{100}{\metre} (read directly in Fig.~\ref{fig:altnoise}a), and a drift of tens of metres
-over a multi-hour flight, with the synoptic pressure and the atmosphere's departure from the
-ICAO profile (Fig.~\ref{fig:altnoise}b) -- and slow errors are annihilated by the differencing
-that every dynamical quantity involves (a vertical velocity, a displacement increment, an
+over a multi-hour flight, following the synoptic pressure and the atmosphere's departure
+from the ICAO profile (Fig.~\ref{fig:altnoise}b). Slow errors are annihilated by the
+differencing that every dynamical quantity involves (a vertical velocity, a displacement increment, an
 autocorrelation). The GNSS altitude, by contrast, is geometrically referenced but vertically
 noisier: the vertical dilution of precision makes it $1.5$--$2$ times worse than the
-horizontal, and multipath adds high-frequency jitter of a few metres -- exactly the band that
-differencing \emph{amplifies}. This is also why the variometers used in free flight derive the
-climb rate from the pressure sensor, not from GNSS.
+horizontal, and multipath adds high-frequency jitter of a few metres, exactly the band that
+differencing amplifies. This is why free-flight variometers derive the
+climb rate from the pressure sensor rather than from GNSS.
 
 \paragraph{Empirical confirmation.}
-This is borne out on our data, with one qualification that turns out to matter. Figure~%
+This is borne out on our data, with one qualification. Figure~%
 \ref{fig:altnoise} compares the two channels over a subsample sized for a robust spectral
 estimate (Appendix~\ref{app:psd}) \impldetails{impl:altchannel}. At low frequency the two
-agree, tracking the real climbs and glides. The high-frequency behaviour is where they part,
-but \emph{not uniformly}. For the \emph{typical} flight the two are comparable: both approach
+agree, tracking the real climbs and glides. The high-frequency behaviour is where they differ,
+though not uniformly. For the \emph{typical} flight the two are comparable: both approach
 the common floor set by the metre resolution to which the IGC format rounds \emph{both}
 channels, so the median spectra (panel~c, solid lines) nearly coincide.
 
 What separates the channels is the \emph{spread} across flights, the shaded bands. The barometric band stays
-tight -- that channel is uniformly clean -- whereas the GNSS band fans out by one to two
+tight (that channel is uniformly clean), whereas the GNSS band fans out by one to two
 orders of magnitude towards the Nyquist frequency: a substantial minority of flights carry
 large GNSS high-frequency noise, from multipath and the vertical dilution of precision, while
 most do not. Since the vertical velocity is a finite difference, which amplifies exactly that
 band, and since one cannot know in advance which flights have poor GNSS reception, the
-uniformly-clean barometric channel is the safe choice -- the same reasoning by which
-free-flight variometers read the climb rate from the pressure sensor, not from GNSS. This
+uniformly clean barometric channel is the safe choice. This
 \emph{departs from the reference study}~\cite{vilpellet2026}, whose pipeline derives the
 vertical coordinate and velocity from the GNSS altitude; the divergence is deliberate, and one
 of the points re-examined here.
@@ -309,7 +308,7 @@ refreshed.)
 
 \paragraph{Mixed altitude sources.}
 The mix is acceptable, for two reasons. The \emph{horizontal}
-transport analysis -- the primary result (MSD and its scaling) -- does not use the altitude at
+transport analysis, the primary result (MSD and its scaling), does not use the altitude at
 all, so every flight is usable there regardless of channel. Altitude enters only the vertical
 velocity, hence the segmentation and the phase-resolved observables; there the two source
 groups are kept distinct through \texttt{alt\_source} and their statistics checked for
@@ -335,9 +334,9 @@ from which the horizontal speed between the fixes is $v_{xy,i}=\Delta s_i/(t_{i+
 from the barometric altitude, the vertical speed is $v_{z,i}=(h_{i+1}-h_i)/(t_{i+1}-t_i)$. Two
 whole-flight quantities used below follow from the same distance: the flown \emph{path length}
 $L=\sum_i\Delta s_i$ and the \emph{extent} $D=\max_i\Delta s(\mathrm{fix}_0,\mathrm{fix}_i)$,
-the farthest a fix gets from take-off. The spherical approximation is ample here -- the
-ellipsoidal correction to an inter-fix distance is $\lesssim\SI{0.3}{\percent}$, far below the
-GPS noise -- and it avoids converting coordinates before the trajectory has been cleaned.
+the farthest a fix gets from take-off. The spherical approximation is ample here (the
+ellipsoidal correction to an inter-fix distance is $\lesssim\SI{0.3}{\percent}$, far below
+the GPS noise), and it avoids converting coordinates before the trajectory has been cleaned.
 
 \paragraph{Design principle.}
 Corrupt or physically impossible fixes must be removed without discarding the flight around
@@ -534,7 +533,7 @@ Missing / out-of-band altitude, or $|v_z|$ spike
 \bottomrule
 \end{tabular}
 \caption{Fix-level cleaning, grouped by how each defect presents; the three groups map onto
-detectors of increasing context -- an absolute bound, a robust local test, a structural rule.
+detectors of increasing context: an absolute bound, a robust local test, a structural rule.
 Numeric thresholds and the robust-test parameters ($k$, $\varepsilon_{\min}$, $\varepsilon$,
 $\tau_{\mathrm{freeze}}$) are audited in Fig.~\ref{fig:fixlevel} and set in
 Sec.~\ref{impl:fixlevel}; the $v_{xy}$ bound is per-discipline because the speed envelopes
@@ -673,8 +672,8 @@ A separate minimum-fix-count cut would be redundant: at $T\geq\SI{40}{\minute}$ 
 \SI{10}{\second} logger -- the slowest common hang-glider rate
 (Fig.~\ref{fig:sampling}) -- already records ${\sim}240$ fixes, ample for the kinematics;
 the thin tail of still slower loggers is handled by the $\Delta t$ stratification
-(Sec.~\ref{sec:uniform}), not by a fix-count cut. A further criterion -- sampling regularity -- is applied later, where a
-flight's time base is examined (Sec.~\ref{sec:uniform}) \impldetails{impl:flightfilter}.
+(Sec.~\ref{sec:uniform}), not by a fix-count cut. A further criterion, sampling
+regularity, is applied later, where a flight's time base is examined (Sec.~\ref{sec:uniform}) \impldetails{impl:flightfilter}.
 
 Figure~\ref{fig:preproc} shows, for every discipline and computed on the \emph{full} dataset
 (every track, no sub-sampling), the distributions of the two track cuts and, beside each, the
@@ -704,7 +703,7 @@ value; the diagnostics must be re-examined for the less curated further sources.
 \subsection{From geographic to local Cartesian coordinates}
 \label{sec:enu}
 The cleaned, trimmed track is next mapped from geographic to local Cartesian coordinates;
-the two remaining steps -- resampling and smoothing -- are naturally metric and run on the
+the two remaining steps (resampling and smoothing) are naturally metric and run on the
 result. Latitudes and longitudes are angles on a curved
 surface and cannot be differenced directly to obtain distances; the mapping proceeds in two
 steps, following the convention of Vilpellet et al.
@@ -834,9 +833,9 @@ The ENU frame \emph{is} the local Cartesian frame: its horizontal plane $(E,N)$ 
 ``north--east'' plane and $U$ is the local vertical, so there are not two distinct
 coordinate systems but one, reached through the intermediate (global) ECEF representation.
 Over the spatial extent of a single flight (tens of kilometres) the tangent-plane
-approximation is accurate to well below the GPS noise. What the rotation matrix actually
-\emph{does} -- turning a vector's global ECEF components into local East/North/Up ones --
-is shown in Figure~\ref{fig:enu-rotation}.
+approximation is accurate to well below the GPS noise. Figure~\ref{fig:enu-rotation} shows
+the action of the rotation matrix: it turns a vector's global ECEF components into local
+East, North, Up ones.
 
 \begin{figure}[htbp]
   \centering
@@ -1070,28 +1069,27 @@ and only ever across the short gaps a split has left behind; the barometric alti
 low-noise, slowly-drifting sensor within a phase (Sec.~\ref{sec:altchannel}), is interpolated
 linearly (or by a cubic spline) with negligible error over such gaps. Both are filled to the
 \emph{same} completeness invariant: within a retained segment every grid time carries a defined
-$(x,y,z)$, so the segmentation downstream is never handed a missing value. This is where the
-deferred altitudes of Sec.~\ref{sec:fixlevel} -- a dropped barometric spike, a \texttt{V} fix
-on a GNSS-fallback flight -- are actually restored.
+$(x,y,z)$, so the segmentation downstream is never handed a missing value. The altitudes
+deferred in Sec.~\ref{sec:fixlevel} (a dropped barometric spike, a \texttt{V} fix on a
+GNSS-fallback flight) are restored here.
 
-It is tempting to reason that, because the vertical speed is about an order of magnitude
-smaller than the horizontal ($v_z\sim\SI{1}{\metre\per\second}$ against
-$v_{xy}\sim\SI{10}{\metre\per\second}$), the altitude tolerates \emph{wider} gaps. It does not,
-and the gap bound is the same for every channel. The interpolation error is set by the
-\emph{curvature} the signal has over the gap, not by its speed -- a fast but straight motion is
-interpolated exactly, a slow but turning one is not -- so a slower channel is not automatically
-a smoother one.
+One might expect the altitude to tolerate wider gaps, since the vertical speed is about an
+order of magnitude smaller than the horizontal ($v_z\sim\SI{1}{\metre\per\second}$ against
+$v_{xy}\sim\SI{10}{\metre\per\second}$). It does not, and the gap bound is the same for
+every channel: the interpolation error is set by the \emph{curvature} of the signal over
+the gap, not by its speed (a fast but straight motion is interpolated exactly, a slow but
+turning one is not), so a slower channel is not automatically a smoother one.
 
 More decisively, the altitude feeds $v_z$, the segmentation's discriminant, and
 a long altitude gap linearly interpolated returns a single average slope that \emph{erases any
 climb--glide transition falling inside it}; and those transitions are exactly where $v_z$ swings
-fastest -- a thermal entry flips $v_z$ from about $-\SI{1.5}{}$ to $+\SI{3}{\metre\per\second}$
-in a second or two -- the worst case for interpolation. The one real asymmetry is benign and
+fastest (a thermal entry flips $v_z$ from about $-\SI{1.5}{}$ to $+\SI{3}{\metre\per\second}$
+in a second or two), the worst case for interpolation. One asymmetry is real and
 already used: an \emph{isolated} missing altitude is filled far more reliably than a horizontal
-one, because the barometric channel is so smooth, which is what licenses ``drop the altitude
-only'' at cleaning -- but it says nothing about widening the gap.
+one, because the barometric channel is so smooth. This licenses ``drop the altitude
+only'' at cleaning, but it says nothing about widening the gap.
 
-The gap bound is the further flight-level control promised in Sec.~\ref{sec:flightfilter};
+The gap bound is the sampling-regularity control anticipated in Sec.~\ref{sec:flightfilter};
 Figure~\ref{fig:gaps} makes the fraction of flights it leaves whole auditable in the same way
 as the duration and path-length cuts \impldetails{impl:uniform}. One caveat carries
 downstream: a few observables are intrinsically $\Delta t$-dependent (a finite-difference
@@ -1115,12 +1113,12 @@ cadence.
   fraction of a uniform grid at that interval, both on linear bins and a linear axis, over
   the bulk of the distribution (the heavy tail is not lost: (c)/(d) sweep the full range).
   Unlike native $\Delta t$ (Figure~\ref{fig:sampling}) the largest-gap ratio is not purely
-  discrete -- a missed fix or two at the native rate is the single most common cause of a
-  large gap, but the gap's exact duration is not grid-aligned to it -- yet integer ratios
+  discrete (a missed fix or two at the native rate is the most common cause of a
+  large gap, but the gap's exact duration is not grid-aligned to it), yet integer ratios
   (a gap of exactly $k$ native intervals) are still visibly the dominant, common values,
   especially for hang gliders; a logarithmic axis, appropriate for a quantity spanning
   orders of magnitude, would have stretched precisely this small-integer structure into
-  invisibility -- it matters here because it is where the adopted cut (dashed) sits.
+  invisibility; the structure matters here because the adopted cut (dashed) sits on it.
   (c)/(d)~The fraction of flights each cut would
   retain \emph{on its own} (marginal, not cascaded), with the adopted thresholds marked; here
   the cut ranges over orders of magnitude to show the full saturating shape, so (c) keeps a
@@ -1157,18 +1155,18 @@ cadence.
 Velocity and acceleration drive the kinematics and the segmentation, but differencing raw GPS
 positions amplifies the high-frequency noise characterised in Sec.~\ref{sec:altchannel}. A
 \textbf{Savitzky--Golay} filter~\cite{savitzky1964} solves both problems at once: it fits a low-order polynomial
-to a sliding window by least squares and reads off that polynomial -- or its derivatives -- at
+to a sliding window by least squares and reads off that polynomial, or its derivatives, at
 the window centre, returning smoothed position, velocity and acceleration
 ($\mathrm{deriv}=0,1,2$) in one pass per component. The derivative outputs are scaled by the
 flight's own $\Delta t$ (Sec.~\ref{sec:uniform}), so the multi-rate fleet needs no common
 grid, and the window never crosses a flight boundary. Because it runs on the resampled grid
 (Sec.~\ref{sec:uniform}), the filter sees a uniform time base with the short gaps already
-filled; the interpolated points -- a small, recorded fraction, since heavily-reconstructed
-flights are dropped whole (Sec.~\ref{sec:fixlevel}) -- add a little local correlation but no
+filled; the interpolated points (a small, recorded fraction, since heavily reconstructed
+flights are dropped whole, Sec.~\ref{sec:fixlevel}) add a little local correlation but no
 bias over gaps this short.
 
-The filter has two hyperparameters -- the window length $w$ (odd, in samples) and the
-polynomial order $p$ -- fixed by a \emph{quantitative}, noise-matched procedure, not by eye:
+The filter has two hyperparameters, the window length $w$ (odd, in samples) and the
+polynomial order $p$, fixed from the measured noise spectrum rather than by eye:
 \begin{enumerate}[label=(\roman*)]
   \item From the ensemble Welch power spectrum of the raw ENU components on a sample of
         flights (the diagnostic of Sec.~\ref{sec:altchannel} applied to $E$, $N$, $U$), read
@@ -1183,19 +1181,18 @@ polynomial order $p$ -- fixed by a \emph{quantitative}, noise-matched procedure,
         $w=\mathrm{odd}\!\left(\tau_c/\Delta t\right)$, so the physical smoothing scale is the
         same across the fleet regardless of rate.
   \item Treat the vertical separately from the horizontal, and condition it on the altitude
-        \emph{source}. On a barometric flight the vertical channel is \emph{smoother} than the
-        horizontal -- the pressure sensor carries little high-frequency noise
-        (Sec.~\ref{sec:altchannel}) -- so it wants a shorter window, not a longer one; on a
-        GNSS-fallback flight the vertical is instead $1.5$--$3\times$ \emph{noisier} (vertical
-        dilution of precision) and wants more smoothing. Its knee $f_c$, and hence its window,
+        \emph{source}. On a barometric flight the vertical channel is \emph{smoother} than
+        the horizontal, since the pressure sensor carries little high-frequency noise
+        (Sec.~\ref{sec:altchannel}), so it takes a shorter window; on a
+        GNSS-fallback flight the vertical is instead $1.5$--$3\times$ noisier (vertical
+        dilution of precision) and needs more smoothing. Its knee $f_c$, and hence its window,
         are therefore read from the spectrum of the channel actually in use, separately from
         those of $(E,N)$.
 \end{enumerate}
 The choice is validated on a held-out sample: the residual (raw minus smoothed) spectrum
-should be flat above $f_c$ -- confirming that noise, not signal, was removed -- the
-acceleration distribution should stay within physical bounds, and the results should be
-stable under a one-step change of $w$. Both hyperparameters are thus anchored to a measured
-property of the data rather than to a guess \impldetails{impl:savgol}.
+should be flat above $f_c$, confirming that noise rather than signal was removed; the
+acceleration distribution should stay within physical bounds; and the results should be
+stable under a one-step change of $w$ \impldetails{impl:savgol}.
 
 \subsection{Notation}
 Throughout, $\mathbf{r}(t)=\big(x(t),y(t)\big)=\big(E(t),N(t)\big)$ denotes the
@@ -1221,7 +1218,7 @@ well-founded analysis.
 \paragraph{Trajectory statistics.}
 For each flight, computed from its parsed track: airborne duration $T$, total horizontal path
 length, number of valid fixes and native sampling interval $\Delta t$. Their ensemble
-distributions -- the filtering-relevant ones in Fig.~\ref{fig:preproc} -- characterise what
+distributions (the filtering-relevant ones in Fig.~\ref{fig:preproc}) characterise what
 the dataset contains, flag outliers, and, through $\Delta t$, set the per-flight smoothing
 window (Sec.~\ref{sec:savgol}). In the present data durations centre on a few hours and track
 lengths on $\sim\!10^4$ fixes, so the flight-level cuts fall in an essentially empty tail.
@@ -1239,24 +1236,25 @@ A complementary check is a Kolmogorov--Smirnov test comparing the empirical dist
 of $E(t)$ and $N(t)$ at a few selected lags.
 
 If isotropy fails, the two marginals $P(E(t)=x)$ and $P(N(t)=x)$ are analysed
-\emph{separately}: this is both the natural fallback and, in itself, informative -- unequal
-scaling exponents $H_E\neq H_N$ or equal exponents but different scaling functions signal
-geometrically anisotropic transport.
+\emph{separately}: this is both the natural fallback and informative in itself, since
+unequal scaling exponents $H_E\neq H_N$, or equal exponents with different scaling
+functions, signal geometrically anisotropic transport.
 
 \paragraph{Compatibility across strata.}
 The dataset spans more than two decades, two glider types (paragliders and hang gliders), and
-a range of performance classes (Sec.~\ref{sec:glider}) -- from recreational EN\,A/B
-paraglider wings to CCC racing wings and the flexible/rigid hang-glider classes -- whose
-kinematics differ substantially; sailplanes will later add a third type. Before treating all flights as draws from a single statistical process -- i.e.\
-before computing ensemble averages over the pooled dataset -- the subpopulations must be
-checked for statistical compatibility.
+a range of performance classes (Sec.~\ref{sec:glider}), from recreational EN\,A/B
+paraglider wings to CCC racing wings and the flexible/rigid hang-glider classes, whose
+kinematics differ substantially; sailplanes will later add a third type. Before treating
+all flights as draws from a single statistical process, i.e.\ before computing ensemble
+averages over the pooled dataset, the subpopulations must be checked for statistical
+compatibility.
 
 A lightweight way to do this: for each stratum (e.g.\ a single wing class, or the flights
 of a single season) compute the per-component displacement variance $\langle E(t)^2\rangle$
 as a function of the elapsed time $t$ and overlay the curves on one plot. If they coincide,
 the transport statistics are compatible and pooling is justified. If one stratum grows
-systematically faster or with a different shape -- competition wings, say, cover ground
-faster than recreational ones -- the strata must be analysed separately, and that difference
+systematically faster or with a different shape (competition wings, say, cover ground
+faster than recreational ones), the strata must be analysed separately, and that difference
 is itself a result about the universality of the transport regime.
 
 \paragraph{Spatial coverage.}

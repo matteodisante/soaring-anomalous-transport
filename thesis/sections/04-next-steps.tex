@@ -130,21 +130,21 @@ state what it is, how it is computed, and what it is for.
         which vanishes for a Gaussian and is positive for heavier-than-Gaussian tails (the
         factor $2$ is the two-dimensional Gaussian value of
         $\langle|\mathbf{r}|^4\rangle/\langle|\mathbf{r}|^2\rangle^{2}$). Evaluated on the
-        propagator $P(\mathbf{x},t)$ at each elapsed time $t$, it is a function of $t$ -- one
-        number per time -- tracing a curve $\alpha_2(t)$ that pinpoints the scales over which
+        propagator $P(\mathbf{x},t)$ at each elapsed time $t$, it is a function of $t$ (one
+        number per time) tracing a curve $\alpha_2(t)$ that pinpoints the scales over which
         the displacement statistics are non-Gaussian (typically largest at intermediate
         times, where occasional long glides dominate, and decaying if a central-limit
-        Gaussianisation sets in at long times). It summarises the shape of $P$, it does not
-        replace it.
+        Gaussianisation sets in at long times). It summarises the shape of $P$ without
+        replacing it.
   \item[Velocity autocorrelation $C(\tau)$.]
         $C(\tau)=\langle\mathbf{v}(t_0)\cdot\mathbf{v}(t_0+\tau)\rangle$ (often normalised by
         $C(0)$) is the dot product of the velocity with its later self: it is large and
         positive when, a delay $\tau$ later, the motion still points the same way, so the
-        scale over which $C(\tau)$ decays \emph{is} the memory time of the heading. It controls
+        scale over which $C(\tau)$ decays sets the memory time of the heading. It controls
         the MSD through the Green--Kubo relation (for a stationary velocity)
         $\mathrm{MSD}(t)=2\!\int_0^{t}\!(t-\tau)\,C(\tau)\,\mathrm{d}\tau$: a slowly decaying
-        $C$ produces a faster-growing MSD. We do not presume the motion ends in ordinary
-        diffusion; rather, the functional form of $C(\tau)$ is the diagnostic -- an integrable
+        $C$ produces a faster-growing MSD. The functional form of $C(\tau)$ is the
+        diagnostic: an integrable
         $C$ relaxes to normal diffusion, a non-integrable (e.g.\ power-law) tail sustains
         persistent super-diffusion with no crossover, and a sign change reveals the
         anti-persistence expected from circling.
@@ -190,19 +190,19 @@ state what it is, how it is computed, and what it is for.
   \item[Radius of gyration.] The root-mean-square distance of the trajectory points from their
         centroid, i.e.\ the characteristic spatial extent of a flight. As a single number it
         sets the natural length scale of a flight (useful to normalise other observables);
-        measured as it grows with elapsed time, $R_g(t)\sim t^{H}$, it offers yet another
-        reading of the same exponent.
+        measured as it grows with elapsed time, $R_g(t)\sim t^{H}$, it provides a further
+        estimate of the same exponent.
 \end{description}
 
-\paragraph{One number per flight, or a function of scale?}
-The geometric quantities above can be read in two complementary ways. As a \emph{single
-number per flight} -- one tortuosity, one $d_f$, one $R_g$ -- whose distribution over the
-ensemble characterises the population and feeds the stratified comparisons. Or as a
-\emph{function of scale or elapsed time} -- $R_g(t)$ as the trajectory unfolds, tortuosity
-measured on sub-segments of growing duration $t$, the box count as a function of box size --
-which is precisely where the transport exponents live ($R_g(t)\sim t^H$; the box-count slope
-is $d_f$). The scalar is descriptive; the scale dependence is what links geometry back to the
-anomalous exponent, and both views will be used.
+\paragraph{Per-flight scalars and scale dependence.}
+The geometric quantities above can be read in two complementary ways: as a single number
+per flight (one tortuosity, one $d_f$, one $R_g$), whose distribution over the ensemble
+characterises the population and feeds the stratified comparisons; or as a function of
+scale or elapsed time ($R_g(t)$ as the trajectory unfolds, tortuosity on sub-segments of
+growing duration, the box count as a function of box size), which is where the transport
+exponents appear ($R_g(t)\sim t^H$; the box-count slope is $d_f$). The scalar is
+descriptive; the scale dependence links the geometry to the anomalous exponent. Both views
+will be used.
 
 \section{Segmentation into flight phases}
 \label{sec:segmentation}
@@ -244,11 +244,11 @@ first segmenting the flight.
         directed steps, so we treat them on an equal footing and build three distributions --
         the climb duration $\tau_c$, the search duration $\tau_s$, and their sum
         $\tau_w=\tau_s+\tau_c$, the total time spent essentially stationary between glides.
-        The distinction is not cosmetic: Vilpellet et al.~\cite{vilpellet2026} report the
+        The distinction matters: Vilpellet et al.~\cite{vilpellet2026} report the
         search times to be broadly \emph{power-law} distributed while the climb times are
         closer to \emph{exponential}, so that the heavy tail of the combined waiting time
-        $\psi(\tau_w)$ -- the quantity that actually decides whether trapping drives
-        sub-diffusion -- would be inherited from the search phase. Whether this still holds on
+        $\psi(\tau_w)$, the quantity that determines whether trapping drives
+        sub-diffusion, would be inherited from the search phase. Whether this still holds on
         the larger dataset is itself one of the things to re-check once the segmentation is in
         place. We therefore report $\psi(\tau_w)$ together with the separate $\psi(\tau_c)$ and
         $\psi(\tau_s)$. Alongside the durations we record the climb kinematics (altitude gained
@@ -291,8 +291,8 @@ correlations between consecutive phase durations -- for instance whether a long 
 precede a long glide. Both probe the \emph{renewal} assumption underlying the textbook CTRW
 and L\'evy-walk results, in which each step and wait is independent of the history: if the
 transition matrix is structured or the durations are correlated, the process is non-renewal
-and those formulas must be amended. Measuring these is therefore what tells us whether a
-memoryless model is admissible at all.
+and those formulas must be amended. These measurements determine whether a memoryless
+model is admissible.
 
 \section{Reproducing the reference results}
 \label{sec:reproducing}
