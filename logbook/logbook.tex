@@ -861,6 +861,42 @@ suspect-wait flag (near-zero $v_{xy}$ with flat barometric trace, any duration) 
 $\psi(\tau)$ sensitivity re-fits. README refreshed: \texttt{soaring.analysis} exists, and
 the logbook is committed with the repo, not git-ignored as the old text claimed.
 
+\paragraph{2026-07 --- Fifth audit: implementer's walkthrough; C2 de-walled.}
+Traced one IGC file through every step of the spec as an implementer would, asking at
+each point ``what exactly does the code do here?''. Four real logical bugs surfaced, all
+fixed across the contract:
+\begin{description}
+  \item[Backward-time attribution] ``Delete the fix with the corrupt time'' did not say
+        which one; a running-max rule would let a single forward-jumped clock condemn
+        every later fix. Now: minimal removal (complement of the longest increasing
+        subsequence).
+  \item[Position discontinuity] A re-acquisition offset (track jumps and stays) fits
+        neither the spike model (no bounded block restores the trend --- deletion would
+        cascade) nor the frozen-lock model. Now its own row in \texttt{tab:cleaning}:
+        split at the step, like a long gap; both sides are genuine, only the transition
+        is unknown.
+  \item[\texttt{interpolated} was undefined under resampling] Every grid point is
+        technically interpolated once a flight is resampled. Now: measured iff a fix
+        lies within half a native step of the grid time; the same tolerance defines
+        \path{was_resampled}.
+  \item[Savitzky--Golay window collapse] $w=\mathrm{odd}(\tau_c/\Delta t)$ falls below a
+        cubic fit's minimum for slow loggers ($\Delta t$ of order $\tau_c$ or above). Now
+        floored at
+        $w=5$, with the over-smoothing caveat stated and those flights already
+        stratified out of $\Delta t$-sensitive observables.
+\end{description}
+Smaller closures: $\delta_z$ got a number ($\approx5$\,m); Hampel needs a minimally
+populated window (order five fixes, else absolute bounds only); the frozen-lock
+$\Delta z$ witness is median-based so an uncleaned altitude spike cannot fake a climb;
+suspect-ground stints are stored as per-flight intervals (phases do not exist yet at
+pre-processing time); a flight with no sustained-speed stretch is discarded with reason;
+duplicate uploads added to the blueprint's open items. Readiness verdict: the pipeline is
+implementable end-to-end today up to smoothing; the three Savitzky--Golay $\tau_c$ remain
+the one true blocker (placeholders pending the ENU PSD study; procedure and code path
+exist). Remaining C2 walls of text (uniform-sampling thresholds, segment handling,
+flight-filter diagnostic sample, PSD band reading, flag-to-action) rewritten as labelled
+lists, same content.
+
 \paragraph{2026-06 --- Documentation.}
 Project docs are built with MkDocs and published on GitHub Pages. Initially deployed with
 \texttt{mkdocs gh-deploy}, which accumulated one built-site commit per deploy on a

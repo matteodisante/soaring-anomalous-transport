@@ -453,8 +453,8 @@ are the \texttt{FlightLevelThresholds} dataclass, from \path{configs/preprocessi
 \begin{description}
   \item[Scope.] The full census, every parsed track, no sub-sampling:
         \num{\StatScanParaTracks} paraglider and \num{\StatScanHangTracks} hang-glider
-        tracks, from the \path{load_or_scan_tracks} scan;
-        \path{make_flightlevel_diagnostics_figure} renders the panels.
+        tracks, from the \path{load_or_scan_tracks} scan; the rendering script is in
+        Table~\ref{tab:impl-repro}.
   \item[Provenance.] The totals, like every census number in this document, are
         generated macros quoting the cached scan (\path{generate_census_stats.py}); the
         live archive grows by a trickle, so they can trail the download counts of the
