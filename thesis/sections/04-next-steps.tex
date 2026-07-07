@@ -49,7 +49,7 @@ state what it is, how it is computed, and what it is for.
         limit (the distribution collapses to a delta function).
 
         \smallskip
-        \textbf{Non-ergodic case: two independent signatures.}
+        \textbf{Non-ergodic case: two independent signatures}~\cite{he2008}.
         \begin{enumerate}[label=(\roman*)]
           \item \emph{Aging.} $\mathrm{TAMSD}(t,T)$ differs from $\mathrm{MSD}(t)$ and
                 retains a systematic dependence on $T$: flights of different duration yield
@@ -119,7 +119,7 @@ state what it is, how it is computed, and what it is for.
         than from its tails, which is valuable when heavy tails make the variance -- and hence
         the MSD -- ill-defined; a change of slope in $\log P_0$ versus $\log t$ exposes a
         crossover between regimes, and a peak exponent that disagrees with the MSD exponent is
-        itself informative, pointing to multi-scaling. (This is the route Mantegna and Stanley
+        itself informative, pointing to multi-scaling. (This is the route Mantegna and Stanley~\cite{mantegna1995}
         used to read off the index of L\'evy-like walks.)
   \item[Non-Gaussianity.] How far the propagator departs from a Gaussian, measured by the
         non-Gaussian parameter (in the plane)
@@ -156,7 +156,7 @@ state what it is, how it is computed, and what it is for.
         the MSD.
   \item[First-passage and first-exit times.] The first-passage time $T(L)$ is the first time
         the horizontal distance from take-off reaches a value $L$ (the first-exit time, the
-        first time the trajectory leaves a disc of radius $L$). For a self-similar transport
+        first time the trajectory leaves a disc of radius $L$)~\cite{redner2001}. For a self-similar transport
         process the characteristic time scales with the length as
         $\langle T(L)\rangle\sim L^{1/H}$, with dynamic exponent $z=1/H$, so the slope of
         $\log\langle T\rangle$ against $\log L$ gives an estimate of $H$ obtained in the space
@@ -219,7 +219,7 @@ segmented into the three phases of the soaring cycle:
   \item[Climb (thermalling).] Circling within rising air to regain altitude: persistent
         turning with small net horizontal displacement. This is the localized ``trap''.
 \end{description}
-That work performs the segmentation with a hidden Markov model whose observations are a
+That work performs the segmentation with a hidden Markov model~\cite{rabiner1989} whose observations are a
 small set of \emph{binary} trajectory-derived features --- the sign of the vertical speed,
 the persistence of the curvature angle, and indicators of trajectory straightness.
 
@@ -328,7 +328,7 @@ data-acquisition stage and the original analysis that follows.
 \label{sec:transport}
 Using these observables, test for anomalous transport: estimate the MSD scaling exponent
 $\alpha$, fit the tails of $\psi(\tau)$ and $\lambda(\ell)$ with principled methods (e.g.\
-maximum-likelihood power-law fits with goodness-of-fit tests), and perform model selection
+maximum-likelihood power-law fits with goodness-of-fit tests~\cite{clauset2009}), and perform model selection
 between the continuous-time random walk and the L\'evy-walk
 frameworks~\cite{metzler2000,zaburdaev2015} -- using the step/waiting-time coupling to tell
 them apart. Because logging devices, sites, gliders and weather differ, results will be

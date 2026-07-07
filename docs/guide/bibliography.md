@@ -34,6 +34,11 @@ marked as such and carry their canonical URL in the *Downloaded from* column ins
 | `welch1967` | Welch, *The use of fast Fourier transform for the estimation of power spectra…*, IEEE Trans. Audio Electroacoust. **15**(2), 70–73 (1967) — Welch's method (PSD appendix) | [`10.1109/TAU.1967.1161901`](https://doi.org/10.1109/TAU.1967.1161901) | Crossref — title, author, journal, volume, issue, pages, year all match | **not archived** — no legal open copy (1967 IEEE journal, paywalled, pre-arXiv) | — |
 | `hampel1974` | Hampel, *The Influence Curve and its Role in Robust Estimation*, J. Am. Stat. Assoc. **69**(346), 383–393 (1974) — the Hampel identifier (robust local-outlier test) | [`10.1080/01621459.1974.10482962`](https://doi.org/10.1080/01621459.1974.10482962) | Crossref — title, author, journal, volume, issue, pages, year all match | **not archived** — no legal open copy (JASA, paywalled) | — |
 | `rousseeuw1993` | Rousseeuw & Croux, *Alternatives to the Median Absolute Deviation*, J. Am. Stat. Assoc. **88**(424), 1273–1283 (1993) — the MAD scale factor 1.4826 for a Gaussian-consistent robust spread | [`10.1080/01621459.1993.10476408`](https://doi.org/10.1080/01621459.1993.10476408) | Crossref — title, authors, journal, volume, issue, pages, year all match | **not archived** — no legal open copy (JASA, paywalled) | — |
+| `clauset2009` | Clauset, Shalizi & Newman, *Power-Law Distributions in Empirical Data*, SIAM Rev. **51**(4), 661–703 (2009) — maximum-likelihood power-law tail fitting with goodness-of-fit (transport analysis) | [`10.1137/070710111`](https://doi.org/10.1137/070710111) | Crossref — title, authors, journal, volume, issue, pages, year all match; arXiv `journal-ref` confirms "SIAM Review 51, 661-703 (2009)" | `clauset2009.pdf` (arXiv preprint v2; abstract states the ML-fit + KS goodness-of-fit method the thesis cites) | [arxiv.org/abs/0706.1062](https://arxiv.org/abs/0706.1062) |
+| `he2008` | He, Burov, Metzler & Barkai, *Random Time-Scale Invariant Diffusion and Transport Coefficients*, Phys. Rev. Lett. **101**(5), 058101 (2008) — weak ergodicity breaking / TA-MSD (Appendix A, CTRW) | [`10.1103/PhysRevLett.101.058101`](https://doi.org/10.1103/PhysRevLett.101.058101) | Crossref — title, authors, journal, volume, issue, article no., year all match; arXiv `journal-ref` confirms "Phys. Rev. Lett. 101, 058101 (2008)" | `he2008.pdf` (arXiv preprint v1; derives the distribution of the random TA-MSD δ² for CTRW — the Mittag-Leffler / non-self-averaging result the thesis cites) | [arxiv.org/abs/0807.4793](https://arxiv.org/abs/0807.4793) |
+| `rabiner1989` | Rabiner, *A Tutorial on Hidden Markov Models and Selected Applications in Speech Recognition*, Proc. IEEE **77**(2), 257–286 (1989) — the canonical HMM tutorial (segmentation) | [`10.1109/5.18626`](https://doi.org/10.1109/5.18626) | Crossref — title, author, journal, volume, issue, pages, year all match | **not archived** — no legal open copy (1989 IEEE journal, paywalled, pre-arXiv) | — |
+| `redner2001` | Redner, *A Guide to First-Passage Processes*, Cambridge University Press (2001) — the standard monograph for first-passage / first-exit times | [`10.1017/CBO9780511606014`](https://doi.org/10.1017/CBO9780511606014) | Crossref (monograph record) — title, author, publisher, year, ISBNs all match | **not archived** — no legal open copy (Cambridge University Press book, paywalled) | — |
+| `mantegna1995` | Mantegna & Stanley, *Scaling behaviour in the dynamics of an economic index*, Nature **376**(6535), 46–49 (1995) — the return-probability route to the Lévy index | [`10.1038/376046a0`](https://doi.org/10.1038/376046a0) | Crossref — title, authors, journal, volume, issue, pages, year all match | **not archived** — no legal open copy (1995 Nature, paywalled, pre-arXiv) | — |
 
 **Not archived, and why.** `metzler2000` is published by Elsevier behind a
 subscription and has **no arXiv version** (checked against the arXiv API by exact
@@ -42,11 +47,15 @@ university access ([ScienceDirect](https://doi.org/10.1016/S0370-1573(00)00070-3
 and drop it into `thesis/references/metzler2000.pdf`; then update this table.
 
 The same holds for the methodological classics `savitzky1964` (Anal. Chem., 1964),
-`welch1967` (IEEE Trans., 1967), `hampel1974` and `rousseeuw1993` (both JASA): each
-predates or sits outside the open-access ecosystem and has no legal free copy. Their
-metadata are verified against Crossref (every field matched), and each DOI resolves to
-the correct work, but the full texts are paywalled and therefore not archived; retrieve
-them through university access at the DOIs above if a copy is needed locally.
+`welch1967` (IEEE Trans., 1967), `hampel1974` and `rousseeuw1993` (both JASA),
+`rabiner1989` (Proc. IEEE, 1989), `mantegna1995` (Nature, 1995) and the monograph
+`redner2001` (Cambridge University Press): each predates or sits outside the open-access
+ecosystem and has no legal free copy. Their metadata are verified against Crossref (every
+field matched), and each DOI resolves to the correct work, but the full texts are
+paywalled and therefore not archived; retrieve them through university access at the DOIs
+above if a copy is needed locally. In contrast `clauset2009` and `he2008` are archived
+from their author-hosted arXiv versions, whose `journal-ref` fields carry the published
+coordinates.
 
 ## A correction this audit produced
 
