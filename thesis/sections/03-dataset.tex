@@ -211,18 +211,24 @@ differencing \emph{amplifies}. This is also why the variometers used in free fli
 climb rate from the pressure sensor, not from GNSS.
 
 \paragraph{Empirical confirmation.}
-This is confirmed empirically on our data. Figure~\ref{fig:altnoise} compares the two
-channels over a subsample sized for a reliable PSD \emph{shape} estimate rather than a
-full census, since the Welch PSD is an ensemble-average spectral shape, not a headline
-number (Appendix~\ref{app:psd}) \impldetails{impl:altchannel}. Their power spectra agree
-at low frequency, where the real climbs and glides live, but towards the Nyquist frequency
-the GNSS spectrum flattens into a noise floor two to three orders of magnitude above the
-barometric one; for a single flight, the two raw channels (panel~a) and their difference
-(panel~b) show the same jitter directly. It is worth being explicit that this choice
+This is borne out on our data, with one qualification that turns out to matter. Figure~%
+\ref{fig:altnoise} compares the two channels over a subsample sized for a robust spectral
+estimate (Appendix~\ref{app:psd}) \impldetails{impl:altchannel}. At low frequency the two
+agree, tracking the real climbs and glides. The high-frequency behaviour is where they part,
+but \emph{not uniformly}. For the \emph{typical} flight the two are comparable: both approach
+the common floor set by the metre resolution to which the IGC format rounds \emph{both}
+channels, so the median spectra (panel~c, solid lines) nearly coincide. What separates the
+channels is the \emph{spread} across flights, the shaded bands. The barometric band stays
+tight -- that channel is uniformly clean -- whereas the GNSS band fans out by one to two
+orders of magnitude towards the Nyquist frequency: a substantial minority of flights carry
+large GNSS high-frequency noise, from multipath and the vertical dilution of precision, while
+most do not. Since the vertical velocity is a finite difference, which amplifies exactly that
+band, and since one cannot know in advance which flights have poor GNSS reception, the
+uniformly-clean barometric channel is the safe choice -- the same reasoning by which
+free-flight variometers read the climb rate from the pressure sensor, not from GNSS. This
 \emph{departs from the reference study}~\cite{vilpellet2026}, whose pipeline derives the
-vertical coordinate and vertical velocity from the GNSS altitude (it reads the barometric
-channel but does not use it); the divergence is deliberate and is one of the points
-re-examined here.
+vertical coordinate and velocity from the GNSS altitude; the divergence is deliberate, and one
+of the points re-examined here.
 
 \begin{figure}[htbp]
   \centering
@@ -233,28 +239,25 @@ re-examined here.
     \texttt{scripts/reporting/generate\_altitude\_noise\_figure.py} from the raw IGC tracks on
     the SSD (not versioned). Run it to render this figure.}}%
   }
-  \caption{Barometric vs GNSS altitude noise. For one representative flight, over the same
-  \SI{30}{\minute} window: (a)~the two raw channels, each on its \emph{own}, independently
-  auto-scaled $y$-axis (barometric left, GNSS right): the two curves then track almost on
-  top of each other, since each is stretched to fill the panel with its own climb -- the
-  point of this panel is that shared shape, not their offset (that's panel~(b)'s job). Nor
-  is this panel where the claim that GNSS is the noisier channel rests -- a climb of
-  hundreds of metres dwarfs a jitter of a few metres at this timescale, so a single
-  flight's raw trace is the wrong place to look for it; that evidence is panel~(c).
-  (b)~Their difference GNSS$-$barometric (mean removed, \emph{not} detrended): the offset
-  and its drift, of order several tens of metres over the window, put on a single shared
-  scale. That drift is a real, physically meaningful feature -- plausibly the barometric
-  channel's progressive departure from the ICAO standard atmosphere as altitude changes --
-  not noise to be filtered out, so only the constant part of the offset is subtracted; its
-  value for this flight is annotated on the panel. Over the ensemble: (c)~mean Welch power
-  spectra of the two channels, per discipline (Appendix~\ref{app:psd}) -- here, and only
-  here, does the two-to-three-orders-of-magnitude gap between the channels at high
-  frequency make the noise-floor claim; the dotted line is the Nyquist frequency
-  $f_{\mathrm{Nyq}}=1/(2\Delta t)$, the highest frequency the sampling can resolve, a
-  single line since the pooled flights are all resampled to one shared modal $\Delta t$
-  before averaging. (d)~Fraction of flights whose barometric channel is absent, per
-  discipline; see the main text for how these were measured and their precision.
-  \impldetails{impl:altchannel}}
+  \caption{Barometric vs GNSS altitude noise. Panels (a)/(b): one representative flight over
+  a \SI{30}{\minute} window. (a)~the two raw channels on a single \emph{shared} axis, so
+  their offset -- the gap between the pressure and ellipsoidal references, tens of metres --
+  is read directly, while both track the same vertical motion. (b)~their difference
+  GNSS$-$barometric (mean removed, \emph{not} detrended): the offset drifts by tens of
+  metres over the flight, a real feature -- plausibly the barometric channel's slow departure
+  from the ICAO standard atmosphere as altitude changes -- not noise, so only its constant
+  part (annotated) is subtracted. Panels (c)/(d): over the ensemble. (c)~the per-frequency
+  \emph{median} Welch spectrum of each channel (Appendix~\ref{app:psd}), pooled over the two
+  disciplines (whose spectra coincide), with a shaded \numrange{10}{90} percentile band
+  across flights. The median lines nearly coincide: for the \emph{typical} flight the two
+  channels are comparable at high frequency, both near the floor set by the shared
+  metre-resolution logging. The \emph{bands} carry the real story -- the barometric band
+  stays tight (uniformly clean), whereas the GNSS band fans out by one to two orders of
+  magnitude towards Nyquist, driven by a minority of flights with heavy multipath noise. The
+  median, not the mean, precisely because these per-flight spectra are heavy-tailed and a
+  mean is dominated by that noisy minority (Sec.~\ref{impl:altchannel}). The dotted line is
+  the Nyquist frequency $f_{\mathrm{Nyq}}=1/(2\Delta t)$. (d)~Fraction of flights whose
+  barometric channel is absent, per discipline. \impldetails{impl:altchannel}}
   \label{fig:altnoise}
 \end{figure}
 

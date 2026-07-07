@@ -46,9 +46,11 @@ procedure rather than restate it, once populated.
 \label{impl:altchannel}
 
 \paragraph{PSD sample (Figure~\ref{fig:altnoise}a--c).} A seeded random subsample of
-\num{400} flights per discipline. Panel~(a)/(b) use one representative flight (the one
-with the most fixes in the subsample); its measured offset (panel~b) is annotated on the
-panel itself, not restated here.
+\num{3000} flights per discipline -- larger than a spectral \emph{shape} alone would need,
+because the high-frequency barometric curve is visibly under-averaged (ragged) at a few
+hundred flights and smooths out only with a few thousand. Panel~(a)/(b) use one
+representative flight (the one with the most fixes in the subsample); its measured offset
+(panel~b) is annotated on the panel itself, not restated here.
 
 \paragraph{Welch/PSD computational procedure (panel c).} IGC loggers record one fix per
 second nominally, but timestamps are not guaranteed to be perfectly regular (a missed
@@ -65,8 +67,8 @@ runs on every flight before the transform.
         \SI{0.25}{\second} of the modal $\Delta t$ are retained, so pooled spectra share
         one frequency axis; flights with fewer than $N_{\text{seg}}=256$ fixes
         ($\sim$\SI{4}{\minute} at $\Delta t=\SI{1}{\second}$) are also excluded, since at
-        least one full segment is needed. Of the \num{400} sampled flights per
-        discipline, this leaves \num{212} paragliders but only \num{114} hang gliders:
+        least one full segment is needed. Of the \num{3000} sampled flights per
+        discipline, this leaves \num{1641} paragliders but \num{727} hang gliders:
         paragliders are overwhelmingly \SI{1}{\second} loggers, so the population mode is
         a good match for most of them, whereas hang gliders split across several native
         rates ($1$, $2$, $5$, $\geq\!8\,\text{s}$, Figure~\ref{fig:sampling}) and only
@@ -77,13 +79,29 @@ runs on every flight before the transform.
   \item \textbf{Welch on the resampled series.} \path{scipy.signal.welch} is called
         with $f_s=1/\Delta t$, $N_{\text{seg}}=256$, 50\% overlap, a Hann window, and
         linear detrending per segment.
-  \item \textbf{Ensemble average.} The PSD of each qualifying flight is added to a
-        running sum, separately per discipline and channel (barometric/GNSS); the mean
-        over all contributing flights is the curve shown in Figure~\ref{fig:altnoise}(c).
+  \item \textbf{Robust ensemble estimator.} The per-flight PSDs are kept individually
+        (per discipline and channel) and reduced across flights by the per-frequency
+        \emph{median}, with a shaded \numrange{10}{90} percentile band; panel~(c) then
+        pools the two disciplines, whose medians coincide. The median, not the arithmetic
+        mean, because these per-flight spectra are heavy-tailed: a mean is dominated by a
+        few flights and swings by one to two orders of magnitude between samples -- for the
+        hang-glider barometric floor, from \num{0.8} to \num{93}\,\si{\metre\squared\per\hertz}
+        between an $n=\num{114}$ and an $n=\num{727}$ draw -- whereas the median is stable.
         Because $\Delta t$ is the same for every retained flight by construction, the
-        figure's Nyquist dotted line is a single fixed value, not a flight-by-flight
-        average.
+        figure's Nyquist dotted line is a single fixed value.
 \end{enumerate}
+
+\paragraph{Reading the band (panel c).} The two channels' medians coincide because, for the
+typical flight, both are dominated at high frequency by the metre resolution to which the IGC
+format rounds every altitude: the white-noise floor of a \SI{1}{\metre} quantiser,
+$\tfrac{1}{12}/f_{\text{Nyq}}\approx\SI{0.17}{\metre\squared\per\hertz}$, sits just below where
+the measured medians level off ($\approx\SI{0.3}{\metre\squared\per\hertz}$). The channels
+part only in the \emph{tail}: at the 90th percentile the high-frequency GNSS floor is
+\num{4}$\times$ the barometric one for paragliders and \num{108}$\times$ for hang gliders --
+the worse GNSS multipath of the hang-glider fleet, and the reason its GNSS band is the wider
+-- and \SIrange{13}{20}{\percent} of flights carry a GNSS floor above three times their own
+barometric one. That heterogeneity, not a uniform gap, is what motivates preferring the
+uniformly-clean barometric channel (Sec.~\ref{sec:altchannel}).
 
 \paragraph{Fallback-rate census (panel d).} A full census, not a sample: the same full
 parse of every track is needed anyway for the flight-level filtering diagnostics of
@@ -92,6 +110,14 @@ fraction is read off that one scan rather than measured separately -- exactness 
 byproduct, not extra work. (A sized random sample -- the standard proportion formula
 $n=z^2p(1-p)/e^2$ -- would be the right tool if a full census were not already being
 paid for elsewhere; it is not needed here.)
+
+\paragraph{Presence is whole-file (panel d).} The barometric channel is all-or-nothing at the
+file level, checked on the same census: when it is absent it reads exactly zero for
+\SI{99.7}{\percent} (paragliders) / \SI{100}{\percent} (hang gliders) of those flights, and
+when present it covers every fix for \SIrange{96}{98}{\percent} of them (the rest miss only a
+handful of individual fixes, dropped one by one, Sec.~\ref{sec:fixlevel}). A logger either has
+a pressure sensor for the whole track or none at all, so the \texttt{alt\_source} decision is
+per flight, never per fix.
 
 \subsection{Fix-level cleaning}
 \label{impl:fixlevel}

@@ -6,12 +6,14 @@ disciplines (paragliders and hang gliders).
 
 The central tool is the **power spectral density (PSD)**, estimated with Welch's method
 (:func:`scipy.signal.welch`): it shows *at which frequencies* a channel carries power.
-The expectation, confirmed by the figure, is that the barometric channel dominates at
-low frequency (slow pressure drift) while the GNSS channel carries a much higher
-high-frequency noise floor -- exactly the band that contaminates vertical velocity, MSD
-increments and the segmentation. A second diagnostic reports the fraction of flights
-whose barometric channel is absent (no pressure sensor, so the whole channel is zero),
-which sizes the population that must fall back to GNSS.
+What the figure shows is that the two channels are comparable for the *typical* flight
+(both quantization-limited at high frequency by the metre-resolution logging), but the
+GNSS channel carries large excess high-frequency noise in a substantial minority of
+flights -- the fanned-out upper tail of its per-flight spectra -- exactly the band that
+differencing amplifies into the vertical velocity and the segmentation. The barometric
+channel is instead uniformly clean, which is why it is preferred. A second diagnostic
+reports the fraction of flights whose barometric channel is absent (no pressure sensor,
+so the whole channel is zero), which sizes the population that must fall back to GNSS.
 
 Two different precision needs drive two different sampling policies, both made explicit
 here rather than left implicit:
@@ -31,10 +33,14 @@ here rather than left implicit:
   minute to parse, even serially -- the reason to sample at all is speed, and the reason
   the sample size is not arbitrary is that a wrong number quoted without a stated
   precision would be worse than not quoting one.
-* The **PSD** is a qualitative ensemble-average spectral *shape*, not a headline
-  statistic with an error bar, so it is computed on a smaller, explicitly sized and
-  seeded random subsample (see ``sample_igc_paths``) -- standard practice for this kind
-  of exploratory spectral diagnostic, and far cheaper than a full sweep.
+* The **PSD** is a qualitative ensemble spectral *shape*, not a headline statistic with
+  an error bar, so it is computed on an explicitly sized, seeded random subsample (see
+  ``sample_igc_paths``) and reduced across flights with the robust per-frequency median
+  (``_Accumulator.median_psd``) -- far cheaper than a full sweep, and, unlike an
+  arithmetic mean of these heavy-tailed per-flight spectra, not dominated by the handful
+  of flights whose raw barometric channel carries an uncleaned high-frequency artefact.
+  The subsample must still be a few thousand flights for the high-frequency barometric
+  curve to converge (at a few hundred it is visibly ragged).
 
 ``scipy`` and ``matplotlib`` are imported lazily so importing this module never requires
 the optional ``analysis`` extra; only building the figure does.
@@ -234,8 +240,14 @@ class _Accumulator:
         # per-discipline flight and baro-absent counts (see baro_presence_stats)
         self.baro_absent: dict[str, int] = {}
         self.n_flights: dict[str, int] = {}
-        # PSD accumulation, keyed by (discipline, channel) -> [sum_pxx, count]
-        self._psd: dict[tuple[str, str], list] = {}
+        # Per-flight PSD curves, keyed by (discipline, channel) -> list of spectra.
+        # Kept individually (not pre-summed) so the ensemble can be reduced with a
+        # ROBUST estimator: these per-flight PSDs are variance-like and heavy-tailed
+        # across flights, so an arithmetic mean is dominated by the few flights whose
+        # RAW barometric channel carries an uncleaned spike (this diagnostic runs before
+        # fix-level cleaning). The per-frequency median is the typical-flight spectrum
+        # and is what the figure plots; see :meth:`median_psd`.
+        self._psd: dict[tuple[str, str], list[np.ndarray]] = {}
         self._psd_f: np.ndarray | None = None
         # one representative flight (discipline, t, z_baro, z_gnss)
         self.representative: tuple[str, np.ndarray, np.ndarray, np.ndarray] | None = (
@@ -248,18 +260,74 @@ class _Accumulator:
             self._psd_f = f
         if len(f) != len(self._psd_f):
             return  # different segment length: cannot pool onto the common grid
-        key = (disc, channel)
-        if key not in self._psd:
-            self._psd[key] = [np.zeros_like(pxx), 0]
-        self._psd[key][0] += pxx
-        self._psd[key][1] += 1
+        self._psd.setdefault((disc, channel), []).append(pxx)
+
+    def n_psd(self, disc: str, channel: str) -> int:
+        """Number of flights contributing to a (discipline, channel) spectrum."""
+        return len(self._psd.get((disc, channel), []))
+
+    def _stack(self, disc: str, channel: str) -> np.ndarray | None:
+        curves = self._psd.get((disc, channel))
+        if self._psd_f is None or not curves:
+            return None
+        return np.vstack(curves)
+
+    def median_psd(
+        self, disc: str, channel: str
+    ) -> tuple[np.ndarray, np.ndarray] | None:
+        """Per-frequency **median** spectrum across flights (the robust estimator).
+
+        Robust to the handful of flights whose raw barometric channel carries an
+        uncleaned high-frequency artefact, which would otherwise dominate an arithmetic
+        mean of these variance-like per-flight PSDs and inflate the noise floor by
+        one--two orders of magnitude between samples.
+        """
+        s = self._stack(disc, channel)
+        return None if s is None else (self._psd_f, np.median(s, axis=0))
 
     def mean_psd(self, disc: str, channel: str) -> tuple[np.ndarray, np.ndarray] | None:
-        key = (disc, channel)
-        if self._psd_f is None or key not in self._psd or self._psd[key][1] == 0:
+        """Per-frequency arithmetic-mean spectrum, kept only for comparison.
+
+        Not plotted: it is the outlier-sensitive estimator that :meth:`median_psd`
+        replaces.
+        """
+        s = self._stack(disc, channel)
+        return None if s is None else (self._psd_f, np.mean(s, axis=0))
+
+    def band_psd(
+        self, disc: str, channel: str, lo: float = 10.0, hi: float = 90.0
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray] | None:
+        """Per-frequency ``(lo, median, hi)`` percentiles across flights.
+
+        The spread between ``lo`` and ``hi`` is the real story of the channels: tight
+        and channel-independent for the barometric channel (uniformly clean, near the
+        metre-quantization floor), but fanning out by one to two orders of magnitude at
+        high frequency for GNSS, whose excess noise is present only in a substantial
+        minority of flights. Plotting the median with this band is honest where plotting
+        the mean is not (the mean conflates the two into one inflated curve).
+        """
+        s = self._stack(disc, channel)
+        if s is None:
             return None
-        total, count = self._psd[key]
-        return self._psd_f, total / count
+        plo, pmed, phi = np.percentile(s, [lo, 50.0, hi], axis=0)
+        return self._psd_f, plo, pmed, phi
+
+    def pooled_band_psd(
+        self, channel: str, lo: float = 10.0, hi: float = 90.0
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray] | None:
+        """:meth:`band_psd` pooled over all disciplines for one channel.
+
+        The per-discipline median spectra coincide (the high-frequency noise is a
+        property of the channel and the receiver, not the glider), so panel (c) pools
+        them into one median-plus-band per channel: two clean curves, not four
+        overlapping ones. The per-discipline difference lives only in the *tail* (GNSS
+        multipath is worse for hang gliders) and is reported in text, not drawn here.
+        """
+        curves = [c for (_, ch), lst in self._psd.items() if ch == channel for c in lst]
+        if self._psd_f is None or not curves:
+            return None
+        plo, pmed, phi = np.percentile(np.vstack(curves), [lo, 50.0, hi], axis=0)
+        return self._psd_f, plo, pmed, phi
 
 
 def collect(
@@ -399,22 +467,26 @@ def render_altitude_noise_figure(acc: _Accumulator, disciplines: list[str]) -> F
     """Render the barometric-vs-GNSS altitude noise figure from collected diagnostics.
 
     Four panels. For one representative flight, over the same, 30-minute window: (a) the
-    two raw channels, each on its *own* y-axis (barometric left, GNSS right,
-    independently auto-scaled) so both curves' own shape is fully resolved rather than
-    competing for space on one axis spanning their ~100 m mutual offset; (b) their
-    difference GNSS minus barometric (mean removed), which puts a number on that offset
-    and its drift (plausibly the barometric channel's departure from the ICAO standard
-    atmosphere as altitude changes) alongside the residual jitter -- deliberately *not*
-    detrended, so the drift stays visible rather than hidden; since panel (a)'s
-    independent axes no longer make the raw vertical gap a direct reading of the offset,
-    panel (b) is where that number lives. Neither raw-trace panel is where the jitter
-    claim rests: that is (c) below, the ensemble PSD, which shows it unambiguously (a
-    two-to-three-orders-of-magnitude gap at high frequency) -- a single flight's raw
-    trace, at this timescale, is not the right evidence for it. Over the ensemble: (c)
-    the mean Welch PSD of the two
-    channels (log-log), per discipline; (d) the fraction of flights whose barometric
-    channel is absent, per discipline (a census or a sized-sample estimate, depending on
-    how ``acc`` was built -- see :func:`collect`).
+    two raw channels on a single shared y-axis (metres), so the vertical separation
+    between them is the true offset between the pressure and ellipsoidal references
+    (tens of metres) and the two are on the same scale; the channels otherwise track the
+    same vertical motion. (b) their difference GNSS minus barometric (mean removed),
+    which puts a number on that offset and its drift (plausibly the barometric channel's
+    departure from the ICAO standard atmosphere as altitude changes) -- deliberately
+    *not* detrended, so the drift stays visible rather than hidden. Neither raw-trace
+    panel is where the high-frequency-jitter claim rests: that is (c), the ensemble
+    PSD, where it shows in the right way -- a single flight's raw trace, at this
+    timescale, is not the right evidence. Over the ensemble: (c) the per-frequency
+    median Welch PSD of the two channels (log-log), pooled over disciplines, each with a
+    shaded 10th--90th percentile band across flights. The median, not the mean, because
+    these per-flight PSDs are heavy-tailed; the band because it is the real finding --
+    tight and channel-
+    independent for the barometric channel (uniformly clean, near the metre-quantization
+    floor), but fanning out one to two orders of magnitude at high frequency for GNSS,
+    whose excess noise is carried by a substantial minority of flights, not the typical
+    one. (d) the fraction of flights whose barometric channel is absent, per discipline
+    (a census or a sized-sample estimate, depending on how ``acc`` was built -- see
+    :func:`collect`).
 
     Args:
         acc: Diagnostics already accumulated by :func:`collect`.
@@ -427,7 +499,6 @@ def render_altitude_noise_figure(acc: _Accumulator, disciplines: list[str]) -> F
 
     ch_color = {"baro": "#3477a8", "gnss": "#b5482a"}
     diff_color = "#4e8a5b"  # distinct from both baro (blue) and gnss (red)
-    disc_style = {disc: ["-", "--", ":"][i % 3] for i, disc in enumerate(disciplines)}
     # One shared window for (a) and (b): long enough (30 min) for the offset between
     # the channels to visibly drift -- both directly in panel (a)'s raw traces and,
     # quantified, in panel (b)'s difference. A window this long would swamp the jitter
@@ -445,24 +516,18 @@ def render_altitude_noise_figure(acc: _Accumulator, disciplines: list[str]) -> F
         tw = t[window] - t[0]
         zb_w, zg_w = zb[window], zg[window]
 
-        # (a) both raw channels, dual y-axis: each channel independently auto-scaled to
-        # its own range, so its own climb/jitter shape is fully resolved instead of
-        # sharing one axis that must span both curves plus their mutual offset. The
-        # trade-off is that the raw vertical gap between the curves no longer reads as
-        # the true offset in metres -- that number lives in panel (b) instead.
-        ax_baro = axd["a"]
-        ax_gnss = ax_baro.twinx()
-        (line_baro,) = ax_baro.plot(
-            tw, zb_w, color=ch_color["baro"], lw=1.0, label="barometric"
-        )
-        (line_gnss,) = ax_gnss.plot(
-            tw, zg_w, color=ch_color["gnss"], lw=0.9, label="GNSS"
-        )
-        ax_baro.legend(handles=[line_gnss, line_baro], fontsize=7, loc="best")
-        ax_baro.set_ylabel("barometric altitude [m]", color=ch_color["baro"])
-        ax_gnss.set_ylabel("GNSS altitude [m]", color=ch_color["gnss"])
-        ax_baro.tick_params(axis="y", labelcolor=ch_color["baro"])
-        ax_gnss.tick_params(axis="y", labelcolor=ch_color["gnss"])
+        # (a) both raw channels on ONE shared y-axis (metres): the vertical separation
+        # between the curves is then the true offset between the pressure and the
+        # ellipsoidal reference (tens of metres), read off the panel rather than hidden
+        # by two independently auto-scaled axes. The two channels otherwise track the
+        # same vertical motion, so they run close and roughly parallel; the residual
+        # per-sample jitter that distinguishes them is not the claim this panel carries
+        # (panel (c) does) -- the point here is the shared motion and the offset.
+        ax_a = axd["a"]
+        ax_a.plot(tw, zg_w, color=ch_color["gnss"], lw=0.9, label="GNSS")
+        ax_a.plot(tw, zb_w, color=ch_color["baro"], lw=1.0, label="barometric")
+        ax_a.legend(fontsize=7, loc="best")
+        ax_a.set_ylabel("altitude [m]")
 
         # (b) their difference: mean removed (not detrended), so the slow drift of the
         # offset remains visible next to the residual jitter -- the drift is a real,
@@ -488,20 +553,18 @@ def render_altitude_noise_figure(acc: _Accumulator, disciplines: list[str]) -> F
 
     # (c) mean PSD ---------------------------------------------------------------
     ax = axd["c"]
-    for disc in disciplines:
-        for channel in ("baro", "gnss"):
-            res = acc.mean_psd(disc, channel)
-            if res is None:
-                continue
-            f, pxx = res
-            ax.loglog(
-                f[1:],
-                pxx[1:],
-                color=ch_color[channel],
-                ls=disc_style[disc],
-                lw=1.2,
-                label=f"{channel}, {disc}",
-            )
+    ch_label = {"baro": "barometric", "gnss": "GNSS"}
+    for channel in ("baro", "gnss"):
+        res = acc.pooled_band_psd(channel, 10.0, 90.0)
+        if res is None:
+            continue
+        f, plo, pmed, phi = res
+        color = ch_color[channel]
+        # shaded 10th-90th percentile band across flights, then the median line on top:
+        # the band is the point (tight for barometric, fanning out for GNSS); the two
+        # channels are pooled over disciplines for clarity.
+        ax.fill_between(f[1:], plo[1:], phi[1:], color=color, alpha=0.18, lw=0)
+        ax.loglog(f[1:], pmed[1:], color=color, lw=1.7, label=ch_label[channel])
     f_nyquist = 1.0 / (2.0 * acc.target_dt)
     ax.axvline(f_nyquist, color="0.3", ls=":", lw=1.2)
     ax.text(

@@ -54,17 +54,6 @@ detrended before transforming -- e.g.\ by removing a linear fit -- so that the e
 reflects the fluctuations about the trend -- the part where sensor noise lives -- rather
 than the trend itself \impldetails{impl:altchannel}.
 
-\section*{Reading the altitude spectra}
-
-In Figure~\ref{fig:altnoise}(c) the PSD is computed for the barometric and the GNSS
-altitude of each flight, at a common sampling cadence, and averaged over the sampled
-ensemble. Two features carry the argument of Chapter~\ref{ch:dataset}. First, both
-channels agree at \emph{low} frequency, where the real vertical motion (climbs and
-glides) lives. Second, towards the \emph{Nyquist} frequency the GNSS curve flattens into
-a high plateau -- a white-ish noise floor -- lying about two to three orders of magnitude
-above the barometric curve, which keeps falling. That gap is the high-frequency GNSS
-jitter, precisely the band that a time derivative (vertical velocity) or a displacement
-increment amplifies, and it is the quantitative reason the vertical dynamics are taken
-from the barometric channel. The hang-glider curve in particular is an average over its
-\SI{1}{\second}-logger minority, not the full hang-glider population -- an honest reading
-of the panel, not a claim about every hang-glider logger \impldetails{impl:altchannel}.
+How these spectra read for the two altitude channels -- and what the comparison implies for
+the choice of channel -- is discussed where that choice is made
+(Sec.~\ref{sec:altchannel}), not here; this appendix covers only the method.

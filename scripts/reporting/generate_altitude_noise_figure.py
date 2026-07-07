@@ -43,10 +43,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 OUT_PATH = ROOT / "thesis" / "generated" / "altitude_noise.pdf"
 
-# Flights sampled per discipline for the PSD / representative-flight panels: an
-# ensemble-average spectral shape, not a headline statistic, so a moderate seeded random
-# subsample is standard practice here (see the module docstring above).
-PSD_SAMPLE_PER_DISCIPLINE = 400
+# Flights sampled per discipline for the PSD / representative-flight panels. The PSD
+# ensemble spectral shape, not a headline statistic, but the sample must still be large
+# enough for the high-frequency barometric curve to converge: at ~400 flights that curve
+# is visibly under-averaged (ragged), and it smooths out with more. A few thousand keeps
+# the parse cheap while giving a stable curve (the ensemble is reduced with the robust
+# per-frequency median, see `soaring.analysis.altitude_noise`, so a few noisy flights do
+# not dominate, but the median still needs enough flights to be smooth).
+PSD_SAMPLE_PER_DISCIPLINE = 3000
 # Populations up to this size are censused exactly for panel (d) rather than sampled
 # (a couple of minutes at most; the hang-glider archive, ~6,700 files, falls under it).
 CENSUS_MAX_POPULATION = 10_000
