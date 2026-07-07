@@ -841,6 +841,26 @@ trimming removes anyway must not condemn a flight), and the missing-fraction gat
 per segment (a bad segment is dropped alone). Savitzky--Golay edge handling pinned
 (\texttt{mode='interp'}, per segment).
 
+\paragraph{2026-07 --- Fourth audit: the gap cap measured on the census; blueprint realigned.}
+With the SSD mounted, the two-scale gap bound was measured on the cached census scans
+(paired $\Delta t$/largest-gap per flight, thresholds read from the config, never
+hard-coded): the combined bound leaves 15.3\% of paraglider and 40.5\% of hang-glider
+flights with at least one split, against 11.8\%/14.5\% under the relative rule alone. The
+increase sits at the slow cadences ($\Delta t\geq2$\,s), where a 20\,s hole is only a few
+missed fixes. A split is cheap for ensemble observables but fragments within-segment
+statistics, so the cap stays a working value and enters the downstream-invariance sweep;
+the shares are generated census macros (\texttt{StatScan*GapSplit*}) quoted by the thesis.
+Blueprint realigned with the thesis: the stale ``no second absolute bound is needed''
+sentence removed, \texttt{segment\_id}/\texttt{interpolated} added to the \texttt{fixes}
+schema, a \texttt{segments} table added, Savitzky--Golay per-segment
+\texttt{mode='interp'} recorded, open items refreshed ($\delta_z$,
+\texttt{min\_segment\_duration}, \texttt{T\_ground}, suspect-wait flag), and the header
+now states the working rule: implement from the blueprint, thesis normative on conflict.
+Sub-$T_{\mathrm{ground}}$ stints are now \emph{flagged} rather than merely auditable: the
+suspect-wait flag (near-zero $v_{xy}$ with flat barometric trace, any duration) feeds
+$\psi(\tau)$ sensitivity re-fits. README refreshed: \texttt{soaring.analysis} exists, and
+the logbook is committed with the repo, not git-ignored as the old text claimed.
+
 \paragraph{2026-06 --- Documentation.}
 Project docs are built with MkDocs and published on GitHub Pages. Initially deployed with
 \texttt{mkdocs gh-deploy}, which accumulated one built-site commit per deploy on a
