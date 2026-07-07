@@ -800,6 +800,26 @@ segments --- the earlier draft said they were, which would have preferentially d
 the data behind late-flight gaps --- replaced by a minimal segment-duration gate (config
 key with the routine).
 
+\paragraph{2026-07 --- Second split audit: the gap bound gains an absolute scale.}
+Two questions from a design review, before implementation. (1)~The gap bound was purely
+relative ($10\,\Delta t$): a 3\,s logger could bridge 27\,s, a 10\,s logger 100\,s, while
+the harm of a bridged gap is set by the motion's timescales, not the logger's (an
+interpolated stretch is a straight line; near the thermalling period it can replace a
+full circle and read downstream as a glide). The split bound is now
+$\min(10\,\Delta t, 20\,\mathrm{s})$: the cap is at least twice the slowest common
+cadence (one missed fix never splits), at most about two thirds of a thermalling period,
+and well below $\tau_{\mathrm{freeze}}$ (an excised frozen run is split, so a native gap
+of that length cannot be bridged). Added as \texttt{max\_gap\_seconds} to the YAML and
+the \texttt{SamplingThresholds} dataclass, with the config test extended. (2)~How a
+split works mechanically: the ENU conversion precedes it, so both segments already carry
+parent-referred coordinates and time; a split assigns a \texttt{segment\_id} in the
+\texttt{fixes} table, per-segment records go to a \texttt{segments} table --- no separate
+files, and the ensemble MSD reads $\mathbf{r}(t)$ wherever a segment covers $t$. Also
+flagged: trimming strips only the \emph{outer} ground phases, so a mid-flight landing
+and relaunch in one log would read as an implausibly long wait; an interior-ground guard
+(sustained near-zero $v_{xy}$ of order ten minutes, treated like a long gap) is planned
+with the implementation.
+
 \paragraph{2026-06 --- Documentation.}
 Project docs are built with MkDocs and published on GitHub Pages. Initially deployed with
 \texttt{mkdocs gh-deploy}, which accumulated one built-site commit per deploy on a
