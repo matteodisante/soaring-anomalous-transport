@@ -684,6 +684,59 @@ Verified throughout: every \texttt{impl:*} label matches an \texttt{impldetails}
 dangling cross-reference), full rebuilds clean at each stage (no undefined references),
 official build script (\texttt{scripts/build\_docs.sh thesis}) green.
 
+\paragraph{2026-07 --- Fix-level cleaning redesigned: three detectors, unambiguous removal.}
+A critical re-reading of the fix-level cleaning, asking whether the adopted design
+(Table~3.6.2 / old 4.1) is actually reliable, exposed real gaps and turned the flat list of
+absolute bounds into a design organised by \emph{how} each defect presents. Cleaning only,
+not the flight-level filtering.
+\begin{description}
+  \item[The gap that mattered] ``Reject the fix'' was ambiguous on the one question that
+        decides everything: when the speed between two fixes is too high, \emph{which} of the
+        two is removed? A speed lives on the segment between fixes and cannot say. And a fixed
+        global speed bound is only a teleport filter --- it passes the moderate spikes (a
+        30\,m/s step for a 12\,m/s paraglider) that dominate the differentiated
+        velocity/acceleration, and is blind to a frozen GPS lock (repeated position, zero
+        speed, clock still running), which mimics a long CTRW waiting time and would plant
+        false trapping events in the very tail the anomalous exponent is read from.
+  \item[Guiding principle] Cleaning must not bias the transport statistic it precedes: assume
+        only that the trajectory is smooth at the sampling scale, never a model of the motion.
+        This rules out the tempting ``best'' upgrade, a Kalman / robust motion-model
+        smoother --- its constant-velocity or diffusive prior would write the studied
+        behaviour into the data.
+  \item[Three detectors, by context] \emph{Off the trend} (spikes): a robust local-outlier
+        test (Hampel --- median centre, MAD scale, threshold in robust $\sigma$, plus an
+        absolute floor $\varepsilon_{\mathrm{min}}$), a per-\emph{node} quantity, which names
+        the offending fix directly and dissolves the which-fix ambiguity. \emph{On the trend}
+        (structural): duplicate time $\to$ centroid; non-roll-over backward time $\to$ delete;
+        frozen-lock run $\to$ mark as gap. \emph{Out of range}: the old absolute bounds, kept
+        as the interpretable backstop the figure already audits.
+  \item[Two removal semantics] Split apart what ``remove'' meant: a corrupt position/time
+        deletes the node (gap bridged later at resampling); a corrupt altitude invalidates
+        only the altitude channel, keeping the horizontal position --- so the primary
+        (horizontal) MSD loses nothing to a barometric spike. The old table coupled the two,
+        throwing away good $(x,y,t)$ for an altitude fault.
+  \item[Frozen lock $\to$ split, not bridge] A lost-lock run is marked as a data gap and the
+        flight is \emph{split} there into independently analysed segments --- not interpolated
+        across (which invents motion) nor dropped whole (which wastes the good sides). Folded
+        into the uniform-sampling step, which already floated segmentation as a refinement.
+  \item[Validation, both directions] The existing ``removes a negligible fraction of fixes''
+        argument only bounds false \emph{positives}. Added two checks for the other direction:
+        an injected-defect / recovery test (planted spikes/freezes/time-glitches of known size
+        give the detection rate, i.e.\ the false negatives, and calibrate the parameters) and
+        a downstream-invariance test (MSD exponent and waiting-time tail versus cleaning
+        strength; adopt the plateau where they stop moving --- the evidence that error, not
+        signal, was removed).
+  \item[Where it lives] Narrative in Sec.~3.6.2 (Table regrouped by family with an explicit
+        action column, fix-level figure reframed as the backstop audit); full working
+        definitions --- Hampel parameters, frozen-lock thresholds, single-pass $O(N)$ anchor
+        scan, integrity gate, validation protocol --- in the dataset chapter of the
+        implementation appendix. The cleaning routine and its new config keys
+        ($w, k, \varepsilon_{\mathrm{min}}, \varepsilon, \tau_{\mathrm{freeze}}, f$) remain to
+        be built; the blueprint (\texttt{preprocessing-pipeline.md}) and its open items were
+        updated to match. Thesis compiles clean (50\,pp, no undefined refs, no new overfull
+        boxes).
+\end{description}
+
 \paragraph{2026-06 --- Documentation.}
 Project docs are built with MkDocs and published on GitHub Pages. Initially deployed with
 \texttt{mkdocs gh-deploy}, which accumulated one built-site commit per deploy on a
