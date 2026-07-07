@@ -897,6 +897,38 @@ exist). Remaining C2 walls of text (uniform-sampling thresholds, segment handlin
 flight-filter diagnostic sample, PSD band reading, flag-to-action) rewritten as labelled
 lists, same content.
 
+\paragraph{2026-07 --- Sixth audit: every hyperparameter pinned; the flight filter re-measured.}
+Goal: implementable through step (vii) included, no ranges left.
+\begin{description}
+  \item[$\tau_c$ measured, blocker closed] New script
+        (\texttt{estimate\_savgol\_timescales.py}): Welch on $E,N$ (local
+        equirectangular) and on the altitude channel each flight uses, seeded 1\,Hz
+        sample (908/719/189 flight-channels). All three knees sit at
+        $f_c\approx0.2$\,Hz $\Rightarrow\tau_c=5$\,s: every channel's typical floor is
+        IGC quantization (measured 0.60/0.26\,m$^2$/Hz against theoretical 0.57/0.17),
+        not receiver noise. The baro/GNSS asymmetry lives in the spectrum's level, not
+        its knee; even p90 spectra move it by less than a second. Placeholders replaced
+        with measured values.
+  \item[Flight filter was cutting the wrong thing] Census forensics: above 40\,min,
+        path$<$10\,km catches 6 flights of 184{,}583 while the adopted 30\,km cut removed
+        5{,}229 genuine localized flights (median extent 7.4\,km) --- the most-trapped
+        tail, whose exclusion would bias the transport toward travellers. The declared
+        minimal-threshold strategy itself dictated lowering: \texttt{min\_path\_km} 30
+        $\to$ 10. Also found and fixed: fifteen ``flights'' of 16--166\,h (loggers left
+        running, paths to 10{,}000\,km) now cut by an upper duration bound (16\,h); a few
+        hundred retained records with total altitude range under 100\,m (vehicle logs or
+        stuck sensors) now caught by an altitude-activity floor (75\,m) plus a
+        baro-liveness check at channel choice (range $<$30\,m $\Rightarrow$ fall back to
+        GNSS --- a stuck baro previously passed as a baro flight with $v_z\equiv0$).
+  \item[All working ranges pinned] Hampel ($w=20$\,s, $k=5$, $\varepsilon_{\min}=15$\,m,
+        min.\ window 5 fixes), frozen-lock ($\varepsilon=15$\,m, $\delta_z=5$\,m,
+        $\tau_{\mathrm{freeze}}=60$\,s), $f=0.10$, segment gate 90\,s, interior-ground
+        (600\,s, 5\,m): all now YAML keys with dataclass fields and config-test
+        assertions. The injected-defect calibration owns the final values.
+  \item[Figures regenerated] The pre-processing diagnostics were rebuilt from the SSD
+        with the new thresholds (the path-cut line moved to 10\,km).
+\end{description}
+
 \paragraph{2026-06 --- Documentation.}
 Project docs are built with MkDocs and published on GitHub Pages. Initially deployed with
 \texttt{mkdocs gh-deploy}, which accumulated one built-site commit per deploy on a

@@ -434,9 +434,9 @@ are the \texttt{TrimmingThresholds} dataclass, loaded from
 \path{configs/preprocessing.yaml} (key \texttt{trimming}); as with every threshold in
 this pipeline, nothing is hard-coded in Python.
 
-The interior-ground guard of Sec.~\ref{sec:trimming} keeps its two keys in the same
-group: \texttt{interior\_ground\_s} ($T_{\mathrm{ground}}$, \SI{600}{\second}) and
-\texttt{ground\_flatness\_m} (\SI{5}{\metre}). A detected stint is excised and handed to the split
+The interior-ground guard of Sec.~\ref{sec:trimming} keeps
+\texttt{interior\_ground\_s} ($T_{\mathrm{ground}}$, \SI{600}{\second}) and
+\texttt{ground\_flatness\_m} (\SI{5}{\metre}) in the same group. A detected stint is excised and handed to the split
 machinery of Sec.~\ref{impl:uniform}, so it needs no removal semantics of its own. Below
 $T_{\mathrm{ground}}$ the same predicate is stored as a list of suspect intervals per
 flight; the segmentation later maps them onto the phases they touch, and the
