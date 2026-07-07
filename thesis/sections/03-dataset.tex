@@ -1057,10 +1057,39 @@ Per flight, let $\Delta t$ be the median inter-fix interval. Three cases arise:
         dominant \SI{1}{\second} cadence that is more than \SI{10}{\second} of unknown path,
         and interpolating across it would fabricate dynamics the smoothing could not tell
         from real motion. The flight is \emph{split} at the gap into independently analysed
-        segments, each carried forward on its own; a segment left too short by the split is
-        caught by the flight-level cuts (Sec.~\ref{sec:flightfilter}). A missing fraction
+        segments, each carried forward on its own; what a split means for the analysis is
+        stated below. A missing fraction
         above \SI{10}{\percent} even between gaps excludes the flight outright.
 \end{description}
+
+\paragraph{Consequences of a split.}
+The observables of Ch.~\ref{ch:next-steps} are affected differently by a split, and the
+distinction is worth stating once. Ensemble quantities (the MSD, the propagator) need the
+position at a given elapsed time, not the path between: a segment keeps its parent's
+origin and clock (Sec.~\ref{sec:notation}), and a GPS position is absolute, so the
+positions after the gap remain valid and the flight simply contributes no data at the
+missing lags. Path-dependent quantities (path length, phase durations, step lengths,
+time-averaged windows) are computed within a segment and never across the gap. Three
+cautions follow.
+\begin{itemize}[itemsep=2pt, topsep=3pt]
+  \item \emph{Censoring at the boundary.} A phase in progress when the gap opens is
+        truncated: its duration is a lower bound, not a measurement. Boundary-truncated
+        durations are flagged as censored and excluded from the $\psi(\tau)$ fits, or
+        handled with censoring-aware estimators, rather than counted as complete;
+        otherwise every split would read as a spuriously short wait and thin the same
+        tail the cleaning protects.
+  \item \emph{A segment is not a fresh flight.} For observables that depend on the time
+        since take-off, such as the time-averaged MSD stratified by duration
+        (Ch.~\ref{ch:next-steps}), a segment beginning at parent time $t_0>0$ is an
+        observation window of an aged process, and is used as such rather than re-zeroed.
+  \item \emph{No second pass of the flight-level cuts.} The parent flight has already
+        passed the cuts of Sec.~\ref{sec:flightfilter}, and re-applying the duration cut
+        to segments would preferentially discard the data behind late-flight gaps. A
+        segment needs only to support the smoothing window and the within-segment
+        statistics: one below a minimal duration (a configuration key set with the
+        implementation, Sec.~\ref{impl:uniform}) is dropped alone, and the rest of the
+        flight is retained.
+\end{itemize}
 
 \paragraph{Interpolation across short gaps.}
 The fill is done per channel on the uniform grid. The horizontal position, which the transport
@@ -1195,6 +1224,7 @@ acceleration distribution should stay within physical bounds; and the results sh
 stable under a one-step change of $w$ \impldetails{impl:savgol}.
 
 \subsection{Notation}
+\label{sec:notation}
 Throughout, $\mathbf{r}(t)=\big(x(t),y(t)\big)=\big(E(t),N(t)\big)$ denotes the
 \emph{horizontal} position in this local frame and $z(t)=U(t)$ the (barometric) altitude. By
 construction each trajectory starts at the horizontal origin, $\mathbf{r}(0)=\mathbf{0}$, with

@@ -58,12 +58,13 @@ flight_level:
 # (audited in the thesis, fig:gaps).
 sampling:
   max_gap_factor: 10.0             # split the flight at any inter-fix gap exceeding this
-                                   #   multiple of its own native dt (segments then analysed
-                                   #   independently; a too-short segment falls to the
-                                   #   flight-level cuts). RELATIVE to native dt, so the
-                                   #   tolerated absolute gap scales with the logger's rate;
-                                   #   raising it much further would interpolate over
-                                   #   ever-longer spans.
+                                   #   multiple of its own native dt. Segments keep the
+                                   #   parent's origin/clock and are analysed independently;
+                                   #   the flight-level cuts are NOT re-applied to them (a
+                                   #   minimal segment-duration key joins here with the
+                                   #   routine). RELATIVE to native dt, so the tolerated
+                                   #   absolute gap scales with the logger's rate; raising it
+                                   #   much further would interpolate over ever-longer spans.
   max_missing_fraction: 0.10       # exclude if more than this fraction of the uniform grid
                                    #   at the native dt is left uncovered
 

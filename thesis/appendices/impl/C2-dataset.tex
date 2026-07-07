@@ -455,6 +455,13 @@ every channel: an order-of-magnitude smaller $v_z$ buys no wider gap for the alt
 the interpolation error scales with curvature, not speed, and a wide altitude gap would erase
 the climb--glide transitions that $v_z$ is there to resolve (Sec.~\ref{sec:uniform}).
 
+\paragraph{Segment handling.} A segment keeps its parent flight's origin and clock, and
+the flight-level cuts are not re-applied to it (Sec.~\ref{sec:uniform}). A minimal segment
+duration, enough to support the smoothing window and the within-segment statistics, joins
+\texttt{sampling} when the routine is built; the per-segment output additionally flags any
+phase duration truncated at a segment boundary as censored, for the $\psi(\tau)$ fits to
+exclude.
+
 \paragraph{Per-channel fill.} Across a short gap the horizontal position is interpolated
 shape-preservingly (monotone piecewise-cubic, e.g.\ \path{scipy.interpolate.PchipInterpolator})
 and the barometric altitude linearly or by cubic spline (its within-phase smoothness makes the
