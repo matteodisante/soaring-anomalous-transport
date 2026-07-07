@@ -59,11 +59,15 @@ Figures~\ref{fig:fixlevel}, \ref{fig:preproc}, \ref{fig:gaps}, \ref{fig:sampling
   \path{generate_preproc_figure.py} &
   One run produces all four (a shared full-census scan feeds three; fix-level cleaning
   uses a separate sampled pass). Needs the raw IGC archive. \\
+Savitzky--Golay $\tau_c$ (config values) &
+  \path{estimate_savgol_timescales.py} &
+  Prints the measured spectral knees (Sec.~\ref{impl:savgol}); adopting them in the YAML
+  is a deliberate edit. Needs the raw IGC archive. \\
 \bottomrule
 \end{tabular}
 \caption{Script that regenerates each auto-generated thesis figure or table. Run as
 \texttt{uv run python scripts/reporting/<name>}; only \texttt{generate\_stats.py} is wired
-into \texttt{scripts/build\_docs.sh} (the two figure scripts need the external SSD and are
+into \texttt{scripts/build\_docs.sh} (the others need the external SSD and are
 run manually).}
 \label{tab:impl-repro}
 \end{table}

@@ -73,8 +73,9 @@ coordinates (great-circle speeds); (v) converts to the metric ENU frame; (vi)–
 Key mechanics that reconcile the blueprint with the repo:
 
 - **Altitude channel (i).** The parser returns *both* channels; the pipeline picks one per
-  flight (`alt_source`), never splices. Barometric where present; whole-channel-absent
-  flights fall back to unfiltered GNSS. The `A`/`V` flag is subsumed by the
+  flight (`alt_source`), never splices. Barometric where present **and alive**
+  (`alt_channel.baro_min_range_m`: a stuck sensor writing a constant value falls back);
+  whole-channel-absent flights fall back to unfiltered GNSS. The `A`/`V` flag is subsumed by the
   missing-altitude check on the chosen channel. (Thesis `sec:altchannel`.)
 - **ENU (v).** Origin at the take-off fix; `E,N` zeroed there; **`U` is not re-zeroed**
   (absolute barometric altitude retained; the take-off height `U_origin` is stored in
@@ -231,10 +232,9 @@ Handle at ingestion (empirically observed on the real files):
   `estimate_savgol_timescales.py`): all three knees at ~0.2 Hz → `τ_c = 5 s`, the typical
   floor being IGC quantization on every channel. Confirm with the sec:savgol validation
   (flat residual spectrum, one-step window stability) on the production ENU series.
-- The `alt_channel` liveness bound, the flight-level duration window / altitude-activity
-  floor, and the fix-level working values (`hampel_*`, `frozen_*`,
-  `integrity_max_fraction`) are now **in the YAML**; the injected-defect calibration owns
-  their final values.
+- The `alt_channel` liveness bound and the flight-level duration window /
+  altitude-activity floor are census-motivated additions (thesis `sec:flightfilter`,
+  `sec:altchannel`); audit them on the first production run.
 - Duplicate uploads: before pooling, check whether the same physical flight appears twice
   (same pilot and date, near-identical track); the catalog does not guard against it.
 - The `sampling` cuts (`max_gap_factor`/`max_gap_seconds`/`max_missing_fraction`) and the
@@ -245,12 +245,10 @@ Handle at ingestion (empirically observed on the real files):
   **working value** (census impact in the `StatScan*GapSplit*` macros: the cap mostly
   affects the slow-cadence hang-glider half) → freeze it via the downstream-invariance
   sweep.
-- The fix-level **robust-outlier** (`w, k, ε_min`) and **frozen-lock** (`ε, δ_z, τ_freeze`)
-  parameters, the integrity fraction `f`, the segment gate `min_segment_duration`, and the
-  interior-ground guard (`T_ground`, flatness tolerance, sub-threshold suspect-wait flag)
-  are designed but not yet set or audited →
-  calibrate via the injected-defect + downstream-invariance tests (thesis `sec:fixlevel`) once the
-  cleaning routine is built. These are false-*negative* / bias checks; the removed-fraction
-  audit above only bounds false positives.
+- The fix-level **robust-outlier** (`w, k, ε_min`), **frozen-lock** (`ε, δ_z, τ_freeze`),
+  integrity `f`, segment-gate and interior-ground values are **in the YAML as working
+  values** → the injected-defect + downstream-invariance tests own their final values once
+  the cleaning routine is built. These are false-*negative* / bias checks; the
+  removed-fraction audit above only bounds false positives.
 - Actual `flight_id` cross-source intersection check → confirms the `(source, flight_id)` key.
 - Sailplane catalog schema → document as above once the source is in hand.

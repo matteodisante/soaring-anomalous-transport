@@ -126,7 +126,9 @@ those flights, and when present it covers every fix for \StatScanParaBaroFullPct
 \StatScanHangBaroFullPct\,\% of them (the rest miss only a
 handful of individual fixes, dropped one by one, Sec.~\ref{sec:fixlevel}). A logger either has
 a pressure sensor for the whole track or none at all, so the \texttt{alt\_source} decision is
-per flight, never per fix.
+per flight, never per fix. Liveness is checked as well: a present channel whose total
+range stays under \texttt{baro\_min\_range\_m} (\SI{30}{\metre}, key \texttt{alt\_channel})
+is a stuck sensor, and the flight falls back to GNSS (Sec.~\ref{sec:altchannel}).
 
 \subsection{Fix-level cleaning}
 \label{impl:fixlevel}
@@ -142,7 +144,8 @@ context), and a structural rule (a whole run).
 cleaning below is designed, and its absolute bounds are thresholded on the data
 (Table~\ref{tab:cleaning}, Figure~\ref{fig:fixlevel}); the routine that walks a trajectory
 applying all three detectors, and the robust-test and frozen-lock parameters it needs, are
-the next step. The parameter names introduced here are the config keys that step will add.
+the next step. The parameters it needs are already config keys
+(Table~\ref{tab:fixlevel-params}).
 
 \paragraph{Robust local-outlier test (off-the-trend defects).} For a fix $P_k$ at time
 $t_k$:
@@ -225,7 +228,7 @@ enough -- and the pass defaults to keeping the data otherwise.
 \begin{itemize}[itemsep=2pt, topsep=3pt]
   \item \emph{Extent.} The run's bounding diameter -- the maximum great-circle distance
         between \emph{any} two of its fixes, not the fix-to-fix step -- stays below
-        $\varepsilon$ (a few times the GPS noise, $\sim$\SIrange{10}{15}{\metre}); a
+        $\varepsilon$ (\SI{15}{\metre}, a few times the GPS noise); a
         circling climb spans its disc,
         $2R\approx\SIrange{40}{100}{\metre}\gg\varepsilon$, and is cleared on extent
         alone, whereas a step-based test would fire on every \SI{1}{\hertz} climb (step
@@ -250,7 +253,7 @@ enough -- and the pass defaults to keeping the data otherwise.
         flight, where Eq.~\eqref{eq:frozenlock} substitutes them for the missing
         barometric witness.
   \item \emph{Duration.} The run must span at least $\tau_{\mathrm{freeze}}$, set to a few
-        thermalling periods ($\gtrsim\SIrange{60}{90}{\second}$), so that a long, slow,
+        thermalling periods (\SI{60}{\second}), so that a long, slow,
         tight climb is never mistaken for a freeze.
 \end{itemize}
 Only then is the run marked as a data gap; the split it induces is
@@ -342,9 +345,9 @@ interpolation than measurement. This is the cleaning counterpart of the sampling
 cut (Sec.~\ref{impl:uniform}).
 
 \paragraph{Configuration.} The absolute bounds are already the \texttt{FixLevelThresholds}
-group above. The remaining parameters are collected in Table~\ref{tab:fixlevel-params}: they
-join that group in \path{configs/preprocessing.yaml} when the routine is built and, as with
-every threshold in this pipeline, they live in the config, never in Python.
+group above. The remaining parameters are collected in Table~\ref{tab:fixlevel-params} and live under
+the same key in \path{configs/preprocessing.yaml}; as with every threshold in this
+pipeline, nothing is hard-coded in Python.
 
 \begin{table}[htbp]
 \centering

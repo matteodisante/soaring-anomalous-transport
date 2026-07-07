@@ -381,9 +381,9 @@ is scaled by the robust local spread of those residuals, and the fix is flagged 
   \qquad \sigma_k = 1.4826\operatorname{MAD}_k,
 \end{equation}
 i.e.\ when it departs by more than $k$ robust standard deviations \emph{and} by more than
-an absolute floor $\varepsilon_{\min}$ of a few times the GPS noise (working defaults:
-$k\approx4$--$5$, a window $\pm w$ with $w\approx\SIrange{15}{30}{\second}$,
-$\varepsilon_{\min}\approx\SI{15}{\metre}$; rationale in Sec.~\ref{impl:fixlevel}). A flag alone does not delete: the fix is removed only
+an absolute floor $\varepsilon_{\min}$ of a few times the GPS noise (working values:
+$k=5$, a window of $\pm\SI{20}{\second}$, $\varepsilon_{\min}=\SI{15}{\metre}$;
+rationale in Sec.~\ref{impl:fixlevel}). A flag alone does not delete: the fix is removed only
 when this local flag is \emph{corroborated} by an absolute $v_{xy}$ bound that rules the step
 physically impossible, so a genuine but under-sampled tight turn -- flagged, yet flying at an
 ordinary speed -- is kept (Sec.~\ref{impl:fixlevel}). A fix \emph{on the trend} agrees with its
@@ -480,9 +480,9 @@ never recorded is lost.
 
 Quantitatively, a real thermalling climb fails the cut on two independent instruments at
 once: its circle spans $2R\approx\SIrange{40}{100}{\metre}$ against
-$\varepsilon\approx\SIrange{10}{15}{\metre}$, so test~(i) misses by a factor of $3$--$10$;
+$\varepsilon=\SI{15}{\metre}$, so test~(i) misses by a factor of $3$--$7$;
 and a climb of order \SI{1}{\metre\per\second} sustained over
-$\tau_{\mathrm{freeze}}\gtrsim\SIrange{60}{90}{\second}$ moves the barometer by
+$\tau_{\mathrm{freeze}}=\SI{60}{\second}$ moves the barometer by
 $\gtrsim\SI{60}{\metre}$ against a flatness tolerance $\delta_z$ of a few metres. Cutting a
 genuine climb on a barometric flight therefore requires two simultaneous
 order-of-magnitude failures, or coordinates repeated bit for bit, which no moving receiver
@@ -687,7 +687,7 @@ the ensemble is disturbed as little as possible. Once chosen, each cut is verifi
 full-distribution diagnostics in Fig.~\ref{fig:preproc}: it sits in the empty tail of its
 distribution, where moving it changes almost nothing. All flight-level quantities are
 computed directly from the parsed tracks; the thresholds follow the minimal-threshold
-strategy just described. Two track quantities gate a flight, plus a metadata stratifier:
+strategy just described. Three track criteria gate a flight, plus a metadata stratifier:
 \begin{enumerate}[label=(\arabic*)]
   \item \emph{Recorded duration} $T\geq\SI{40}{\minute}$. A cross-country flight spans many
         climb--glide cycles; shorter logs are sled runs or aborted attempts. An upper
@@ -726,7 +726,8 @@ the thin tail of still slower loggers is handled by the $\Delta t$ stratificatio
 regularity, is applied later, where a flight's time base is examined (Sec.~\ref{sec:uniform}) \impldetails{impl:flightfilter}.
 
 Figure~\ref{fig:preproc} shows, for every discipline and computed on the \emph{full} dataset
-(every track, no sub-sampling), the distributions of the two track cuts and, beside each, the
+(every track, no sub-sampling), the distributions of the two principal track cuts
+(duration and path length) and, beside each, the
 fraction of flights that cut \emph{alone} would retain -- its marginal effect, not a cascade.
 Both cuts sit far out in the tail, so the retained fraction is insensitive to their exact
 value; the diagnostics must be re-examined for the less curated further sources.
@@ -1126,7 +1127,7 @@ glide. The absolute cap of \SI{20}{\second} is pinned by three constraints: at l
 $2\times$ the slowest common cadence (\SI{10}{\second}, Fig.~\ref{fig:sampling}), so a
 single missed fix never splits a flight; at most about two thirds of a thermalling
 period, so a bridged gap can never hide a full circle; and well below
-$\tau_{\mathrm{freeze}}\gtrsim\SIrange{60}{90}{\second}$, for consistency -- an excised
+$\tau_{\mathrm{freeze}}=\SI{60}{\second}$, for consistency -- an excised
 frozen-lock run of that length is split, so a native gap of comparable length cannot be
 bridged. One refinement keeps the first constraint true at \emph{every} cadence: the cap
 is floored at $2\,\Delta t$, i.e.
@@ -1305,13 +1306,15 @@ polynomial order $p$, fixed from the measured noise spectrum rather than by eye:
         scale; those flights are in any case stratified out of the $\Delta t$-sensitive
         observables (Sec.~\ref{sec:uniform}).
   \item Treat the vertical separately from the horizontal, and condition it on the altitude
-        \emph{source}. On a barometric flight the vertical channel is \emph{smoother} than
-        the horizontal, since the pressure sensor carries little high-frequency noise
-        (Sec.~\ref{sec:altchannel}), so it takes a shorter window; on a
-        GNSS-fallback flight the vertical is instead $1.5$--$3\times$ noisier (vertical
-        dilution of precision) and needs more smoothing. Its knee $f_c$, and hence its window,
-        are therefore read from the spectrum of the channel actually in use, separately from
-        those of $(E,N)$.
+        \emph{source}. The a-priori expectation was asymmetric: a smoother barometric
+        channel taking a shorter window than $(E,N)$, a noisier GNSS vertical taking a
+        longer one. The measurement said otherwise: the three knees coincide at
+        $f_c\approx\SI{0.2}{\hertz}$ ($\tau_c=\SI{5}{\second}$), because the typical
+        floor of every channel is the metre and arc-minute quantization of the IGC
+        format, not receiver noise; the barometric--GNSS asymmetry shows in the
+        spectrum's level, not in its knee (Sec.~\ref{impl:savgol}). The per-channel
+        conditioning is kept, for the noisy GNSS minority, but the adopted windows are
+        currently equal.
 \end{enumerate}
 The choice is validated on a held-out sample: the residual (raw minus smoothed) spectrum
 should be flat above $f_c$, confirming that noise rather than signal was removed; the
