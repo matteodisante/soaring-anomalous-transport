@@ -820,6 +820,27 @@ and relaunch in one log would read as an implausibly long wait; an interior-grou
 (sustained near-zero $v_{xy}$ of order ten minutes, treated like a long gap) is planned
 with the implementation.
 
+\paragraph{2026-07 --- Third audit: interpolation budget, interior landings, per-segment gates.}
+(1)~Interpolation error over a bridged gap is governed by the unresolved manoeuvring, not
+by the interpolant order: during a glide the error over 10--20\,s stays at metres (below
+GPS noise), while during circling a gap of $g$ seconds spans an arc of $2\pi g/T$ that no
+interpolant can recover --- at $g=10$\,s the chord-arc deviation is already
+$\approx0.5R$ (10--25\,m), at $g=20$\,s up to $2R$. This confirms the two-scale bound and
+adds a refinement: the cap is floored at $2\Delta t$
+($g_{\max}=\min(10\Delta t, \max(20\,\mathrm{s}, 2\Delta t))$), so the thin tail of very
+slow loggers also tolerates a single missed fix (a bridged gap there inserts at most two
+grid points). Every filled grid point is now flagged \texttt{interpolated} in
+\texttt{fixes}, so phase statistics can treat reconstructed stretches with the same
+caution as segment boundaries. (2)~The interior-ground detector is specified, built like
+the frozen-lock rule (cut only on corroborated evidence, since a wing soaring into wind
+holds near-zero ground speed while flying): $v_{xy}<v_0$ sustained for
+$T_{\mathrm{ground}}$ (order ten minutes) \emph{and} barometric altitude flat within a
+few metres; a detected stint is excised and handed to the split machinery. (3)~Two gate
+corrections: the integrity gate counts over the airborne window only (ground junk that
+trimming removes anyway must not condemn a flight), and the missing-fraction gate acts
+per segment (a bad segment is dropped alone). Savitzky--Golay edge handling pinned
+(\texttt{mode='interp'}, per segment).
+
 \paragraph{2026-06 --- Documentation.}
 Project docs are built with MkDocs and published on GitHub Pages. Initially deployed with
 \texttt{mkdocs gh-deploy}, which accumulated one built-site commit per deploy on a
