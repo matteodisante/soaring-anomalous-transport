@@ -333,33 +333,42 @@ group in \path{configs/preprocessing.yaml} when the routine is built; as with ev
 in this pipeline they live in the config, never in Python.
 
 \paragraph{Validating the cleaning.} The removed-fraction count of Figure~\ref{fig:fixlevel}
-bounds only the false positives (over-cleaning). Two further checks, part of the same planned
-step, bound the false negatives and the bias. \emph{Injected defects}: on tracks the cleaning
-leaves untouched, plant synthetic defects of known type and size -- position spikes of
-amplitude $a$, frozen runs of length $\tau$, backward-time glitches -- and measure the
-recovered fraction against size. This gives the detection floor (the smallest spike caught)
-and calibrates $k$, $w$, $\varepsilon$ and $\tau_{\mathrm{freeze}}$ to a target rate, the only
-direct measurement of what the cleaning misses. \emph{Downstream invariance}: recompute the
-transport estimators -- the displacement-scaling exponent and the waiting-time-tail exponent
--- over a grid of cleaning strengths, and take the operating point on the plateau where they
-stop moving; movement under stricter cleaning is the signature of a cut biting into signal.
-A cheap third check guards against a missed defect class: the fixes flagged by the absolute
-bound should nest inside those flagged by the local test (the impossible is a subset of the
-locally anomalous), so a large disagreement points to a defect neither was designed for. A
-fourth check targets the error this pipeline most wants to avoid -- losing a slow-phase fix.
-Once the segmentation is in place (Ch.~\ref{ch:next-steps}) the removal and split rates are
-measured \emph{per phase} and required to be flat across transition, search and climb rather
-than enriched in the two slow phases; and synthetic tight climbs -- circles at flying speed,
-over a range of radii and wind drift -- planted in otherwise clean tracks confirm directly
-that the frozen-lock detector never splits a real climb. This is the false-\emph{positive}
-complement of the injected-defect test, and its natural readout is the tail of
-$\psi(\tau_w)$: a cut biting into climb or search would thin that tail before it moved
-anything else. A fifth check targets the vertical bound specifically: the fixes cut by
-$|v_z|>\SI{13}{\metre\per\second}$ must be \emph{isolated}, not consecutive -- a sustained
-spiral dive holds \SIrange{15}{20}{\metre\per\second} of real sink, so a run-shaped excess
-is the signature of a genuine manoeuvre, calling for a raised bound or a coherent-run
-exemption rather than censoring; an isolated super-threshold difference, bracketed by
-ordinary rates, is a sensor error and safe to cut.
+bounds only the false positives (over-cleaning). Five checks, part of the same planned step,
+bound the false negatives and the bias:
+\begin{enumerate}[label=(\arabic*), itemsep=2pt, topsep=3pt]
+  \item \emph{Injected defects.} On tracks the cleaning leaves untouched, plant synthetic
+        defects of known type and size -- position spikes of amplitude $a$, frozen runs of
+        length $\tau$, backward-time glitches -- and measure the recovered fraction against
+        size. This gives the detection floor (the smallest spike caught) and calibrates
+        $k$, $w$, $\varepsilon$ and $\tau_{\mathrm{freeze}}$ to a target rate: the only
+        direct measurement of what the cleaning misses.
+  \item \emph{Downstream invariance.} Recompute the transport estimators -- the
+        displacement-scaling exponent and the waiting-time-tail exponent -- over a grid of
+        cleaning strengths, and take the operating point on the plateau where they stop
+        moving; movement under stricter cleaning is the signature of a cut biting into
+        signal.
+  \item \emph{Detector nesting.} The fixes flagged by the absolute bound should nest
+        inside those flagged by the local test (the impossible is a subset of the locally
+        anomalous); a large disagreement points to a defect class neither was designed for
+        -- a cheap guard.
+  \item \emph{Per-phase removal rates.} The error this pipeline most wants to avoid is
+        losing a slow-phase fix. Once the segmentation is in place
+        (Ch.~\ref{ch:next-steps}), the removal and split rates are measured \emph{per
+        phase} and required to be flat across transition, search and climb rather than
+        enriched in the two slow phases; and synthetic tight climbs -- circles at flying
+        speed, over a range of radii and wind drift -- planted in otherwise clean tracks
+        confirm directly that the frozen-lock detector never splits a real climb. This is
+        the false-\emph{positive} complement of check~(1), and its natural readout is the
+        tail of $\psi(\tau_w)$: a cut biting into climb or search would thin that tail
+        before it moved anything else.
+  \item \emph{Isolation of the vertical cuts.} The fixes cut by
+        $|v_z|>\SI{13}{\metre\per\second}$ must be \emph{isolated}, not consecutive: a
+        sustained spiral dive holds \SIrange{15}{20}{\metre\per\second} of real sink, so a
+        run-shaped excess is the signature of a genuine manoeuvre -- calling for a raised
+        bound or a coherent-run exemption rather than censoring -- whereas an isolated
+        super-threshold difference, bracketed by ordinary rates, is a sensor error and
+        safe to cut.
+\end{enumerate}
 
 \paragraph{Reproduce.} Table~\ref{tab:impl-repro}, row \path{generate_preproc_figure.py} (one
 run also regenerates Figures~\ref{fig:preproc}, \ref{fig:gaps} and~\ref{fig:sampling} from a
