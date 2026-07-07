@@ -72,6 +72,29 @@ class FixLevelThresholds:
     max_vertical_speed_mps: float
     min_altitude_m: float
     max_altitude_m: float
+    # Robust local-outlier test (Hampel identifier) and structural rules: working
+    # values, to be finalized by the injected-defect calibration (thesis impl:fixlevel).
+    hampel_window_s: float
+    hampel_k: float
+    hampel_eps_min_m: float
+    hampel_min_window_fixes: int
+    frozen_eps_m: float
+    frozen_delta_z_m: float
+    frozen_tau_s: float
+    integrity_max_fraction: float
+
+
+@dataclass(frozen=True)
+class AltChannelThresholds:
+    """Altitude-channel liveness bound (loaded from the config).
+
+    A barometric channel can be present (non-zero) yet dead: a stuck sensor writes a
+    constant value, passes the presence check, and would feed the segmentation a
+    vertical velocity of identically zero. Below ``baro_min_range_m`` of total range
+    over the flight the channel is treated as absent and the flight falls back to GNSS.
+    """
+
+    baro_min_range_m: float
 
 
 @dataclass(frozen=True)
@@ -85,6 +108,8 @@ class FlightLevelThresholds:
 
     min_duration_s: float
     min_path_km: float
+    max_duration_s: float
+    min_alt_range_m: float
 
 
 @dataclass(frozen=True)
@@ -93,6 +118,8 @@ class TrimmingThresholds:
 
     takeoff_speed_mps: float
     sustained_s: float
+    interior_ground_s: float
+    ground_flatness_m: float
 
 
 @dataclass(frozen=True)
@@ -110,6 +137,7 @@ class SamplingThresholds:
     max_gap_factor: float
     max_gap_seconds: float
     max_missing_fraction: float
+    min_segment_duration_s: float
 
 
 @dataclass(frozen=True)
@@ -133,6 +161,7 @@ class PreprocConfig:
     """The full set of pre-processing thresholds, grouped by pipeline level."""
 
     fix: FixLevelThresholds
+    alt_channel: AltChannelThresholds
     trimming: TrimmingThresholds
     flight: FlightLevelThresholds
     sampling: SamplingThresholds
@@ -159,6 +188,7 @@ def load_preproc_config(path: str | Path | None = None) -> PreprocConfig:
     raw = yaml.safe_load(p.read_text(encoding="utf-8"))
     return PreprocConfig(
         fix=FixLevelThresholds(**raw["fix_level"]),
+        alt_channel=AltChannelThresholds(**raw["alt_channel"]),
         trimming=TrimmingThresholds(**raw["trimming"]),
         flight=FlightLevelThresholds(**raw["flight_level"]),
         sampling=SamplingThresholds(**raw["sampling"]),

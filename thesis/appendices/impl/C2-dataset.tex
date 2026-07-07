@@ -356,33 +356,32 @@ every threshold in this pipeline, they live in the config, never in Python.
 \midrule
 \multicolumn{3}{@{}l}{\itshape Robust local-outlier test (Hampel)}\\
 \addlinespace[2pt]
-$w$ & \SIrange{15}{30}{\second} & half-width of the local time window; a few native
+$w$ & \SI{20}{\second} & half-width of the local time window; a few native
   intervals \\
-$k$ & $4$--$5$ & flag threshold, in robust standard deviations $\sigma_k$ \\
+$k$ & $5$ & flag threshold, in robust standard deviations $\sigma_k$ \\
 $\varepsilon_{\min}$ & $\approx\SI{15}{\metre}$ & absolute residual floor; a few times the
   horizontal GPS noise, so a smooth stretch ($\sigma_k\to0$) is not chased \\
 \addlinespace[6pt]
 \multicolumn{3}{@{}l}{\itshape Frozen-lock rule (Eq.~\ref{eq:frozenlock})}\\
 \addlinespace[2pt]
-$\varepsilon$ & \SIrange{10}{15}{\metre} & run-extent tolerance; a few times the GPS noise,
+$\varepsilon$ & \SI{15}{\metre} & run-extent tolerance; a few times the GPS noise,
   $\ll 2R\approx\SIrange{40}{100}{\metre}$ of a circling climb \\
 $\delta_z$ & $\approx\SI{5}{\metre}$ & barometric-flatness witness; a few times the
   sensor noise and quantisation, $\ll$ the $\gtrsim\SI{60}{\metre}$ a real climb gains
   over $\tau_{\mathrm{freeze}}$ \\
-$\tau_{\mathrm{freeze}}$ & \SIrange{60}{90}{\second} & minimum span of a cut run; a few
+$\tau_{\mathrm{freeze}}$ & \SI{60}{\second} & minimum span of a cut run; two
   thermalling periods, so a slow, tight climb is never mistaken for a freeze \\
 \addlinespace[6pt]
 \multicolumn{3}{@{}l}{\itshape Flight-level integrity gate}\\
 \addlinespace[2pt]
-$f$ & \numrange{0.05}{0.10} & maximum deleted-plus-reconstructed fraction; past it the
+$f$ & $0.10$ & maximum deleted-plus-reconstructed fraction; past it the
   flight is being rebuilt, not cleaned, and is dropped whole \\
 \bottomrule
 \end{tabular}
 \caption{Fix-level cleaning: parameters of the robust and structural detectors, with their
 working defaults -- to be finalized by the injected-defect calibration, check~(1) of the
-validation list below -- and the physical scale that sets each. They become config keys
-under \texttt{fix\_level} in \texttt{configs/preprocessing.yaml} when the cleaning routine
-is built; the absolute bounds of Table~\ref{tab:cleaning} already live there.}%
+validation list below -- and the physical scale that sets each. They live as config keys
+under \texttt{fix\_level} in \texttt{configs/preprocessing.yaml}; the absolute bounds of Table~\ref{tab:cleaning} already live there.}%
 \label{tab:fixlevel-params}
 \end{table}
 
@@ -435,9 +434,9 @@ are the \texttt{TrimmingThresholds} dataclass, loaded from
 \path{configs/preprocessing.yaml} (key \texttt{trimming}); as with every threshold in
 this pipeline, nothing is hard-coded in Python.
 
-The interior-ground guard of Sec.~\ref{sec:trimming} adds two keys when built:
-\texttt{interior\_ground\_s} ($T_{\mathrm{ground}}$, order \SI{600}{\second}) and a
-barometric flatness tolerance. A detected stint is excised and handed to the split
+The interior-ground guard of Sec.~\ref{sec:trimming} keeps its two keys in the same
+group: \texttt{interior\_ground\_s} ($T_{\mathrm{ground}}$, \SI{600}{\second}) and
+\texttt{ground\_flatness\_m} (\SI{5}{\metre}). A detected stint is excised and handed to the split
 machinery of Sec.~\ref{impl:uniform}, so it needs no removal semantics of its own. Below
 $T_{\mathrm{ground}}$ the same predicate is stored as a list of suspect intervals per
 flight; the segmentation later maps them onto the phases they touch, and the
@@ -445,9 +444,12 @@ $\psi(\tau)$ sensitivity re-fits consume the flag.
 
 \subsection{Flight-level filtering}
 \label{impl:flightfilter}
-The duration ($T\geq\SI{40}{\minute}$) and path-length ($L\geq\SI{30}{\kilo\metre}$) cuts
-are the \texttt{FlightLevelThresholds} dataclass, from \path{configs/preprocessing.yaml}
-(key \path{flight_level}).
+The duration window ($\SI{40}{\minute}\leq T\leq\SI{16}{\hour}$), the path floor
+($L\geq\SI{10}{\kilo\metre}$) and the altitude-activity floor (\SI{75}{\metre} on the
+adopted channel) are the \texttt{FlightLevelThresholds} dataclass, from
+\path{configs/preprocessing.yaml} (key \path{flight_level}); the census measurements
+behind the 30-to-10 km change and the upper duration bound are in the narrative
+(Sec.~\ref{sec:flightfilter}).
 
 \paragraph{Diagnostic sample (Figure~\ref{fig:preproc}).}
 \begin{description}
@@ -490,10 +492,9 @@ dataclass) act as follows.
         uncovered is dropped alone, the flight only if no segment survives. The
         per-flight value in the census scan is the pre-split diagnostic, not the
         operational gate.
-  \item[Segment gate.] \texttt{min\_segment\_duration} joins the group when the routine
-        is built. It only needs to support the smoothing window and the within-segment
-        statistics: a few smoothing timescales, working value order
-        \SIrange{60}{120}{\second}, never less than $w\,\Delta t$.
+  \item[Segment gate.] \texttt{min\_segment\_duration\_s} (\SI{90}{\second}). It only
+        needs to support the smoothing window and the within-segment statistics: a few
+        smoothing timescales, never less than $w\,\Delta t$.
   \item[Measured vs interpolated.] A grid point counts as measured when a fix lies
         within half a native step of it, interpolated otherwise; the same tolerance
         decides whether a flight is uniform as recorded (no interpolated points) or was
@@ -563,16 +564,26 @@ than the noise scale (those flights are stratified out of the $\Delta t$-sensiti
 observables anyway). The polynomial order ($p=3$) and the three smoothing timescales --
 \path{tau_c_horizontal_s} for $(E,N)$, \path{tau_c_vertical_baro_s} and
 \path{tau_c_vertical_gnss_s} for $U$ -- are the \texttt{SavgolParams} dataclass in
-\path{configs/preprocessing.yaml} (key \texttt{savgol}), but today hold placeholder
-values -- each $\tau_c$ is to be fixed once the ENU power spectra are measured, reusing the
-Welch procedure of Sec.~\ref{impl:altchannel} applied to $E,N,U$ instead of altitude.
-The vertical timescale is read from the spectrum of the altitude channel \emph{actually in
-use}: a barometric flight, being the smoother channel, takes a shorter window than $(E,N)$,
-a GNSS-fallback flight (noisier by vertical dilution of precision) a longer one -- which is
-why the config carries the conditioning on \path{alt_source} as two explicit vertical keys
-rather than one value (Sec.~\ref{sec:savgol}). The filter runs on the resampled grid, so
-the small interpolated
-fraction (\path{frac_interpolated}) is already in place when it reads its window.
+\path{configs/preprocessing.yaml} (key \texttt{savgol}).
+
+\paragraph{The measured timescales.} The knees were measured with
+\path{estimate_savgol_timescales.py}, which applies the Welch procedure of
+Sec.~\ref{impl:altchannel} to $E$, $N$ (local equirectangular metres) and to the altitude
+channel each flight actually uses, on a seeded sample (908 horizontal flight-components,
+719 barometric and 189 GNSS-fallback flights at \SI{1}{\hertz}). The knee rule: the floor
+is the median PSD over \SIrange{0.35}{0.5}{\hertz}; $f_c$ is the lowest frequency whose
+median PSD falls below three times it. All three knees land at
+$f_c\approx\SI{0.2}{\hertz}$, so $\tau_c=\SI{5}{\second}$ for every channel: each
+channel's typical floor is the metre and arc-minute quantization of the IGC format
+(measured $\approx0.60$ and $\approx\SI{0.26}{\metre\squared\per\hertz}$ against the
+theoretical $q^2/12/f_{\mathrm{Nyq}}$ of $0.57$ and $0.17$), not receiver noise. The
+expected asymmetry between the barometric and GNSS verticals shows in the spectrum's
+\emph{level}, not in its knee, and even the 90th-percentile spectra move the knee by less
+than a second. The two vertical keys stay, conditioned on \path{alt_source}, for the
+noisy-minority refinement; the validation of Sec.~\ref{sec:savgol} (flat residual
+spectrum, stability under one window step) is what confirms the values. The filter runs
+on the resampled grid, so the small interpolated fraction (\path{frac_interpolated}) is
+already in place when it reads its window.
 
 \section{Preliminary characterization}
 \label{impl:prelim}

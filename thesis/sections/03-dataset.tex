@@ -293,7 +293,11 @@ Several practical points follow.
         back-filled from GNSS. A logger with \emph{no} pressure sensor writes the whole
         barometric channel as zero (the presence is essentially all-or-nothing, not a
         scattering of gaps); such a flight falls back to the GNSS altitude, unfiltered --
-        a non-negligible minority of flights (Figure~\ref{fig:altnoise}d).
+        a non-negligible minority of flights (Figure~\ref{fig:altnoise}d). Presence alone
+        is not enough: a stuck sensor writes a constant non-zero value and would feed the
+        segmentation a vertical velocity of identically zero, so a barometric channel
+        whose total range over the flight stays below \SI{30}{\metre} is treated as
+        absent, and the flight falls back to GNSS.
 \end{description}
 
 \paragraph{Measuring the fallback rate.}
@@ -686,15 +690,28 @@ computed directly from the parsed tracks; the thresholds follow the minimal-thre
 strategy just described. Two track quantities gate a flight, plus a metadata stratifier:
 \begin{enumerate}[label=(\arabic*)]
   \item \emph{Recorded duration} $T\geq\SI{40}{\minute}$. A cross-country flight spans many
-        climb--glide cycles; shorter logs are sled runs or aborted attempts. The cut is
+        climb--glide cycles; shorter logs are sled runs or aborted attempts. An upper
+        sanity bound $T\leq\SI{16}{\hour}$ removes loggers left running past the flight:
+        the census holds fifteen ``flights'' of \SIrange{16}{166}{\hour}, with paths up
+        to \SI{10000}{\kilo\metre}, which would poison the long-lag MSD. The cut is
         deliberately \emph{decoupled} from the maximum MSD lag -- the ensemble at lag $t$
         already uses only flights with $T>t$, and the aging in $T$ is diagnosed by stratifying
         in $T$ -- so large-lag analyses restrict to the long-duration stratum rather than
         raising this global cut.
-  \item \emph{Flown path length} $L\geq\SI{30}{\kilo\metre}$, with $L=\sum_i\Delta s_i$ from
-        the great-circle steps of~\eqref{eq:haversine}. This removes tows and local hops that
-        never became a cross-country flight. It is a minimal cut: a real XC flight covers many
-        tens to hundreds of kilometres, far above \SI{30}{\kilo\metre}.
+  \item \emph{Flown path length} $L\geq\SI{10}{\kilo\metre}$, with $L=\sum_i\Delta s_i$
+        from the great-circle steps of~\eqref{eq:haversine}, a floor against degenerate
+        logs. An earlier draft used \SI{30}{\kilo\metre}; the census showed that value
+        violating the minimal-threshold strategy itself. Above \SI{40}{\minute},
+        $L<\SI{10}{\kilo\metre}$ catches 6 flights out of \num{184583}, while
+        $L<\SI{30}{\kilo\metre}$ removed \num{5229} genuine, localized soaring flights
+        (median extent \SI{7.4}{\kilo\metre}) -- precisely the most-trapped tail of the
+        ensemble, whose exclusion would bias the transport toward travellers. Duration
+        already clears tows and sled runs.
+  \item \emph{Altitude activity.} The total range of the adopted altitude channel must
+        reach \SI{75}{\metre}: a $\geq\SI{40}{\minute}$ record spanning less is not free
+        flight (a vehicle log, or a dead sensor). The census holds a few hundred such
+        candidates among retained paraglider records; they are counted and dropped with
+        the reason recorded.
   \item \emph{Glider class} (metadata). For class-stratified analyses, flights whose
         \texttt{aile\_class} cannot be normalised onto the discipline's system are dropped from
         the class-resolved sub-analyses but kept in the pooled one. Stratification by glider
@@ -729,7 +746,7 @@ value; the diagnostics must be re-examined for the less curated further sources.
   duration and (b)~flown path length. Bottom: the fraction of flights retained versus (c)~the
   duration cut and (d)~the path-length cut, each computed for \emph{that cut alone} (marginal,
   not cascaded). Dashed lines mark the adopted cuts ($T\geq\SI{40}{\minute}$,
-  $L\geq\SI{30}{\kilo\metre}$), which sit far out in the tail. \impldetails{impl:flightfilter}}
+  $L\geq\SI{10}{\kilo\metre}$), which sit far out in the tail. \impldetails{impl:flightfilter}}
   \label{fig:preproc}
 \end{figure}
 

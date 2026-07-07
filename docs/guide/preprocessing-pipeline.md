@@ -109,10 +109,12 @@ Key mechanics that reconcile the blueprint with the repo:
   gate** drops any flight that cleaning had to rebuild past a small fraction `f`. New config
   keys (`w, k, ε_min, ε, τ_freeze, f`) join `fix_level` in the YAML when built. No inter-fix
   time-gap bound here — gaps handled once at (vi). (Thesis `sec:fixlevel`.)
-- **Flight-level cuts (iv).** Duration ≥ 40 min and flown **path length** ≥ 30 km, both
-  computed from the track. Path length = sum of great-circle steps (not extent/displacement);
-  30 km is a *minimal* cut (a real XC flies far more). A minimum-fix-count cut is dropped as
-  redundant with the duration cut. (Thesis `sec:flightfilter`.)
+- **Flight-level cuts (iv).** Duration window 40 min ≤ T ≤ 16 h (the upper bound removes
+  loggers left running: 15 census "flights" of 16–166 h); **path length** ≥ 10 km (was 30,
+  which removed 5,229 genuine localized flights while 10 km catches 6 — census-measured,
+  thesis `sec:flightfilter`); **altitude activity** ≥ 75 m on the adopted channel (vehicle
+  logs, dead sensors). Path length = sum of great-circle steps (not extent/displacement).
+  A minimum-fix-count cut is dropped as redundant with the duration cut.
 - **Uniform Δt (vi).** Native `Δt` per flight (no common cadence). Uniform ⇒ use as is;
   mildly irregular ⇒ resample onto the native grid across small gaps (each filled point
   flagged `interpolated`); a gap past
@@ -225,10 +227,14 @@ Handle at ingestion (empirically observed on the real files):
 
 ## Open items
 
-- The Savitzky–Golay `τ_c` (horizontal/vertical) are **placeholders** in
-  `configs/preprocessing.yaml` → finalize from the real PSD study on `E,N,U`. This is
-  **the one true blocker** for a first end-to-end clean dataset: every other parameter
-  has an adopted or working value. (`polyorder`, the filtering and trimming cuts are set.)
+- ~~The Savitzky–Golay `τ_c` are placeholders~~ **Measured** (2026-07,
+  `estimate_savgol_timescales.py`): all three knees at ~0.2 Hz → `τ_c = 5 s`, the typical
+  floor being IGC quantization on every channel. Confirm with the sec:savgol validation
+  (flat residual spectrum, one-step window stability) on the production ENU series.
+- The `alt_channel` liveness bound, the flight-level duration window / altitude-activity
+  floor, and the fix-level working values (`hampel_*`, `frozen_*`,
+  `integrity_max_fraction`) are now **in the YAML**; the injected-defect calibration owns
+  their final values.
 - Duplicate uploads: before pooling, check whether the same physical flight appears twice
   (same pilot and date, near-identical track); the catalog does not guard against it.
 - The `sampling` cuts (`max_gap_factor`/`max_gap_seconds`/`max_missing_fraction`) and the

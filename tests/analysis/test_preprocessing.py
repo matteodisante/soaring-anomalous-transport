@@ -27,14 +27,25 @@ def test_load_preproc_config_from_yaml():
         "hang gliders": 55.0,
     }
     assert cfg.fix.max_vertical_speed_mps == 13.0
+    assert cfg.fix.hampel_window_s == 20.0
+    assert cfg.fix.hampel_k == 5.0
+    assert cfg.fix.hampel_eps_min_m == 15.0
+    assert cfg.fix.frozen_tau_s == 60.0
+    assert cfg.fix.integrity_max_fraction == pytest.approx(0.10)
+    assert cfg.alt_channel.baro_min_range_m == 30.0
     assert cfg.trimming.takeoff_speed_mps == 5.0
     assert cfg.trimming.sustained_s == 30.0
+    assert cfg.trimming.interior_ground_s == 600.0
     assert cfg.flight.min_duration_s == 2400.0  # 40 min
-    assert cfg.flight.min_path_km == 30.0
+    assert cfg.flight.min_path_km == 10.0
+    assert cfg.flight.max_duration_s == 57600.0  # 16 h
+    assert cfg.flight.min_alt_range_m == 75.0
     assert cfg.sampling.max_gap_factor == 10.0
     assert cfg.sampling.max_gap_seconds == 20.0
     assert cfg.sampling.max_missing_fraction == pytest.approx(0.10)
+    assert cfg.sampling.min_segment_duration_s == 90.0
     assert cfg.savgol.polyorder == 3
+    assert cfg.savgol.tau_c_horizontal_s == 5.0  # measured, estimate_savgol_timescales
 
 
 def test_fraction_retained_basic():

@@ -40,18 +40,49 @@ fix_level:
                                    #   (not per-discipline: bounds the barometric sensor's
                                    #   own reading range, not glider performance -- see thesis)
   max_altitude_m: 6000.0           # ... upper bound
+  # Robust local-outlier test (Hampel identifier) and structural rules: working values,
+  # to be finalized by the injected-defect calibration (thesis impl:fixlevel).
+  hampel_window_s: 20.0            # half-width (+/- s) of the local time window
+  hampel_k: 5.0                    # flag threshold, in robust standard deviations
+  hampel_eps_min_m: 15.0           # absolute residual floor, a few x horizontal GPS noise
+  hampel_min_window_fixes: 5       # sparser neighbourhoods fall back to the absolute bounds
+  frozen_eps_m: 15.0               # frozen-lock run-extent tolerance (<< 2R of a climb)
+  frozen_delta_z_m: 5.0            # barometric-flatness witness (median-based Delta z)
+  frozen_tau_s: 60.0               # minimum span of a cut run, two thermalling periods
+  integrity_max_fraction: 0.10     # flight-level integrity gate f, over the airborne window
+
+# --- altitude channel: chosen per flight, before any cleaning ------------------
+alt_channel:
+  baro_min_range_m: 30.0           # a "present" barometric channel whose total range over
+                                   #   the flight stays under this is a stuck sensor, not a
+                                   #   measurement: fall back to GNSS (thesis sec:altchannel)
 
 # --- trimming: strip ground phases (take-off / landing), on v_xy alone --------
 trimming:
   takeoff_speed_mps: 5.0           # airborne once v_xy exceeds this...
   sustained_s: 30.0                # ...continuously for at least this long
+  interior_ground_s: 600.0         # interior stint of sustained v_xy < takeoff speed AND
+                                   #   flat baro at least this long => a mid-flight landing:
+                                   #   excise and split (thesis sec:trimming); shorter stints
+                                   #   only set the suspect-wait flag
+  ground_flatness_m: 5.0           # the "flat baro" tolerance of the interior-ground guard
 
 # --- flight level: applied PER FLIGHT (drops whole flights), from the track --
 flight_level:
   min_duration_s: 2400.0           # 40 min: shortest genuine XC flight; the SMALLEST cut
                                    #   that clears sled runs / tows / aborted logs
-  min_path_km: 30.0                # total flown path length (sum of great-circle steps);
-                                   #   30 km removes non-flights, minimal bias on real XC
+  min_path_km: 10.0                # total flown path length (sum of great-circle steps).
+                                   #   Was 30, which violated the minimal-threshold strategy:
+                                   #   above 40 min, path<10 km catches 6 flights of 184,583
+                                   #   while path<30 km removed 5,229 genuine localized
+                                   #   flights (median extent 7.4 km -- the most-trapped
+                                   #   tail). Duration already clears sleds and tows.
+  max_duration_s: 57600.0          # 16 h: daylight sanity bound. The census holds 15 "flights"
+                                   #   of 16 to 166 h (loggers left running, paths up to
+                                   #   10,000 km) that would poison the long-lag MSD.
+  min_alt_range_m: 75.0            # total altitude range on the adopted channel: a >=40 min
+                                   #   "flight" spanning less is not free flight (vehicle log,
+                                   #   dead sensor); counted and dropped with reason
 
 # --- sampling: intra-flight uniformity, a prerequisite for Savitzky-Golay -----
 # Flight-level cuts: a flight too irregular to resample onto a uniform grid is excluded
@@ -81,6 +112,8 @@ sampling:
   max_missing_fraction: 0.10       # drop a segment more than this fraction uncovered on its
                                    #   uniform grid at the native dt (the whole flight only
                                    #   if no segment survives)
+  min_segment_duration_s: 90.0     # a segment shorter than this cannot support the smoothing
+                                   #   window and within-segment statistics; dropped alone
 
 # --- Savitzky-Golay smoothing + differentiation (per ENU component) ----------
 # window is set PER FLIGHT from the noise timescale: window = odd(tau_c / dt).
@@ -90,6 +123,11 @@ sampling:
 # Hence two vertical keys, not one.
 savgol:
   polyorder: 3                     # >=2 for a clean 2nd derivative; insensitive within {2,3,4}
-  tau_c_horizontal_s: 12.0         # PLACEHOLDER: smoothing timescale for E,N (from PSD knee)
-  tau_c_vertical_baro_s: 8.0       # PLACEHOLDER: U on a barometric flight (smoother channel)
-  tau_c_vertical_gnss_s: 20.0      # PLACEHOLDER: U on a GNSS-fallback flight (noisier channel)
+  # Measured 2026-07 by estimate_savgol_timescales.py (seeded 1 Hz sample, 908/719/189
+  # flight-channels; median Welch knee against the quantization floor, factor 3). The
+  # three knees nearly coincide at ~0.2 Hz: every channel's typical floor is the
+  # metre/arc-minute quantization of the IGC format, not receiver noise. Per-channel
+  # keys kept for the noisy-minority refinement; validated per thesis sec:savgol.
+  tau_c_horizontal_s: 5.0
+  tau_c_vertical_baro_s: 5.0
+  tau_c_vertical_gnss_s: 5.0
