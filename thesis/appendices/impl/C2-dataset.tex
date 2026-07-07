@@ -316,7 +316,9 @@ the cost is $O(N)$ in the number of fixes.
 
 \paragraph{Flight-level integrity gate.} The pass records how much it changed each flight (or
 segment) -- \path{n_fix_raw}, \path{n_fix_clean} and \path{frac_interpolated} in
-\path{flights_meta}. A flight whose deleted-plus-reconstructed fraction exceeds a small $f$
+\path{flights_meta} -- counted over the airborne (trimmed) window only: junk in a ground
+phase that trimming removes anyway must not condemn the flight. A flight whose
+deleted-plus-reconstructed fraction exceeds a small $f$
 (order \numrange{0.05}{0.10}) is dropped whole: beyond that point the trajectory is more
 interpolation than measurement. This is the cleaning counterpart of the sampling-regularity
 cut (Sec.~\ref{impl:uniform}).
@@ -414,6 +416,11 @@ are the \texttt{TrimmingThresholds} dataclass, loaded from
 \path{configs/preprocessing.yaml} (key \texttt{trimming}); as with every threshold in
 this pipeline, nothing is hard-coded in Python.
 
+The interior-ground guard of Sec.~\ref{sec:trimming} adds two keys when built:
+\texttt{interior\_ground\_s} ($T_{\mathrm{ground}}$, order \SI{600}{\second}) and a
+barometric flatness tolerance. A detected stint is excised and handed to the split
+machinery of Sec.~\ref{impl:uniform}, so it needs no removal semantics of its own.
+
 \subsection{Flight-level filtering}
 \label{impl:flightfilter}
 The duration ($T\geq\SI{40}{\minute}$) and path-length ($L\geq\SI{30}{\kilo\metre}$) cuts
@@ -449,15 +456,19 @@ are hand-drawn \textsc{TikZ} diagrams, not data plots.
 \subsection{Uniform sampling within a flight}
 \label{impl:uniform}
 The split bound
-$g_{\max}=\min(\texttt{max\_gap\_factor}\times\Delta t,\,\texttt{max\_gap\_seconds})
-=\min(10\,\Delta t,\SI{20}{\second})$ and the maximum missing fraction ($0.10$) are
+$g_{\max}=\min\big(\texttt{max\_gap\_factor}\times\Delta t,\,
+\max(\texttt{max\_gap\_seconds},\,2\,\Delta t)\big)$ and the maximum missing fraction
+($0.10$) are
 loaded from \path{configs/preprocessing.yaml} (key \texttt{sampling}) as the
 \texttt{SamplingThresholds} dataclass. The absolute cap is pinned by the constraint chain
 of Sec.~\ref{sec:uniform} (one missed fix of the slowest common logger never splits; a
 bridged gap can never hide a full thermalling circle; well below
 $\tau_{\mathrm{freeze}}$); its audit is a per-flight count -- the census scan already
 records \path{max_gap_ratio} and \path{dt_s}, so the absolute gap is their product -- and
-joins Figure~\ref{fig:gaps} when regenerated. The bound is on the \emph{time base} and is the same for
+joins Figure~\ref{fig:gaps} when regenerated. The missing fraction acts per
+\emph{segment}: a segment more than a tenth uncovered is dropped alone, the flight only
+if no segment survives; the per-flight value in the census scan is the pre-split
+diagnostic, not the operational gate. The bound is on the \emph{time base} and is the same for
 every channel: an order-of-magnitude smaller $v_z$ buys no wider gap for the altitude, since
 the interpolation error scales with curvature, not speed, and a wide altitude gap would erase
 the climb--glide transitions that $v_z$ is there to resolve (Sec.~\ref{sec:uniform}).
@@ -481,8 +492,9 @@ and the barometric altitude linearly or by cubic spline (its within-phase smooth
 choice immaterial). The result meets the completeness invariant of Sec.~\ref{sec:fixlevel}:
 within each retained segment every grid time carries a defined $(x,y,z)$ -- deleted position
 nodes and deferred (missing) altitudes both restored here -- so the segmentation is never handed
-a hole; long gaps are split, not filled, and \path{frac_interpolated} records the reconstructed
-fraction per segment for the integrity gate.
+a hole; long gaps are split, not filled. Each filled grid point is flagged in an
+\path{interpolated} boolean column of \path{fixes}, and \path{frac_interpolated} records
+the per-segment fraction for the integrity gate.
 
 \paragraph{Figures~\ref{fig:gaps} and~\ref{fig:sampling}.} Both rendered by
 \path{make_gap_diagnostics_figure}/\path{make_sampling_figure} from the same
@@ -507,7 +519,11 @@ long thin tail beyond \SI{11}{\second}.
 
 \subsection{Smoothing and differentiation}
 \label{impl:savgol}
-Not yet implemented. The polynomial order ($p=3$) and the three smoothing timescales --
+Not yet implemented. Two decisions are pinned for the implementation: the filter runs per
+segment (never across a boundary) with \path{scipy.signal.savgol_filter} in
+\texttt{mode='interp'}, so the terminal half-windows are fitted on the edge window rather
+than padded; and edge samples inherit the segment-boundary caution of
+Sec.~\ref{impl:uniform}. The polynomial order ($p=3$) and the three smoothing timescales --
 \path{tau_c_horizontal_s} for $(E,N)$, \path{tau_c_vertical_baro_s} and
 \path{tau_c_vertical_gnss_s} for $U$ -- are the \texttt{SavgolParams} dataclass in
 \path{configs/preprocessing.yaml} (key \texttt{savgol}), but today hold placeholder

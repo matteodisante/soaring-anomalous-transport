@@ -598,10 +598,12 @@ altitude is not a lost altitude but a \emph{deferred} one, reconstructed downstr
 single, audited interpolation does all the filling.
 
 \paragraph{Flight-level integrity gate.}
-Cleaning acts fix by fix, but it also keeps count of how much it had to do. If it has removed
-or reconstructed more than a small fraction of a flight's fixes, the flight is no longer being
-cleaned but rebuilt, and it is dropped whole -- the cleaning counterpart of the
-sampling-regularity cut (Sec.~\ref{sec:uniform}).
+Cleaning acts fix by fix, but it also keeps count of how much it had to do. The counters
+are taken over the airborne window: defects in a ground phase that trimming removes
+anyway must not condemn the flight. If cleaning has removed or reconstructed more than a
+small fraction of a flight's airborne fixes, the flight is no longer being cleaned but
+rebuilt, and it is dropped whole -- the cleaning counterpart of the sampling-regularity
+cut (Sec.~\ref{sec:uniform}).
 
 \paragraph{Validating the cleaning.}
 That each bound removes only a negligible fraction of fixes shows the cleaning is not too
@@ -635,9 +637,23 @@ into wind) would otherwise trigger mid-flight. The persistence $T_0$ prevents a 
 GPS glitch on the ground from being mistaken for take-off. The rule trims only the
 \emph{outer} ground phases: a mid-flight landing and relaunch recorded in one log (a
 top-landing, say) would survive as an interior near-zero-speed stint and read downstream
-as an implausibly long wait. An interior-ground guard -- sustained $v_{xy}<v_0$ for far
-longer than any search, of order ten minutes, treated like a long gap (split and excised,
-Sec.~\ref{sec:uniform}) -- is planned with the implementation. One caveat is structural: the criterion is a \emph{ground} speed, so a slow
+as an implausibly long wait -- and a false wait of tens of minutes lands in the far tail
+of $\psi(\tau)$, where it does the most damage. An interior-ground detector is therefore
+specified, built like the frozen-lock rule: it cuts only on corroborated evidence,
+because its dangerous error is the opposite one -- a wing soaring into wind can hold
+$v_{xy}$ near zero for minutes while flying. A stint is cut only when both conditions
+hold: $v_{xy}<v_0$ sustained for at least $T_{\mathrm{ground}}$ (order ten minutes, far
+beyond any search), \emph{and} the barometric altitude flat over the whole stint, within
+a few metres -- a wing at zero ground speed in real air still moves vertically, the same
+independent-sensor argument as Eq.~\eqref{eq:frozenlock}. On a GNSS-fallback flight the
+vertical witness uses the noisier GNSS channel with a wider tolerance, and in doubt the
+stint is kept. A cut stint is treated exactly like a long gap: excised and split
+(Sec.~\ref{sec:uniform}), inheriting the segment rules -- boundary censoring, no second
+pass of the flight-level cuts. Stints shorter than $T_{\mathrm{ground}}$ survive by
+design; whether any do is auditable in the waiting-time distribution, where a cluster of
+long waits with a flat barometric trace would show. The two parameters
+($T_{\mathrm{ground}}$ and the flatness tolerance) join \texttt{trimming} in the
+configuration when the guard is built \impldetails{impl:trimming}. One caveat is structural: the criterion is a \emph{ground} speed, so a slow
 phase adjacent to take-off or landing (a launch straight into ridge lift, say) can still be
 clipped; the trimmed fraction is recorded per flight so this failure mode is auditable
 rather than hidden. Both the threshold and the persistence affect what fraction of each
@@ -1053,7 +1069,8 @@ Per flight, let $\Delta t$ be the median inter-fix interval. Three cases arise:
 \begin{description}
   \item[Uniform.] All intervals equal $\Delta t$ to tolerance: the series is used as is.
   \item[Mildly irregular.] Isolated jitter or single drop-outs -- no gap beyond the
-        split bound $g_{\max}=\min\!\big(10\,\Delta t,\ \SI{20}{\second}\big)$ and less
+        split bound $g_{\max}=\min\!\big(10\,\Delta t,\ \max(\SI{20}{\second},\,2\,\Delta
+        t)\big)$ and less
         than \SI{10}{\percent} of the grid missing (the sampling thresholds,
         Sec.~\ref{impl:uniform}): the flight is resampled onto the uniform grid at its
         native $\Delta t$, interpolating across the small gaps only, and the
@@ -1063,8 +1080,9 @@ Per flight, let $\Delta t$ be the median inter-fix interval. Three cases arise:
         interpolating across it would fabricate dynamics the smoothing could not tell
         from real motion. The flight is \emph{split} at the gap into independently
         analysed segments, each carried forward on its own; what a split means for the
-        analysis is stated below. A missing fraction above \SI{10}{\percent} even
-        between gaps excludes the flight outright.
+        analysis is stated below. A residual missing fraction above \SI{10}{\percent}
+        within a segment drops that segment alone, and the flight only if no segment
+        survives.
 \end{description}
 
 \paragraph{The split bound has two scales.}
@@ -1081,9 +1099,14 @@ single missed fix never splits a flight; at most about two thirds of a thermalli
 period, so a bridged gap can never hide a full circle; and well below
 $\tau_{\mathrm{freeze}}\gtrsim\SIrange{60}{90}{\second}$, for consistency -- an excised
 frozen-lock run of that length is split, so a native gap of comparable length cannot be
-bridged. At the dominant \SI{1}{\second} cadence the relative bound binds
-($g_{\max}=\SI{10}{\second}$); from $\Delta t=\SI{2}{\second}$ upward the absolute cap
-does.
+bridged. One refinement keeps the first constraint true at \emph{every} cadence: the cap
+is floored at $2\,\Delta t$, i.e.
+$g_{\max}=\min\!\big(10\,\Delta t,\ \max(\SI{20}{\second},\,2\,\Delta t)\big)$, so the
+thin tail of very slow loggers (Fig.~\ref{fig:sampling}) also tolerates a single missed
+fix; at those cadences a bridged gap inserts at most two grid points. At the dominant
+\SI{1}{\second} cadence the relative bound binds ($g_{\max}=\SI{10}{\second}$); from
+$\Delta t=\SI{2}{\second}$ to \SI{10}{\second} the \SI{20}{\second} cap does; beyond,
+the $2\,\Delta t$ floor.
 
 \paragraph{Consequences of a split.}
 The observables of Ch.~\ref{ch:next-steps} are affected differently by a split, and the
@@ -1124,7 +1147,11 @@ and only ever across the short gaps a split has left behind; the barometric alti
 low-noise, slowly-drifting sensor within a phase (Sec.~\ref{sec:altchannel}), is interpolated
 linearly (or by a cubic spline) with negligible error over such gaps. Both are filled to the
 \emph{same} completeness invariant: within a retained segment every grid time carries a defined
-$(x,y,z)$, so the segmentation downstream is never handed a missing value. The altitudes
+$(x,y,z)$, so the segmentation downstream is never handed a missing value. Every filled
+point carries an \texttt{interpolated} flag: the invariant serves the segmentation, but
+downstream statistics can distinguish measured from reconstructed samples, and a phase
+boundary that falls inside a bridged stretch inherits the same caution as one at a
+segment boundary. The altitudes
 deferred in Sec.~\ref{sec:fixlevel} (a dropped barometric spike, a \texttt{V} fix on a
 GNSS-fallback flight) are restored here.
 

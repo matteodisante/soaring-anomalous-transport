@@ -58,7 +58,7 @@ coordinates (great-circle speeds); (v) converts to the metric ENU frame; (vi)–
 | 1 | Parse IGC `B`/`H` records | `.igc` | fixes `[t,lat,lon,valid,baro_alt,gnss_alt]` | `analysis.igc.parse_igc` | `sec:igcformat` |
 | i | Choose altitude channel per flight | fixes | `alt_source ∈ {baro,gnss}` + chosen `alt` | *(to build)* | `sec:altchannel` |
 | ii | Fix-level cleaning: absolute bounds + robust local test + structural rules | raw geo | cleaned fixes | `FixLevelThresholds` ← YAML; `fix_level_distributions` | `sec:fixlevel` |
-| iii | Trim ground phases (`v_xy` sustained) | raw geo | airborne segment | `TrimmingThresholds` ← YAML | `sec:trimming` |
+| iii | Trim outer ground phases (`v_xy` sustained); interior-ground guard planned (near-zero `v_xy` ≥ `T_ground` **and** flat baro → excise & split) | raw geo | airborne segment | `TrimmingThresholds` ← YAML | `sec:trimming` |
 | iv | Flight-level filtering (duration + path length) | parsed tracks | keep/drop + reason | `FlightLevelThresholds` ← YAML, `scan_tracks` | `sec:flightfilter` |
 | v | Geographic → ECEF → ENU (origin = take-off) | geo | `E,N,U` | *(to build; formula in thesis)* | `sec:enu` |
 | vi | Enforce uniform `Δt` within flight | ENU | uniform series or exclusion | *(to build)* | `sec:uniform` |
@@ -105,8 +105,9 @@ Key mechanics that reconcile the blueprint with the repo:
   30 km is a *minimal* cut (a real XC flies far more). A minimum-fix-count cut is dropped as
   redundant with the duration cut. (Thesis `sec:flightfilter`.)
 - **Uniform Δt (vi).** Native `Δt` per flight (no common cadence). Uniform ⇒ use as is;
-  mildly irregular ⇒ resample onto the native grid across small gaps; a gap past
-  min(`max_gap_factor`·Δt, `max_gap_seconds`) (native or opened by an excised frozen-lock
+  mildly irregular ⇒ resample onto the native grid across small gaps (each filled point
+  flagged `interpolated`); a gap past
+  min(`max_gap_factor`·Δt, max(`max_gap_seconds`, 2·Δt)) (native or opened by an excised frozen-lock
   run, step ii) ⇒ **split** the flight at the gap into independently analysed segments (not
   bridged: interpolating a long hole fabricates motion); segments keep the parent flight's
   origin and clock; a split is bookkeeping, not new files (ENU precedes it, fixes are
@@ -114,7 +115,8 @@ Key mechanics that reconcile the blueprint with the repo:
   table); the flight-level cuts are **not** re-applied to segments (only a minimal
   segment-duration gate, key added with the routine), and phase durations truncated at a
   segment boundary are flagged censored, for the duration fits to exclude; a
-  `missing_fraction` too large even between gaps ⇒ **exclude**.
+  `missing_fraction` too large within a segment ⇒ **drop the segment** (the flight only if
+  none survives).
   Thresholds `max_gap_factor`, `max_gap_seconds`, `max_missing_fraction` (in the YAML), audited by
   `make_gap_diagnostics_figure`. This is the *only* gap handling — the gap is relative to each
   flight's own native cadence, so no second absolute bound is needed.

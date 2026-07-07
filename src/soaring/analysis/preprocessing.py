@@ -100,10 +100,11 @@ class SamplingThresholds:
     """Intra-flight sampling-regularity bounds (loaded from the config).
 
     The split bound on an inter-fix gap is ``min(max_gap_factor * dt,
-    max_gap_seconds)``: relative to the native cadence (tolerating logger hiccups in
-    proportion, and capping the number of interpolated grid points), but never beyond
-    an absolute cap set by the motion's own timescales rather than the logger's
-    (thesis, sec:uniform).
+    max(max_gap_seconds, 2 * dt))``: relative to the native cadence (tolerating logger
+    hiccups in proportion, and capping the number of interpolated grid points), but
+    never beyond an absolute cap set by the motion's own timescales rather than the
+    logger's; the ``2 * dt`` floor keeps "one missed fix never splits" true at every
+    cadence (thesis, sec:uniform).
     """
 
     max_gap_factor: float

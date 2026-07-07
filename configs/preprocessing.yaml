@@ -74,9 +74,13 @@ sampling:
                                    #   period (~30 s: a bridged gap can never hide a full
                                    #   circle), << tau_freeze (60-90 s: an excised frozen-lock
                                    #   run is split, so a native gap of comparable length
-                                   #   cannot be bridged).
-  max_missing_fraction: 0.10       # exclude if more than this fraction of the uniform grid
-                                   #   at the native dt is left uncovered
+                                   #   cannot be bridged). Floored at 2*dt in the rule
+                                   #   min(max_gap_factor*dt, max(max_gap_seconds, 2*dt)),
+                                   #   so the thin tail of very slow loggers also tolerates
+                                   #   a single missed fix.
+  max_missing_fraction: 0.10       # drop a segment more than this fraction uncovered on its
+                                   #   uniform grid at the native dt (the whole flight only
+                                   #   if no segment survives)
 
 # --- Savitzky-Golay smoothing + differentiation (per ENU component) ----------
 # window is set PER FLIGHT from the noise timescale: window = odd(tau_c / dt).
