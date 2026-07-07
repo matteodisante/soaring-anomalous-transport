@@ -65,6 +65,16 @@ sampling:
                                    #   routine). RELATIVE to native dt, so the tolerated
                                    #   absolute gap scales with the logger's rate; raising it
                                    #   much further would interpolate over ever-longer spans.
+  max_gap_seconds: 20.0            # absolute cap on a bridgeable gap: the split bound is
+                                   #   min(max_gap_factor * dt, max_gap_seconds). The relative
+                                   #   part tolerates logger hiccups in proportion to cadence;
+                                   #   this cap is set by the motion's own timescales, not the
+                                   #   logger's: >= 2x the slowest common dt (10 s: one missed
+                                   #   fix never splits a flight), <= ~2/3 of a thermalling
+                                   #   period (~30 s: a bridged gap can never hide a full
+                                   #   circle), << tau_freeze (60-90 s: an excised frozen-lock
+                                   #   run is split, so a native gap of comparable length
+                                   #   cannot be bridged).
   max_missing_fraction: 0.10       # exclude if more than this fraction of the uniform grid
                                    #   at the native dt is left uncovered
 

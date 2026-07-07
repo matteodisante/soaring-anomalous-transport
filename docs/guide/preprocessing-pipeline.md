@@ -106,14 +106,16 @@ Key mechanics that reconcile the blueprint with the repo:
   redundant with the duration cut. (Thesis `sec:flightfilter`.)
 - **Uniform Δt (vi).** Native `Δt` per flight (no common cadence). Uniform ⇒ use as is;
   mildly irregular ⇒ resample onto the native grid across small gaps; a gap past
-  `max_gap_factor` (native or opened by an excised frozen-lock run, step ii) ⇒ **split** the
-  flight at the gap into independently analysed segments (not bridged: interpolating a long
-  hole fabricates motion); segments keep the parent flight's origin and clock; the
-  flight-level cuts are **not** re-applied to segments (only a minimal segment-duration
-  gate, key added with the routine), and phase durations truncated at a segment boundary
-  are flagged censored, for the duration fits to exclude; a `missing_fraction` too large
-  even between gaps ⇒ **exclude**.
-  Thresholds `max_gap_factor`, `max_missing_fraction` (in the YAML), audited by
+  min(`max_gap_factor`·Δt, `max_gap_seconds`) (native or opened by an excised frozen-lock
+  run, step ii) ⇒ **split** the flight at the gap into independently analysed segments (not
+  bridged: interpolating a long hole fabricates motion); segments keep the parent flight's
+  origin and clock; a split is bookkeeping, not new files (ENU precedes it, fixes are
+  already parent-referred: a `segment_id` column in `fixes` plus a `segments` metadata
+  table); the flight-level cuts are **not** re-applied to segments (only a minimal
+  segment-duration gate, key added with the routine), and phase durations truncated at a
+  segment boundary are flagged censored, for the duration fits to exclude; a
+  `missing_fraction` too large even between gaps ⇒ **exclude**.
+  Thresholds `max_gap_factor`, `max_gap_seconds`, `max_missing_fraction` (in the YAML), audited by
   `make_gap_diagnostics_figure`. This is the *only* gap handling — the gap is relative to each
   flight's own native cadence, so no second absolute bound is needed.
 - **Savitzky–Golay (vii).** Two hyperparameters: `window_length` (odd) and `polyorder`.

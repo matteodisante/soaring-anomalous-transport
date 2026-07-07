@@ -97,9 +97,17 @@ class TrimmingThresholds:
 
 @dataclass(frozen=True)
 class SamplingThresholds:
-    """Intra-flight sampling-regularity bounds (loaded from the config)."""
+    """Intra-flight sampling-regularity bounds (loaded from the config).
+
+    The split bound on an inter-fix gap is ``min(max_gap_factor * dt,
+    max_gap_seconds)``: relative to the native cadence (tolerating logger hiccups in
+    proportion, and capping the number of interpolated grid points), but never beyond
+    an absolute cap set by the motion's own timescales rather than the logger's
+    (thesis, sec:uniform).
+    """
 
     max_gap_factor: float
+    max_gap_seconds: float
     max_missing_fraction: float
 
 

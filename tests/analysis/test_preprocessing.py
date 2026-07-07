@@ -31,6 +31,8 @@ def test_load_preproc_config_from_yaml():
     assert cfg.trimming.sustained_s == 30.0
     assert cfg.flight.min_duration_s == 2400.0  # 40 min
     assert cfg.flight.min_path_km == 30.0
+    assert cfg.sampling.max_gap_factor == 10.0
+    assert cfg.sampling.max_gap_seconds == 20.0
     assert cfg.sampling.max_missing_fraction == pytest.approx(0.10)
     assert cfg.savgol.polyorder == 3
 

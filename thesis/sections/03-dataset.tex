@@ -632,7 +632,12 @@ is $[t_{\mathrm{on}},t_{\mathrm{off}}]$ with
 i.e.\ the same sustained-speed rule read forward and time-reversed -- \emph{not} a cut at
 the first sustained drop, which a slow soaring phase (ground speed near zero when hovering
 into wind) would otherwise trigger mid-flight. The persistence $T_0$ prevents a gust or a
-GPS glitch on the ground from being mistaken for take-off. One caveat is structural: the criterion is a \emph{ground} speed, so a slow
+GPS glitch on the ground from being mistaken for take-off. The rule trims only the
+\emph{outer} ground phases: a mid-flight landing and relaunch recorded in one log (a
+top-landing, say) would survive as an interior near-zero-speed stint and read downstream
+as an implausibly long wait. An interior-ground guard -- sustained $v_{xy}<v_0$ for far
+longer than any search, of order ten minutes, treated like a long gap (split and excised,
+Sec.~\ref{sec:uniform}) -- is planned with the implementation. One caveat is structural: the criterion is a \emph{ground} speed, so a slow
 phase adjacent to take-off or landing (a launch straight into ridge lift, say) can still be
 clipped; the trimmed fraction is recorded per flight so this failure mode is auditable
 rather than hidden. Both the threshold and the persistence affect what fraction of each
@@ -1047,24 +1052,45 @@ flights.
 Per flight, let $\Delta t$ be the median inter-fix interval. Three cases arise:
 \begin{description}
   \item[Uniform.] All intervals equal $\Delta t$ to tolerance: the series is used as is.
-  \item[Mildly irregular.] Isolated jitter or single drop-outs -- no gap beyond
-        $10\,\Delta t$ and less than \SI{10}{\percent} of the grid missing (the two sampling
-        thresholds, Sec.~\ref{impl:uniform}): the flight is resampled onto the
-        uniform grid at its native $\Delta t$, interpolating across the small gaps only, and
-        the interpolated fraction is recorded.
-  \item[Broken by a long gap.] A gap longer than $10\,\Delta t$ -- native, or opened where
-        cleaning removed a frozen-lock run (Sec.~\ref{sec:fixlevel}) -- is not bridged: at the
-        dominant \SI{1}{\second} cadence that is more than \SI{10}{\second} of unknown path,
-        and interpolating across it would fabricate dynamics the smoothing could not tell
-        from real motion. The flight is \emph{split} at the gap into independently analysed
-        segments, each carried forward on its own; what a split means for the analysis is
-        stated below. A missing fraction
-        above \SI{10}{\percent} even between gaps excludes the flight outright.
+  \item[Mildly irregular.] Isolated jitter or single drop-outs -- no gap beyond the
+        split bound $g_{\max}=\min\!\big(10\,\Delta t,\ \SI{20}{\second}\big)$ and less
+        than \SI{10}{\percent} of the grid missing (the sampling thresholds,
+        Sec.~\ref{impl:uniform}): the flight is resampled onto the uniform grid at its
+        native $\Delta t$, interpolating across the small gaps only, and the
+        interpolated fraction is recorded.
+  \item[Broken by a long gap.] A gap longer than $g_{\max}$ -- native, or opened where
+        cleaning removed a frozen-lock run (Sec.~\ref{sec:fixlevel}) -- is not bridged:
+        interpolating across it would fabricate dynamics the smoothing could not tell
+        from real motion. The flight is \emph{split} at the gap into independently
+        analysed segments, each carried forward on its own; what a split means for the
+        analysis is stated below. A missing fraction above \SI{10}{\percent} even
+        between gaps excludes the flight outright.
 \end{description}
+
+\paragraph{The split bound has two scales.}
+The relative part, $10\,\Delta t$, tolerates logger hiccups in proportion to the cadence
+and caps the number of interpolated grid points at ten. Alone, however, it would let a
+slow logger bridge very long holes: \SI{30}{\second} at $\Delta t=\SI{3}{\second}$,
+\SI{100}{\second} at $\Delta t=\SI{10}{\second}$. The harm of a bridged gap is set by the
+motion's own timescales, not the logger's: an interpolated stretch is a straight line, so
+a gap approaching the thermalling period ($\sim\SI{30}{\second}$) could replace a full
+circle, and the segmentation downstream would read the invented straight stretch as a
+glide. The absolute cap of \SI{20}{\second} is pinned by three constraints: at least
+$2\times$ the slowest common cadence (\SI{10}{\second}, Fig.~\ref{fig:sampling}), so a
+single missed fix never splits a flight; at most about two thirds of a thermalling
+period, so a bridged gap can never hide a full circle; and well below
+$\tau_{\mathrm{freeze}}\gtrsim\SIrange{60}{90}{\second}$, for consistency -- an excised
+frozen-lock run of that length is split, so a native gap of comparable length cannot be
+bridged. At the dominant \SI{1}{\second} cadence the relative bound binds
+($g_{\max}=\SI{10}{\second}$); from $\Delta t=\SI{2}{\second}$ upward the absolute cap
+does.
 
 \paragraph{Consequences of a split.}
 The observables of Ch.~\ref{ch:next-steps} are affected differently by a split, and the
-distinction is worth stating once. Ensemble quantities (the MSD, the propagator) need the
+distinction is worth stating once. In practice a split is bookkeeping, not new
+trajectories: the conversion to ENU (step~v) runs before this step, so every fix already
+carries coordinates and elapsed time referred to the parent take-off, and the split only
+assigns a segment identifier. Ensemble quantities (the MSD, the propagator) need the
 position at a given elapsed time, not the path between: a segment keeps its parent's
 origin and clock (Sec.~\ref{sec:notation}), and a GPS position is absolute, so the
 positions after the gap remain valid and the flight simply contributes no data at the
@@ -1188,7 +1214,7 @@ to a sliding window by least squares and reads off that polynomial, or its deriv
 the window centre, returning smoothed position, velocity and acceleration
 ($\mathrm{deriv}=0,1,2$) in one pass per component. The derivative outputs are scaled by the
 flight's own $\Delta t$ (Sec.~\ref{sec:uniform}), so the multi-rate fleet needs no common
-grid, and the window never crosses a flight boundary. Because it runs on the resampled grid
+grid, and the window never crosses a segment boundary. Because it runs on the resampled grid
 (Sec.~\ref{sec:uniform}), the filter sees a uniform time base with the short gaps already
 filled; the interpolated points (a small, recorded fraction, since heavily reconstructed
 flights are dropped whole, Sec.~\ref{sec:fixlevel}) add a little local correlation but no

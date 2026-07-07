@@ -448,9 +448,16 @@ are hand-drawn \textsc{TikZ} diagrams, not data plots.
 
 \subsection{Uniform sampling within a flight}
 \label{impl:uniform}
-The gap bound ($10\times$ native $\Delta t$) and the maximum missing fraction ($0.10$) are
+The split bound
+$g_{\max}=\min(\texttt{max\_gap\_factor}\times\Delta t,\,\texttt{max\_gap\_seconds})
+=\min(10\,\Delta t,\SI{20}{\second})$ and the maximum missing fraction ($0.10$) are
 loaded from \path{configs/preprocessing.yaml} (key \texttt{sampling}) as the
-\texttt{SamplingThresholds} dataclass. The bound is on the \emph{time base} and is the same for
+\texttt{SamplingThresholds} dataclass. The absolute cap is pinned by the constraint chain
+of Sec.~\ref{sec:uniform} (one missed fix of the slowest common logger never splits; a
+bridged gap can never hide a full thermalling circle; well below
+$\tau_{\mathrm{freeze}}$); its audit is a per-flight count -- the census scan already
+records \path{max_gap_ratio} and \path{dt_s}, so the absolute gap is their product -- and
+joins Figure~\ref{fig:gaps} when regenerated. The bound is on the \emph{time base} and is the same for
 every channel: an order-of-magnitude smaller $v_z$ buys no wider gap for the altitude, since
 the interpolation error scales with curvature, not speed, and a wide altitude gap would erase
 the climb--glide transitions that $v_z$ is there to resolve (Sec.~\ref{sec:uniform}).
@@ -460,7 +467,13 @@ the flight-level cuts are not re-applied to it (Sec.~\ref{sec:uniform}). A minim
 duration, enough to support the smoothing window and the within-segment statistics, joins
 \texttt{sampling} when the routine is built; the per-segment output additionally flags any
 phase duration truncated at a segment boundary as censored, for the $\psi(\tau)$ fits to
-exclude.
+exclude. Concretely a split is bookkeeping: the ENU conversion precedes this step, so
+every fix already carries parent-referred coordinates and time; the split assigns a
+\path{segment_id}, the \path{fixes} table keeps one row per fix keyed
+(\path{flight_id}, \path{segment_id}), and per-segment records (start/end, fix count,
+\path{frac_interpolated}, boundary-censoring flags) form a \path{segments} table beside
+\path{flights_meta}. No separate files are created, and the ensemble MSD at lag $t$
+simply reads $\mathbf{r}(t)$ wherever some segment covers $t$.
 
 \paragraph{Per-channel fill.} Across a short gap the horizontal position is interpolated
 shape-preservingly (monotone piecewise-cubic, e.g.\ \path{scipy.interpolate.PchipInterpolator})
