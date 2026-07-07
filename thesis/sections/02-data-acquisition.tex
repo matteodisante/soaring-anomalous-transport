@@ -1,7 +1,9 @@
-\chapter{Data acquisition}
-\label{ch:acquisition}
+% Included by sections/03-dataset.tex as the opening section of the dataset chapter
+% (the acquisition is part of describing the dataset, not a chapter of its own).
+\section{Data acquisition}
+\label{sec:acquisition}
 
-\section{Source: the FFVL Coupe F\'ed\'erale de Distance}
+\subsection{Source: the FFVL Coupe F\'ed\'erale de Distance}
 
 The data come from the \emph{Coupe F\'ed\'erale de Distance} (CFD), the cross-country
 competition run by the French free-flight federation (FFVL). The federation operates two
@@ -14,7 +16,7 @@ acquisition pipeline handles both. A ``season'' is identified by its starting ye
 e.g.\ the year~1999 denotes the 1999--2000 season; the paraglider archive starts in
 1999--2000 and the hang-glider archive in 2001--2002.
 
-\section{What is collected}
+\subsection{What is collected}
 
 For every season the pipeline retrieves two things:
 \begin{itemize}
@@ -27,9 +29,9 @@ From these, a derived \textbf{catalog} is built (\texttt{catalog.csv}, one row p
 metadata plus the local path of its track) together with a per-season index
 (\texttt{seasons\_index.csv}). The raw data (tens of gigabytes) live on an external disk
 and are never committed to the repository; only the small per-season index is versioned,
-and it is the source of the statistics in Chapter~\ref{ch:dataset}.
+and it is the source of the statistics of Sec.~\ref{sec:coverage}.
 
-\section{Pipeline and tooling}
+\subsection{Pipeline and tooling}
 
 Acquisition is performed by a dedicated, installable Python package, exposed through two
 command-line tools, one per discipline, sharing the same subcommands for fetching,
@@ -38,7 +40,7 @@ long-running, large job: downloads are resumable and safe to interrupt, a respon
 accepted only once validated as real IGC content, and the client is courteous to the
 server it downloads from \impldetails{impl:acqpipeline}.
 
-\section{Reproducibility}
+\subsection{Reproducibility}
 
 The destination directory is not hard-coded: it is set per machine through an environment
 variable or a configuration file shipping a placeholder, so no machine-specific path is
@@ -47,20 +49,20 @@ message if the target is missing, rather than failing obscurely. Archiving the s
 XMLs verbatim keeps the full provenance: the catalog can always be rebuilt from them
 \impldetails{impl:acqrepro}.
 
-\section{Integrity}
+\subsection{Integrity}
 
 Because the data sit on an external drive, integrity is re-checked independently after
 download, rather than trusted at download time \impldetails{impl:acqintegrity}. Both
 FFVL collections have been verified in full: all \num{\StatParaDownloaded} paraglider and
-\num{\StatHangDownloaded} hang-glider downloaded tracklogs pass validation
-(Chapter~\ref{ch:dataset}).
+\num{\StatHangDownloaded} hang-glider downloaded tracklogs pass validation against the
+IGC standard (Sec.~\ref{sec:igcformat}).
 
-\section{Further data sources}
+\subsection{Further data sources}
 The FFVL CFD is the primary source of the present study, but the dataset is not assumed to
 be final. The paraglider data (\num{\StatParaTotalFlights} flights,
 \num{\StatParaWithIgc} tracklogs) are the main analysis target; the hang-glider data
 (\num{\StatHangTotalFlights} flights, \num{\StatHangWithIgc} tracklogs) are collected in
-parallel and enable the cross-type comparison of Chapter~\ref{ch:dataset}. Additional
+parallel and enable the cross-type comparison of Sec.~\ref{sec:glider}. Additional
 public soaring repositories are
 being pursued to enlarge and diversify the sample and, above all, to add the third glider
 category, \emph{sailplanes} (Section~\ref{sec:glider}). The most complete sailplane source is

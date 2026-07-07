@@ -1,9 +1,12 @@
 \chapter{The dataset}
 \label{impl:dataset}
-\emph{Mirrors Chapter~\ref{ch:dataset}, including its pre-processing and preliminary-
+\emph{Mirrors Chapter~\ref{ch:dataset} section by section, opening with the data
+acquisition (Sec.~\ref{sec:acquisition}) and including the pre-processing and preliminary-
 characterization sections (Secs.~\ref{sec:preproc},~\ref{sec:prelim}) -- the cleaning and
 first-look steps are part of describing the dataset, not of the planned analysis in
 Chapter~\ref{ch:next-steps}.}
+
+\input{appendices/impl/C1-acquisition}
 
 \section{The IGC tracklog format}
 \label{impl:igcformat}
@@ -138,44 +141,49 @@ applying all three detectors, and the robust-test and frozen-lock parameters it 
 the next step. The parameter names introduced here are the config keys that step will add.
 
 \paragraph{Robust local-outlier test (off-the-trend defects).} For a fix $P_k$ at time
-$t_k$, take the fixes lying within a window of $\pm w$ seconds of $t_k$ (a \emph{time}
-window, so it adapts to the native cadence and to irregular sampling), excluding $P_k$
-itself. Fit a robust local estimate of the position there -- the component-wise median of the
-windowed fixes, or a degree-one Theil--Sen fit -- and evaluate it at $t_k$; the residual
-$r_k$ is the great-circle distance from $P_k$ to that estimate. Scale it by a robust local
-spread $\sigma_k = 1.4826\,\operatorname{MAD}$ of the windowed residuals (the factor makes
-$\sigma_k$ a Gaussian-consistent standard deviation~\cite{rousseeuw1993}), and flag $P_k$ when
-\[
-  r_k > k\,\sigma_k \quad\text{and}\quad r_k > \varepsilon_{\min}.
-\]
-This is a Hampel identifier~\cite{hampel1974}: a median centre, a MAD scale, a threshold in robust standard
-deviations. Working defaults, to be finalized by the injected-defect test below:
-$k\approx 4$--$5$, a window $w$ of a few native intervals (order \SIrange{15}{30}{\second}),
-and an absolute floor $\varepsilon_{\min}\approx\SI{15}{\metre}$, a few times the horizontal
-GPS noise.
+$t_k$:
+\begin{enumerate}[label=(\arabic*), itemsep=1pt, topsep=3pt]
+  \item take the fixes lying within $\pm w$ seconds of $t_k$ (a \emph{time} window, so it
+        adapts to the native cadence and to irregular sampling), excluding $P_k$ itself;
+  \item fit a robust local estimate of the position there -- the component-wise median of
+        the windowed fixes, or a degree-one Theil--Sen fit -- and evaluate it at $t_k$;
+  \item the residual $r_k$ is the great-circle distance from $P_k$ to that estimate; scale
+        it by the robust local spread $\sigma_k = 1.4826\,\operatorname{MAD}$ of the
+        windowed residuals (the factor makes $\sigma_k$ a Gaussian-consistent standard
+        deviation~\cite{rousseeuw1993});
+  \item flag $P_k$ when $r_k > k\,\sigma_k$ \emph{and} $r_k > \varepsilon_{\min}$.
+\end{enumerate}
+This is a Hampel identifier~\cite{hampel1974}: a median centre, a MAD scale, a threshold in
+robust standard deviations. Working defaults, to be finalized by the injected-defect test
+below: $k\approx 4$--$5$, a window $w$ of a few native intervals (order
+\SIrange{15}{30}{\second}), and an absolute floor
+$\varepsilon_{\min}\approx\SI{15}{\metre}$, a few times the horizontal GPS noise.
 
-Three points earn the test its place over the bare speed bound. \emph{The floor
-$\varepsilon_{\min}$ is not cosmetic}: on a very smooth stretch $\sigma_k\to 0$, so without
-it any sub-metre wiggle would exceed $k\sigma_k$ and the test would chase GPS noise where
-there is no outlier. \emph{It is local, and locality buys attribution}: a speed belongs to
-the segment \emph{between} two fixes and cannot say which endpoint is at fault, whereas the
-residual belongs to one fix -- when the absolute bound does fire, the identifier names the
-culprit, and a burst is removed as one block. The flag itself is context-sensitive -- a
-\SI{30}{\metre\per\second} step out of a \SI{12}{\metre\per\second} glide is flagged while
-the same step passes unremarked where it is ordinary -- but a flag alone does not delete
-(next paragraph): such a flagged-but-physically-possible fix is \emph{kept}, and the flag
-survives as a per-flight anomaly count, recorded alongside the integrity-gate counters as
-a diagnostic. \emph{It does not
-clip real
-manoeuvres}: a genuine sharp turn is drawn by consecutive, mutually consistent fixes, each
-well predicted by its neighbours and so of small residual; only an isolated point off the
-local trend scores large. The one failure mode -- a turn so tight it is under-sampled at the
-native cadence -- is rare at these rates, and the injected-defect test below measures it
-directly. A short burst of consecutive spikes inflates the windowed MAD only mildly, so it is
-still flagged, and is removed as the block whose bracketing neighbours rejoin within scale.
-The identical test runs on the horizontal position and, independently, on the adopted
-altitude channel, so a vertical spike invalidates the altitude alone and the horizontal
-position stays (the channel decoupling of Sec.~\ref{sec:fixlevel}).
+Three points earn the test its place over the bare speed bound:
+\begin{itemize}[itemsep=2pt, topsep=3pt]
+  \item \emph{The floor $\varepsilon_{\min}$ is not cosmetic.} On a very smooth stretch
+        $\sigma_k\to 0$, so without it any sub-metre wiggle would exceed $k\sigma_k$ and
+        the test would chase GPS noise where there is no outlier.
+  \item \emph{It is local, and locality buys attribution.} A speed belongs to the segment
+        \emph{between} two fixes and cannot say which endpoint is at fault, whereas the
+        residual belongs to one fix: when the absolute bound does fire, the identifier
+        names the culprit, and a burst is removed as one block -- a short burst of
+        consecutive spikes inflates the windowed MAD only mildly, so it is still flagged,
+        and is removed as the block whose bracketing neighbours rejoin within scale.
+  \item \emph{It does not clip real manoeuvres.} A genuine sharp turn is drawn by
+        consecutive, mutually consistent fixes, each well predicted by its neighbours and
+        so of small residual; only an isolated point off the local trend scores large. The
+        one failure mode -- a turn so tight it is under-sampled at the native cadence -- is
+        rare at these rates, and the injected-defect test below measures it directly.
+\end{itemize}
+The flag itself is context-sensitive -- a \SI{30}{\metre\per\second} step out of a
+\SI{12}{\metre\per\second} glide is flagged while the same step passes unremarked where it
+is ordinary -- but a flag alone does not delete (next paragraph): a
+flagged-but-physically-possible fix is \emph{kept}, its flag recorded as a per-flight
+anomaly count alongside the integrity-gate counters. The identical test runs on the
+horizontal position and, independently, on the adopted altitude channel, so a vertical
+spike invalidates the altitude alone and the horizontal position stays (the channel
+decoupling of Sec.~\ref{sec:fixlevel}).
 
 \paragraph{From flag to action: detect here, reconstruct later.} The identifier only
 \emph{flags}; it never repairs. A flagged horizontal fix is \emph{deleted} as a node -- not
@@ -184,16 +192,19 @@ resampling step (Sec.~\ref{impl:uniform}), under one policy and one accounting, 
 a second, in-place imputation that would then feed the resampler as if it were data. This is
 the \emph{Hampel identifier}~\cite{hampel1974}, the detection half of the eponymous filter, not
 the median-substituting filter itself: the local median/Theil--Sen enters only as the reference
-for the residual $r_k$, never as an output value. And a flag alone does not delete: to be
-removed, a fix must be flagged \emph{and} corroborated as physically impossible -- its implied
-in-and-out speed exceeding the absolute $v_{xy}$ bound -- so that the one benign false positive,
-a genuine under-sampled tight turn (whose flagged fix still moves at ordinary flying speed), is
-flagged but \emph{kept}. The gate deliberately narrows the identifier's \emph{deletions} to
-what the absolute bound already deems impossible: on its own, the local test attributes and
-audits. A locally anomalous but physically possible fix is kept by design -- its residual harm
-is bounded and absorbed by the smoother, whereas deleting it would risk real dynamics -- the
-same asymmetric-risk argument that shapes the whole step. A flagged altitude is treated more
-permissively, marked missing on the flag alone,
+for the residual $r_k$, never as an output value.
+
+Deletion is gated twice: a fix is removed only when it is flagged \emph{and} corroborated
+as physically impossible -- its implied in-and-out speed exceeding the absolute $v_{xy}$
+bound -- so that the one benign false positive, a genuine under-sampled tight turn (whose
+flagged fix still moves at ordinary flying speed), is flagged but \emph{kept}. The gate
+deliberately narrows the identifier's \emph{deletions} to what the absolute bound already
+deems impossible: on its own, the local test attributes and audits. A locally anomalous but
+physically possible fix is kept by design -- its residual harm is bounded and absorbed by
+the smoother, whereas deleting it would risk real dynamics -- the same asymmetric-risk
+argument that shapes the whole step.
+
+A flagged \emph{altitude} is treated more permissively, marked missing on the flag alone,
 because a dropped altitude is not a deletion but a deferral: it is restored by the
 single audited interpolation at resampling, so the stakes are far lower than for a position
 node. This is the fix-level face of the \emph{default to keep}
@@ -202,27 +213,37 @@ rule of Sec.~\ref{sec:fixlevel}: removal needs positive, corroborated evidence.
 \paragraph{Frozen-lock detection (on-the-trend).} A run is a lost-lock episode only under the
 rule of Eq.~\eqref{eq:frozenlock} -- spatially collapsed, \emph{and} witnessed (barometrically
 flat or byte-identical; the declared flags only where no barometer exists), \emph{and} long
-enough -- and the pass defaults to keeping the data otherwise. (i)~\emph{Extent}:
-the run's bounding diameter -- the maximum great-circle distance between \emph{any} two of its
-fixes, not the fix-to-fix step -- stays below $\varepsilon$ (a few times the GPS noise,
-$\sim$\SIrange{10}{15}{\metre}); a circling climb spans its disc, $2R\approx\SIrange{40}{100}
-{\metre}\gg\varepsilon$, and is cleared on extent alone, whereas a step-based test would fire on
-every \SI{1}{\hertz} climb (step $v_{xy}\Delta t\approx\SI{10}{\metre}\sim\varepsilon$).
-(ii)~\emph{Independent witness}: over the run the barometric altitude must also be flat --
-$|\Delta z_{\mathrm{baro}}|$ below a few metres -- since a real thermalling climb gains tens of
-metres in that time on a sensor independent of the GNSS, so a horizontally-still run whose baro
-altitude is still climbing is a tight climb and is kept. (iii)~\emph{Corroboration, ranked}: of the declared signatures, only the
-\emph{byte-identical} repeat may override the witness -- a run of byte-identical coordinates
-under a climbing barometric altitude is a freeze that happened \emph{during} a climb (no
-real circling wing rewrites the same coordinates), and is cut, the positions being invented
-even where the height gain is real. The \texttt{V} flag and the zeroed GNSS altitude do
-\emph{not} override a live barometer: they certify a degraded GNSS \emph{altitude}, not a
-frozen horizontal fix (a \texttt{V} fix may still carry a usable position,
-Sec.~\ref{sec:igcformat}), so on a barometric flight they are recorded as corroborating
-diagnostics only, and become decisive only on a GNSS-fallback flight, where
-Eq.~\eqref{eq:frozenlock} substitutes them for the missing barometric witness. The run must also span at least $\tau_{\mathrm{freeze}}$, set to a few
-thermalling periods ($\gtrsim\SIrange{60}{90}{\second}$), so that a long, slow, tight climb is
-never mistaken for a freeze. Only then is the run marked as a data gap; the split it induces is
+enough -- and the pass defaults to keeping the data otherwise.
+\begin{itemize}[itemsep=2pt, topsep=3pt]
+  \item \emph{Extent.} The run's bounding diameter -- the maximum great-circle distance
+        between \emph{any} two of its fixes, not the fix-to-fix step -- stays below
+        $\varepsilon$ (a few times the GPS noise, $\sim$\SIrange{10}{15}{\metre}); a
+        circling climb spans its disc,
+        $2R\approx\SIrange{40}{100}{\metre}\gg\varepsilon$, and is cleared on extent
+        alone, whereas a step-based test would fire on every \SI{1}{\hertz} climb (step
+        $v_{xy}\Delta t\approx\SI{10}{\metre}\sim\varepsilon$).
+  \item \emph{Independent witness.} Over the run the barometric altitude must also be
+        flat -- $|\Delta z_{\mathrm{baro}}|$ below a few metres -- since a real thermalling
+        climb gains tens of metres in that time on a sensor independent of the GNSS, so a
+        horizontally-still run whose baro altitude is still climbing is a tight climb and
+        is kept.
+  \item \emph{Corroboration, ranked.} Of the declared signatures, only the
+        \emph{byte-identical} repeat may override the witness -- a run of byte-identical
+        coordinates under a climbing barometric altitude is a freeze that happened
+        \emph{during} a climb (no real circling wing rewrites the same coordinates), and
+        is cut, the positions being invented even where the height gain is real. The
+        \texttt{V} flag and the zeroed GNSS altitude do \emph{not} override a live
+        barometer: they certify a degraded GNSS \emph{altitude}, not a frozen horizontal
+        fix (a \texttt{V} fix may still carry a usable position,
+        Sec.~\ref{sec:igcformat}), so on a barometric flight they are recorded as
+        corroborating diagnostics only, and become decisive only on a GNSS-fallback
+        flight, where Eq.~\eqref{eq:frozenlock} substitutes them for the missing
+        barometric witness.
+  \item \emph{Duration.} The run must span at least $\tau_{\mathrm{freeze}}$, set to a few
+        thermalling periods ($\gtrsim\SIrange{60}{90}{\second}$), so that a long, slow,
+        tight climb is never mistaken for a freeze.
+\end{itemize}
+Only then is the run marked as a data gap; the split it induces is
 realized at the uniform-sampling stage (Sec.~\ref{impl:uniform}), on the same footing as a
 native long gap. On a GNSS-fallback flight the barometric witness is unavailable, so there the
 extent and flag tests must both hold outright and, in any doubt, the run is kept -- the safe
@@ -237,7 +258,9 @@ time is deleted as a node, just as a fix with a corrupt position is. A falsified
 a defect to record, not a repair to hide. This requires moving the clamp out of the parser:
 \path{parse_igc} keeps the roll-over unwrap (a format concern, needing the raw time of day)
 but stops flattening backward jitter with the running maximum -- flattened, the evidence the
-cleaning must act on no longer exists downstream. Fixes sharing one UTC second are
+cleaning must act on no longer exists downstream.
+
+Fixes sharing one UTC second are
 collapsed to a single representative at that second's centroid position. This replaces the
 provisional \enquote{keep the first} of the earlier design: keeping the first privileges an
 arbitrary member and, for a genuine $\ge\!\SI{2}{\hertz}$ logger, would silently halve the
@@ -280,14 +303,20 @@ partly fill the gaps once cadences are pooled: among \SI{1}{\second}-native fixe
 99\%\ land within \SI{0.05}{\metre\per\second} of an integer, against only 34--42\%\ at every
 other cadence.)
 
-\paragraph{Order, and a single pass.} The detectors run in a fixed order -- format, then the
-time defects (backward, duplicate), then position outliers, then frozen-lock, then altitude
--- because a speed or a residual is only meaningful once the time base is monotone and free of
-duplicates. The position-outlier and frozen-lock passes are one left-to-right scan that
-carries the last accepted fix as an anchor: it never re-walks the whole track, and it absorbs
-a run by extending the anchor across the flagged block -- tracking the block's running
-bounding box to test its extent against $\varepsilon$ -- so the cost is $O(N)$ in the number
-of fixes.
+\paragraph{Order, and a single pass.} The detectors run in a fixed order:
+\begin{enumerate}[label=(\arabic*), itemsep=0pt, topsep=3pt]
+  \item format validity, at decode time (Sec.~\ref{impl:igcformat});
+  \item time defects: backward steps, then duplicates;
+  \item position outliers (Hampel flag $+$ impossibility gate);
+  \item frozen-lock runs;
+  \item altitude: absolute bounds and altitude outliers.
+\end{enumerate}
+The order matters because a speed or a residual is only meaningful once the time base is
+monotone and free of duplicates. The position-outlier and frozen-lock passes are one
+left-to-right scan that carries the last accepted fix as an anchor: it never re-walks the
+whole track, and it absorbs a run by extending the anchor across the flagged block --
+tracking the block's running bounding box to test its extent against $\varepsilon$ -- so
+the cost is $O(N)$ in the number of fixes.
 
 \paragraph{Flight-level integrity gate.} The pass records how much it changed each flight (or
 segment) -- \path{n_fix_raw}, \path{n_fix_clean} and \path{frac_interpolated} in

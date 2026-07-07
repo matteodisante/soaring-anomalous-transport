@@ -1,8 +1,10 @@
-\chapter{Data acquisition}
+% Included by appendices/impl/C2-dataset.tex: the acquisition mirror opens the dataset
+% mirror, just as Sec.~\ref{sec:acquisition} opens the dataset chapter in the body.
+\section{Data acquisition}
 \label{impl:acquisition}
-\emph{Mirrors Chapter~\ref{ch:acquisition}.}
+\emph{Mirrors Sec.~\ref{sec:acquisition}.}
 
-\section{Pipeline and tooling}
+\subsection{Pipeline and tooling}
 \label{impl:acqpipeline}
 Package \path{soaring.acquisition.ffvl}, exposed as two CLI entry points,
 \texttt{soaring-para} and \texttt{soaring-delta}, sharing subcommands: \texttt{fetch-xml}
@@ -25,7 +27,7 @@ error pages and truncated responses are rejected and retried.
 exponential backoff, and a minimum delay between requests avoid hammering the server; a
 browser TLS fingerprint is impersonated to pass the site's Cloudflare challenge.
 
-\section{Reproducibility}
+\subsection{Reproducibility}
 \label{impl:acqrepro}
 Destination directory (\path{data_root}) set per machine via an environment
 variable -- \path{SOARING_PARA_DATA_ROOT} for paragliders,
@@ -33,7 +35,7 @@ variable -- \path{SOARING_PARA_DATA_ROOT} for paragliders,
 shipping a placeholder (\path{configs/para_download.yaml}/
 \path{configs/delta_download.yaml}); every command validates the setting at start-up.
 
-\section{Integrity}
+\subsection{Integrity}
 \label{impl:acqintegrity}
 The \texttt{verify} subcommand re-scans every downloaded file on disk, reusing the same
 IGC validation applied at download time, and flags truncated or invalid files, leftover

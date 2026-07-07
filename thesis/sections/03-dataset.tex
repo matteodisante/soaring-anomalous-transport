@@ -1,6 +1,14 @@
 \chapter{The dataset}
 \label{ch:dataset}
 
+This chapter follows the data end to end: how the raw archive is acquired, verified and
+kept reproducible (Sec.~\ref{sec:acquisition}); what the records contain and what the
+collection looks like (Secs.~\ref{sec:igcformat}--\ref{sec:dataquality}); and the
+pre-processing that turns a raw tracklog into the analysis-ready trajectory the transport
+analysis consumes (Sec.~\ref{sec:preproc}).
+
+\input{sections/02-data-acquisition}
+
 \section{The IGC tracklog format}
 \label{sec:igcformat}
 
@@ -8,7 +16,7 @@ A flight track is stored as an \emph{IGC file}, the plain-text format defined by
 FAI/IGC Technical Specification for IGC-approved GNSS flight recorders~\cite{fai_igc_spec};
 it is the standard output of the recorders used in free-flight competitions. Its layout is
 therefore fixed by that standard, not inferred from the files, and the acquisition
-validates every downloaded track against it (Chapter~\ref{ch:acquisition}), so conformance
+validates every downloaded track against it (Sec.~\ref{sec:acquisition}), so conformance
 is checked across the whole archive.
 
 Each line is a \emph{record} whose type is set by its first character -- a code assigned by
@@ -101,7 +109,7 @@ competitions -- one for \emph{paragliders} and one for \emph{hang gliders} -- so
 dataset spans \emph{both} glider types: the glider-type stratum has two levels, and the
 cross-type comparison of the reference study~\cite{vilpellet2026} is therefore already
 possible between paragliders and hang gliders. The third category, \emph{sailplanes}, is
-collected by different portals and is not yet in hand (Chapter~\ref{ch:acquisition}); until
+collected by different portals and is not yet in hand (Sec.~\ref{sec:acquisition}); until
 it is added the cross-type analysis is limited to the two FFVL disciplines.
 
 Within each discipline the flights can be further stratified by \emph{performance class},
@@ -125,7 +133,7 @@ handled at the pre-processing stage, later in this chapter \impldetails{impl:gli
 \label{sec:coverage}
 
 The statistics below describe the FFVL CFD dataset currently in hand; further sources may be
-added later (Chapter~\ref{ch:acquisition}). It comprises \num{\StatTotalFlights} flights in
+added later (Sec.~\ref{sec:acquisition}). It comprises \num{\StatTotalFlights} flights in
 total, of which \num{\StatTotalWithIgc} carry a GPS tracklog and \num{\StatTotalDownloaded}
 have been downloaded and verified, split across two disciplines.
 
@@ -180,10 +188,16 @@ Each IGC file is parsed into a sequence of fixes $(t_i,\varphi_i,\lambda_i,h_i)$
 time, geodetic latitude and longitude, and altitude -- by the \texttt{soaring.analysis.igc}
 parser, which reads the \texttt{B} records at their fixed character positions and returns
 both altitude channels. The pipeline then proceeds in a fixed order:
-(i)~choose the altitude channel; (ii)~clean individual fixes; (iii)~trim the ground phases;
-(iv)~filter out unfit whole flights; (v)~convert to a local Cartesian frame; (vi)~enforce a
-uniform sampling interval within each flight; and (vii)~smooth and differentiate the
-trajectory. The output is a tidy, analysis-ready representation in a growing
+\begin{enumerate}[label=(\roman*), itemsep=1pt, topsep=3pt]
+  \item choose the altitude channel (Sec.~\ref{sec:altchannel});
+  \item clean individual fixes (Sec.~\ref{sec:fixlevel});
+  \item trim the ground phases (Sec.~\ref{sec:trimming});
+  \item filter out unfit whole flights (Sec.~\ref{sec:flightfilter});
+  \item convert to a local Cartesian frame (Sec.~\ref{sec:enu});
+  \item enforce a uniform sampling interval within each flight (Sec.~\ref{sec:uniform});
+  \item smooth and differentiate the trajectory (Sec.~\ref{sec:savgol}).
+\end{enumerate}
+The output is a tidy, analysis-ready representation in a growing
 \texttt{soaring.analysis} sub-package.
 
 The ordering follows one rule: work in the frame that makes each step exact and cheap.
@@ -220,8 +234,9 @@ estimate (Appendix~\ref{app:psd}) \impldetails{impl:altchannel}. At low frequenc
 agree, tracking the real climbs and glides. The high-frequency behaviour is where they part,
 but \emph{not uniformly}. For the \emph{typical} flight the two are comparable: both approach
 the common floor set by the metre resolution to which the IGC format rounds \emph{both}
-channels, so the median spectra (panel~c, solid lines) nearly coincide. What separates the
-channels is the \emph{spread} across flights, the shaded bands. The barometric band stays
+channels, so the median spectra (panel~c, solid lines) nearly coincide.
+
+What separates the channels is the \emph{spread} across flights, the shaded bands. The barometric band stays
 tight -- that channel is uniformly clean -- whereas the GNSS band fans out by one to two
 orders of magnitude towards the Nyquist frequency: a substantial minority of flights carry
 large GNSS high-frequency noise, from multipath and the vertical dilution of precision, while
@@ -344,8 +359,9 @@ below it must sit within tens of metres of the true track (at most the speed bou
 native step, $\approx\SI{45}{\metre}$ at \SI{1}{\hertz}, and typically within the outlier
 floor $\varepsilon_{\min}\approx\SI{15}{\metre}$), and the smoother absorbs that. Whereas
 \emph{removing} a genuine slow-phase fix has no such bound: it erases a real trapping event
-and biases that tail irreversibly. The cleaning therefore defaults to
-\emph{keep}: a fix is removed only on positive, corroborated evidence of a defect, never on
+and biases that tail irreversibly.
+
+The cleaning therefore defaults to \emph{keep}: a fix is removed only on positive, corroborated evidence of a defect, never on
 suspicion, and no detector may delete a fix that still carries a usable horizontal position
 (it may at most mark a channel missing, to be restored downstream). This is what lets the
 procedure strip the plainly broken without ever eating a search or climb fix.
@@ -468,9 +484,10 @@ $\tau_{\mathrm{freeze}}\gtrsim\SIrange{60}{90}{\second}$ moves the barometer by
 $\gtrsim\SI{60}{\metre}$ against a flatness tolerance $\delta_z$ of a few metres, so the
 witness misses by an order of magnitude. Cutting a genuine climb on a barometric flight
 therefore requires two independent order-of-magnitude failures at once -- or coordinates
-repeated bit-for-bit, which no moving receiver writes. The guarantee rests on one stated
-assumption, a functioning barometric witness, and degrades gracefully where that witness is
-absent: on the GNSS-fallback minority (Sec.~\ref{sec:altchannel}) the declared signatures
+repeated bit-for-bit, which no moving receiver writes.
+
+The guarantee rests on one stated assumption, a functioning barometric witness, and
+degrades gracefully where that witness is absent: on the GNSS-fallback minority (Sec.~\ref{sec:altchannel}) the declared signatures
 decide, and both residual corner cases are confined there -- a sub-$\varepsilon$ circling
 climb carrying a \texttt{V} flag (cut wrongly) and an undeclared, jittering freeze (kept
 wrongly), each a near-empty set in which the default to keep errs toward preserving real
@@ -609,15 +626,19 @@ the physics unchanged; one that has begun to bite into real dynamics does not
 \label{sec:trimming}
 The logger starts recording before take-off and stops after landing; these ground phases must
 be stripped before any kinematic analysis. Detection uses the \emph{horizontal} speed
-$v_{xy}$ alone (from~\eqref{eq:haversine}) -- the vertical speed plays no role here: the
-airborne segment begins at the \emph{first} time $v_{xy}$ rises above
-\SI{5}{\metre\per\second} and stays above it for at least \SI{30}{\second}, and ends where
-the \emph{last} such sustained-above stretch ends -- the same rule applied to the
-time-reversed track, \emph{not} a cut at the first sustained drop, which a slow soaring
-phase (ground speed near
-zero when hovering into wind) would otherwise trigger mid-flight. The
-sustained-speed requirement prevents a gust or a GPS glitch on the ground from being mistaken
-for take-off. One caveat is structural: the criterion is a \emph{ground} speed, so a slow
+$v_{xy}$ alone (from~\eqref{eq:haversine}) -- the vertical speed plays no role here. With
+$v_0=\SI{5}{\metre\per\second}$ and $T_0=\SI{30}{\second}$, the retained airborne segment
+is $[t_{\mathrm{on}},t_{\mathrm{off}}]$ with
+\begin{equation}
+\label{eq:trimming}
+  t_{\mathrm{on}}=\min\bigl\{t:\ v_{xy}>v_0\ \text{on}\ [t,\,t+T_0]\bigr\},
+  \qquad
+  t_{\mathrm{off}}=\max\bigl\{t:\ v_{xy}>v_0\ \text{on}\ [t-T_0,\,t]\bigr\},
+\end{equation}
+i.e.\ the same sustained-speed rule read forward and time-reversed -- \emph{not} a cut at
+the first sustained drop, which a slow soaring phase (ground speed near zero when hovering
+into wind) would otherwise trigger mid-flight. The persistence $T_0$ prevents a gust or a
+GPS glitch on the ground from being mistaken for take-off. One caveat is structural: the criterion is a \emph{ground} speed, so a slow
 phase adjacent to take-off or landing (a launch straight into ridge lift, say) can still be
 clipped; the trimmed fraction is recorded per flight so this failure mode is auditable
 rather than hidden. Both the threshold and the persistence affect what fraction of each
@@ -1061,7 +1082,9 @@ $v_{xy}\sim\SI{10}{\metre\per\second}$), the altitude tolerates \emph{wider} gap
 and the gap bound is the same for every channel. The interpolation error is set by the
 \emph{curvature} the signal has over the gap, not by its speed -- a fast but straight motion is
 interpolated exactly, a slow but turning one is not -- so a slower channel is not automatically
-a smoother one. More decisively, the altitude feeds $v_z$, the segmentation's discriminant, and
+a smoother one.
+
+More decisively, the altitude feeds $v_z$, the segmentation's discriminant, and
 a long altitude gap linearly interpolated returns a single average slope that \emph{erases any
 climb--glide transition falling inside it}; and those transitions are exactly where $v_z$ swings
 fastest -- a thermal entry flips $v_z$ from about $-\SI{1.5}{}$ to $+\SI{3}{\metre\per\second}$
