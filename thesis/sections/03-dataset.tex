@@ -400,7 +400,11 @@ isolated spike is removed without touching its neighbours, and a short burst is 
 one block, the smallest whose removal restores the trend. The action then depends on the
 channel affected. A corrupt \emph{position or time} deletes the fix entirely; the value is
 not replaced with the local median, because all reconstruction is deferred to the single
-resampling step (Sec.~\ref{sec:uniform}), which bridges the resulting short gap. A corrupt
+resampling step (Sec.~\ref{sec:uniform}), which bridges the resulting short gap. A defect
+that no bounded removal repairs -- a position discontinuity, such as a re-acquisition
+offset, where the track jumps and stays -- is not a deletion problem: both sides are
+genuine and only the transition between them is unknown, so the trajectory is split at
+the step, like a long gap (Sec.~\ref{sec:uniform}). A corrupt
 \emph{altitude} keeps position and time and marks only the altitude as missing; the
 horizontal analysis, which is the primary result, does not use the altitude, so dropping a
 barometric spike costs it nothing (Sec.~\ref{sec:altchannel}).
@@ -506,6 +510,10 @@ Position spike, out-and-back jump
   & robust local-outlier test (Hampel identifier~\cite{hampel1974}), \emph{corroborated by} an
   absolute $v_{xy}$ bound (\num{45}/\SI{55}{\metre\per\second}, para/hang)
   & delete the fix; the short gap is bridged at resampling \\
+\addlinespace[3pt]
+Position discontinuity (re-acquisition offset)
+  & flagged step that no bounded removal rejoins
+  & split at the step, like a long gap \\
 \addlinespace[9pt]
 \multicolumn{3}{@{}p{12.6cm}}{\textbf{On the trend} --- \emph{record structurally wrong,
   position agrees with its neighbours}}\\
@@ -634,7 +642,9 @@ is $[t_{\mathrm{on}},t_{\mathrm{off}}]$ with
 i.e.\ the same sustained-speed rule read forward and time-reversed -- \emph{not} a cut at
 the first sustained drop, which a slow soaring phase (ground speed near zero when hovering
 into wind) would otherwise trigger mid-flight. The persistence $T_0$ prevents a gust or a
-GPS glitch on the ground from being mistaken for take-off. The rule trims only the
+GPS glitch on the ground from being mistaken for take-off. A flight with no sustained
+stretch at all has no airborne segment and is discarded, with the reason recorded. The
+rule trims only the
 \emph{outer} ground phases: a mid-flight landing and relaunch recorded in one log (a
 top-landing, say) would survive as an interior near-zero-speed stint and read downstream
 as an implausibly long wait -- and a false wait of tens of minutes lands in the far tail
@@ -1272,7 +1282,11 @@ polynomial order $p$, fixed from the measured noise spectrum rather than by eye:
         $\{2,3,4\}$.
   \item Set the window per flight from the \emph{timescale},
         $w=\mathrm{odd}\!\left(\tau_c/\Delta t\right)$, so the physical smoothing scale is the
-        same across the fleet regardless of rate.
+        same across the fleet regardless of rate -- with a floor at $w=5$, the smallest
+        window a cubic fit accepts. For the few flights with $\Delta t\gtrsim\tau_c$ the
+        noise band lies beyond Nyquist and the floor smooths slightly more than the noise
+        scale; those flights are in any case stratified out of the $\Delta t$-sensitive
+        observables (Sec.~\ref{sec:uniform}).
   \item Treat the vertical separately from the horizontal, and condition it on the altitude
         \emph{source}. On a barometric flight the vertical channel is \emph{smoother} than
         the horizontal, since the pressure sensor carries little high-frequency noise

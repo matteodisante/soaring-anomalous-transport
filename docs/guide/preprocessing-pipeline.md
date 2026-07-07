@@ -89,12 +89,16 @@ Key mechanics that reconcile the blueprint with the repo:
   window; flag when residual > max(`k`·σ, `ε_min`), thesis `eq:hampel`): detection and
   **attribution** only — a flag alone never deletes. A horizontal fix is deleted only when
   flagged **and** its implied in-and-out speed breaks the absolute `v_xy` bound
-  (impossibility gate); a flagged-but-possible fix is kept, its flag recorded per flight.
+  (impossibility gate); a flagged-but-possible fix is kept, its flag recorded per flight; a
+  flagged step that no bounded removal rejoins (position discontinuity, e.g. re-acquisition
+  offset) ⇒ **split** at the step, like a long gap.
   Runs per channel, so a vertical spike drops the altitude only (invalidated on the flag
   alone: a dropped altitude is a deferral, restored at (vi), not a deletion). *Structural
   rules*: duplicate timestamp → merge to that second's centroid; non-wrap backward time →
-  delete the fix (the parser stops clamping backward jitter — `parse_igc` keeps only the
-  midnight-rollover unwrap — so the cleaning pass sees the defect); frozen-lock run, cut
+  delete by minimal removal (complement of the longest increasing subsequence, so a
+  forward-jumped clock removes itself, not every fix after it; the parser stops clamping
+  backward jitter — `parse_igc` keeps only the midnight-rollover unwrap — so the cleaning
+  pass sees the defect); frozen-lock run, cut
   only per thesis `eq:frozenlock`: bounding diameter < `ε` **and** witness **and** span ≥
   `τ_freeze`, the witness ranked per altitude source — barometric flight: baro flat **or**
   byte-identical repeats (`V`/zero GNSS alt never overrule a climbing barometer; recorded as
@@ -130,8 +134,8 @@ Key mechanics that reconcile the blueprint with the repo:
   time gaps.
 - **Savitzky–Golay (vii).** Two hyperparameters: `window_length` (odd) and `polyorder`.
   Set by the noise-matched procedure of thesis `sec:savgol` (PSD knee `f_c` → smoothing scale
-  `τ_c` → `window = odd(τ_c/Δt)` per flight; runs **per segment**, never across a boundary,
-  with `mode='interp'`; `polyorder` fixed at 3; horizontal and
+  `τ_c` → `window = max(odd(τ_c/Δt), 5)` per flight; runs **per segment**, never across a
+  boundary, with `mode='interp'`; `polyorder` fixed at 3; horizontal and
   vertical treated separately, the vertical conditioned on `alt_source` via the two config
   keys `tau_c_vertical_baro_s`/`tau_c_vertical_gnss_s`). `deriv=0,1,2` and `delta=Δt` are
   not tuning knobs.
@@ -222,8 +226,11 @@ Handle at ingestion (empirically observed on the real files):
 ## Open items
 
 - The Savitzky–Golay `τ_c` (horizontal/vertical) are **placeholders** in
-  `configs/preprocessing.yaml` → finalize from the real PSD study on `E,N,U`.
-  (`polyorder`, the filtering and trimming cuts are set.)
+  `configs/preprocessing.yaml` → finalize from the real PSD study on `E,N,U`. This is
+  **the one true blocker** for a first end-to-end clean dataset: every other parameter
+  has an adopted or working value. (`polyorder`, the filtering and trimming cuts are set.)
+- Duplicate uploads: before pooling, check whether the same physical flight appears twice
+  (same pilot and date, near-identical track); the catalog does not guard against it.
 - The `sampling` cuts (`max_gap_factor`/`max_gap_seconds`/`max_missing_fraction`) and the
   fix-level **absolute bounds** (thesis `tab:cleaning`) are set and **audited** on the real
   data (`make_gap_diagnostics_figure`,
