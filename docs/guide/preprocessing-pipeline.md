@@ -90,8 +90,10 @@ Key mechanics that reconcile the blueprint with the repo:
   rules*: duplicate timestamp → merge to that second's centroid; non-wrap backward time →
   delete the fix (the parser stops clamping backward jitter — `parse_igc` keeps only the
   midnight-rollover unwrap — so the cleaning pass sees the defect); frozen-lock run, cut
-  only per thesis `eq:frozenlock`: bounding diameter < `ε` **and** (baro flat **or**
-  declared: `V` flag / zero GNSS alt / byte-identical repeats) **and** span ≥ `τ_freeze` →
+  only per thesis `eq:frozenlock`: bounding diameter < `ε` **and** witness **and** span ≥
+  `τ_freeze`, the witness ranked per altitude source — barometric flight: baro flat **or**
+  byte-identical repeats (`V`/zero GNSS alt never overrule a climbing barometer; recorded as
+  diagnostics); GNSS-fallback flight: `V` flag / zero GNSS alt **or** byte-identical →
   mark as gap, split at step (vi). **Removal
   semantics:** position/time defect → delete node (gap bridged at vi); altitude defect →
   invalidate the altitude channel only (horizontal position kept). A **flight-level integrity

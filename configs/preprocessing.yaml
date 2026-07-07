@@ -57,11 +57,13 @@ flight_level:
 # Flight-level cuts: a flight too irregular to resample onto a uniform grid is excluded
 # (audited in the thesis, fig:gaps).
 sampling:
-  max_gap_factor: 10.0             # exclude if the largest inter-fix gap exceeds this
-                                   #   multiple of the flight's own native dt. RELATIVE to
-                                   #   native dt, so the tolerated absolute gap scales with
-                                   #   the logger's rate; raising it much further would
-                                   #   interpolate over ever-longer spans.
+  max_gap_factor: 10.0             # split the flight at any inter-fix gap exceeding this
+                                   #   multiple of its own native dt (segments then analysed
+                                   #   independently; a too-short segment falls to the
+                                   #   flight-level cuts). RELATIVE to native dt, so the
+                                   #   tolerated absolute gap scales with the logger's rate;
+                                   #   raising it much further would interpolate over
+                                   #   ever-longer spans.
   max_missing_fraction: 0.10       # exclude if more than this fraction of the uniform grid
                                    #   at the native dt is left uncovered
 

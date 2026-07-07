@@ -200,9 +200,9 @@ node. This is the fix-level face of the \emph{default to keep}
 rule of Sec.~\ref{sec:fixlevel}: removal needs positive, corroborated evidence.
 
 \paragraph{Frozen-lock detection (on-the-trend).} A run is a lost-lock episode only under the
-rule of Eq.~\eqref{eq:frozenlock} -- spatially collapsed, \emph{and} either barometrically
-flat \emph{or} explicitly declared, \emph{and} long enough -- and the pass defaults to keeping
-the data otherwise. (i)~\emph{Extent}:
+rule of Eq.~\eqref{eq:frozenlock} -- spatially collapsed, \emph{and} witnessed (barometrically
+flat or byte-identical; the declared flags only where no barometer exists), \emph{and} long
+enough -- and the pass defaults to keeping the data otherwise. (i)~\emph{Extent}:
 the run's bounding diameter -- the maximum great-circle distance between \emph{any} two of its
 fixes, not the fix-to-fix step -- stays below $\varepsilon$ (a few times the GPS noise,
 $\sim$\SIrange{10}{15}{\metre}); a circling climb spans its disc, $2R\approx\SIrange{40}{100}
@@ -211,13 +211,16 @@ every \SI{1}{\hertz} climb (step $v_{xy}\Delta t\approx\SI{10}{\metre}\sim\varep
 (ii)~\emph{Independent witness}: over the run the barometric altitude must also be flat --
 $|\Delta z_{\mathrm{baro}}|$ below a few metres -- since a real thermalling climb gains tens of
 metres in that time on a sensor independent of the GNSS, so a horizontally-still run whose baro
-altitude is still climbing is a tight climb and is kept. (iii)~\emph{Corroboration}: a declared
-lost lock (the \texttt{V} flag, GNSS altitude \texttt{00000}) or byte-identical repeated
-coordinates confirm it -- and, being an \emph{or}-branch of Eq.~\eqref{eq:frozenlock},
-override the witness: a run of byte-identical coordinates under a climbing barometric
-altitude is a freeze that happened \emph{during} a climb (no real circling wing rewrites the
-same coordinates), and is cut -- the positions are invented even where the height gain is
-real. The run must also span at least $\tau_{\mathrm{freeze}}$, set to a few
+altitude is still climbing is a tight climb and is kept. (iii)~\emph{Corroboration, ranked}: of the declared signatures, only the
+\emph{byte-identical} repeat may override the witness -- a run of byte-identical coordinates
+under a climbing barometric altitude is a freeze that happened \emph{during} a climb (no
+real circling wing rewrites the same coordinates), and is cut, the positions being invented
+even where the height gain is real. The \texttt{V} flag and the zeroed GNSS altitude do
+\emph{not} override a live barometer: they certify a degraded GNSS \emph{altitude}, not a
+frozen horizontal fix (a \texttt{V} fix may still carry a usable position,
+Sec.~\ref{sec:igcformat}), so on a barometric flight they are recorded as corroborating
+diagnostics only, and become decisive only on a GNSS-fallback flight, where
+Eq.~\eqref{eq:frozenlock} substitutes them for the missing barometric witness. The run must also span at least $\tau_{\mathrm{freeze}}$, set to a few
 thermalling periods ($\gtrsim\SIrange{60}{90}{\second}$), so that a long, slow, tight climb is
 never mistaken for a freeze. Only then is the run marked as a data gap; the split it induces is
 realized at the uniform-sampling stage (Sec.~\ref{impl:uniform}), on the same footing as a
