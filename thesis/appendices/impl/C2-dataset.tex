@@ -169,17 +169,40 @@ The identical test runs on the horizontal position and, independently, on the ad
 altitude channel, so a vertical spike invalidates the altitude alone and the horizontal
 position stays (the channel decoupling of Sec.~\ref{sec:fixlevel}).
 
-\paragraph{Frozen-lock detection (on-the-trend).} A maximal run of consecutive fixes whose
-pairwise great-circle displacement stays below $\varepsilon$ while the timestamps advance
-normally, of total span at least $\tau_{\mathrm{freeze}}$ (equivalently $M$ fixes at the
-native cadence), is a lost-lock episode. Working values: $\varepsilon$ a few times the GPS
-noise ($\sim$\SIrange{10}{15}{\metre}), $\tau_{\mathrm{freeze}}$ some tens of seconds -- long
-enough that a real slow hover of that duration would still drift several metres, short enough
-to catch the defect before it distorts a waiting time. A circling glider is not caught: its
-turn radius is tens of metres, well above $\varepsilon$, so its displacement never collapses
-to the logger's quantization. The run is marked as a data gap; the split it induces is
+\paragraph{From flag to action: detect here, reconstruct later.} The identifier only
+\emph{flags}; it never repairs. A flagged horizontal fix is \emph{deleted} as a node -- not
+overwritten with the local median -- so that all reconstruction is done by the single
+resampling step (Sec.~\ref{impl:uniform}), under one policy and one accounting, rather than by
+a second, in-place imputation that would then feed the resampler as if it were data. This is
+the \emph{Hampel identifier}~\cite{hampel1974}, the detection half of the eponymous filter, not
+the median-substituting filter itself: the local median/Theil--Sen enters only as the reference
+for the residual $r_k$, never as an output value. And a flag alone does not delete: to be
+removed, a fix must be flagged \emph{and} corroborated as physically impossible -- its implied
+in-and-out speed exceeding the absolute $v_{xy}$ bound -- so that the one benign false positive,
+a genuine under-sampled tight turn (whose flagged fix still moves at ordinary flying speed), is
+flagged but \emph{kept}. A flagged altitude is symmetrically marked missing, not replaced, and
+restored with the rest at resampling. This is the fix-level face of the \emph{default to keep}
+rule of Sec.~\ref{sec:fixlevel}: removal needs positive, corroborated evidence.
+
+\paragraph{Frozen-lock detection (on-the-trend).} A run is a lost-lock episode only when three
+independent tests agree, and the pass defaults to keeping the data otherwise. (i)~\emph{Extent}:
+the run's bounding diameter -- the maximum great-circle distance between \emph{any} two of its
+fixes, not the fix-to-fix step -- stays below $\varepsilon$ (a few times the GPS noise,
+$\sim$\SIrange{10}{15}{\metre}); a circling climb spans its disc, $2R\approx\SIrange{40}{100}
+{\metre}\gg\varepsilon$, and is cleared on extent alone, whereas a step-based test would fire on
+every \SI{1}{\hertz} climb (step $v_{xy}\Delta t\approx\SI{10}{\metre}\sim\varepsilon$).
+(ii)~\emph{Independent witness}: over the run the barometric altitude must also be flat --
+$|\Delta z_{\mathrm{baro}}|$ below a few metres -- since a real thermalling climb gains tens of
+metres in that time on a sensor independent of the GNSS, so a horizontally-still run whose baro
+altitude is still climbing is a tight climb and is kept. (iii)~\emph{Corroboration}: a declared
+lost lock (the \texttt{V} flag, GNSS altitude \texttt{00000}) or byte-identical repeated
+coordinates confirm it. The run must also span at least $\tau_{\mathrm{freeze}}$, set to a few
+thermalling periods ($\gtrsim\SIrange{60}{90}{\second}$), so that a long, slow, tight climb is
+never mistaken for a freeze. Only then is the run marked as a data gap; the split it induces is
 realized at the uniform-sampling stage (Sec.~\ref{impl:uniform}), on the same footing as a
-native long gap.
+native long gap. On a GNSS-fallback flight the barometric witness is unavailable, so there the
+extent and flag tests must both hold outright and, in any doubt, the run is kept -- the safe
+direction, since keeping a rare true freeze costs far less than splitting a real climb.
 
 \paragraph{Duplicate and backward timestamps (on-the-trend).} The parser already rebuilds a
 monotone clock: it unwraps the UTC-midnight roll-over (a drop of $\sim$\SI{86400}{\second}
@@ -231,7 +254,8 @@ time defects (backward, duplicate), then position outliers, then frozen-lock, th
 -- because a speed or a residual is only meaningful once the time base is monotone and free of
 duplicates. The position-outlier and frozen-lock passes are one left-to-right scan that
 carries the last accepted fix as an anchor: it never re-walks the whole track, and it absorbs
-a run by extending the anchor across the flagged block, so the cost is $O(N)$ in the number
+a run by extending the anchor across the flagged block -- tracking the block's running
+bounding box to test its extent against $\varepsilon$ -- so the cost is $O(N)$ in the number
 of fixes.
 
 \paragraph{Flight-level integrity gate.} The pass records how much it changed each flight (or
@@ -243,7 +267,8 @@ cut (Sec.~\ref{impl:uniform}).
 
 \paragraph{Configuration.} The absolute bounds are already the \texttt{FixLevelThresholds}
 group above. The robust-test parameters ($w$, $k$, $\varepsilon_{\min}$), the frozen-lock
-parameters ($\varepsilon$, $\tau_{\mathrm{freeze}}$) and the integrity fraction $f$ join that
+parameters (the extent tolerance $\varepsilon$, the minimum span $\tau_{\mathrm{freeze}}$ and
+the barometric-flatness threshold of the witness test) and the integrity fraction $f$ join that
 group in \path{configs/preprocessing.yaml} when the routine is built; as with every threshold
 in this pipeline they live in the config, never in Python.
 
@@ -260,7 +285,16 @@ transport estimators -- the displacement-scaling exponent and the waiting-time-t
 stop moving; movement under stricter cleaning is the signature of a cut biting into signal.
 A cheap third check guards against a missed defect class: the fixes flagged by the absolute
 bound should nest inside those flagged by the local test (the impossible is a subset of the
-locally anomalous), so a large disagreement points to a defect neither was designed for.
+locally anomalous), so a large disagreement points to a defect neither was designed for. A
+fourth check targets the error this pipeline most wants to avoid -- losing a slow-phase fix.
+Once the segmentation is in place (Ch.~\ref{ch:next-steps}) the removal and split rates are
+measured \emph{per phase} and required to be flat across transition, search and climb rather
+than enriched in the two slow phases; and synthetic tight climbs -- circles at flying speed,
+over a range of radii and wind drift -- planted in otherwise clean tracks confirm directly
+that the frozen-lock detector never splits a real climb. This is the false-\emph{positive}
+complement of the injected-defect test, and its natural readout is the tail of
+$\psi(\tau_w)$: a cut biting into climb or search would thin that tail before it moved
+anything else.
 
 \paragraph{Reproduce.} Table~\ref{tab:impl-repro}, row \path{generate_preproc_figure.py} (one
 run also regenerates Figures~\ref{fig:preproc}, \ref{fig:gaps} and~\ref{fig:sampling} from a
@@ -301,7 +335,19 @@ are hand-drawn \textsc{TikZ} diagrams, not data plots.
 \label{impl:uniform}
 The gap bound ($10\times$ native $\Delta t$) and the maximum missing fraction ($0.10$) are
 loaded from \path{configs/preprocessing.yaml} (key \texttt{sampling}) as the
-\texttt{SamplingThresholds} dataclass.
+\texttt{SamplingThresholds} dataclass. The bound is on the \emph{time base} and is the same for
+every channel: an order-of-magnitude smaller $v_z$ buys no wider gap for the altitude, since
+the interpolation error scales with curvature, not speed, and a wide altitude gap would erase
+the climb--glide transitions that $v_z$ is there to resolve (Sec.~\ref{sec:uniform}).
+
+\paragraph{Per-channel fill.} Across a short gap the horizontal position is interpolated
+shape-preservingly (monotone piecewise-cubic, e.g.\ \path{scipy.interpolate.PchipInterpolator})
+and the barometric altitude linearly or by cubic spline (its within-phase smoothness makes the
+choice immaterial). The result meets the completeness invariant of Sec.~\ref{sec:fixlevel}:
+within each retained segment every grid time carries a defined $(x,y,z)$ -- deleted position
+nodes and deferred (missing) altitudes both restored here -- so the segmentation is never handed
+a hole; long gaps are split, not filled, and \path{frac_interpolated} records the reconstructed
+fraction per segment for the integrity gate.
 
 \paragraph{Figures~\ref{fig:gaps} and~\ref{fig:sampling}.} Both rendered by
 \path{make_gap_diagnostics_figure}/\path{make_sampling_figure} from the same
@@ -326,6 +372,12 @@ $\tau_c$ (horizontal/vertical) are the \texttt{SavgolParams} dataclass in
 \path{configs/preprocessing.yaml} (key \texttt{savgol}), but today hold placeholder
 values -- $\tau_c$ is to be fixed once the ENU power spectra are measured, reusing the
 Welch procedure of Sec.~\ref{impl:altchannel} applied to $E,N,U$ instead of altitude.
+The vertical timescale is read from the spectrum of the altitude channel \emph{actually in
+use}: a barometric flight, being the smoother channel, takes a shorter window than $(E,N)$,
+a GNSS-fallback flight (noisier by vertical dilution of precision) a longer one -- so the
+two $\tau_c$ values are not fixed once but conditioned on \path{alt_source}
+(Sec.~\ref{sec:savgol}). The filter runs on the resampled grid, so the small interpolated
+fraction (\path{frac_interpolated}) is already in place when it reads its window.
 
 \section{Preliminary characterization}
 \label{impl:prelim}
