@@ -1,7 +1,7 @@
 """Pre-processing thresholds and the *track-based* diagnostics that justify them.
 
-Trajectory pre-processing uses several numeric thresholds (see the thesis chapter "Next
-steps", Sec. 4.1). **None of them is hard-coded here**: their values live in
+Trajectory pre-processing uses several numeric thresholds (see the thesis chapter "The
+dataset", sec:preproc). **None of them is hard-coded here**: their values live in
 ``configs/preprocessing.yaml`` -- the single documented place to change a cut -- read
 into typed dataclasses by :func:`load_preproc_config`. This module also provides the
 diagnostics that justify the flight-level cuts, computed **from the parsed IGC tracks
@@ -60,7 +60,7 @@ class FixLevelThresholds:
 
     ``max_horizontal_speed_mps`` is keyed by discipline (``"paragliders"``,
     ``"hang gliders"``, later ``"sailplanes"``): the two types have markedly different
-    horizontal-speed envelopes (thesis Figure 4.2), so one shared bound is either too
+    horizontal-speed envelopes (thesis, fig:fixlevel), so one shared bound is either too
     loose for the slower type or clips real dynamics of the faster one.
     ``max_vertical_speed_mps`` and the altitude bounds are *not* split by discipline:
     the two disciplines' vertical-speed distributions are close enough that splitting
@@ -79,8 +79,8 @@ class FlightLevelThresholds:
     """Population thresholds for flight-level filtering (loaded from the config).
 
     A separate minimum-fix-count cut is intentionally omitted: it is redundant with the
-    duration cut -- even the slowest logger (~5 s) over ``min_duration_s`` gives several
-    hundred fixes, well above what the kinematics need.
+    duration cut -- even a slow logger (~10 s, the slowest common hang-glider rate) over
+    ``min_duration_s`` gives ~240 fixes, ample for the kinematics.
     """
 
     min_duration_s: float
@@ -105,11 +105,18 @@ class SamplingThresholds:
 
 @dataclass(frozen=True)
 class SavgolParams:
-    """Savitzky-Golay parameters (loaded from the config; window is set per flight)."""
+    """Savitzky-Golay parameters (loaded from the config; window is set per flight).
+
+    Two vertical timescales, not one: the vertical smoothing window is conditioned on
+    the flight's ``alt_source`` (thesis, sec:savgol) -- the barometric channel is
+    smoother than the horizontal and takes a shorter window, the GNSS vertical is
+    noisier and takes a longer one.
+    """
 
     polyorder: int
     tau_c_horizontal_s: float
-    tau_c_vertical_s: float
+    tau_c_vertical_baro_s: float
+    tau_c_vertical_gnss_s: float
 
 
 @dataclass(frozen=True)
@@ -178,12 +185,12 @@ def track_stats(fixes: pd.DataFrame) -> dict | None:
     count, the total flown path length (sum of great-circle steps), the extent (farthest
     fix from the first), the native sampling interval, the largest single gap and the
     missing fraction (the two quantities the intra-flight sampling-regularity cut acts
-    on, Sec. 4.1.6 of the thesis), the barometric-presence fraction, the largest
+    on, thesis sec:uniform), the barometric-presence fraction, the largest
     horizontal/vertical speed between consecutive fixes, and the barometric-altitude
     range -- these last four are not yet used by any thesis figure, but are cheap
     byproducts of this same scan and directly support future work: validating the
-    fix-level speed/altitude bounds of Table 4.1 against real data, and (for
-    ``baro_present_frac``) the barometric-presence figure of Sec. 4.1.1, which today
+    fix-level speed/altitude bounds of tab:cleaning against real data, and (for
+    ``baro_present_frac``) the barometric-presence figure of sec:altchannel, which today
     runs its own separate scan.
 
     Args:

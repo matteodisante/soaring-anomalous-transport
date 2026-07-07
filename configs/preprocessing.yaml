@@ -6,7 +6,7 @@
 #  touching. Loaded by `soaring.analysis.preprocessing.load_preproc_config`.
 #
 #  Grouped by the pipeline level at which each acts (see the thesis chapter
-#  "Next steps", Sec. 4.1, and docs/guide/preprocessing-pipeline.md). All speeds in
+#  "The dataset", sec:preproc, and docs/guide/preprocessing-pipeline.md). All speeds in
 #  m/s, distances in km unless the name says otherwise; altitudes are barometric.
 # =============================================================================
 
@@ -20,13 +20,14 @@ fix_level:
   # Per discipline: paragliders and hang gliders have markedly different speed
   # envelopes (thesis fig:fixlevel), so one shared bound is either too loose for the
   # slower type or clips real dynamics of the faster one. Values set from the full
-  # per-fix distribution at a large sample (15000 paragliders, the full 6716-flight
-  # hang-glider population), placed where the bin-to-bin ratio of a fine (2.5 m/s)
+  # per-fix distribution at a large sample (15000 paragliders, the full hang-glider
+  # population), placed where the bin-to-bin ratio of a fine (2.5 m/s)
   # histogram actually settles near 1 -- i.e. where the decay stops, not just slows --
   # since a shallower-but-still-decreasing stretch beyond the steepest part of the
   # curve can still be genuine (rare but real) dynamics; only a genuinely flat tail
   # reads as a GPS/logger artifact with no credible speed explanation (hang gliders:
-  # a distinct plateau from ~45 to ~90 m/s). Add a "sailplanes" key once that source
+  # the decay first slows near ~40 m/s, but the genuinely flat plateau runs ~55 to
+  # ~90 m/s, which is where the bound sits). Add a "sailplanes" key once that source
   # is in.
   max_horizontal_speed_mps:        # v_xy above this between two fixes => GPS position jump
     paragliders: 45.0
@@ -66,7 +67,12 @@ sampling:
 
 # --- Savitzky-Golay smoothing + differentiation (per ENU component) ----------
 # window is set PER FLIGHT from the noise timescale: window = odd(tau_c / dt).
+# The vertical timescale is conditioned on the flight's alt_source (thesis, sec:savgol):
+# the barometric channel is SMOOTHER than the horizontal and takes a shorter window; the
+# GNSS vertical is noisier (vertical dilution of precision) and takes a longer one.
+# Hence two vertical keys, not one.
 savgol:
   polyorder: 3                     # >=2 for a clean 2nd derivative; insensitive within {2,3,4}
   tau_c_horizontal_s: 12.0         # PLACEHOLDER: smoothing timescale for E,N (from PSD knee)
-  tau_c_vertical_s: 20.0           # PLACEHOLDER: smoothing timescale for U (vertical noisier)
+  tau_c_vertical_baro_s: 8.0       # PLACEHOLDER: U on a barometric flight (smoother channel)
+  tau_c_vertical_gnss_s: 20.0      # PLACEHOLDER: U on a GNSS-fallback flight (noisier channel)

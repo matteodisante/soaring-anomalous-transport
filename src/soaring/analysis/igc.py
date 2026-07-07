@@ -110,7 +110,7 @@ def parse_igc(path: str | Path) -> pd.DataFrame:
         (arc-minutes ``< 60``, correct hemisphere letter, within
         ``[-90, 90]``/``[-180, 180]``); this is a format-validity check, not a
         plausibility judgement on the flight dynamics, which fix-level cleaning
-        (Chapter "Next steps") handles separately. A file with no valid fix yields an
+        (thesis, sec:fixlevel) handles separately. A file with no valid fix yields an
         empty table with the same columns.
     """
     sec_of_day: list[int] = []
