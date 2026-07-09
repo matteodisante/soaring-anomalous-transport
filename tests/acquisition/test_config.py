@@ -93,6 +93,14 @@ def test_data_root_expands_env_vars(tmp_path, monkeypatch):
     assert cfg.data_root == Path(os.path.expandvars("$HOME/archives/igc"))
 
 
+def test_data_root_expands_user_home(tmp_path, monkeypatch):
+    # _expand also runs expanduser: exercise the '~' branch, not just $VAR.
+    monkeypatch.setenv(ENV, "~/archives/igc")
+    cfg = load_config(_write(tmp_path, _MINIMAL_YAML), data_root_env=ENV)
+    assert "~" not in str(cfg.data_root)
+    assert cfg.data_root == Path("~/archives/igc").expanduser()
+
+
 def test_missing_file_raises_filenotfound(tmp_path, monkeypatch):
     monkeypatch.delenv(ENV, raising=False)
     with pytest.raises(FileNotFoundError):

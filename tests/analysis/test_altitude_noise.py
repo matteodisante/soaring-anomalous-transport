@@ -55,10 +55,15 @@ def test_required_sample_size_monotone_in_margin():
 
 
 def test_required_sample_size_p_half_is_conservative():
-    # p=0.5 maximises the variance bound, so it returns the largest n over any p.
+    # p=0.5 maximises the variance bound, so it returns the STRICTLY largest n over
+    # any other p. Strict (<, not <=) on purpose: a bug that ignored p and always used
+    # 0.5 would satisfy <= by equality and slip through.
     n_half = required_sample_size(0.02, p=0.5)
     for p in (0.1, 0.3, 0.7, 0.9):
-        assert required_sample_size(0.02, p=p) <= n_half
+        assert required_sample_size(0.02, p=p) < n_half
+    # Anchor the actual p-dependence, not just its ordering: p=0.1 -> p(1-p)=0.09,
+    # n = ceil(z^2 * 0.09 / 0.02^2) = 865.
+    assert required_sample_size(0.02, p=0.1) == 865
 
 
 def test_required_sample_size_grows_with_confidence():
