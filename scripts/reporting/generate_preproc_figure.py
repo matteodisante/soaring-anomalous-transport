@@ -98,8 +98,8 @@ def main() -> int:
     matplotlib.use("Agg")
 
     from soaring.acquisition.ffvl.config import (
-        DEFAULT_CONFIG_PATH,
-        DEFAULT_DELTA_CONFIG_PATH,
+        PARA_CONFIG_PATH,
+        DELTA_CONFIG_PATH,
     )
     from soaring.analysis.altitude_noise import sample_igc_paths
     from soaring.analysis.preprocessing import (
@@ -114,10 +114,10 @@ def main() -> int:
 
     configs = {
         "paragliders": _resolve_config(
-            str(DEFAULT_CONFIG_PATH), "SOARING_PARA_DATA_ROOT"
+            str(PARA_CONFIG_PATH), "SOARING_PARA_DATA_ROOT"
         ),
         "hang gliders": _resolve_config(
-            str(DEFAULT_DELTA_CONFIG_PATH), "SOARING_DELTA_DATA_ROOT"
+            str(DELTA_CONFIG_PATH), "SOARING_DELTA_DATA_ROOT"
         ),
     }
     configs = {d: c for d, c in configs.items() if c is not None}

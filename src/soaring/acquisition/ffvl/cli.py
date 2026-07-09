@@ -41,7 +41,7 @@ import pandas as pd
 
 from . import catalog as catalog_mod
 from .catalog_xml import fetch_season_xml, load_season_records, season_xml_path
-from .config import Config, DEFAULT_DELTA_CONFIG_PATH, load_config
+from .config import Config, DELTA_CONFIG_PATH, PARA_CONFIG_PATH, load_config
 from .download import download_seasons
 from .housekeeping import clean_appledouble
 from .http import Fetcher
@@ -362,7 +362,7 @@ def main(
     argv: list[str] | None = None,
     *,
     prog: str = "soaring-para",
-    default_config: str | None = None,
+    default_config: str = str(PARA_CONFIG_PATH),
     data_root_env: str = "SOARING_PARA_DATA_ROOT",
 ) -> int:
     """Entry point for the ``soaring-para`` (and ``soaring-delta``) CLI.
@@ -371,8 +371,8 @@ def main(
         argv: Arguments (for testing); if ``None`` uses ``sys.argv``.
         prog: Program name shown in ``--help``.
         default_config: Path to the default configuration file; overridden by
-            ``--config`` on the command line. ``None`` falls back to
-            :data:`~.config.DEFAULT_CONFIG_PATH`.
+            ``--config`` on the command line. Defaults to :data:`~.config.PARA_CONFIG_PATH`
+            for the ``soaring-para`` entry point.
         data_root_env: Name of the environment variable that overrides ``data_root``.
 
     Returns:
@@ -402,7 +402,7 @@ def delta_main(argv: list[str] | None = None) -> int:
     return main(
         argv,
         prog="soaring-delta",
-        default_config=str(DEFAULT_DELTA_CONFIG_PATH),
+        default_config=str(DELTA_CONFIG_PATH),
         data_root_env="SOARING_DELTA_DATA_ROOT",
     )
 

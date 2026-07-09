@@ -33,17 +33,17 @@ if _SRC not in sys.path:
 def main() -> int:
     """Copy each reachable SSD ``seasons_index.csv`` into the repo; best-effort."""
     from soaring.acquisition.ffvl.config import (
-        DEFAULT_CONFIG_PATH,
-        DEFAULT_DELTA_CONFIG_PATH,
+        PARA_CONFIG_PATH,
+        DELTA_CONFIG_PATH,
         load_config,
     )
 
     # (discipline, config file, env override, repo sub-directory)
     disciplines = [
-        ("paragliders", DEFAULT_CONFIG_PATH, "SOARING_PARA_DATA_ROOT", "paragliders"),
+        ("paragliders", PARA_CONFIG_PATH, "SOARING_PARA_DATA_ROOT", "paragliders"),
         (
             "hang gliders",
-            DEFAULT_DELTA_CONFIG_PATH,
+            DELTA_CONFIG_PATH,
             "SOARING_DELTA_DATA_ROOT",
             "hang_gliders",
         ),

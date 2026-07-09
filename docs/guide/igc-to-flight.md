@@ -41,13 +41,12 @@ the `local_path` column that links the flight to the physical file on disk.
 
 ```python
 import pandas as pd
-from soaring.acquisition.ffvl.config import load_config
+from soaring.acquisition.ffvl.config import PARA_CONFIG_PATH, DELTA_CONFIG_PATH, load_config
 
-# Paragliders (default config + SOARING_PARA_DATA_ROOT):
-cfg = load_config()
+# Paragliders:
+cfg = load_config(PARA_CONFIG_PATH, data_root_env="SOARING_PARA_DATA_ROOT")
 # Hang gliders:
-# from soaring.acquisition.ffvl.config import DEFAULT_DELTA_CONFIG_PATH
-# cfg = load_config(DEFAULT_DELTA_CONFIG_PATH, data_root_env="SOARING_DELTA_DATA_ROOT")
+# cfg = load_config(DELTA_CONFIG_PATH, data_root_env="SOARING_DELTA_DATA_ROOT")
 
 cat = pd.read_csv(cfg.catalog_path)
 row = cat.loc[cat.flight_id == 20150770].iloc[0]
