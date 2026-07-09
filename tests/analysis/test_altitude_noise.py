@@ -54,16 +54,22 @@ def test_required_sample_size_monotone_in_margin():
     )
 
 
-def test_required_sample_size_p_half_is_conservative():
-    # p=0.5 maximises the variance bound, so it returns the STRICTLY largest n over
-    # any other p. Strict (<, not <=) on purpose: a bug that ignored p and always used
-    # 0.5 would satisfy <= by equality and slip through.
-    n_half = required_sample_size(0.02, p=0.5)
-    for p in (0.1, 0.3, 0.7, 0.9):
-        assert required_sample_size(0.02, p=p) < n_half
-    # Anchor the actual p-dependence, not just its ordering: p=0.1 -> p(1-p)=0.09,
-    # n = ceil(z^2 * 0.09 / 0.02^2) = 865.
-    assert required_sample_size(0.02, p=0.1) == 865
+def test_required_sample_size_p_dependence_is_conservative_and_symmetric():
+    # The p-dependence is the factor p(1-p): maximal at 0.5, symmetric about it. Tested
+    # as invariants rather than a formula-derived magic number, so the test does not
+    # re-derive the code's own arithmetic; absolute scale is pinned independently by the
+    # textbook n=2401 anchor above.
+    def n(p):
+        return required_sample_size(0.02, p=p)
+
+    # Strictly increasing toward 0.5 -> 0.5 is the unique conservative maximum. The
+    # distinctness check catches a bug that ignores p (all sizes would be equal).
+    sizes = [n(p) for p in (0.1, 0.2, 0.3, 0.4, 0.5)]
+    assert sizes == sorted(sizes)
+    assert len(set(sizes)) == len(sizes)
+    # Symmetric under p -> 1-p, since p(1-p) is; catches an asymmetric p-dependence.
+    for p in (0.1, 0.25, 0.4):
+        assert n(p) == n(1.0 - p)
 
 
 def test_required_sample_size_grows_with_confidence():
