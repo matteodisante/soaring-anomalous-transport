@@ -24,6 +24,17 @@ def _write(path: Path, data: bytes) -> Path:
     return path
 
 
+def _cfg(data_root: Path) -> Config:
+    # season_start/season_end/base_url are required but irrelevant here (no
+    # network, verify_season takes the year explicitly): use inert dummies.
+    return Config(
+        data_root=data_root,
+        season_start=2014,
+        season_end=2015,
+        base_url="https://ffvl.invalid",
+    )
+
+
 def test_check_igc_file_accepts_valid(tmp_path):
     assert check_igc_file(_write(tmp_path / "ok.igc", VALID_IGC)) is None
 
@@ -40,7 +51,7 @@ def test_check_igc_file_flags_invalid_structure(tmp_path):
 
 
 def test_verify_season_clean(tmp_path):
-    cfg = Config(data_root=tmp_path)
+    cfg = _cfg(tmp_path)
     season_dir = cfg.igc_dir / "2014-2015"
     _write(season_dir / "a.igc", VALID_IGC)
     _write(season_dir / "b.igc", VALID_IGC)
@@ -53,7 +64,7 @@ def test_verify_season_clean(tmp_path):
 
 
 def test_verify_season_reports_problems_and_failures(tmp_path):
-    cfg = Config(data_root=tmp_path)
+    cfg = _cfg(tmp_path)
     season_dir = cfg.igc_dir / "2014-2015"
     _write(season_dir / "good.igc", VALID_IGC)
     _write(season_dir / "broken.igc", b"<html>nope</html>" * 10)  # integrity failure
@@ -72,6 +83,6 @@ def test_verify_season_reports_problems_and_failures(tmp_path):
 
 
 def test_verify_season_missing_dir_is_empty(tmp_path):
-    cfg = Config(data_root=tmp_path)
+    cfg = _cfg(tmp_path)
     result = verify_season(2099, cfg)
     assert result.n_igc == 0 and result.ok

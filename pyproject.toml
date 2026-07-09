@@ -98,6 +98,12 @@ convention = "google"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
+# Put src/ on sys.path directly, independent of the editable-install .pth.
+# On macOS that .pth can acquire the UF_HIDDEN flag (venv recreation / external
+# tools), and CPython's site module silently skips hidden .pth files -> import
+# soaring breaks. This keeps collection working regardless. Fix a hidden venv
+# for non-pytest use with: chflags -R nohidden .venv
+pythonpath = ["src"]
 
 [tool.mypy]
 python_version = "3.10"
