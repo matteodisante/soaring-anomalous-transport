@@ -135,9 +135,9 @@ is a stuck sensor, and the flight falls back to GNSS (Sec.~\ref{sec:altchannel})
 
 This section gives the working definitions the narrative (Sec.~\ref{sec:fixlevel}) states in
 words: the three detectors, their parameters, the order they run in, and how the whole step
-is validated. The three families of Table~\ref{tab:cleaning} map onto three detectors of
-increasing context: an absolute bound (no context), a robust local test (a short window of
-context), and a structural rule (a whole run).
+is validated. In the order of Table~\ref{tab:cleaning}, the three families map onto a
+robust local test (a short window of context), a structural rule (a whole run), and an
+absolute bound (no context).
 
 \paragraph{Status.} The format-validity rejection is implemented in
 \path{soaring.analysis.igc.parse_igc} and covered by unit tests. The dynamics and structural
@@ -152,20 +152,21 @@ $t_k$:
 \begin{enumerate}[label=(\arabic*), itemsep=1pt, topsep=3pt]
   \item take the fixes lying within $\pm w$ seconds of $t_k$ (a \emph{time} window, so it
         adapts to the native cadence and to irregular sampling), excluding $P_k$ itself;
-  \item fit a robust local estimate of the position there -- the component-wise median of
-        the windowed fixes, or a degree-one Theil--Sen fit -- and evaluate it at $t_k$;
+  \item take the component-wise median of the windowed fixes as the robust local
+        estimate of the position;
   \item the residual $r_k$ is the great-circle distance from $P_k$ to that estimate; scale
         it by the robust local spread $\sigma_k = 1.4826\,\operatorname{MAD}$ of the
         windowed residuals (the factor makes $\sigma_k$ a Gaussian-consistent standard
         deviation~\cite{rousseeuw1993});
   \item flag $P_k$ when $r_k > k\,\sigma_k$ \emph{and} $r_k > \varepsilon_{\min}$.
 \end{enumerate}
-This is a Hampel identifier~\cite{hampel1974}: a median centre, a MAD scale, a threshold in
-robust standard deviations; working defaults in Table~\ref{tab:fixlevel-params}. The
+This is a Hampel identifier~\cite{hampel1974,daviesgather1993}: a median centre, a MAD
+scale, a threshold in robust standard deviations; working defaults in
+Table~\ref{tab:fixlevel-params}. The
 window must hold at least a handful of fixes (order five); a sparser neighbourhood falls
 back to the absolute bounds alone.
 
-Three points earn the test its place over the bare speed bound:
+Three properties distinguish the test from the bare speed bound:
 \begin{itemize}[itemsep=2pt, topsep=3pt]
   \item \emph{The floor $\varepsilon_{\min}$ is not cosmetic.} On a very smooth stretch
         $\sigma_k\to 0$, so without it any sub-metre wiggle would exceed $k\sigma_k$ and
@@ -196,8 +197,8 @@ decoupling of Sec.~\ref{sec:fixlevel}).
 overwritten with the local median -- so that all reconstruction is done by the single
 resampling step (Sec.~\ref{impl:uniform}), under one policy and one accounting, rather than by
 a second, in-place imputation that would then feed the resampler as if it were data. This is
-the \emph{Hampel identifier}~\cite{hampel1974}, the detection half of the eponymous filter, not
-the median-substituting filter itself: the local median/Theil--Sen enters only as the reference
+the \emph{Hampel identifier}~\cite{hampel1974,daviesgather1993}, the detection half of the eponymous filter, not
+the median-substituting filter itself: the local median enters only as the reference
 for the residual $r_k$, never as an output value.
 
 \begin{description}
@@ -226,12 +227,12 @@ rule of Eq.~\eqref{eq:frozenlock} -- spatially collapsed, \emph{and} witnessed (
 flat or byte-identical; the declared flags only where no barometer exists), \emph{and} long
 enough -- and the pass defaults to keeping the data otherwise.
 \begin{itemize}[itemsep=2pt, topsep=3pt]
-  \item \emph{Extent.} The run's bounding diameter -- the maximum great-circle distance
+  \item \emph{Diameter.} The run's bounding diameter -- the maximum great-circle distance
         between \emph{any} two of its fixes, not the fix-to-fix step -- stays below
         $\varepsilon$ (\SI{15}{\metre}, a few times the GPS noise); a
-        circling climb spans its disc,
-        $2R\approx\SIrange{40}{100}{\metre}\gg\varepsilon$, and is cleared on extent
-        alone, whereas a step-based test would fire on every \SI{1}{\hertz} climb (step
+        circling climb spans its disc, $2R\approx\SIrange{30}{100}{\metre}$ (at least
+        twice $\varepsilon$), and is cleared on the diameter alone, whereas a step-based
+        test would fire on every \SI{1}{\hertz} climb (step
         $v_{xy}\Delta t\approx\SI{10}{\metre}\sim\varepsilon$).
   \item \emph{Independent witness.} Over the run the barometric altitude must also be
         flat ($|\Delta z_{\mathrm{baro}}|$ below a few metres), since a real thermalling
@@ -247,20 +248,21 @@ enough -- and the pass defaults to keeping the data otherwise.
         is cut, the positions being invented even where the height gain is real. The
         \texttt{V} flag and the zeroed GNSS altitude do \emph{not} override a live
         barometer: they certify a degraded GNSS \emph{altitude}, not a frozen horizontal
-        fix (a \texttt{V} fix may still carry a usable position,
+        fix (a \texttt{V} fix may still carry a usable horizontal position,
         Sec.~\ref{sec:igcformat}), so on a barometric flight they are recorded as
         corroborating diagnostics only, and become decisive only on a GNSS-fallback
         flight, where Eq.~\eqref{eq:frozenlock} substitutes them for the missing
         barometric witness.
-  \item \emph{Duration.} The run must span at least $\tau_{\mathrm{freeze}}$, set to a few
-        thermalling periods (\SI{60}{\second}), so that a long, slow,
+  \item \emph{Duration.} The run must span at least $\tau_{\mathrm{freeze}}$, set to
+        about two thermalling periods (\SI{60}{\second}), so that a long, slow,
         tight climb is never mistaken for a freeze.
 \end{itemize}
 Only then is the run marked as a data gap; the split it induces is
 realized at the uniform-sampling stage (Sec.~\ref{impl:uniform}), on the same footing as a
 native long gap. On a GNSS-fallback flight the barometric witness is unavailable, so there the
-extent and flag tests must both hold outright and, in any doubt, the run is kept -- the safe
-direction, since keeping a rare true freeze costs far less than splitting a real climb.
+diameter and flag tests must both hold outright and, in any doubt, the run is kept -- the safe
+direction: a kept freeze can still be flagged and checked downstream, a split climb cannot
+be restored.
 
 \paragraph{Duplicate and backward timestamps (on-the-trend).} The parser already rebuilds a
 monotone clock: it unwraps the UTC-midnight roll-over (a drop of $\sim$\SI{86400}{\second}
@@ -332,7 +334,7 @@ The order matters because a speed or a residual is only meaningful once the time
 monotone and free of duplicates. The position-outlier and frozen-lock passes are one
 left-to-right scan that carries the last accepted fix as an anchor: it never re-walks the
 whole track, and it absorbs a run by extending the anchor across the flagged block --
-tracking the block's running bounding box to test its extent against $\varepsilon$ -- so
+tracking the block's running bounding box to test its bounding diameter against $\varepsilon$ -- so
 the cost is $O(N)$ in the number of fixes.
 
 \paragraph{Flight-level integrity gate.} The pass records how much it changed each flight (or
@@ -367,8 +369,8 @@ $\varepsilon_{\min}$ & $\approx\SI{15}{\metre}$ & absolute residual floor; a few
 \addlinespace[6pt]
 \multicolumn{3}{@{}l}{\itshape Frozen-lock rule (Eq.~\ref{eq:frozenlock})}\\
 \addlinespace[2pt]
-$\varepsilon$ & \SI{15}{\metre} & run-extent tolerance; a few times the GPS noise,
-  $\ll 2R\approx\SIrange{40}{100}{\metre}$ of a circling climb \\
+$\varepsilon$ & \SI{15}{\metre} & run-diameter tolerance; a few times the GPS noise,
+  below the $2R\approx\SIrange{30}{100}{\metre}$ of a circling climb \\
 $\delta_z$ & $\approx\SI{5}{\metre}$ & barometric-flatness witness; a few times the
   sensor noise and quantisation, $\ll$ the $\gtrsim\SI{60}{\metre}$ a real climb gains
   over $\tau_{\mathrm{freeze}}$ \\
@@ -543,7 +545,9 @@ full-census scan as Figure~\ref{fig:preproc} (Table~\ref{tab:impl-repro}, row
 \StatScanParaGapIntPct\,\%/\StatScanHangGapIntPct\,\% (para/hang) of largest-gap-ratio
 values are exact integers, the rest a
 genuinely continuous scatter; the integer peaks visible for hang gliders sit around
-$k=3,6,10,15$.
+$k=3,6,10,15$. Panels (a)/(b) of the figure therefore use linear axes: a logarithmic
+axis would compress precisely this small-integer structure, on which the adopted cut
+sits.
 
 \paragraph{Native-rate discreteness (Figure~\ref{fig:sampling}).} Checked directly:
 $\Delta t$ lands on an exact whole second for \StatScanParaDtIntPct\,\% of paragliders

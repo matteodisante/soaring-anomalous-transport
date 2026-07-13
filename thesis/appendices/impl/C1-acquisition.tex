@@ -23,9 +23,9 @@ external disk, which has no journaling.
 file (an \texttt{A} header record followed by at least one \texttt{B} fix record); HTML
 error pages and truncated responses are rejected and retried.
 
-\paragraph{Courteous networking.} A small bounded thread pool, per-request timeouts,
-exponential backoff, and a minimum delay between requests avoid hammering the server; a
-browser TLS fingerprint is impersonated to pass the site's Cloudflare challenge.
+\paragraph{Rate-limited networking.} A small bounded thread pool, per-request timeouts,
+exponential backoff, and a minimum delay between requests keep the load on the server
+low; a browser TLS fingerprint is impersonated to pass the site's Cloudflare challenge.
 
 \subsection{Reproducibility}
 \label{impl:acqrepro}
