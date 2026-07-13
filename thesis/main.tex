@@ -9,7 +9,7 @@
 %
 %  Build:  make thesis   (or: latexmk -pdf main.tex)
 % =============================================================================
-\documentclass[11pt,a4paper]{report}
+\documentclass[11pt,a4paper,twoside]{report}
 
 % ---- Reproducible output: identical bytes when the content is unchanged, so the
 % ---- committed PDF only changes when the document actually changes (clean diffs).
@@ -18,6 +18,8 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+% Latin Modern (Computer Modern) text + math -- the classic LaTeX face, matching the
+% reference document's typography.
 \usepackage{lmodern}
 \usepackage[english]{babel}
 \usepackage{amsmath}
@@ -34,18 +36,47 @@
 % caption short enough to need no wrapping); singlelinecheck=false disables it, since
 % it is what overflows, not anything about the wrapped result.
 \usepackage[singlelinecheck=false]{caption}
+% Thesis caption style: small caption body so the long, data-justified captions recede, with
+% a bold period-separated label ("Figure 2.2.").
+\captionsetup{font=small, labelfont=bf, labelsep=period}
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{siunitx}
 \usepackage{xcolor}
 \usepackage{csquotes}
-\usepackage[hidelinks]{hyperref}
+\usepackage{hyperref}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta, calc, angles, quotes}
 % Local, per-part "Contents" listing (titletoc): used once, for the implementation-details
 % part at the back of the document, so that block reads as a self-contained "document within
 % the document" with its own index rather than just another appendix.
 \usepackage{titletoc}
+
+% ---- Running headers (book style, two-sided). On an even (left) page the chapter
+% ---- title sits flush against the outer (left) edge; on an odd (right) page the
+% ---- current section title sits flush against the outer (right) edge; a rule runs
+% ---- under both, and the page number is in the outer footer. The class is `twoside`
+% ---- so the two sides can differ; `report` is `openany`, so no blank pages are added.
+\usepackage{fancyhdr}
+\setlength{\headheight}{14pt}   % room for the header + rule (silences fancyhdr's warning)
+\makeatletter
+% "Chapter N. Title" on verso, "Appendix A. Title" in the back matter (\@chapapp tracks
+% the \appendix switch); mixed case, not the class default's all-caps running head.
+\renewcommand{\chaptermark}[1]{\markboth{\@chapapp\ \thechapter.\ #1}{}}
+\makeatother
+\renewcommand{\sectionmark}[1]{\markright{\thesection.\ #1}}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE]{\itshape\nouppercase{\leftmark}}   % even (left) page: chapter, outer/left
+\fancyhead[RO]{\itshape\nouppercase{\rightmark}}  % odd (right) page: section, outer/right
+\fancyfoot[LE,RO]{\thepage}                         % page number on the outer edge
+\renewcommand{\headrulewidth}{0.4pt}
+% Chapter-opening pages (class style `plain`): no running head, page number only.
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \fancyfoot[LE,RO]{\thepage}%
+  \renewcommand{\headrulewidth}{0pt}%
+}
 
 \sisetup{group-separator={,}, group-minimum-digits=4}
 
@@ -63,6 +94,21 @@
 \definecolor{figblue}{HTML}{3477A8}
 \definecolor{figred}{HTML}{B5482A}
 \definecolor{figgreen}{HTML}{4E8A5B}
+
+% Subtle, navigable hyperlinks in the figure palette (dark blue for internal refs and URLs,
+% dark green for citations), plus PDF metadata and numbered bookmarks. Set after the colours
+% are defined.
+\hypersetup{
+  colorlinks=true,
+  linkcolor=figblue,
+  citecolor=figgreen,
+  urlcolor=figblue,
+  linktoc=all,
+  bookmarksnumbered=true,
+  pdftitle={Anomalous Transport in Soaring Flights},
+  pdfauthor={Matteo Di Sante},
+  pdfsubject={MSc thesis --- Physics of Complex Systems},
+}
 
 % Cross-reference from body prose to the implementation-details appendix (App. C): used
 % at the point where an implementation/reproducibility fact was trimmed out of the body,
@@ -114,6 +160,10 @@
 Sources and code: \url{https://github.com/matteodisante/soaring-anomalous-transport}\par}
 \end{titlepage}
 
+% Front matter (abstract, contents) in roman numerals; the body switches to arabic,
+% restarting at 1, just before the first chapter.
+\pagenumbering{roman}
+
 % ----------------------------- Abstract --------------------------------------
 \begin{abstract}
 \noindent
@@ -137,6 +187,9 @@ analysis and modelling.
 \end{abstract}
 
 \tableofcontents
+
+\clearpage
+\pagenumbering{arabic}
 
 \input{sections/01-introduction}
 \input{sections/03-dataset}
