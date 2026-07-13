@@ -999,11 +999,9 @@ phase splitting.
         agreement or disagreement with the ensemble MSD is an ergodicity test; the
         one-dimensional marginal propagator and its scaling collapse; the return
         probability and the non-Gaussian parameter; the velocity autocorrelation and
-        turning-angle distribution; first-passage/first-exit times; the
-        speed/vertical-velocity distributions; and geometric measures (tortuosity,
-        fractal dimension, radius of gyration), read both as one number per flight and as
-        functions of scale. Goal: a first physical/statistical picture, independent of
-        any phase splitting.
+        turning-angle distribution; first-passage/first-exit times; and the
+        speed/vertical-velocity distributions. Goal: a first physical/statistical picture,
+        independent of any phase splitting.
   \item \textbf{Segmentation (Sec.~3.2).} Study J\'er\'emie's internship report and code,
         then re-examine the transition/search/climb HMM (binary features: sign of
         vertical speed, curvature-angle persistence, straightness) --- decide whether to
@@ -1022,18 +1020,11 @@ phase splitting.
         conditional MSD (their Fig.~3) and per-phase descriptive statistics (their
         Fig.~4), plus the global $H\approx0.88$ --- validation and universality test (the
         sailplane comparison becomes reachable once that source is in hand).
-  \item \textbf{Transport analysis (Sec.~3.5).} Estimate the MSD scaling exponent, fit
-        the tails of the waiting-time and step-length distributions with principled
-        methods (e.g.\ maximum-likelihood power-law fits with goodness-of-fit tests), and
-        perform CTRW-vs-L\'evy-walk model selection using the step--waiting coupling.
-        Results will be stratified (season, site, glider class, data source) and
-        trajectories normalized, with finite-size, censoring and sampling biases
-        controlled throughout.
-  \item \textbf{Minimal model (Sec.~3.6).} A minimal stochastic model for
+  \item \textbf{Minimal model (Sec.~3.5).} A minimal stochastic model for
         $H\approx0.88$: resolve transition segments, merge search+climb into one
         effective state, with angular diffusion between successive transition
         directions (preliminary idea, to be refined/changed).
-  \item \textbf{Tooling (Sec.~3.7).} Largely underway already: the analysis package
+  \item \textbf{Tooling (Sec.~3.6).} Largely underway already: the analysis package
         mirrors acquisition, and the dataset statistics plus several diagnostic figures
         (pre-processing, altitude noise) already regenerate automatically from the data
         rather than being pasted in by hand. Remaining: extend the same treatment to

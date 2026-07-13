@@ -9,7 +9,6 @@ the analysis proceeds as follows.
 A first group of observables requires \emph{no} segmentation: it can be measured directly on
 the full trajectories and already probes the transport at the global level.
 
-\paragraph{Transport and diffusion.}
 \begin{description}
   \item[Mean-squared displacement (MSD).] With every flight starting at the origin
         ($\mathbf{r}(0)=\mathbf{0}$), the \emph{ensemble-averaged} MSD is the mean squared
@@ -166,43 +165,6 @@ the full trajectories and already probes the transport at the global level.
         separates climbing from sinking and feeds the segmentation below.
 \end{description}
 
-\paragraph{Trajectory geometry.}
-\begin{description}
-  \item[Tortuosity.] How much a path winds, quantified by the ratio between the length actually
-        travelled and the straight-line distance between its endpoints over the same interval
-        ($1$ for a straight line, larger for a more convoluted path). It is a geometric
-        \emph{efficiency} descriptor and does not map one-to-one onto a transport exponent --
-        very different dynamics can share a tortuosity -- so we use it descriptively and to
-        separate phases (close to $1$ in glides, large in search and climb) rather than as an
-        estimator of $H$.
-  \item[Fractal dimension.] The box-counting dimension $d_f$ of the trail, i.e.\ the exponent
-        with which the number of boxes of size $\epsilon$ needed to cover the path grows as
-        $\epsilon\!\to\!0$. For a self-similar walk it is tied to the transport exponent by
-        \begin{equation}
-          d_f=\min\!\big(1/H,\,2\big),
-        \end{equation}
-        so a ballistic line ($H=1$) gives $d_f=1$, a Brownian path ($H=1/2$) gives $d_f=2$,
-        and the reported sub-ballistic soaring ($H\approx0.88$) gives $d_f\approx1.14$. The
-        fractal dimension is thus the geometric counterpart of $H$ and a third, independent
-        route to it, after the MSD slope and the return/first-passage scalings; agreement
-        among the three is a strong internal check, disagreement is evidence of multi-scaling.
-  \item[Radius of gyration.] The root-mean-square distance of the trajectory points from their
-        centroid, i.e.\ the characteristic spatial extent of a flight. As a single number it
-        sets the natural length scale of a flight (useful to normalise other observables);
-        measured as it grows with elapsed time, $R_g(t)\sim t^{H}$, it provides a further
-        estimate of the same exponent.
-\end{description}
-
-\paragraph{Per-flight scalars and scale dependence.}
-The geometric quantities above can be read in two complementary ways: as a single number
-per flight (one tortuosity, one $d_f$, one $R_g$), whose distribution over the ensemble
-characterises the population and feeds the stratified comparisons; or as a function of
-scale or elapsed time ($R_g(t)$ as the trajectory unfolds, tortuosity on sub-segments of
-growing duration, the box count as a function of box size), which is where the transport
-exponents appear ($R_g(t)\sim t^H$; the box-count slope is $d_f$). The scalar is
-descriptive; the scale dependence links the geometry to the anomalous exponent. Both views
-will be used.
-
 \section{Segmentation into flight phases}
 \label{sec:segmentation}
 Building on the previous work of Vilpellet et al.~\cite{vilpellet2026}, each flight is
@@ -322,17 +284,6 @@ would test the universality of the reported behaviour on a substantially larger 
 systematic departures would be equally informative, pointing to dataset- or method-dependent
 effects to investigate. This comparison is therefore the bridge between the present
 data-acquisition stage and the original analysis that follows.
-
-\section{Transport analysis}
-\label{sec:transport}
-Using these observables, test for anomalous transport: estimate the MSD scaling exponent
-$\alpha$, fit the tails of $\psi(\tau)$ and $\lambda(\ell)$ with principled methods (e.g.\
-maximum-likelihood power-law fits with goodness-of-fit tests~\cite{clauset2009}), and perform model selection
-between the continuous-time random walk and the L\'evy-walk
-frameworks~\cite{metzler2000,zaburdaev2015} -- using the step/waiting-time coupling to tell
-them apart. Because logging devices, sites, gliders and weather differ, results will be
-stratified (by season, site, glider class, and data source) and trajectories normalized,
-and finite-size, censoring and sampling biases will be controlled throughout.
 
 \section{Modelling and simulation}
 \label{sec:modelling}
