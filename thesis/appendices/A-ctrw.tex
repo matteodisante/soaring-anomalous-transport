@@ -54,7 +54,7 @@ For a trajectory of duration $T$, the time-averaged MSD at lag $t\ll T$ is
 \end{equation}
 Since $\langle[x(t_0+t)-x(t_0)]^2\rangle=\sigma^2\langle n(t_0+t)-n(t_0)\rangle$, the
 mean of the integrand equals $\sigma^2$ times the mean number of steps in any window of
-width $t$. The key observation is that the integral
+width $t$. The integral
 $\int_0^{T-t}[n(t_0+t)-n(t_0)]\,\mathrm{d}t_0$ counts, for each step $k$ that lands at
 time $T_k\in[0,T]$, the length of the $t$-wide sliding window that contains $T_k$. For
 $T_k$ deep in the interior ($t\le T_k\le T-t$) this length is exactly $t$; the contributions
@@ -78,14 +78,14 @@ T^\alpha/\sigma^2$,
 \end{equation}
 Comparing \eqref{eq:ctrw-enmsd} and \eqref{eq:ctrw-tamsd}:
 \begin{itemize}
-  \item The EA-MSD scales as $t^\alpha$ (sub-diffusive), whereas the TAMSD scales as $t^1$
+  \item The EA-MSD scales as $t^\alpha$ (sub-diffusive), whereas the TA-MSD scales as $t^1$
         (linear in the lag) -- a qualitatively different dependence on $t$.
-  \item The TAMSD carries an explicit $T^{\alpha-1}$ prefactor: since $\alpha<1$ this is a
-        decreasing function of $T$, so longer flights yield smaller TAMSD at the same lag.
-        This $T$-dependence is the signature of \emph{aging}: the process has not forgotten
-        its past, and the answer depends on how long we have observed it.
+  \item The TA-MSD carries an explicit $T^{\alpha-1}$ prefactor: since $\alpha<1$ this is a
+        decreasing function of $T$, so longer trajectories yield a smaller TA-MSD at the
+        same lag. This $T$-dependence is the signature of \emph{aging}: the increment
+        statistics depend on how long the process has already been observed.
   \item The ratio $\mathrm{TAMSD}(t,T)/\mathrm{MSD}(t)\sim(t/T)^{1-\alpha}\to 0$ as
-        $T\to\infty$ at fixed $t$ -- the two observables diverge.
+        $T\to\infty$ at fixed $t$.
 \end{itemize}
 
 \section*{Distribution of the TA-MSD: non-self-averaging}
@@ -97,28 +97,29 @@ steps in $[0,T]$. For a power-law renewal process the rescaled count
   \xi\equiv\frac{n(T)}{\langle n(T)\rangle}
 \end{equation}
 converges in distribution as $T\to\infty$ to a non-degenerate limit law: the
-\emph{Mittag-Leffler distribution} $M_\alpha$, whose probability density function is
-defined through its moments
+\emph{Mittag-Leffler distribution} $M_\alpha$, whose moments are
 $\langle\xi^n\rangle=n!\,\Gamma(1+\alpha)^n/\Gamma(1+n\alpha)$~\cite{he2008}.
 This is a broad, non-Gaussian distribution on $(0,\infty)$ that does \emph{not} concentrate
 around $\xi=1$ for $\alpha<1$: different trajectories give systematically different values
-of $\overline{\delta^2}(t;T)$ even in the limit $T\to\infty$. This is
-\emph{non-self-averaging}: the TA-MSD of a single trajectory is not a reliable estimate of
-any ensemble quantity, regardless of how long the trajectory is.
+of $\overline{\delta^2}(t;T)$ even in the limit $T\to\infty$. Hence the TA-MSD is
+\emph{non-self-averaging}: the value from a single trajectory is not a reliable estimate
+of any ensemble quantity, however long the trajectory.
 
 Quantitatively, the ergodicity-breaking parameter
 \begin{equation}
   \mathrm{EB}(t,T)\equiv
   \frac{\langle[\overline{\delta^2}(t;T)]^2\rangle-\langle\overline{\delta^2}(t;T)\rangle^2}
        {\langle\overline{\delta^2}(t;T)\rangle^2}
-  =\mathrm{Var}(\xi)\sim c_\alpha\, T^{-\alpha}\to 0
+  =\mathrm{Var}(\xi)\;\xrightarrow{\;T\to\infty\;}\;
+  \frac{2\,\Gamma(1+\alpha)^2}{\Gamma(1+2\alpha)}-1\;>\;0
 \end{equation}
-does tend to zero (the variance of $\xi$ decreases with $T$), but the \emph{distribution}
-of $\xi$ converges to a non-trivial limit rather than to a delta function. This is why
-monitoring the full distribution of $\overline{\delta^2}^{(k)}(t)$ across trajectories --
-not just its mean -- is the proper diagnostic for non-ergodicity: the collapse (or
-non-collapse) of that distribution as $T$ grows tells us whether we are dealing with a
-self-averaging ergodic process or a non-self-averaging non-ergodic one.
+tends to a finite positive constant rather than to zero~\cite{he2008}: the scatter of
+$\overline{\delta^2}$ across trajectories survives even in the limit of infinite
+observation time (for $\alpha=1$ the constant is $0$ and ergodicity is recovered).
+Monitoring the full distribution of $\overline{\delta^2}^{(k)}(t)$ across trajectories,
+and not only its mean, therefore diagnoses non-ergodicity directly: the distribution
+collapses with growing $T$ for a self-averaging ergodic process and converges to a
+non-trivial limit for a non-ergodic one.
 
 For comparison, in an ordinary random walk ($\alpha=1$, finite mean waiting time) the ratio
 $n(T)/\langle n(T)\rangle$ tends to $1$ in probability as $T\to\infty$, so the distribution

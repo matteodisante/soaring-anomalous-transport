@@ -7,8 +7,7 @@ the analysis proceeds as follows.
 \section{Observables on the whole trajectory}
 \label{sec:obs-global}
 A first group of observables requires \emph{no} segmentation: it can be measured directly on
-the full trajectories and already probes the transport at the global level. For each, we
-state what it is, how it is computed, and what it is for.
+the full trajectories and already probes the transport at the global level.
 
 \paragraph{Transport and diffusion.}
 \begin{description}
@@ -138,8 +137,8 @@ state what it is, how it is computed, and what it is for.
         replacing it.
   \item[Velocity autocorrelation $C(\tau)$.]
         $C(\tau)=\langle\mathbf{v}(t_0)\cdot\mathbf{v}(t_0+\tau)\rangle$ (often normalised by
-        $C(0)$) is the dot product of the velocity with its later self: it is large and
-        positive when, a delay $\tau$ later, the motion still points the same way, so the
+        $C(0)$) correlates the velocity at a time $t_0$ with the velocity a delay $\tau$
+        later: it is large and positive when the motion still points the same way, so the
         scale over which $C(\tau)$ decays sets the memory time of the heading. It controls
         the MSD through the Green--Kubo relation (for a stationary velocity)
         $\mathrm{MSD}(t)=2\!\int_0^{t}\!(t-\tau)\,C(\tau)\,\mathrm{d}\tau$: a slowly decaying
@@ -167,7 +166,7 @@ state what it is, how it is computed, and what it is for.
         separates climbing from sinking and feeds the segmentation below.
 \end{description}
 
-\paragraph{\textcolor{red}{Trajectory geometry.}}
+\paragraph{Trajectory geometry.}
 \begin{description}
   \item[Tortuosity.] How much a path winds, quantified by the ratio between the length actually
         travelled and the straight-line distance between its endpoints over the same interval
@@ -233,7 +232,7 @@ walks and L\'evy walks.
 
 \section{Phase-resolved observables}
 \label{sec:phaseobs}
-The segmentation unlocks a second group of observables, defined per phase occurrence and
+The segmentation gives access to a second group of observables, defined per phase occurrence and
 then as ensemble distributions. These are the building blocks of an intermittent-transport
 description and, unlike those of Section~\ref{sec:obs-global}, cannot be obtained without
 first segmenting the flight.

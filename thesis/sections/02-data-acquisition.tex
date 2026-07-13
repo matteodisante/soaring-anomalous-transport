@@ -10,13 +10,14 @@ competition run by the French free-flight federation (FFVL). The federation oper
 parallel competitions on separate sites: one for paragliders
 (\texttt{parapente.ffvl.fr}) and one for hang gliders (\texttt{delta.ffvl.fr}). Pilots
 upload their flights; each entry carries metadata (pilot, date, take-off and landing sites,
-scored distance, duration, glider) and, in most cases, the raw GPS tracklog in IGC format.
+scored distance, duration, glider) and, in most cases, the raw GPS tracklog in IGC format
+(the standard flight-recorder format, Sec.~\ref{sec:igcformat}).
 Both sites expose identical URL structure and machine-readable XML exports, so the same
 acquisition pipeline handles both. A ``season'' is identified by its starting year,
 e.g.\ the year~1999 denotes the 1999--2000 season; the paraglider archive starts in
 1999--2000 and the hang-glider archive in 2001--2002.
 
-\subsection{What is collected}
+\subsection{Collected data}
 
 For every season the pipeline retrieves two things:
 \begin{itemize}
@@ -37,15 +38,15 @@ Acquisition is performed by a dedicated, installable Python package, exposed thr
 command-line tools, one per discipline, sharing the same subcommands for fetching,
 downloading, cataloguing, and verifying. The design favours robustness for a
 long-running, large job: downloads are resumable and safe to interrupt, a response is
-accepted only once validated as real IGC content, and the client is courteous to the
-server it downloads from \impldetails{impl:acqpipeline}.
+accepted only once validated as real IGC content, and download requests are rate-limited
+so as not to load the server \impldetails{impl:acqpipeline}.
 
 \subsection{Reproducibility}
 
 The destination directory is not hard-coded: it is set per machine through an environment
-variable or a configuration file shipping a placeholder, so no machine-specific path is
-committed. Every command validates this setting at start-up and aborts with an explicit
-message if the target is missing, rather than failing obscurely. Archiving the season
+variable or a configuration file, of which the repository ships only a placeholder, so no
+machine-specific path is committed. Every command validates this setting at start-up and
+aborts with an explicit message if the target is missing. Archiving the season
 XMLs verbatim keeps the full provenance: the catalog can always be rebuilt from them
 \impldetails{impl:acqrepro}.
 
@@ -65,10 +66,10 @@ be final. The paraglider data (\num{\StatParaTotalFlights} flights,
 parallel and enable the cross-type comparison of Sec.~\ref{sec:glider}. Additional
 public soaring repositories are
 being pursued to enlarge and diversify the sample and, above all, to add the third glider
-category, \emph{sailplanes} (Section~\ref{sec:glider}). The most complete sailplane source is
-\emph{WeGlide}: it exposes flight metadata and IGC tracks through an API, but the default
-access is rate-limited (of order sixty requests per day), so a bulk export of the archive is
-not feasible under it; a request for research access with a higher quota has been sent and is
-pending. Paraglider and hang-glider coverage may likewise be broadened through further
-portals such as XContest. These sources expose comparable flight metadata and IGC tracks and
-can be acquired with the same approach and merged into the same catalog.
+category, \emph{sailplanes} (Sec.~\ref{sec:glider}). The most complete sailplane source
+is \emph{WeGlide}, which exposes flight metadata and IGC tracks through an API. The
+default access is rate-limited (of order sixty requests per day), which rules out a bulk
+export of the archive; a request for research access with a higher quota has been sent
+and is pending. Paraglider and hang-glider coverage may likewise be broadened through
+further portals such as XContest; all of these can be acquired with the same approach and
+merged into the same catalog.

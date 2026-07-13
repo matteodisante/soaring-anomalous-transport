@@ -3,11 +3,12 @@
 
 This appendix explains the tool used in Chapter~\ref{ch:dataset} to compare the two
 altitude channels of an IGC file, namely the \emph{power spectral density} (PSD) estimated
-with \emph{Welch's method}~\cite{welch1967}. It is written so the reader need not already know what these are.
+with \emph{Welch's method}~\cite{welch1967}. No prior familiarity with spectral
+estimation is assumed.
 
-\section*{What the power spectral density is}
+\section*{The power spectral density}
 
-Take a signal sampled at a fixed rate, here an altitude series $z_n=z(n\,\Delta t)$,
+Consider a signal sampled at a fixed rate, here an altitude series $z_n=z(n\,\Delta t)$,
 $n=0,\dots,N-1$, with sampling interval $\Delta t$ (so the sampling frequency is
 $f_s=1/\Delta t$). Any such finite signal can be written as a sum of sinusoids of different
 frequencies (its discrete Fourier transform). The \textbf{power spectral density} describes how the power (the variance) of the signal
@@ -20,23 +21,23 @@ signal,
 \end{equation}
 with units of (metres)$^2$ per hertz. The upper limit $f_s/2$ is the \emph{Nyquist
 frequency}: a series sampled every $\Delta t$ cannot resolve anything faster than one
-oscillation per two samples. A PSD thus shows where in frequency the signal's power lies, which is what separates a
-slowly drifting but locally clean channel (power concentrated at low $f$) from a channel
-with a high-frequency noise floor (power that stays large up to the Nyquist frequency).
+oscillation per two samples. This separates a slowly drifting but locally clean channel
+(power concentrated at low $f$) from one with a high-frequency noise floor (power that
+stays large up to the Nyquist frequency).
 
-\section*{The periodogram and why it is noisy}
+\section*{The periodogram}
 
 The naive estimator of $S(f)$ is the \textbf{periodogram}: take the discrete Fourier
 transform $\hat z(f)=\sum_n z_n\,e^{-2\pi i f n\Delta t}$ and form $|\hat z(f)|^2$
-(suitably normalised). It is asymptotically unbiased but \emph{not consistent}: its variance does not
-shrink as the record gets longer: a longer signal gives more frequency points, each still
-as noisy as before. Plotted directly it is a spiky, unreadable curve, from which one cannot
-reliably compare two channels.
+(suitably normalised). It is asymptotically unbiased but \emph{not consistent}: its
+variance does not shrink as the record gets longer, because a longer signal gives more
+frequency points, each as noisy as before. Plotted directly it is a spiky curve, too
+noisy for a reliable comparison of two channels.
 
-\section*{Welch's method: segment, window, average}
+\section*{Welch's method}
 
-Welch's method turns the noisy periodogram into a usable estimate by \emph{averaging}. The
-recipe is:
+Welch's method turns the noisy periodogram into a usable estimate by \emph{averaging}. It
+proceeds in three steps:
 \begin{enumerate}[label=(\roman*)]
   \item \textbf{Segment.} Split the record into several shorter, overlapping segments.
   \item \textbf{Window.} Multiply each segment by a smooth taper (a Hann window) that falls
@@ -52,6 +53,5 @@ typically detrended before transforming (e.g.\ by removing a linear fit), so tha
 estimate reflects the fluctuations about the trend, where the sensor noise lives, rather
 than the trend itself \impldetails{impl:altchannel}.
 
-How these spectra read for the two altitude channels, and what the comparison implies for
-the choice of channel, is discussed where that choice is made
-(Sec.~\ref{sec:altchannel}); this appendix covers only the method.
+The spectra of the two altitude channels, and the choice of channel they motivate, are
+discussed in Sec.~\ref{sec:altchannel}; this appendix covers only the method.

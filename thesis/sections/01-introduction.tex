@@ -17,9 +17,10 @@ Intermittent and directionally persistent motion of this kind is the setting in 
 \emph{anomalous transport} arises. Let $\mathbf{r}(t)$ denote the horizontal position of a flight, measured from take-off.
 Transport is anomalous when the mean-squared displacement grows as a non-trivial power of
 time, $\langle |\mathbf{r}(t)|^2\rangle \sim t^{\alpha}$ with $\alpha \neq 1$, as opposed to
-the linear growth ($\alpha = 1$) of ordinary Brownian diffusion. Continuous-time random walks and
-L\'evy walks are the standard frameworks for such regimes~\cite{metzler2000,zaburdaev2015},
-which have been reported in animal movement, in disordered media, and in turbulent flows.
+the linear growth ($\alpha = 1$) of ordinary Brownian diffusion. Continuous-time random
+walks and L\'evy walks are the standard frameworks for such
+regimes~\cite{metzler2000,zaburdaev2015}; anomalous transport has been reported in animal
+movement, in disordered media, and in turbulent flows.
 Whether the trajectories of real soaring flights belong to an anomalous regime, and of which
 type, is the question addressed in this thesis.
 
@@ -27,11 +28,13 @@ Soaring has previously been studied mainly as a control problem---how to centre 
 a thermal efficiently, including by reinforcement learning~\cite{reddy2016}. The present
 work is statistical instead: it asks which transport properties emerge at the level of the
 ensemble of observed trajectories. Its direct precedent is the study of Vilpellet et
-al.~\cite{vilpellet2026}, who analysed a large set of human soaring flights, found a
+al.~\cite{vilpellet2026}, who analysed a large set of human soaring flights and found a
 horizontal transport that is sub-ballistic and approximately independent of aircraft type
-(Hurst exponent $H \approx 0.88$), and introduced a phase-resolved analysis based on the
-transition--search--climb cycle. This thesis builds on that study: it enlarges the dataset
-and re-examines both the phase segmentation and the transport analysis.
+(Hurst exponent $H \approx 0.88$, i.e.\ $\langle|\mathbf{r}(t)|^2\rangle\sim t^{2H}$,
+between diffusive $H=1/2$ and ballistic $H=1$). That study also introduced a
+phase-resolved analysis based on the transition--search--climb cycle. This thesis builds
+on it: it enlarges the dataset and re-examines both the phase segmentation and the
+transport analysis.
 
 \section{Objectives}
 
@@ -43,8 +46,9 @@ The thesis pursues three objectives:
   \item to test for anomalous transport and to compare the empirical statistics with
         stochastic transport models.
 \end{enumerate}
-A first dataset---the FFVL CFD archive of paraglider and hang-glider flights---has been
-assembled and verified and is described here; data collection is ongoing and may
+A first dataset---the archive of the \emph{Coupe F\'ed\'erale de Distance} (CFD) of the
+French free-flight federation (FFVL), covering paraglider and hang-glider flights---has
+been assembled and verified and is described here; data collection is ongoing and may
 incorporate further sources, notably sailplanes (Sec.~\ref{sec:acquisition}). The second
 and third objectives define the work ahead (Chapter~\ref{ch:next-steps}).
 
@@ -56,9 +60,11 @@ the dataset, so it remains consistent with the data in hand. Chapter~\ref{ch:dat
 follows the data end to end: the acquisition and the reproducibility of its pipeline
 (Sec.~\ref{sec:acquisition}), the dataset and its statistics, and the pre-processing that
 turns the raw logs into analysis-ready trajectories. Chapter~\ref{ch:next-steps} sets out
-the planned transport analysis and modelling. Throughout, the discussion keeps to the
-scientific and statistical reasoning behind each choice. Implementation-level detail (code
-modules, configuration values, sample sizes, computation times, reproduction commands) is
-collected separately in \nameref{app:implementation}, from
-p.~\pageref{app:implementation}, organised chapter by chapter to mirror the body and
-referenced at the relevant point as ``implementation details: Sec.~X''.
+the planned transport analysis and modelling.
+
+Throughout, the discussion keeps to the scientific and statistical reasoning behind each
+choice. Implementation-level detail (code modules, configuration values, sample sizes,
+computation times, reproduction commands) is collected in \nameref{app:implementation},
+from p.~\pageref{app:implementation}. The appendix is organised chapter by chapter to
+mirror the body; each body section points to its entry as ``implementation details:
+Sec.~X''.
