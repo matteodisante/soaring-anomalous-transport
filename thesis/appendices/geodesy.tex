@@ -1,0 +1,149 @@
+% Added in the July 2026 review pass (annotation [155]): step-by-step derivations of the
+% geodetic-to-ECEF transform (eq:ecef) and of the ECEF-to-ENU rotation used in
+% Sec.~\ref{sec:enu}, plus the tangent-plane error estimate quoted there. Entirely new
+% content, hence wrapped in \rev{} as one block.
+\chapter{Geodetic transforms: from \texorpdfstring{$(\varphi,\lambda,h)$}{(phi, lambda, h)} to ECEF to ENU}
+\label{app:geodesy}
+
+\begin{revblock}
+This appendix derives the two formulas that Sec.~\ref{sec:enu} uses as given: the
+geodetic-to-ECEF transform, Eq.~\eqref{eq:ecef}, and the ECEF-to-ENU rotation matrix. It
+closes with the size of the tangent-plane error quoted there. Notation as in the body:
+WGS84 semi-major axis $a$, flattening $f$, $b=a(1-f)$ the semi-minor axis,
+$e^2=f(2-f)=1-b^2/a^2$ the first eccentricity squared~\cite{nga_wgs84}.
+
+\section{Geodetic coordinates to ECEF}
+\label{app:geodesy-ecef}
+
+The ECEF frame is Cartesian, centred at the Earth's centre $O$: the $Z$ axis along the
+polar axis, the $X$ axis through the intersection of the equator and the prime meridian,
+$Y$ completing the right-handed triad. By symmetry, a point at longitude $\lambda$ lies in
+the meridian plane obtained by rotating the $X$--$Z$ plane by $\lambda$; writing $p$ for
+the distance from the polar axis, its ECEF coordinates are
+\begin{equation}
+\label{eq:geo-meridian}
+X=p\cos\lambda,\qquad Y=p\sin\lambda,\qquad Z=Z .
+\end{equation}
+The problem therefore reduces to the meridian ellipse: find $(p,Z)$ of a point at geodetic
+latitude $\varphi$ and height $h$.
+
+\paragraph{The surface point.}
+The meridian section of the ellipsoid is the ellipse
+\begin{equation}
+\label{eq:geo-ellipse}
+\frac{p^2}{a^2}+\frac{Z^2}{b^2}=1 .
+\end{equation}
+The geodetic latitude is defined through the surface \emph{normal}
+(Figure~\ref{fig:ellipsoid}). The gradient of the left-hand side of
+\eqref{eq:geo-ellipse} is proportional to $(p/a^2,\;Z/b^2)$, so the outward normal at a
+surface point $(p_s,Z_s)$ makes an angle $\varphi$ with the equatorial plane given by
+\begin{equation}
+\label{eq:geo-normal}
+\tan\varphi=\frac{Z_s/b^2}{p_s/a^2}
+\qquad\Longrightarrow\qquad
+Z_s=\frac{b^2}{a^2}\,p_s\tan\varphi=(1-e^2)\,p_s\tan\varphi .
+\end{equation}
+Substituting \eqref{eq:geo-normal} into \eqref{eq:geo-ellipse}, with $b^2=a^2(1-e^2)$,
+\begin{equation}
+\frac{p_s^2}{a^2}\Big(1+(1-e^2)\tan^2\varphi\Big)=1
+\quad\Longrightarrow\quad
+p_s^{2}=\frac{a^2\cos^2\varphi}{\cos^2\varphi+(1-e^2)\sin^2\varphi}
+       =\frac{a^2\cos^2\varphi}{1-e^2\sin^2\varphi},
+\end{equation}
+that is,
+\begin{equation}
+\label{eq:geo-ps}
+p_s=N(\varphi)\cos\varphi,
+\qquad
+N(\varphi)\equiv\frac{a}{\sqrt{1-e^2\sin^2\varphi}},
+\end{equation}
+and, back through \eqref{eq:geo-normal},
+\begin{equation}
+\label{eq:geo-zs}
+Z_s=(1-e^2)\,N(\varphi)\sin\varphi .
+\end{equation}
+The quantity $N(\varphi)$ so defined is the \emph{prime-vertical radius of curvature}; a
+short computation shows it is precisely the distance, along the normal, from the surface
+point to the polar axis (the segment $Q$--$P$ of Figure~\ref{fig:ellipsoid}): the normal
+direction in the meridian plane is $(\cos\varphi,\sin\varphi)$, and following it inward
+from $(p_s,Z_s)$ a length $N$ lands on the axis,
+$p_s-N\cos\varphi=0$ by \eqref{eq:geo-ps}.
+
+\paragraph{Adding the height.}
+The height $h$ of a fix is measured along the same normal, whose unit vector in ECEF
+components is
+\begin{equation}
+\label{eq:geo-up}
+\hat{\mathbf{u}}=(\cos\varphi\cos\lambda,\;\cos\varphi\sin\lambda,\;\sin\varphi).
+\end{equation}
+Adding $h\,\hat{\mathbf{u}}$ to the surface point
+\eqref{eq:geo-ps}--\eqref{eq:geo-zs} in the meridian plane and restoring the longitude via
+\eqref{eq:geo-meridian}:
+\begin{equation}
+X=(N+h)\cos\varphi\cos\lambda,\qquad
+Y=(N+h)\cos\varphi\sin\lambda,\qquad
+Z=\big(N(1-e^2)+h\big)\sin\varphi,
+\end{equation}
+which is Eq.~\eqref{eq:ecef}. The asymmetry between the horizontal factor $(N+h)$ and the
+vertical one $\big(N(1-e^2)+h\big)$ is the ellipsoid's flattening at work: on a sphere
+($e=0$) both reduce to $R+h$ and the geodetic and geocentric latitudes coincide.
+
+\section{ECEF to local ENU}
+\label{app:geodesy-enu}
+
+The local frame at the origin fix $(\varphi_0,\lambda_0,h_0)$ is spanned by three unit
+vectors: East, tangent to the parallel; North, tangent to the meridian, pointing to the
+pole; Up, along the ellipsoid normal \eqref{eq:geo-up}. East is the direction in which the
+position \eqref{eq:geo-meridian} changes under $\lambda$ alone,
+\begin{equation}
+\hat{\mathbf{e}}_E=\frac{\partial\mathbf{X}/\partial\lambda}
+                        {\lVert\partial\mathbf{X}/\partial\lambda\rVert}
+=(-\sin\lambda_0,\;\cos\lambda_0,\;0),
+\end{equation}
+Up is $\hat{\mathbf{u}}$ of \eqref{eq:geo-up} evaluated at
+$(\varphi_0,\lambda_0)$, and North completes the right-handed triad,
+\begin{equation}
+\hat{\mathbf{e}}_N=\hat{\mathbf{e}}_U\times\hat{\mathbf{e}}_E
+=(-\sin\varphi_0\cos\lambda_0,\;-\sin\varphi_0\sin\lambda_0,\;\cos\varphi_0).
+\end{equation}
+The ENU components of a displacement $\Delta\mathbf{X}$ are its projections on the triad,
+$E=\hat{\mathbf{e}}_E\!\cdot\!\Delta\mathbf{X}$ and likewise for $N$ and $U$; stacking the
+three row vectors gives exactly the matrix of Sec.~\ref{sec:enu},
+\begin{equation}
+\begin{pmatrix}E\\N\\U\end{pmatrix}=
+\underbrace{\begin{pmatrix}
+-\sin\lambda_0 & \cos\lambda_0 & 0\\
+-\sin\varphi_0\cos\lambda_0 & -\sin\varphi_0\sin\lambda_0 & \cos\varphi_0\\
+\cos\varphi_0\cos\lambda_0 & \cos\varphi_0\sin\lambda_0 & \sin\varphi_0
+\end{pmatrix}}_{\textstyle R\,}
+\Delta\mathbf{X},
+\end{equation}
+whose rows are orthonormal by construction, so $R$ is a rotation
+($R^{\mathsf T}R=\mathbb{1}$)~\cite{esa_navipedia_ellipsoidal_cartesian}. Two remarks used
+in the body follow directly. First, the rows depend on the \emph{geodetic} latitude
+because Up is the ellipsoid normal --- the same $\varphi$ that enters
+Eq.~\eqref{eq:ecef}, which is why no latitude conversion appears anywhere in the
+pipeline. Second, the matrix is evaluated once per flight, at the origin fix: the frame
+is a fixed tangent frame, not one that travels with the wing.
+
+\section{Size of the tangent-plane error}
+\label{app:geodesy-error}
+
+Working in a fixed tangent frame replaces distances measured \emph{along} the curved
+surface by straight-line (chord) distances in the plane. For two surface points separated
+by an arc $d$ on a sphere of radius $R_\oplus$, the chord is
+\begin{equation}
+c=2R_\oplus\sin\!\frac{d}{2R_\oplus}
+ = d-\frac{d^{3}}{24\,R_\oplus^{2}}+O\!\big(d^{5}\big),
+\end{equation}
+so the horizontal distance error of the tangent-plane picture is
+$d^{3}/(24R_\oplus^{2})$: about \SI{1}{\centi\metre} at $d=\SI{20}{\kilo\metre}$ and
+\SI{13}{\centi\metre} at $d=\SI{50}{\kilo\metre}$ --- far below the metre-scale GPS noise
+on the same displacement, which is the comparison made in Sec.~\ref{sec:enu}. The
+\emph{vertical} coordinate of a distant surface point is a different matter: the surface
+falls below the tangent plane by the sagitta $\approx d^{2}/(2R_\oplus)$, which reaches
+tens of metres already at $d=\SI{20}{\kilo\metre}$. This is why the analysis never takes
+its working altitude from the plane geometry: the vertical coordinate is the barometric
+altitude itself (Sec.~\ref{sec:enu}), and the $U$ component serves only the geometric
+construction.
+\end{revblock}

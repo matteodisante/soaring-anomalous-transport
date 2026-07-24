@@ -46,11 +46,32 @@
 \usepackage{csquotes}
 \usepackage{hyperref}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta, calc, angles, quotes}
+\usetikzlibrary{arrows.meta, calc, angles, quotes, positioning, decorations.pathreplacing}
 % Local, per-part "Contents" listing (titletoc): used once, for the implementation-details
 % part at the back of the document, so that block reads as a self-contained "document within
 % the document" with its own index rather than just another appendix.
 \usepackage{titletoc}
+% TOC layout: the class reserves 1.5em for a chapter number, sized for a single
+% digit/letter. The chapter-2 appendices are numbered 2.A-2.C (see the note opening the
+% appendix part), and that wider bold label overflows the box by ~3pt, colliding with
+% the title. Widen the box for all chapter-level entries, so every chapter title in the
+% TOC keeps starting at the same offset.
+% (titletoc, just loaded, wraps \l@chapter in a dispatcher and stashes the class
+% definition in \ttl@savel@chapter -- the patch must target whichever of the two
+% actually holds the 1.5em.)
+\usepackage{etoolbox}
+\makeatletter
+\ifpatchable{\l@chapter}{\setlength\@tempdima{1.5em}}
+  {\patchcmd{\l@chapter}{\setlength\@tempdima{1.5em}}{\setlength\@tempdima{2.1em}}{}{}}
+  {\patchcmd{\ttl@savel@chapter}{\setlength\@tempdima{1.5em}}{\setlength\@tempdima{2.1em}}
+    {}{\GenericWarning{}{main.tex: TOC chapter-number box not widened (patch failed)}}}
+% Same story one level down: section entries "2.C.1"-"2.C.3" of the geodesy appendix
+% overflow the class's 2.3em section-number box; widen it for all section entries.
+\ifpatchable{\l@section}{{2.3em}}
+  {\patchcmd{\l@section}{{2.3em}}{{2.7em}}{}{}}
+  {\patchcmd{\ttl@savel@section}{{2.3em}}{{2.7em}}
+    {}{\GenericWarning{}{main.tex: TOC section-number box not widened (patch failed)}}}
+\makeatother
 
 % ---- Running headers (book style, two-sided). On an even (left) page the chapter
 % ---- title sits flush against the outer (left) edge; on an odd (right) page the
@@ -94,6 +115,23 @@
 \definecolor{figblue}{HTML}{3477A8}
 \definecolor{figred}{HTML}{B5482A}
 \definecolor{figgreen}{HTML}{4E8A5B}
+
+% ---- Revision markup (July 2026 review pass on main_revision.pdf). Two channels:
+% ----   \rev{...}  (blue)   -- text added or rewritten in response to a reviewer annotation;
+% ----   \flow{...} (orange) -- readability-only rewording (sentence rhythm, paragraphing),
+% ----                          not requested by any specific annotation.
+% ---- Flip \revmodefalse for the clean (all-black) final version; the commands then
+% ---- pass their argument through unchanged.
+\definecolor{revblue}{HTML}{1565C0}
+\definecolor{revorange}{HTML}{E07B00}
+\newif\ifrevmode
+\revmodetrue
+\newcommand{\rev}[1]{\ifrevmode\textcolor{revblue}{#1}\else#1\fi}
+\newcommand{\flow}[1]{\ifrevmode\textcolor{revorange}{#1}\else#1\fi}
+% Block forms of \rev/\flow for material that spans sectioning commands, floats or lists
+% (a plain \textcolor argument must not contain \section&c.).
+\newenvironment{revblock}{\ifrevmode\color{revblue}\fi}{}
+\newenvironment{flowblock}{\ifrevmode\color{revorange}\fi}{}
 
 % Subtle, navigable hyperlinks in the figure palette (dark blue for internal refs and URLs,
 % dark green for citations), plus PDF metadata and numbered bookmarks. Set after the colours
@@ -171,19 +209,18 @@ Soaring birds and human pilots stay aloft by extracting energy from atmospheric 
 producing long, intermittent trajectories that alternate climbs within thermals with
 quasi-ballistic glides. Such motion is a candidate for \emph{anomalous transport}, that is,
 a departure from ordinary Brownian diffusion. This thesis characterizes the transport
-statistics of real soaring flights from a large empirical dataset and compares them with
-stochastic transport models.
+statistics of real soaring flights from a large empirical dataset and \rev{seeks a minimal
+stochastic transport model able to reproduce those statistics, rather than only comparing
+the data against existing models. As the work develops it will also examine how flying in
+competition changes the motion relative to solo flights.}
 
-This document reports the current state of the project. A first, reproducible acquisition
-has collected \num{\StatTotalFlights} flights from the FFVL Coupe F\'ed\'erale de Distance
-across two disciplines: \num{\StatParaTotalFlights} paraglider flights (seasons
-\StatParaSeasonFirst\ to \StatParaSeasonLast) and \num{\StatHangTotalFlights} hang-glider
-flights (\StatHangSeasonFirst\ to \StatHangSeasonLast). Of these, \num{\StatTotalWithIgc}
-carry a GPS tracklog and \num{\StatTotalDownloaded} have been downloaded and verified. Data
-collection is ongoing and may be extended to further public soaring databases -- notably
-WeGlide for sailplanes, and XContest -- using the same approach. The remainder of the
-document describes the acquisition method, the dataset and its statistics, and the planned
-analysis and modelling.
+\rev{This document reports the current state of the project. A first dataset has been
+acquired reproducibly---the archive of the FFVL \emph{Coupe F\'ed\'erale de Distance}, in
+its paraglider and hang-glider disciplines---and the document describes its acquisition,
+the dataset and its statistics, and the pre-processing that turns the raw logs into
+analysis-ready trajectories, before setting out the planned transport analysis and
+modelling. Chapter~\ref{ch:dataset} reports the dataset and its coverage in full;
+Chapter~\ref{ch:next-steps} the analysis ahead.}
 \end{abstract}
 
 \tableofcontents
@@ -199,8 +236,40 @@ analysis and modelling.
 \bibliography{references}
 
 \appendix
-\input{appendices/A-ctrw}
+% ---- Per-chapter appendix numbering (July 2026 review pass): an appendix is numbered
+% ---- after the body chapter where it is first cited -- "Appendix 2.A" for the first
+% ---- appendix cited in Chapter 2, and so on. All three appendices below are first cited
+% ---- in Chapter 2; they appear in citation order (PSD in Sec. 2.7.1, CTRW in Sec. 2.7.2,
+% ---- geodesy in Sec. 2.7.5). \appendix has just reset the chapter counter and set
+% ---- \thechapter to \Alph{chapter}; the prefix is added on top of that.
+\renewcommand{\thechapter}{2.\Alph{chapter}}
+% ---- Divider page (July 2026 pass): states the numbering convention to the reader --
+% ---- the comment above only serves the maintainer. Hand-built in the style of a
+% ---- report-class \part* page, because \part* ejects to a new page before any text
+% ---- could be placed under the title.
+\clearpage
+\thispagestyle{plain}
+\phantomsection
+\addcontentsline{toc}{part}{Appendices}
+\null\vfil
+{\centering\normalfont\Huge\bfseries Appendices\par}
+\vspace{2\baselineskip}
+\begin{flowblock}
+\begin{center}
+\begin{minipage}{0.78\textwidth}
+The appendices are numbered after the body chapter they support: Appendices 2.A, 2.B
+and 2.C all belong to Chapter~2, and follow one another in the order in which the text
+first cites them. The part \emph{Implementation and Computational Details} that closes
+the document sits outside this sequence: its chapters mirror the body of the thesis
+chapter by chapter, and carry their own independent numbering (Chapters~1, 2, \dots).
+\end{minipage}
+\end{center}
+\end{flowblock}
+\vfil\vfil
+\newpage
 \input{appendices/B-psd}
+\input{appendices/A-ctrw}
+\input{appendices/geodesy}
 \input{appendices/C-implementation}
 
 \end{document}

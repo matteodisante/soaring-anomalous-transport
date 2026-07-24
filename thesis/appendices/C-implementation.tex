@@ -1,6 +1,9 @@
 % Unnumbered: a numbered "Part I" would imply a "Part II" that does not exist. Still gets
 % a TOC entry and a hyperref anchor (for \nameref/\pageref from the body) despite being
 % starred.
+% \part* opens with its own \clearpage, which would leave the \phantomsection anchor on
+% the PREVIOUS page (links land one page early); break the page first, then anchor.
+\clearpage
 \phantomsection
 \addcontentsline{toc}{part}{Implementation and Computational Details}
 \part*{Implementation and Computational Details}
@@ -15,6 +18,10 @@
 % Appendix A) back to "Chapter", matching the body's own style.
 \setcounter{chapter}{0}
 \renewcommand{\thechapter}{\arabic{chapter}}
+% Distinct hyperref anchor namespace: without this, resetting the chapter counter makes
+% these chapters reuse the appendices' anchor names (appendix.A, section.C.1, ...) and all
+% PDF links to this part land on Appendix 2.A-2.C instead.
+\renewcommand{\theHchapter}{impl.\arabic{chapter}}
 \makeatletter
 \renewcommand{\@chapapp}{\chaptername}
 \makeatother
@@ -27,19 +34,23 @@ This part collects the implementation- and computation-level detail behind the c
 made in the main text: the exact code module and script that produced each figure or
 table, the configuration values in force, sample sizes and computation times, and the
 status of each piece (implemented and tested, designed but not yet built, or planned). It
-is organised as a document within the document: its own chapters mirror the body chapter
-by chapter, so that a detail removed from the body sits in the corresponding chapter or
-section here. It is not meant to be read start to end -- the body links to the relevant
+is organised as a document within the document: its own chapters\flow{, numbered
+independently of the appendices,} mirror the body chapter by chapter, so that a detail
+removed from the body sits in the corresponding chapter or section here. It is not meant to be read start to end -- the body links to the relevant
 place at the point where a detail was trimmed out of the text, via a cross-reference such
 as ``(implementation details: Sec.~3.5.2)''.
 
 \printcontents[impl]{l}{0}{\section*{Contents of this part}}
 
+% Visual separation from the mini-TOC above; the [tbp] float spec (no "h") keeps the
+% table itself off this block and sends it to a page top instead (July 2026 pass).
+\bigskip
+
 Table~\ref{tab:impl-repro} is a quick index of which script reproduces which
 auto-generated figure or table (all paths relative to \texttt{scripts/reporting/}); the
 chapters that follow go into the reasoning and numbers behind each one.
 
-\begin{table}[htbp]
+\begin{table}[tbp]
 \centering\small
 \begin{tabular}{@{}p{3.1cm}p{4.3cm}p{6.1cm}@{}}
 \toprule
@@ -51,7 +62,14 @@ Stats macros; Tables~\ref{tab:seasons-para},~\ref{tab:seasons-hang} &
 Census macros (\texttt{\textbackslash StatScan\dots}) &
   \path{generate_census_stats.py} &
   Reads the cached track scans on the SSD (never rescans); instant; best-effort in the
-  pre-commit hook, so the committed macros refresh whenever the SSD is mounted. \\
+  pre-commit hook, so the committed macros refresh whenever the SSD is mounted.
+  \rev{Also emits the flight-level filtering census
+  (\texttt{LongEnough}/\texttt{Overlong}/\texttt{ShortPath} families,
+  Sec.~\ref{sec:flightfilter}) and the missing-barometric-fix statistics
+  (\texttt{BaroMiss}, Sec.~\ref{sec:altchannel}), against the thresholds in
+  \path{configs/preprocessing.yaml}}\flow{, and re-exports those thresholds as the
+  \texttt{\textbackslash Preproc*} macros quoted by the pipeline map
+  (Table~\ref{tab:pipelinemap})}\rev{.} \\
 Figure~\ref{fig:altnoise} &
   \path{generate_altitude_noise_figure.py} &
   Needs the raw IGC archive (env.\ \path{SOARING_PARA_DATA_ROOT}/\path{SOARING_DELTA_DATA_ROOT}). \\

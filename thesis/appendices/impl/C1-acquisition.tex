@@ -10,7 +10,10 @@ Package \path{soaring.acquisition.ffvl}, exposed as two CLI entry points,
 \texttt{soaring-para} and \texttt{soaring-delta}, sharing subcommands: \texttt{fetch-xml}
 (archive season XMLs), \texttt{download} (fetch IGC files), \texttt{build-catalog}
 (rebuild catalog/index), \texttt{status} (per-season coverage), \texttt{verify}
-(post-hoc integrity scan, Sec.~\ref{impl:acqintegrity}).
+(post-hoc integrity scan, Sec.~\ref{impl:acqintegrity}). \rev{One package serves both
+disciplines because the two FFVL sites expose an identical URL structure and the same
+machine-readable XML export format; only the host and the data root differ between the
+two CLIs.}
 
 \paragraph{Resumable downloads.} Files already present on disk are skipped, so an
 interrupted job resumes freely without re-fetching.
@@ -33,7 +36,8 @@ Destination directory (\path{data_root}) set per machine via an environment
 variable -- \path{SOARING_PARA_DATA_ROOT} for paragliders,
 \path{SOARING_DELTA_DATA_ROOT} for hang gliders -- or a config file
 shipping a placeholder (\path{configs/para_download.yaml}/
-\path{configs/delta_download.yaml}); every command validates the setting at start-up.
+\path{configs/delta_download.yaml}); every command validates the setting at start-up\flow{
+and aborts with an explicit message if the target is missing}.
 
 \subsection{Integrity}
 \label{impl:acqintegrity}

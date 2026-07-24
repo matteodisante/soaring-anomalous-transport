@@ -9,11 +9,11 @@ The data come from the \emph{Coupe F\'ed\'erale de Distance} (CFD), the cross-co
 competition run by the French free-flight federation (FFVL). The federation operates two
 parallel competitions on separate sites: one for paragliders
 (\texttt{parapente.ffvl.fr}) and one for hang gliders (\texttt{delta.ffvl.fr}). Pilots
-upload their flights; each entry carries metadata (pilot, date, take-off and landing sites,
-scored distance, duration, glider) and, in most cases, the raw GPS tracklog in IGC format
+upload their flights; each entry carries metadata---\rev{among them} pilot, date, take-off
+and landing sites, scored distance, duration, and glider\rev{, with the full set of fields
+listed in Sec.~\ref{sec:catalog}}---and, in most cases, the raw GPS tracklog in IGC format
 (the standard flight-recorder format, Sec.~\ref{sec:igcformat}).
-Both sites expose identical URL structure and machine-readable XML exports, so the same
-acquisition pipeline handles both. A ``season'' is identified by its starting year,
+A ``season'' is identified by its starting year,
 e.g.\ the year~1999 denotes the 1999--2000 season; the paraglider archive starts in
 1999--2000 and the hang-glider archive in 2001--2002.
 
@@ -27,10 +27,10 @@ For every season the pipeline retrieves two things:
         has a track.
 \end{itemize}
 From these, a derived \textbf{catalog} is built (\texttt{catalog.csv}, one row per flight,
-metadata plus the local path of its track) together with a per-season index
+\rev{its columns detailed in Sec.~\ref{sec:catalog}}) together with a per-season index
 (\texttt{seasons\_index.csv}). The raw data (tens of gigabytes) live on an external disk
-and are never committed to the repository; only the small per-season index is versioned,
-and it is the source of the statistics of Sec.~\ref{sec:coverage}.
+and are never committed to the repository. \flow{The catalog is itself rebuildable from
+the archived XMLs and likewise uncommitted (Sec.~\ref{sec:catalog}).}
 
 \subsection{Pipeline and tooling}
 
@@ -45,10 +45,8 @@ so as not to load the server \impldetails{impl:acqpipeline}.
 
 The destination directory is not hard-coded: it is set per machine through an environment
 variable or a configuration file, of which the repository ships only a placeholder, so no
-machine-specific path is committed. Every command validates this setting at start-up and
-aborts with an explicit message if the target is missing. Archiving the season
-XMLs verbatim keeps the full provenance: the catalog can always be rebuilt from them
-\impldetails{impl:acqrepro}.
+machine-specific path is committed. Archiving the season
+XMLs verbatim keeps the full provenance \impldetails{impl:acqrepro}.
 
 \subsection{Integrity}
 
@@ -56,7 +54,8 @@ Because the data sit on an external drive, integrity is re-checked independently
 download, rather than trusted at download time \impldetails{impl:acqintegrity}. Both
 FFVL collections have been verified in full: all \num{\StatParaDownloaded} paraglider and
 \num{\StatHangDownloaded} hang-glider downloaded tracklogs pass validation against the
-IGC standard (Sec.~\ref{sec:igcformat}).
+IGC standard (Sec.~\ref{sec:igcformat}). \flow{These are the tracklogs actually fetched; they cover a subset of the flights that
+carry a track at all (Sec.~\ref{sec:coverage}).}
 
 \subsection{Further data sources}
 The FFVL CFD is the primary source of the present study, but the dataset is not assumed to
@@ -71,5 +70,6 @@ is \emph{WeGlide}, which exposes flight metadata and IGC tracks through an API. 
 default access is rate-limited (of order sixty requests per day), which rules out a bulk
 export of the archive; a request for research access with a higher quota has been sent
 and is pending. Paraglider and hang-glider coverage may likewise be broadened through
-further portals such as XContest; all of these can be acquired with the same approach and
-merged into the same catalog.
+further portals such as XContest. \rev{A comparable research-access request has been sent
+to XContest; as of 20 July 2026 neither WeGlide nor XContest has replied.} All of these can
+be acquired with the same approach\rev{, each producing a catalog in the same format}.
