@@ -11,7 +11,8 @@
     chapter *The dataset*, section *Trajectory pre-processing* (`sec:preproc`) — not here.
     The **numbers** (all thresholds) live in
     `configs/preprocessing.yaml` (loaded via `load_preproc_config`) — not here. This page
-    never restates either; it links to them. That is how we avoid a thesis/doc that drift.
+    links to both; where it repeats a headline threshold for readability, the YAML stays
+    authoritative. That is how we avoid a thesis/doc that drift.
 
     **During implementation, follow this page** for steps, schemas, keys and storage;
     open the thesis only when the *behaviour* is ambiguous. On any conflict, the thesis
@@ -65,7 +66,7 @@ coordinates (great-circle speeds); (v) converts to the metric ENU frame; (vi)–
 | ii | Fix-level cleaning: absolute bounds + robust local test + structural rules | raw geo | cleaned fixes | `FixLevelThresholds` ← YAML; `fix_level_distributions` | `sec:fixlevel` |
 | iii | Trim outer ground phases (`v_xy` sustained); interior-ground guard planned (near-zero `v_xy` ≥ `T_ground` **and** flat baro → excise & split) | raw geo | airborne segment | `TrimmingThresholds` ← YAML | `sec:trimming` |
 | iv | Flight-level filtering (duration + path length) | parsed tracks | keep/drop + reason | `FlightLevelThresholds` ← YAML, `scan_tracks` | `sec:flightfilter` |
-| v | Geographic → ECEF → ENU (origin = take-off) | geo | `E,N,U` | *(to build; formula in thesis)* | `sec:enu` |
+| v | Geographic → ECEF → ENU (origin = first fix of the trimmed track) | geo | `E,N,U` | *(to build; formula in thesis)* | `sec:enu` |
 | vi | Enforce uniform `Δt` within flight | ENU | uniform series or exclusion | *(to build)* | `sec:uniform` |
 | vii | Savitzky–Golay smooth + differentiate | ENU | pos/vel/acc | *(to build; `scipy.signal.savgol_filter`)* | `sec:savgol` |
 | viii | Write `fixes` + `flights_meta` | all | Parquet | *(to build)* | — |
@@ -76,10 +77,16 @@ Key mechanics that reconcile the blueprint with the repo:
   flight (`alt_source`), never splices. Barometric where present **and alive**
   (`alt_channel.baro_min_range_m`: a stuck sensor writing a constant value falls back);
   whole-channel-absent flights fall back to unfiltered GNSS. The `A`/`V` flag is subsumed by the
-  missing-altitude check on the chosen channel. (Thesis `sec:altchannel`.)
-- **ENU (v).** Origin at the take-off fix; `E,N` zeroed there; **`U` is not re-zeroed**
-  (absolute barometric altitude retained; the take-off height `U_origin` is stored in
-  `flights_meta`). (Thesis `sec:enu`, Notation.)
+  missing-altitude check on the chosen channel. Individually missing barometric values on
+  baro-adopted flights are quantified by the `StatScan*BaroMiss*` census macros
+  (`generate_census_stats.py`, July 2026): share of flights affected plus median/max
+  missing-fix counts. (Thesis `sec:altchannel`.)
+- **ENU (v).** Origin at the **first fix of the trimmed track** (the start of free
+  flight — close to, but not, the take-off point on the ground); `E,N` zeroed there. The
+  working **vertical is not the rotation's `U`**: the pipeline keeps the adopted altitude
+  channel at its measured value, `z(t) = alt(t)`, never re-zeroed (increments are
+  offset-invariant; the absolute height stays available). (Thesis `sec:enu`, Notation —
+  July 2026 review pass.)
 - **Fix-level cleaning (ii).** Three detectors, by how much context each needs (thesis
   `tab:cleaning`). *Absolute bounds* on per-fix `v_xy`, `|v_z|`, barometric altitude
   (`FixLevelThresholds` ←
@@ -107,13 +114,17 @@ Key mechanics that reconcile the blueprint with the repo:
   mark as gap, split at step (vi). **Removal
   semantics:** position/time defect → delete node (gap bridged at vi); altitude defect →
   invalidate the altitude channel only (horizontal position kept). A **flight-level integrity
-  gate** drops any flight that cleaning had to rebuild past a small fraction `f`. New config
-  keys (`w, k, ε_min, ε, τ_freeze, f`) join `fix_level` in the YAML when built. No inter-fix
+  gate** drops any flight that cleaning had to rebuild past a small fraction `f`. The keys
+  (`w, k, ε_min, ε, δ_z, τ_freeze, f`) live under `fix_level` in the YAML as working
+  values, fixed a priori (the routine that applies them is still to build). No inter-fix
   time-gap bound here — gaps handled once at (vi). (Thesis `sec:fixlevel`.)
 - **Flight-level cuts (iv).** Duration window 40 min ≤ T ≤ 16 h (the upper bound removes
-  loggers left running: 15 census "flights" of 16–166 h); **path length** ≥ 10 km (was 30,
-  which removed 5,229 genuine localized flights while 10 km catches 6 — census-measured,
-  thesis `sec:flightfilter`); **altitude activity** ≥ 75 m on the adopted channel (vehicle
+  loggers left running: 15 census "flights" of 16–166 h); **path length** ≥ 20 km (set in
+  the July 2026 review pass; on the census, above 40 min it catches 236 of 184,583
+  paraglider and 7 of 6,638 hang-glider flights — `StatScan*{LongEnough,Overlong,ShortPath}*`
+  macros from `generate_census_stats.py`,
+  thesis `sec:flightfilter`; an earlier 30 km draft removed 5,229 genuine localized
+  flights); **altitude activity** ≥ 75 m on the adopted channel (vehicle
   logs, dead sensors). Path length = sum of great-circle steps (not extent/displacement).
   A minimum-fix-count cut is dropped as redundant with the duration cut.
 - **Uniform Δt (vi).** Native `Δt` per flight (no common cadence). Uniform ⇒ use as is;
@@ -124,16 +135,16 @@ Key mechanics that reconcile the blueprint with the repo:
   bridged: interpolating a long hole fabricates motion); segments keep the parent flight's
   origin and clock; a split is bookkeeping, not new files (ENU precedes it, fixes are
   already parent-referred: a `segment_id` column in `fixes` plus a `segments` metadata
-  table); the flight-level cuts are **not** re-applied to segments (only a minimal
-  segment-duration gate, key added with the routine), and phase durations truncated at a
+  table); the flight-level cuts are **not** re-applied to segments (only the minimal
+  segment-duration gate, key `min_segment_duration_s` in the YAML), and phase durations truncated at a
   segment boundary are flagged censored, for the duration fits to exclude; a
   `missing_fraction` too large within a segment ⇒ **drop the segment** (the flight only if
   none survives).
   Thresholds `max_gap_factor`, `max_gap_seconds`, `max_missing_fraction` (in the YAML), audited by
   `make_gap_diagnostics_figure` and quoted by the `StatScan*GapSplit*` census macros. The
   bound is two-scale by design — relative to cadence, capped in seconds (thesis
-  `sec:uniform`) — and the cap's working value enters the downstream-invariance sweep
-  before being frozen. This is the *only* gap handling: no other step bounds inter-fix
+  `sec:uniform`) — and the cap's working value is swept a posteriori on the split
+  fractions (same audit pattern as the cleaning thresholds) before being frozen. This is the *only* gap handling: no other step bounds inter-fix
   time gaps.
 - **Savitzky–Golay (vii).** Two hyperparameters: `window_length` (odd) and `polyorder`.
   Set by the noise-matched procedure of thesis `sec:savgol` (PSD knee `f_c` → smoothing scale
@@ -154,6 +165,17 @@ never in the repo; `load_or_scan_tracks` reads it if present, else scans and wri
 no invalidation beyond presence, delete the file to force a refresh). This is a
 lightweight *preview* of `flights_meta`, not a substitute for it: same spirit (per-flight
 summary, Parquet), far fewer columns, no `alt_source`/provenance/versioning.
+
+The census macros the thesis quotes come from this cache via
+`scripts/reporting/generate_census_stats.py`, which emits three families into
+`thesis/generated/census.tex`: the scan statistics (`StatScan*`, including the
+`BaroMiss` and `GapSplit` groups), the flight-level filtering census
+(`StatScan*{LongEnough,Overlong,ShortPath}*`), and — new in the July 2026 pass — the
+adopted thresholds themselves re-exported from `configs/preprocessing.yaml` as
+`\Preproc*` macros (one per YAML value, converted to the unit the suffix names). The
+thesis pipeline-map figure/table (`sec:pipelinemap`, closing the dataset chapter) quotes
+the operating point exclusively through `\Preproc*`, so a threshold change re-runs one
+script and propagates everywhere without a rescan.
 
 `track_stats` also computes a few per-flight QC fields, free byproducts of the same scan:
 `baro_present_frac`, `max_vxy_mps`, `max_vz_mps`, `baro_alt_min_m`, `baro_alt_max_m`.
@@ -179,13 +201,13 @@ everything else is lazy.
 | `segment_id` | int16 | 0-based within the flight; a split at a long gap / excised run increments it (thesis `sec:uniform`) |
 | `interpolated` | bool | grid point reconstructed at resampling, not measured |
 | `t` | float32 | s; `t=0` at first airborne fix of the **parent flight** (segments keep the parent clock) |
-| `E`, `N` | float32 | ENU, smoothed (`deriv=0`); `E=N=0` at take-off |
-| `U` | float32 | ENU up, smoothed; **not** re-zeroed |
-| `v_E`, `v_N`, `v_U` | float32 | velocity (`deriv=1`) |
-| `a_E`, `a_N`, `a_U` | float32 | acceleration (`deriv=2`) |
+| `E`, `N` | float32 | ENU, smoothed (`deriv=0`); `E=N=0` at the first fix of the trimmed track |
+| `z` | float32 | adopted altitude channel at its measured value, smoothed; never re-zeroed (thesis `sec:enu`) |
+| `v_E`, `v_N`, `v_z` | float32 | velocity (`deriv=1`) |
+| `a_E`, `a_N`, `a_z` | float32 | acceleration (`deriv=2`) |
 
-Lazy (never stored), e.g. `v_tot=√(v_E²+v_N²+v_U²)`, `θ_xy=atan2(v_N,v_E)`,
-`ω=(v_E a_N − v_N a_E)/(v_E²+v_N²)`, `z_abs=U+U_origin`.
+Lazy (never stored), e.g. `v_tot=√(v_E²+v_N²+v_z²)`, `θ_xy=atan2(v_N,v_E)`,
+`ω=(v_E a_N − v_N a_E)/(v_E²+v_N²)`. (`z` is already absolute; no `U_origin` offset exists.)
 
 ### `segments` (one row per segment)
 
@@ -197,7 +219,7 @@ Single Parquet. Key `(source, flight_id, segment_id)`: `t_start`, `t_end`, `n_fi
 
 Single Parquet. Identity + provenance (`source`, `flight_id`, `global_flight_id?`,
 `pipeline_version`, `config_hash`, `processed_at`); cleaned catalog fields (§7 recodes);
-georeference (`lat0`, `lon0`, `U_origin`); timing (`t_signal_*`, `duration_signal_s`,
+georeference (`lat0`, `lon0`, `alt0` — the measured altitude at the origin fix, informational only); timing (`t_signal_*`, `duration_signal_s`,
 `duration_flight_s`, `ground_phase_{start,end}_s`); cleaning diagnostics (`n_fix_raw`,
 `n_fix_clean`, `frac_interpolated`, `dt_native_s`, `was_resampled`, `alt_source`); filtering
 params (`savgol_window_horiz/vert`, `savgol_order`). Fields unavailable for a source stay
@@ -243,12 +265,14 @@ Handle at ingestion (empirically observed on the real files):
   thesis `sec:uniform`; `make_fixlevel_diagnostics_figure`, `sec:fixlevel`). Revisit only if a future
   source's distributions place a cut outside its implausible tail. `max_gap_seconds` is a
   **working value** (census impact in the `StatScan*GapSplit*` macros: the cap mostly
-  affects the slow-cadence hang-glider half) → freeze it via the downstream-invariance
-  sweep.
+  affects the slow-cadence hang-glider half) → freeze it via the a-posteriori sweep of the
+  split fractions (same procedure as the cleaning thresholds).
 - The fix-level **robust-outlier** (`w, k, ε_min`), **frozen-lock** (`ε, δ_z, τ_freeze`),
   integrity `f`, segment-gate and interior-ground values are **in the YAML as working
-  values** → the injected-defect + downstream-invariance tests own their final values once
-  the cleaning routine is built. These are false-*negative* / bias checks; the
-  removed-fraction audit above only bounds false positives.
+  values**, fixed a priori. Primary validation (July 2026 review pass, thesis
+  `sec:fixlevel`): audit the per-rule removal fractions over the archive and sweep each
+  threshold around its working value (plateau ⇒ keep). Injected defects and the
+  downstream-invariance sweep are the deeper, *targeted* follow-up for rules the audit
+  leaves in doubt — they bound the false negatives the removal audit cannot see.
 - Actual `flight_id` cross-source intersection check → confirms the `(source, flight_id)` key.
 - Sailplane catalog schema → document as above once the source is in hand.
