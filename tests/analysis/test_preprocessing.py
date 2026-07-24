@@ -37,7 +37,7 @@ def test_load_preproc_config_from_yaml():
     assert cfg.trimming.sustained_s == 30.0
     assert cfg.trimming.interior_ground_s == 600.0
     assert cfg.flight.min_duration_s == 2400.0  # 40 min
-    assert cfg.flight.min_path_km == 10.0
+    assert cfg.flight.min_path_km == 20.0
     assert cfg.flight.max_duration_s == 57600.0  # 16 h
     assert cfg.flight.min_alt_range_m == 75.0
     assert cfg.sampling.max_gap_factor == 10.0
