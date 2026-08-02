@@ -418,14 +418,20 @@ def make_flightlevel_diagnostics_figure(
 ) -> Figure:
     """Flight-level filtering diagnostics, per discipline, from full-census track data.
 
-    Four panels, each overlaying every discipline: (a) recorded flight duration and
-    (b) total flown path length, with the adopted cut marked; (c)/(d) the fraction of
-    flights retained versus that cut, computed for **that cut alone** (marginal, not
-    cascaded), so each curve isolates the effect of one criterion.
+    Six panels, each overlaying every discipline. Top row, the distribution of the
+    quantity each of the three track criteria cuts on: (a) recorded flight duration,
+    (b) total flown path length, (c) whole-flight barometric altitude range, with the
+    adopted cut marked. Bottom row, (d)/(e)/(f) the fraction of flights retained versus
+    that cut, computed for **that cut alone** (marginal, not cascaded), so each curve
+    isolates the effect of one criterion.
+
+    The altitude-range panels need no extra scan: the range is
+    ``baro_alt_max_m - baro_alt_min_m``, both already columns of the cached census.
 
     Args:
-        scans: Mapping ``discipline -> per-flight table`` (``duration_s``, ``path_km``),
-            each a full census (:func:`scan_tracks` over every track).
+        scans: Mapping ``discipline -> per-flight table`` (``duration_s``, ``path_km``,
+            ``baro_alt_min_m``, ``baro_alt_max_m``), each a full census
+            (:func:`scan_tracks` over every track).
         flight_level: The adopted thresholds to mark.
 
     Returns:
@@ -434,10 +440,11 @@ def make_flightlevel_diagnostics_figure(
     import matplotlib.pyplot as plt
 
     line_kw = {"color": "0.25", "ls": "--", "lw": 1.2}
-    fig, axes = plt.subplots(2, 2, figsize=(9.4, 6.8))
+    fig, axes = plt.subplots(2, 3, figsize=(13.2, 6.8))
 
     dur_grid = np.linspace(5.0, 150.0, 80)  # minutes
     path_grid = np.logspace(np.log10(1.0), np.log10(500.0), 80)  # km
+    alt_grid = np.logspace(np.log10(5.0), np.log10(5000.0), 80)  # m
 
     for disc, s in scans.items():
         color = _DISC_COLOR.get(disc, "gray")
@@ -445,6 +452,17 @@ def make_flightlevel_diagnostics_figure(
         dur_h = dur_h[dur_h > 0]
         path = pd.to_numeric(s["path_km"], errors="coerce")
         path = path[path > 0]
+        # Restricted to flights that actually adopt the barometric channel. The scan
+        # stores only the barometric extremes, so a GNSS-fallback flight reads a range of
+        # zero here whatever its real altitude activity: pooling the two would put ~30 %
+        # of paragliders at the bottom of the distribution for a reason that has nothing
+        # to do with how they flew. Auditing the cut on the fallback minority needs the
+        # GNSS extremes in the scan, i.e. a full rescan (thesis, sec:flightfilter).
+        has_baro = pd.to_numeric(s["baro_present_frac"], errors="coerce") >= BARO_PRESENT_MIN
+        alt_range = pd.to_numeric(s["baro_alt_max_m"], errors="coerce") - pd.to_numeric(
+            s["baro_alt_min_m"], errors="coerce"
+        )
+        alt_range = alt_range[has_baro & (alt_range > 0)]
 
         axes[0, 0].hist(
             dur_h[dur_h <= 12],
@@ -464,6 +482,15 @@ def make_flightlevel_diagnostics_figure(
             color=color,
             label=disc,
         )
+        axes[0, 2].hist(
+            alt_range,
+            bins=np.logspace(np.log10(1.0), np.log10(10000), 70),
+            density=True,
+            histtype="step",
+            lw=1.5,
+            color=color,
+            label=disc,
+        )
         axes[1, 0].plot(
             dur_grid,
             100.0 * retention_curve(dur_h * 60.0, dur_grid)[1],
@@ -474,6 +501,13 @@ def make_flightlevel_diagnostics_figure(
         axes[1, 1].plot(
             path_grid,
             100.0 * retention_curve(path, path_grid)[1],
+            color=color,
+            lw=1.6,
+            label=disc,
+        )
+        axes[1, 2].plot(
+            alt_grid,
+            100.0 * retention_curve(alt_range, alt_grid)[1],
             color=color,
             lw=1.6,
             label=disc,
@@ -496,11 +530,19 @@ def make_flightlevel_diagnostics_figure(
         xscale="log",
     )
 
+    axes[0, 2].axvline(flight_level.min_alt_range_m, **line_kw)
+    axes[0, 2].set(
+        xlabel="whole-flight altitude range [m]",
+        ylabel="density",
+        title="(c) Altitude activity",
+        xscale="log",
+    )
+
     axes[1, 0].axvline(flight_level.min_duration_s / 60.0, **line_kw)
     axes[1, 0].set(
         xlabel=r"minimum duration $T_{\min}$ [min]",
         ylabel="flights retained [%]",
-        title="(c) Retention vs duration cut (this cut alone)",
+        title="(d) Retention vs duration cut (this cut alone)",
     )
     axes[1, 0].grid(alpha=0.3)
 
@@ -508,10 +550,19 @@ def make_flightlevel_diagnostics_figure(
     axes[1, 1].set(
         xlabel="minimum path length [km]",
         ylabel="flights retained [%]",
-        title="(d) Retention vs path cut (this cut alone)",
+        title="(e) Retention vs path cut (this cut alone)",
         xscale="log",
     )
     axes[1, 1].grid(alpha=0.3)
+
+    axes[1, 2].axvline(flight_level.min_alt_range_m, **line_kw)
+    axes[1, 2].set(
+        xlabel="minimum altitude range [m]",
+        ylabel="flights retained [%]",
+        title="(f) Retention vs altitude-range cut (this cut alone)",
+        xscale="log",
+    )
+    axes[1, 2].grid(alpha=0.3)
 
     fig.tight_layout()
     return fig
