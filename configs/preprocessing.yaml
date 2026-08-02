@@ -84,9 +84,17 @@ flight_level:
   max_duration_s: 57600.0          # 16 h: daylight sanity bound. The census holds 15 "flights"
                                    #   of 16 to 166 h (loggers left running, paths up to
                                    #   10,000 km) that would poison the long-lag MSD.
-  min_alt_range_m: 75.0            # total altitude range on the adopted channel: a >=40 min
+  min_alt_range_m: 600.0           # total altitude range on the adopted channel: a >=40 min
                                    #   "flight" spanning less is not free flight (vehicle log,
-                                   #   dead sensor); counted and dropped with reason
+                                   #   dead sensor); counted and dropped with reason.
+                                   #   Raised 75 -> 600 (2026-08-02). 75 m only excluded a
+                                   #   dead sensor; 600 m asks for the altitude budget an
+                                   #   actual XC flight spends, since a 40 min cross-country
+                                   #   needs several climbs of several hundred metres each.
+                                   #   The census says the two are nearly equivalent in
+                                   #   practice -- retention 69.8% -> 68.1% (para), 83.0% ->
+                                   #   81.1% (hang) -- i.e. the cut sits on a plateau and the
+                                   #   population between the two values is thin.
 
 # --- sampling: intra-flight uniformity, a prerequisite for Savitzky-Golay -----
 # Flight-level cuts: a flight too irregular to resample onto a uniform grid is excluded
@@ -95,24 +103,27 @@ sampling:
   max_gap_factor: 10.0             # split the flight at any inter-fix gap exceeding this
                                    #   multiple of its own native dt. Segments keep the
                                    #   parent's origin/clock and are analysed independently;
-                                   #   the flight-level cuts are NOT re-applied to them (a
-                                   #   minimal segment-duration key joins here with the
-                                   #   routine). RELATIVE to native dt, so the tolerated
-                                   #   absolute gap scales with the logger's rate; raising it
-                                   #   much further would interpolate over ever-longer spans.
+                                   #   the flight-level cuts are NOT re-applied to them.
+                                   #   RELATIVE to native dt, so the tolerated absolute gap
+                                   #   scales with the logger's rate.
   max_gap_seconds: 20.0            # absolute cap on a bridgeable gap: the split bound is
-                                   #   min(max_gap_factor * dt, max_gap_seconds). The relative
-                                   #   part tolerates logger hiccups in proportion to cadence;
-                                   #   this cap is set by the motion's own timescales, not the
-                                   #   logger's: >= 2x the slowest common dt (10 s: one missed
-                                   #   fix never splits a flight), <= ~2/3 of a thermalling
-                                   #   period (~30 s: a bridged gap can never hide a full
-                                   #   circle), << tau_freeze (60 s: an excised frozen-lock
-                                   #   run is split, so a native gap of comparable length
-                                   #   cannot be bridged). Floored at 2*dt in the rule
-                                   #   min(max_gap_factor*dt, max(max_gap_seconds, 2*dt)),
-                                   #   so the thin tail of very slow loggers also tolerates
-                                   #   a single missed fix.
+                                   #   min(max_gap_factor * dt, max(max_gap_seconds, 2*dt)).
+                                   #   Set by the motion's own timescales, not the logger's:
+                                   #   >= 2x the slowest common dt (10 s: one missed fix never
+                                   #   splits a flight), <= ~2/3 of a thermalling period
+                                   #   (~30 s: a bridged gap can never hide a full circle),
+                                   #   << tau_freeze (60 s: an excised frozen-lock run is
+                                   #   split, so a native gap of comparable length cannot be
+                                   #   bridged). Floored at 2*dt so the thin tail of very slow
+                                   #   loggers also tolerates a single missed fix.
+                                   #
+                                   # A 4x loosening was tried on 2026-08-02 and REVERTED: it
+                                   # cut the split shares (para 15.3% -> 5.7%, hang 40.5% ->
+                                   # 6.2%) but broke both the circle guarantee and the
+                                   # ordering against tau_freeze. The high hang-glider split
+                                   # share is real and stays an open question -- it is a
+                                   # consequence of their slow cadences, and the place to
+                                   # address it is the sweep, not a hand-set multiple.
   max_missing_fraction: 0.10       # drop a segment more than this fraction uncovered on its
                                    #   uniform grid at the native dt (the whole flight only
                                    #   if no segment survives)
