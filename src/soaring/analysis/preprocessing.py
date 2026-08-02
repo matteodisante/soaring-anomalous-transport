@@ -574,14 +574,22 @@ def make_gap_diagnostics_figure(
     """Sampling-regularity diagnostics: how the gap-based exclusion would act.
 
     Mirrors :func:`make_flightlevel_diagnostics_figure`. Two panels overlay every
-    discipline's distribution -- (a) the largest single gap, in units of its own native
-    sampling interval, and (b) the fraction of a uniform grid at that interval left
-    uncovered (see :func:`track_stats`) -- and two show the marginal retention curve for
-    each cut alone, with the adopted threshold marked.
+    discipline's distribution -- (a) the largest single gap **in units of that flight's own
+    effective split bound** ``g_max``, and (b) the fraction of a uniform grid at the native
+    interval left uncovered (see :func:`track_stats`) -- and two show the marginal retention
+    curve for each cut alone, with the adopted threshold marked.
+
+    Panel (a) is normalised by ``g_max``, not by ``dt``, on purpose. The bound actually
+    applied is ``min(max_gap_factor * dt, max(max_gap_seconds, 2 * dt))``, which is not a
+    fixed multiple of ``dt``: at 1 s the relative term binds, from 2 s to 10 s the absolute
+    cap does, above that the ``2 * dt`` floor. Plotting ``gap / dt`` against a line at
+    ``max_gap_factor`` would therefore draw a cut that is not the one in force for most
+    cadences. Dividing each flight's gap by its own ``g_max`` puts the true criterion at
+    exactly 1 for every flight.
 
     Args:
-        scans: Mapping ``discipline -> per-flight table`` with ``max_gap_ratio`` and
-            ``missing_fraction`` columns (:func:`scan_tracks` over every track).
+        scans: Mapping ``discipline -> per-flight table`` with ``max_gap_ratio``, ``dt_s``
+            and ``missing_fraction`` columns (:func:`scan_tracks` over every track).
         sampling: The adopted thresholds to mark.
 
     Returns:
@@ -596,8 +604,17 @@ def make_gap_diagnostics_figure(
     gaps: dict[str, np.ndarray] = {}
     misses: dict[str, np.ndarray] = {}
     for disc, s in scans.items():
-        g = pd.to_numeric(s["max_gap_ratio"], errors="coerce")
-        gaps[disc] = g[np.isfinite(g) & (g > 0)].to_numpy()
+        ratio = pd.to_numeric(s["max_gap_ratio"], errors="coerce")
+        dt = pd.to_numeric(s["dt_s"], errors="coerce")
+        # Each flight's own effective bound, then the gap in units of it: the cut is
+        # then at 1 for every flight whatever its cadence (see the docstring).
+        g_max = np.minimum(
+            sampling.max_gap_factor * dt,
+            np.maximum(sampling.max_gap_seconds, 2.0 * dt),
+        )
+        g = (ratio * dt) / g_max
+        ok = np.isfinite(g) & (g > 0) & np.isfinite(dt) & (dt > 0)
+        gaps[disc] = g[ok].to_numpy()
         m = pd.to_numeric(s["missing_fraction"], errors="coerce")
         misses[disc] = m[np.isfinite(m)].to_numpy()
 
@@ -613,7 +630,7 @@ def make_gap_diagnostics_figure(
     pooled_miss = np.concatenate(
         [m for m in misses.values() if m.size] or [np.array([0.0])]
     )
-    gap_hi = float(max(np.quantile(pooled_gap, 0.90), sampling.max_gap_factor * 2.0))
+    gap_hi = float(max(np.quantile(pooled_gap, 0.90), 2.0))
     # Only a little past the cut (not 2x): the 90th percentile already sits almost
     # exactly at the cut, so a wider margin would just add empty axis past it.
     miss_hi = float(
@@ -624,11 +641,11 @@ def make_gap_diagnostics_figure(
     # magnitude. A log-spaced grid would also make the bins vary widely in width,
     # which is a bad match for a quantity whose common values sit at small integers
     # (a gap of exactly k missed native-rate fixes).
-    gap_bins = np.linspace(1.0, gap_hi, 50)
+    gap_bins = np.linspace(0.0, gap_hi, 50)
     miss_bins = np.linspace(0.0, miss_hi, 50)
 
     # Retention curves (c)/(d) sweep a wide range to show the full saturating shape.
-    gap_grid = np.logspace(0.0, np.log10(max(200.0, gap_hi)), 80)  # dimensionless ratio
+    gap_grid = np.logspace(-1.0, np.log10(max(20.0, gap_hi)), 80)  # in units of g_max
     miss_grid = np.linspace(0.0, max(0.6, miss_hi), 80)  # fraction
 
     for disc in scans:
@@ -666,12 +683,12 @@ def make_gap_diagnostics_figure(
             label=disc,
         )
 
-    axes[0, 0].axvline(sampling.max_gap_factor, **line_kw)
+    axes[0, 0].axvline(1.0, **line_kw)
     axes[0, 0].set(
-        xlabel=r"largest gap / native $\Delta t$",
+        xlabel=r"largest gap / this flight's $g_{\max}$",
         ylabel="density",
-        title="(a) Largest gap (relative)",
-        xlim=(1.0, gap_hi),
+        title="(a) Largest gap (in units of the split bound)",
+        xlim=(0.0, gap_hi),
     )
     axes[0, 0].legend(fontsize=8)
 
@@ -683,9 +700,9 @@ def make_gap_diagnostics_figure(
         xlim=(0.0, miss_hi),
     )
 
-    axes[1, 0].axvline(sampling.max_gap_factor, **line_kw)
+    axes[1, 0].axvline(1.0, **line_kw)
     axes[1, 0].set(
-        xlabel=r"cut on largest gap / native $\Delta t$",
+        xlabel=r"cut on largest gap, in units of $g_{\max}$",
         ylabel="flights retained [%]",
         title="(c) Retention vs gap cut (this cut alone)",
         xscale="log",
