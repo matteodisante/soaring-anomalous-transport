@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
+from .altitude_noise import BARO_PRESENT_MIN
 from .igc import baro_present_fraction, median_sampling_period, parse_igc
 
 if TYPE_CHECKING:
@@ -46,7 +47,9 @@ _DISC_COLOR = {
 # non-zero pressure altitude (presence is essentially all-or-nothing). Vertical speed
 # and altitude are only physical on such flights; on a GNSS-only flight the barometric
 # field is a constant-zero placeholder and is excluded from the fix-level distributions.
-_BARO_PRESENT_MIN = 0.5
+# Single source of truth: the constant lives in altitude_noise, so the census, the PSD
+# diagnostic and the cleaning cannot drift apart.
+_BARO_PRESENT_MIN = BARO_PRESENT_MIN
 
 
 @dataclass(frozen=True)

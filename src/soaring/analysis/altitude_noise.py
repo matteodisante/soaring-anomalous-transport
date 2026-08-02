@@ -68,9 +68,14 @@ NPERSEG = 256
 DT_TOLERANCE_S = 0.25
 # A flight "has" a barometric channel when at least this fraction of its fixes carry a
 # non-zero pressure altitude. Presence is essentially bimodal (a logger either has a
-# pressure sensor, so the channel is full, or has none, so it is all zero), so the exact
-# value is not critical.
-BARO_PRESENT_MIN = 0.5
+# pressure sensor, so the channel is full, or has none, so it is all zero), which is what
+# the census measures directly: where the channel is present it covers essentially every
+# fix. The threshold is therefore set high rather than mid-scale -- a flight missing more
+# than a twentieth of its pressure altitudes is not a healthy barometric flight, and
+# admitting it would hand the segmentation a channel with holes. Raising 0.5 -> 0.95 moves
+# only the flights in between, which the same census shows to be few (thesis,
+# sec:altchannel / impl:altchannel).
+BARO_PRESENT_MIN = 0.95
 
 
 def required_sample_size(
