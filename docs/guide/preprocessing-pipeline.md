@@ -124,8 +124,12 @@ Key mechanics that reconcile the blueprint with the repo:
   paraglider and 7 of 6,638 hang-glider flights — `StatScan*{LongEnough,Overlong,ShortPath}*`
   macros from `generate_census_stats.py`,
   thesis `sec:flightfilter`; an earlier 30 km draft removed 5,229 genuine localized
-  flights); **altitude activity** ≥ 75 m on the adopted channel (vehicle
-  logs, dead sensors). Path length = sum of great-circle steps (not extent/displacement).
+  flights); **altitude activity** ≥ 600 m on the adopted channel (raised from 75 m on
+  2026-08-02: 75 m only excluded a dead sensor, 600 m asks for the altitude budget a
+  ≥40 min cross-country actually spends. Cheap either way — retained share of barometric
+  flights 69.8 % → 68.1 % para, 83.0 % → 81.1 % hang, so both sit on the same plateau.
+  Caveat: the census stores only the *barometric* extremes, so this cut cannot yet be
+  audited on the GNSS-fallback minority). Path length = sum of great-circle steps (not extent/displacement).
   A minimum-fix-count cut is dropped as redundant with the duration cut.
 - **Uniform Δt (vi).** Native `Δt` per flight (no common cadence). Uniform ⇒ use as is;
   mildly irregular ⇒ resample onto the native grid across small gaps (each filled point
@@ -179,6 +183,10 @@ script and propagates everywhere without a rescan.
 
 `track_stats` also computes a few per-flight QC fields, free byproducts of the same scan:
 `baro_present_frac`, `max_vxy_mps`, `max_vz_mps`, `baro_alt_min_m`, `baro_alt_max_m`.
+A flight counts as **barometric** when `baro_present_frac` ≥ `BARO_PRESENT_MIN` = **0.95** (raised from 0.5 on 2026-08-02; defined once in
+`soaring.analysis.altitude_noise` and imported by `preprocessing`, so cleaning, census and
+PSD cannot drift). The change reclassified 241 paraglider flights and no hang-glider ones
+(0.13 % of the archive) — the direct measurement of how bimodal presence is.
 `baro_present_frac` is consumed by the altitude-noise figure's fallback-rate panel (thesis
 `sec:altchannel`), which prefers this cache (`altitude_noise.baro_presence_from_scan`) over its own
 separate scan when it exists, turning a sampled estimate into an exact census at no extra
