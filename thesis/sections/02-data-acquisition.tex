@@ -9,9 +9,9 @@ The data come from the \emph{Coupe F\'ed\'erale de Distance} (CFD), the cross-co
 competition run by the French free-flight federation (FFVL). The federation operates two
 parallel competitions on separate sites: one for paragliders
 (\texttt{parapente.ffvl.fr}) and one for hang gliders (\texttt{delta.ffvl.fr}). Pilots
-upload their flights; each entry carries metadata---\rev{among them} pilot, date, take-off
-and landing sites, scored distance, duration, and glider\rev{, with the full set of fields
-listed in Sec.~\ref{sec:catalog}}---and, in most cases, the raw GPS tracklog in IGC format
+upload their flights; each entry carries metadata---among them pilot, date, take-off
+and landing sites, scored distance, duration, and glider, with the full set of fields
+listed in Sec.~\ref{sec:catalog}---and, in most cases, the raw GPS tracklog in IGC format
 (the standard flight-recorder format, Sec.~\ref{sec:igcformat}).
 A ``season'' is identified by its starting year,
 e.g.\ the year~1999 denotes the 1999--2000 season; the paraglider archive starts in
@@ -27,10 +27,10 @@ For every season the pipeline retrieves two things:
         has a track.
 \end{itemize}
 From these, a derived \textbf{catalog} is built (\texttt{catalog.csv}, one row per flight,
-\rev{its columns detailed in Sec.~\ref{sec:catalog}}) together with a per-season index
+its columns detailed in Sec.~\ref{sec:catalog}) together with a per-season index
 (\texttt{seasons\_index.csv}). The raw data (tens of gigabytes) live on an external disk
-and are never committed to the repository. \flow{The catalog is itself rebuildable from
-the archived XMLs and likewise uncommitted (Sec.~\ref{sec:catalog}).}
+and are never committed to the repository. The catalog is itself rebuildable from
+the archived XMLs and likewise uncommitted (Sec.~\ref{sec:catalog}).
 
 \subsection{Pipeline and tooling}
 
@@ -54,15 +54,14 @@ Because the data sit on an external drive, integrity is re-checked independently
 download, rather than trusted at download time \impldetails{impl:acqintegrity}. Both
 FFVL collections have been verified in full: all \num{\StatParaDownloaded} paraglider and
 \num{\StatHangDownloaded} hang-glider downloaded tracklogs pass validation against the
-IGC standard (Sec.~\ref{sec:igcformat}). \flow{These are the tracklogs actually fetched; they cover a subset of the flights that
-carry a track at all (Sec.~\ref{sec:coverage}).}
+IGC standard (Sec.~\ref{sec:igcformat}). These are the tracklogs actually fetched; they
+cover a subset of the flights that carry a track at all (Sec.~\ref{sec:coverage}).
 
 \subsection{Further data sources}
 The FFVL CFD is the primary source of the present study, but the dataset is not assumed to
-be final. The paraglider data (\num{\StatParaTotalFlights} flights,
-\num{\StatParaWithIgc} tracklogs) are the main analysis target; the hang-glider data
-(\num{\StatHangTotalFlights} flights, \num{\StatHangWithIgc} tracklogs) are collected in
-parallel and enable the cross-type comparison of Sec.~\ref{sec:glider}. Additional
+be final. The paraglider data are the main analysis target; the hang-glider data are
+collected in parallel and enable the cross-type comparison of Sec.~\ref{sec:glider}
+(the counts for both are given in Sec.~\ref{sec:coverage}). Additional
 public soaring repositories are
 being pursued to enlarge and diversify the sample and, above all, to add the third glider
 category, \emph{sailplanes} (Sec.~\ref{sec:glider}). The most complete sailplane source
@@ -70,6 +69,6 @@ is \emph{WeGlide}, which exposes flight metadata and IGC tracks through an API. 
 default access is rate-limited (of order sixty requests per day), which rules out a bulk
 export of the archive; a request for research access with a higher quota has been sent
 and is pending. Paraglider and hang-glider coverage may likewise be broadened through
-further portals such as XContest. \rev{A comparable research-access request has been sent
-to XContest; as of 20 July 2026 neither WeGlide nor XContest has replied.} All of these can
-be acquired with the same approach\rev{, each producing a catalog in the same format}.
+further portals such as XContest. A comparable research-access request has been sent
+to XContest; as of 20 July 2026 neither WeGlide nor XContest has replied. All of these can
+be acquired with the same approach, each producing a catalog in the same format.

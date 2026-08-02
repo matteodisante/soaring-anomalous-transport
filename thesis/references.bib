@@ -20,8 +20,12 @@
   doi     = {10.1103/RevModPhys.87.483}
 }
 
-% --- Added 2026-07 (review pass, annotation [13]): canonical reports of anomalous
-% --- transport across domains. NOTE: bibliographic details to be double-checked.
+% --- Added 2026-07 (review pass): canonical reports of anomalous transport across
+% --- domains. All three verified against Crossref on 2026-08-02 (title, authors,
+% --- journal, volume, pages, year) -- the July "to double-check" flag is cleared.
+% --- One substantive correction: viswanathan1999 is a study of optimal random-search
+% --- strategies (Levy-flight searching), not a report of measured animal movement;
+% --- the sentence citing it in Ch. 1 was reworded accordingly.
 @article{viswanathan1999,
   author  = {Viswanathan, G. M. and Buldyrev, Sergey V. and Havlin, Shlomo and
              da Luz, M. G. E. and Raposo, E. P. and Stanley, H. Eugene},
@@ -98,6 +102,51 @@
   number      = {NGA.STND.0036, Version 1.0.0},
   year        = {2014},
   note        = {\url{https://earth-info.nga.mil/php/download.php?file=coord-wgs84}}
+}
+
+% Primary source for the horizontal/vertical accuracy asymmetry quoted in Sec. 2.6:
+% Table 3.8-3 commits to <= 8 m 95% horizontal and <= 13 m 95% vertical (global
+% average), and <= 15 m / <= 33 m at the worst site.
+@techreport{gps_sps_ps_2020,
+  author      = {{United States Department of Defense}},
+  title       = {Global Positioning System Standard Positioning Service Performance Standard},
+  institution = {Department of Defense, Washington, DC},
+  number      = {5th Edition},
+  year        = {2020},
+  note        = {Table~3.8-3. \url{https://www.gps.gov/technical/ps/2020-SPS-performance-standard.pdf}}
+}
+
+% Checked 2026-08: the source for multipath being time-correlated rather than white
+% between epochs (first-order Gauss-Markov fit, ~300 s correlation constant).
+@inproceedings{garciacrespillo2024,
+  author    = {Garc\'ia Crespillo, Omar and Oliva Gonz\'alez, Rafael and Caizzone, Stefano},
+  title     = {Airborne Time-Correlated {GNSS} Multipath Error Modeling of Carrier-phase Smoothed Code},
+  booktitle = {Proceedings of the 2024 International Technical Meeting of the Institute of Navigation (ION ITM)},
+  year      = {2024},
+  note      = {German Aerospace Center (DLR)}
+}
+
+% The published EN 926-2:2013 is a copyrighted CEN standard sold per copy by the national
+% bodies (AFNOR, DIN, BSI); there is no free authoritative text. This is the final draft
+% submitted to formal vote, circulated publicly by CEN/TC 136/WG 6 -- the closest openly
+% available source. Table 1 is the class description quoted in Sec. 2.4.
+@techreport{fpren926_2_2012,
+  author      = {{CEN/TC 136/WG 6}},
+  title       = {Paragliding equipment --- Paragliders --- Part~2: Requirements and test
+                 methods for classifying flight safety characteristics},
+  institution = {European Committee for Standardization},
+  number      = {Draft of FprEN 926-2, document N 0054, submitted to formal vote},
+  year        = {2012},
+  note        = {Final draft of the standard published as EN~926-2:2013.
+                 \url{http://www.xcmag.com/wp-content/uploads/2012/08/DraftEN926-2.pdf}}
+}
+
+@misc{sklearn_haversine,
+  author       = {{scikit-learn developers}},
+  title        = {\texttt{sklearn.metrics.pairwise.haversine\_distances}},
+  howpublished = {scikit-learn API reference},
+  note         = {States the great-circle formula used here.
+                  \url{https://scikit-learn.org/stable/modules/generated/sklearn.metrics.pairwise.haversine_distances.html}}
 }
 
 @article{savitzky1964,

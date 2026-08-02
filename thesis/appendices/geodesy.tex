@@ -88,6 +88,36 @@ which is Eq.~\eqref{eq:ecef}. The asymmetry between the horizontal factor $(N+h)
 vertical one $\big(N(1-e^2)+h\big)$ is the ellipsoid's flattening at work: on a sphere
 ($e=0$) both reduce to $R+h$ and the geodetic and geocentric latitudes coincide.
 
+\begin{revblock}
+\paragraph{How far the two latitudes differ.}
+The geocentric latitude $\psi$ of a point on the surface is the angle its position vector
+makes with the equatorial plane, so from \eqref{eq:geo-ps}--\eqref{eq:geo-zs}, at $h=0$,
+\begin{equation}
+\label{eq:geo-psi}
+  \tan\psi=\frac{Z_s}{p_s}=\frac{N(1-e^2)\sin\varphi}{N\cos\varphi}=(1-e^2)\tan\varphi ,
+\end{equation}
+the classic relation: the two agree only where $e=0$, or at the equator and the poles,
+where $\tan$ is $0$ or infinite. To see the size of the gap, write $\psi=\varphi-\Delta$
+and expand for small $e^2$. Using
+$\tan(\varphi-\Delta)\simeq\tan\varphi-\Delta\,(1+\tan^2\varphi)$ in \eqref{eq:geo-psi},
+\begin{equation}
+  \tan\varphi-\Delta\,(1+\tan^2\varphi)\simeq(1-e^2)\tan\varphi
+  \quad\Longrightarrow\quad
+  \Delta\simeq\frac{e^2\tan\varphi}{1+\tan^2\varphi}=e^2\sin\varphi\cos\varphi ,
+\end{equation}
+that is
+\begin{equation}
+\label{eq:geo-latgap}
+  \varphi-\psi\simeq\frac{e^2}{2}\,\sin 2\varphi ,
+\end{equation}
+which is the expression quoted in Sec.~\ref{sec:enu}. It is largest where $\sin2\varphi=1$,
+i.e.\ exactly at $\varphi=45^\circ$, and there equals $e^2/2=3.353\times10^{-3}$ radian, or
+$0.192^\circ\approx11.5'$. Mistaking one latitude for the other therefore displaces a fix
+along the meridian by $R_\oplus\,(e^2/2)\approx\SI{21}{\kilo\metre}$ at mid-latitudes---the
+${\sim}\SI{20}{\kilo\metre}$ quoted in the body. The error vanishes at the equator and at
+the poles and is symmetric about $45^\circ$.
+\end{revblock}
+
 \section{ECEF to local ENU}
 \label{app:geodesy-enu}
 

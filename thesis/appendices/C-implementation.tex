@@ -35,8 +35,7 @@ made in the main text: the exact code module and script that produced each figur
 table, the configuration values in force, sample sizes and computation times, and the
 status of each piece (implemented and tested, designed but not yet built, or planned). It
 is organised as a document within the document: its own chapters\flow{, numbered
-independently of the appendices,} mirror the body chapter by chapter, so that a detail
-removed from the body sits in the corresponding chapter or section here. It is not meant to be read start to end -- the body links to the relevant
+independently of the appendices,} mirror the body chapter by chapter. It is not meant to be read start to end -- the body links to the relevant
 place at the point where a detail was trimmed out of the text, via a cross-reference such
 as ``(implementation details: Sec.~3.5.2)''.
 
@@ -52,13 +51,14 @@ chapters that follow go into the reasoning and numbers behind each one.
 
 \begin{table}[tbp]
 \centering\small
-\begin{tabular}{@{}p{3.1cm}p{4.3cm}p{6.1cm}@{}}
-\toprule
-Figure/Table & Script & Notes \\
-\midrule
+\begin{tabular}{|p{3.1cm}|p{4.3cm}|p{5.9cm}|}
+\hline
+\textbf{Figure/Table} & \textbf{Script} & \textbf{Notes} \\
+\hline
 Stats macros; Tables~\ref{tab:seasons-para},~\ref{tab:seasons-hang} &
   \path{generate_stats.py} &
   Reads committed \path{data/*/seasons_index.csv}; instant; part of the pre-commit hook. \\
+\hline
 Census macros (\texttt{\textbackslash StatScan\dots}) &
   \path{generate_census_stats.py} &
   Reads the cached track scans on the SSD (never rescans); instant; best-effort in the
@@ -70,18 +70,21 @@ Census macros (\texttt{\textbackslash StatScan\dots}) &
   \path{configs/preprocessing.yaml}}\flow{, and re-exports those thresholds as the
   \texttt{\textbackslash Preproc*} macros quoted by the pipeline map
   (Table~\ref{tab:pipelinemap})}\rev{.} \\
+\hline
 Figure~\ref{fig:altnoise} &
   \path{generate_altitude_noise_figure.py} &
   Needs the raw IGC archive (env.\ \path{SOARING_PARA_DATA_ROOT}/\path{SOARING_DELTA_DATA_ROOT}). \\
+\hline
 Figures~\ref{fig:fixlevel}, \ref{fig:preproc}, \ref{fig:gaps}, \ref{fig:sampling} &
   \path{generate_preproc_figure.py} &
   One run produces all four (a shared full-census scan feeds three; fix-level cleaning
   uses a separate sampled pass). Needs the raw IGC archive. \\
+\hline
 Savitzky--Golay $\tau_c$ (config values) &
   \path{estimate_savgol_timescales.py} &
   Prints the measured spectral knees (Sec.~\ref{impl:savgol}); adopting them in the YAML
   is a deliberate edit. Needs the raw IGC archive. \\
-\bottomrule
+\hline
 \end{tabular}
 \caption{Script that regenerates each auto-generated thesis figure or table. Run as
 \texttt{uv run python scripts/reporting/<name>}; only \texttt{generate\_stats.py} is wired

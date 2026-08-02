@@ -4,7 +4,7 @@
 \section{Motivation}
 
 Gliders, paragliders, and soaring birds carry no continuous source of propulsion; to remain
-airborne they extract energy from \rev{air currents in the atmosphere}, primarily from
+airborne they extract energy from air currents in the atmosphere, primarily from
 \emph{thermals}, the buoyant updrafts that form as sunlight heats the ground. A
 cross-country flight thus proceeds as a repeating cycle of three phases. In the
 \emph{transition} phase the flyer glides along a nearly straight path toward the next
@@ -13,22 +13,42 @@ probes the surrounding air mass to locate lift. Once lift is found, a \emph{clim
 begins, in which the flyer circles within the rising air to regain altitude. The cycle
 alternates long, directed displacements with episodes of slow, localized motion.
 
-Intermittent and directionally persistent motion of this kind is \rev{one of the settings}
+Intermittent and directionally persistent motion of this kind is one of the settings
 in which \emph{anomalous transport} arises. Let $\mathbf{r}(t)$ denote the horizontal position of a flight, measured from take-off.
 Transport is anomalous when the mean-squared displacement grows as a non-trivial power of
 time, $\langle |\mathbf{r}(t)|^2\rangle \sim t^{\alpha}$ with $\alpha \neq 1$, as opposed to
-the linear growth ($\alpha = 1$) of ordinary Brownian diffusion. Continuous-time random
-walks and L\'evy walks are the standard \flow{modelling} frameworks for such
-regimes~\cite{metzler2000,zaburdaev2015}, and anomalous transport has been reported in animal
-movement\rev{~\cite{viswanathan1999}}, in disordered media\rev{~\cite{bouchaud1990}}, and in turbulent
-flows\rev{~\cite{solomon1993}}. \rev{These two frameworks sit at opposite ends of a spectrum: a
-plain continuous-time random walk carries no memory of direction between successive steps,
-whereas a L\'evy walk is a \emph{coupled} continuous-time random walk, in which each waiting
-time is tied to a ballistic displacement. The soaring cycle---directed glides interrupted by
-localized climbs---falls between them, and is more naturally described by a persistent random
-walk endowed with a waiting-time distribution between successive legs, so that both the leg
-statistics and the correlation between successive flight directions are retained. Isolating
-such a minimal model is one aim of the analysis developed later.}
+the linear growth ($\alpha = 1$) of ordinary Brownian diffusion. \rev{The continuous-time
+random walk (CTRW) is the standard modelling framework for such
+regimes~\cite{metzler2000}: the walker waits a random time $\tau$, then makes a random
+displacement $\mathbf{x}$, and the joint density $\psi(\mathbf{x},\tau)$ of the two fixes
+the transport. The L\'evy walk is not a separate framework but the particular case in which
+the two are coupled through a constant speed $v$,}
+\begin{equation}
+  \rev{\psi(\mathbf{x},\tau) = \tfrac{1}{2}\,\delta\!\left(|\mathbf{x}| - v\tau\right) w(\tau),}
+  \label{eq:levywalk}
+\end{equation}
+\rev{so that each waiting time is spent travelling ballistically rather than standing
+still~\cite{zaburdaev2015}. Anomalous transport of this kind has been reported in
+random-search strategies~\cite{viswanathan1999}, in disordered
+media~\cite{bouchaud1990}, and in turbulent flows~\cite{solomon1993}.}
+
+\rev{The soaring cycle lies somewhere between the uncoupled and the fully coupled case, and
+it has three parts rather than two: a directed glide, then a search phase, then a localized
+climb. The glides are legs flown at a nearly constant speed, as in a L\'evy walk; the search
+and the climb that end each leg are episodes of slow, localized motion, closer to the waits
+of an uncoupled CTRW. Whether those two phases can be collapsed into a single waiting phase
+is a modelling decision that the data have to support, and it is argued for where the
+quantitative model is built (Chapter~\ref{ch:next-steps}). One feature is captured by
+neither limiting case: successive glides need not point in independent directions. The model
+this thesis works towards is therefore a persistent random walk in continuous time---one
+whose successive leg directions are correlated, with waiting times between legs.}
+
+\rev{Which of these ingredients the data actually require is settled by measurement, not
+assumed in advance. The analysis first characterizes the empirical trajectories---the
+distributions of leg length, speed and waiting time, and the correlation between successive
+headings---and the minimal model is then built on what those tests return. The persistence
+in particular is a working hypothesis about angular memory, which only the measured heading
+correlations can confirm or rule out.}
 Whether the trajectories of real soaring flights belong to an anomalous regime, and of which
 type, is the question addressed in this thesis.
 
@@ -39,11 +59,11 @@ ensemble of observed trajectories. Its direct precedent is the study of Vilpelle
 al.~\cite{vilpellet2026}, who analysed a large set of human soaring flights and found a
 horizontal transport that is sub-ballistic and approximately independent of aircraft type
 (Hurst exponent $H \approx 0.88$, i.e.\ $\langle|\mathbf{r}(t)|^2\rangle\sim t^{2H}$,
-between diffusive $H=1/2$ and ballistic $H=1$\rev{, so that a value $1/2<H<1$ marks
-superdiffusive transport}). That study also introduced a
+between diffusive $H=1/2$ and ballistic $H=1$, so that a value $1/2<H<1$ marks
+superdiffusive transport). That study also introduced a
 phase-resolved analysis based on the transition--search--climb cycle. This thesis builds
-on it: it enlarges the dataset\rev{, revisits the cleaning and filtering that precede any
-analysis,} and re-examines both the phase segmentation and the transport analysis.
+on it: it enlarges the dataset, revisits the cleaning and filtering that precede any
+analysis, and re-examines both the phase segmentation and the transport analysis.
 
 \section{Objectives}
 
@@ -51,37 +71,39 @@ The thesis pursues \rev{the following} objectives:
 \begin{enumerate}
   \item to assemble a large, reproducible, and documented dataset of real soaring flights;
   \item \rev{to clean and filter the raw GPS logs into analysis-ready trajectories, and to
-        define suitable transport observables;}
+        define, measure and analyze suitable transport observables---the test for anomalous
+        transport is carried out on those observables, as soon as the trajectories exist;}
   \item \rev{to define a segmentation strategy for the transition--search--climb cycle and
         characterize the motion statistics within each phase;}
-  \item \rev{to test for anomalous transport and to build a minimal stochastic model able
-        to reproduce the empirical statistics, rather than only comparing the data against
-        existing models;}
+  \item \rev{to build a minimal stochastic model able to reproduce the empirical
+        statistics;}
   \item \rev{to extend the dataset to competition flights and examine how flying in
         competition changes the motion relative to solo flights.}
 \end{enumerate}
 A first dataset---the archive of the \emph{Coupe F\'ed\'erale de Distance} (CFD) of the
 French free-flight federation (FFVL), covering paraglider and hang-glider flights---has
-been assembled and verified and is described here; \rev{data collection continues and will
-be extended to further sources, in particular sailplanes and competition flights}
-(Sec.~\ref{sec:acquisition}). \rev{The dataset and its cleaning-and-filtering pipeline are
-described here; the segmentation, the transport analysis and modelling, and the extension to
-competition flights define the work ahead} (Chapter~\ref{ch:next-steps}).
+been assembled and verified and is described in \rev{Chapter~\ref{ch:dataset}}; \rev{data
+collection continues and will be extended to further sources, in particular sailplanes and
+competition flights} (Sec.~\ref{sec:acquisition}). \rev{The dataset
+(Secs.~\ref{sec:igcformat}--\ref{sec:coverage}) and its cleaning-and-filtering pipeline
+(Sec.~\ref{sec:preproc}) are described in Chapter~\ref{ch:dataset}; the segmentation, the
+transport analysis and modelling, and the extension to competition flights define the work
+ahead} (Chapter~\ref{ch:next-steps}).
 
 \section{Scope of this document}
 
 This document reports the current state of the project and is revised as the work proceeds.
-\rev{Its statistics, tables, and figures are produced directly from the dataset by the
-analysis code, so the numbers quoted in the text cannot drift from the data they describe.}
-\rev{Chapter~\ref{ch:dataset} follows the data end to end: its acquisition and the
+Its statistics, tables, and figures are produced directly from the dataset by the
+analysis code, so the numbers quoted in the text cannot drift from the data they describe.
+Chapter~\ref{ch:dataset} follows the data end to end: its acquisition and the
 reproducibility of the pipeline (Sec.~\ref{sec:acquisition}); the tracklog format and the
 flight catalog (Secs.~\ref{sec:igcformat}--\ref{sec:catalog}); the glider categories and
 the coverage statistics (Secs.~\ref{sec:glider}--\ref{sec:coverage}); the known data-quality
 caveats (Sec.~\ref{sec:dataquality}); the pre-processing
 that turns the raw logs into analysis-ready trajectories (Sec.~\ref{sec:preproc}); a
-first characterization of the cleaned dataset (Sec.~\ref{sec:prelim})}\flow{; and a
+first characterization of the cleaned dataset (Sec.~\ref{sec:prelim}); and a
 one-map summary of the whole pipeline that closes the chapter
-(Sec.~\ref{sec:pipelinemap}).}
+(Sec.~\ref{sec:pipelinemap}).
 Chapter~\ref{ch:next-steps} sets out the planned transport analysis and modelling.
 
 Throughout, the discussion keeps to the scientific and statistical reasoning behind each
