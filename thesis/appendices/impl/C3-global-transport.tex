@@ -212,6 +212,52 @@ has to be unbiased where the archive sits, at $H$ near \num{1}, which is the bou
 the family: on exact fractional Brownian motion of $H=0.99$ it returns \num{1.98}.}
 \end{revblock}
 
+\paragraph{\rev{When a knee is declared.}} \rev{A bilinear fit to $q\nu(q)$ has two more
+parameters than a straight line through the origin, always reduces the residual, and on a
+grid of ten moment orders buys the reduction cheaply --- fitted to a fractional Brownian
+motion, which has no knee, BIC prefers the bilinear form while the straight line already
+fits to an rms of \num{0.003}. So BIC alone is not the rule. \path{bilinear_fit} declares a
+knee only when three conditions hold together: BIC prefers the bilinear form, \emph{and} the
+straight line leaves a residual above \path{min_departure} = \num{0.02}, \emph{and} the
+knee sits inside the $q$ grid rather than on its edge. On the synthetic pair those three
+give no knee for fractional Brownian motion and a knee at \num{1.57} with a right-hand slope
+of \num{0.96} for a Lévy walk of index \num{1.5}. The archive's departure from a line is
+\StatShapeParaLinearDeparture, an order of magnitude below the threshold.}
+
+\paragraph{\rev{Why the drift is filtered and never subtracted.}} \rev{\path{centring_bias}
+measures the alternative rather than arguing against it: fractional Brownian motion of known
+exponent is generated, the mean-squared displacement is computed raw and after subtracting
+each realisation's own net velocity, and the two are compared lag by lag. Subtracting a
+velocity estimated from the record's endpoint turns the series into a bridge whose increments
+must sum to zero, so the centred curve is pulled down at every lag and hardest at the long
+ones --- \SI{2}{\percent} at a lag of \SI{0.05}{\percent} of the record and
+\SI{76}{\percent} at half of it, with no range in between where the distortion is
+negligible. On $\alpha=1.50$ the operation returns \num{1.35}. The filtered variation of
+\path{soaring.analysis.observables.variations} estimates no drift at all, so none can be
+estimated badly, and the order scan is what reads off how much drift there was.}
+
+\paragraph{\rev{The variation pass, and why stratifying is free.}} \rev{
+\path{measure_variations.py} traverses the fix table once and keeps, per flight and per
+filter order, one curve over the lag grid together with the flight's cadence, wing class,
+season and declared task. Every stratification of Sec.~\ref{sec:transport-nulls} is then a
+row selection on that table rather than another pass over $1.4\times10^{9}$ rows, which is
+what makes four cuts affordable where one would otherwise be a day's work.}
+
+\paragraph{\rev{The persistence runs, and the bias that decomposition avoids.}}
+\rev{\path{persistence_runs} walks the record greedily from its start, extending a run while
+the sinuosity --- arc length over chord --- stays under the threshold and beginning the next
+run where the last one ended, with a floor of five samples. The stopping rule is
+\emph{first violation}: the condition is not monotone in the endpoint, since a stretch can
+come back inside the threshold after leaving it, so the rule is stated rather than implied.
+No sample belongs to two runs, and that is the point. Sampling the run length at every
+instant instead returns each run in proportion to its own length --- the length-biased
+distribution, whose tail index is one below the truth. \path{inspection_biased_runs}
+implements the wrong way on purpose so the size of the error can be measured: on synthetic
+runs of known index \num{2.0} the two estimators return \num{2.0} and \num{1.1}. At the
+values this archive shows that is not a bias to correct afterwards but a different answer.
+The first implementation of the biased estimator measured the residual life instead of the
+containing run, which is a third quantity again; a test caught it.}
+
 \paragraph{\rev{First-passage times, and why they are not reported.}} \rev{The audit arrays
 keep each flight's position at every lag, so the first-passage time $T(L)$ --- the first time
 a flight is $L$ from take-off --- costs no traversal, and
