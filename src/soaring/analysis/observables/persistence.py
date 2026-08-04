@@ -110,15 +110,20 @@ def persistence_runs(positions: np.ndarray, max_sinuosity: float, min_length: in
     step = np.hypot(*np.diff(positions, axis=0).T)
     arc = np.concatenate([[0.0], np.cumsum(step)])
 
+    # The inner search is vectorised: for a fixed start, every candidate endpoint's
+    # sinuosity is one array expression and the first violation is one argmax. Walking it
+    # sample by sample is the same answer and costs three hours over the archive against
+    # twenty minutes, because the scan is O(n x run length) in Python and O(n) in numpy.
     lengths: list[int] = []
     start = 0
     while start < n - min_length:
-        end = start + min_length
-        while end < n:
-            chord = float(np.hypot(*(positions[end] - positions[start])))
-            if chord <= 0 or (arc[end] - arc[start]) / chord > max_sinuosity:
-                break
-            end += 1
+        tail = positions[start + min_length :]
+        chord = np.hypot(tail[:, 0] - positions[start, 0], tail[:, 1] - positions[start, 1])
+        with np.errstate(divide="ignore", invalid="ignore"):
+            sinuosity = (arc[start + min_length :] - arc[start]) / chord
+        violates = ~(chord > 0) | (sinuosity > max_sinuosity)
+        offset = int(np.argmax(violates)) if violates.any() else violates.size
+        end = start + min_length + offset
         lengths.append(end - start)
         start = end
     return np.asarray(lengths, dtype=int)

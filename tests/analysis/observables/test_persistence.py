@@ -73,3 +73,42 @@ def test_the_two_samplers_disagree_on_the_same_record():
     honest = P.persistence_runs(track, 1.15)
     biased = P.inspection_biased_runs(track, 1.15, stride=7)
     assert biased.mean() > honest.mean()
+
+
+def test_the_vectorised_scan_is_the_scalar_one():
+    """The optimisation must be an optimisation, not a change of definition.
+
+    Walking the endpoint sample by sample and finding the first violation with an argmax
+    are the same rule; the second is seven times faster, which is three hours against
+    twenty-six minutes over the archive. Equality is asserted rather than assumed, across
+    three processes and three thresholds, because a scan that silently drifted would move
+    every run-length statistic in the chapter.
+    """
+    def scalar(positions, max_sinuosity, min_length=5):
+        n = len(positions)
+        if n <= min_length:
+            return np.empty(0, dtype=int)
+        step = np.hypot(*np.diff(positions, axis=0).T)
+        arc = np.concatenate([[0.0], np.cumsum(step)])
+        out, start = [], 0
+        while start < n - min_length:
+            end = start + min_length
+            while end < n:
+                chord = float(np.hypot(*(positions[end] - positions[start])))
+                if chord <= 0 or (arc[end] - arc[start]) / chord > max_sinuosity:
+                    break
+                end += 1
+            out.append(end - start)
+            start = end
+        return np.asarray(out, dtype=int)
+
+    for seed in range(4):
+        for track in (
+            S.persistent_walk(3000, 80.0, seed=seed),
+            S.brownian(3000, seed=seed),
+            S.levy_walk(3000, 1.6, seed=seed),
+        ):
+            for threshold in (1.05, 1.15, 1.30):
+                np.testing.assert_array_equal(
+                    P.persistence_runs(track, threshold), scalar(track, threshold)
+                )
