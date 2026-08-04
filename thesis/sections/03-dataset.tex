@@ -1116,7 +1116,10 @@ real dynamics intact.}
 \centering
 \small
 \renewcommand{\arraystretch}{1.15}
-\begin{tabular}{|p{3.1cm}|p{5.5cm}|p{3.4cm}|}
+% Ragged right in every narrow column. Justifying a 3 cm column forces TeX to stretch
+% a handful of words across it, which it reports as underfull boxes at badness 10000
+% and which reads as "Duplicate times-" hanging alone on a line.
+\begin{tabular}{|>{\raggedright\arraybackslash}p{3.1cm}|>{\raggedright\arraybackslash}p{5.5cm}|>{\raggedright\arraybackslash}p{3.4cm}|}
 \hline
 \textbf{Defect} & \textbf{Detected by} & \textbf{Action} \\
 \hline
@@ -2861,7 +2864,7 @@ the \protect\path{flights_meta} table the pipeline itself writes.}}
 \centering\footnotesize
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.2}
-\begin{tabular}{|c|p{2.2cm}|p{1.55cm}|p{4.1cm}|p{4.6cm}|c|}
+\begin{tabular}{|c|>{\raggedright\arraybackslash}p{2.2cm}|>{\raggedright\arraybackslash}p{1.55cm}|>{\raggedright\arraybackslash}p{4.1cm}|>{\raggedright\arraybackslash}p{4.6cm}|c|}
 \hline
  & \textbf{Stage} & \textbf{Level} & \textbf{Effect} & \textbf{Adopted parameters} & \textbf{Sec.} \\
 \hline
