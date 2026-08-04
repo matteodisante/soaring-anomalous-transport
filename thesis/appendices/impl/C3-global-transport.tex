@@ -200,6 +200,24 @@ has to be unbiased where the archive sits, at $H$ near \num{1}, which is the bou
 the family: on exact fractional Brownian motion of $H=0.99$ it returns \num{1.98}.}
 \end{revblock}
 
+\paragraph{\rev{First-passage times, and why they are not reported.}} \rev{The audit arrays
+keep each flight's position at every lag, so the first-passage time $T(L)$ --- the first time
+a flight is $L$ from take-off --- costs no traversal, and
+$\langle T(L)\rangle\sim L^{1/H}$ would give the exponent in the space domain, independently
+of any moment fitted over lags. It was computed and is not reported, for a reason worth
+recording so it is not attempted again.
+Read naively it returns $\alpha=2.46$, which no process with stationary increments can give.
+The cause is right censoring: at \SI{34}{\kilo\metre} only a quarter of paraglider flights
+arrive and the missing three quarters are the slow ones. Treating non-arrival as censored and
+taking a Kaplan--Meier median instead returns \num{1.95} and \num{2.03}, inside the quoted
+interval --- but refitting over sub-ranges of radius moves that between \num{1.51} and
+\num{2.03}, a spread five times the uncertainty it was meant to check.
+The reason is the one this chapter already gives for the ensemble MSD. $T(L)$ is measured
+from take-off, so it shares that estimator's origin: at small $L$ the wing is still climbing
+out inside its launch area, and at large $L$ the censored median extrapolates past the
+duration of most flights. It is the same crossover seen along the space axis instead of the
+time axis, and it is not an independent check on anything.}
+
 \subsection{\rev{Known limitations, with their size}}
 \begin{revblock}
 Four, each bounded rather than repaired.
