@@ -9,10 +9,18 @@ asks the questions that one moment cannot answer.
 for a monofractal process. The discrimination is visual and does not rest on a delicate
 fit, which is why it is worth a full pass over the archive.
 
-**Does the memory account for the displacement?** The velocity autocorrelation integrated
-by Green--Kubo must return the measured displacement. The two channels are built by
-different routes --- positions smoothed, velocities differentiated from them --- so
-agreement is a statement that the differentiation invented nothing.
+**Is the propagator Gaussian?** The second and fourth moments already carry the answer:
+:math:`\alpha_2=\langle|\Delta\mathbf{r}|^4\rangle/2\langle|\Delta\mathbf{r}|^2\rangle^2-1`
+vanishes for a Gaussian and is positive for heavier tails. It costs nothing beyond the
+spectrum and it separates two things the spectrum alone conflates --- one exponent for
+every moment is a statement about *scaling*, not about *shape*.
+
+**Does the memory account for the displacement?** The velocity autocorrelation and the
+displacement are two readings of one thing, joined by Green--Kubo. The two channels are
+built by different routes --- positions smoothed, velocities differentiated from them --- so
+comparing them catches a class of error in either. The comparison is made through the
+scaling form and is one-sided; the reason is in
+``soaring.analysis.observables.persistence``.
 
 **Is there a separation of scales?** The persistence runs say how far the wing goes before
 it turns. If their tail index is stable as the geometric threshold is scanned, there is a
@@ -48,6 +56,10 @@ SINUOSITIES = (1.05, 1.15, 1.30)
 _SINUOSITY_WORD = {1.05: "Straight", 1.15: "Gentle", 1.30: "Loose"}
 MIN_SAMPLES = 500
 
+# The window every exponent in Chapter 3 is fitted on. Quantities that are sensitive to the
+# far tail are quoted over it and drawn beyond it.
+TRANSPORT_RANGE_S = (60.0, 2000.0)
+
 _PDF_METADATA = {"Creator": "soaring.analysis", "Producer": "soaring.analysis", "CreationDate": None}
 
 
@@ -58,7 +70,7 @@ def load(slug: str, audit_dir: Path):
 
 def measure(discipline: str, data: dict, macros: dict) -> dict:
     from soaring.analysis.observables.moments import bilinear_fit
-    from soaring.analysis.observables.persistence import tail_index
+    from soaring.analysis.observables.persistence import tail_index, vacf_tail_exponent
 
     tag = DISCIPLINES[discipline][1]
     lags, q_grid = data["lags_s"], data["q_grid"]
@@ -92,6 +104,38 @@ def measure(discipline: str, data: dict, macros: dict) -> dict:
     put("TailMaxPct", f"{100 * np.nanmax(tail[usable]):.0f}")
     put("TailAtQMaxPct", f"{100 * np.nanmedian(tail[usable, -1]):.0f}")
 
+    # The non-Gaussian parameter, which the second and fourth moments already carry:
+    # alpha_2 = <|dr|^4> / (2 <|dr|^2>^2) - 1, zero for a two-dimensional Gaussian. Read on
+    # the increment rather than on the position, which is the frame the rest of the chapter
+    # trusts; on the position it would measure the launch geometry again.
+    #
+    # It is quoted over TRANSPORT_RANGE_S and not over the whole grid. Above it the curve
+    # climbs steeply, but that is where the declared task takes the trajectory over and
+    # where a fourth moment is carried by the fewest flights, so a maximum read there would
+    # be a statement about the scoring rule. The range is the one every exponent in the
+    # chapter is fitted on, and the full curve is drawn so the climb is visible.
+    non_gaussian = None
+    two = int(np.argmin(np.abs(q_grid - 2.0)))
+    four = int(np.argmin(np.abs(q_grid - 4.0)))
+    if abs(q_grid[two] - 2.0) < 1e-9 and abs(q_grid[four] - 4.0) < 1e-9:
+        non_gaussian = moment[:, four] / (2.0 * moment[:, two] ** 2) - 1.0
+        quoted = (
+            usable
+            & np.isfinite(non_gaussian)
+            & (lags >= TRANSPORT_RANGE_S[0])
+            & (lags <= TRANSPORT_RANGE_S[1])
+        )
+        if quoted.any():
+            put("NonGaussMinS", f"{lags[quoted][0]:.0f}")
+            put("NonGaussMaxS", f"{lags[quoted][-1]:.0f}")
+            put("NonGaussMin", f"{np.nanmin(non_gaussian[quoted]):+.2f}")
+            put("NonGaussMax", f"{np.nanmax(non_gaussian[quoted]):+.2f}")
+            put("NonGaussMedian", f"{np.nanmedian(non_gaussian[quoted]):+.2f}")
+            put("NonGaussDrift", f"{non_gaussian[quoted][-1] - non_gaussian[quoted][0]:+.2f}")
+        beyond = usable & np.isfinite(non_gaussian) & (lags > TRANSPORT_RANGE_S[1])
+        if beyond.any():
+            put("NonGaussBeyond", f"{np.nanmax(non_gaussian[beyond]):+.2f}")
+
     # The velocity memory.
     vacf = data.get("vacf", np.zeros(0))
     good = np.isfinite(vacf) & (vacf != 0)
@@ -103,32 +147,48 @@ def measure(discipline: str, data: dict, macros: dict) -> dict:
         negative = np.flatnonzero(good & (vacf < 0))
         put("VacfSignChangeS", f"{lags[negative[0]]:.0f}" if negative.size else "never")
 
+        # The tail of the memory against the exponent of the motion: two readings of one
+        # thing, joined by Green-Kubo in its scaling form. One-sided, so it is reported as
+        # the bound it is rather than as an agreement.
+        positive = good & (vacf > 0)
+        gamma, implied, n_lags = vacf_tail_exponent(lags[positive], vacf[positive])
+        if n_lags:
+            put("VacfTailGamma", f"{gamma:.2f}")
+            put("VacfTailLags", f"{n_lags}")
+            put("VacfTailMinS", f"{lags[positive][0]:.0f}")
+            put("VacfTailMaxS", f"{lags[positive][-1]:.0f}")
+            put("VacfImpliedAlphaFloor", f"{implied:.2f}")
+            put("VacfIntegrable", "yes" if gamma > 1.0 else "no")
+
     # The persistence runs, scanned over the geometric threshold.
-    betas = []
+    betas: dict[float, float] = {}
     for sinuosity in SINUOSITIES:
         lengths = data.get(f"runs_{str(sinuosity).replace('.', 'p')}", np.zeros(0))
         if lengths.size < 100:
             continue
         beta, cut = tail_index(lengths)
-        betas.append(beta)
+        betas[sinuosity] = beta
         name = _SINUOSITY_WORD[sinuosity]
         put(f"Beta{name}", f"{beta:.2f}")
         put(f"Median{name}S", f"{np.median(lengths):.0f}")
         put(f"Runs{name}", f"{lengths.size}")
         put(f"Cut{name}S", f"{cut:.0f}")
     if len(betas) > 1:
-        put("BetaSpread", f"{max(betas) - min(betas):.2f}")
-        put("BetaStable", "no" if max(betas) - min(betas) > 0.3 else "yes")
+        spread = max(betas.values()) - min(betas.values())
+        put("BetaSpread", f"{spread:.2f}")
+        put("BetaStable", "no" if spread > 0.3 else "yes")
 
     return {"lags": lags, "q_grid": q_grid, "q_nu": q_nu, "usable": usable,
-            "moment": moment, "tail": tail, "vacf": vacf, "fit": fitted, "data": data}
+            "moment": moment, "tail": tail, "vacf": vacf, "fit": fitted, "data": data,
+            "gamma": float(macros.get(f"StatShape{tag}VacfTailGamma", "nan")),
+            "non_gaussian": non_gaussian, "betas": betas}
 
 
 def draw(measured: dict):
     import matplotlib.pyplot as plt
 
-    fig, axes = plt.subplots(2, 2, figsize=(11.4, 7.6))
-    (spec_ax, tail_ax), (vacf_ax, runs_ax) = axes
+    fig, axes = plt.subplots(2, 3, figsize=(13.8, 7.4))
+    (spec_ax, tail_ax, gauss_ax), (vacf_ax, runs_ax, beta_ax) = axes
 
     for discipline, m in measured.items():
         colour = COLORS[discipline]
@@ -138,9 +198,22 @@ def draw(measured: dict):
                      label=f"{discipline}, $q\\nu={m['fit']['linear_slope']:.2f}q$")
         tail_ax.plot(q, np.nanmedian(m["tail"][m["usable"]], axis=0), "o-", color=colour, ms=4,
                      label=discipline)
-        good = np.isfinite(m["vacf"]) & (m["vacf"] != 0)
+        # Log-log, not semilog: the statement about C is that its tail is a power law, and
+        # a semilog axis hides exactly that.
+        good = np.isfinite(m["vacf"]) & (m["vacf"] > 0)
         if good.any():
-            vacf_ax.semilogx(m["lags"][good], m["vacf"][good], color=colour, label=discipline)
+            vacf_ax.loglog(m["lags"][good], m["vacf"][good], color=colour, label=discipline)
+            if np.isfinite(m["gamma"]):
+                tau = m["lags"][good]
+                reference = m["vacf"][good][0] * (tau / tau[0]) ** -m["gamma"]
+                vacf_ax.loglog(tau, reference, "--", color=colour, lw=0.9,
+                               label=f"{discipline}, $\\tau^{{-{m['gamma']:.2f}}}$")
+        if m["non_gaussian"] is not None:
+            keep = m["usable"] & np.isfinite(m["non_gaussian"])
+            gauss_ax.semilogx(m["lags"][keep], m["non_gaussian"][keep], "o-", color=colour,
+                              ms=3, label=discipline)
+
+        betas = []
         for sinuosity, style in zip(SINUOSITIES, ("-", "--", ":")):
             lengths = m["data"].get(f"runs_{str(sinuosity).replace('.', 'p')}", np.zeros(0))
             if lengths.size < 100:
@@ -149,6 +222,10 @@ def draw(measured: dict):
             survival = np.array([(lengths >= e).mean() for e in edges])
             runs_ax.loglog(edges, survival, style, color=colour, lw=1.1,
                            label=f"{discipline}, $s\\leq{sinuosity}$")
+            betas.append((sinuosity, m["betas"].get(sinuosity, np.nan)))
+        if betas:
+            beta_ax.plot([s for s, _ in betas], [b for _, b in betas], "o-", color=colour,
+                         ms=5, label=discipline)
 
     spec_ax.set_xlabel("$q$")
     spec_ax.set_ylabel(r"$q\,\nu(q)$")
@@ -157,13 +234,24 @@ def draw(measured: dict):
     tail_ax.set_xlabel("$q$")
     tail_ax.set_ylabel("share of the moment in its largest 1\\%".replace("\\", ""))
     tail_ax.set_title("(b) tail control", fontsize=10, loc="left")
-    vacf_ax.axhline(0.0, color="0.4", lw=0.8)
     vacf_ax.set_xlabel(r"$\tau$ (s)")
     vacf_ax.set_ylabel(r"$C(\tau)$")
-    vacf_ax.set_title("(c) velocity autocorrelation", fontsize=10, loc="left")
+    vacf_ax.set_title("(d) velocity autocorrelation, and its tail", fontsize=10, loc="left")
+    # The Gaussian value is zero, and the two calibrations bracket what the archive shows.
+    gauss_ax.axhline(0.0, color="0.4", lw=0.8, ls="--")
+    gauss_ax.axhline(0.56, color="0.6", lw=0.8, ls=":")
+    gauss_ax.axvspan(*TRANSPORT_RANGE_S, color="0.85", alpha=0.5, zorder=0)
+    gauss_ax.text(0.02, 0.96, "Gaussian $=0$, Levy walk $\\simeq 0.56$;\nshaded: the quoted range",
+                  fontsize=7, transform=gauss_ax.transAxes, va="top")
+    gauss_ax.set_xlabel(r"$\Delta$ (s)")
+    gauss_ax.set_ylabel(r"$\alpha_2(\Delta)$")
+    gauss_ax.set_title("(c) non-Gaussian parameter", fontsize=10, loc="left")
     runs_ax.set_xlabel("run duration (s)")
     runs_ax.set_ylabel("$P(T>\\tau)$")
-    runs_ax.set_title("(d) persistence runs, by geometric threshold", fontsize=10, loc="left")
+    runs_ax.set_title("(e) persistence runs, by geometric threshold", fontsize=10, loc="left")
+    beta_ax.set_xlabel(r"sinuosity threshold $s_{\max}$")
+    beta_ax.set_ylabel(r"tail index $\beta$")
+    beta_ax.set_title("(f) and how the tail index moves with it", fontsize=10, loc="left")
     for ax in axes.ravel():
         ax.legend(frameon=False, fontsize=7)
     fig.tight_layout()
