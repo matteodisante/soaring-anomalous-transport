@@ -597,11 +597,18 @@ pass over data already on disk, and it is the measurement this thesis most needs
 
 | check | result |
 |---|---|
-| `pytest` | **459 passed**, and again with `-W error::RuntimeWarning` |
-| `check_generated_macros.py` | 655 written, 336 quoted, **0 quoted and never written**, 0 unusable names; 12 typed-literal collisions reported, 5 of them coincidences with design constants |
+| `pytest` | **466 passed**, and again with `-W error::RuntimeWarning` |
+| `check_generated_macros.py` | 659 written, 338 quoted, **0 quoted and never written**, 0 unusable names |
 | `check_reproducible.py --sample 250` | **500 flights recomputed from the raw IGC, 0 disagree** |
 | `regenerate.sh` | 7 of 7 reductions **byte-identical**; the shape traversal re-run in full (155,788 + 6,132 flights); `verify_dataset.py` started and stopped (§1.4) |
-| thesis build, `latexmk -halt-on-error` | **0 errors, 0 overfull boxes, 0 undefined references, 114 pages** |
+| thesis build, `latexmk -halt-on-error` | **0 errors, 0 overfull boxes, 0 undefined references, 9 underfull, 115 pages** |
 | logbook build | clean |
 | `mkdocs build --strict` | clean |
 | `git status` | clean |
+
+One thing this table cannot yet say. `persistence_runs` was corrected after the archive pass
+had run, so `shape.tex`'s run counts and medians still descend from the estimator that padded
+unvalidated stretches to five samples. The corrected pass is running; the tail indices the
+chapter quotes are the statistics that do not move, and the counts and medians are not quoted
+in the body at all. Re-run `generate_shape_figure.py` against the new arrays and the last of
+it is closed.
