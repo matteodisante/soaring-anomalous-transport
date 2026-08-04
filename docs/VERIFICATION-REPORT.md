@@ -190,11 +190,43 @@ strata spread it by at most 0.06 where they spread the ensemble MSD by 40–62 %
 Swept for the banned register. 18 candidate hits, all false positives on inspection: TikZ
 `\draw[very thick]`, a quotation from the EN standard, and ordinary uses of "the very same".
 
-### 3.2 Every sentence earns its place — **partial, and stated as such**
+### 3.2 Every sentence earns its place — **confirmed, and it was the largest yield**
 
-Not a complete sentence-by-sentence read of ~3 000 lines. What was done: the whole of
-Chapter 3 read closely, which produced Findings 1, 2, 3 and 7; the register sweep across the
-document; and the density measurement below. **This is the largest gap in this pass.**
+The whole document was read sentence by sentence, in ten regions covering every `.tex` file
+of body and appendices, and every finding was then passed to a second reader whose brief was
+to **refute** it — with instructions to default to refuted, and a list of the grounds on
+which a finding fails (the sentence does work the reviewer missed; the claim is supported
+elsewhere; the fix would lose a reader; the complaint is house style; the fix would break
+LaTeX). 109 findings survived that filter out of roughly 150.
+
+Of those, 22 were must-fix. Every one was re-verified here against the source, the code or
+the data before being applied — and that mattered: the review's own severity marks were
+sometimes generous, and one proposed remedy would have broken the hyperref anchors. What the
+109 contained, by kind:
+
+| kind | count | example |
+|---|---|---|
+| wrong number | 8 | the geodesy appendix printed the flattening where it meant $e^2/2$; a wing gaining 700 m in a 600 s stint at 1 m/s |
+| stale status | 6 | "the routine that walks a trajectory applying the three detectors is still to be built" — built, unit-tested, and the status table says so |
+| wrong description of the code | 4 | the parser described as clamping backward jitter with a running maximum, which `igc.py` deliberately stopped doing and says why |
+| claim wider than the evidence | 9 | "every transport statistic is reported per class and per orographic group" |
+| dangling or self-referential pointer | 5 | "the full forty-one are listed in Sec. X", where X is the section containing the sentence and the list is nowhere |
+| register | 7 | "and it is worth seeing why, because…" |
+
+The single most consequential was in an appendix nobody would check: the CTRW derivation
+expanded $1-\hat\psi(s)$ as $(\tau_0 s)^\alpha$, dropping the Tauberian $\Gamma(1-\alpha)$ that
+its own Eq. (1) implies. $K_\alpha$ was wrong by that factor. Every scaling conclusion in the
+appendix survives, because the constant multiplies the EA-MSD and the TA-MSD alike and
+cancels from their ratio — which is the appendix's whole point — but the constant was wrong.
+
+**The recurring fault, and it is worth naming.** Nine of the 109 are the same fault in
+different places: *the document describing a state of the work that was true when the
+sentence was written*. Status lines saying a stage is unbuilt, pointers into chapters that
+have since been split, a divider page stating a numbering rule the appendices no longer
+obeyed, an abstract calling a measured chapter a plan. Nothing here decays on its own; it
+decays because the work moved and the prose did not. The generated-macro contract exists to
+stop exactly this for *numbers*, and it works — 0 quoted macros were missing or stale. There
+is no equivalent guard for *claims about state*, and that is where the errors concentrated.
 
 ### 3.3 Structure and page density — **confirmed, one finding**
 
