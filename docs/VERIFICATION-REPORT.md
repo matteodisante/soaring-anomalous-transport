@@ -299,6 +299,84 @@ text block, checked on rendered pages as well as in the log.
 > through that region routinely. The limit is now taken explicitly. **Fixed**; the suite
 > passes with runtime warnings as errors.
 
+### 4.1a The correctness audit — **confirmed, ten defects**
+
+Seven areas of the analysis code were audited for defects that would make a published number
+wrong, with every suspicion required to be reproduced by a script before it counted, and
+every reproduction then passed to a skeptic briefed to refute it. Ten survived. Each was
+re-derived here before being acted on.
+
+**Two changed a published number.**
+
+> `persistence_runs` looked for the first sinuosity violation starting at
+> `start + min_length`, so a stretch that broke the threshold immediately was emitted as a
+> run of exactly that floor with its sinuosity **never checked**. On Brownian positions at
+> 1.05 that is 99.8 % of the runs, and 99.1 % of those violate the threshold that defines a
+> run; runs above the floor never violate it. The reported median run length was the floor
+> and tracked `min_length` exactly (3 → 3, 5 → 5, 8 → 8), so it was never a measurement, and
+> the run count was understated by about half. The tail index moves by up to 0.27 and its
+> spread across thresholds from 1.46 to 1.59 — so the chapter's conclusion, that no leg
+> duration is distinguished, survives and is firmer. **Fixed**; the archive pass is
+> re-running.
+>
+> Neither existing test could have caught it. The equivalence test compared the vectorised
+> scan against a scalar reference carrying the *identical* floor — written from the same
+> misunderstanding — and the tiling test is satisfied perfectly by floor-length runs.
+
+> `bilinear_fit` returned `np.std` for three fields named `rms`, and quoted as "in rms" by
+> the chapter. The least-squares line through the origin sets $\sum q r = 0$ and leaves
+> $\sum r$ free, so std is strictly the smaller: 0.0099 published where the rms is 0.0108.
+> **Fixed**, including in the gate that declares a knee, where the change is conservative in
+> the right direction. No test read any of the three fields.
+
+**One overturned a piece of evidence.** See §4.1b.
+
+**Three were in the validation itself**, which is the class that invalidates everything
+downstream rather than one number: `persistent_walk` restarted its heading from zero after
+the first step, giving every realisation a course along $+x$; `_fgn_hosking` updated the
+Durbin–Levinson coefficients in place, so from order three it read entries it had already
+overwritten and its output was not stationary; and `cluster_labels` wrote synthetic ids into
+a narrow categorical-codes array where they wrap past 127, silently merging unkeyed rows
+into real clusters. All fixed, all now pinned against theory rather than against another
+implementation.
+
+The remaining four are a segment counted as a flight, two mismatched-population ratios in
+the audit, and a departure time read only at the lag grid.
+
+### 4.1b The runs test was read against a null the data cannot satisfy — **confirmed**
+
+The chapter's evidence that neither MSD estimator is a power law was a Wald–Wolfowitz $z$ of
+−4.9 to −5.8 against a normal table. That table assumes the residual signs are independent
+draws, and on curves every lag of which averages the same flights they are not: the measured
+lag-1 residual autocorrelation is **0.89 to 0.95 on all four**.
+
+Simulated here — an exact power law observed with AR(1) noise of that correlation, on the
+same forty-lag grid:
+
+| $\rho$ | how often $|z|>2$ rejects an exact power law | 5 % critical $|z|$ |
+|---|---|---|
+| 0.0 | 3.7 % | 1.94 |
+| 0.5 | 41 % | 3.50 |
+| 0.8 | 84 % | 4.80 |
+| 0.9 | 90 % | 5.12 |
+
+The two time-averaged values the chapter called decisive, −4.86 and −4.97, sit **below** the
+threshold. **The test as reported did not establish what it was asked to establish.** This is
+the second assumed null this project has been caught by; the first was the breakpoint
+surrogate, found earlier in this same session's implementation phase.
+
+Calibrating the null on the *observed* residual autocorrelation would be circular in exactly
+the same way — a bent curve has correlated residuals *because* of the bend — so the
+conclusion now rests on a comparison that needs no null. Each lag is a mean over the flights
+covering it and carries a standard error the stored 10–90 band and count give directly. The
+residual is **51, 22, 28 and 27 times** that error on the four curves. A departure twenty to
+fifty times the error on each point is not scatter, whatever its arrangement, and the band is
+converted on a normal equivalence that understates a skewed spread, so each ratio is a lower
+bound.
+
+The conclusion is unchanged and better supported. The runs count stays in the chapter as a
+description of the arrangement, explicitly not as a test.
+
 ### 4.2 Comprehensibility — **confirmed**
 
 Module docstrings say why the module exists separately; function docstrings say what is
