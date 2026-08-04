@@ -59,6 +59,24 @@ Stats macros; Tables~\ref{tab:seasons-para},~\ref{tab:seasons-hang} &
   \path{generate_stats.py} &
   Reads committed \path{data/*/seasons_index.csv}; instant; part of the pre-commit hook. \\
 \hline
+\rev{The three processed tables (Sec.~\ref{impl:onDisk})} & \rev{\path{../preprocess.py}} &
+  \rev{Runs stages (i)--(vii) over an archive; ${\sim}\SI{80}{\minute}$ for both
+  disciplines on 8 workers. \path{../verify_dataset.py} checks the result against the
+  invariants of Ch.~\ref{ch:dataset}.} \\
+\hline
+\rev{Figure~\ref{fig:msd}; \texttt{\textbackslash StatMsd*}} & \rev{\path{generate_msd_figure.py}} &
+  \rev{Streams \path{fixes.parquet} once, through
+  \path{soaring.analysis.derived.stream_flights}, and accumulates in that single pass
+  both estimators and the three fixed-duration cohorts (Sec.~\ref{sec:obs-global});
+  ${\sim}\SI{20}{\minute}$ on the paraglider archive. The cohorts cost nothing beyond
+  three more accumulators, because the expensive step is the read. \path{--redraw}
+  re-renders the figure from the written \path{msd_curve.csv} in a second, without
+  touching the archive: nothing there recomputes an estimator, so a change to the drawing
+  need not cost another pass over $10^{9}$ rows.} \\
+\hline
+\rev{Table~\ref{tab:pipecensus}; \texttt{\textbackslash StatPipe*}} & \rev{\path{generate_pipeline_census.py}} &
+  \rev{Queries \path{flights_meta.parquet}; instant.} \\
+\hline
 Census macros (\texttt{\textbackslash StatScan\dots}) &
   \path{generate_census_stats.py} &
   Reads the cached track scans on the SSD (never rescans); instant; best-effort in the
@@ -70,6 +88,37 @@ Census macros (\texttt{\textbackslash StatScan\dots}) &
   \path{configs/preprocessing.yaml}}\flow{, and re-exports those thresholds as the
   \texttt{\textbackslash Preproc*} macros quoted by the pipeline map
   (Table~\ref{tab:pipelinemap})}\rev{.} \\
+\hline
+\rev{--- (all of the above, in order)} & \rev{\path{../regenerate.sh}} &
+  \rev{Runs every row of this table that depends on the processed dataset, in the one
+  order that is correct, and refuses to start while \path{preprocess.py} is still
+  writing. The ordering is a real constraint rather than a convenience: the driver
+  rewrites \path{<data_root>/derived/} in place and completes \path{flights_meta} only
+  after its last flight, so a generator run against a live archive reads a partial
+  fix table beside the previous run's metadata and produces numbers that are wrong and
+  look right. That happened once. The macro contract below is checked before the build,
+  because an undefined generated macro inside a \texttt{\textbackslash SI} is a fatal
+  \LaTeX{} error rather than a warning.} \\
+\hline
+\rev{--- (a check, not a product)} & \rev{\protect\path{../check_reproducible.py}} &
+  \rev{Asks the question the version stamp cannot answer for itself: are the stored
+  tables the ones \emph{this} code writes? A seeded sample of retained flights is found
+  in the raw archive, run through \path{run_flight} as it stands, and compared with the
+  stored rows column by column---row count, every boolean flag exactly, every kinematic
+  column to the storage precision. A stored table can disagree with the version it names
+  for reasons no invariant check can see: a run interrupted and resumed from a different
+  commit, a rule edited while the archive was being written, a version bumped without
+  re-running. On the present dataset \num{500} flights over both disciplines reproduce
+  identically, the largest departure being \SI{0.016}{\metre}---the \texttt{float32}
+  quantum at a coordinate of \SI{100}{\kilo\metre}.} \\
+\hline
+\rev{--- (a check, not a product)} & \rev{\protect\path{check_generated_macros.py}} &
+  \rev{Reads both sides of the contract this table describes---the macros
+  \path{thesis/generated/} writes, and the macros the thesis quotes---and fails if the
+  second is not contained in the first. Instant, needs no data. It exists because the
+  failure it catches is otherwise an undefined control sequence buried in a build log,
+  and because a number argued for in the text before its generator knows about it is the
+  one way the thesis can quote something no script ever computed.} \\
 \hline
 Figure~\ref{fig:altnoise} &
   \path{generate_altitude_noise_figure.py} &
@@ -84,6 +133,32 @@ Savitzky--Golay $\tau_c$ (config values) &
   \path{estimate_savgol_timescales.py} &
   Prints the measured spectral knees (Sec.~\ref{impl:savgol}); adopting them in the YAML
   is a deliberate edit. Needs the raw IGC archive. \\
+\hline
+\rev{--- (an analysis product)} & \rev{\protect\path{audit_msd.py}} &
+  \rev{A second streaming pass over \path{fixes.parquet}, keeping each flight's position
+  at every lag instead of only the average over flights (Sec.~\ref{impl:obs-global}).
+  Writes to \path{--out}, outside the repository. Comparable in cost to the MSD pass.} \\
+\hline
+\rev{\texttt{\textbackslash StatAudit*}} & \rev{\protect\path{audit_msd_report.py}} &
+  \rev{Reduces the audit arrays, the curve CSV and the segment and flight tables into the
+  audit macros: the residual each estimator leaves against its own fitted power law, the
+  local slope recomputed on fixed-cadence and fixed-duration sub-ensembles, the
+  common-heading share, the departure time from the launch area, and the pre-processing
+  losses decomposed by rule. Seconds, given \path{--audit-dir}.} \\
+\hline
+\rev{--- (a committed input)} & \rev{\protect\path{build_basemap.py}} &
+  \rev{Fetches Natural Earth admin-0 countries once, crops them to the three map frames,
+  decimates and writes \path{data/basemap.json} (\SI{0.76}{\mega\byte}, committed). Run
+  only to change a panel's extent; everything downstream then draws offline with no
+  geospatial stack (Sec.~\ref{impl:prelim}). Needs the network.} \\
+\hline
+\rev{Figures~\ref{fig:prelim-map}, \ref{fig:prelim-ensemble}, \ref{fig:prelim-strata},
+  \texttt{\textbackslash StatPrelim*}} &
+  \rev{\protect\path{generate_prelim_figure.py}} &
+  \rev{Sec.~\ref{sec:prelim}: the retained-ensemble statistics, the three take-off maps,
+  the isotropy check, and the ensemble MSD within wing class, orographic group and season.
+  Reads the audit arrays rather than the fix table (Sec.~\ref{impl:prelim}), so a
+  stratified MSD is a row selection. Seconds, given \path{--audit-dir}.} \\
 \hline
 \end{tabular}
 \caption{Script that regenerates each auto-generated thesis figure or table. Run as

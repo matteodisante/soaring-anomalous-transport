@@ -2,14 +2,216 @@
 \label{impl:analysis}
 The sections below mirror Chapter~\ref{ch:next-steps}, which -- since pre-processing and
 preliminary characterization now live in Chapter~\ref{ch:dataset}'s mirror
-(Sec.~\ref{impl:dataset}) -- starts from ``Observables on the whole trajectory.'' None of
-this analysis code exists yet, so each entry is a placeholder rather than a populated
-record; each will gain its own implementation content (module names, sample sizes,
-reproduction commands) as that code is written.
+(Sec.~\ref{impl:dataset}) -- starts from ``Observables on the whole trajectory.''
+\rev{Of that chapter only the two mean-squared-displacement estimators and their audit are
+built, and Sec.~\ref{impl:obs-global} is a populated record of them. The remaining
+sections are placeholders, and each will gain its own implementation content (module
+names, sample sizes, reproduction commands) as that code is written.}
 
 \section{Observables on the whole trajectory}
 \label{impl:obs-global}
-Not yet implemented; see Sec.~\ref{sec:obs-global}.
+\rev{The mean-squared displacement of Sec.~\ref{sec:obs-global} is implemented and
+unit-tested; the rest of the section's observables are not. The estimators live in
+\path{soaring.analysis.transport} and the figure, the curve table and the
+\texttt{\textbackslash StatMsd*} macros come from one pass of
+\path{generate_msd_figure.py} (Table~\ref{tab:impl-repro}). A second pass,
+\path{audit_msd.py}, keeps what the first one averages away, and
+\path{audit_msd_report.py} reduces it into the \texttt{\textbackslash StatAudit*}
+macros; both are described at the end of this section.}
+
+\subsection{\rev{The two estimators}}
+\rev{\path{MSDAccumulator} builds the ensemble average and \path{TAMSDAccumulator} the
+time average. Both accumulate by streaming rather than by loading: the \path{fixes} table
+runs to ${\sim}1.4\times10^{9}$ rows over the two archives, and neither estimator needs
+more than one flight in memory at a time.}
+
+\paragraph{\rev{Coverage.}} \rev{A flight answers a lag $t$ with the fix nearest to it,
+and only if two conditions hold: that fix lies within $\max(\SI{0.5}{\second},\Delta
+t/2)$ of $t$, and $t\ge\Delta t$, where $\Delta t$ is the median inter-fix time of the
+flight's own concatenated segments. The second condition is the one that is easy to omit
+and expensive to omit. Without it a \SI{5}{\second} logger asked for a lag of
+\SI{1}{\second} answers with its fix at $t=0$---a displacement of exactly zero---and a
+slow-cadence minority drags the short-lag MSD down until the grid crosses their step. The
+same rule appears in the time-averaged estimator, which refuses any lag below its
+segment's own step. A lag falling inside a gap between two retained segments is answered
+by neither side, since the split bound (Sec.~\ref{sec:uniform}) makes every gap wider than
+the tolerance.}
+
+\paragraph{\rev{The lag grid.}} \rev{\path{log_lag_grid} spaces \num{90} points
+geometrically from \SI{1}{\second} to \SI{43200}{\second}, the duration bound of the
+flight-level filter, and snaps them to the second. The snapping is what makes the short
+end usable: unsnapped, lags of \num{1.00}, \num{1.13} and \num{1.27} seconds all resolve
+to the same fix at a \SI{1}{\hertz} cadence, and the curve there is a staircase of
+repeated values whose local slope alternates between zero and a spurious spike. Snapping
+merges them instead, which is why the grid delivers \num{80} distinct lags rather than
+\num{90}, and why the lags below \SI{8}{\second} are consecutive integers. At long lags
+the rounding is a part in $10^4$. The consecutive-integer run is also what lets the
+coverage artefact of Sec.~\ref{sec:obs-global} have a period; that is the cost of the
+snapping, it is measured below, and it sits an order of magnitude below the lower end of
+every fit range.}
+
+\paragraph{\rev{The time average.}} \rev{\path{time_averaged_msd} is computed within a
+segment, never across the gap that ends it. The direct double loop is $O(n^2)$ and
+hopeless at $10^4$ samples per segment; writing $D_j=|\mathbf{r}_j|^2$, the identity
+$\overline{\delta^2}(k)=\langle D_j+D_{j+k}\rangle_j-2\langle
+\mathbf{r}_j\cdot\mathbf{r}_{j+k}\rangle_j$ turns the second term into an
+autocorrelation, which the FFT gives in $O(n\log n)$. The curve is cut at half a segment's
+length, beyond which the average over starting times has too few of them to be one.}
+
+\subsection{\rev{The fit, and what is quoted from it}}
+\paragraph{\rev{The range.}} \rev{The lower end is an argument, not a consequence: at
+\SI{120}{\second} it sits above the thermalling period, so what the slope measures is
+transport rather than the circling superimposed on it, and above the whole region the
+short-lag artefacts occupy. The upper end is a consequence.
+\path{coverage_limited_range} walks the count-per-lag curve and cuts where it has fallen
+to \path{min_coverage} = \num{0.25} of its value at the lower end; past that the curve is
+an average over a survivorship-selected minority. Applied to the four curves this gives
+the ranges quoted with each exponent.}
+
+\paragraph{\rev{The two errors.}} \rev{\path{fit_msd_exponent} fits unweighted in log
+space, which gives every decade the same say; a fit weighted by the much larger absolute
+errors at long lags would be dominated by the last decade alone. It returns the
+least-squares error on the slope, which is written out as
+\texttt{\textbackslash StatMsd*AlphaErrOls} and is \emph{not} the quoted uncertainty.
+\path{bootstrap_alpha_error} resamples \num{200} ensembles of flights with replacement,
+refits each over the same range, and reports the standard deviation; that is the quoted
+$\pm$. The argument for preferring it, and the synthetic check that establishes it
+measures sampling uncertainty, are in Sec.~\ref{sec:obs-global}.}
+
+\paragraph{\rev{The cohorts.}} \rev{Three fixed-duration cohorts at $T=1$, $2$ and
+\SI{4}{\hour}. Within a cohort every member is present at every lag up to $T$, so the
+population is constant by construction and any remaining growth is motion; each is
+therefore fitted from the range's lower end up to its own $T$, which is as far as the
+guarantee reaches. The time-averaged cohorts are keyed on segment span and capped at
+$T/2$, for the same reason the time-averaged curve is. A cohort is compared against the
+\emph{pooled curve refitted over the cohort's own lags}, never against the pooled
+exponent over the pooled range: the local slope is not constant across those two spans, so
+the naive comparison charges the shape of the curve to the change of population. Both
+readings are generated (\texttt{\textbackslash StatMsd*CohortSpread} and
+\texttt{*CohortSpreadNaive}), and on the ensemble estimator they differ by a factor of
+five, which is the size of the mistake avoided.}
+
+\paragraph{\rev{The local slope, and why it is a regression.}}
+\begin{revblock}
+The panel that carries the most interpretation is the one whose estimator is easiest
+to get wrong. The local slope is $\mathrm{d}\log\mathrm{MSD}/\mathrm{d}\log t$, and the
+obvious way to compute it---a centred difference between neighbouring lags---divides by
+the grid spacing, which on the logarithmic grid used here is about \num{0.05} decades.
+The division multiplies whatever scatter the curve carries by $1/(2\times0.05)\approx4$:
+a point-to-point scatter of a few tenths of a per cent in the MSD, which is about what the
+ensemble's own standard error allows, becomes a slope that jitters by \num{0.05} and reads
+as noise. The panel then testifies against a curve that is not in fact noisy.
+
+\path{soaring.analysis.transport.local_slope} therefore works on a window: at each lag it
+takes the points within \num{0.15} decades on either side---five to six at this grid
+spacing---and reports the \emph{median of the slopes of all pairs} of them, a Theil--Sen
+estimator. The choice is for resistance to a single displaced lag rather than to a
+heavy-tailed residual, which is the failure this curve actually has: a coverage artefact
+of a few per cent at one lag tilts a least-squares window and moves a median by nothing.
+The uncertainty reported with it, and drawn as a band, is the interquartile range of those
+pairwise slopes divided by \num{1.35} and by the square root of the window's size---the
+window's own scatter about its line, expressed as an error on the slope. Over the fitted
+range it is \num{0.017}, against a point-to-point variation of \num{0.052}: the curve
+moves more between neighbouring lags than the scatter within a window accounts for, which
+is the quantitative statement that what the panel shows is structure and not noise. The
+half-width is a stated compromise rather than a tuned one: narrower and the amplification
+returns, wider and a genuine bend is flattened into the straight line the panel exists to
+test for; \num{0.15} decades resolves a crossover of half a decade. It is not a smoother
+in disguise. The residual wiggle of this archive is correlated across some four grid
+points, so it survives the window---which is the right outcome for something that is not
+noise, and the reason the window is reported with the figure rather than chosen to make
+the curve look better.
+\end{revblock}
+
+\subsection{\rev{The audit pass}}
+\begin{revblock}
+The ensemble curve turned out not to be a power law (Sec.~\ref{sec:obs-global}), and
+none of the questions that decides---is the shape the coverage rule, the survivorship, a
+shared heading, or the motion---can be asked of an averaged curve after the fact. Each is
+a different reduction of the same per-flight quantity, and that quantity is gone by the
+time the average exists.
+
+\path{audit_msd.py} therefore makes a second streaming pass and writes what the first one
+discards: one row per flight and one column per lag, holding each flight's $E$ and $N$ at
+that lag under the estimator's own coverage rule, \path{NaN} where it does not cover it,
+plus a per-flight summary (duration, path, native step, mean-velocity components, largest
+in-segment step speed, coordinate extent). The coverage rule is \emph{copied} into that
+script rather than imported, so that a change to the estimator surfaces as a disagreement
+between the figure and the audit instead of being tracked silently. The arrays run to a
+few hundred megabytes per discipline and are analysis products, not thesis ones: they live
+outside the repository, under \path{AUDIT_DIR}.
+
+\path{audit_msd_report.py} reduces them, together with the curve table
+\path{msd_curve.csv} and the segment and flight tables, into
+\texttt{\textbackslash StatAudit*}. Everything the audit asserts in the body reaches it
+through those macros. What it computes: the rms residual each estimator leaves against
+the power law fitted to it, in dex and as a percentage; the range of the local slope over
+the fitted decades; the mean vector's share of the mean square,
+$|\langle\mathbf{r}\rangle|^2/\langle|\mathbf{r}|^2\rangle$; the local slope recomputed on
+sub-ensembles of a single native cadence, where the population cannot change, and on
+fixed-duration cohorts, where it cannot be selected; the first-crossing time of
+\SI{5}{\kilo\metre} from take-off, per flight; the per-component variance ratio and the
+Kolmogorov--Smirnov distance between the $E$ and $N$ marginals; and the pre-processing
+losses of Table~\ref{tab:pipecensus} decomposed by the rule that caused them.
+
+Two of its numbers are worth naming here because they are checks on the pipeline rather
+than on the estimator. The retained tables carry
+\num{\StatAuditParaNonFiniteFixes} non-finite coordinates and
+\num{\StatAuditParaNonMonotoneFlights} non-monotone clocks, which is what
+Sec.~\ref{impl:verify} asserts and this pass confirms independently. And the flights whose
+first retained segment did not survive resampling start their record at $t>0$ rather than
+at the origin---\SI{\StatAuditParaLateStartPct}{\percent} of paraglider and
+\SI{\StatAuditHangLateStartPct}{\percent} of hang-glider flights. Their position is still
+measured from their own take-off, since the ENU frame is anchored there and a dropped
+segment does not move it; they simply do not answer the lags before their record starts.
+For the rest, the position at $t=0$ is the origin to within
+\SI{\StatAuditParaOriginMedianM}{\metre} in the median, the smoothing's displacement of
+the first sample.
+\end{revblock}
+
+\subsection{\rev{Known limitations, with their size}}
+\begin{revblock}
+Four, each bounded rather than repaired.
+
+\emph{Edge samples enter.} The smoothing evaluates its polynomial off-centre at the ends
+of a segment and the table flags those samples \path{edge} (Sec.~\ref{sec:savgol}).
+\path{verify_dataset.py} qualifies its invariants by that flag---which is why its speed
+invariant holds---and the MSD estimators do not, and read every fix. Those samples are
+under \SI{1}{\percent} of the table and account for
+\num{\StatVerifyParaEdgeStepsOver} of the \num{\StatVerifyParaEdgeStepsOver}${}+{}$%
+\num{\StatVerifyParaMeasuredStepsOver} in-segment steps above the fix-level speed bound,
+\SI{\StatVerifyParaEdgeStepsPct}{\percent} of all steps. The worst step between two
+\emph{measured} samples is \SI{\StatVerifyParaWorstMeasuredMs}{\metre\per\second} against
+a bound of \SI{45}{\metre\per\second}: an excess of under a tenth, which the verifier
+reports and does not fail on, its threshold for a data defect being twice the bound.
+Excluding the flagged samples moves the ensemble MSD by up to \SI{13}{\percent} below
+\SI{10}{\second} and by under \SI{0.2}{\percent} above \SI{60}{\second}, so the fit ranges
+are unaffected; excluding them would also cost every flight its shortest lags, since the
+first samples of a record are exactly the flagged ones.
+
+\emph{Absolute position carries re-acquisition offsets.} Bounded in
+Sec.~\ref{sec:obs-global} at under a per cent of the mean over the fitted range, on
+\SI{\StatVerifyParaOffsetPct}{\percent} of paraglider flights.
+
+\emph{The archive holds a few duplicate flights.} The same physical flight uploaded
+twice, detected by take-off coordinates, duration and path length agreeing to four
+decimal places, one second and ten metres: \num{\StatAuditParaDupGroups} groups
+(\SI{\StatAuditParaDupPct}{\percent} of paraglider flights) and
+\num{\StatAuditHangDupGroups} (\SI{\StatAuditHangDupPct}{\percent}). Ensemble averaging
+assumes independent draws, and at this rate the violation is immaterial; it is reported so
+that it is not assumed to be zero.
+
+\emph{The last lag of the grid is empty.} \SI{43200}{\second} is the flight-level
+duration bound, so no retained flight reaches it and the row is written with a null MSD
+and a zero count. It is dropped by every fit and every plot through the finiteness mask,
+and appears in \path{msd_curve.csv} for grid completeness.
+\end{revblock}
+
+\paragraph{\rev{Reading the table.}} \rev{Through
+\path{soaring.analysis.derived.stream_flights}, never by iterating Parquet row groups: a
+row group is a unit of storage and cuts across flights, so the direct reading counted
+\SI{0.7}{\percent} of flights twice and truncated the longest segments, which are
+precisely the ones the long-lag end of the time-averaged curve rests on.}
 
 \section{Segmentation into flight phases}
 \label{impl:segmentation}
