@@ -13,14 +13,15 @@ The macros cover, per discipline: the number of scanned tracks; the barometric-a
 fraction and its all-or-nothing structure (channel exactly zero when absent, complete
 when present); the prevalence of *individually* missing barometric values among the
 flights that adopt the channel (``StatScan*BaroMiss{FlightsPct,MedianFixes,MaxFixes}``,
-quoted by the "Missing fixes" paragraph of thesis ``sec:altchannel``: share of barometric
-flights missing at least one value, and the median/maximum number of missing fixes among
-them); the median recorded duration and flown path length; the native-rate
-discreteness (fraction at an exact whole second, and the per-rate breakdown quoted in
-the text); the fraction of largest-gap ratios that are exact integer multiples of
-the native interval; and the share of flights whose largest gap exceeds the relative
-gap rule alone versus the combined two-scale split bound (thesis ``sec:uniform``),
-computed with the thresholds read from ``configs/preprocessing.yaml``.
+quoted by the "Missing fixes" paragraph of thesis ``sec:altchannel``: share of
+barometric flights missing at least one value, and the median/maximum number of
+missing fixes among them); the median recorded duration and flown path length; the
+native-rate discreteness (fraction at an exact whole second, and the per-rate
+breakdown quoted in the text); the fraction of largest-gap ratios that are exact
+integer multiples of the native interval; and the share of flights whose largest gap
+exceeds the relative gap rule alone versus the combined two-scale split bound
+(thesis ``sec:uniform``), computed with the thresholds read from
+``configs/preprocessing.yaml``.
 
 It also emits the **flight-level filtering census** quoted in thesis
 ``sec:flightfilter`` (previously computed with throwaway code and hard-coded in the
@@ -126,8 +127,8 @@ def _scan_macros(prefix: str, scan, sampling) -> dict[str, str]:
     g_comb = np.minimum(g_rel, np.maximum(sampling.max_gap_seconds, 2.0 * dt_p))
 
     # Among flights that *adopt* the barometric channel, the per-flight number of fixes
-    # whose barometric value is missing (thesis sec:altchannel, "Availability"): dropped,
-    # not back-filled, so their prevalence is quoted in the text.
+    # whose barometric value is missing (thesis sec:altchannel, "Availability"):
+    # dropped, not back-filled, so their prevalence is quoted in the text.
     n_fix = scan["n_fix"].to_numpy()
     miss = np.rint((1.0 - frac[~absent]) * n_fix[~absent]).astype(int)
     have_miss = miss > 0
@@ -188,9 +189,7 @@ def _filtering_macros(prefix: str, scan, flight) -> dict[str, str]:
         macros[f"StatScan{prefix}OverlongMaxH"] = _fmt(
             float(np.floor(dur[overlong].max() / 3600.0)), 0
         )
-        macros[f"StatScan{prefix}OverlongMaxPathKm"] = str(
-            int(round(path[overlong].max()))
-        )
+        macros[f"StatScan{prefix}OverlongMaxPathKm"] = str(round(path[overlong].max()))
     else:  # keep the macro set complete so the thesis build never breaks
         macros[f"StatScan{prefix}OverlongMinH"] = "0"
         macros[f"StatScan{prefix}OverlongMaxH"] = "0"
@@ -210,10 +209,16 @@ def _config_macros(preproc) -> dict[str, str]:
     One macro per YAML value, in the unit its suffix names, so the pipeline-map table
     (thesis ``sec:pipelinemap``) quotes the operating point without hard-coding it.
     """
+    from soaring.analysis.preproc.smoothing import MIN_WINDOW
+
     fix = preproc.fix
+    alt = preproc.alt_channel
+    speed = fix.max_horizontal_speed_mps
     return {
-        "PreprocMaxHSpeedParaMps": _fmt(fix.max_horizontal_speed_mps["paragliders"], 1),
-        "PreprocMaxHSpeedHangMps": _fmt(fix.max_horizontal_speed_mps["hang gliders"], 1),
+        "PreprocMaxHSpeedParaMps": _fmt(speed["paragliders"], 1),
+        "PreprocMaxHSpeedHangMps": _fmt(
+            fix.max_horizontal_speed_mps["hang gliders"], 1
+        ),
         "PreprocMaxVSpeedMps": _fmt(fix.max_vertical_speed_mps, 1),
         "PreprocMinAltM": _fmt(fix.min_altitude_m, 1),
         "PreprocMaxAltM": _fmt(fix.max_altitude_m, 1),
@@ -225,7 +230,8 @@ def _config_macros(preproc) -> dict[str, str]:
         "PreprocFrozenDeltaZM": _fmt(fix.frozen_delta_z_m, 1),
         "PreprocFrozenTauS": _fmt(fix.frozen_tau_s, 1),
         "PreprocIntegrityMaxPct": _fmt(100.0 * fix.integrity_max_fraction, 1),
-        "PreprocBaroMinRangeM": _fmt(preproc.alt_channel.baro_min_range_m, 1),
+        "PreprocBaroPresentMinPct": _fmt(100.0 * alt.baro_present_min, 0),
+        "PreprocBaroMinRangeM": _fmt(alt.baro_min_range_m, 1),
         "PreprocTakeoffSpeedMps": _fmt(preproc.trimming.takeoff_speed_mps, 1),
         "PreprocSustainedS": _fmt(preproc.trimming.sustained_s, 1),
         "PreprocInteriorGroundMin": _fmt(preproc.trimming.interior_ground_s / 60.0, 1),
@@ -239,6 +245,14 @@ def _config_macros(preproc) -> dict[str, str]:
         "PreprocMaxMissingPct": _fmt(100.0 * preproc.sampling.max_missing_fraction, 1),
         "PreprocMinSegmentS": _fmt(preproc.sampling.min_segment_duration_s, 1),
         "PreprocSavgolOrder": str(preproc.savgol.polyorder),
+        # The window floor, in *samples*. Quoted because it, and not tau_c, is what
+        # fixes the smoothing scale for every logger slower than 1 Hz: in seconds the
+        # window is max(tau_c, floor * dt), which at a 30 s cadence is 150 s (thesis,
+        # sec:savgol, fourth acceptance criterion).
+        "PreprocSavgolMinWindow": str(
+            max(MIN_WINDOW, preproc.savgol.polyorder + 2)
+            | 1  # up to the nearest odd: a centred fit needs a middle sample
+        ),
         "PreprocSavgolTauCS": _fmt(preproc.savgol.tau_c_horizontal_s, 1),
         "PreprocSavgolTauCVertBaroS": _fmt(preproc.savgol.tau_c_vertical_baro_s, 1),
         "PreprocSavgolTauCVertGnssS": _fmt(preproc.savgol.tau_c_vertical_gnss_s, 1),
@@ -248,15 +262,15 @@ def _config_macros(preproc) -> dict[str, str]:
 def _placeholder_date_macros(prefix: str, catalog) -> dict[str, str]:
     """Census of the ``0000-00-00`` sentinel dates (thesis, sec:dataquality).
 
-    These flights are discarded rather than carried along: a flight whose date is unknown
-    cannot be assigned to a season. Two numbers are needed to justify that, and the second
-    is the one that matters: a cut that is negligible archive-wide can still remove a large
-    share of one early, small season, so the worst per-season share is reported alongside
-    the total.
+    These flights are discarded rather than carried along: a flight whose date is
+    unknown cannot be assigned to a season. Two numbers are needed to justify that,
+    and the second is the one that matters: a cut that is negligible archive-wide
+    can still remove a large share of one early, small season, so the worst per-
+    season share is reported alongside the total.
 
     Unlike every other family here this reads the *catalog*, not the track scan: the
-    sentinel lives in the season XML metadata, and a flight can carry it whether or not it
-    has a tracklog.
+    sentinel lives in the season XML metadata, and a flight can carry it whether or
+    not it has a tracklog.
 
     Args:
         prefix: Macro prefix for the discipline (``"Para"`` / ``"Hang"``).
@@ -270,7 +284,7 @@ def _placeholder_date_macros(prefix: str, catalog) -> dict[str, str]:
     out = {
         f"StatCat{prefix}PlaceholderDateCount": str(int(bad.sum())),
         f"StatCat{prefix}PlaceholderDatePct": _fmt(_pct(bad), 4),
-        f"StatCat{prefix}Flights": str(int(len(catalog))),
+        f"StatCat{prefix}Flights": str(len(catalog)),
     }
     # Worst per-season share: the number that decides whether a season survives the cut.
     worst_season, worst_share = "--", 0.0
@@ -314,7 +328,9 @@ def main() -> int:
         scans[prefix] = pd.read_parquet(cache)
         catalog_csv = cfg.catalog_path
         catalogs[prefix] = (
-            pd.read_csv(catalog_csv, low_memory=False) if catalog_csv.is_file() else None
+            pd.read_csv(catalog_csv, low_memory=False)
+            if catalog_csv.is_file()
+            else None
         )
 
     lines = [
