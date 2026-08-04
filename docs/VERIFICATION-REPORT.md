@@ -4,9 +4,10 @@ The pass specified by `PROMPT-VERIFY.md`, run after the implementation tasks of 
 Organised by that document's sections. **Confirmed** means checked here, by running
 something; **suspected** means argued and not checked. The two are never mixed.
 
-Twenty-one findings. Eighteen are fixed, two are reported and not fixed, one is a limitation
-of this pass rather than of the work. Three of the fixes were themselves wrong when first made
-and are recorded as such in §6a.
+Twenty-six findings, the twenty-second of which is itself 109 findings from a sentence-level
+read of the whole document. Twenty-three are fixed, two are reported and not fixed, one is a
+limitation of this pass rather than of the work. Four of the fixes were themselves wrong when
+first made and are recorded as such in §6a. 
 
 ---
 
@@ -35,6 +36,11 @@ and are recorded as such in §6a.
 | 19 | `mkdocs build --strict` did not pass, and had not been run | broken build | fixed |
 | 20 | A dead link in `data-on-disk.md`, and two docstrings whose Args continuation lines were parsed as new entries | stale documentation | fixed |
 | 21 | 33 signatures in the new modules carried no return annotation | comprehensibility | fixed |
+| 22 | 109 findings from a sentence-level read of all ten document regions; 22 must-fix | see §3.2 | fixed |
+| 23 | `wavelet_variance` documented slope 2H+1 where the cascade gives 2H, and fitted from a pre-asymptotic octave | latent, wrong by 0.036 in H at H=0.99 | fixed |
+| 24 | Two quantities both written $\alpha_2$, seventeen lines apart, in the chapter that carries both | notation collision, introduced by this pass | fixed |
+| 25 | Four of the six `\impldetails` pointers in Chapter 3 landed on a chapter carrying none of it | missing content | fixed |
+| 26 | The generators wrote a half file when a discipline's pass was missing, killing the build 500 lines later | brittle tooling | fixed |
 
 ---
 
