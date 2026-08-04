@@ -51,6 +51,53 @@ DEPARTURE_RADIUS_M = 5000.0
 SLOPE_HALF_DECADES = 0.15
 
 
+def departure_times(lags: np.ndarray, radius: np.ndarray, threshold: float):
+    r"""First time each flight is ``threshold`` from take-off, interpolated within the cell.
+
+    Reading the crossing off the lag grid with an ``argmax`` snaps it to the next grid
+    point, so the reported time is never early and is late by up to one cell. The grid is
+    logarithmic at about thirteen per cent a step, which near a departure of 1500 s is a
+    bias of order 200 s -- on a number Chapter 3 sets beside the peak of the local slope, at
+    a separation of the same order. Measured on the archive, correcting it moves the median
+    paraglider departure from 1911 s to 1725 s and the hang-glider one from 1695 to 1530.
+
+    The radius grows close to a power law over the crossing, so the interpolation is linear
+    in ``log t`` against ``log r``, which is exact for one and second-order for anything
+    smooth.
+
+    Returns:
+        ``(times, leaves, early_fraction)`` -- the crossing time of each flight that leaves,
+        the mask of those that do, and the share of them already outside at the first lag,
+        for which no cell brackets the crossing and ``lags[0]`` is reported instead.
+    """
+    lags = np.asarray(lags, dtype=float)
+    outside = radius > threshold
+    leaves = outside.any(axis=1)
+    if not leaves.any():
+        return np.empty(0), leaves, 0.0
+
+    index = outside.argmax(axis=1)[leaves]
+    r_hi = radius[leaves, index]
+    t_hi = lags[index]
+    before = index - 1
+
+    times = t_hi.copy()
+    bracketed = before >= 0
+    if bracketed.any():
+        rows = np.flatnonzero(leaves)[bracketed]
+        r_lo = radius[rows, before[bracketed]]
+        t_lo = lags[before[bracketed]]
+        good = np.isfinite(r_lo) & (r_lo > 0) & (r_hi[bracketed] > r_lo)
+        if good.any():
+            frac = (np.log(threshold) - np.log(r_lo[good])) / (
+                np.log(r_hi[bracketed][good]) - np.log(r_lo[good])
+            )
+            interpolated = t_lo[good] * (t_hi[bracketed][good] / t_lo[good]) ** frac
+            where = np.flatnonzero(bracketed)[good]
+            times[where] = interpolated
+    return times, leaves, float((~bracketed).mean())
+
+
 def _derived_dir(discipline: str) -> Path | None:
     from soaring.acquisition.ffvl import config as cfgmod
 
@@ -252,9 +299,19 @@ def audit(discipline: str, audit_dir: Path) -> dict[str, str]:
     put("DriftPct", f"{100 * np.nanmax(drift[inside]):.1f}")
 
     # ---- B2: the heterogeneous-ballistic scale -------------------------------------
+    # The numerator is a mean over the flights COVERED at each lag, so the denominator has
+    # to be one too. Dividing by the mean speed of the whole table instead makes the ratio
+    # drift with the lag purely because the two averages are taken over different
+    # populations -- and drift is the only thing this diagnostic is read for.
     speed_sq = (flights.vbar_e**2 + flights.vbar_n**2).to_numpy()
-    ballistic = msd / (np.mean(speed_sq) * lags**2)
-    put("BallisticRmsMs", f"{np.sqrt(np.mean(speed_sq)):.2f}")
+    covered = np.isfinite(squared)
+    with np.errstate(invalid="ignore"):
+        mean_speed_sq = np.array(
+            [speed_sq[covered[:, i]].mean() if covered[:, i].any() else np.nan
+             for i in range(lags.size)]
+        )
+    ballistic = msd / (mean_speed_sq * lags**2)
+    put("BallisticRmsMs", f"{np.sqrt(np.nanmean(speed_sq)):.2f}")
     put("BallisticRatioMin", f"{np.nanmin(ballistic[inside]):.1f}")
     put("BallisticRatioMax", f"{np.nanmax(ballistic[inside]):.1f}")
 
@@ -285,14 +342,13 @@ def audit(discipline: str, audit_dir: Path) -> dict[str, str]:
 
     # ---- B3: when the population leaves the launch area ----------------------------
     radius = np.hypot(east, north)
-    leaves = (radius > DEPARTURE_RADIUS_M).any(1)
-    first = (radius > DEPARTURE_RADIUS_M).argmax(1)
-    departure = lags[first[leaves]]
+    departure, leaves, early = departure_times(lags, radius, DEPARTURE_RADIUS_M)
     put("DepartureRadiusKm", f"{DEPARTURE_RADIUS_M / 1000:.0f}")
     put("DepartureLeavePct", f"{100 * leaves.mean():.1f}")
     put("DepartureMedianS", f"{np.median(departure):.0f}")
     put("DepartureIqrLowS", f"{np.percentile(departure, 25):.0f}")
     put("DepartureIqrHighS", f"{np.percentile(departure, 75):.0f}")
+    put("DepartureBeforeGridPct", f"{100 * early:.2f}")
 
     # ---- E3: isotropy ---------------------------------------------------------------
     ratio = np.nanmean(east**2, 0) / np.nanmean(north**2, 0)
