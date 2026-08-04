@@ -104,6 +104,10 @@ on the next build. To add a new module, a single `:::` line here is enough.
 
 ::: soaring.analysis.observables.variations
 
+## `analysis.observables.moments` — the spectrum of moments and the shape of the increments
+
+::: soaring.analysis.observables.moments
+
 ## `analysis.observables.regimes` — how many regimes, and where
 
 ::: soaring.analysis.observables.regimes
