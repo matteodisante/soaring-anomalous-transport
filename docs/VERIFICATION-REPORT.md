@@ -99,7 +99,11 @@ byte-identical.**
 
 The four full traversals (MSD, audit, variations, shape) were not re-run from scratch in this
 pass; each is 20–110 minutes over 1.36 × 10⁹ fixes, and the shape traversal *was* re-run,
-since its paraglider half was outstanding. What is verified is that every macro descends from
+since its paraglider half was outstanding. `verify_dataset.py`, which is step 1 of
+`regenerate.sh` and another full traversal, was started and then stopped: run concurrently it
+halved the throughput of the shape pass, which was on the critical path, and its invariants
+are the ones `check_reproducible.py` re-derives from the raw archive anyway. It is the one
+step of `regenerate.sh` this pass did not exercise. What is verified is that every macro descends from
 a stored array by a reduction that reproduces exactly, and that the stored arrays descend from
 the raw archive by a pipeline that reproduces exactly on a sample of 500.
 
