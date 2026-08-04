@@ -1441,7 +1441,7 @@ is flat over a wide stretch before the bulk begins.} The threshold is placed
 stretch where the retained-fraction curve is flat---there, moving the cut changes almost
 nothing, which is precisely the statement that it removes junk and not signal. \rev{Five}
 track criteria gate a flight, plus a metadata stratifier:
-\rev{Two of the four are sums over the flight, and what they are summed over is part of
+\rev{Two of them are sums over the flight, and what they are summed over is part of
 the rule rather than an implementation detail: the duration and the path accumulate
 \emph{within} a block and never across the boundary that ends it, since the trajectory
 there is unknown and a straight line drawn over it was never flown.}
@@ -1557,8 +1557,8 @@ Sec.~\ref{impl:flightfilter}.}
 above the duration cut even a \SI{10}{\second} logger records hundreds of fixes.} A further criterion, sampling
 regularity, is applied later, where a flight's time base is examined (Sec.~\ref{sec:uniform}) \impldetails{impl:flightfilter}.
 
-\flow{Figure~\ref{fig:preproc} shows these diagnostics for \rev{all three track criteria and}
-both disciplines, computed on the full census (no subsampling).}
+\flow{Figure~\ref{fig:preproc} shows these diagnostics for \rev{the three criteria that carry
+a tunable threshold, (1)--(3), and} both disciplines, computed on the full census (no subsampling).}
 \flow{The duration and path cuts} sit far out in the tail, so the retained fraction is insensitive to their exact
 value.
 
@@ -2481,13 +2481,13 @@ These are not the raw-archive figures of Sec.~\ref{sec:coverage}: the retained m
 duration exceeds the recorded median \SI{\StatScanParaMedianDurH}{\hour} because the
 duration floor and the altitude-activity floor remove short and inactive records, and the
 retained median path is close to the recorded \SI{\StatScanParaMedianPathKm}{\kilo\metre}
-because the \SI{20}{\kilo\metre} path floor bites on few flights
+because the \SI{\PreprocMinPathKm}{\kilo\metre} path floor bites on few flights
 (Table~\ref{tab:pipecensus}). Nothing in the retained ensemble is an outlier in the sense
 the filtering was meant to catch: the table carries \num{\StatAuditParaNonFiniteFixes}
 non-finite coordinates and \num{\StatAuditParaNonMonotoneFlights} non-monotone clocks, and
 the fastest step between two \emph{measured} samples is
 \SI{\StatVerifyParaWorstMeasuredMs}{\metre\per\second} against the fix-level bound of
-\SI{45}{\metre\per\second}---an excess of under a tenth, on \num{32} steps out of
+\SI{45}{\metre\per\second}---an excess of under a tenth, on \num{\StatVerifyParaMeasuredStepsOver} steps out of
 $1.4\times10^{9}$, which Sec.~\ref{impl:obs-global} accounts for.
 
 \paragraph{What the cascade costs, and whether it costs it evenly.}
@@ -2554,8 +2554,8 @@ $\langle E(t)^2\rangle/\langle N(t)^2\rangle$ should be identically $1$.
 Figure~\ref{fig:prelim-strata}a shows it is not. Over the lags the transport analysis
 reads it sits at \StatPrelimParaIsoRatioMedian\ for paragliders, between
 \StatPrelimParaIsoRatioMin\ and \StatPrelimParaIsoRatioMax\ and never touching unity: the
-north--south spread exceeds the east--west by about a quarter, steadily and across three
-decades. The hang gliders are anisotropic the other way, at
+north--south mean square exceeds the east--west by about a quarter, steadily and across
+three decades. The hang gliders are anisotropic the other way, at
 \StatPrelimHangIsoRatioMedian. A Kolmogorov--Smirnov comparison of the empirical
 distributions of $E(t)$ and $N(t)$ at \StatPrelimParaIsoKsLags\ lags agrees, with
 distances from \StatPrelimParaIsoKsMin\ to \StatPrelimParaIsoKsMax; at this sample size

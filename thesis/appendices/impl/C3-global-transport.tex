@@ -47,8 +47,8 @@ merges them instead, which is why the grid delivers \num{80} distinct lags rathe
 \num{90}, and why the lags below \SI{8}{\second} are consecutive integers. At long lags
 the rounding is a part in $10^4$. The consecutive-integer run is also what lets the
 coverage artefact of Sec.~\ref{sec:obs-global} have a period; that is the cost of the
-snapping, it is measured below, and it sits an order of magnitude below the lower end of
-every fit range.}
+snapping, it is measured in Sec.~\ref{sec:obs-global} by splitting the archive by cadence,
+and it sits an order of magnitude below the lower end of every fit range.}
 
 \paragraph{\rev{The time average.}} \rev{\path{time_averaged_msd} is computed within a
 segment, never across the gap that ends it. The direct double loop is $O(n^2)$ and
@@ -252,9 +252,11 @@ Sec.~\ref{sec:obs-global} at under a per cent of the mean over the fitted range,
 
 \emph{The archive holds a few duplicate flights.} The same physical flight uploaded
 twice, detected by take-off coordinates, duration and path length agreeing to four
-decimal places, one second and ten metres: \num{\StatAuditParaDupGroups} groups
-(\SI{\StatAuditParaDupPct}{\percent} of paraglider flights) and
-\num{\StatAuditHangDupGroups} (\SI{\StatAuditHangDupPct}{\percent}). Ensemble averaging
+decimal places, one second and ten metres:
+\num{\StatAuditParaDupFlights} paraglider flights in
+\num{\StatAuditParaDupGroups} groups, \SI{\StatAuditParaDupPct}{\percent} of the archive,
+and \num{\StatAuditHangDupFlights} hang-glider flights in \num{\StatAuditHangDupGroups}
+groups, \SI{\StatAuditHangDupPct}{\percent}. Ensemble averaging
 assumes independent draws, and at this rate the violation is immaterial; it is reported so
 that it is not assumed to be zero.
 

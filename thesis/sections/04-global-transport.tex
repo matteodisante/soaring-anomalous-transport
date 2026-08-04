@@ -479,7 +479,7 @@ Figure~\ref{fig:msd} should be read as motion.
 
 \paragraph{The mean, and how far it sits from the median.}
 The two part company as the lag grows---at \SI{40}{\second} the mean is the median, at
-\SI{400}{\second} three times it, and past \SI{20000}{\second} more than ten times---and
+\SI{400}{\second} three times it, and past \SI{30000}{\second} more than ten times---and
 that is a property of the distribution rather than a fault. The MSD \emph{is} the mean of
 $|\mathbf{r}(t)|^2$, and that distribution broadens enormously with the lag: its 10--90
 band spans two orders of magnitude by \SI{1000}{\second}. A mean over a broad,
@@ -773,9 +773,10 @@ sampling noise returns a break \SI{\StatVarParaFalsePositivePct}{\percent} and
 
 The reason is the resolution of the data rather than the fitting. The residuals of any fit
 to these curves are correlated across lags, because every lag averages the same flights, so
-\StatVarParaFitLags\ lags carry \StatVarParaDof\ independent points. On that budget one
-breakpoint is at the edge of what is estimable and two are not, and the honest statement is
-a single effective exponent over a declared range --- which is how
+\StatVarParaFitLags\ lags carry no more than \StatVarParaDof\ independent points --- the
+floor the estimator will report, reached in both disciplines. On that budget one breakpoint
+is at the edge of what is estimable and two are not, and the honest statement is a single
+effective exponent over a declared range --- which is how
 Table~\ref{tab:orderscan} reports it.
 \end{revblock}
 
