@@ -383,6 +383,19 @@ each paragraph: none other was affected.
 agreement between two "different" implementations was a property of a symmetric kernel, not
 evidence about the code. Re-verified against a hand-derived closed form.
 
+**The non-Gaussian calibration was mine and did not come from where I said it did.** The
+paragraph added in §2.1 cited `test_moments.py` as the source of its two calibration figures,
+0.01 and 0.56. The test's configuration returns 0.017 and 0.546. The quoted pair came from an
+ad-hoc run with twice the realisations and a different lag grid — reproducible by nobody,
+pinned by nothing, and off by enough to matter, since chasing it showed that the Gaussian
+0.02 is finite-sample bias rather than a floor: sixteen times the data collapses it to within
+a hundredth of zero, sign included. Both sample sizes are now asserted by the test.
+
+Worse, the same paragraph averaged two disciplines that differ fourfold — paragliders at
++0.04, hang gliders at +0.18 — and reported one number. Against a Gaussian consistent with
+zero, both are non-Gaussian and neither is near Lévy, but the factor of four between a slower
+wing and a faster one is a result, not noise to smooth over. Corrected.
+
 **And one finding was a bug in the checker, not in the thesis.** The cross-reference check
 first reported 29 references using the wrong word for their label kind; every one was
 `Chapter~\ref{ch:...}`, correct, and the checker was comparing fixed-width prefixes so that
