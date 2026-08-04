@@ -4,9 +4,9 @@ The pass specified by `PROMPT-VERIFY.md`, run after the implementation tasks of 
 Organised by that document's sections. **Confirmed** means checked here, by running
 something; **suspected** means argued and not checked. The two are never mixed.
 
-Thirty-three findings, two of which are themselves collections: 109 from a sentence-level
-read of the whole document, and 10 from a correctness audit of the analysis code. Twenty-nine
-are fixed, three are reported and not fixed, one is a limitation of this pass rather than of
+Thirty-five findings, two of which are themselves collections: 109 from a sentence-level
+read of the whole document, and 10 from a correctness audit of the analysis code. Thirty-two
+are fixed, two are reported and not fixed, one is a limitation of this pass rather than of
 the work. Five of the fixes were themselves wrong when first made and are recorded as such
 in §6a.
 
@@ -54,7 +54,9 @@ comparison that needs no null and is twenty to fifty times clear of it.
 | 30 | `persistent_walk` gave every realisation a course along $+x$ | validation defect | fixed |
 | 31 | `_fgn_hosking` updated Durbin--Levinson in place and was not stationary | validation defect | fixed |
 | 32 | `cluster_labels` wrapped synthetic cluster ids in an int8 array | latent | fixed |
-| 33 | Four smaller audit defects: a segment counted as a flight, two mismatched-population ratios, a crossing read only at the lag grid | latent to diagnostic | reported |
+| 33 | A segment counted as a flight in the VACF | latent | fixed |
+| 34 | The departure time was read at the lag-grid edge, so never early and late by up to one cell | changes a published number | fixed |
+| 35 | The heterogeneous-ballistic ratio divided two averages taken over different populations | diagnostic | fixed |
 
 ---
 
@@ -354,8 +356,17 @@ a narrow categorical-codes array where they wrap past 127, silently merging unke
 into real clusters. All fixed, all now pinned against theory rather than against another
 implementation.
 
-The remaining four are a segment counted as a flight, two mismatched-population ratios in
-the audit, and a departure time read only at the lag grid.
+The remaining four are all fixed too. A segment was counted as a flight in the VACF count.
+The heterogeneous-ballistic ratio divided an MSD averaged over the flights covered at each
+lag by a speed averaged over the whole table, so it drifted with the lag for no reason but
+the mismatch --- and drift is the only thing it is read for. And the departure onto the
+cross-country leg was found with an `argmax` over the lag grid, so the crossing of the 5 km
+radius was never early and always late by up to one cell: on a logarithmic grid of thirteen
+per cent a step, of order two hundred seconds, on a number the chapter sets beside the peak
+of the local slope at a separation of the same order. Interpolating within the bracketing
+cell moves the median paraglider departure from 1911 s to 1725 and the hang-glider one from
+1695 to 1530 --- and **tightens the chapter's argument**: the overshoot at 1504 s and 1334 s
+is still before the departure, now by 221 s and 196 s where it was 407 and 361.
 
 ### 4.1b The runs test was read against a null the data cannot satisfy — **confirmed**
 
