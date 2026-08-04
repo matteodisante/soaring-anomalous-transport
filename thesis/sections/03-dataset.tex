@@ -17,8 +17,9 @@ the cleaned dataset (Sec.~\ref{sec:prelim}) and a one-map summary of the pipelin
 A flight track is stored as an \emph{IGC file}, the plain-text format defined by the
 FAI/IGC Technical Specification for IGC-approved GNSS flight recorders~\cite{fai_igc_spec}.
 Its layout is fixed by that standard, so a fix can be decoded from fixed character
-positions; every downloaded track is validated against the
-standard at acquisition (Sec.~\ref{sec:acquisition}).
+positions; every downloaded track is checked at acquisition to be
+IGC content --- an \texttt{A} record followed by at least one \texttt{B} record
+(Sec.~\ref{sec:acquisition}).
 
 Each line is a \emph{record} whose type is set by its first character -- a code assigned by
 the standard, not chosen by the logger. The records relevant here are:
@@ -144,7 +145,7 @@ Within each discipline the flights can be further stratified by \emph{performanc
 recorded in \texttt{aile\_class}; \rev{the two disciplines use different class systems,
 collected in Table~\ref{tab:aileclass}. Paragliders follow the EN/LTF certification
 ladder, which does track performance (higher classes fly faster and flatter) and is
-therefore the natural within-source stratification variable. The hang-glider figure is
+therefore the natural within-source stratification variable. The hang-glider scheme is
 \emph{not} a ladder: the FAI classes are defined by the method of control, so they
 stratify the fleet by design rather than by performance, and any ordering imposed on them
 is an assumption to be checked rather than a property of the scheme.}
@@ -166,8 +167,7 @@ The EN entries of Table~\ref{tab:aileclass} are therefore condensed from Table~1
 formal vote, which the CEN working group circulated
 publicly~\cite{fpren926_2_2012}. That draft is the closest thing to the source text that
 is openly available, and the class descriptions in it are unlikely to have moved in the
-published \mbox{EN~926-2:2013}---but \enquote{unlikely} is not \enquote{checked}, and the
-distinction is flagged rather than buried. Nothing in this thesis depends on the wording:
+published \mbox{EN~926-2:2013}, though that has not been checked against the published text. Nothing in this thesis depends on the wording:
 the class field is used as a stratification label, and what the analysis needs from it is
 that the labels are distinct and ordered, not what each one certifies.
 \end{revblock}
@@ -213,8 +213,9 @@ Two caveats bear on any use of \texttt{aile\_class}. First, the field must be no
 before it can serve as a stratum: normalisation here means merging the label variants
 of the same class onto one canonical value per discipline and, where possible, recovering a
 blank or placeholder entry from the wing model name. Second, the class certifies the wing,
-not the pilot. Both
-points are handled at the pre-processing stage, later in this chapter \impldetails{impl:glider}.
+not the pilot. The normalisation is done at the pre-processing stage
+(Sec.~\ref{sec:flightfilter}) \impldetails{impl:glider}; the second point no processing can
+remove, and it bounds what a class-stratified result can be taken to mean.
 
 \section{Coverage and statistics}
 \label{sec:coverage}
@@ -235,7 +236,8 @@ flights, of which \num{\StatHangWithIgc} (\StatHangPctWithIgc\,\%) carry a track
 (Table~\ref{tab:seasons-hang}). The hang-glider archive is roughly twenty times smaller,
 reflecting the smaller active population of the discipline.
 
-In both disciplines the volume of flights grows by orders of magnitude over the period,
+In both disciplines the number of flights carrying a track grows by orders of magnitude
+over the period,
 reflecting the adoption of GPS loggers and online scoring: the early seasons contribute a
 handful of tracks each, while recent seasons contribute thousands of tracks for
 paragliders and several hundred for hang gliders.

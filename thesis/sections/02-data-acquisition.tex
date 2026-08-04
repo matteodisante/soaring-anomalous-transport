@@ -53,8 +53,9 @@ XMLs verbatim keeps the full provenance \impldetails{impl:acqrepro}.
 Because the data sit on an external drive, integrity is re-checked independently after
 download, rather than trusted at download time \impldetails{impl:acqintegrity}. Both
 FFVL collections have been verified in full: all \num{\StatParaDownloaded} paraglider and
-\num{\StatHangDownloaded} hang-glider downloaded tracklogs pass validation against the
-IGC standard (Sec.~\ref{sec:igcformat}). These are the tracklogs actually fetched; they
+\num{\StatHangDownloaded} hang-glider downloaded tracklogs pass the same content check
+applied at download --- a readable file whose first record is an \texttt{A} header and which
+carries at least one \texttt{B} fix record (Sec.~\ref{sec:igcformat}). These are the tracklogs actually fetched; they
 cover a subset of the flights that carry a track at all (Sec.~\ref{sec:coverage}).
 
 \subsection{Further data sources}
@@ -64,8 +65,9 @@ collected in parallel and enable the cross-type comparison of Sec.~\ref{sec:glid
 (the counts for both are given in Sec.~\ref{sec:coverage}). Additional
 public soaring repositories are
 being pursued to enlarge and diversify the sample and, above all, to add the third glider
-category, \emph{sailplanes} (Sec.~\ref{sec:glider}). The most complete sailplane source
-is \emph{WeGlide}, which exposes flight metadata and IGC tracks through an API. The
+category, \emph{sailplanes} (Sec.~\ref{sec:glider}). A large sailplane source with a
+machine-readable interface is \emph{WeGlide}, which exposes flight metadata and IGC tracks
+through an API. The
 default access is rate-limited (of order sixty requests per day), which rules out a bulk
 export of the archive; a request for research access with a higher quota has been sent
 and is pending. Paraglider and hang-glider coverage may likewise be broadened through
