@@ -137,7 +137,7 @@ def bilinear_fit(
     grid of ten moment orders: a bilinear fit has two more parameters, always reduces the
     residual, and on that many points buys the reduction cheaply. Fitted to a fractional
     Brownian motion -- which has no knee -- BIC prefers the bilinear form while the straight
-    line already fits to an rms of 0.003. So the knee is declared only when BIC prefers it,
+    line already fits to an rms of 0.0031. So the knee is declared only when BIC prefers it,
     **and** the straight line leaves a residual above ``min_departure``, **and** the knee
     sits inside the grid rather than on its edge. On the same synthetic pair those three
     give: fractional Brownian motion, no knee; Lévy walk of index 1.5, a knee at 1.57 with a
@@ -175,17 +175,24 @@ def bilinear_fit(
         rss = float(residual @ residual)
         return q.size * np.log(max(rss, 1e-300) / q.size) + k * np.log(q.size)
 
+    # Root mean square, not standard deviation. The least-squares line through the origin
+    # sets sum(q r) = 0 and leaves sum(r) free, so the residual mean is not zero and std is
+    # strictly the smaller of the two -- by about a tenth on a spectrum of this shape. Every
+    # name here says rms and so does the text that quotes it, so rms is what it must be.
+    def rms(residual):
+        return float(np.sqrt(np.mean(residual**2)))
+
     return {
         "knee": float(popt[0]),
         "slope_low": float(popt[1]),
         "slope_high": float(popt[2]),
-        "rms": float(np.std(residual_bi)),
+        "rms": rms(residual_bi),
         "linear_slope": slope,
-        "linear_rms": float(np.std(residual_lin)),
-        "linear_departure": float(np.std(residual_lin)),
+        "linear_rms": rms(residual_lin),
+        "linear_departure": rms(residual_lin),
         "prefers_bilinear": bool(
             bic(residual_bi, 3) < bic(residual_lin, 1)
-            and np.std(residual_lin) > min_departure
+            and rms(residual_lin) > min_departure
             and q.min() + 0.1 < popt[0] < q.max() - 0.1
         ),
     }

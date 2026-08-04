@@ -126,3 +126,26 @@ def test_the_non_gaussian_parameter_separates_gaussian_from_levy():
     assert np.median(gaussian) == pytest.approx(0.02, abs=0.012)
     assert abs(np.median(plentiful)) < 0.015
     assert abs(np.median(plentiful)) < abs(np.median(gaussian))
+
+
+def test_the_reported_departure_is_an_rms_and_not_a_standard_deviation():
+    """The least-squares line through the origin does not centre its residuals.
+
+    It sets sum(q r) = 0, which is its normal equation, and leaves sum(r) free. So the
+    residual mean is not zero and np.std is strictly smaller than the root mean square --
+    by about a tenth on a spectrum of this shape. Every field name here says rms, the
+    docstring says rms, and the thesis quotes the number "in rms", so it has to be one.
+    """
+    from soaring.analysis.observables.moments import Q_GRID, bilinear_fit
+
+    q = np.asarray(Q_GRID)
+    q_nu = 0.83 * q + 0.02 * q * (q - q.mean()) / q.max()
+    slope = float(np.sum(q * q_nu) / np.sum(q * q))
+    residual = q_nu - slope * q
+
+    assert abs(np.sum(q * residual)) < 1e-12
+    assert abs(np.sum(residual)) > 1e-3, "if this fit centred its residuals the point is moot"
+
+    fitted = bilinear_fit(q, q_nu)
+    assert fitted["linear_departure"] == pytest.approx(np.sqrt(np.mean(residual**2)))
+    assert fitted["linear_departure"] > np.std(residual)

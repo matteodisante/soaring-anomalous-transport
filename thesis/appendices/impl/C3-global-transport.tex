@@ -221,8 +221,11 @@ knee only when three conditions hold together: BIC prefers the bilinear form, \e
 straight line leaves a residual above \path{min_departure} = \num{0.02}, \emph{and} the
 knee sits inside the $q$ grid rather than on its edge. On the synthetic pair those three
 give no knee for fractional Brownian motion and a knee at \num{1.57} with a right-hand slope
-of \num{0.96} for a Lévy walk of index \num{1.5}. The archive's departure from a line is
-\StatShapeParaLinearDeparture, an order of magnitude below the threshold.}
+of \num{0.96} for a Lévy walk of index \num{1.5}. A Lévy walk of index \num{1.5} leaves a departure of about \num{0.084} on this grid; the
+archive leaves \StatShapeParaLinearDeparture\ and \StatShapeHangLinearDeparture, which is
+roughly eight and fourteen times smaller, and about half and a third of the declaration
+threshold. The margin against a knee is therefore an order of magnitude; the margin against
+the gate is a factor of two, and the two should not be confused.}
 
 \paragraph{\rev{Why the drift is filtered and never subtracted.}} \rev{\path{centring_bias}
 measures the alternative rather than arguing against it: fractional Brownian motion of known
