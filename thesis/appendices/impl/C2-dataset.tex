@@ -351,7 +351,7 @@ hang-glider) once and caches a per-flight summary table at
 That cache is worth describing, since every census number in the chapter is a query
 against it. It is a table with \emph{one row per parsed flight} and one column per summary
 quantity, all produced by \path{track_stats} in
-\path{soaring.analysis.preprocessing} as it walks a flight's fixes once:
+\path{soaring.analysis.census} as it walks a flight's fixes once:
 \begin{itemize}[nosep]
   \item \path{duration_s}, \path{n_fix}, \path{dt_s} --- the recorded span, the number of
         \texttt{B} records, and the median inter-fix interval;
@@ -742,9 +742,9 @@ gap.
 
 \subsubsection{\flow{Absolute bounds and gates}}
 The six numbers of
-Table~\ref{tab:cleaning} are the \texttt{FixLevelThresholds} dataclass, loaded by
-\path{soaring.analysis.preprocessing.load_preproc_config} from
-\path{configs/preprocessing.yaml} (key \path{fix_level}); nothing is hard-coded in Python.
+Table~\ref{tab:cleaning} are the \texttt{FixLevelThresholds} dataclass, which
+\path{load_preproc_config} reads from \path{configs/preprocessing.yaml} under the key
+\path{fix_level}; nothing is hard-coded in Python.
 They are the context-free floor of the design, and are placed on the real per-fix
 distributions (Figure~\ref{fig:fixlevel}) rather than guessed. The horizontal-speed bound is
 set where the bin-to-bin ratio of a finely binned (\SI{2.5}{\metre\per\second}) histogram
@@ -934,7 +934,7 @@ The chain behind every number quoted in Sec.~\ref{sec:flightfilter} is short eno
 name in full, so that a count can be traced to the code that produced it:
 \begin{itemize}[nosep]
   \item \path{soaring.analysis.igc.parse_igc} decodes one IGC file into a table of fixes;
-  \item \path{soaring.analysis.preprocessing.track_stats} reduces those fixes to the one
+  \item \path{soaring.analysis.census.track_stats} reduces those fixes to the one
         summary row described in Sec.~\ref{impl:preproc}, and
         \path{scan_tracks} / \path{load_or_scan_tracks} do that for every flight of a
         discipline and cache the result;

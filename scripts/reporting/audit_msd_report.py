@@ -130,7 +130,10 @@ def audit(discipline: str, audit_dir: Path) -> dict[str, str]:
         out[f"StatAudit{macro}{name}"] = value
 
     # ---- the fit ranges the figure used, rediscovered the way it discovers them ----
-    from soaring.analysis.transport import MSDResult, coverage_limited_range
+    from soaring.analysis.observables.transport import (
+        MSDResult,
+        coverage_limited_range,
+    )
 
     ea_range = coverage_limited_range(
         MSDResult(t=ea_t, msd=ea_msd, n_flights=ea_n.astype(int), sem=None,

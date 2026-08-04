@@ -48,9 +48,13 @@ on the next build. To add a new module, a single `:::` line here is enough.
 
 ::: soaring.analysis.igc
 
-## `analysis.preprocessing`
+## `analysis.config` — the pre-processing thresholds
 
-::: soaring.analysis.preprocessing
+::: soaring.analysis.config
+
+## `analysis.census` — the raw-archive scan
+
+::: soaring.analysis.census
 
 ## `analysis.preproc` (the pipeline, one module per stage)
 
@@ -92,6 +96,12 @@ on the next build. To add a new module, a single `:::` line here is enough.
 
 ::: soaring.analysis.derived
 
-## `analysis.transport`
+## `analysis.observables.transport` — the MSD estimators
 
-::: soaring.analysis.transport
+::: soaring.analysis.observables.transport
+
+## `analysis.figures` — drawing, kept apart from computing
+
+::: soaring.analysis.figures.preproc
+
+::: soaring.analysis.figures.transport

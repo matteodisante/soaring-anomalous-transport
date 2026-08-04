@@ -305,7 +305,7 @@ def main() -> int:
         import pandas as pd
 
         from soaring.acquisition.ffvl.config import load_config
-        from soaring.analysis.preprocessing import load_preproc_config
+        from soaring.analysis.config import load_preproc_config
     except ImportError as exc:
         print(f"census stats: missing dependency ({exc}); keeping the committed file.")
         return 0

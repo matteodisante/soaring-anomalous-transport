@@ -4,7 +4,10 @@ import pytest
 
 from soaring.analysis.altitude_noise import BARO_PRESENT_MIN
 from soaring.analysis.preproc.altchannel import adopt_alt_channel
-from soaring.analysis.preprocessing import AltChannelThresholds, load_preproc_config
+from soaring.analysis.config import (
+    AltChannelThresholds,
+    load_preproc_config,
+)
 
 ALT_CHANNEL = AltChannelThresholds(baro_present_min=0.95, baro_min_range_m=30.0)
 
@@ -120,7 +123,7 @@ def test_the_presence_threshold_lives_in_the_config_and_nowhere_else():
     rather than the config, so this test is what stops the two from drifting apart.
     """
     from soaring.analysis.altitude_noise import BARO_PRESENT_MIN
-    from soaring.analysis.preprocessing import load_preproc_config
+    from soaring.analysis.config import load_preproc_config
 
     configured = load_preproc_config().alt_channel.baro_present_min
     assert configured == BARO_PRESENT_MIN

@@ -5,13 +5,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from soaring.analysis.preprocessing import (
+from soaring.analysis.config import load_preproc_config
+from soaring.analysis.census import (
     _fix_level_arrays,
     fix_level_distributions,
     fraction_retained,
     great_circle_m,
     load_or_scan_tracks,
-    load_preproc_config,
     retention_curve,
     track_stats,
 )

@@ -14,7 +14,7 @@ from soaring.analysis.preproc.enu import (
     prime_vertical_radius_m,
     to_local_frame,
 )
-from soaring.analysis.preprocessing import great_circle_m
+from soaring.analysis.census import great_circle_m
 
 WGS84_B_M = WGS84_A_M * (1.0 - WGS84_F)  # semi-minor axis
 

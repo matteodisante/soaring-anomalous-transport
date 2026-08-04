@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from soaring.analysis.transport import MSDAccumulator
+from soaring.analysis.observables.transport import MSDAccumulator
 
 ROOT = Path(__file__).resolve().parents[2]
 

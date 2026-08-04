@@ -184,7 +184,7 @@ Key mechanics that reconcile the blueprint with the repo:
 ## Reporting-stage scan cache (not the production `fixes`/`flights_meta` tables)
 
 Ahead of the real pipeline, the thesis-figure scripts already run a full-dataset scan
-(`soaring.analysis.preprocessing.scan_tracks`, driven by `track_stats` per flight) to
+(`soaring.analysis.census.scan_tracks`, driven by `track_stats` per flight) to
 compute the flight-level filtering, gap and sampling diagnostics (steps iii/iv/vi above).
 Since a full paraglider census takes tens of minutes, this scan is **cached** to a flat
 Parquet on the SSD, `<data_root>/derived/track_scan.parquet` (`Config.derived_dir` --

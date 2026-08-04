@@ -220,9 +220,9 @@ def baro_presence_from_scan(scan) -> tuple[int, int]:
     """Barometric-absence count from an already-parsed track scan (no re-parsing).
 
     Uses the ``baro_present_frac`` column that
-    :func:`soaring.analysis.preprocessing.track_stats` computes as a byproduct of its
+    :func:`soaring.analysis.census.track_stats` computes as a byproduct of its
     own full-dataset scan
-    (:func:`soaring.analysis.preprocessing.load_or_scan_tracks`). When that scan is a
+    (:func:`soaring.analysis.census.load_or_scan_tracks`). When that scan is a
     full census -- as it is for the flight-level filtering diagnostics -- this gives
     the *exact* population fraction, with no sampling needed.
 
@@ -358,7 +358,7 @@ def collect(
         precomputed_baro_stats: Optional mapping ``discipline -> (baro_absent,
             n_flights)`` to use instead of scanning -- e.g. from
             :func:`baro_presence_from_scan` on an already-cached full census
-            (:mod:`soaring.analysis.preprocessing`). Disciplines not present here still
+            (:mod:`soaring.analysis.census`). Disciplines not present here still
             fall back to :func:`baro_presence_stats`.
 
     Returns:

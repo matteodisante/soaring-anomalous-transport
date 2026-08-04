@@ -39,7 +39,7 @@ from .smoothing import smooth_flight
 from .trimming import trim_flight
 
 if TYPE_CHECKING:
-    from ..preprocessing import PreprocConfig
+    from ..config import PreprocConfig
 
 # Bumped whenever a stage changes what it produces, so a stored table can be told apart
 # from one written by an older pipeline (design principle: traceability).

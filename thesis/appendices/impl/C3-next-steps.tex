@@ -12,7 +12,7 @@ names, sample sizes, reproduction commands) as that code is written.}
 \label{impl:obs-global}
 \rev{The mean-squared displacement of Sec.~\ref{sec:obs-global} is implemented and
 unit-tested; the rest of the section's observables are not. The estimators live in
-\path{soaring.analysis.transport} and the figure, the curve table and the
+\path{soaring.analysis.observables.transport} and the figure, the curve table and the
 \texttt{\textbackslash StatMsd*} macros come from one pass of
 \path{generate_msd_figure.py} (Table~\ref{tab:impl-repro}). A second pass,
 \path{audit_msd.py}, keeps what the first one averages away, and
@@ -102,7 +102,7 @@ a point-to-point scatter of a few tenths of a per cent in the MSD, which is abou
 ensemble's own standard error allows, becomes a slope that jitters by \num{0.05} and reads
 as noise. The panel then testifies against a curve that is not in fact noisy.
 
-\path{soaring.analysis.transport.local_slope} therefore works on a window: at each lag it
+\path{soaring.analysis.observables.transport.local_slope} therefore works on a window: at each lag it
 takes the points within \num{0.15} decades on either side---five to six at this grid
 spacing---and reports the \emph{median of the slopes of all pairs} of them, a Theil--Sen
 estimator. The choice is for resistance to a single displaced lag rather than to a

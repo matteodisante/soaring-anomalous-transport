@@ -61,10 +61,10 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
-from ..preprocessing import great_circle_m
+from ..census import great_circle_m
 
 if TYPE_CHECKING:
-    from ..preprocessing import FixLevelThresholds
+    from ..config import FixLevelThresholds
 
 # Per-fix columns this stage adds. `split_before` is consumed by stage (vi), which
 # realises the cut; the other two are the per-fix record of what the cleaning did, and

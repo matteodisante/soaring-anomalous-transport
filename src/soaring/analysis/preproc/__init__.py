@@ -18,7 +18,7 @@ chooses a data root; that is the driver script's job (``scripts/``), so a stage 
 tested against a synthetic track with known properties and nothing else.
 
 Thresholds are never hard-coded: they live in ``configs/preprocessing.yaml`` and reach a
-stage as the typed dataclasses of :mod:`soaring.analysis.preprocessing`. Stage (v) is
+stage as the typed dataclasses of :mod:`soaring.analysis.census`. Stage (v) is
 the one stage with no thresholds at all -- it is pure coordinate geometry (thesis,
 impl:enu).
 """

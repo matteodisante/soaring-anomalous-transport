@@ -14,7 +14,10 @@ from soaring.analysis.preproc.resample import (
     segment_bounds,
     split_bound_s,
 )
-from soaring.analysis.preprocessing import SamplingThresholds, load_preproc_config
+from soaring.analysis.config import (
+    SamplingThresholds,
+    load_preproc_config,
+)
 
 # The adopted values, restated here so the behaviour tests below read as behaviour and
 # not as a second copy of the config; test_split_bound_uses_the_adopted_config pins them

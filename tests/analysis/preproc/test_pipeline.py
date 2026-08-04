@@ -11,7 +11,7 @@ from soaring.analysis.preproc.pipeline import (
     run_flight,
 )
 from soaring.analysis.preproc.trimming import DROP_NO_FLIGHT
-from soaring.analysis.preprocessing import load_preproc_config
+from soaring.analysis.config import load_preproc_config
 
 CFG = load_preproc_config()
 LAT0, LON0 = 45.0, 7.0

@@ -64,7 +64,7 @@ def _process_one(job):
     from soaring.acquisition.ffvl.naming import parse_igc_filename
     from soaring.analysis.igc import parse_igc
     from soaring.analysis.preproc.pipeline import run_flight
-    from soaring.analysis.preprocessing import load_preproc_config
+    from soaring.analysis.config import load_preproc_config
 
     global _CFG
     try:

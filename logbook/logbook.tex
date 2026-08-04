@@ -161,7 +161,7 @@ across 8 processes cut this to $\sim$15\,min, still too slow to run routinely.
 Reworked Chapter~4 so the flight-level filtering is computed from the \emph{full parsed
 dataset} (paragliders and hang gliders), not the declared catalog metadata.
 \begin{description}
-  \item[What changed] A track scan (\texttt{soaring.analysis.preprocessing.scan\_tracks})
+  \item[What changed] A track scan (\texttt{soaring.analysis.census.scan\_tracks})
         parses every downloaded track; Figure~4.2 shows the real duration and
         flown-path-length distributions with per-variable \emph{marginal} retention
         curves. Adopted cuts: duration $\geq 40$ min and path length $\geq 30$ km (a

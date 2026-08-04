@@ -17,7 +17,7 @@ import pandas as pd
 import pytest
 
 from soaring.analysis.preproc.pipeline import FIX_TABLE_COLUMNS, run_flight
-from soaring.analysis.preprocessing import load_preproc_config
+from soaring.analysis.config import load_preproc_config
 
 CFG = load_preproc_config()
 LAT0, LON0 = 45.0, 7.0

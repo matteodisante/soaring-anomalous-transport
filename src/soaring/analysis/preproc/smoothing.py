@@ -70,7 +70,7 @@ import pandas as pd
 from .resample import FIX_COLUMNS, Resampled
 
 if TYPE_CHECKING:
-    from ..preprocessing import SavgolParams
+    from ..config import SavgolParams
 
 # The kinematic columns this stage adds, in order: velocity then acceleration, per ENU
 # component. `E`, `N` and `z` are overwritten in place by their smoothed values -- only

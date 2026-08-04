@@ -95,7 +95,10 @@ def _accumulate(path: Path, lags):
     ask two questions of the same rows would double the only expensive step here.
     """
     from soaring.analysis.derived import stream_flights
-    from soaring.analysis.transport import MSDAccumulator, TAMSDAccumulator
+    from soaring.analysis.observables.transport import (
+        MSDAccumulator,
+        TAMSDAccumulator,
+    )
 
     ensemble = MSDAccumulator(lags)
     time_averaged = TAMSDAccumulator(lags)
@@ -165,7 +168,7 @@ def _macro_name(discipline: str) -> str:
 
 def _draw(results, fits, ta_results, ta_fits) -> None:
     """Render and save the figure from curves already in hand."""
-    from soaring.analysis.transport import make_msd_figure
+    from soaring.analysis.figures.transport import make_msd_figure
 
     OUT_FIG.parent.mkdir(parents=True, exist_ok=True)
     make_msd_figure(results, fits, ta_results, ta_fits).savefig(
@@ -186,7 +189,7 @@ def redraw() -> int:
     """
     import pandas as pd
 
-    from soaring.analysis.transport import (
+    from soaring.analysis.observables.transport import (
         MSDResult,
         coverage_limited_range,
         fit_msd_exponent,
@@ -238,7 +241,7 @@ def main() -> int:
 
     import pandas as pd
 
-    from soaring.analysis.transport import (
+    from soaring.analysis.observables.transport import (
         bootstrap_alpha_error,
         coverage_limited_range,
         fit_msd_exponent,

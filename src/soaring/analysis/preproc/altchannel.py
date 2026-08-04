@@ -48,7 +48,7 @@ import numpy as np
 import pandas as pd
 
 if TYPE_CHECKING:
-    from ..preprocessing import AltChannelThresholds
+    from ..config import AltChannelThresholds
 
 # The two values ``alt_source`` can take, and the raw column each adopts.
 ALT_SOURCES = {"baro": "baro_alt", "gnss": "gnss_alt"}

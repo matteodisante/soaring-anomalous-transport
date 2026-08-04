@@ -70,10 +70,10 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
-from ..preprocessing import great_circle_m
+from ..census import great_circle_m
 
 if TYPE_CHECKING:
-    from ..preprocessing import FlightLevelThresholds, SamplingThresholds
+    from ..config import FlightLevelThresholds, SamplingThresholds
 
 DROP_TOO_SHORT = "duration_below_minimum"
 DROP_TOO_LONG = "duration_above_maximum"

@@ -15,7 +15,7 @@ from soaring.analysis.preproc.trimming import (
     airborne_window,
     trim_flight,
 )
-from soaring.analysis.preprocessing import load_preproc_config
+from soaring.analysis.config import load_preproc_config
 
 CFG = load_preproc_config()
 TRIM, FLIGHT = CFG.trimming, CFG.flight
@@ -371,7 +371,7 @@ def test_a_long_gap_is_not_counted_as_flown():
     the case the rule is about: ten minutes of missing record counted as ten minutes of
     flight, and the straight line across it as six kilometres flown.
     """
-    from soaring.analysis.preprocessing import load_preproc_config
+    from soaring.analysis.config import load_preproc_config
 
     sampling = load_preproc_config().sampling
     t = np.concatenate([np.arange(0.0, 600.0), np.arange(1200.0, 1800.0)])
@@ -402,7 +402,7 @@ def test_the_two_duration_bounds_read_different_quantities():
     km, which would land in the long-lag MSD.
     """
     from soaring.analysis.preproc.flightfilter import DROP_TOO_LONG
-    from soaring.analysis.preprocessing import load_preproc_config
+    from soaring.analysis.config import load_preproc_config
 
     sampling = load_preproc_config().sampling
     # One hour of flight, twenty hours of nothing, one more hour of flight.

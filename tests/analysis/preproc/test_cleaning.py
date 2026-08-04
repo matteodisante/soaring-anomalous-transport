@@ -12,7 +12,8 @@ from soaring.analysis.preproc.cleaning import (
     integrity_gate,
     longest_non_decreasing,
 )
-from soaring.analysis.preprocessing import great_circle_m, load_preproc_config
+from soaring.analysis.config import load_preproc_config
+from soaring.analysis.census import great_circle_m
 
 FIX = load_preproc_config().fix
 LAT0, LON0 = 45.0, 7.0

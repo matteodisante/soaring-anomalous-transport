@@ -72,7 +72,7 @@ def test_the_time_averaged_msd_no_longer_loses_its_longest_lags(tmp_path):
     # it lets the 100-sample stub answer the short lags a second time. The long-lag tail
     # thins and the short lags are counted twice -- and which flights it happens to is
     # decided by the writer's buffering, not by the data.
-    from soaring.analysis.transport import TAMSDAccumulator
+    from soaring.analysis.observables.transport import TAMSDAccumulator
 
     path = _write(tmp_path, _table(n_flights=3, n_fix=600), row_group_size=500)
     lags = np.array([40.0, 260.0])

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from soaring.analysis.transport import (
+from soaring.analysis.observables.transport import (
     MSDAccumulator,
     ensemble_msd,
     fit_msd_exponent,
@@ -146,7 +146,7 @@ def test_a_flight_says_nothing_about_lags_below_its_own_cadence():
 def test_the_time_averaged_msd_of_a_straight_flight_is_exact():
     # Ballistic: |r(t0+tau) - r(t0)| = v tau for every starting point, so the time
     # average is v^2 tau^2 whatever the window -- an answer to machine precision.
-    from soaring.analysis.transport import time_averaged_msd
+    from soaring.analysis.observables.transport import time_averaged_msd
 
     t = np.arange(0.0, 600.0)
     delta2 = time_averaged_msd(9.0 * t, 12.0 * t, 1.0)  # |v| = 15 m/s
@@ -157,7 +157,7 @@ def test_the_time_averaged_msd_of_a_straight_flight_is_exact():
 
 def test_the_time_averaged_msd_matches_the_direct_double_loop():
     # The FFT identity is worth one test against the O(n^2) definition it replaces.
-    from soaring.analysis.transport import time_averaged_msd
+    from soaring.analysis.observables.transport import time_averaged_msd
 
     rng = np.random.default_rng(11)
     east = np.cumsum(rng.normal(0.0, 3.0, 200))
@@ -178,7 +178,7 @@ def test_the_time_averaged_msd_matches_the_direct_double_loop():
 
 
 def test_a_segment_too_short_gives_nan():
-    from soaring.analysis.transport import time_averaged_msd
+    from soaring.analysis.observables.transport import time_averaged_msd
 
     assert np.isnan(time_averaged_msd(np.array([1.0]), np.array([2.0]), 1.0)).all()
 
@@ -186,7 +186,7 @@ def test_a_segment_too_short_gives_nan():
 def test_the_time_averaged_accumulator_pools_cadences_on_one_lag_axis():
     # Segments of different cadence contribute at the lags each can resolve, on a shared
     # *time* axis: a 5 s logger answers at 5 s and not at 1 s, and both answer at 10 s.
-    from soaring.analysis.transport import TAMSDAccumulator
+    from soaring.analysis.observables.transport import TAMSDAccumulator
 
     lags = np.array([1.0, 5.0, 10.0, 100.0])
     accumulator = TAMSDAccumulator(lags)
@@ -208,7 +208,7 @@ def test_the_time_averaged_accumulator_cuts_the_lags_a_segment_cannot_support():
     # Past half a segment's length the time average has a handful of starting points
     # left and stops being an average; those lags are not answered rather than answered
     # badly.
-    from soaring.analysis.transport import TAMSDAccumulator
+    from soaring.analysis.observables.transport import TAMSDAccumulator
 
     lags = np.array([10.0, 40.0, 60.0, 200.0])
     accumulator = TAMSDAccumulator(lags)
@@ -220,7 +220,7 @@ def test_the_time_averaged_accumulator_cuts_the_lags_a_segment_cannot_support():
 def test_the_fit_range_stops_where_the_ensemble_thins_out():
     # The upper end is not a choice but a consequence: past it the average is over the
     # flights that kept going rather than over the population.
-    from soaring.analysis.transport import coverage_limited_range
+    from soaring.analysis.observables.transport import coverage_limited_range
 
     lags = np.array([100.0, 200.0, 400.0, 800.0, 1600.0])
     short = [_ballistic(i, 10.0, 0.0, duration=500.0) for i in range(8)]
@@ -343,7 +343,7 @@ def test_a_segment_says_nothing_about_lags_below_its_own_step():
     # _cadence`. Without it a 10 s segment answered a lag of 6 s with its value at 10 s
     # -- 2.8 times too large -- so every slow-cadence segment inflated the short-lag end
     # of the curve, and the two estimators were no longer measuring the same thing.
-    from soaring.analysis.transport import TAMSDAccumulator
+    from soaring.analysis.observables.transport import TAMSDAccumulator
 
     lags = np.array([5.0, 6.0, 9.0, 10.0, 20.0])
     accumulator = TAMSDAccumulator(lags)
@@ -366,7 +366,7 @@ def test_the_bootstrap_error_on_alpha_is_the_honest_one():
     alpha over independent ensembles of the same process -- the OLS error understates by
     about five times and the flight-resampling bootstrap lands on it.
     """
-    from soaring.analysis.transport import bootstrap_alpha_error
+    from soaring.analysis.observables.transport import bootstrap_alpha_error
 
     rng = np.random.default_rng(4)
     hurst, n = 0.7, 128
@@ -418,7 +418,10 @@ def test_the_local_slope_is_robust_to_a_single_bad_lag():
     pairwise slopes does not. The panel is read as evidence about the exponent, so
     its estimator must not turn one bad point into a bend.
     """
-    from soaring.analysis.transport import MSDResult, local_slope
+    from soaring.analysis.observables.transport import (
+        MSDResult,
+        local_slope,
+    )
 
     lags = np.geomspace(1.0, 1000.0, 60)
     clean = MSDResult(

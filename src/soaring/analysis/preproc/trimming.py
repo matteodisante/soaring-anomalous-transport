@@ -52,10 +52,10 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
-from ..preprocessing import great_circle_m
+from ..census import great_circle_m
 
 if TYPE_CHECKING:
-    from ..preprocessing import TrimmingThresholds
+    from ..config import TrimmingThresholds
 
 # A flight with no sustained airborne stretch at all has no airborne segment.
 DROP_NO_FLIGHT = "no_sustained_flight"

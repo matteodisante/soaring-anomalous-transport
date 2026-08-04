@@ -323,7 +323,7 @@ def verify(
 
 def main() -> int:
     """Verify every reachable discipline; non-zero exit if any invariant fails."""
-    from soaring.analysis.preprocessing import load_preproc_config
+    from soaring.analysis.config import load_preproc_config
 
     cfg = load_preproc_config()
     total = 0

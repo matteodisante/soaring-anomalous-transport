@@ -26,7 +26,7 @@ The per-flight scan is **cached** on the SSD, at each discipline's
 ``<data_root>/derived/track_scan.parquet`` (``Config.derived_dir`` -- never in the
 repo): a second run reuses it instead of re-parsing; delete the file (or edit
 ``FORCE_RESCAN`` below) to force a fresh scan, e.g. after changing
-``soaring.analysis.preprocessing.track_stats``. The same cache also carries the
+``soaring.analysis.census.track_stats``. The same cache also carries the
 barometric-presence fraction, so the altitude-noise figure's fallback-rate panel can
 read an exact census from it instead of running its own separate scan.
 
@@ -102,10 +102,12 @@ def main() -> int:
         PARA_CONFIG_PATH,
     )
     from soaring.analysis.altitude_noise import sample_igc_paths
-    from soaring.analysis.preprocessing import (
+    from soaring.analysis.config import load_preproc_config
+    from soaring.analysis.census import (
         fix_level_distributions,
         load_or_scan_tracks,
-        load_preproc_config,
+    )
+    from soaring.analysis.figures.preproc import (
         make_fixlevel_diagnostics_figure,
         make_flightlevel_diagnostics_figure,
         make_gap_diagnostics_figure,

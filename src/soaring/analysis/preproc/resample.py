@@ -67,7 +67,7 @@ from ..igc import median_sampling_period
 from .enu import LOCAL_COLUMNS
 
 if TYPE_CHECKING:
-    from ..preprocessing import SamplingThresholds
+    from ..config import SamplingThresholds
 
 # Columns of the resampled per-fix table, in order (carried-through columns follow),
 # with the dtypes an empty result must still advertise.

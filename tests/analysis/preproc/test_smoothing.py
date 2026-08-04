@@ -13,7 +13,7 @@ from soaring.analysis.preproc.smoothing import (
     smooth_flight,
     smooth_segment,
 )
-from soaring.analysis.preprocessing import (
+from soaring.analysis.config import (
     SamplingThresholds,
     SavgolParams,
     load_preproc_config,
