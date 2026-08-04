@@ -55,6 +55,17 @@ fix_level:
 
 # --- altitude channel: chosen per flight, before any cleaning ------------------
 alt_channel:
+  baro_present_min: 0.95           # a flight "has" a barometric channel when at least this
+                                   #   share of its fixes carry a non-zero pressure altitude.
+                                   #   Presence is bimodal -- a logger either has the sensor,
+                                   #   so the channel is full, or has none, so it is all zero
+                                   #   -- so the threshold sits high rather than mid-scale:
+                                   #   a flight missing more than a twentieth of its pressure
+                                   #   altitudes is not a healthy barometric flight, and
+                                   #   admitting it hands the segmentation a channel with
+                                   #   holes (thesis sec:altchannel). It decides alt_source
+                                   #   for every flight, which is why it belongs here and not
+                                   #   in a Python module.
   baro_min_range_m: 30.0           # a "present" barometric channel whose total range over
                                    #   the flight stays under this is a stuck sensor, not a
                                    #   measurement: fall back to GNSS (thesis sec:altchannel)

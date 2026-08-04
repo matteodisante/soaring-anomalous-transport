@@ -66,15 +66,15 @@ NPERSEG = 256
 # A flight qualifies for the PSD only if its native cadence matches the sample
 # mode within this tolerance (so the pooled spectra share one sampling frequency).
 DT_TOLERANCE_S = 0.25
-# A flight "has" a barometric channel when at least this fraction of its fixes carry a
-# non-zero pressure altitude. Presence is essentially bimodal (a logger either has a
-# pressure sensor, so the channel is full, or has none, so it is all zero), which is what
-# the census measures directly: where the channel is present it covers essentially every
-# fix. The threshold is therefore set high rather than mid-scale -- a flight missing more
-# than a twentieth of its pressure altitudes is not a healthy barometric flight, and
-# admitting it would hand the segmentation a channel with holes. Raising 0.5 -> 0.95 moves
-# only the flights in between, which the same census shows to be few (thesis,
-# sec:altchannel / impl:altchannel).
+# A flight "has" a barometric channel when at least this fraction of its fixes carry
+# a non-zero pressure altitude. Presence is essentially bimodal (a logger either has
+# a pressure sensor, so the channel is full, or has none, so it is all zero), which
+# is what the census measures directly: where the channel is present it covers
+# essentially every fix. The threshold is therefore set high rather than mid-scale
+# -- a flight missing more than a twentieth of its pressure altitudes is not a
+# healthy barometric flight, and admitting it would hand the segmentation a channel
+# with holes. Raising 0.5 -> 0.95 moves only the flights in between, which the same
+# census shows to be few (thesis, sec:altchannel / impl:altchannel).
 BARO_PRESENT_MIN = 0.95
 
 
@@ -288,7 +288,9 @@ class _Accumulator:
         one--two orders of magnitude between samples.
         """
         s = self._stack(disc, channel)
-        return None if s is None else (self._psd_f, np.median(s, axis=0))
+        if s is None or self._psd_f is None:
+            return None
+        return self._psd_f, np.median(s, axis=0)
 
     def mean_psd(self, disc: str, channel: str) -> tuple[np.ndarray, np.ndarray] | None:
         """Per-frequency arithmetic-mean spectrum, kept only for comparison.
@@ -297,7 +299,9 @@ class _Accumulator:
         replaces.
         """
         s = self._stack(disc, channel)
-        return None if s is None else (self._psd_f, np.mean(s, axis=0))
+        if s is None or self._psd_f is None:
+            return None
+        return self._psd_f, np.mean(s, axis=0)
 
     def band_psd(
         self, disc: str, channel: str, lo: float = 10.0, hi: float = 90.0
@@ -312,7 +316,7 @@ class _Accumulator:
         the mean is not (the mean conflates the two into one inflated curve).
         """
         s = self._stack(disc, channel)
-        if s is None:
+        if s is None or self._psd_f is None:
             return None
         plo, pmed, phi = np.percentile(s, [lo, 50.0, hi], axis=0)
         return self._psd_f, plo, pmed, phi

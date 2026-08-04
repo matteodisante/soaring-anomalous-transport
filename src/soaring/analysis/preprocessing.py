@@ -24,6 +24,7 @@ import pandas as pd
 
 from .altitude_noise import BARO_PRESENT_MIN
 from .igc import baro_present_fraction, median_sampling_period, parse_igc
+from .preproc.resample import split_bound_s
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
@@ -89,14 +90,18 @@ class FixLevelThresholds:
 
 @dataclass(frozen=True)
 class AltChannelThresholds:
-    """Altitude-channel liveness bound (loaded from the config).
+    """Altitude-channel presence and liveness bounds (loaded from the config).
 
-    A barometric channel can be present (non-zero) yet dead: a stuck sensor writes a
-    constant value, passes the presence check, and would feed the segmentation a
-    vertical velocity of identically zero. Below ``baro_min_range_m`` of total range
-    over the flight the channel is treated as absent and the flight falls back to GNSS.
+    Two conditions decide whether a flight uses its barometric channel. It must be
+    *present*: at least ``baro_present_min`` of the fixes carry a non-zero pressure
+    altitude. And it must be *alive*: a barometric channel can be present yet dead, a
+    stuck sensor writing a constant value that passes the presence check and would feed
+    the segmentation a vertical velocity of identically zero, so below
+    ``baro_min_range_m`` of range over the flight the channel is treated as absent too.
+    Failing either, the flight falls back to GNSS.
     """
 
+    baro_present_min: float
     baro_min_range_m: float
 
 
@@ -453,12 +458,14 @@ def make_flightlevel_diagnostics_figure(
         path = pd.to_numeric(s["path_km"], errors="coerce")
         path = path[path > 0]
         # Restricted to flights that actually adopt the barometric channel. The scan
-        # stores only the barometric extremes, so a GNSS-fallback flight reads a range of
-        # zero here whatever its real altitude activity: pooling the two would put ~30 %
-        # of paragliders at the bottom of the distribution for a reason that has nothing
-        # to do with how they flew. Auditing the cut on the fallback minority needs the
-        # GNSS extremes in the scan, i.e. a full rescan (thesis, sec:flightfilter).
-        has_baro = pd.to_numeric(s["baro_present_frac"], errors="coerce") >= BARO_PRESENT_MIN
+        # stores only the barometric extremes, so a GNSS-fallback flight reads a
+        # range of zero here whatever its real altitude activity: pooling the two
+        # would put ~30 % of paragliders at the bottom of the distribution for a
+        # reason that has nothing to do with how they flew. Auditing the cut on the
+        # fallback minority needs the GNSS extremes in the scan, i.e. a full rescan
+        # (thesis, sec:flightfilter).
+        present = pd.to_numeric(s["baro_present_frac"], errors="coerce")
+        has_baro = present >= BARO_PRESENT_MIN
         alt_range = pd.to_numeric(s["baro_alt_max_m"], errors="coerce") - pd.to_numeric(
             s["baro_alt_min_m"], errors="coerce"
         )
@@ -574,22 +581,23 @@ def make_gap_diagnostics_figure(
     """Sampling-regularity diagnostics: how the gap-based exclusion would act.
 
     Mirrors :func:`make_flightlevel_diagnostics_figure`. Two panels overlay every
-    discipline's distribution -- (a) the largest single gap **in units of that flight's own
-    effective split bound** ``g_max``, and (b) the fraction of a uniform grid at the native
-    interval left uncovered (see :func:`track_stats`) -- and two show the marginal retention
-    curve for each cut alone, with the adopted threshold marked.
+    discipline's distribution -- (a) the largest single gap **in units of that
+    flight's own effective split bound** ``g_max``, and (b) the fraction of a
+    uniform grid at the native interval left uncovered (see :func:`track_stats`) --
+    and two show the marginal retention curve for each cut alone, with the adopted
+    threshold marked.
 
-    Panel (a) is normalised by ``g_max``, not by ``dt``, on purpose. The bound actually
-    applied is ``min(max_gap_factor * dt, max(max_gap_seconds, 2 * dt))``, which is not a
-    fixed multiple of ``dt``: at 1 s the relative term binds, from 2 s to 10 s the absolute
-    cap does, above that the ``2 * dt`` floor. Plotting ``gap / dt`` against a line at
-    ``max_gap_factor`` would therefore draw a cut that is not the one in force for most
-    cadences. Dividing each flight's gap by its own ``g_max`` puts the true criterion at
-    exactly 1 for every flight.
+    Panel (a) is normalised by ``g_max``, not by ``dt``, on purpose. The bound
+    actually applied is ``min(max_gap_factor * dt, max(max_gap_seconds, 2 * dt))``,
+    which is not a fixed multiple of ``dt``: at 1 s the relative term binds, from 2
+    s to 10 s the absolute cap does, above that the ``2 * dt`` floor. Plotting ``gap
+    / dt`` against a line at ``max_gap_factor`` would therefore draw a cut that is
+    not the one in force for most cadences. Dividing each flight's gap by its own
+    ``g_max`` puts the true criterion at exactly 1 for every flight.
 
     Args:
-        scans: Mapping ``discipline -> per-flight table`` with ``max_gap_ratio``, ``dt_s``
-            and ``missing_fraction`` columns (:func:`scan_tracks` over every track).
+        scans: Mapping ``discipline -> per-flight table`` with ``max_gap_ratio``,
+            ``dt_s`` and ``missing_fraction`` (:func:`scan_tracks` over every track).
         sampling: The adopted thresholds to mark.
 
     Returns:
@@ -607,11 +615,10 @@ def make_gap_diagnostics_figure(
         ratio = pd.to_numeric(s["max_gap_ratio"], errors="coerce")
         dt = pd.to_numeric(s["dt_s"], errors="coerce")
         # Each flight's own effective bound, then the gap in units of it: the cut is
-        # then at 1 for every flight whatever its cadence (see the docstring).
-        g_max = np.minimum(
-            sampling.max_gap_factor * dt,
-            np.maximum(sampling.max_gap_seconds, 2.0 * dt),
-        )
+        # then at 1 for every flight whatever its cadence (see the docstring). The
+        # bound comes from the stage that applies it, so the figure cannot draw a cut
+        # the pipeline does not make.
+        g_max = split_bound_s(dt, sampling)
         g = (ratio * dt) / g_max
         ok = np.isfinite(g) & (g > 0) & np.isfinite(dt) & (dt > 0)
         gaps[disc] = g[ok].to_numpy()
@@ -753,7 +760,8 @@ def make_sampling_figure(scans: dict[str, pd.DataFrame]) -> Figure:
         dt = dt[(dt > 0) & np.isfinite(dt)]
         ax.hist(
             dt.clip(upper=upper),
-            bins=bins,
+            # matplotlib's stub omits the array-of-edges form of `bins`.
+            bins=bins,  # type: ignore[arg-type]
             density=True,
             histtype="step",
             lw=1.5,
