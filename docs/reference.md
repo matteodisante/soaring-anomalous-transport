@@ -43,3 +43,55 @@ on the next build. To add a new module, a single `:::` line here is enough.
 ## `cli`
 
 ::: soaring.acquisition.ffvl.cli
+
+## `analysis.igc`
+
+::: soaring.analysis.igc
+
+## `analysis.preprocessing`
+
+::: soaring.analysis.preprocessing
+
+## `analysis.preproc` (the pipeline, one module per stage)
+
+::: soaring.analysis.preproc
+
+### `preproc.altchannel` — stage (i)
+
+::: soaring.analysis.preproc.altchannel
+
+### `preproc.cleaning` — stage (ii)
+
+::: soaring.analysis.preproc.cleaning
+
+### `preproc.trimming` — stage (iii)
+
+::: soaring.analysis.preproc.trimming
+
+### `preproc.flightfilter` — stage (iv)
+
+::: soaring.analysis.preproc.flightfilter
+
+### `preproc.enu` — stage (v)
+
+::: soaring.analysis.preproc.enu
+
+### `preproc.resample` — stage (vi)
+
+::: soaring.analysis.preproc.resample
+
+### `preproc.smoothing` — stage (vii)
+
+::: soaring.analysis.preproc.smoothing
+
+### `preproc.pipeline` — the seven, chained
+
+::: soaring.analysis.preproc.pipeline
+
+## `analysis.derived`
+
+::: soaring.analysis.derived
+
+## `analysis.transport`
+
+::: soaring.analysis.transport

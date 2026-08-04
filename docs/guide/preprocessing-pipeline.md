@@ -1,11 +1,17 @@
 # Pre-processing pipeline — implementation blueprint
 
-!!! warning "Status: design blueprint (transient)"
-    This page is the **engineering contract** for building the IGC → clean-dataset
-    pipeline: the exact steps, schemas, config keys and storage. It is deliberately
-    *transitional*. Once the pipeline is implemented it **retires** into the code (the
-    single source of truth) plus the auto-generated [API Reference](../reference.md) and a
-    short usage guide — it is **not** maintained as a second copy forever.
+!!! success "Status: built (2026-08-03)"
+    Every stage below is implemented under `soaring.analysis.preproc/` (one module per
+    stage, chained by `pipeline.run_flight`) and driven over an archive by
+    `scripts/preprocess.py`. This page is now a *map* of that code rather than a plan for
+    it; where a rule needed a decision the specification left open, the decision is
+    recorded in the stage module's docstring and mirrored into the thesis appendix.
+
+!!! note "What this page is for now"
+    It stays the map of steps, schemas, config keys and storage — one page to read before
+    touching the pipeline — but it is no longer the plan it was written as. It is
+    *transitional*: as the API Reference grows it retires into the code plus a short usage
+    guide, and it is **not** maintained as a second copy forever.
 
     The **why** (justification, method, hyperparameter reasoning) lives in the thesis,
     chapter *The dataset*, section *Trajectory pre-processing* (`sec:preproc`) — not here.
@@ -14,10 +20,9 @@
     links to both; where it repeats a headline threshold for readability, the YAML stays
     authoritative. That is how we avoid a thesis/doc that drift.
 
-    **During implementation, follow this page** for steps, schemas, keys and storage;
-    open the thesis only when the *behaviour* is ambiguous. On any conflict, the thesis
-    is normative and this page must be corrected — the two are kept aligned by the same
-    design audits that produced them.
+    On any conflict, the thesis is normative and this page must be corrected — and where
+    building the code showed the thesis itself to be incomplete, the thesis was corrected
+    in the same pass (see *Decisions taken while building*).
 
 ## Design principles
 
@@ -62,14 +67,14 @@ coordinates (great-circle speeds); (v) converts to the metric ENU frame; (vi)–
 |---|---|---|---|---|---|
 | 0 | Ingest catalogs, add `source`, coarse pre-filter (no track ⇒ skip) | catalog | candidate flight list | `acquisition.ffvl.catalog` | `sec:catalog` |
 | 1 | Parse IGC `B`/`H` records | `.igc` | fixes `[t,lat,lon,valid,baro_alt,gnss_alt]` | `analysis.igc.parse_igc` | `sec:igcformat` |
-| i | Choose altitude channel per flight | fixes | `alt_source ∈ {baro,gnss}` + chosen `alt` | *(to build)* | `sec:altchannel` |
-| ii | Fix-level cleaning: absolute bounds + robust local test + structural rules | raw geo | cleaned fixes | `FixLevelThresholds` ← YAML; `fix_level_distributions` | `sec:fixlevel` |
-| iii | Trim outer ground phases (`v_xy` sustained); interior-ground guard planned (near-zero `v_xy` ≥ `T_ground` **and** flat baro → excise & split) | raw geo | airborne segment | `TrimmingThresholds` ← YAML | `sec:trimming` |
-| iv | Flight-level filtering (duration + path length) | parsed tracks | keep/drop + reason | `FlightLevelThresholds` ← YAML, `scan_tracks` | `sec:flightfilter` |
-| v | Geographic → ECEF → ENU (origin = first fix of the trimmed track) | geo | `E,N,U` | *(to build; formula in thesis)* | `sec:enu` |
-| vi | Enforce uniform `Δt` within flight | ENU | uniform series or exclusion | *(to build)* | `sec:uniform` |
-| vii | Savitzky–Golay smooth + differentiate | ENU | pos/vel/acc | *(to build; `scipy.signal.savgol_filter`)* | `sec:savgol` |
-| viii | Write `fixes` + `flights_meta` | all | Parquet | *(to build)* | — |
+| i | Choose altitude channel per flight | fixes | `alt_source ∈ {baro,gnss}` + chosen `alt` | `analysis.preproc.altchannel.adopt_alt_channel` | `sec:altchannel` |
+| ii | Fix-level cleaning: absolute bounds + robust local test + structural rules | raw geo | cleaned fixes | `analysis.preproc.cleaning.clean_flight` | `sec:fixlevel` |
+| iii | Trim outer ground phases (`v_xy` sustained) + interior-ground guard | raw geo | airborne segment | `analysis.preproc.trimming.trim_flight` | `sec:trimming` |
+| iv | Flight-level filtering (duration + path + altitude activity) | trimmed track | keep/drop + reason | `analysis.preproc.flightfilter.filter_flight` | `sec:flightfilter` |
+| v | Geographic → ECEF → ENU (origin = first fix of the trimmed track) | geo | `E,N,U` | `analysis.preproc.enu.to_local_frame` | `sec:enu` |
+| vi | Enforce uniform `Δt` within flight | ENU | uniform series or exclusion | `analysis.preproc.resample.resample_flight` | `sec:uniform` |
+| vii | Savitzky–Golay smooth + differentiate | ENU | pos/vel/acc | `analysis.preproc.smoothing.smooth_flight` | `sec:savgol` |
+| viii | Write `fixes` + `segments` + `flights_meta` | all | Parquet | `scripts/preprocess.py` (chain: `analysis.preproc.pipeline.run_flight`) | — |
 
 Key mechanics that reconcile the blueprint with the repo:
 
@@ -144,6 +149,16 @@ Key mechanics that reconcile the blueprint with the repo:
   segment boundary are flagged censored, for the duration fits to exclude; a
   `missing_fraction` too large within a segment ⇒ **drop the segment** (the flight only if
   none survives).
+  Grid mechanics (`resample_flight`): anchored on the segment's **own** first fix,
+  stepping the flight's native `Δt`, with the span rounded *down* to a whole number of
+  steps — so the grid never reaches past the last fix and every point is interpolated
+  strictly inside the measured range, never extrapolated. A grid point counts as
+  measured when a fix lies within `Δt/2` of it; the fill is per *channel* (PCHIP on
+  `E`,`N`; linear on `z`), so an altitude that stage (ii) invalidated is restored even
+  where the grid point itself is measured. Carried per-fix flags follow the nearest fix
+  and are blanked at reconstructed points, which carry no measurement to describe. The
+  bound `g_max` is defined once, in `split_bound_s`, and the diagnostic figure reads it
+  from there.
   Thresholds `max_gap_factor`, `max_gap_seconds`, `max_missing_fraction` (in the YAML), audited by
   `make_gap_diagnostics_figure` and quoted by the `StatScan*GapSplit*` census macros. The
   bound is two-scale by design — relative to cadence, capped in seconds (thesis
@@ -157,6 +172,14 @@ Key mechanics that reconcile the blueprint with the repo:
   vertical treated separately, the vertical conditioned on `alt_source` via the two config
   keys `tau_c_vertical_baro_s`/`tau_c_vertical_gnss_s`). `deriv=0,1,2` and `delta=Δt` are
   not tuning knobs.
+  Two consequences of the window, made explicit when the stage was built: the first and
+  last `w // 2` samples of every segment are evaluated off-centre and are flagged `edge`
+  (the per-sample flag `sec:savgol` asks for, so an edge-sensitive observable can be
+  recomputed on interior samples only); and a segment with fewer than `w` samples cannot
+  be smoothed at all, so it is dropped with reason `shorter_than_smoothing_window`. The
+  90 s segment gate of (vi) guarantees the window fits **up to Δt = 22.5 s** — beyond
+  that, in the thin slow-logger tail, this drop is what covers the difference. It is
+  observed: 1 segment in 307 on a 116-flight raw sample.
 
 ## Reporting-stage scan cache (not the production `fixes`/`flights_meta` tables)
 
@@ -199,29 +222,49 @@ justifies a fix-level cut is the fraction of *fixes* it removes, not of flights 
 
 ### `fixes` (one row per fix)
 
-Partitioned Parquet by `(source, flight_id)`, zstd. Only filter *outputs* are stored;
-everything else is lazy.
+One Parquet per discipline, zstd, written in batches of 400 flights (**a row group is
+not a batch** — read it through `soaring.analysis.derived.stream_flights`). Only filter
+*outputs* are stored; everything else is lazy. Eighteen columns, in this order — the list
+is `pipeline.FIX_TABLE_COLUMNS` and this table is checked against it by
+`test_the_documented_fix_schema_matches_the_code`.
 
 | column | dtype | note |
 |---|---|---|
-| `source` | categorical | `paraglider` / `hangglider` / `sailplane` |
-| `flight_id` | int32 | key is `(source, flight_id)` — see [flight_id](#catalog-quirks) |
+| `source` | string | `paraglider` / `hangglider` / `sailplane` |
+| `flight_id` | string | key is `(source, flight_id)` — see [flight_id](#catalog-quirks) |
 | `segment_id` | int16 | 0-based within the flight; a split at a long gap / excised run increments it (thesis `sec:uniform`) |
-| `interpolated` | bool | grid point reconstructed at resampling, not measured |
 | `t` | float32 | s; `t=0` at first airborne fix of the **parent flight** (segments keep the parent clock) |
 | `E`, `N` | float32 | ENU, smoothed (`deriv=0`); `E=N=0` at the first fix of the trimmed track |
 | `z` | float32 | adopted altitude channel at its measured value, smoothed; never re-zeroed (thesis `sec:enu`) |
 | `v_E`, `v_N`, `v_z` | float32 | velocity (`deriv=1`) |
 | `a_E`, `a_N`, `a_z` | float32 | acceleration (`deriv=2`) |
+| `interpolated` | bool | the **time base** had no fix within half a step, so all three channels were reconstructed at resampling |
+| `z_reconstructed` | bool | this grid point's **altitude** did not come from a measured one — either `interpolated`, or the fix it came from carried no altitude. A vertical hole opens no time gap, so it forces no split and `interpolated` stays False: exclude on *this* flag for any vertical analysis |
+| `edge` | bool | within a half-window of a segment boundary, where the Savitzky–Golay polynomial is evaluated off-centre and so carries more variance (thesis `sec:savgol`) |
+| `hampel_flagged` | bool | the local-outlier test flagged this fix; recorded, never a gate (thesis `sec:fixlevel`) |
+| `alt_invalidated` | bool | the **cleaning** removed this altitude, as opposed to the logger never writing one |
 
 Lazy (never stored), e.g. `v_tot=√(v_E²+v_N²+v_z²)`, `θ_xy=atan2(v_N,v_E)`,
 `ω=(v_E a_N − v_N a_E)/(v_E²+v_N²)`. (`z` is already absolute; no `U_origin` offset exists.)
 
 ### `segments` (one row per segment)
 
-Single Parquet. Key `(source, flight_id, segment_id)`: `t_start`, `t_end`, `n_fix`,
-`frac_interpolated`, and the boundary-censoring flags for phases truncated at either end
-(thesis `sec:uniform`). Per-flight aggregates stay in `flights_meta`.
+Single Parquet. Key `(source, flight_id, segment_id)`: `t_start`, `t_end`, `n_fix`
+(grid points contributed to `fixes`), `n_fix_raw` (measured fixes), `frac_interpolated`,
+`frac_z_reconstructed`, and the boundary-censoring flags `censored_start`/`censored_end` for phases truncated at
+either end (thesis `sec:uniform`). Per-flight aggregates stay in `flights_meta`.
+
+Two implementation choices, made when stage (vi) was built:
+
+- **Every segment the split produced gets a row**, retained or not, with `kept` (bool)
+  and `drop_reason` (null when kept, else `shorter_than_min_segment_duration` /
+  `missing_fraction_above_max`). `segment_id` is assigned at split time and stays stable,
+  so a gap in the numbering *is* the record of a drop. Same principle as `flights_meta`:
+  the reason is recorded, not just the removal — and this is the material the gap-cap
+  sweep of `sec:uniform` needs.
+- **`censored_*` is True only at a boundary a split created.** The parent flight's own
+  first and last boundary truncate the phase in progress too, but they are a different
+  thing, and are told apart by these flags being False on the first/last segment.
 
 ### `flights_meta` (one row per flight)
 
@@ -255,6 +298,145 @@ Handle at ingestion (empirically observed on the real files):
   explicitly; flag `Biplace`/`non homologuée` for exclusion from single-pilot analyses.
 - **`pilot`** carries anonymized tokens on some rows → validate the pattern before any
   per-pilot analysis.
+
+## Regenerating everything after a run
+
+`scripts/regenerate.sh` runs, in order:
+
+| # | step | writes | cost |
+|---|---|---|---|
+| 1 | `verify_dataset.py` | `verify.tex` (`\StatVerify*`) | one full scan |
+| 2 | `generate_pipeline_census.py` | `pipeline_census.tex`, `tab:pipecensus` | seconds |
+| 3 | `generate_msd_figure.py` | `msd.pdf`, `msd_curve.csv`, `msd.tex` | ~20 min |
+| 4 | `generate_census_stats.py` | `census.tex` (`\StatScan*`, `\Preproc*`) | seconds |
+| 5 | `audit_msd.py` | per-flight positions at every lag, into `$AUDIT_DIR` | ~20 min |
+| 6 | `audit_msd_report.py` | `audit.tex` (`\StatAudit*`) | seconds |
+| 7 | `generate_prelim_figure.py` | `prelim_{ensemble,strata}.pdf`, `prelim.tex` | seconds |
+| 8 | `check_generated_macros.py` | nothing; fails if a quoted macro is unwritten | instant |
+| 9 | `latexmk` | `thesis/main.pdf` | ~1 min |
+
+Steps 5–7 are the audit and the preliminary characterization. Step 5 is a second streaming
+pass that keeps what step 3 averages away — each flight's position at each lag — because
+the questions the audit asks (does the curve's shape survive a fixed logger cadence, a
+fixed duration, the removal of the common heading?) are different reductions of a
+per-flight quantity that no longer exists once the average has been taken. Step 7 reads
+step 5's arrays rather than the fix table, which is what makes a stratified MSD a row
+selection instead of another 43 GB scan. `$AUDIT_DIR` defaults to `$TMPDIR/soaring-audit`
+and holds a few hundred MB per discipline; it is an analysis product, not a thesis one.
+
+It **refuses to start
+while `preprocess.py` is alive**, because the driver rewrites `<data_root>/derived/` in
+place and writes `flights_meta.parquet` only after its last flight — so a generator run
+against a live archive reads a partial fix table beside the *previous* run's metadata and
+produces numbers that are wrong and look right. That is not hypothetical; it happened.
+
+The macro contract is checked before the build and not after, because an undefined
+generated macro inside a `\SI{}` is a **fatal** LaTeX error, not a warning: siunitx fails
+to parse the argument, the braces unbalance, and the build dies with dozens of `Extra }`
+errors pointing at lines that are perfectly correct.
+
+## Decisions taken while building (2026-08-03)
+
+Each is a place where the specification did not determine the answer, and each is
+mirrored in the thesis appendix (`impl:fixlevel`, `impl:trimming`) in the same pass:
+
+- **The impossibility gate deletes; the Hampel flag does not gate.** The identifier's
+  50 % breakdown point is a stated property, and the archive exceeds it: scattered runs of
+  null-island `(0,0)` fixes can be more than half a ±20 s window, the median follows them,
+  and the corrupt fixes go *unflagged* while the good ones around them are flagged. A rule
+  requiring the flag is blind exactly there. Deletion now needs only: unreachable from the
+  anchor at the `v_xy` bound, and the block's removal lets the track rejoin. The flag is
+  still recorded per fix and counted per flight. (Thesis `sec:fixlevel`, second revblock.)
+- **Postcondition: no impossible step inside a segment.** Whatever the scan resolves, any
+  surviving step past the `v_xy` bound becomes a segment boundary — it is a transition of
+  unknown course, like a long gap. Stated as a property of the output so the invariant
+  holds by construction; the number of boundaries it adds is `n_boundaried` in
+  `flights_meta`, because a silent repair is a lost diagnosis.
+- **A block may run for `hampel_window_s` before it is called a discontinuity.** Reused,
+  not invented. It also sets the scale at which excursion and offset part: an offset under
+  `v_xy_max · w` ≈ 900 m is removed as an excursion instead of split.
+- **Flight-level plausibility bound.** Mean ground speed `path / duration` must stay under
+  the discipline's own fix-level `v_xy` bound. Same kind of sanity cut as the 16 h duration
+  cap, and it reuses the existing number rather than adding a key. Catches the logs that
+  are corrupt beyond repair; one such flight left in would carry the ensemble MSD alone.
+- **The ground-flatness test uses a central span, not a full range.** A range is a maximum
+  statistic: over zero-mean noise it grows as `2σ√(2 ln n)` — 4.6 m over 60 samples, 7.1 m
+  over 3000 — so against a 5 m tolerance the same motionless pilot passed on a short stint
+  and failed on a long one, and since an interior stint must last minutes to be considered
+  at all, **the guard could not fire on anything**. The p5–p95 span sits at 3.3σ whatever
+  the length. Consequence stated openly: on a GNSS-fallback flight the guard *abstains*,
+  because the widened tolerance the thesis promises needs a measured channel-noise ratio
+  that a first measurement did not reproduce. Abstaining is the safe direction.
+- **An unreturned vertical step is counted (`n_alt_level_shift`) but not yet treated.** The
+  `|v_z|` rule knew an out-and-back spike and a coherent run; a single step never undone —
+  a barometric re-reference — is neither, so it was censored by nothing *and counted by
+  nothing*, and the smoothing differentiated it into up to 5117 m/s in the table. 8.3 % of
+  paraglider and 6.2 % of hang-glider flights carry one. Detection is not a judgement, so
+  it is done; the treatment (split / re-reference / invalidate) each changes a rule the
+  thesis argues, so it is left open for the segmentation work that consumes `v_z`.
+- **`suspect_intervals.parquet` is written.** The driver returned only three tables, so the
+  slow-and-flat stints stage (iii) exists to produce were dropped on the floor and the
+  ψ(τ) sensitivity check had no data. Written even when empty, so its absence means "older
+  run", not "no flight had one".
+- **A hole in the vertical channel is flagged, not split at, and never silent.** `g_max`
+  bounds the interval between two *fixes*; it says nothing about an interval where a fix
+  exists but carries no altitude — which happens whenever the logger wrote none or the
+  cleaning removed one, with the horizontal record intact. No time gap opens, so no split
+  is declared and `interpolated` stays False, while `_fill_channel` bridges the hole with
+  a straight line of any length. Measured: 500 s of missing altitude gave up to 540 m of
+  error, a fabricated `v_z`, `frac_interpolated = 0.00000` and `was_resampled = False`.
+  The flight declared itself uniform as recorded. Now: per-fix `z_reconstructed`,
+  per-segment `frac_z_reconstructed`, per-flight `z_gap_max_s`. **No split**, because the
+  horizontal trajectory is intact and Chapter 3 measures the horizontal — cutting it for a
+  vertical defect would discard good data. Vertical analyses exclude on the flag.
+- **No rule attributes an impossible step at the *start* of a record — deliberately.**
+  The first fix becomes the ENU origin (`sec:enu`), so a corrupt one displaces every
+  coordinate; five archive flights sat 4500 km out. But a step is a statement about a
+  *pair*, and away from the ends the bounded-removal test settles which end is wrong by
+  asking which removal restores the trend — at the first fix there is no trend behind it
+  to ask. Two rules were written and both were wrong, opposite ways: firing on the first
+  impossible step accuses the earlier end always (an ordinary spike 3 s in deleted the
+  good fixes and became the origin); firing on the scan's split looks like evidence but
+  the split index is the first fix of the *unrejoinable block*, which is **after** the
+  step whenever the corruption outlasts `w` (a 50 s corrupt run 5 s in deleted 5 good
+  fixes, kept 50 bad, origin 5039 km out). The discontinuity is left as one; the
+  guarantee lives at the flight level, where the reach bound refuses such a record whole.
+  That bound never depended on the rule, and the rule would have recovered 2 flights in
+  156 017.
+- **Flight-level reach bound.** Every fix must satisfy `|r(t)| ≤ v_xy_max · t` — stated
+  per fix, the same form `verify_dataset.py` checks on the written table, and not as the
+  extent against the whole duration, which would license a fix 100 km out ten seconds in. This is the *displacement* analogue of the
+  plausibility bound, and it catches what that one cannot: a flight whose first fix is
+  corrupt has no impossible step left to inflate the path, so it passes every other cut and
+  simply sits thousands of kilometres from its own origin. Five paraglider flights in run 4
+  sat 4500 km out; because the ensemble MSD averages `|r|²`, five records in 156 017 moved
+  it by seven orders of magnitude. Costs 0.03 % (para) / 0.05 % (hang) on a 4000-flight
+  sample, and reuses the existing number. Re-checked on the written tables by
+  `verify_dataset.py` as `|r(t)| ≤ v_xy_max · t` — the one invariant stated in terms of the
+  frame and the bound alone, so it holds whatever the pipeline did.
+- **No Hampel test on `z`.** `sec:fixlevel` argues it (three reasons); `impl:fixlevel`
+  still said the identical test ran on the altitude channel. The body wins, the appendix
+  was corrected, and the vertical is cleaned by its absolute bounds alone.
+- **Both altitude bounds act on the *adopted* channel**, GNSS included. With no local
+  test on `z`, the alternative would leave a GNSS-fallback flight with no vertical cleaner
+  at all. The `|v_z|` bound was calibrated on barometric data but expresses an aircraft
+  envelope, not an instrument one; its firing rate is recorded per `alt_source`.
+- **The `|v_z|` bound marks *isolated* spikes only** — both adjoining steps over the
+  bound, opposite signs. A same-sign run is a sustained manoeuvre (a spiral dive), counted
+  and left alone: this is `impl:fixlevel` check (5) made operational.
+- **The first fix is tested forward.** An anchor-carrying scan never questions its first
+  anchor, and that fix becomes the ENU origin — a spike there displaces the whole flight.
+  It is deleted on the same two conditions as any other: flagged, and an impossible step
+  to its successor. (Found by the MSD: two flights with a 4 km first step dominated the
+  short-lag ensemble average.)
+- **The interior-ground flatness test bounds the fitted slope too.** Detrending removes a
+  steady climb as readily as a pressure drift, so the residual test alone would excise a
+  wing thermalling at 1 m/s in still air. The slope bound is `δ_z / τ_freeze`, a rate the
+  config already fixes.
+- **A segment shorter than the smoothing window is dropped** with reason
+  `shorter_than_smoothing_window`. The 90 s segment gate guarantees the window fits only
+  up to Δt = 22.5 s.
+- **The `segments` table records every segment**, kept or not, with the reason.
 
 ## Open items
 
