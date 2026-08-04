@@ -63,16 +63,28 @@ if grep -qE '^logbook/' <<<"$staged"; then
     fi
 fi
 
-# 4) Drift check: the "Next steps" plan lives in both the thesis and the logbook and
-# must stay in sync. Warn (never block) when it changed in one document but not the
-# other. We compare the logbook's "Next steps" SECTION (so editing the narrative notes
-# alone does not trigger a false alarm), and the thesis's dedicated next-steps file.
-thesis_ns_file="thesis/sections/04-next-steps.tex"
+# 4) Drift check: the plan lives in both the thesis and the logbook and must stay in
+# sync. Warn (never block) when it changed in one document but not the other. We compare
+# the logbook's "Next steps" SECTION -- so editing the narrative notes alone does not
+# raise a false alarm -- against the thesis chapters that hold the plan.
+#
+# The thesis side is a LIST, and the list is the point: it was one file until the
+# planning chapter was split into "Global transport" (measured) and "Flight phases"
+# (still a plan), and a hook that names a file which no longer exists reports "unchanged"
+# for ever and silently stops checking. Add a file here whenever a chapter joins the plan.
+thesis_ns_files="thesis/sections/04-global-transport.tex thesis/sections/05-flight-phases.tex"
 logbook_file="logbook/logbook.tex"
 extract_ns() { awk '/\\section\{Next steps\}/{f=1} f{print}'; }
 
+for f in $thesis_ns_files; do
+    if [ ! -e "$f" ]; then
+        echo "pre-commit: WARNING -- the drift check names $f, which does not exist." >&2
+        echo "  Update thesis_ns_files in .githooks/pre-commit, or the check is dead." >&2
+    fi
+done
+
 thesis_ns=0
-git diff --cached --quiet -- "$thesis_ns_file" || thesis_ns=1
+git diff --cached --quiet -- $thesis_ns_files || thesis_ns=1
 
 logbook_ns=0
 staged_ns="$(git show ":$logbook_file" 2>/dev/null | extract_ns)"
@@ -81,7 +93,7 @@ head_ns="$(git show "HEAD:$logbook_file" 2>/dev/null | extract_ns)"
 
 if [ "$thesis_ns" != "$logbook_ns" ]; then
     echo "pre-commit: WARNING -- the 'Next steps' plan changed in one document but not the other:" >&2
-    echo "    thesis ($thesis_ns_file): $([ "$thesis_ns" = 1 ] && echo changed || echo unchanged)" >&2
+    echo "    thesis plan chapters:        $([ "$thesis_ns" = 1 ] && echo changed || echo unchanged)" >&2
     echo "    logbook 'Next steps' section:                $([ "$logbook_ns" = 1 ] && echo changed || echo unchanged)" >&2
     echo "  Keep the two in sync. This is only a warning; the commit proceeds." >&2
 fi
