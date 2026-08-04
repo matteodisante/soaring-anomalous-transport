@@ -139,14 +139,17 @@ the full trajectories and already probes the transport at the global level.
   \item[Non-Gaussianity.] How far the propagator departs from a Gaussian, measured by the
         non-Gaussian parameter (in the plane)
         \begin{equation}
-          \alpha_2(t)=\frac{\big\langle|\mathbf{r}(t)|^4\big\rangle}
+          \alpha_2^{\mathrm{NG}}(t)=\frac{\big\langle|\mathbf{r}(t)|^4\big\rangle}
           {2\,\big\langle|\mathbf{r}(t)|^2\big\rangle^{2}}-1 ,
         \end{equation}
-        which vanishes for a Gaussian and is positive for heavier-than-Gaussian tails (the
+        which vanishes for a Gaussian and is positive for heavier-than-Gaussian tails. The
+        superscript separates it from the filtered-variation exponents $\alpha_p$ of
+        Sec.~\ref{sec:transport-measure}, which the literature also writes $\alpha_2$ at
+        $p=2$ and which is a different quantity entirely. (The
         factor $2$ is the two-dimensional Gaussian value of
         $\langle|\mathbf{r}|^4\rangle/\langle|\mathbf{r}|^2\rangle^{2}$). Evaluated on the
         propagator $P(\mathbf{x},t)$ at each elapsed time $t$, it is a function of $t$ (one
-        number per time) tracing a curve $\alpha_2(t)$ that pinpoints the scales over which
+        number per time) tracing a curve $\alpha_2^{\mathrm{NG}}(t)$ that pinpoints the scales over which
         the displacement statistics are non-Gaussian (typically largest at intermediate
         times, where occasional long glides dominate, and decaying if a central-limit
         Gaussianisation sets in at long times). It summarises the shape of $P$ without
@@ -819,7 +822,7 @@ is one flight and is not an estimate, and nothing here is close.
 The natural next step is to call the process a correlated Gaussian motion, and the same
 moments refuse it. One exponent for every moment is a statement about how the distribution
 \emph{scales}; it says nothing about its \emph{shape}, and the non-Gaussian parameter
-$\alpha_2=\langle|\Delta\mathbf{r}|^4\rangle/2\langle|\Delta\mathbf{r}|^2\rangle^2-1$,
+$\alpha_2^{\mathrm{NG}}=\langle|\Delta\mathbf{r}|^4\rangle/2\langle|\Delta\mathbf{r}|^2\rangle^2-1$,
 which the fourth and second moments already carry, measures the shape directly. It vanishes
 for a Gaussian.
 
@@ -840,7 +843,7 @@ hang gliders sit an order of magnitude above the Gaussian value and the paraglid
 times above it. Whatever makes these increments heavier-tailed than Gaussian acts about four
 times more strongly on the smaller, slower discipline.
 
-Beyond the fitted range $\alpha_2$ climbs, to $\StatShapeParaNonGaussBeyond$ and
+Beyond the fitted range $\alpha_2^{\mathrm{NG}}$ climbs, to $\StatShapeParaNonGaussBeyond$ and
 $\StatShapeHangNonGaussBeyond$ at the longest lags in panel~(c). Those lags are where the
 declared task governs the trajectory and where the fourth moment is carried by the fewest
 flights, so the climb is reported and not quoted; the range over which every exponent in

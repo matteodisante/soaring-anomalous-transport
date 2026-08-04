@@ -244,7 +244,9 @@ def draw(measured: dict):
     gauss_ax.text(0.02, 0.96, "Gaussian $=0$, Levy walk $\\simeq 0.56$;\nshaded: the quoted range",
                   fontsize=7, transform=gauss_ax.transAxes, va="top")
     gauss_ax.set_xlabel(r"$\Delta$ (s)")
-    gauss_ax.set_ylabel(r"$\alpha_2(\Delta)$")
+    # Superscripted to keep it apart from the filtered-variation exponent, which the
+    # chapter also calls alpha_2 and which is a different quantity.
+    gauss_ax.set_ylabel(r"$\alpha_2^{\mathrm{NG}}(\Delta)$")
     gauss_ax.set_title("(c) non-Gaussian parameter", fontsize=10, loc="left")
     runs_ax.set_xlabel("run duration (s)")
     runs_ax.set_ylabel("$P(T>\\tau)$")
