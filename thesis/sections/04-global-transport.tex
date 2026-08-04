@@ -700,6 +700,96 @@ a single effective exponent over a declared range --- which is how
 Table~\ref{tab:orderscan} reports it.
 \end{revblock}
 
+\section{Beyond the second moment}
+\label{sec:transport-shape}
+\begin{revblock}
+An exponent is a statement about one moment of one distribution, and two processes can
+agree on it and be different physics. A correlated Gaussian process and a Lévy walk both
+give $\langle|\Delta\mathbf{r}|^2\rangle\sim\Delta^{2H}$; what separates them is the rest of
+the spectrum. This section asks three questions the exponent cannot answer, and the first
+of them settles which of those two the archive is.
+
+\paragraph{The whole spectrum of moments.}
+Writing $\big\langle|\Delta\mathbf{r}(\Delta)|^q\big\rangle\sim\Delta^{\,q\nu(q)}$ and
+reading $q\nu(q)$ as a function of $q$: a self-similar monofractal process gives a straight
+line through the origin, $\nu(q)$ constant, while a Lévy walk gives a bilinear one whose
+knee sits at its tail index and whose right-hand branch has slope one, the ballistic front.
+The discrimination is visual rather than a delicate fit, which is what makes it worth a full
+traversal of the archive.
+
+Over \SIrange{\StatShapeParaFitMinS}{\StatShapeParaFitMaxS}{\second} and
+$q$ from \StatShapeParaQMin\ to \StatShapeParaQMax, the spectrum is straight.
+$\nu(q)$ varies by \StatShapeParaNuSpread\ across the whole range of $q$ for paragliders and
+\StatShapeHangNuSpread\ for hang gliders, and the departure from a line through the origin
+is \StatShapeParaLinearDeparture\ and \StatShapeHangLinearDeparture\ in rms --- an order of
+magnitude below what a knee would leave, and below the threshold at which a knee is declared
+at all \impldetails{impl:global}. Neither archive shows strong anomalous diffusion.
+
+That is a negative result and it is the informative kind. The Lévy walk is the model this
+thesis was framed around; on the whole trajectory, unsegmented, the archive does not support
+it. What it supports is a monofractal process --- one exponent governing every moment ---
+which is what a correlated Gaussian motion looks like.
+
+The moments are estimable rather than merely computed. The share of each moment carried by
+the largest one per cent of its increments reaches
+\SI{\StatShapeParaTailMaxPct}{\percent} at worst, and
+\SI{\StatShapeParaTailAtQMaxPct}{\percent} at $q=\StatShapeParaQMax$; above a half a moment
+is one flight and is not an estimate, and nothing here is close.
+
+\paragraph{How long a heading survives.}
+The velocity autocorrelation is positive throughout and decays without ever changing sign:
+$C=\StatShapeParaVacfAtFloor$ at the lower end of the grid and no sign change anywhere,
+where a change of sign would be the anti-persistence a circling wing produces. It is also
+the one observable in this chapter whose range is set by the pipeline rather than by the
+archive: the grid starts at \SI{\StatShapeParaFitMinS}{\second} because that is the
+smoothing scale of the slowest logger, and the correlation has already fallen below $1/e$
+there. The heading memory of a soaring wing is shorter than the scale at which this dataset
+can speak, so what is reported is a lower bound on the decay and not the decay.
+
+\paragraph{Whether there is a scale to separate.}
+The persistence runs decompose each flight into non-overlapping stretches whose sinuosity
+--- arc length over chord --- stays under a threshold, and their durations are the geometric
+counterpart of a waiting time. Their tail index is what a Lévy walk would tie to the
+exponent, and it is not stable: scanning the threshold over $s_{\max}\in\{1.05,1.15,1.30\}$
+moves $\beta$ from \StatShapeParaBetaStraight\ to \StatShapeParaBetaGentle\ to
+\StatShapeParaBetaLoose, a spread of \StatShapeParaBetaSpread.
+
+A run length that depends this strongly on the angle at which a turn is declared is a run
+length with no natural scale, which is a second and independent way of saying what the
+moment spectrum says: there is no distinguished flight-leg duration for a Lévy description
+to be built on. It is also a prediction about Chapter~\ref{ch:phases}. A segmentation into
+climbs and glides declares a threshold of the same kind, and this measurement says the
+result will move with it.
+
+The runs are decomposed without overlap on purpose. Sampling the run length at every instant
+returns the length-biased distribution, whose tail index is one below the truth; on
+synthetic runs of known index $2.0$ the two estimators return $2.0$ and $1.1$
+\impldetails{impl:global}. At the values seen here that would not be a bias to correct but a
+different answer.
+\end{revblock}
+
+
+\begin{figure}[htbp]
+  \centering
+  \IfFileExists{generated/shape.pdf}{%
+    \includegraphics[width=\linewidth]{generated/shape}%
+  }{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/generate\_shape\_figure.py}.}}%
+  }
+  \caption{\rev{What the second moment cannot say. (a)~The moment spectrum
+  $q\nu(q)$ with the straight line $q\nu=\nu q$ dashed: straight means one exponent governs
+  every moment, and a Lévy walk would bend here with a knee at its tail index. (b)~The share
+  of each moment carried by the largest \SI{1}{\percent} of its increments; above the dashed
+  line a moment is being set by a handful of flights. (c)~The velocity autocorrelation,
+  positive throughout and already below $1/e$ at the lower end of the grid, which is the
+  smoothing scale rather than a property of the flying. (d)~Survival of the persistence-run
+  durations at three geometric thresholds; that they do not lie parallel is the statement
+  that no run length is distinguished. Computed by
+  \texttt{scripts/reporting/generate\_shape\_figure.py}.}}
+  \label{fig:shape}
+\end{figure}
+
 \section{What this establishes}
 \label{sec:transport-verdict}
 \begin{revblock}
