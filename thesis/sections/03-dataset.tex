@@ -328,19 +328,34 @@ observables, and audited a posteriori on the fraction of data each rule removes
 value changed there changes here.
 \end{revblock}
 
-\begin{table}[p]
+% A longtable, not a table float: the parameter list is taller than the text block, and a
+% float that cannot fit runs off the bottom of the page and overprints the folio instead of
+% breaking. pdflatex reports no overfull box for that, so the log does not catch it.
+\begingroup
 \ifrevmode\color{revblue}\fi
-\centering\small
+\small
 \renewcommand{\arraystretch}{1.15}
+\setlength{\LTcapwidth}{\textwidth}
+\begin{longtable}{|l|l|p{7.4cm}|}
 \caption{\rev{Working values of the pre-processing pipeline, by stage. Symbols are those
 used in the text; every value is generated from \texttt{configs/preprocessing.yaml}, and the
 per-parameter rationale is given in the section listed. Config keys and implementation
 notes: Sec.~\ref{impl:fixlevel} onward.}}
-\label{tab:workingparams}
-\begin{tabular}{|l|l|p{7.4cm}|}
+\label{tab:workingparams} \\
 \hline
 \textbf{Symbol} & \textbf{Value} & \textbf{What it controls} \\
 \hline
+\endfirsthead
+\multicolumn{3}{@{}l}{\small\itshape Table~\thetable\ (continued)} \\
+\hline
+\textbf{Symbol} & \textbf{Value} & \textbf{What it controls} \\
+\hline
+\endhead
+\hline
+\multicolumn{3}{r@{}}{\small\itshape continued on the next page} \\
+\endfoot
+\hline
+\endlastfoot
 \multicolumn{3}{|l|}{\textbf{Fix-level cleaning} (Sec.~\ref{sec:fixlevel}) --- removes
 corrupt fixes, keeps every genuine one} \\
 \hline
@@ -439,9 +454,8 @@ because the spectral knees of the three coincide (Sec.~\ref{sec:savgol})} \\
 than a cubic determines. It is this floor and not $\tau_c$ that fixes the smoothing scale
 for every logger slower than \SI{1}{\hertz}: in seconds the window is
 $\max(\tau_c,\,\PreprocSavgolMinWindow\,\Delta t)$} \\
-\hline
-\end{tabular}
-\end{table}
+\end{longtable}
+\endgroup
 
 \subsection{Choice of altitude channel}
 \label{sec:altchannel}
