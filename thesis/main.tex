@@ -41,6 +41,7 @@
 \captionsetup{font=small, labelfont=bf, labelsep=period}
 \usepackage{booktabs}
 \usepackage{longtable}
+\usepackage{multirow}
 \usepackage{siunitx}
 \usepackage{xcolor}
 \usepackage{csquotes}
@@ -179,6 +180,9 @@
 % Dataset statistics (\StatDataParaWorstCutPct, \DataCascadeParaRows, ...): the discard
 % cascade with its running remainder, and the survivors per season.
 \IfFileExists{generated/dataset_stats.tex}{\input{generated/dataset_stats}}{}
+% Transport numbers (\StatVarParaAlphaOrderTwo, ...): the filtered-variation measurement
+% of Chapter 3, with the stratifications that test it.
+\IfFileExists{generated/transport.tex}{\input{generated/transport}}{}
 
 \title{Anomalous Transport in Soaring: Collective Strategies and Intermittent Search Models}
 \author{Matteo Di Sante}

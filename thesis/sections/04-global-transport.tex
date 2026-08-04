@@ -494,6 +494,247 @@ curves to be power laws. It is taken up again in the forms that do not
 the searches into one number. Separating those is what the rest of this chapter is for.
 \end{revblock}
 
+\section{An estimator the archive does not defeat}
+\label{sec:variations}
+\begin{revblock}
+Section~\ref{sec:obs-global} leaves the displacement statistic in an awkward position. Both
+averages of it are curves with structure a single exponent does not describe, and the
+ensemble one is dominated over the decade that matters by where flights start rather than
+by how they move. Neither failure is a defect of the archive: they are properties of a
+quantity built from absolute displacement, measured on flights that share an origin and fly
+a declared course.
+
+Three things contaminate that quantity here, and they are worth naming together because one
+estimator disposes of all three.
+
+The first is each flight's own course. A wing that crosses country has a mean velocity, and
+a mean velocity contributes $|\mathbf{v}_d|^2\Delta^2$ to any mean square displacement
+whatever the underlying process. The obvious repair is to subtract it, and the obvious
+repair is a trap: $\mathbf{v}_d$ has to be estimated, the natural estimate
+$[\mathbf{r}(T)-\mathbf{r}(0)]/T$ uses the record's own endpoint, and subtracting it turns
+the series into a bridge whose increments must sum to zero by construction. On synthetic
+fractional Brownian motion of known exponent $\alpha=1.50$ the operation returns
+$1.35$, and the distortion has no safe range: the centred variation is already
+\SI{2}{\percent} below the raw one at a lag of \SI{0.05}{\percent} of the record and
+\SI{76}{\percent} below at half of it \impldetails{impl:global}.
+
+The second is the declared task. The CFD scores closed courses, and
+\SI{\StatVarParaClosedPct}{\percent} of retained paraglider flights fly a triangle. A
+triangle returns towards its start, so the displacement saturates by construction, and it
+does so at lags set by the task rather than by the air.
+
+The third is the population. Section~\ref{sec:prelim} measured the strata of this archive as
+incompatible on the ensemble MSD, by \SI{\StatPrelimParaClassTypicalDeparturePct}{\percent}
+across wing classes and \SI{\StatPrelimParaGroupTypicalDeparturePct}{\percent} across
+orographic groups. A superposition of ordinary processes with different persistence times
+imitates a single anomalous one, which is the most economical way this measurement could be
+wrong.
+
+\paragraph{Filtering rather than subtracting.}
+A finite difference of order $p$ annihilates every polynomial of degree $p-1$ identically.
+Writing $A_p$ for that difference taken at spacing $\Delta$ and summing over the two
+horizontal components, the \emph{filtered variation}
+\begin{equation}
+  V_p(\Delta)=\big\langle\,\big|A_p\,\mathbf{r}(\Delta)\big|^2\big\rangle
+  \label{eq:variation}
+\end{equation}
+scales as $\Delta^{2H}$ for a self-similar process of exponent $H$, at every order. What
+differs between orders is what each removes before measuring: $p=1$ is the plain increment
+and removes a constant offset, $p=2$ removes a constant velocity, $p=3$ a constant
+acceleration. No drift is ever estimated, so none can be estimated badly.
+
+The order scan is the measurement rather than a check on it. The difference
+$\alpha_1-\alpha_2$ is the part of the apparent exponent that was course, read off directly;
+the agreement $\alpha_2\simeq\alpha_3$ is the certificate that nothing polynomial is left to
+remove. On synthetic data with a course of \SI{8}{\metre\per\second} imposed on a process of
+true exponent $1.50$, order~1 returns $1.89$ and orders~2 and~3 return $1.51$ and $1.51$.
+
+Everything below is computed within a retained segment, never across the gap that ends one,
+and never on displacement from take-off. The estimator is
+\path{soaring.analysis.observables.variations}; the pass that applies it to the archive
+keeps one curve per flight, so every stratification in this section is a row selection
+rather than another traversal of the fix table \impldetails{impl:global}.
+\end{revblock}
+
+\section{The measurement}
+\label{sec:transport-measure}
+\begin{revblock}
+The fitted range is stated rather than discovered:
+\SIrange{\StatVarParaFitMinS}{\StatVarParaFitMaxS}{\second}, which is
+\StatVarParaFitDecades\ decades. Its floor sits above the smoothing scale of the slowest
+logger retained --- five samples at \SI{10}{\second} is \SI{50}{\second}, so nothing below
+it is a statement about motion --- and its ceiling below the lags at which flight-duration
+censoring begins to select the ensemble. Every exponent is quoted with the range it was
+fitted over and with how much it moves when that range changes.
+
+\begin{table}[htbp]
+\centering\small
+\ifrevmode\color{revblue}\fi
+\renewcommand{\arraystretch}{1.2}
+\caption{\rev{The order scan over
+\SIrange{\StatVarParaFitMinS}{\StatVarParaFitMaxS}{\second}. Order~1 is the plain
+increment and still carries each flight's course; orders~2 and~3 annihilate a constant
+velocity and a constant acceleration, and agree with each other, which is what says nothing
+polynomial is left. The uncertainty is the combination of a day-and-site bootstrap and the
+movement of the exponent when the fitted range is halved; the two are given separately
+because they differ by a factor of fifty and only the second is worth arguing about.}}
+\label{tab:orderscan}
+\begin{tabular}{@{}l c c c c@{}}
+\toprule
+& \textbf{order $p$} & \boldmath$\alpha_p$ & \textbf{sampling} & \textbf{range} \\
+\midrule
+\multirow{3}{*}{paragliders}
+ & 1 & \StatVarParaAlphaOrderOne\ $\pm$ \StatVarParaAlphaOrderOneErr
+   & \StatVarParaAlphaOrderOneErrSampling & \StatVarParaAlphaOrderOneErrRange \\
+ & 2 & \StatVarParaAlphaOrderTwo\ $\pm$ \StatVarParaAlphaOrderTwoErr
+   & \StatVarParaAlphaOrderTwoErrSampling & \StatVarParaAlphaOrderTwoErrRange \\
+ & 3 & \StatVarParaAlphaOrderThree\ $\pm$ \StatVarParaAlphaOrderThreeErr
+   & \StatVarParaAlphaOrderThreeErrSampling & \StatVarParaAlphaOrderThreeErrRange \\
+\addlinespace
+\multirow{3}{*}{hang gliders}
+ & 1 & \StatVarHangAlphaOrderOne\ $\pm$ \StatVarHangAlphaOrderOneErr
+   & \StatVarHangAlphaOrderOneErrSampling & \StatVarHangAlphaOrderOneErrRange \\
+ & 2 & \StatVarHangAlphaOrderTwo\ $\pm$ \StatVarHangAlphaOrderTwoErr
+   & \StatVarHangAlphaOrderTwoErrSampling & \StatVarHangAlphaOrderTwoErrRange \\
+ & 3 & \StatVarHangAlphaOrderThree\ $\pm$ \StatVarHangAlphaOrderThreeErr
+   & \StatVarHangAlphaOrderThreeErrSampling & \StatVarHangAlphaOrderThreeErrRange \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:orderscan} gives the scan. Three things in it are the result.
+
+\paragraph{Removing the course raises the exponent.}
+$\alpha_1$ and $\alpha_2$ differ by $\StatVarParaDriftShare$\ for paragliders and
+$\StatVarHangDriftShare$\ for hang gliders, and the sign is the opposite of the one a residual
+drift would produce. A drift inflates a displacement statistic; what happens here is that
+the archive's closed tasks \emph{suppress} it, because a triangle comes home. The plain
+increment sees that and reads an exponent that is too low; the second-order variation does
+not see it at all.
+
+That reading is confirmed where it can be tested directly. Fitting closed and open tasks
+separately, the gap in the exponent is $\StatVarParaTaskGapOrderOne$\ at order~1 and
+$\StatVarParaTaskGapOrderTwo$\ at order~2, and on a wider range the first grows to
+$+0.28$ while the second does not move. A difference of curvature does not care where the
+course ends.
+
+\paragraph{Orders two and three agree.}
+By \StatVarParaOrderAgreement\ for paragliders and \StatVarHangOrderAgreement\ for hang
+gliders. Nothing polynomial is left in the trajectory that the second difference has not
+already removed, so the exponent is not a residue of a trend of any degree.
+
+\paragraph{The uncertainty is not the sampling error.}
+The day-and-site bootstrap returns \StatVarParaAlphaOrderTwoErrSampling\ on
+$\alpha_2$; refitting each half of the range returns
+\StatVarParaAlphaOrderTwoErrRange. The systematic is fifty times the statistical, and a
+number quoted with the second alone would carry four significant figures where its second
+is not determined. The choice of resampling unit is measured rather than asserted: the
+intraclass correlation of the per-flight variation is \StatVarParaIccFlight\ at the flight
+level, \StatVarParaIccDaySite\ at day and site, \StatVarParaIccDay\ at day and
+\StatVarParaIccPilot\ at pilot, so the resampling unit is the day and site, of which the
+archive holds \num{\StatVarParaClusters}.
+\end{revblock}
+
+\section{Trying to break it}
+\label{sec:transport-nulls}
+\begin{revblock}
+An exponent that survives only the analysis that produced it has not been measured. Four
+stratifications, each a row selection on the per-flight curves, ask whether the number
+belongs to the motion or to who is in the ensemble.
+
+\begin{table}[htbp]
+\centering\small
+\ifrevmode\color{revblue}\fi
+\renewcommand{\arraystretch}{1.2}
+\caption{\rev{What the exponent does when the ensemble is cut four ways, at order~2, over
+the same range. The comparison that matters is with Sec.~\ref{sec:prelim}, where the same
+strata departed from the pooled ensemble MSD by
+\SI{\StatPrelimParaClassTypicalDeparturePct}{\percent} and
+\SI{\StatPrelimParaGroupTypicalDeparturePct}{\percent}: the heterogeneity that makes the
+ensemble estimator unusable does not reach this one.}}
+\label{tab:strata-alpha}
+\begin{tabular}{@{}l r c c@{}}
+\toprule
+\textbf{cut} & \textbf{strata} & \boldmath$\alpha_2$ \textbf{range} & \textbf{spread} \\
+\midrule
+native cadence & \StatVarParaCadenceStrata
+  & \StatVarParaCadenceAlphaMin--\StatVarParaCadenceAlphaMax & \StatVarParaCadenceSpreadAlpha \\
+wing class & \StatVarParaClassStrata
+  & \StatVarParaClassAlphaMin--\StatVarParaClassAlphaMax & \StatVarParaClassSpreadAlpha \\
+season & \StatVarParaSeasonStrata
+  & \StatVarParaSeasonAlphaMin--\StatVarParaSeasonAlphaMax & \StatVarParaSeasonSpreadAlpha \\
+declared task & 2 & --- & $\StatVarParaTaskGapOrderTwo$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{The pipeline is not being measured.}
+The Savitzky--Golay window has a floor of five \emph{samples}
+(Sec.~\ref{sec:savgol}), so a \SI{10}{\second} logger is smoothed over
+\SI{50}{\second} and a \SI{1}{\hertz} one over \SI{5}{\second}: a factor of ten in the
+scale below which the trajectory has been made smooth. Across the
+\StatVarParaCadenceStrata\ cadence classes the exponent spreads by
+\StatVarParaCadenceSpreadAlpha. Whatever the estimator is reading, it is not the filter.
+
+\paragraph{The heterogeneity does not reach it.}
+Across wing classes the spread is \StatVarParaClassSpreadAlpha\ and across seasons
+\StatVarParaSeasonSpreadAlpha. This is the sharpest contrast the chapter offers: on the
+ensemble MSD of Sec.~\ref{sec:prelim} the same wing classes departed from the pooled curve
+by \SI{\StatPrelimParaClassTypicalDeparturePct}{\percent} and the same terrain groups by
+\SI{\StatPrelimParaGroupTypicalDeparturePct}{\percent}. A mixture of populations with
+different speeds and different courses is a mixture of \emph{trends}, and a trend is what
+the second difference removes.
+
+\paragraph{How many regimes the range supports.}
+Fewer than the curve appears to show. Breakpoint selection on the second-order variation
+returns \StatVarParaBreaks\ break for paragliders and \StatVarHangBreaks\ for hang gliders,
+but the same procedure run on surrogates that are a single power law plus the measured
+sampling noise returns a break \SI{\StatVarParaFalsePositivePct}{\percent} and
+\SI{\StatVarHangFalsePositivePct}{\percent} of the time. Neither count is established.
+
+The reason is the resolution of the data rather than the fitting. The residuals of any fit
+to these curves are correlated across lags, because every lag averages the same flights, so
+\StatVarParaFitLags\ lags carry \StatVarParaDof\ independent points. On that budget one
+breakpoint is at the edge of what is estimable and two are not, and the honest statement is
+a single effective exponent over a declared range --- which is how
+Table~\ref{tab:orderscan} reports it.
+\end{revblock}
+
+\section{What this establishes}
+\label{sec:transport-verdict}
+\begin{revblock}
+Over \SIrange{\StatVarParaFitMinS}{\StatVarParaFitMaxS}{\second}, on an estimator that
+removes any polynomial trend and that the archive's cadence, wing class, season and task
+type move by at most \StatVarParaClassSpreadAlpha\ in the exponent, cross-country soaring
+gives $\alpha_2=\StatVarParaAlphaOrderTwo\pm\StatVarParaAlphaOrderTwoErr$ for paragliders
+and $\StatVarHangAlphaOrderTwo\pm\StatVarHangAlphaOrderTwoErr$ for hang gliders. The two
+disciplines agree within their uncertainties, which is not guaranteed --- they differ in
+speed, in glide ratio and in where they fly.
+
+An exponent of two is the boundary of the self-similar family: $\alpha=2H$ with $H=1$ is
+motion whose increments stay correlated at every lag in the range. It is worth being
+careful about what that does \emph{not} mean, because the natural reading is wrong. It is
+not the signature of locally straight flight. A process observed inside its own persistence
+time is differentiable, and its second-order variation reads near three rather than two:
+measured on a persistent random walk of correlation time \SI{3000}{\second}, the same
+estimator over the same lags returns $3.02$, and on a straight line it returns identically
+zero. A measurement of two says the trajectory is persistent and still rough at every lag
+of the range --- correlated, not smooth.
+
+What the chapter cannot do is extend that range. Below it the trajectory has been smoothed
+by the pipeline; above it the declared task takes over, and the separation between closed
+and open courses grows from \num{0.03} in the local slope at \SI{60}{\second} to
+\num{1.13} at \SI{12000}{\second}. The window in which this archive speaks about transport
+rather than about the scoring rule is \StatVarParaFitDecades\ decades wide, and the
+pre-asymptotic character of what is measured in it follows from the system rather than from
+the method: a soaring day ends, so there is a physical cutoff and no amount of data moves
+it.
+
+That is the limit of what the whole trajectory can say. It gives one exponent, over one
+window, for a motion that mixes climbing, gliding and searching into a single number.
+Chapter~\ref{ch:phases} is about separating them.
+\end{revblock}
+
 \begin{figure}[htbp]
   \centering
   \IfFileExists{generated/msd.pdf}{%
