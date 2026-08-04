@@ -268,6 +268,8 @@ archive (hours, once) from the cost of asking it a question (instant), and every
 `\StatScan*` macro in the thesis is a query against it.
 
 ```
+6,716 rows in 1 row groups, 0.4 MB on disk, SNAPPY
+
 derived/track_scan.parquet   shape = 6,716 rows x 12 columns
 
 dtypes:
@@ -319,9 +321,9 @@ One row per **grid point** of every retained segment, keyed `(source, flight_id,
 segment_id)`:
 
 ```
-34,389,245 rows in 43 row groups, 1,156.0 MB on disk, ZSTD
+34,525,108 rows in 43 row groups, 1,161.6 MB on disk, ZSTD
 
-derived/fixes.parquet   shape = 34,389,245 rows x 17 columns
+derived/fixes.parquet   shape = 34,525,108 rows x 18 columns
 
 dtypes:
   source                str
@@ -338,6 +340,7 @@ dtypes:
   a_N                   float32
   a_z                   float32
   interpolated          bool
+  z_reconstructed       bool
   edge                  bool
   hampel_flagged        bool
   alt_invalidated       bool
@@ -349,12 +352,12 @@ hangglider       975           0 10.0 111.172691  -33.921207 1460.657104  9.7787
 hangglider       975           0 20.0 198.742096 -103.775276 1468.514282  8.025670 -6.961107
 hangglider       975           0 30.0 279.220947 -138.911942 1463.914307  7.008325 -2.623670
 
-head(4), columns 10-17:
-      v_z       a_E       a_N       a_z  interpolated  edge  hampel_flagged  alt_invalidated
--0.532143 -0.436803 -1.029317  0.192857         False  True           False            False
- 0.721429 -0.262474 -0.408811  0.057857         False  True           False            False
- 0.625000 -0.088144  0.211696 -0.077143         False False           False            False
--1.466667  0.072790  0.463077 -0.047143         False False            True            False
+head(4), columns 10-18:
+      v_z       a_E       a_N       a_z  interpolated  z_reconstructed  edge  hampel_flagged  alt_invalidated
+-0.532143 -0.436803 -1.029317  0.192857         False            False  True           False            False
+ 0.721429 -0.262474 -0.408811  0.057857         False            False  True           False            False
+ 0.625000 -0.088144  0.211696 -0.077143         False            False False           False            False
+-1.466667  0.072790  0.463077 -0.047143         False            False False            True            False
 ```
 
 Zstd, ~33 bytes per row, written in batches of 400 flights, streamed by analyses rather
@@ -438,9 +441,9 @@ Every segment the splitting produced, **retained or not**, with the reason for e
 drop:
 
 ```
-13,541 rows in 1 row groups, 0.2 MB on disk, ZSTD
+13,222 rows in 1 row groups, 0.2 MB on disk, ZSTD
 
-derived/segments.parquet   shape = 13,541 rows x 12 columns
+derived/segments.parquet   shape = 13,222 rows x 13 columns
 
 dtypes:
   source                str
@@ -451,17 +454,72 @@ dtypes:
   n_fix                 int64
   n_fix_raw             int64
   frac_interpolated     float64
+  frac_z_reconstructed  float64
   censored_start        bool
   censored_end          bool
   kept                  bool
   drop_reason           string
 
 head(4):
-    source flight_id  segment_id  t_start   t_end  n_fix  n_fix_raw  frac_interpolated  censored_start  censored_end  kept                 drop_reason
-hangglider       975           0      0.0 20640.0   2065       2064           0.001453           False         False  True                        <NA>
-hangglider      1032           0      0.0 14175.0      0        691           0.001479           False         False False channel_not_reconstructable
-hangglider      1037           0      0.0 17660.0   1767       1766           0.000000           False         False  True                        <NA>
-hangglider      1049           0      0.0 19698.0      0        960           0.000000           False         False False channel_not_reconstructable
+    source flight_id  segment_id  t_start   t_end  n_fix  n_fix_raw  frac_interpolated  frac_z_reconstructed  censored_start  censored_end  kept                 drop_reason
+hangglider       975           0      0.0 20640.0   2065       2064           0.001453              0.001453           False         False  True                        <NA>
+hangglider      1032           0      0.0 14175.0      0        691           0.001479              1.000000           False         False False channel_not_reconstructable
+hangglider      1037           0      0.0 17660.0   1767       1766           0.000000              0.000000           False         False  True                        <NA>
+hangglider      1049           0      0.0 19698.0      0        960           0.000000              1.000000           False         False False channel_not_reconstructable
+
+==============================================================================
+derived/flights_meta.parquet  -- transposed: 41 columns read down
+==============================================================================
+6,716 rows x 47 columns (6,132 retained, 584 dropped)
+
+                     a retained flight           a dropped one
+source                      hangglider              hangglider
+flight_id                          975                     830
+pipeline_version                 1.3.0                   1.3.0
+drop_stage                         NaN           flight_filter
+drop_reason                        NaN  duration_below_minimum
+error_detail                      None                    None
+alt_source                        baro                    gnss
+baro_present_frac                  1.0                     0.0
+baro_range_m                    1977.0                     0.0
+n_alt_missing_raw                    0                     349
+n_fix_raw                         2099                     349
+n_fix_clean                       2069                     348
+n_merged_duplicates                  0                       0
+n_removed_backward                   0                       0
+n_removed_spike                      0                       1
+n_removed_frozen                    30                       0
+n_alt_out_of_band                    0                       0
+n_alt_vz_spike                       0                       0
+n_flagged_kept                      40                       8
+n_vz_runs                            0                       0
+n_alt_level_shift                    0                       0
+split_jump_max_m                   0.0                     0.0
+n_boundaried                         0                       0
+integrity_fraction                 0.0                0.004587
+ground_phase_start_s             300.0                   485.0
+ground_phase_end_s             20945.0                  1570.0
+trimmed_fraction              0.002464                0.376437
+n_interior_excised                   0                       0
+n_suspect_stints                     0                       0
+duration_flight_s              20645.0                  1085.0
+path_km                     283.408578                6.044969
+alt_range_m                     1977.0                     NaN
+extent_km                    62.132928                1.892541
+lat0                         43.812717                     NaN
+lon0                          6.809883                     NaN
+alt0                            1459.0                     NaN
+dt_native_s                       10.0                     NaN
+g_max_s                           20.0                     NaN
+n_segments                         1.0                     NaN
+n_segments_kept                    1.0                     NaN
+frac_interpolated             0.001453                     NaN
+frac_z_reconstructed          0.001453                     NaN
+z_gap_max_s                       10.0                     NaN
+was_resampled                     True                    None
+savgol_order                       3.0                     NaN
+savgol_window_horiz                5.0                     NaN
+savgol_window_vert                 5.0                     NaN
 ```
 
 `n_fix` counts the rows the segment contributed to `fixes` (zero when dropped) against
