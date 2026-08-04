@@ -46,6 +46,11 @@ DISCIPLINES = {"paragliders": ("para", "Para"), "hang gliders": ("hang", "Hang")
 COLORS = {"paragliders": "#3477a8", "hang gliders": "#b5482a"}
 ORDERS = (1, 2, 3)
 
+# A LaTeX control sequence takes letters only, so the filter order is spelled out in the
+# macro name. The checker catches this, but only once a generator has already written the
+# unusable name -- the definition itself is what fails, whether or not anything quotes it.
+_ORDER_WORD = {1: "One", 2: "Two", 3: "Three"}
+
 # Levels the bootstrap may resample at, coarsest last. The one used is chosen by the
 # intraclass correlation rather than by preference.
 LEVELS = ("flight", "day_site", "day", "pilot")
@@ -147,7 +152,7 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
         p: task_systematic(lags, loaded["orders"][p], closed, FIT_RANGE_S) for p in ORDERS
     }
     for p in ORDERS:
-        put(f"TaskGapOrder{p}", f"{task[p][0] - task[p][1]:+.2f}")
+        put(f"TaskGapOrder{_ORDER_WORD[p]}", f"{task[p][0] - task[p][1]:+.2f}")
     slope_open, slope_closed = task[1][2], task[1][3]
 
     # ---- how much clustering there is, at each level --------------------------------
@@ -200,15 +205,15 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
         systematic = float(abs(halves[0] - halves[1]) / 2.0)
         total = float(np.hypot(sampling, systematic))
         alphas[p] = (point, total)
-        put(f"AlphaOrder{p}", f"{point:.2f}")
-        put(f"AlphaOrder{p}Err", f"{total:.2f}")
-        put(f"AlphaOrder{p}ErrSampling", f"{sampling:.3f}")
-        put(f"AlphaOrder{p}ErrRange", f"{systematic:.3f}")
+        put(f"AlphaOrder{_ORDER_WORD[p]}", f"{point:.2f}")
+        put(f"AlphaOrder{_ORDER_WORD[p]}Err", f"{total:.2f}")
+        put(f"AlphaOrder{_ORDER_WORD[p]}ErrSampling", f"{sampling:.3f}")
+        put(f"AlphaOrder{_ORDER_WORD[p]}ErrRange", f"{systematic:.3f}")
         # The per-flight bootstrap, for the comparison that justifies the clustering.
         _, naive = cluster_bootstrap(
             curves, np.arange(len(frame)), exponent, n_resamples=120, seed=7
         )
-        put(f"AlphaOrder{p}ErrNaive", f"{float(np.nanstd(naive)):.3f}")
+        put(f"AlphaOrder{_ORDER_WORD[p]}ErrNaive", f"{float(np.nanstd(naive)):.3f}")
 
     put("DriftShare", f"{alphas[1][0] - alphas[2][0]:+.2f}")
     put("OrderAgreement", f"{abs(alphas[2][0] - alphas[3][0]):.2f}")

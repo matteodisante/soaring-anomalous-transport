@@ -80,3 +80,10 @@ logbook/*.synctex.gz
 logbook/*.toc
 logbook/*.lof
 logbook/*.lot
+
+# Copie in stile Finder ("nome 2.py"): compaiono da sole su questo filesystem e, se sono
+# test, vengono raccolte ed eseguite due volte -- 101 test fantasma in un'occasione.
+# Lo spazio prima della cifra distingue una copia da un nome che finisce legittimamente
+# con un numero (es. 01_fondamenta.md, C2-dataset.tex).
+* [0-9].*
+* [0-9][0-9].*
