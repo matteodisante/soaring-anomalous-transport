@@ -37,8 +37,14 @@
 #  10. transport -- Chapter 3's measurement: the order scan, its uncertainty, the
 #                  stratifications and the regime fit. Minutes.
 #  11. shape    -- the third traversal: the increments themselves, for the moment
-#                  spectrum, the velocity memory and the persistence runs.
-#  12. shapefig -- their reduction into tab:shape and \StatShape*.
+#                  spectrum, the velocity memory and the persistence runs. The longest
+#                  step by far: ~2.5 h on the paraglider archive, since the persistence
+#                  runs are decomposed per segment at three thresholds.
+#  12. shapefig -- their reduction into tab:shape and \StatShape*. Not instant like the
+#                  other reductions: the Clauset-Shalizi-Newman cut-off scans every
+#                  distinct run length as a candidate and measures a KS distance on the
+#                  tail at each, which on the paragliders' ~3e6 runs is ~15 min. The scan
+#                  is exact and the cost is the price of not choosing the cut-off by eye.
 #  13. contract -- every macro the thesis quotes must now exist. An undefined one inside
 #                  \SI{} is a *fatal* LaTeX error, not a warning, so this runs before the
 #                  build and its failure is the useful message.
