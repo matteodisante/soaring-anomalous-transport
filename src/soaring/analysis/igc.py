@@ -33,6 +33,27 @@ COLUMNS = ["t", "lat", "lon", "valid", "baro_alt", "gnss_alt"]
 # A UTC midnight roll-over makes the time of day drop by (almost) a whole day. Only a
 # drop this large is treated as a new day; a smaller backward step is an out-of-order or
 # corrupted fix, not a roll-over (see the unwrap logic in :func:`parse_igc`).
+# How close to midnight both ends of a drop must sit for it to be a roll-over rather
+# than a broken clock. One hour: a real roll-over has a gap of at most the cadence, so
+# the margin is generous, while a lost-clock 00:00:00 written in the afternoon is hours
+# away from it.
+_MIDNIGHT_EDGE_S = 3600
+
+
+def _altitude(token: str) -> float:
+    """Decode a five-character altitude field, or ``nan`` if it is not one.
+
+    The IGC field is five digits, optionally signed in the barometric case. Loggers
+    do write it blank, dashed or otherwise unusable; that is a missing altitude and
+    nothing more, so it is returned as ``nan`` rather than raised, and the fix keeps
+    its position and its timestamp.
+    """
+    token = token.strip()
+    if not token or not (token.lstrip("+-").isdigit() and token.lstrip("+-")):
+        return float("nan")
+    return float(int(token))
+
+
 _MIDNIGHT_WRAP_MIN_DROP_S = 43200
 
 
@@ -46,6 +67,14 @@ def _lat(token: str) -> float:
             unlikely one.
     """
     deg = int(token[0:2])
+    # `int` accepts a leading sign and surrounding whitespace, so "-1234" and "
+    # 1234" both parse and both land inside the < 60000 bound -- decoding to a
+    # position that is merely *wrong* rather than rejected, which is the one outcome
+    # a validity check must not allow. The field is five digits by the format, so it
+    # is required to be five digits.
+
+    if not token[2:7].isdigit():
+        raise ValueError(f"invalid latitude minutes: {token!r}")
     minutes_raw = int(token[2:7])
     if minutes_raw >= 60000:
         raise ValueError(f"invalid latitude minutes: {token!r}")
@@ -69,6 +98,8 @@ def _lon(token: str) -> float:
             unlikely one.
     """
     deg = int(token[0:3])
+    if not token[3:8].isdigit():
+        raise ValueError(f"invalid longitude minutes: {token!r}")
     minutes_raw = int(token[3:8])
     if minutes_raw >= 60000:
         raise ValueError(f"invalid longitude minutes: {token!r}")
@@ -87,7 +118,7 @@ def _valid_time_of_day(hh: int, mm: int, ss: int) -> bool:
     return 0 <= hh <= 23 and 0 <= mm <= 59 and 0 <= ss <= 59
 
 
-def _read_lines(path: Path) -> list[str]:
+def _read_lines(path: str | Path) -> list[str]:
     """Read an IGC file as text, tolerant of latin-1 bytes and CRLF endings."""
     raw = Path(path).read_bytes()
     text = raw.decode("latin-1", errors="replace")
@@ -101,8 +132,10 @@ def parse_igc(path: str | Path) -> pd.DataFrame:
         path: Path to the ``.igc`` file.
 
     Returns:
-        A DataFrame with columns ``t`` (seconds elapsed from the first fix, monotonic
-        with the midnight roll-over unwrapped), ``lat``/``lon`` (signed degrees, WGS84),
+        A DataFrame with columns ``t`` (seconds elapsed from the first fix, with the
+        midnight roll-over unwrapped but a backward step left where the log has one --
+        it is a defect for the cleaning to remove, not for the parser to hide),
+        ``lat``/``lon`` (signed degrees, WGS84),
         ``valid`` (``True`` for an ``A`` fix, ``False`` for ``V``), and ``baro_alt``/
         ``gnss_alt`` (metres; ``0`` where the channel is absent). A record is skipped
         (not just malformed in shape) if its UTC time is not a valid 24-hour
@@ -129,10 +162,17 @@ def parse_igc(path: str | Path) -> pd.DataFrame:
                 continue  # not a ValueError (ints parsed fine): explicit range check
             lat = _lat(line[7:15])
             lon = _lon(line[15:24])
-            baro = float(int(line[25:30]))
-            gnss = float(int(line[30:35]))
         except ValueError:
             continue  # corrupted record: skip it rather than abort the file
+        # The altitudes are decoded *after* the record has been accepted, and
+        # separately from each other. A blank or dashed altitude field is a missing
+        # value, not a corrupt fix: the whole asymmetry of stage (ii) is that a bad
+        # altitude costs the altitude and never the position (sec:fixlevel). Sharing
+        # one `try` with the time and the coordinates threw all three away, so a
+        # logger that blank-pads the field lost every fix of the flight.
+
+        baro = _altitude(line[25:30])
+        gnss = _altitude(line[30:35])
         sec_of_day.append(hh * 3600 + mm * 60 + ss)
         lats.append(lat)
         lons.append(lon)
@@ -144,17 +184,36 @@ def parse_igc(path: str | Path) -> pd.DataFrame:
         return pd.DataFrame({c: pd.Series(dtype="float64") for c in COLUMNS})
 
     sod = np.asarray(sec_of_day, dtype=np.int64)
-    # Rebuild a monotonic elapsed time from the wall-clock time of day, which resets to
-    # 0 at each UTC midnight. Only a drop of (nearly) a whole day is a real roll-over; a
-    # *small* backward step is an out-of-order or corrupted fix, not a new day. The
-    # naive "any decrease adds a day" would turn a few-second GPS glitch into a spurious
-    # +86400 s jump, manufacturing a multi-hour gap and a wildly wrong duration. So only
-    # large drops advance the day counter; any residual backward jitter is then clamped
-    # (:func:`numpy.maximum.accumulate`) so the series is non-decreasing as promised.
+    # Rebuild the elapsed time from the wall-clock time of day, which resets to 0 at
+    # each UTC midnight. Only a drop of (nearly) a whole day is a roll-over; a *small*
+    # backward step is an out-of-order or corrupted fix, not a new day. The naive "any
+    # decrease adds a day" would turn a few-second GPS glitch into a spurious +86400 s
+    # jump, manufacturing a multi-hour gap and a wildly wrong duration. So only large
+    # drops advance the day counter.
+    #
+    # Residual backward jitter is deliberately *left in place*. Flattening it with a
+    # running maximum, as this parser used to, is a repair, and repairing it here would
+    # destroy the evidence the fix-level cleaning has to act on: a backward timestamp is
+    # a defect to be recorded and removed by minimal deletion, not silently absorbed
+    # (thesis, impl:fixlevel "Time-base defects"). The returned ``t`` is therefore
+    # elapsed seconds from the first fix, monotonic *except* where the log itself is
+    # not.
+    #
+    # A large drop is necessary but not sufficient. A genuine roll-over also *looks*
+    # like one: the fix before it sits just under midnight and the one after it just
+    # over. A logger that loses its clock writes 00:00:00 mid-flight, which from an
+    # afternoon value is a drop of tens of thousands of seconds and was read as a new
+    # day -- adding 86400 s to the whole remainder of the record, manufacturing a
+    # day-long gap and a duration an order of magnitude too large. Requiring both ends
+    # to be near midnight costs nothing on a real roll-over and refuses that one.
     diffs = np.diff(sod)
-    day_wraps = np.concatenate([[0], np.cumsum(diffs < -_MIDNIGHT_WRAP_MIN_DROP_S)])
+    wraps = (
+        (diffs < -_MIDNIGHT_WRAP_MIN_DROP_S)
+        & (sod[:-1] >= 86400 - _MIDNIGHT_EDGE_S)
+        & (sod[1:] <= _MIDNIGHT_EDGE_S)
+    )
+    day_wraps = np.concatenate([[0], np.cumsum(wraps)])
     t = (sod + 86400 * day_wraps).astype(float)
-    t = np.maximum.accumulate(t)
     t -= t[0]
 
     return pd.DataFrame(

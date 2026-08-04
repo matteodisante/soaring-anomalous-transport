@@ -137,7 +137,10 @@ def test_backward_jitter_is_not_a_new_day(tmp_path):
     # A few-second backward step is an out-of-order / corrupted fix, NOT a midnight
     # roll-over. The old "any decrease adds a day" logic turned such a glitch into a
     # +86400 s jump, manufacturing a spurious multi-hour span (the "30 h on 1100 fixes"
-    # pathology). Elapsed time must stay a few seconds and non-decreasing.
+    # pathology). Elapsed time must stay a few seconds -- and the backward step must
+    # survive: the parser no longer flattens it with a running maximum, because that
+    # repair would destroy the evidence fix-level cleaning acts on (thesis,
+    # impl:fixlevel "Time-base defects").
     lines = [
         "AXXX",
         "B1000004432469N00542796EA014700155600",  # 10:00:00
@@ -150,4 +153,67 @@ def test_backward_jitter_is_not_a_new_day(tmp_path):
     t = igc.parse_igc(p)["t"].to_numpy()
     assert t[0] == 0.0
     assert t[-1] < 60.0  # a handful of seconds, NOT ~86400+
-    assert np.all(np.diff(t) >= 0.0)  # clamped to a non-decreasing series
+    assert t.tolist() == [0.0, 3.0, 1.0, 5.0]  # the glitch is preserved, not clamped
+
+
+def _b_record(sec, lat_min=30000, alt="01500"):
+    """One B record at `sec` seconds past midnight, 45 deg N 7 deg E."""
+    hh, mm, ss = sec // 3600, (sec % 3600) // 60, sec % 60
+    return f"B{hh:02d}{mm:02d}{ss:02d}45{lat_min:05d}N007{lat_min:05d}EA{alt}{alt}"
+
+
+def _write(tmp_path, records):
+    path = tmp_path / "t.igc"
+    path.write_text("AXXX test\n" + "\n".join(records) + "\n")
+    return path
+
+
+def test_a_lost_clock_is_not_mistaken_for_a_midnight_rollover(tmp_path):
+    """A logger writing 00:00:00 mid-flight used to add a whole day to the record.
+
+    The roll-over was detected from the size of the backward step alone, so a clock
+    dropping from an afternoon value to zero -- what a logger writes when it loses its
+    time reference -- advanced the day counter and shifted the entire remainder of the
+    flight by 86400 s, manufacturing a day-long gap and a duration an order of magnitude
+    too large. A real roll-over also *looks* like one at both ends.
+    """
+    broken = [_b_record(s) for s in range(50000, 50010)]
+    broken += [_b_record(s) for s in range(0, 10)]  # the clock is lost, not a new day
+    parsed = igc.parse_igc(_write(tmp_path, broken))
+    assert len(parsed) == 20
+    # The step is left backward for the cleaning to remove -- never repaired here.
+    assert parsed["t"].iloc[10] < parsed["t"].iloc[9]
+    assert parsed["t"].max() < 86400.0
+
+    # And a genuine roll-over is still unwrapped: 23:59:5x -> 00:00:0x.
+    real = [_b_record(s) for s in range(86390, 86400)]
+    real += [_b_record(s) for s in range(0, 10)]
+    parsed = igc.parse_igc(_write(tmp_path, real))
+    assert np.all(np.diff(parsed["t"].to_numpy()) == 1.0)
+    assert parsed["t"].iloc[-1] == pytest.approx(19.0)
+
+
+def test_an_unusable_altitude_field_costs_the_altitude_and_not_the_fix(tmp_path):
+    # The asymmetry the whole of stage (ii) is built on: a bad altitude costs the
+    # altitude, never the position. The parser broke it by decoding both altitudes
+    # inside the same `try` as the time and the coordinates, so a logger that blank-pads
+    # the field lost every fix of the flight rather than every altitude.
+    records = [_b_record(s, alt="     ") for s in range(1000, 1010)]
+    parsed = igc.parse_igc(_write(tmp_path, records))
+
+    assert len(parsed) == 10, "the fixes must survive an unusable altitude field"
+    assert parsed["lat"].notna().all() and parsed["t"].notna().all()
+    assert parsed["baro_alt"].isna().all()
+    assert parsed["gnss_alt"].isna().all()
+
+
+@pytest.mark.parametrize("minutes", ["-1234", " 1234", "12 34", "+1234"])
+def test_a_non_digit_arc_minutes_field_is_refused_not_decoded(tmp_path, minutes):
+    # `int` tolerates a sign and surrounding whitespace, and the only guard was the
+    # < 60000 upper bound -- which such a token passes. The record then decoded to a
+    # position that was merely *wrong*, which is the one outcome a validity check may
+    # not produce. The field is five digits by the format.
+    good = _b_record(1000)
+    bad = f"B00164045{minutes}N00745000EA0150001500"
+    parsed = igc.parse_igc(_write(tmp_path, [good, bad]))
+    assert len(parsed) == 1, f"{minutes!r} was decoded instead of refused"
