@@ -88,6 +88,68 @@ def invalid_names() -> list[str]:
     return bad
 
 
+_LITERAL = re.compile(r"\\(?:num|SI)\{([0-9][0-9.]*)\}")
+
+# Literals that are design constants, protocol parameters or plain arithmetic, and are
+# expected to appear typed. Each is a decision the thesis makes, not a number it measures,
+# so a generator has nothing to say about it.
+_TYPED_ON_PURPOSE = {
+    "1", "2", "3", "4", "5", "10", "20", "25", "40", "50", "60", "90", "100", "120",
+    "200", "300", "500", "1000",
+}
+
+
+def _distinctive(value: str) -> bool:
+    """Whether a value is specific enough that a collision is worth a look.
+
+    Matching by value alone is noisy: a two-digit integer collides with something in a
+    corpus of six hundred macros most of the time, and a report nobody reads is a check
+    that does not exist. A decimal point or four digits is the threshold at which a
+    collision stops being a coincidence.
+    """
+    return "." in value or len(value.replace(".", "")) >= 4
+
+
+def literals_that_shadow_a_macro() -> list[str]:
+    r"""Typed numbers in the body that a generated macro already carries.
+
+    The contract is that no measured number is typed. A macro that is *quoted* is checked
+    above; a number typed where a macro holds the same value is the same failure in the
+    other direction, and it is silent -- the build succeeds, the page reads correctly, and
+    the number stops tracking the data the moment anything upstream changes. It has to be
+    found by value, since nothing about ``\SI{2000}{\second}`` says which quantity it is.
+
+    Reported, not fatal: a coincidence between a design constant and a measured value is
+    possible, and the common ones are listed in ``_TYPED_ON_PURPOSE``.
+    """
+    by_value: dict[str, list[str]] = {}
+    for path in sorted(GENERATED.glob("*.tex")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            match = re.match(r"\\newcommand\{\\([A-Za-z]+)\}\{([^}]*)\}", line)
+            if match:
+                by_value.setdefault(match.group(2).lstrip("+"), []).append(match.group(1))
+
+    found = []
+    for path in sorted(THESIS.rglob("*.tex")):
+        if path.is_relative_to(GENERATED) or "appendices" in path.parts:
+            continue
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if line.lstrip().startswith("%"):
+                continue
+            for match in _LITERAL.finditer(line):
+                value = match.group(1)
+                if value in _TYPED_ON_PURPOSE or value not in by_value:
+                    continue
+                if not _distinctive(value):
+                    continue
+                owners = ", ".join(f"\\{n}" for n in by_value[value][:3])
+                found.append(
+                    f"{path.relative_to(THESIS.parent)}:{number}: {match.group(0)} "
+                    f"is also {owners}"
+                )
+    return found
+
+
 def main(argv: list[str] | None = None) -> int:
     """Report the difference; non-zero exit if the thesis quotes an undefined macro."""
     quiet = "--quiet" in (argv if argv is not None else sys.argv[1:])
@@ -107,6 +169,12 @@ def main(argv: list[str] | None = None) -> int:
     if unused and not quiet:
         print(f"  {len(unused)} written but not quoted (not an error): ", end="")
         print(", ".join(unused[:8]) + (" ..." if len(unused) > 8 else ""))
+
+    shadowed = literals_that_shadow_a_macro()
+    if shadowed and not quiet:
+        print(f"  {len(shadowed)} typed number(s) a generated macro already carries:")
+        for entry in shadowed:
+            print(f"    {entry}")
 
     if unusable:
         print(
