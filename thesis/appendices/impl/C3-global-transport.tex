@@ -165,6 +165,41 @@ For the rest, the position at $t=0$ is the origin to within
 the first sample.
 \end{revblock}
 
+\subsection{\rev{The shape observables, and what calibrates them}}
+\begin{revblock}
+\paragraph{\rev{The non-Gaussian parameter.}} \rev{Computed from the moment spectrum
+already accumulated, as
+$\alpha_2=\langle|\Delta\mathbf{r}|^4\rangle/2\langle|\Delta\mathbf{r}|^2\rangle^2-1$ at
+each lag, on order-1 increments. Two calibrations make the archive's value readable and
+both are pinned by \path{tests/analysis/observables/test_moments.py}: an exact fractional
+Brownian motion returns \num{0.01} in the median over the same lag grid, and a Lévy walk of
+tail index \num{1.5} returns \num{0.56}. It is quoted over
+\SIrange{60}{2000}{\second} rather than over the whole grid; above that the declared task
+governs the trajectory and the fourth moment rests on the fewest flights, and the curve
+climbs to \StatShapeParaNonGaussBeyond\ there.}
+
+\paragraph{\rev{The tail of the velocity autocorrelation.}} \rev{Green--Kubo is used in
+its scaling form, $C(\tau)\sim\tau^{-\gamma}$ with $\gamma<1$ giving
+$\langle|\Delta\mathbf{r}|^2\rangle\sim\Delta^{2-\gamma}$, and not as the integral. Two
+reasons, both properties of the archive: the integral runs from zero and $C$ is estimable
+only above the smoothing scale of the slowest logger, so its first decade is missing; and
+$C$ is estimated per flight with that flight's own mean velocity removed, which pulls every
+lag down by about the record-mean of $C$ and so steepens the tail. Both push $\gamma$ up,
+so $2-\gamma$ is a floor and \path{vacf_tail_exponent} documents it as one. The
+one-sidedness is itself tested, on an Ornstein--Uhlenbeck velocity whose true correlation
+is known: the estimate with the mean removed is always the steeper.}
+
+\paragraph{\rev{The filter kernel, against a closed form.}} \rev{For any process with
+stationary increments and $S(\Delta)=\sigma^2\Delta^{2H}$, the two orders are related
+exactly by $V_2=4S(\Delta)-S(2\Delta)=S(\Delta)\,(4-2^{2H})$. That identity pins the
+kernel in a way a second convolution cannot: the order-2 kernel is symmetric, so an
+independent \path{np.convolve} route performs the same three products in the same order and
+agrees to the last bit whether or not the kernel is right --- which is what a
+recomputation of the paraglider exponent by that route in fact found. The estimator also
+has to be unbiased where the archive sits, at $H$ near \num{1}, which is the boundary of
+the family: on exact fractional Brownian motion of $H=0.99$ it returns \num{1.98}.}
+\end{revblock}
+
 \subsection{\rev{Known limitations, with their size}}
 \begin{revblock}
 Four, each bounded rather than repaired.

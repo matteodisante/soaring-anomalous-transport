@@ -183,6 +183,41 @@ the full trajectories and already probes the transport at the global level.
 \end{description}
 
 \begin{revblock}
+\paragraph{Which of them this thesis measures.}
+The list above is the programme the observable admits, not the contents of this chapter.
+Table~\ref{tab:obs-status} says which entries are carried through to a number here, which
+are answered in a different form than the entry proposes, and which are set up and left.
+The distinction matters because several of the unmeasured ones are the natural next
+measurement rather than an afterthought: the first-passage time would give $H$ in the space
+domain and the peak of the propagator would give it from the bulk of the distribution, so
+each is an independent check on the exponent this chapter does report.
+
+\begin{table}[htbp]
+\centering\small
+\ifrevmode\color{revblue}\fi
+\renewcommand{\arraystretch}{1.2}
+\caption{\rev{The catalogue of Sec.~\ref{sec:obs-global} against what is measured. One
+entry is answered in a form it does not name: the scaling collapse of the propagator is
+tested through its moments rather than through histograms, since all moments scaling with
+one exponent is the same statement about $F$ in a form that needs no binning.}}
+\label{tab:obs-status}
+\begin{tabular}{@{}l l l@{}}
+\toprule
+\textbf{observable} & \textbf{status} & \textbf{where} \\
+\midrule
+ensemble MSD              & measured            & Sec.~\ref{sec:obs-global} \\
+time-averaged MSD         & measured            & Sec.~\ref{sec:obs-global} \\
+velocity autocorrelation  & measured            & Sec.~\ref{sec:transport-shape} \\
+propagator, scaling collapse & through its moments & Sec.~\ref{sec:transport-shape} \\
+non-Gaussianity           & measured            & Sec.~\ref{sec:transport-shape} \\
+turning angles            & not measured        & --- \\
+return to the origin $P_0(t)$ & not measured    & --- \\
+first-passage times       & not measured        & --- \\
+speed distributions       & not measured        & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \paragraph{The measured MSD.}
 The first of these observables is now computed, on the analysis ensemble defined at the
 close of Sec.~\ref{sec:pipelinemap} and characterised in Sec.~\ref{sec:prelim}:
@@ -290,7 +325,7 @@ with $\alpha=1.4$ and \num{300} flights, the scatter of the fitted exponent acro
 \num{40} independent ensembles is \num{0.025}, the bootstrap reports \num{0.023}, and the
 least-squares error reports \num{0.0047}---understating the sampling uncertainty
 \num{5.3} times. The archive has five hundred times as many flights, and the bootstrap
-falls with $1/\sqrt{N}$ accordingly, to \num{0.001}; the least-squares error does not
+falls with $1/\sqrt{N}$ accordingly, to \StatMsdTaParaAlphaErr; the least-squares error does not
 fall with it, because what it is measuring is not sampling at all. Both numbers are
 generated, the second as \texttt{\textbackslash StatMsd*AlphaErrOls}, and the quoted $\pm$
 is always the first.
@@ -633,6 +668,18 @@ By \StatVarParaOrderAgreement\ for paragliders and \StatVarHangOrderAgreement\ f
 gliders. Nothing polynomial is left in the trajectory that the second difference has not
 already removed, so the exponent is not a residue of a trend of any degree.
 
+\paragraph{Order one reproduces the time-averaged MSD.}
+It should: the first-order filtered variation \emph{is}
+$\overline{\delta^2(\Delta)}$ under another name. That makes the comparison a check on the
+two implementations rather than on the physics, and it is worth stating because the two were
+written separately, traverse the fix table separately and are fitted over different ranges
+--- \SIrange{\StatVarParaFitMinS}{\StatVarParaFitMaxS}{\second} here against
+\SIrange{\StatMsdTaParaFitMinS}{\StatMsdTaParaFitMaxS}{\second} in
+Sec.~\ref{sec:obs-global}. They return $\alpha_1=\StatVarParaAlphaOrderOne$ against
+$\alpha_{\mathrm{TA}}=\StatMsdTaParaAlpha$ for paragliders and \StatVarHangAlphaOrderOne\
+against \StatMsdTaHangAlpha\ for hang gliders: closer, in both disciplines, than the
+movement either shows when its own range is halved.
+
 \paragraph{The uncertainty is not the sampling error.}
 The day-and-site bootstrap returns \StatVarParaAlphaOrderTwoErrSampling\ on
 $\alpha_2$; refitting each half of the range returns
@@ -737,8 +784,7 @@ at all \impldetails{impl:global}. Neither archive shows strong anomalous diffusi
 
 That is a negative result and it is the informative kind. The Lévy walk is the model this
 thesis was framed around; on the whole trajectory, unsegmented, the archive does not support
-it. What it supports is a monofractal process --- one exponent governing every moment ---
-which is what a correlated Gaussian motion looks like.
+it. What it supports is a monofractal process: one exponent governing every moment.
 
 The moments are estimable rather than merely computed. The share of each moment carried by
 the largest one per cent of its increments reaches
@@ -746,15 +792,61 @@ the largest one per cent of its increments reaches
 \SI{\StatShapeParaTailAtQMaxPct}{\percent} at $q=\StatShapeParaQMax$; above a half a moment
 is one flight and is not an estimate, and nothing here is close.
 
-\paragraph{How long a heading survives.}
+\paragraph{Monofractal is not the same as Gaussian.}
+The natural next step is to call the process a correlated Gaussian motion, and the same
+moments refuse it. One exponent for every moment is a statement about how the distribution
+\emph{scales}; it says nothing about its \emph{shape}, and the non-Gaussian parameter
+$\alpha_2=\langle|\Delta\mathbf{r}|^4\rangle/2\langle|\Delta\mathbf{r}|^2\rangle^2-1$,
+which the fourth and second moments already carry, measures the shape directly. It vanishes
+for a Gaussian.
+
+Over \SIrange{\StatShapeParaNonGaussMinS}{\StatShapeParaNonGaussMaxS}{\second} it is
+$\StatShapeParaNonGaussMedian$ in the median for paragliders and
+$\StatShapeHangNonGaussMedian$ for hang gliders, flat across the range --- it moves by
+$\StatShapeParaNonGaussDrift$ and $\StatShapeHangNonGaussDrift$ from one end to the other.
+The calibration is what makes those numbers readable: the same estimator returns
+\num{0.01} on an exact fractional Brownian motion and \num{0.56} on a Lévy walk of tail
+index \num{1.5} \impldetails{impl:global}. The archive sits between them and nearer the
+Gaussian --- increments with tails heavier than Gaussian, but not the heavy tails a Lévy
+description needs, and not heavy in a way that changes with the scale.
+
+Beyond the fitted range $\alpha_2$ climbs, to $\StatShapeParaNonGaussBeyond$ and
+$\StatShapeHangNonGaussBeyond$ at the longest lags in panel~(c). Those lags are where the
+declared task governs the trajectory and where the fourth moment is carried by the fewest
+flights, so the climb is reported and not quoted; the range over which every exponent in
+this chapter is read stops below it for the same reason.
+
+\paragraph{How long a heading survives, and why that is consistent with the exponent.}
 The velocity autocorrelation is positive throughout and decays without ever changing sign:
 $C=\StatShapeParaVacfAtFloor$ at the lower end of the grid and no sign change anywhere,
 where a change of sign would be the anti-persistence a circling wing produces. It is also
 the one observable in this chapter whose range is set by the pipeline rather than by the
 archive: the grid starts at \SI{\StatShapeParaFitMinS}{\second} because that is the
 smoothing scale of the slowest logger, and the correlation has already fallen below $1/e$
-there. The heading memory of a soaring wing is shorter than the scale at which this dataset
-can speak, so what is reported is a lower bound on the decay and not the decay.
+there.
+
+That last fact and the exponent look incompatible, and it is worth showing that they are
+not. A memory already spent by \SI{\StatVarParaFitMinS}{\second} would leave the motion
+diffusive over a range reaching to \SI{\StatVarParaFitMaxS}{\second}, whereas $\alpha_2$
+says the increments are still
+correlated across it. Green--Kubo reconciles them only through the shape of the decay:
+what matters is not when $C$ becomes small but whether it becomes \emph{integrable}, and a
+tail $C(\tau)\sim\tau^{-\gamma}$ with $\gamma<1$ sustains
+$\langle|\Delta\mathbf{r}|^2\rangle\sim\Delta^{2-\gamma}$ however small $C$ has already
+become. Over
+\SIrange{\StatShapeParaVacfTailMinS}{\StatShapeParaVacfTailMaxS}{\second} the measured tail
+is a power law of $\gamma=\StatShapeParaVacfTailGamma$ for paragliders and
+\StatShapeHangVacfTailGamma\ for hang gliders --- non-integrable in both --- so the memory
+is not spent at \SI{60}{\second}, only small.
+
+The comparison is one-sided and is reported as such. The correlation is estimated per
+flight with that flight's own mean velocity removed, which pulls every lag down by about
+the record-mean of $C$ and so steepens the tail, and the first decade of the Green--Kubo
+integral lies below the grid; both push $\gamma$ up, so $2-\gamma$ is a floor rather than
+an estimate. That floor is \StatShapeParaVacfImpliedAlphaFloor\ and
+\StatShapeHangVacfImpliedAlphaFloor, and the measured $\alpha_1=\StatVarParaAlphaOrderOne$
+and \StatVarHangAlphaOrderOne\ clear it. A velocity channel whose memory decayed faster
+than this would have contradicted the position channel; it does not.
 
 \paragraph{Whether there is a scale to separate.}
 The persistence runs decompose each flight into non-overlapping stretches whose sinuosity
