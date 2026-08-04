@@ -445,3 +445,20 @@ low-order and negative-order behaviour, where the bulk of the distribution lives
 crossover in shape shows before it shows in the variance. The peak height
 $P_0(\Delta)\sim\Delta^{-dH}$ falls straight out of the same histograms. It is one streaming
 pass over data already on disk, and it is the measurement this thesis most needs next.
+
+---
+
+## 9. The closing checks
+
+`PROMPT-VERIFY` asks for these to be run and reported at the end of the pass, not asserted.
+
+| check | result |
+|---|---|
+| `pytest` | **459 passed**, and again with `-W error::RuntimeWarning` |
+| `check_generated_macros.py` | 655 written, 336 quoted, **0 quoted and never written**, 0 unusable names; 12 typed-literal collisions reported, 5 of them coincidences with design constants |
+| `check_reproducible.py --sample 250` | **500 flights recomputed from the raw IGC, 0 disagree** |
+| `regenerate.sh` | 7 of 7 reductions **byte-identical**; the shape traversal re-run in full (155,788 + 6,132 flights); `verify_dataset.py` started and stopped (§1.4) |
+| thesis build, `latexmk -halt-on-error` | **0 errors, 0 overfull boxes, 0 undefined references, 114 pages** |
+| logbook build | clean |
+| `mkdocs build --strict` | clean |
+| `git status` | clean |
