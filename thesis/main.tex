@@ -238,13 +238,25 @@ statistics of real soaring flights from a large empirical dataset and seeks a mi
 stochastic transport model able to reproduce those statistics. As the work develops it
 will also examine how flying in competition changes the motion relative to solo flights.
 
-This document reports the current state of the project. A first dataset has been
-acquired reproducibly---the archive of the FFVL \emph{Coupe F\'ed\'erale de Distance}, in
-its paraglider and hang-glider disciplines---and the document describes its acquisition,
-the dataset and its statistics, and the pre-processing that turns the raw logs into
-analysis-ready trajectories, before setting out the planned transport analysis and
-modelling. Chapter~\ref{ch:dataset} reports the dataset and its coverage in full;
-Chapter~\ref{ch:global} the analysis ahead.
+This document reports the current state of the project. A first dataset has been acquired
+reproducibly---the archive of the FFVL \emph{Coupe F\'ed\'erale de Distance}, in its
+paraglider and hang-glider disciplines---and Chapter~\ref{ch:dataset} describes its
+acquisition, its coverage and the pre-processing that turns the raw logs into
+analysis-ready trajectories.
+
+\rev{Chapter~\ref{ch:global} measures the transport of the retained ensemble without
+segmenting a flight. Displacement from take-off turns out to measure the geometry of the
+launch site rather than the motion, and is retired as a source of exponents in favour of a
+within-flight estimator that annihilates any polynomial trend. Over
+\SIrange{\StatVarParaFitMinS}{\StatVarParaFitMaxS}{\second} that estimator gives
+$\alpha=\StatVarParaAlphaOrderTwo\pm\StatVarParaAlphaOrderTwoErr$ for paragliders and
+$\StatVarHangAlphaOrderTwo\pm\StatVarHangAlphaOrderTwoErr$ for hang gliders --- strongly
+super-diffusive, and unmoved by every stratification the archive allows. Beyond the second
+moment, the spectrum of moments is straight, so the motion is monofractal and is
+\emph{not} a L\'evy walk; the propagator is nonetheless not Gaussian; and no leg duration is
+distinguished, which is a constraint on any segmentation attempted next.
+Chapter~\ref{ch:phases} sets out that segmentation and the modelling it enables, and is a
+plan rather than a result.}
 \end{abstract}
 
 \tableofcontents
