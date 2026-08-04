@@ -45,8 +45,7 @@ fix for which the receiver could not resolve altitude, in which case the standar
 the GNSS-altitude field to be written as zero. A \texttt{V} flag therefore does not make the
 fix two-dimensional: the latitude and longitude stay usable and, on a logger with a working
 pressure sensor, so does the barometric altitude, which is the channel this analysis adopts
-(Sec.~\ref{sec:altchannel}). What a \texttt{V} flag signals lost is the GNSS altitude, not
-the horizontal position.
+(Sec.~\ref{sec:altchannel}).
 
 Decoding a \texttt{B} record from fixed character positions can succeed numerically while
 the result is not a valid encoding at all -- a corrupted byte can still parse as a digit.
@@ -151,9 +150,9 @@ stratify the fleet by design rather than by performance, and any ordering impose
 is an assumption to be checked rather than a property of the scheme.}
 
 \begin{revblock}
-The two ladders are not documented on equal terms, and it is worth saying why, since it
-governs how far each entry of Table~\ref{tab:aileclass} can be trusted. The FAI classes
-come from the Sporting Code, which the FAI publishes for free: anyone can download the
+The two ladders are not documented on equal terms, which governs how far each entry of
+Table~\ref{tab:aileclass} can be trusted. The FAI classes come from the Sporting
+Code~\cite{fai_sc7_2024}, which the FAI publishes for free: anyone can download the
 current edition and check a definition against it. The EN classes come from a
 \emph{European standard}, which is a different kind of document. Standards are drafted by
 the European Committee for Standardization (CEN) and then published and \emph{sold} by the
@@ -178,8 +177,9 @@ that the labels are distinct and ordered, not what each one certifies.
 \caption{\rev{Class labels recorded in \texttt{aile\_class}, one system per discipline.
 The EN ladder is ordered by increasing demand on the pilot, and that ordering is all the
 stratification needs from it; the FAI classes are \emph{not} a ladder, being defined by
-the method of control. Sources: FAI Sporting Code, Common Section~7, 2024
-ed.\ (\S\S1.2, 1.4.1) for the FAI classes and the sub-class ceilings; the EN class
+the method of control. Sources: the FAI Sporting Code, Common
+Section~7~\cite{fai_sc7_2024} (\S\S1.2, 1.4.1) for the FAI classes and the sub-class
+ceilings; the EN class
 descriptions are condensed from Table~1 of the standard, on the caveat explained in the
 text.}}
 \label{tab:aileclass}
