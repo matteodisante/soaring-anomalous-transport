@@ -99,10 +99,25 @@ def residual_runs(t: np.ndarray, y: np.ndarray) -> tuple[int, float, float]:
     eighteen, the curve is an arch and the fit is a chord across it. Only the arrangement
     of the residuals can say that, and this is the test that reads it.
 
+    **Read the z against a simulated threshold, never against a normal table.** The
+    asymptotic null assumes the signs are independent draws, and on a curve every lag of
+    which averages the same flights they are nothing of the kind: the measured lag-1
+    residual autocorrelation on these curves is 0.89 to 0.95. Simulating an *exact* power
+    law observed with AR(1) noise of that correlation, on the same 40-lag grid, the rule
+    ``|z| > 2`` rejects it 84 to 92 per cent of the time and the true five-per-cent
+    threshold is ``|z|`` near 5.1. A z of 4.9 against a normal table looks decisive and is
+    not evidence at all.
+
+    Calibrating the null on the *observed* residual autocorrelation would be circular in
+    the way this project has already been caught by once --- a genuinely bent curve has a
+    high residual autocorrelation because of the bend --- so the runs count is reported here
+    as a description of the arrangement and nothing is concluded from its z.
+    :func:`residual_against_noise` supplies the test that does conclude, by comparing the
+    residual against the per-lag sampling error rather than against an assumed null.
+
     Returns:
-        ``(runs, expected_runs, z)``. Under the null of independent signs the run count is
-        asymptotically normal, so ``|z| > 2`` is a curve with structure the exponent does
-        not describe, whatever the residual's size.
+        ``(runs, expected_runs, z)``, where the z is the asymptotic one and is not to be
+        read as a significance.
     """
     fit = np.polyfit(np.log10(t), np.log10(y), 1)
     signs = np.sign(np.log10(y) - np.polyval(fit, np.log10(t)))
@@ -117,11 +132,40 @@ def residual_runs(t: np.ndarray, y: np.ndarray) -> tuple[int, float, float]:
     return runs, float(expected), float(z)
 
 
+def residual_against_noise(y: np.ndarray, low: np.ndarray, high: np.ndarray,
+                           counts: np.ndarray, residual_dex: float) -> float:
+    """How many times the per-lag sampling error the residual is.
+
+    The non-circular version of the question the runs test was asked. If the departure from
+    a power law were scatter, it would be of the size of the error on each point; the error
+    on each point is the standard error of a mean over the flights covering that lag, which
+    the stored 10--90 band and count give directly. A ratio near one is scatter; a ratio of
+    twenty is a shape.
+
+    The band is converted on a normal equivalence, which understates the spread of a
+    right-skewed distribution and so understates the error --- making the returned ratio a
+    lower bound, which is the direction that costs the argument nothing.
+    """
+    with np.errstate(divide="ignore", invalid="ignore"):
+        sem = (high - low) / (2.0 * 1.2816) / np.sqrt(counts)
+        sem_dex = sem / (y * np.log(10.0))
+    good = np.isfinite(sem_dex) & (sem_dex > 0)
+    if not good.any():
+        return float("nan")
+    return float(residual_dex / np.median(sem_dex[good]))
+
+
 def _curve(frame: pd.DataFrame, discipline: str, estimator: str):
     sub = frame[
         (frame.discipline == discipline) & (frame.estimator == estimator)
     ].dropna(subset=["msd_m2"])
-    return sub.t_s.to_numpy(), sub.msd_m2.to_numpy(), sub.n_flights.to_numpy()
+    return (
+        sub.t_s.to_numpy(),
+        sub.msd_m2.to_numpy(),
+        sub.n_flights.to_numpy(),
+        sub.p10_m2.to_numpy(),
+        sub.p90_m2.to_numpy(),
+    )
 
 
 def audit(discipline: str, audit_dir: Path) -> dict[str, str]:
@@ -147,9 +191,8 @@ def audit(discipline: str, audit_dir: Path) -> dict[str, str]:
     counts = covered.sum(0)
 
     curves = pd.read_csv(CURVE_CSV)
-    _, ea_msd, ea_n = _curve(curves, discipline, "ensemble")
-    ea_t, _, _ = _curve(curves, discipline, "ensemble")
-    ta_t, ta_msd, _ = _curve(curves, discipline, "time_averaged")
+    ea_t, ea_msd, ea_n, ea_p10, ea_p90 = _curve(curves, discipline, "ensemble")
+    ta_t, ta_msd, ta_n, ta_p10, ta_p90 = _curve(curves, discipline, "time_averaged")
 
     out: dict[str, str] = {}
 
@@ -167,7 +210,6 @@ def audit(discipline: str, audit_dir: Path) -> dict[str, str]:
                   p10=None, p50=None, p90=None),
         t_min_s=FIT_MIN_S,
     )
-    ta_n = _curve(curves, discipline, "time_averaged")[2]
     ta_range = coverage_limited_range(
         MSDResult(t=ta_t, msd=ta_msd, n_flights=ta_n.astype(int), sem=None,
                   p10=None, p50=None, p90=None),
@@ -175,13 +217,17 @@ def audit(discipline: str, audit_dir: Path) -> dict[str, str]:
     )
 
     # ---- B4: does a power law describe either curve? ------------------------------
-    for label, (t, y, rng) in {
-        "Ea": (ea_t, ea_msd, ea_range),
-        "Ta": (ta_t, ta_msd, ta_range),
+    for label, (t, y, rng, lo, hi, cnt) in {
+        "Ea": (ea_t, ea_msd, ea_range, ea_p10, ea_p90, ea_n),
+        "Ta": (ta_t, ta_msd, ta_range, ta_p10, ta_p90, ta_n),
     }.items():
         inside = (t >= rng[0]) & (t <= rng[1])
         alpha, residual = power_law_residual(t[inside], y[inside])
         runs, expected_runs, runs_z = residual_runs(t[inside], y[inside])
+        put(
+            f"{label}ResidNoiseRatio",
+            f"{residual_against_noise(y[inside], lo[inside], hi[inside], cnt[inside], residual):.0f}",
+        )
         put(f"{label}ResidRuns", f"{runs}")
         put(f"{label}ResidRunsExpected", f"{expected_runs:.0f}")
         put(f"{label}ResidRunsZ", f"{runs_z:.1f}")

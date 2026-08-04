@@ -280,6 +280,25 @@ out inside its launch area, and at large $L$ the censored median extrapolates pa
 duration of most flights. It is the same crossover seen along the space axis instead of the
 time axis, and it is not an independent check on anything.}
 
+\paragraph{\rev{Why the runs test is not read against a normal table.}} \rev{The
+Wald--Wolfowitz statistic is asymptotically normal under a null of \emph{independent} signs,
+and on a curve every lag of which averages the same flights the signs are nothing of the
+kind: the measured lag-1 residual autocorrelation is \numrange{0.89}{0.95} on all four
+curves. Simulating an exact power law observed with AR(1) noise of that correlation on the
+same forty-lag grid, the rule $|z|>2$ rejects it in \SI{84}{\percent} of trials at
+$\rho=0.8$ and \SI{90}{\percent} at $\rho=0.9$, and the true five-per-cent threshold is
+$|z|$ near \num{5.1}. The $z$ values this archive returns, \numrange{-4.9}{-5.8}, are
+therefore not significances, and \path{residual_runs} now says so in its own docstring.}
+
+\rev{Calibrating the null on the \emph{observed} residual autocorrelation would be circular in
+the way this project has been caught by once already, since a genuinely bent curve has a
+high residual autocorrelation because of the bend. So the conclusion rests on a different
+comparison, \path{residual_against_noise}: the residual against the standard error of each
+lag's own mean, taken from the stored \SIrange{10}{90}{\percent} band and count on a normal
+equivalence, which understates a right-skewed spread and so returns a lower bound. It gives
+\numrange{22}{51} across the four curves --- a departure that many times the error on each
+point cannot be scatter, whatever its arrangement.}
+
 \subsection{\rev{Known limitations, with their size}}
 \begin{revblock}
 Four, each bounded rather than repaired.

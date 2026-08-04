@@ -259,16 +259,27 @@ other units: across the fitted decades the ensemble curve runs from
 \StatAuditParaTaSlopeMin--\StatAuditParaTaSlopeMax\ and
 \StatAuditHangTaSlopeMin--\StatAuditHangTaSlopeMax\ on the time-averaged one.
 
-The size of a residual is only half of what decides whether an exponent describes a curve,
-and taken alone it is misleading. A Wald--Wolfowitz runs test on the \emph{sign} of the
-residuals says the rest. Over its fitted range the time-averaged curve leaves
-\num{\StatAuditParaTaResidLags} residuals in \num{\StatAuditParaTaResidRuns} sign runs
-where independent scatter would give \num{\StatAuditParaTaResidRunsExpected}
-($z=\StatAuditParaTaResidRunsZ$), and the hang gliders the same
-($z=\StatAuditHangTaResidRunsZ$); the ensemble curve is worse still,
-$z=\StatAuditParaEaResidRunsZ$ and $\StatAuditHangEaResidRunsZ$. The residuals of both
-curves are arranged, not scattered: each is a systematic arch and the fitted line is a
-chord across it.
+The size of a residual is only half of what decides whether an exponent describes a curve.
+The other half is whether it is larger than the noise on the points, and here it is, by a
+wide margin. Each lag's value is a mean over the flights covering it, so it carries a
+standard error the stored \SIrange{10}{90}{\percent} band and count give directly. Over the
+fitted range the residual is \num{\StatAuditParaTaResidNoiseRatio} times that error on the
+paraglider time average and \num{\StatAuditHangTaResidNoiseRatio} times on the hang-glider
+one, \num{\StatAuditParaEaResidNoiseRatio} and \num{\StatAuditHangEaResidNoiseRatio} times
+on the two ensemble curves. A departure twenty to fifty times the error on each point is not
+scatter about a power law; it is a shape.
+
+Its arrangement is an arch. The time-averaged curve leaves
+\num{\StatAuditParaTaResidLags} residuals in \num{\StatAuditParaTaResidRuns} sign runs where
+independent signs would give \num{\StatAuditParaTaResidRunsExpected}, and the ensemble curve
+fewer still --- the residuals go negative, positive and negative once, which is a bend, and
+the fitted line is a chord across it. That count is reported as a description and not as a
+test. A Wald--Wolfowitz $z$ presumes independent signs, and every lag of these curves
+averages the same flights: the measured lag-to-lag residual correlation is near
+\num{0.9}, and on an \emph{exact} power law observed with noise of that correlation the
+rule $|z|>2$ rejects between eighty and ninety per cent of the time
+\impldetails{impl:global}. The evidence that these curves are not power laws is the previous
+paragraph's, not this one's.
 
 So neither estimator is a power law in the strict sense, and the difference between them is
 of degree. The time-averaged curve departs from its line by a factor of four to eight less
