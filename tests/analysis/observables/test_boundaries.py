@@ -58,8 +58,15 @@ def test_quantile_ratios_refuse_a_quantile_the_sample_cannot_support():
     assert np.isnan(ratios).all()
 
 
-def test_persistence_runs_on_a_track_shorter_than_the_minimum():
-    assert P.persistence_runs(np.zeros((3, 2)), 1.1).size == 0
+def test_persistence_runs_on_a_track_too_short_and_on_a_degenerate_one():
+    # Fewer than two samples spans no run at all.
+    assert P.persistence_runs(np.zeros((1, 2)), 1.1).size == 0
+    # A record that never moves has a zero chord everywhere, so no stretch of it is inside
+    # any threshold; the scan must still terminate and still tile, which it does with unit
+    # runs rather than by looping.
+    degenerate = P.persistence_runs(np.zeros((3, 2)), 1.1)
+    assert degenerate.size == 2
+    assert degenerate.sum() == 2
 
 
 def test_tail_index_refuses_a_sample_too_small_to_fit():

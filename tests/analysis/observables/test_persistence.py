@@ -84,15 +84,15 @@ def test_the_vectorised_scan_is_the_scalar_one():
     three processes and three thresholds, because a scan that silently drifted would move
     every run-length statistic in the chapter.
     """
-    def scalar(positions, max_sinuosity, min_length=5):
+    def scalar(positions, max_sinuosity):
         n = len(positions)
-        if n <= min_length:
+        if n < 2:
             return np.empty(0, dtype=int)
         step = np.hypot(*np.diff(positions, axis=0).T)
         arc = np.concatenate([[0.0], np.cumsum(step)])
         out, start = [], 0
-        while start < n - min_length:
-            end = start + min_length
+        while start < n - 1:
+            end = start + 1
             while end < n:
                 chord = float(np.hypot(*(positions[end] - positions[start])))
                 if chord <= 0 or (arc[end] - arc[start]) / chord > max_sinuosity:
@@ -175,3 +175,29 @@ def test_vacf_tail_exponent_is_the_one_sided_bound_the_docstring_claims():
     gamma_measured, _, _ = vacf_tail_exponent(lags[window], measured[window])
     gamma_truth, _, _ = vacf_tail_exponent(lags[window], truth[window])
     assert gamma_measured > gamma_truth
+
+
+@pytest.mark.parametrize("threshold", [1.05, 1.15, 1.30])
+def test_every_emitted_run_respects_the_threshold_that_defines_it(threshold):
+    """The property the estimator claims, tested on the runs it actually emits.
+
+    The scan used to look for a violation only from start + min_length, so a stretch that
+    broke the threshold immediately was emitted at exactly that floor, unchecked. On
+    Brownian positions at 1.05 that was 99.8 per cent of the runs, and 99.1 per cent of them
+    violated the threshold; the reported median was the floor rather than a measurement.
+    Neither of the two tests here caught it: the equivalence test compared against a scalar
+    reference carrying the identical floor, and the tiling test is satisfied perfectly by
+    floor-length runs. This one asks the estimator for its own contract.
+    """
+    for seed in range(3):
+        track = np.asarray(S.brownian(4000, seed=seed))
+        step = np.hypot(*np.diff(track, axis=0).T)
+        arc = np.concatenate([[0.0], np.cumsum(step)])
+        lengths = P.persistence_runs(track, threshold)
+        edges = np.concatenate([[0], np.cumsum(lengths)])
+        for a, b in zip(edges[:-1], edges[1:]):
+            if b - a < 2:
+                continue
+            chord = float(np.hypot(*(track[b - 1] - track[a])))
+            assert chord > 0
+            assert (arc[b - 1] - arc[a]) / chord <= threshold + 1e-9

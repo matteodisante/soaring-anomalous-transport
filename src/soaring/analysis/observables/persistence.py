@@ -122,33 +122,40 @@ def vacf_tail_exponent(
     return -slope, 2.0 + slope, int(good.sum())
 
 
-def persistence_runs(
-    positions: np.ndarray, max_sinuosity: float, min_length: int = 5
-) -> np.ndarray:
+def persistence_runs(positions: np.ndarray, max_sinuosity: float) -> np.ndarray:
     """Non-overlapping stretches whose sinuosity stays under ``max_sinuosity``.
 
     Sinuosity is arc length over chord, so it is one for a straight stretch and grows as the
     path bends. The scan is greedy from the start of the record and each run begins where
     the last one ended, so no sample belongs to two runs --- which is what makes the returned
     lengths a sample from the run-length distribution rather than from its length-biased
-    cousin.
+    cousin. The runs tile the record exactly, which :func:`inspection_biased_runs` relies on.
 
     The stopping rule is **first violation**. The condition is not monotone in the endpoint,
     since a stretch can come back inside the threshold after leaving it, so a different rule
     gives different statistics; this one is stated so the number can be reproduced.
 
+    **Every emitted run has been tested.** The scan used to start looking for a violation
+    only at ``start + min_length``, which meant a stretch that broke the threshold
+    immediately was emitted at exactly that floor without its sinuosity ever being checked.
+    On Brownian positions that was 99.8 per cent of the runs at ``max_sinuosity = 1.05``, and
+    99.1 per cent of *those* violated the threshold that defines a run: the reported median
+    was the floor rather than a measurement, and the run count was understated by about a
+    half, since broken stretches were glued into single floor-length units. There is
+    therefore no floor here. A caller wanting one should apply it to the returned lengths,
+    knowing that doing so breaks the tiling.
+
     Args:
         positions: ``(n, 2)`` positions on a uniform grid.
         max_sinuosity: Threshold, at least 1. Roughly, 1.05, 1.15 and 1.30 correspond to
             cones of half-angle 18, 31 and 45 degrees.
-        min_length: Shortest run considered, in samples.
 
     Returns:
-        Run lengths in samples.
+        Run lengths in samples, summing to ``len(positions)``.
     """
     positions = np.asarray(positions, dtype=float)
     n = len(positions)
-    if n <= min_length:
+    if n < 2:
         return np.empty(0, dtype=int)
     step = np.hypot(*np.diff(positions, axis=0).T)
     arc = np.concatenate([[0.0], np.cumsum(step)])
@@ -159,24 +166,21 @@ def persistence_runs(
     # twenty minutes, because the scan is O(n x run length) in Python and O(n) in numpy.
     lengths: list[int] = []
     start = 0
-    while start < n - min_length:
-        tail = positions[start + min_length :]
+    while start < n - 1:
+        tail = positions[start + 1 :]
         chord = np.hypot(tail[:, 0] - positions[start, 0], tail[:, 1] - positions[start, 1])
         with np.errstate(divide="ignore", invalid="ignore"):
-            sinuosity = (arc[start + min_length :] - arc[start]) / chord
+            sinuosity = (arc[start + 1 :] - arc[start]) / chord
         violates = ~(chord > 0) | (sinuosity > max_sinuosity)
         offset = int(np.argmax(violates)) if violates.any() else violates.size
-        end = start + min_length + offset
+        end = start + 1 + offset
         lengths.append(end - start)
         start = end
     return np.asarray(lengths, dtype=int)
 
 
 def inspection_biased_runs(
-    positions: np.ndarray,
-    max_sinuosity: float,
-    min_length: int = 5,
-    stride: int = 1,
+    positions: np.ndarray, max_sinuosity: float, stride: int = 1
 ) -> np.ndarray:
     """The length of the run **containing** each sampled instant: the wrong way, on purpose.
 
@@ -191,7 +195,7 @@ def inspection_biased_runs(
     containing run is obtained by decomposing once with :func:`persistence_runs` and then
     reading off which run each sampled instant falls in.
     """
-    lengths = persistence_runs(positions, max_sinuosity, min_length)
+    lengths = persistence_runs(positions, max_sinuosity)
     if lengths.size == 0:
         return np.empty(0, dtype=int)
     edges = np.concatenate([[0], np.cumsum(lengths)])
