@@ -1,0 +1,159 @@
+\chapter{Flight phases, and what they explain}
+\label{ch:phases}
+
+Chapter~\ref{ch:global} determines which class of transport the archive shows. It cannot
+say which flight behaviour generates it, because every observable there is an average over
+climbs, glides and searches together. Separating them needs a segmentation of each flight
+into its phases, and that is the work this chapter plans.
+
+The distinction is worth stating plainly, because it sets what a segmentation is allowed
+to claim. Pre-segmentation determines \emph{which} class of transport is present;
+segmentation explains \emph{which mechanism} produces it. A segmentation explains an
+exponent, it does not measure one --- and if the two disagree, the disagreement is
+evidence about the segmentation rather than about the transport.
+
+None of this chapter is implemented. Each section states what is to be built and what it
+would settle.
+
+\section{Segmentation into flight phases}
+\label{sec:segmentation}
+Building on the previous work of Vilpellet et al.~\cite{vilpellet2026}, each flight is
+segmented into the three phases of the soaring cycle:
+\begin{description}
+  \item[Transition (glide).] The inter-thermal cruise: a near-straight, energy-efficient
+        glide toward the next source of lift (sinking, large directed horizontal
+        displacement). This is the directed ``step''.
+  \item[Search.] The exploratory phase entered when no thermal is found at a comfortable
+        altitude: gentle turns and probing manoeuvres to sample the air mass and locate the
+        next thermal while limiting altitude loss. It mediates the passage from one step to
+        the next trap.
+  \item[Climb (thermalling).] Circling within rising air to regain altitude: persistent
+        turning with small net horizontal displacement. This is the localized ``trap''.
+\end{description}
+That work performs the segmentation with a hidden Markov model~\cite{rabiner1989} whose observations are a
+small set of \emph{binary} trajectory-derived features --- the sign of the vertical speed,
+the persistence of the curvature angle, and indicators of trajectory straightness.
+
+A first task of this thesis is to scrutinize this segmentation rather than take it for
+granted: to assess whether those binary variables are adequate and robust on the larger,
+more heterogeneous dataset assembled here, and whether the feature set or the model should
+be refined, extended, or replaced. The segmentation method is therefore itself an object of
+study, and the specific variables are deliberately left open at this stage. This
+three-state description refines the two-state caricature underlying continuous-time random
+walks and L\'evy walks.
+
+\section{Phase-resolved observables}
+\label{sec:phaseobs}
+The segmentation gives access to a second group of observables, defined per phase occurrence and
+then as ensemble distributions. These are the building blocks of an intermittent-transport
+description and, unlike those of Section~\ref{sec:obs-global}, cannot be obtained without
+first segmenting the flight.
+\begin{description}
+  \item[The waiting phase: climb and search.] Between two consecutive glides the flier
+        advances little horizontally: it searches for a thermal and climbs in it. For a
+        transport model these two phases together form the \emph{waiting time} between
+        directed steps, so we treat them on an equal footing and build three distributions --
+        the climb duration $\tau_c$, the search duration $\tau_s$, and their sum
+        $\tau_w=\tau_s+\tau_c$, the total time spent essentially stationary between glides.
+        The distinction matters: Vilpellet et al.~\cite{vilpellet2026} report the
+        search times to be broadly \emph{power-law} distributed while the climb times are
+        closer to \emph{exponential}, so that the heavy tail of the combined waiting time
+        $\psi(\tau_w)$, the quantity that determines whether trapping drives
+        sub-diffusion, would be inherited from the search phase. Whether this still holds on
+        the larger dataset is itself one of the things to re-check once the segmentation is in
+        place. We therefore report $\psi(\tau_w)$ together with the separate $\psi(\tau_c)$ and
+        $\psi(\tau_s)$. Alongside the durations we record the climb kinematics (altitude gained
+        $\Delta z$, mean climb rate, thermalling radius and period) and the search geometry
+        (path length, tortuosity, net displacement) -- the search being the phase in which
+        prior work locates the signature of pilot skill.
+  \item[The directed step: glide (transition).] Each glide contributes a horizontal step of
+        length $\ell$ and duration $\tau_g$, with ground speed, glide ratio (horizontal
+        distance per unit altitude lost) and sink rate. Because a glide is close to ballistic,
+        $\ell\approx v_g\,\tau_g$, step length and duration are expected to be nearly
+        proportional; we test this directly through the joint law of $(\ell,\tau_g)$ -- the
+        $\ell$--$\tau_g$ scatter, the conditional mean $\langle\ell\mid\tau_g\rangle$, and the
+        spread of the ratio $\ell/\tau_g$ (the glide speed). Both marginals matter: the tail of
+        the step-length distribution $\lambda(\ell)$ controls super-diffusive contributions, so
+        we compute the distributions of $\ell$ and $\tau_g$ separately as well as their joint
+        law.
+  \item[Anatomy of a flight.] Number of thermals (climbs) per flight, inter-thermal distances,
+        and the fraction of both time and along-track distance spent in each phase: the coarse
+        composition that sets the weight of each phase in the global transport.
+  \item[Angular diffusion between glides.] The turning angle between the heading of one
+        transition segment and the next -- the segment-level counterpart of the turning angle
+        of Section~\ref{sec:obs-global}. How fast successive glide directions decorrelate is
+        the key ingredient of the minimal model below.
+\end{description}
+
+Two couplings then decide which transport model applies, and are stated here as explicit
+objects of study. The first is the \emph{step--waiting coupling}: whether a long glide tends
+to be followed by a long wait, i.e.\ whether $\ell$ and $\tau_w$ are correlated. A genuine
+coupling is the defining feature of a L\'evy walk and is what separates it from a decoupled
+CTRW, in which jumps and waiting times are drawn independently.
+
+The second is the \emph{memory in the phase sequence}. A flight is a discrete sequence over
+the three states $\{\text{transition},\text{search},\text{climb}\}$, and memory can hide in
+two places. (i) The \emph{order} of the phases, summarised by the transition matrix
+$P_{ij}=\Pr(\text{next}=j\mid\text{current}=i)$: a perfectly cyclic flight
+($\text{T}\!\to\!\text{S}\!\to\!\text{C}\!\to\!\text{T}$) gives a near-deterministic matrix,
+whereas aborted climbs, repeated searches or skipped phases appear as off-cycle probabilities
+and reveal how stereotyped the soaring cycle actually is. (ii) The \emph{durations}, through
+correlations between consecutive phase durations -- for instance whether a long climb tends to
+precede a long glide. Both probe the \emph{renewal} assumption underlying the textbook CTRW
+and L\'evy-walk results, in which each step and wait is independent of the history: if the
+transition matrix is structured or the durations are correlated, the process is non-renewal
+and those formulas must be amended. These measurements determine whether a memoryless
+model is admissible.
+
+\section{Reproducing the reference results}
+\label{sec:reproducing}
+A first objective of the analysis, undertaken once the segmentation is in place, is to check
+whether the enlarged---and eventually multi-source---dataset reproduces the quantitative and
+graphical results of Vilpellet et al.~\cite{vilpellet2026}. That study covers paragliders,
+hang gliders and sailplanes; the present data cover the first two (Chapter~\ref{ch:dataset}),
+so both the paraglider and the hang-glider comparisons are within reach, while the sailplane
+figures become reachable once that source is added. Two figures are the main targets.
+
+The first is the per-phase conditional MSD (their Fig.~3): the transition segments should
+stay ballistic ($\alpha=2$, i.e.\ $H=1$) across time lags; the search phase should be
+strongly sub-diffusive ($H\approx0.3$ for paragliders and hang gliders, $\approx0.2$ for
+sailplanes); and the climb phase should be quasi-ballistic at long lags but with an effective
+velocity about two orders of magnitude smaller, including the transient anti-correlation near
+the $\sim\!30$\,s thermalling period.
+
+The second is the set of per-phase descriptive statistics (their Fig.~4): the glide ratios
+($\approx 8.5$, $10$, and $25$ for paragliders, hang gliders, and sailplanes), the
+horizontal-velocity statistics, the heavy-tailed distribution of transition times, the
+search-time fraction and the effective search radius, the vertical climb velocities, the
+thermalling radii, and the thin, near-exponential distribution of climb times---together with
+the global time budget ($\approx\!60\%$ transition, $\approx\!35\%$ climb, the remainder
+searching) and the global sub-ballistic scaling ($H\approx0.88$).
+
+Recovering these results would validate the acquisition pipeline and the segmentation and
+would test the universality of the reported behaviour on a substantially larger sample;
+systematic departures would be equally informative, pointing to dataset- or method-dependent
+effects to investigate. This comparison is therefore the bridge between the present
+data-acquisition stage and the original analysis that follows.
+
+\section{Modelling and simulation}
+\label{sec:modelling}
+The aim is a \emph{minimal} stochastic model that reproduces the asymptotic anomalous
+scaling reported for soaring (a Hurst exponent $H \approx 0.88$) with as few ingredients as
+possible. A preliminary working hypothesis---to be made precise, and possibly revised, once
+the empirical phase statistics are available---is that the transport is carried mainly by
+the transition (glide) phases. The model would therefore resolve the transition segments
+explicitly while merging search and climb into a single effective non-transition state, so
+that the soaring cycle reduces to a sequence of directed glides interrupted by
+reorientations. Anomalous transport would then emerge from the directed transition segments
+combined with an \emph{angular diffusion} of the heading from one transition to the next:
+successive glide directions decorrelate gradually rather than abruptly, producing a
+correlated random walk whose persistence controls the long-time exponent. Simulated
+ensembles would be compared with the data to test whether these ingredients suffice. These
+are baseline ideas, to be refined---or changed---as the analysis progresses.
+
+\section{Tooling}
+\label{sec:tooling}
+Mirror the acquisition package with an analysis package, and let the figures and tables of
+this document be generated automatically from the analysis outputs -- as the dataset
+statistics already are -- so that this document stays in step with the work and remains a
+reliable basis for the thesis and for presentations.

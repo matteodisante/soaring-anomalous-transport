@@ -790,7 +790,7 @@ candidate treatments---split the flight at the step, on the same footing as an i
 horizontal step; re-reference the altitude after it, restoring continuity; or invalidate a
 window around it and let the resampling bridge it---each change a rule argued elsewhere in
 this chapter, and none of them follows from the specification. The vertical channel feeds
-the phase segmentation of Chapter~\ref{ch:next-steps} and not the transport measurement of
+the phase segmentation of Chapter~\ref{ch:phases} and not the transport measurement of
 Sec.~\ref{sec:obs-global}, which is horizontal, so the choice belongs with that analysis
 rather than ahead of it.
 \end{revblock}
@@ -932,7 +932,7 @@ later, where it can be stated without attributing blame to either end: a record 
 reach of its own first fix is refused whole (Sec.~\ref{sec:flightfilter}). That bound
 never depended on a fix-level rule. What such a rule would have bought is the recovery of
 two flights in \num{156017}, against a failure mode now demonstrated twice---and the
-invariant the whole of Chapter~\ref{ch:next-steps} rests on,
+invariant the whole of Chapter~\ref{ch:global} rests on,
 $|\mathbf{r}(t)|\le v_{xy}^{\max}\,t$, holds either way, checked as such on the written
 tables (Sec.~\ref{impl:verify}).
 \end{revblock}
@@ -1213,7 +1213,7 @@ few tens of metres negative (the offset scale is visible in Fig.~\ref{fig:altnoi
 \end{figure}
 
 \paragraph{Completeness of the resampled trajectory.}
-The segmentation (Ch.~\ref{ch:next-steps}) needs a defined horizontal position \emph{and}
+The segmentation (Ch.~\ref{ch:phases}) needs a defined horizontal position \emph{and}
 altitude at every time, since the vertical velocity is its discriminant. Cleaning does not
 guarantee this fix by fix -- it may delete a fix (a corrupt horizontal position) or mark a channel
 missing (a barometric spike, a \texttt{V} fix on a GNSS-fallback flight) -- because the
@@ -1235,7 +1235,7 @@ small fraction of a flight's airborne fixes, the flight is dropped whole.
 
 \paragraph{Validating the cleaning.}
 All the detector parameters are validated by one procedure, run once the cleaning
-routine is built (Ch.~\ref{ch:next-steps}):
+routine is built (Ch.~\ref{ch:phases}):
 \begin{enumerate}[label=(\alph*), itemsep=2pt, topsep=3pt]
   \item \emph{Freeze the working values.} The thresholds are fixed a priori at the
         values of \rev{Table~\ref{tab:workingparams}}; nothing is tuned
@@ -1531,7 +1531,7 @@ actually be analysed over.}
         nothing else. Like the previous one it introduces no configuration value, and it is
         checked again on the written tables as an invariant of the output
         (Sec.~\ref{impl:verify}), where it is the statement $|\mathbf{r}(t)|\le
-        v_{xy}^{\max}t$ that the whole of Chapter~\ref{ch:next-steps} assumes.}
+        v_{xy}^{\max}t$ that the whole of Chapter~\ref{ch:global} assumes.}
   \item \emph{Glider class} (metadata). For class-stratified analyses, flights whose
         \texttt{aile\_class} cannot be normalised onto the discipline's system
         \rev{(Sec.~\ref{sec:glider})} are dropped from
@@ -2040,7 +2040,7 @@ signal is much smoother---that is what justified \enquote{drop the altitude only
 cleaning (Sec.~\ref{sec:fixlevel}); it does not justify a wider gap bound for $z$.
 
 \paragraph{Consequences of a split.}
-The observables of Ch.~\ref{ch:next-steps} are affected differently by a split. In
+The observables of Ch.~\ref{ch:global} are affected differently by a split. In
 practice a split is bookkeeping rather than a new trajectory: the conversion to ENU
 (step~v) runs before this step, so every fix already
 carries coordinates and elapsed time referred to the parent origin, and the split only
@@ -2071,7 +2071,7 @@ gap. Three cautions follow.
         the standard one just named.}
   \item \emph{A segment is not a fresh flight.} For observables referenced to the
         time since the flight began---the time-averaged MSD stratified by duration, for
-        instance (Ch.~\ref{ch:next-steps})---a segment starting at parent time $t_0>0$ is
+        instance (Ch.~\ref{ch:global})---a segment starting at parent time $t_0>0$ is
         not re-zeroed into a new flight that starts at $t=0$. It is used for what it is:
         an observation window $[t_0,t_1]$ onto a process already $t_0$ old. Re-zeroing
         would mix statistics of young and aged trajectories, which an aging analysis must
@@ -2113,7 +2113,7 @@ declared, and the linear fill spans the hole whatever its length.
 
 Two things follow, and both are decided here rather than left implicit. First, such a
 hole does \emph{not} split the flight. The horizontal trajectory, which is what
-Chapter~\ref{ch:next-steps} measures, is intact across it; cutting it because the vertical
+Chapter~\ref{ch:global} measures, is intact across it; cutting it because the vertical
 is missing would discard good data for a defect that does not touch it. Second---and this
 is the correction the check demanded---the reconstruction must be visible. It was not: a
 grid point sitting on a real fix whose altitude had to be invented was reported as
@@ -2373,13 +2373,13 @@ slower than \SI{1}{\hertz}. In \emph{seconds} the window is therefore
 $\max(\tau_c,\,\PreprocSavgolMinWindow\,\Delta t)$: \SI{5}{\second} at a
 \SI{1}{\second} cadence, \SI{50}{\second} at \SI{10}{\second},
 \SI{150}{\second} at \SI{30}{\second}---which reaches the lower end of the range over
-which Chapter~\ref{ch:next-steps} fits its exponent.
+which Chapter~\ref{ch:global} fits its exponent.
 
 Measured rather than argued, on synthetic trajectories of known exponent passed through
 the adopted filter and read the way the pipeline reads them---displacement from the frame
 origin, which is the \emph{raw} first fix (Sec.~\ref{sec:enu}), not the smoothed
 one---the answer is that the filter is transparent to the motion. For a superdiffusive
-trajectory ($\alpha=1.8$, the regime Chapter~\ref{ch:next-steps} finds) and no measurement
+trajectory ($\alpha=1.8$, the regime Chapter~\ref{ch:global} finds) and no measurement
 noise, the filtered MSD sits within \SI{2.3}{\percent} of the true one at a lag of two
 samples and within \SI{1}{\percent} at every lag from three samples upwards. The reason
 is structural rather than fortunate: a cubic Savitzky--Golay filter reproduces any locally
@@ -2441,7 +2441,7 @@ and~\ref{fig:sampling} were computed on \emph{every} parsed flight, as a filteri
 diagnostic, whereas the analysis needs the same quantities on the flights actually
 used. \rev{None of the checks below requires the phase segmentation, so all of them run as
 soon as the pipeline does; two of them constrain what the transport analysis of
-Chapter~\ref{ch:next-steps} is allowed to do, and both come out against the simpler
+Chapter~\ref{ch:global} is allowed to do, and both come out against the simpler
 option.}
 
 \begin{revblock}
@@ -2588,7 +2588,7 @@ rather than a nuisance: a competition wing covers ground faster than a recreatio
 and thermals over a mountain range are anchored to slopes and organised along ridges
 whereas over flat terrain they drift with the wind, so the persistence of the glides and
 the spacing of the climbs need not be the same. Every transport statistic of
-Chapter~\ref{ch:next-steps} is therefore reported per class and per orographic group as
+Chapter~\ref{ch:global} is therefore reported per class and per orographic group as
 well as pooled, and a pooled exponent is read as an average over strata that are known to
 differ, not as a property of a homogeneous population.
 \end{revblock}
@@ -2960,6 +2960,6 @@ a retention rule: a flight or segment that should not be analysed has no rows to
 Every segment keeps its parent's origin and clock, so a position is always measured from
 that flight's take-off and a time is always elapsed since it, whether or not the record is
 continuous up to that point. Section~\ref{sec:prelim} characterises this ensemble,
-Chapter~\ref{ch:next-steps} analyses it, and \path{docs/guide/data-on-disk.md} states which
+Chapter~\ref{ch:global} analyses it, and \path{docs/guide/data-on-disk.md} states which
 columns each estimator reads and what a segment boundary means to it.
 \end{revblock}

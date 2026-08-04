@@ -4,7 +4,7 @@
 acquisition (Sec.~\ref{sec:acquisition}) and including the pre-processing and preliminary-
 characterization sections (Secs.~\ref{sec:preproc},~\ref{sec:prelim}) -- the cleaning and
 first-look steps are part of describing the dataset, not of the planned analysis in
-Chapter~\ref{ch:next-steps}.}
+Chapter~\ref{ch:global}.}
 
 \flow{Table~\ref{tab:impl-status} collects the implementation status of every step
 discussed below; the sections point to it instead of repeating status remarks.}
@@ -288,7 +288,7 @@ random and asserts only these invariants) found two more, and both were faults i
 \emph{statement} rather than in the pipeline: the invariant had been written without
 either qualification above. A third, the corrupt opening block of
 Sec.~\ref{sec:fixlevel}, was found by neither: it was found by the ensemble MSD of
-Chapter~\ref{ch:next-steps} being wrong, which is the expensive way to find a bug, and
+Chapter~\ref{ch:global} being wrong, which is the expensive way to find a bug, and
 the reachability check above is what makes it cheap next time. It also found one in the
 cleaning---a track crossing the
 antimeridian is read as motionless, because the great-circle distance is correctly aware
@@ -855,7 +855,7 @@ matures.}
         -- a cheap guard.
   \item \emph{Per-phase removal rates.} The error this pipeline most wants to avoid is
         losing a slow-phase fix. Once the segmentation is in place
-        (Ch.~\ref{ch:next-steps}), the removal and split rates are measured \emph{per
+        (Ch.~\ref{ch:global}), the removal and split rates are measured \emph{per
         phase} and required to be flat across transition, search and climb rather than
         enriched in the two slow phases; and synthetic tight climbs -- circles at flying
         speed, over a range of radii and wind drift -- planted in otherwise clean tracks
