@@ -103,3 +103,44 @@ def test_net_drift_is_the_endpoint_velocity_not_the_mean_speed():
     time = np.arange(1000, dtype=float)
     loop = np.column_stack([np.sin(2 * np.pi * time / 1000), np.cos(2 * np.pi * time / 1000)])
     assert np.hypot(*V.net_drift(loop * 1000.0)) < 0.05
+
+
+def test_the_second_order_variation_is_unbiased_across_exponents():
+    """alpha_2 = 2H, so a measured 2.0 means H = 1 and not "the estimator saturates"."""
+    lags = np.unique(np.round(np.geomspace(4, 400, 20)).astype(int))
+    for hurst in (0.6, 0.8, 0.95):
+        measured = np.mean(
+            [
+                2
+                * V.hurst_from_variations(
+                    lags, V.filtered_variation(S.fractional_brownian(8192, hurst, seed=s), lags, order=2)
+                )[0]
+                for s in range(4)
+            ]
+        )
+        assert measured == pytest.approx(2 * hurst, abs=0.06)
+
+
+def test_a_straight_line_gives_no_second_order_variation_at_all():
+    """The second difference annihilates constant velocity exactly, not approximately."""
+    line = np.column_stack([np.arange(4000.0) * 12.0, np.zeros(4000)])
+    lags = np.unique(np.round(np.geomspace(4, 400, 20)).astype(int))
+    assert np.nanmax(V.filtered_variation(line, lags, order=2)) == 0.0
+
+
+def test_a_locally_smooth_process_reads_above_two_not_at_it():
+    """The calibration that stops alpha_2 = 2 being misread as "ballistic".
+
+    A persistent walk is differentiable below its correlation time, so over lags well
+    inside it the second-order variation scales as lag^4 in the limit and reads close to
+    3 in practice. A measured 2.0 therefore says the motion is *not* locally straight over
+    the fitted range -- it is the H = 1 boundary of fractional Brownian motion, which is
+    persistent and still rough.
+    """
+    lags = np.unique(np.round(np.geomspace(4, 400, 20)).astype(int))
+
+    def alpha_two(track):
+        return 2 * V.hurst_from_variations(lags, V.filtered_variation(track, lags, order=2))[0]
+
+    assert alpha_two(S.persistent_walk(20000, 3000.0, seed=2)) > 2.7
+    assert alpha_two(S.persistent_walk(20000, 30.0, seed=2)) < 2.4

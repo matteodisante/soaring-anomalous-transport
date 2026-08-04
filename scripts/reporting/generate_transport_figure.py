@@ -117,6 +117,48 @@ def task_systematic(lags, curves, closed, fit_range):
     )
 
 
+
+def stratified_exponents(lags, curves, frame, column, fit_range, *, minimum=2000):
+    """The exponent within each level of a stratifier, largest stratum first.
+
+    Three of these answer three different questions with the same code.
+
+    *Cadence* is a check on the pipeline rather than on the flying. The
+    Savitzky--Golay window has a floor of five **samples**, so the velocity is a
+    5 s derivative at \SI{1}{\hertz} and a 50 s one at \SI{10}{\second}: the
+    trajectories of slow loggers are smoothed over a scale ten times longer than
+    those of fast ones. If the exponent depends on cadence, the estimator is
+    reading the filter.
+
+    *Wing class* and *orographic group* are the heterogeneity confound. A
+    superposition of ordinary processes with different persistence times imitates
+    a single anomalous one, and Sec. 2.8 has already measured these strata as
+    incompatible at 40 and 62 per cent on the ensemble MSD.
+
+    *Season* is the control that should come out flat, since Sec. 2.8 found it
+    compatible; a stratifier that separates here and not there would indict the
+    estimator rather than the archive.
+
+    Returns:
+        ``{level: (alpha, n_flights)}`` for the levels holding at least
+        ``minimum`` flights.
+    """
+    from soaring.analysis.observables.variations import hurst_from_variations
+
+    if column not in frame:
+        return {}
+    counts = frame[column].value_counts()
+    out = {}
+    for level in counts[counts >= minimum].index:
+        member = (frame[column] == level).to_numpy()
+        with np.errstate(invalid="ignore"):
+            mean_curve = np.nanmean(curves[member], axis=0)
+        alpha = 2.0 * hurst_from_variations(lags, mean_curve, fit_range=fit_range)[0]
+        if np.isfinite(alpha):
+            out[str(level)] = (alpha, int(member.sum()))
+    return out
+
+
 def measure(discipline: str, loaded: dict, macros: dict) -> dict:
     from soaring.analysis.observables.regimes import (
         effective_dof,
@@ -217,6 +259,25 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
 
     put("DriftShare", f"{alphas[1][0] - alphas[2][0]:+.2f}")
     put("OrderAgreement", f"{abs(alphas[2][0] - alphas[3][0]):.2f}")
+
+    # ---- does the answer depend on who is in the ensemble? --------------------------
+    # Every one of these is a row selection on the matrix already in memory, so the
+    # confound checks cost nothing beyond the pass that has already been paid for.
+    curves2 = loaded["orders"][2]
+    if "native_dt_s" in frame:
+        frame = frame.assign(cadence=frame["native_dt_s"].round().astype("Int64"))
+    spreads = {}
+    for column, name in (("cadence", "Cadence"), ("wing_class", "Class"),
+                         ("season", "Season")):
+        levels = stratified_exponents(lags, curves2, frame, column, FIT_RANGE_S)
+        if len(levels) < 2:
+            continue
+        values = np.array([v[0] for v in levels.values()])
+        spreads[name] = float(values.max() - values.min())
+        put(f"{name}Strata", f"{len(levels)}")
+        put(f"{name}SpreadAlpha", f"{spreads[name]:.2f}")
+        put(f"{name}AlphaMin", f"{values.min():.2f}")
+        put(f"{name}AlphaMax", f"{values.max():.2f}")
 
     # ---- how many regimes, against a null the shape cannot leak into ----------------
     mean_curve = np.nanmean(loaded["orders"][2], axis=0)
