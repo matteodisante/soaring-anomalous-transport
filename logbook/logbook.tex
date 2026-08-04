@@ -1024,9 +1024,10 @@ clean.
 
 \section{Next steps}
 \label{sec:next-steps}
-These mirror the planning chapter of the state document
-(\texttt{thesis/sections/04-next-steps}, itself titled ``Next steps'') and are kept in
-sync with it, section by section. The near-term plan is to analyse the data \emph{in
+These mirror the two forward-looking chapters of the state document
+(\texttt{thesis/sections/04-global-transport} and
+\texttt{thesis/sections/05-flight-phases}) and are kept in sync with them, section by
+section. The near-term plan is to analyse the data \emph{in
 parallel} with studying the segmentation, since many observables can be built before any
 phase splitting.
 
@@ -1062,26 +1063,32 @@ phase splitting.
         pooled MSD) or orographic group (62\%), though they are by season
         (12\%) --- so the archive may be pooled over time, not over class or
         terrain. Remaining: displacement maps.
-  \item \textbf{Global transport (Ch.~3, no segmentation).} \textbf{Measured} (2026-08):
-        the filtered-variation exponent over 60--2000\,s, $2.02\pm0.10$ and
-        $1.94\pm0.13$, stable under every stratification the archive allows. Still to
-        build in that chapter: the propagator and its collapse, the moment spectrum within
-        a stratum, the velocity autocorrelation, the persistence times with the
-        inspection-bias correction, and the shuffle surrogates. Characterise
-        the data with observables that need no phases. \textbf{Both MSD estimators are
-        built and audited} (2026-08): a single exponent describes the time-averaged curve
-        ($\alpha_{\mathrm{TA}}=1.732$ and $1.688$, residual under 4\%) and
-        only summarises the ensemble one (15.2\% and 31.2\%),
+  \item \textbf{Global transport (Ch.~3, no segmentation).} \textbf{Measured} (2026-08).
+        The chapter now rests on the filtered variation rather than on displacement from
+        take-off: $\alpha_2=2.02\pm0.10$ and $1.94\pm0.13$ over 60--2000\,s, stable under
+        every stratification the archive allows (cadence, wing class, season, declared
+        task; spread at most 0.06 against the 40--62\% the ensemble MSD showed on the same
+        strata). \textbf{Both MSD estimators are built and audited}: a single exponent
+        describes the time-averaged curve ($\alpha_{\mathrm{TA}}=1.732$ and $1.688$,
+        residual under 4\%) and only summarises the ensemble one (15.2\% and 31.2\%),
         whose local slope crosses over --- super-ballistic at the top --- where the
         population leaves its launch area. So the ensemble curve yields a timescale rather
         than an exponent, and the ergodicity test cannot take the form of a gap between
         two fitted slopes; it moves to the EB parameter and the phase-resolved statistic,
-        which compare distributions. Still to build: the
-        one-dimensional marginal propagator and its scaling collapse; the return
-        probability and the non-Gaussian parameter; the velocity autocorrelation and
-        turning-angle distribution; first-passage/first-exit times; and the
-        speed/vertical-velocity distributions. Goal: a first physical/statistical picture,
-        independent of any phase splitting.
+        which compare distributions. \textbf{Beyond the second moment}, also built: the
+        moment spectrum is straight ($\nu$ spread 0.009), so \emph{not} a L\'evy walk and
+        no strong anomalous diffusion; the non-Gaussian parameter is $+0.18$ in the median
+        against 0.01 for an exact Gaussian and 0.56 for a L\'evy walk of index 1.5, so
+        monofractal but not Gaussian; the velocity autocorrelation has a non-integrable
+        tail, $\gamma=0.57$, which is what reconciles a memory already below $1/e$ at
+        60\,s with correlated increments out to 2000\,s; and the persistence-run tail index
+        moves from 4.41 to 2.24 as the sinuosity threshold is scanned, so there is no
+        distinguished leg duration --- a prediction about any segmentation. Still to build:
+        the one-dimensional marginal propagator and its scaling collapse by histogram; the
+        return probability $P_0(t)$; the turning-angle distribution;
+        first-passage/first-exit times; and the speed/vertical-velocity distributions. The
+        first two would each give $H$ by a route independent of the second moment, which is
+        why they head the list.
   \item \textbf{Segmentation (Sec.~3.2).} Study J\'er\'emie's internship report and code,
         then re-examine the transition/search/climb HMM (binary features: sign of
         vertical speed, curvature-angle persistence, straightness) --- decide whether to
