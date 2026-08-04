@@ -29,10 +29,12 @@
 #   7. prelim   -- Sec. 2.8: the retained-ensemble figures and the \StatPrelim* macros.
 #                  Reads step 5's arrays, not the fix table, which is what makes a
 #                  stratified MSD a row selection rather than another 43 GB scan.
-#   8. contract -- every macro the thesis quotes must now exist. An undefined one inside
+#   8. dataset  -- the discard cascade with its running remainder, and the survivors
+#                  per season. Reads flights_meta and the catalogue; seconds.
+#   9. contract -- every macro the thesis quotes must now exist. An undefined one inside
 #                  \SI{} is a *fatal* LaTeX error, not a warning, so this runs before the
 #                  build and its failure is the useful message.
-#   9. build    -- the thesis.
+#  10. build    -- the thesis.
 #
 # Usage:
 #   SOARING_PARA_DATA_ROOT=... SOARING_DELTA_DATA_ROOT=... scripts/regenerate.sh [--no-build]
@@ -53,28 +55,31 @@ fi
 
 step() { printf '\n=== %s ===\n' "$1"; }
 
-step "1/9  invariants (verify_dataset.py)"
+step "1/10  invariants (verify_dataset.py)"
 "$PY" scripts/verify_dataset.py
 
-step "2/9  pipeline census -> StatPipe*, tab:pipecensus"
+step "2/10  pipeline census -> StatPipe*, tab:pipecensus"
 "$PY" scripts/reporting/generate_pipeline_census.py
 
-step "3/9  MSD -> fig:msd, msd_curve.csv, StatMsd*   (the slow one)"
+step "3/10  MSD -> fig:msd, msd_curve.csv, StatMsd*   (the slow one)"
 "$PY" scripts/reporting/generate_msd_figure.py
 
-step "4/9  raw-archive census -> StatScan*, Preproc*"
+step "4/10  raw-archive census -> StatScan*, Preproc*"
 "$PY" scripts/reporting/generate_census_stats.py
 
-step "5/9  MSD audit pass -> per-flight positions at every lag"
+step "5/10  MSD audit pass -> per-flight positions at every lag"
 "$PY" scripts/reporting/audit_msd.py --out "$AUDIT_DIR"
 
-step "6/9  audit report -> StatAudit*"
+step "6/10  audit report -> StatAudit*"
 "$PY" scripts/reporting/audit_msd_report.py --audit-dir "$AUDIT_DIR"
 
-step "7/9  preliminary characterization -> fig:prelim-*, StatPrelim*"
+step "7/10  preliminary characterization -> fig:prelim-*, StatPrelim*"
 "$PY" scripts/reporting/generate_prelim_figure.py --audit-dir "$AUDIT_DIR"
 
-step "8/9  macro contract: everything the thesis quotes must exist"
+step "8/10  dataset statistics -> tab:cascade, fig:seasons, StatData*"
+"$PY" scripts/reporting/generate_dataset_stats.py
+
+step "9/10  macro contract: everything the thesis quotes must exist"
 "$PY" scripts/reporting/check_generated_macros.py
 
 if [[ "${1:-}" == "--no-build" ]]; then
@@ -82,6 +87,6 @@ if [[ "${1:-}" == "--no-build" ]]; then
     exit 0
 fi
 
-step "9/9  thesis"
+step "10/10  thesis"
 cd thesis && latexmk -pdf -interaction=nonstopmode main.tex >/dev/null
 echo "built thesis/main.pdf"

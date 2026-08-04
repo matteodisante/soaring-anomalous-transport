@@ -1,0 +1,316 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{lmodern}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{siunitx}
+\usepackage{booktabs}
+\usepackage{csquotes}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=blue!55!black]{hyperref}
+\usepackage{titlesec}
+
+\definecolor{qcol}{HTML}{7A5C00}
+\definecolor{vgood}{HTML}{1B6B2A}
+\definecolor{vbad}{HTML}{A3231B}
+
+\newcommand{\ann}[3]{%
+  \medskip\noindent\textbf{[#1]}\quad p.~#2\quad\textcolor{qcol}{\textsf{\small #3}}\par\nopagebreak}
+\newcommand{\note}[1]{\begingroup\small\color{qcol}\begin{quote}#1\end{quote}\endgroup}
+\newcommand{\verdict}[1]{\textbf{\textcolor{vbad}{#1}}}
+\newcommand{\ok}[1]{\textbf{\textcolor{vgood}{#1}}}
+
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.6em}{}
+\setlength{\parskip}{0.35em}
+
+\title{\textbf{Answers to the second review pass}\\[2pt]
+  \large Questions from \texttt{main\_revision\_second.pdf} that are not settled inside the thesis}
+\author{}
+\date{2 August 2026}
+
+\begin{document}
+\maketitle
+\vspace{-2.2em}
+
+\noindent
+Of the 294 annotations, 59 contain a question. Most were answered by clarifying the thesis
+itself, and the row for each in \texttt{thesis/REVISION-log-second.md} says where. This
+document holds what could not be settled that way: the two \emph{report-only} tasks whose
+notes forbade editing before approval, and the questions that are decisions for you rather
+than defects in the text.
+
+\medskip\noindent
+\textbf{Status.} The Step-1 reports below were produced first, as the notes require. Step~2
+was then approved and \textbf{applied on 2 August 2026}; each report ends with what was
+actually changed, and with the choices made where the evidence left more than one
+defensible option.
+
+\section{Annotation [36] --- Step-1 report on the glider-class table}
+
+\note{\enquote{Task: fact-check a LaTeX table \dots\ Precision matters more than
+completeness. \dots\ Do not edit anything before I approve Step 1.}}
+
+\noindent
+Step~2 has since been applied to Table~2.2, to its caption, and to annotation~[40], the
+body sentence on the certification ladder.
+
+\paragraph{Primary source used.} FAI Sporting Code, \emph{Common Section 7 --- Class O,
+Hang Gliders and Paragliders}, \textbf{2024 Edition v3, effective 1 May 2024}, downloaded
+from \texttt{fai.org}. Class definitions are in \S1.4.1 (pp.~11--12); the list of
+subsections, including 7G, is in \S1.2. For the EN side, see item~6: the published
+standard is a sold document, and what is cited instead is its publicly circulated final
+draft.
+
+\begin{enumerate}[leftmargin=1.4em, itemsep=0.5em]
+
+\item \textbf{Is the numeric scale 1 / 1-2 / 2 / 2-3 an AFNOR classification?}
+  \verdict{Refuted.} It is the \textbf{LTF} scale (the German
+  \emph{Lufttüchtigkeitsforderungen}, successor to the DHV scale). The Sporting Code never
+  writes \enquote{AFNOR}; it writes the pairs \enquote{EN~B/LTF~1--2} and
+  \enquote{EN~C/LTF~2} when it defines the Class~3 sub-classes (\S1.4.1, p.~12). AFNOR was
+  the older \emph{French} scheme and did not use those numbers.
+  \textbf{The heading \enquote{EN/AFNOR ladder} was wrong and now reads EN/LTF.}
+
+\item \textbf{Are the French parentheticals (\enquote{A ou 1}, \enquote{B ou 1-2}, \dots)
+  documented?} \verdict{Not as written.} What is documented, in the Sporting Code itself,
+  is the \emph{EN$\leftrightarrow$LTF} correspondence, not a French labelling. Presenting
+  \enquote{A ou 1} as a classification label has no support in the primary source. They
+  were removed.
+
+\item \textbf{Does an official EN-to-numeric equivalence exist at all?}
+  \textbf{Partially.} The Sporting Code asserts the equivalence only where it needs it, as
+  the \emph{upper bound} of a sub-class (\enquote{Standard --- up to EN~B/LTF~1--2},
+  \enquote{Sport --- up to EN~C/LTF~2}). That is a competition-eligibility statement, not a
+  published one-to-one mapping of the two ladders, and the table no longer asserts it as an
+  identity --- it records the two ceilings, which is exactly what the source states.
+
+\item \textbf{Is \enquote{tandem / non-certified} one category or two?}
+  \verdict{Two distinct things, wrongly merged.} They are not synonyms: a two-seater wing
+  can be certified, whereas \enquote{non homologuée} means the wing carries no
+  certification at all. The Sporting Code's Class~3 sub-classes are Open / Serial / Sport /
+  Standard --- \emph{tandem does not appear}.
+
+\item \textbf{\enquote{CCC --- CIVL Competition Class racing wings}.} \ok{Confirmed.}
+  Sporting Code \S1.2: \enquote{Section 7G. CIVL Competition Class (CCC) --- Paragliders
+  permitted in FAI Category~1 Cross-Country events (Class~3)}. The row is correct and was
+  left untouched.
+
+\item \textbf{\enquote{EN~A --- most stable, recreational}.} \ok{Substantially confirmed},
+  on a second pass. The published EN~926-2:2013 is a sold, copyrighted CEN standard and I
+  could not obtain it; but the \emph{final draft} submitted to formal vote,
+  FprEN~926-2:2012, was circulated publicly by CEN/TC~136/WG~6, and its Table~1 gives the
+  class descriptions verbatim: A is \enquote{maximum passive safety and extremely
+  forgiving flying characteristics \dots\ designed for all pilots including pilots under
+  all levels of training}. Your original wording was right; what was missing was a source
+  for it. All four EN rows are now filled from that table, with the draft-versus-published
+  caveat stated in the body rather than buried.
+
+\item \textbf{Do \enquote{flexible wing} / \enquote{rigid wing} distinguish Class~1 from
+  Class~2 from Class~5?} \verdict{Refuted --- this was the most serious error in the table.}
+  The classes are defined by the \textbf{method of control}, and \emph{all three have a
+  rigid primary structure} (\S1.4.1):
+  \begin{itemize}[nosep, leftmargin=1.2em]
+    \item \textbf{Class 1} --- rigid primary structure, \emph{pilot weight-shift as the
+      sole method of control}; no pilot fairings or surrounding structures.
+    \item \textbf{Class 2} --- rigid primary structure, \emph{movable aerodynamic surfaces
+      as the primary method of control}.
+    \item \textbf{Class 5} --- rigid primary structure, movable aerodynamic surfaces as the
+      primary method of control \emph{in the roll axis}, plus the same prohibition on
+      fairings and surrounding structures as Class~1.
+  \end{itemize}
+  So \enquote{Delta Class 1 / flexible wing} was wrong, and the identical note shared by
+  Class~2 and Class~5 was not defensible: what separates them is the roll-axis restriction
+  and the fairing prohibition. (Note also that \emph{Class~3 is paragliders} and
+  \emph{Class~4} exists, for gliders that cannot take off or land in nil wind.)
+
+\item \textbf{\enquote{Delta Class Sport}.} \ok{It is a class in its own right} ---
+  explicitly \enquote{a sub-class of Class~1} (\S1.4.1, p.~11). But
+  \verdict{\enquote{flexible wing, intermediate} was wrong}: the definition is not about
+  performance. A Sport Class glider must meet the Class~1 definition \emph{and} carry an
+  HGMA, BHPA or DHV type airworthiness certificate, be (or have been) commercially
+  available for at least a year, be built of original parts only, and \emph{have a king
+  post supporting the majority of the wing load when the wing is not flying}. It is a
+  production-and-design restriction, not a performance tier.
+
+\item \textbf{Does the FAI class scheme cover only hang gliders?} \verdict{No --- the
+  heading was misleading.} The scheme is \textbf{Class~O}, which covers hang gliders
+  \emph{and} paragliders; paragliders are \textbf{Class~3} inside the very same numbering.
+  The heading now says so.
+\end{enumerate}
+
+\paragraph{Summary.} Of nine items: two confirmed (5, 8-partly), five refuted (1, 2, 4, 7,
+9), one partial (3), and one (6) initially unverifiable but settled on a second pass
+against the publicly circulated final draft of the standard.
+
+\paragraph{Step 2, as applied.} Same booktabs style, two columns, row order unchanged, no
+rows added. \emph{The one judgement call}: \enquote{tandem / non-certified} was kept as a
+single row with the corrected note \enquote{two-seater and uncertified wings, pooled in
+this field} --- splitting it would have added a row, which your scope rule forbids, and the
+note is now true of the data even though the two things are distinct in law. The EN rows
+were first left blank and then filled from Table~1 of the draft standard, once that source
+turned up; the body now explains, in one paragraph, what a \enquote{sold} standard is and
+why the draft is cited in place of the published text. Finally the caption: it claimed the
+table was ordered \enquote{low to high performance}, which holds for EN/LTF and is false
+for the FAI classes, so the caption now says so. The second column also became a wrapping
+\texttt{p} column --- with real notes in it, the old \texttt{l} spec overflowed the text
+block by \SI{135}{pt}.
+
+\section{Annotation [66] --- Step-1 report on the multipath sentence}
+
+\note{\enquote{Two elements are suspect. Verify each independently against the literature
+before editing \dots\ Step~2, after my approval only.}}
+
+\noindent
+Text as it stood: \enquote{and \emph{multipath}---signals reaching the antenna only after
+reflecting off terrain or the pilot's own equipment---adds high-frequency jitter of a few
+metres.} Both of your suspicions were confirmed; Step~2 has since been applied.
+
+\paragraph{Item 1 --- the parenthetical definition.} \verdict{The definition as written
+describes NLOS, not multipath.} Multipath is the \emph{superposition} at the correlator of
+the direct signal with delayed replicas; the direct signal is still present, and the error
+comes from the distortion of the correlation function. The case in which the direct signal
+is blocked and only a reflection is received is \emph{non-line-of-sight} (NLOS), a distinct
+and separately treated phenomenon. The word \enquote{only} in the old sentence made it the
+NLOS definition.
+
+\paragraph{Item 2 --- \enquote{high-frequency jitter}.} \verdict{Refuted, and this is the
+substantive error.} Code multipath is \emph{not} white and uncorrelated between epochs; it
+is strongly time-correlated, and the current standards are criticised precisely for not
+saying so. Garc\'ia Crespillo, Oliva Gonz\'alez and Caizzone (DLR), \emph{Airborne
+Time-Correlated GNSS Multipath Error Modeling of Carrier-phase Smoothed Code}, ION ITM
+2024, state in the Introduction that the avionics models (RTCA DO-253C, and the
+elevation-dependent Gaussian models of Circiu et al.) \enquote{lack information about the
+stochastic temporal behavior of the error, such as its time correlation}, and fit a
+first-order Gauss--Markov process with a \textbf{time-correlation constant of
+\SI{300}{\second}} to airborne data. The rate is set by the fringe frequency --- the rate
+of change of excess path length divided by the carrier wavelength --- a
+geometry-and-motion quantity, not a receiver one.
+
+\emph{Caveats I will not paper over.} That study uses carrier-smoothed code on airliners
+with aviation-grade antennas, not a free-flight variometer, and I could not settle two
+things from primary sources: (i) the numerical fringe frequency for a receiver moving at
+$\sim$\SI{10}{\metre\per\second} close to terrain, and hence whether \SI{1}{\hertz}
+sampling can alias a fast-varying multipath error into something that \emph{looks} white;
+(ii) whether \enquote{a few metres} is the right order for code multipath on consumer
+hardware. Neither claim survives in the text, so nothing rests on them. What is safe to
+say is that what dominates epoch-to-epoch scatter in \emph{open sky} is receiver tracking
+noise scaled by the DOP, not multipath.
+
+\paragraph{Replacement, as applied.}
+\enquote{\dots and \emph{multipath}---the direct signal arriving together with replicas
+delayed by reflection off terrain or the pilot's own equipment---biases the range on
+timescales of minutes rather than adding independent noise from fix to fix.}
+This keeps the em-dash apposition, corrects the definition, drops the unsupported jitter
+claim, and states only what the source supports.
+
+\paragraph{Also-check (reported, then acted on).} Two other sentences attributed the
+observed positional scatter to multipath: the figure discussion in Sec.~2.6.1
+(\enquote{large GNSS high-frequency noise, from multipath and the vertical dilution of
+precision}) and the appendix remark on the hang-glider band. \textbf{Both were corrected in
+the same pass}, since leaving them would have made the thesis contradict itself: a raised
+\emph{floor} is by definition a white contribution, so it is receiver tracking noise scaled
+by the DOP, not multipath. The appendix now also says plainly that why the hang-glider
+fleet sits worse is \emph{not} settled by these spectra --- older or lower-grade receivers
+being the obvious candidate --- rather than attributing it to multipath as before. No
+white-noise offset is subtracted from the MSD at short lags anywhere in the text, so
+nothing downstream depended on the wrong model.
+
+\section{Questions that are decisions for you}
+
+\ann{100}{17}{purple --- \enquote{Are we really sure we need this double check using also
+the velocity bound?}}
+Yes, and the thesis now argues it in place. Briefly: the Hampel test alone would delete
+genuine circling fixes. At a \SI{10}{\second} cadence a thermalling circle of a few tens of
+metres puts consecutive fixes on opposite sides of their own window median, so the residual
+clears $\varepsilon_{\min}$ on geometry alone --- and those are exactly the trapping events
+the transport analysis exists to measure. The speed bound is what separates that case from a
+spike. Removing the corroboration would not simplify the rule; it would change what it
+deletes, in the worst possible direction.
+
+\ann{229}{29}{purple --- \enquote{siamo sicuri che un interpolatore lineare sia la scelta
+migliore?}}
+Per l'altitudine sì, ed è una scelta asimmetrica voluta (ora spiegata in
+Sec.~2.7.6). La $z$ viene derivata una volta in più delle coordinate orizzontali prima di
+essere usata --- $v_z$ è il discriminante della segmentazione --- quindi un artefatto di
+interpolazione in $z$ finisce dentro l'assegnazione di fase, mentre lo stesso artefatto in
+$E$ o $N$ viene assorbito dallo smoothing. L'interpolazione lineare non può fare overshoot
+e ha un errore limitato da $\max|\ddot z|\,g^2/8$ (derivato ora in nota); una cubica
+sarebbe più accurata dove $\ddot z$ è regolare e peggiore proprio dove non lo è, cioè alle
+transizioni. Fra uno stimatore un po' conservativo ovunque e uno migliore in media ma che
+può inventare una salita, per un canale che decide le fasi va scelto il primo.
+
+\ann{239}{29}{red --- \enquote{molta attenzione a vedere come realmente è stata generata la
+Figure 2.6}}
+\verdict{Avevi ragione: il difetto c'era.} La figura marcava il taglio a
+$10\,\Delta t$, cioè la sola parte relativa del criterio, mentre il bound effettivo è
+$g_{\max}=\min(10\Delta t,\ \max(\SI{20}{\second},2\Delta t))$. Le due coincidono
+\emph{solo} alla cadenza di \SI{1}{\second}: da \SI{2}{\second} a \SI{10}{\second} vincola
+il cap assoluto, oltre il floor $2\Delta t$. La linea tratteggiata quindi non rappresentava
+il criterio in vigore per la maggior parte dei voli. Corretto nel codice e rigenerata: il
+pannello~(a) ora normalizza il gap di ogni volo al \emph{suo} $g_{\max}$, così il criterio
+vero cade esattamente a $1$.
+
+\ann{76}{14}{orange --- \enquote{Are we 100\% sure of these numbers?}}
+I numeri sono macro generate da \texttt{generate\_census\_stats.py} a partire dallo scan
+completo dell'archivio, quindi non sono trascritti a mano e non possono divergere dal dato.
+Il limite vero è un altro, ed è ora dichiarato in appendice: lo scan gira su tracce
+\emph{parsate}, non ancora pulite, quindi ogni conteggio del Cap.~2 va riletto dopo il
+fix-level cleaning. Fino ad allora vanno considerati stime correnti, non cifre definitive.
+
+\ann{237}{29}{yellow --- \enquote{È il posto giusto dove mettere questo paragrafo?}}
+Sì, l'ho lasciato dov'è. Il paragrafo definisce $g_{\max}$ nel punto in cui il bound viene
+usato per la prima volta, ed è anche il punto in cui serve al lettore per capire cosa
+distingue un buco interpolato da uno split. Spostarlo più avanti costringerebbe ad
+anticipare il simbolo; spostarlo prima lo separerebbe dalla regola che lo usa.
+
+\ann{265}{32}{yellow --- la mappa dei siti di decollo}
+Specificata in Sec.~2.8, ma non ancora prodotta: richiede codice nuovo, non solo una
+rigenerazione. Una nota di merito: la mappa non può essere \enquote{della Francia} e basta,
+perché la CFD ammette voli fatti all'estero e le sorgenti future (WeGlide, XContest) non
+sono francesi. Il testo la definisce quindi sul bounding box effettivo delle coordinate di
+decollo, con la Francia disegnata dentro.
+
+\section{What was changed in code, not only in text}
+
+\begin{itemize}[leftmargin=1.3em, itemsep=0.3em]
+  \item \texttt{BARO\_PRESENT\_MIN} raised \num{0.5} $\to$ \num{0.95} and made a single
+    source of truth in \texttt{soaring.analysis.altitude\_noise}, imported by
+    \texttt{preprocessing} so cleaning, census and PSD cannot drift; tests updated ([293]).
+    \emph{Measured effect}: it reclassified \num{241} paraglider flights and no
+    hang-glider ones, \SI{0.13}{\percent} of the archive --- which is the direct
+    confirmation of the bimodality the appendix asserts. It also cut
+    \texttt{ParaBaroMissMaxFixes} from \num{14878} to \num{1397}, i.e.\ most of what the
+    text used to call a \enquote{rare pathological tail} was a classification artefact of
+    the old threshold, not a sensor one. Both sentences describing it were rewritten.
+  \item \texttt{make\_flightlevel\_diagnostics\_figure}: 2$\times$2 $\to$ 2$\times$3 panels,
+    adding the altitude-range distribution and its retention curve. No rescan needed --- the
+    range is already in the cached census ([181], [185]).
+  \item \texttt{make\_gap\_diagnostics\_figure}: panel~(a) now normalised by each flight's
+    own $g_{\max}$ ([239], above).
+  \item \texttt{generate\_census\_stats.py}: new \texttt{\textbackslash StatCat*} family
+    reading \texttt{catalog.csv}, for the placeholder-date census of [50]. \emph{Result}:
+    \num{8} of \num{203343} paraglider entries carry the \texttt{0000-00-00} sentinel
+    (\SI{0.0039}{\percent}) and none of the hang-glider ones; the worst-affected season
+    loses \SI{0.17}{\percent} of its entries. Your worry that one early season might be
+    gutted by the cut is empirically unfounded, and the text now says so with the numbers.
+\end{itemize}
+
+\section{Two things I chose, that you may want to overrule}
+
+\begin{enumerate}[leftmargin=1.4em, itemsep=0.4em]
+  \item \textbf{\texttt{BARO\_PRESENT\_MIN} is \texttt{>= 0.95}, not \texttt{> 0.95}.} Your
+    note said \enquote{sopra il 95\,\%}. A flight covering exactly \SI{95}{\percent} is
+    admitted. This matches how every other threshold in the pipeline is written (inclusive)
+    and, given that presence is bimodal, no flight is expected to sit exactly on the
+    boundary anyway. One character to change if you disagree.
+  \item \textbf{Pass-1 markup that carried no green annotation was left coloured.} Black now
+    means \enquote{accepted in this pass}. The alternative reading --- that anything you did
+    not object to is accepted --- would have turned most of the chapter black and lost the
+    distinction. Say so and I flip it.
+\end{enumerate}
+
+\end{document}
