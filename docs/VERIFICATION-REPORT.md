@@ -4,8 +4,8 @@ The pass specified by `PROMPT-VERIFY.md`, run after the implementation tasks of 
 Organised by that document's sections. **Confirmed** means checked here, by running
 something; **suspected** means argued and not checked. The two are never mixed.
 
-Eighteen findings. Fifteen are fixed, two are reported and not fixed, one is a limitation of
-this pass rather than of the work. Three of the fixes were themselves wrong when first made
+Twenty-one findings. Eighteen are fixed, two are reported and not fixed, one is a limitation
+of this pass rather than of the work. Three of the fixes were themselves wrong when first made
 and are recorded as such in §6a.
 
 ---
@@ -32,6 +32,9 @@ and are recorded as such in §6a.
 | 16 | Fig. 3.3's caption lettered four panels; the figure has six, and (c) named the wrong one | wrong caption | fixed |
 | 17 | Chapter 3 never put its exponent beside the published one it cites in Chapter 4 | missing comparison | fixed |
 | 18 | One narrow table column was justified where its neighbours were ragged, causing 17 of 27 underfull boxes | typesetting | fixed |
+| 19 | `mkdocs build --strict` did not pass, and had not been run | broken build | fixed |
+| 20 | A dead link in `data-on-disk.md`, and two docstrings whose Args continuation lines were parsed as new entries | stale documentation | fixed |
+| 21 | 33 signatures in the new modules carried no return annotation | comprehensibility | fixed |
 
 ---
 
@@ -281,8 +284,22 @@ residual life, and now the two calibrations that make $\alpha_2$ readable.
 
 ## 5. Verification of the documentation
 
-**Confirmed, one finding.** All 40 `soaring.*` module paths in `docs/` resolve; all 34
-scripts named exist.
+**Confirmed, three findings.** All 40 `soaring.*` module paths in `docs/` resolve; all 34
+scripts named exist; and `mkdocs build --strict` now passes, having been run for the first
+time in this pass.
+
+> **Finding 19/20/21.** The docs site did not build strictly. A dead link — `data-on-disk.md`
+> pointed at `../reference/soaring/analysis/derived.md`, a path the reference does not
+> generate, since it is one page of mkdocstrings directives and not a tree. Two docstrings
+> whose Args continuation lines were indented to the entry level, so the parser read them as
+> new entries and dropped half a sentence from each rendered page. And 33 signatures in the
+> new observables and stats modules with no return annotation.
+>
+> Annotating them is where this pass made its own worst error: **three of the first eleven
+> annotations were wrong.** `piecewise_fit` and `wavelet_variance` return three values, not
+> two, and `sampling_covariance` returns a dict, not a tuple — and two of the three wrong
+> ones came from trusting the docstring's own Returns section. Every annotation was then
+> checked by calling the function and reading what came back. **All fixed.**
 
 > **Finding 5.** `data-on-disk.md` pastes the output of `show_dataset.py`, and the pasted
 > blocks were a pipeline run behind: `fixes.parquet` shown with 17 columns against 18 on
