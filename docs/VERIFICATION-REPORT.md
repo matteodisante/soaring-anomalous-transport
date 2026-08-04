@@ -4,10 +4,17 @@ The pass specified by `PROMPT-VERIFY.md`, run after the implementation tasks of 
 Organised by that document's sections. **Confirmed** means checked here, by running
 something; **suspected** means argued and not checked. The two are never mixed.
 
-Twenty-six findings, the twenty-second of which is itself 109 findings from a sentence-level
-read of the whole document. Twenty-three are fixed, two are reported and not fixed, one is a
-limitation of this pass rather than of the work. Four of the fixes were themselves wrong when
-first made and are recorded as such in §6a. 
+Thirty-three findings, two of which are themselves collections: 109 from a sentence-level
+read of the whole document, and 10 from a correctness audit of the analysis code. Twenty-nine
+are fixed, three are reported and not fixed, one is a limitation of this pass rather than of
+the work. Five of the fixes were themselves wrong when first made and are recorded as such
+in §6a.
+
+**The three that changed what the thesis says**: the process is monofractal but not Gaussian;
+the memory has a non-integrable tail, which is what reconciles a fast-decaying $C$ with
+correlated increments; and the runs test the chapter leaned on was read against a null its
+own residuals cannot satisfy, so the evidence for "not a power law" was re-based on a
+comparison that needs no null and is twenty to fifty times clear of it. 
 
 ---
 
@@ -41,6 +48,13 @@ first made and are recorded as such in §6a.
 | 24 | Two quantities both written $\alpha_2$, seventeen lines apart, in the chapter that carries both | notation collision, introduced by this pass | fixed |
 | 25 | Four of the six `\impldetails` pointers in Chapter 3 landed on a chapter carrying none of it | missing content | fixed |
 | 26 | The generators wrote a half file when a discipline's pass was missing, killing the build 500 lines later | brittle tooling | fixed |
+| 27 | `persistence_runs` emitted runs it never checked: 99.8 % sat at the floor and 99.1 % of those violated the threshold | changes a published number | fixed |
+| 28 | `bilinear_fit` returned a standard deviation from three fields named rms, and quoted as rms | changes a published number | fixed |
+| 29 | The Wald--Wolfowitz $z$ was read against a normal table on residuals correlated at 0.9 | evidence withdrawn, conclusion re-based | fixed |
+| 30 | `persistent_walk` gave every realisation a course along $+x$ | validation defect | fixed |
+| 31 | `_fgn_hosking` updated Durbin--Levinson in place and was not stationary | validation defect | fixed |
+| 32 | `cluster_labels` wrapped synthetic cluster ids in an int8 array | latent | fixed |
+| 33 | Four smaller audit defects: a segment counted as a flight, two mismatched-population ratios, a crossing read only at the lag grid | latent to diagnostic | reported |
 
 ---
 
