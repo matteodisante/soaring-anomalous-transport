@@ -1083,12 +1083,15 @@ phase splitting.
         tail, $\gamma=0.57$, which is what reconciles a memory already below $1/e$ at
         60\,s with correlated increments out to 2000\,s; and the persistence-run tail index
         moves from 4.41 to 2.24 as the sinuosity threshold is scanned, so there is no
-        distinguished leg duration --- a prediction about any segmentation. Still to build:
-        the one-dimensional marginal propagator and its scaling collapse by histogram; the
-        return probability $P_0(t)$; the turning-angle distribution;
-        first-passage/first-exit times; and the speed/vertical-velocity distributions. The
-        first two would each give $H$ by a route independent of the second moment, which is
-        why they head the list.
+        distinguished leg duration --- a prediction about any segmentation. \textbf{First-passage times were tried and do not
+        serve}: $T(L)$ is measured from take-off, so it carries the launch geometry into the
+        space domain and its exponent moves between 1.51 and 2.03 across the available radii
+        --- the ensemble-MSD crossover seen along the space axis. Still to build: the
+        propagator of the \emph{increments} and its scaling collapse read off histograms
+        rather than moments, with the return probability $P_0(\Delta)$ falling out of the
+        same histograms; the turning-angle distribution; and the speed/vertical-velocity
+        distributions. The first heads the list: it avoids both the moment and the origin,
+        which is what every check tried so far has failed on.
   \item \textbf{Segmentation (Sec.~3.2).} Study J\'er\'emie's internship report and code,
         then re-examine the transition/search/climb HMM (binary features: sign of
         vertical speed, curvature-angle persistence, straightness) --- decide whether to
