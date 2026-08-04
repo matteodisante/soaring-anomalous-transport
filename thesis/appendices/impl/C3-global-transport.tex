@@ -179,9 +179,13 @@ the first sample.
 already accumulated, as
 $\alpha_2=\langle|\Delta\mathbf{r}|^4\rangle/2\langle|\Delta\mathbf{r}|^2\rangle^2-1$ at
 each lag, on order-1 increments. Two calibrations make the archive's value readable and
-both are pinned by \path{tests/analysis/observables/test_moments.py}: an exact fractional
-Brownian motion returns \num{0.01} in the median over the same lag grid, and a Lévy walk of
-tail index \num{1.5} returns \num{0.56}. It is quoted over
+both are pinned by \path{tests/analysis/observables/test_moments.py}, at the sample size the
+test uses: an exact fractional Brownian motion returns \num{0.02} in the median over a
+ten-point grid spanning the quoted range, and a Lévy walk of tail index \num{1.5} returns
+\num{0.55}. The Gaussian \num{0.02} is estimation bias and not shape --- a fourth moment
+over $10^4$ increments is not yet its own expectation --- and sixteen times the data
+collapses it to within a hundredth of zero, sign included. The same test pins that too,
+since it is what makes the archive's own value a departure rather than an offset. It is quoted over
 \SIrange{60}{2000}{\second} rather than over the whole grid; above that the declared task
 governs the trajectory and the fourth moment rests on the fewest flights, and the curve
 climbs to \StatShapeParaNonGaussBeyond\ there.}
@@ -217,10 +221,11 @@ recording so it is not attempted again.
 Read naively it returns $\alpha=2.46$, which no process with stationary increments can give.
 The cause is right censoring: at \SI{34}{\kilo\metre} only a quarter of paraglider flights
 arrive and the missing three quarters are the slow ones. Treating non-arrival as censored and
-taking a Kaplan--Meier median instead returns \num{1.95} and \num{2.03}, inside the quoted
-interval --- but refitting over sub-ranges of radius moves that between \num{1.51} and
-\num{2.03}, a spread five times the uncertainty it was meant to check.
-The reason is the one this chapter already gives for the ensemble MSD. $T(L)$ is measured
+taking a Kaplan--Meier median instead returns \num{1.95} for paragliders and \num{2.03} for
+hang gliders, both inside the paraglider interval --- but refitting over sub-ranges of radius
+moves the paraglider value between \num{1.51} and \num{2.03}, a spread five times the
+uncertainty it was meant to check.
+The reason is the one Sec.~\ref{sec:obs-global} gives for the ensemble MSD. $T(L)$ is measured
 from take-off, so it shares that estimator's origin: at small $L$ the wing is still climbing
 out inside its launch area, and at large $L$ the censored median extrapolates past the
 duration of most flights. It is the same crossover seen along the space axis instead of the

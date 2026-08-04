@@ -825,13 +825,20 @@ for a Gaussian.
 
 Over \SIrange{\StatShapeParaNonGaussMinS}{\StatShapeParaNonGaussMaxS}{\second} it is
 $\StatShapeParaNonGaussMedian$ in the median for paragliders and
-$\StatShapeHangNonGaussMedian$ for hang gliders, flat across the range --- it moves by
-$\StatShapeParaNonGaussDrift$ and $\StatShapeHangNonGaussDrift$ from one end to the other.
-The calibration is what makes those numbers readable: the same estimator returns
-\num{0.01} on an exact fractional Brownian motion and \num{0.56} on a Lévy walk of tail
-index \num{1.5} \impldetails{impl:global}. The archive sits between them and nearer the
-Gaussian --- increments with tails heavier than Gaussian, but not the heavy tails a Lévy
-description needs, and not heavy in a way that changes with the scale.
+$\StatShapeHangNonGaussMedian$ for hang gliders, flat across the range in both --- it moves
+by $\StatShapeParaNonGaussDrift$ and $\StatShapeHangNonGaussDrift$ from one end to the
+other.
+
+The calibration is what makes those numbers readable, and it has to be read at the right
+sample size. On an exact fractional Brownian motion the estimator returns \num{0.02} over
+the modest sample its test uses and collapses to within a hundredth of zero, sign included,
+when the sample grows --- so the offset is finite-sample bias and not a floor. On a Lévy
+walk of tail index \num{1.5} it returns \num{0.55} and does not move
+\impldetails{impl:global}. Against that pair, both archives are non-Gaussian and neither is
+close to Lévy; but they are not equally so, and the chapter should not average them. The
+hang gliders sit an order of magnitude above the Gaussian value and the paragliders a few
+times above it. Whatever makes these increments heavier-tailed than Gaussian acts about four
+times more strongly on the smaller, slower discipline.
 
 Beyond the fitted range $\alpha_2$ climbs, to $\StatShapeParaNonGaussBeyond$ and
 $\StatShapeHangNonGaussBeyond$ at the longest lags in panel~(c). Those lags are where the

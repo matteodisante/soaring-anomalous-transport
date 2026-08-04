@@ -113,3 +113,16 @@ def test_the_non_gaussian_parameter_separates_gaussian_from_levy():
     assert abs(np.median(gaussian)) < 0.06, "an exact Gaussian must read zero"
     assert np.median(levy) > 0.3, "a Levy walk must read clearly positive"
     assert np.median(levy) > np.median(gaussian) + 0.3
+
+    # The Gaussian value at this sample size is not zero but about +0.02, and that is
+    # estimation bias rather than shape: a fourth moment over 1.3e4 increments is not yet
+    # its own expectation. Sixteen times the data collapses it to within a hundredth of
+    # zero, sign included -- so the offset is a small-sample artefact and not a floor, which
+    # is what makes the archive's +0.04 a departure rather than a calibration. Chapter 3
+    # quotes both, so both are pinned.
+    plentiful = pooled_alpha_two(
+        lambda n, k: S.fractional_brownian(n, 0.85, seed=1000 + k), reps=480
+    )
+    assert np.median(gaussian) == pytest.approx(0.02, abs=0.012)
+    assert abs(np.median(plentiful)) < 0.015
+    assert abs(np.median(plentiful)) < abs(np.median(gaussian))
