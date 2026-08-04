@@ -144,20 +144,37 @@ def hurst_from_variations(
 
 
 def wavelet_variance(
-    positions: np.ndarray, dt: float = 1.0, *, order: int = 2
+    positions: np.ndarray, dt: float = 1.0, *, order: int = 2, min_octave: int = 3
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """The logscale diagram: variance of the detail coefficients, octave by octave.
 
     A Haar-like cascade with ``order`` vanishing moments, applied within the series. Each
     octave doubles the scale, so a self-similar process gives a straight line of slope
-    ``2H + 1`` in ``log2 <d^2>`` against the octave index. It is the estimator with the
-    best long-scale reach per unit of data here, and unlike a fitted local slope it
-    supplies a per-octave count from which an honest weight can be built.
+    **2H** in ``log2 <d^2>`` against ``log2`` scale, and ``H`` is half the slope --- the same
+    convention as :func:`hurst_from_variations`.
+
+    That is worth stating explicitly, because the textbook logscale diagram has slope
+    ``2H + 1``. The extra octave comes from the orthonormal scaling filter, which carries a
+    factor ``1/sqrt(2)`` per level; the coarse-graining below averages adjacent pairs, whose
+    DC gain is 1, so the factor is absent and so is the ``+1``. Reading this function's
+    output by the textbook rule returns ``H - 1/2``.
+
+    **The first octaves are pre-asymptotic and are dropped.** A block average of width 1, 2
+    or 4 samples is not yet its own continuous limit, so the diagram approaches slope ``2H``
+    from below rather than being straight from the start: fitted from octave 0 the exponent
+    comes out low by 0.10 at ``H = 0.3`` and by 0.036 at ``H = 0.99``, which is the region
+    this archive sits in and is large enough to read as a physical disagreement with the
+    filtered-variation exponent. Starting at ``min_octave = 3`` removes it --- 0.994 recovered
+    at ``H = 0.99``, 0.700 at 0.7. The counts are no help in choosing: they fall
+    monotonically with the octave, so any count threshold keeps exactly the biased end, and
+    weighting by them makes the bias worse rather than better.
 
     Args:
         positions: ``(n, 2)`` positions on a uniform grid.
         dt: Grid step, in seconds.
         order: Vanishing moments, 1 to 3.
+        min_octave: First octave returned. 0 returns the whole cascade, including the
+            pre-asymptotic part, and is there for inspecting it rather than for fitting.
 
     Returns:
         ``(scales_s, variance, count)`` -- the scale of each octave in seconds, the mean
@@ -166,10 +183,11 @@ def wavelet_variance(
     scales, variances, counts = [], [], []
     series = np.asarray(positions, dtype=float)
     octave = 1
+    level = 0
     while len(series) >= 2 * (len(_FILTERS[order]) - 1) + 2:
         detail = filtered_variation(series, np.array([1]), order=order)[0]
         n = len(series) - (len(_FILTERS[order]) - 1)
-        if np.isfinite(detail) and n > 0:
+        if np.isfinite(detail) and n > 0 and level >= min_octave:
             scales.append(octave * dt)
             variances.append(detail)
             counts.append(n)
@@ -178,6 +196,7 @@ def wavelet_variance(
         cut = len(series) - (len(series) % 2)
         series = 0.5 * (series[:cut:2] + series[1:cut:2])
         octave *= 2
+        level += 1
     return np.array(scales), np.array(variances), np.array(counts, dtype=int)
 
 

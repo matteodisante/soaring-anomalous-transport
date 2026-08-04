@@ -363,6 +363,15 @@ def draw(measured: dict):
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--audit-dir", type=Path, required=True)
+    # Writing a file for one discipline when the thesis quotes both is the worst available
+    # failure: the build dies hundreds of lines later on an undefined control sequence, and
+    # the error names the sentence rather than the missing pass. So a missing discipline is
+    # fatal by default, and the escape hatch has to be asked for.
+    parser.add_argument(
+        "--allow-partial",
+        action="store_true",
+        help="write the macros for whichever disciplines are reachable, instead of failing",
+    )
     args = parser.parse_args()
 
     import matplotlib
@@ -370,13 +379,22 @@ def main() -> int:
     matplotlib.use("Agg")
 
     macros: dict[str, str] = {}
+    missing: list[str] = []
     measured: dict[str, dict] = {}
     for discipline, (slug, _) in DISCIPLINES.items():
         loaded = load(slug, args.audit_dir)
         if loaded is None:
-            print(f"{discipline}: variation pass not found, skipping")
+            print(f"{discipline}: variation pass not found")
+            missing.append(discipline)
             continue
         measured[discipline] = measure(discipline, loaded, macros)
+    if missing and not args.allow_partial:
+        print(
+            f"{', '.join(missing)}: pass not reachable. transport.tex would be written for the "
+            "other discipline alone and the thesis would fail to build on the macros this "
+            "one owns. Re-run the pass, or pass --allow-partial if that is what you want."
+        )
+        return 1
     if not macros:
         print("no variation pass reachable; transport.tex not written")
         return 1

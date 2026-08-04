@@ -183,3 +183,40 @@ def test_the_estimator_is_unbiased_where_the_archive_sits():
         pooled += V.filtered_variation(positions, lags, order=2)
     exponent = float(np.polyfit(np.log(lags), np.log(pooled), 1)[0])
     assert exponent == pytest.approx(1.98, abs=0.03)
+
+
+@pytest.mark.parametrize("hurst", [0.5, 0.7, 0.99])
+def test_the_wavelet_diagram_has_slope_two_h_and_is_unbiased_where_the_archive_sits(hurst):
+    """Slope 2H, not the textbook 2H+1, and no low bias once the first octaves are dropped.
+
+    Two things this pins, both of which were wrong before. The cascade coarse-grains by
+    averaging adjacent pairs, whose DC gain is 1, so the orthonormal 1/sqrt(2) that puts the
+    +1 in the textbook logscale diagram is absent: reading the output by that rule returns
+    H - 1/2. And a block average of 1, 2 or 4 samples is not yet its own continuous limit, so
+    fitting from octave 0 comes out low - by 0.036 at H = 0.99, which is where this archive
+    sits and is enough to read as a disagreement with the filtered-variation exponent.
+    """
+    pooled = None
+    for k in range(16):
+        scales, variance, counts = V.wavelet_variance(
+            np.asarray(S.fractional_brownian(8192, hurst, seed=900 + k))
+        )
+        pooled = variance.copy() if pooled is None else pooled + variance
+    pooled /= 16
+    keep = counts > 64
+    slope = float(np.polyfit(np.log2(scales[keep]), np.log2(pooled[keep]), 1)[0])
+    assert slope / 2 == pytest.approx(hurst, abs=0.02)
+
+
+def test_including_the_first_octaves_is_what_biased_it():
+    """The default is not a preference: min_octave=0 reproduces the bias it was set to avoid."""
+    pooled = None
+    for k in range(16):
+        scales, variance, counts = V.wavelet_variance(
+            np.asarray(S.fractional_brownian(8192, 0.99, seed=900 + k)), min_octave=0
+        )
+        pooled = variance.copy() if pooled is None else pooled + variance
+    pooled /= 16
+    keep = counts > 64
+    slope = float(np.polyfit(np.log2(scales[keep]), np.log2(pooled[keep]), 1)[0])
+    assert slope / 2 < 0.97, "the whole cascade should read low; if not, the fix is unneeded"
