@@ -5,9 +5,17 @@ the *arrangement* of the motion rather than about its second moment.
 
 The velocity autocorrelation says how long a heading survives, and it is tied to the
 displacement by Green--Kubo,
-:math:`\mathrm{MSD}(t)=2\int_0^t(t-\tau)\,C(\tau)\,\mathrm{d}\tau`, so computing both and
-checking they agree is a consistency test that costs one extra pass and catches a whole
-class of error in either.
+:math:`\mathrm{MSD}(t)=2\int_0^t(t-\tau)\,C(\tau)\,\mathrm{d}\tau`. That relation is used
+here only through its scaling corollary --- :math:`C(\tau)\sim\tau^{-\gamma}` with
+:math:`0<\gamma<1` gives :math:`\mathrm{MSD}(t)\sim t^{2-\gamma}` --- and not through the
+integral, for two reasons that are properties of this archive rather than of the method.
+The integral runs from zero and the correlation is only estimable above the smoothing scale
+of the slowest logger, so its first decade is missing; and the correlation is estimated per
+flight with that flight's own mean velocity removed, which biases every lag downwards by
+roughly the record-mean of :math:`C` and so steepens the tail. Both push the same way:
+:func:`vacf_tail_exponent` returns a :math:`\gamma` that is an upper bound, hence a
+:math:`2-\gamma` that is a **lower** bound on the displacement exponent, and it is used as
+one.
 
 The persistence runs say how far the wing goes before it turns, measured geometrically
 rather than through a segmentation. That one carries a trap severe enough to be the reason
@@ -29,7 +37,7 @@ from __future__ import annotations
 import numpy as np
 
 __all__ = [
-    "green_kubo_msd",
+    "vacf_tail_exponent",
     "tail_index",
     "inspection_biased_runs",
     "persistence_runs",
@@ -39,6 +47,14 @@ __all__ = [
 
 def velocity_autocorrelation(velocity: np.ndarray, max_lag: int | None = None):
     """``<v(t) . v(t+tau)>`` by FFT, normalised to 1 at zero lag.
+
+    The record's own mean velocity is removed first, so what is returned is the correlation
+    of the fluctuation about the flown course and not of the velocity itself. That is the
+    quantity wanted --- a shared course would otherwise hold ``C`` up at every lag --- but it
+    costs a bias: subtracting a mean estimated from the same record pulls every lag down by
+    about the record-mean of ``C``, which matters where ``C`` is small, that is in the tail.
+    The estimate is therefore trustworthy in shape and sign, and steep in its tail; see
+    :func:`vacf_tail_exponent`, which uses it one-sidedly for that reason.
 
     Args:
         velocity: ``(n, 2)`` velocity samples on a uniform grid.
@@ -66,19 +82,38 @@ def velocity_autocorrelation(velocity: np.ndarray, max_lag: int | None = None):
     return np.arange(max_lag + 1), acf[: max_lag + 1] / acf[0]
 
 
-def green_kubo_msd(lags: np.ndarray, correlation: np.ndarray, variance: float, dt: float):
-    """The MSD implied by a velocity autocorrelation, by the Green--Kubo relation.
+def vacf_tail_exponent(lags: np.ndarray, correlation: np.ndarray, fit_range=None):
+    """``(gamma, alpha_implied, n_lags)`` from a power-law fit to the tail of ``C(tau)``.
 
-    Compared against the directly measured MSD this is a consistency check between the
-    position and velocity channels, which the pipeline computes by different routes: the
-    positions are smoothed and the velocities differentiated from them. Agreement is a
-    statement that the differentiation did not invent anything.
+    Green--Kubo in its scaling form: a correlation decaying as ``tau^-gamma`` with
+    ``0 < gamma < 1`` is non-integrable and sustains a displacement growing as
+    ``t^(2-gamma)``, so the tail of the memory and the exponent of the motion are two
+    readings of one thing. Comparing them is a cross-validation between the velocity
+    channel and the position channel, which the pipeline builds by different routes.
+
+    It is one-sided. Both biases documented in the module docstring steepen the measured
+    tail, so ``gamma`` is an upper bound and ``2 - gamma`` a lower bound on the exponent:
+    the check passes when the displacement exponent is the larger, and fails --- meaning
+    one of the two channels is wrong --- only when it is smaller.
+
+    Args:
+        lags: Lags in seconds, ascending.
+        correlation: ``C(tau)``, normalised or not; only its slope in log-log is used.
+        fit_range: ``(low, high)`` in seconds; the whole positive range by default.
+
+    Returns:
+        ``(gamma, 2 - gamma, n_lags)``, or ``(nan, nan, 0)`` if fewer than four lags carry
+        a positive correlation inside the range.
     """
     lags = np.asarray(lags, dtype=float)
-    # MSD(t) = 2 int_0^t (t-tau) C(tau) dtau = 2 int_0^t int_0^s C(tau) dtau ds, so the
-    # weighting by (t-tau) is the second cumulative sum rather than an explicit weight.
-    integrand = variance * correlation
-    return 2.0 * dt * dt * np.cumsum(np.cumsum(integrand))[: lags.size]
+    correlation = np.asarray(correlation, dtype=float)
+    good = np.isfinite(lags) & np.isfinite(correlation) & (correlation > 0) & (lags > 0)
+    if fit_range is not None:
+        good &= (lags >= fit_range[0]) & (lags <= fit_range[1])
+    if good.sum() < 4:
+        return float("nan"), float("nan"), 0
+    slope = float(np.polyfit(np.log(lags[good]), np.log(correlation[good]), 1)[0])
+    return -slope, 2.0 + slope, int(good.sum())
 
 
 def persistence_runs(positions: np.ndarray, max_sinuosity: float, min_length: int = 5):

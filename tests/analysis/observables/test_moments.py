@@ -78,3 +78,38 @@ def test_quantile_ratios_are_flat_for_a_self_similar_process():
     usable = np.isfinite(ratios[:, 0])
     spread = np.nanmax(ratios[usable, 0]) - np.nanmin(ratios[usable, 0])
     assert spread < 0.15
+
+
+def test_the_non_gaussian_parameter_separates_gaussian_from_levy():
+    """alpha_2 = <|dr|^4>/(2<|dr|^2>^2) - 1 is 0 for a Gaussian and clearly positive for a Levy walk.
+
+    Chapter 3 reads the archive's alpha_2 against these two, so the two have to be pinned:
+    a monofractal moment spectrum says one exponent governs every moment and says nothing
+    about the shape of the distribution, and this is what supplies the shape.
+    """
+    from soaring.analysis.observables import synthetic as S
+    from soaring.analysis.observables.moments import _increments
+
+    lags = np.unique(np.round(np.geomspace(60, 2000, 10)).astype(int))
+
+    def pooled_alpha_two(make, reps=30, n=2**13):
+        second = np.zeros(lags.size)
+        fourth = np.zeros(lags.size)
+        count = np.zeros(lags.size)
+        for k in range(reps):
+            positions = np.asarray(make(n, k))
+            for i, lag in enumerate(lags):
+                magnitude = _increments(positions, int(lag), order=1)
+                if magnitude.size:
+                    second[i] += (magnitude**2).sum()
+                    fourth[i] += (magnitude**4).sum()
+                    count[i] += magnitude.size
+        ok = count > 0
+        return (fourth[ok] / count[ok]) / (2 * (second[ok] / count[ok]) ** 2) - 1.0
+
+    gaussian = pooled_alpha_two(lambda n, k: S.fractional_brownian(n, 0.85, seed=k))
+    levy = pooled_alpha_two(lambda n, k: S.levy_walk(n, 1.5, seed=k))
+
+    assert abs(np.median(gaussian)) < 0.06, "an exact Gaussian must read zero"
+    assert np.median(levy) > 0.3, "a Levy walk must read clearly positive"
+    assert np.median(levy) > np.median(gaussian) + 0.3

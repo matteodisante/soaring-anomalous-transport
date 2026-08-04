@@ -294,9 +294,14 @@ def smooth_crossover(t: np.ndarray, y: np.ndarray, *, p0=None):
 
     def model(logt, log_a, a1, a2, log_tau, log_w):
         w = 10.0**log_w
-        return log_a + a1 * logt + ((a2 - a1) / w) * np.log10(
-            1.0 + 10.0 ** (w * (logt - log_tau))
-        )
+        # log10(1 + 10^z) is z for large z and 0 for very negative z, but 10^z overflows
+        # long before the expression does. The optimiser walks into that region routinely
+        # while it is still far from the minimum, so the limit is taken here rather than
+        # left to inf/inf: the answer is the same and the search does not have to survive
+        # a NaN to reach it.
+        z = np.clip(w * (logt - log_tau), -300.0, 300.0)
+        soft = np.where(z > 30.0, z, np.log10(1.0 + 10.0**np.minimum(z, 30.0)))
+        return log_a + a1 * logt + ((a2 - a1) / w) * soft
 
     guess = p0 or [v[0], 1.5, 2.0, float(np.median(x)), 0.0]
     try:

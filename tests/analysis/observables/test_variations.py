@@ -144,3 +144,42 @@ def test_a_locally_smooth_process_reads_above_two_not_at_it():
 
     assert alpha_two(S.persistent_walk(20000, 3000.0, seed=2)) > 2.7
     assert alpha_two(S.persistent_walk(20000, 30.0, seed=2)) < 2.4
+
+
+def test_the_ratio_of_the_two_orders_matches_the_closed_form():
+    """V_2/V_1 = 4 - 2^(2H) exactly, for any process with stationary increments.
+
+    Derived by hand and owing nothing to the implementation: with X and Y the two
+    consecutive increments at spacing D, A_2 = Y - X, so
+    <|A_2|^2> = 2 S(D) - 2<X.Y> and S(2D) = 2 S(D) + 2<X.Y>, whence
+    V_2 = 4 S(D) - S(2D) = S(D) (4 - 2^(2H)). This pins the filter kernel itself, which a
+    comparison against another convolution cannot: the order-2 kernel is symmetric, so a
+    np.convolve route performs the same three products in the same order and agrees
+    bitwise whether or not the kernel is right.
+    """
+    lags = np.array([4, 8, 16, 32, 64, 128])
+    for hurst, tolerance in ((0.5, 0.02), (0.7, 0.03)):
+        first = np.zeros(lags.size)
+        second = np.zeros(lags.size)
+        for k in range(24):
+            positions = np.asarray(S.fractional_brownian(2**14, hurst, seed=500 + k))
+            first += V.filtered_variation(positions, lags, order=1)
+            second += V.filtered_variation(positions, lags, order=2)
+        ratio = float(np.median(second / first))
+        assert ratio == pytest.approx(4 - 2 ** (2 * hurst), rel=tolerance)
+
+
+def test_the_estimator_is_unbiased_where_the_archive_sits():
+    """H near 1 is the boundary of the family and is exactly where alpha_2 is measured.
+
+    The archive returns alpha_2 close to 2, so a bias that only appears as H approaches 1
+    would land on the headline number and nowhere else. It does not: the exponent is
+    recovered to better than 0.03 at H = 0.99.
+    """
+    lags = np.array([4, 8, 16, 32, 64, 128])
+    pooled = np.zeros(lags.size)
+    for k in range(24):
+        positions = np.asarray(S.fractional_brownian(2**14, 0.99, seed=700 + k))
+        pooled += V.filtered_variation(positions, lags, order=2)
+    exponent = float(np.polyfit(np.log(lags), np.log(pooled), 1)[0])
+    assert exponent == pytest.approx(1.98, abs=0.03)
