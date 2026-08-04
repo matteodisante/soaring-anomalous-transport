@@ -55,8 +55,8 @@ def _local_en(lat, lon):
     import numpy as np
 
     lat0 = float(np.nanmean(lat))
-    east = np.radians(lon - float(np.nanmean(lon))) * 6371008.8 * np.cos(
-        np.radians(lat0)
+    east = (
+        np.radians(lon - float(np.nanmean(lon))) * 6371008.8 * np.cos(np.radians(lat0))
     )
     north = np.radians(lat - lat0) * 6371008.8
     return east, north
@@ -71,9 +71,7 @@ def _psd_1hz(t, x):
     xg = np.interp(grid, t, x)
     if len(xg) < NPERSEG:
         return None, None
-    f, s = welch(
-        xg, fs=1.0, nperseg=NPERSEG, noverlap=NPERSEG // 2, detrend="linear"
-    )
+    f, s = welch(xg, fs=1.0, nperseg=NPERSEG, noverlap=NPERSEG // 2, detrend="linear")
     return f, s
 
 
@@ -104,7 +102,11 @@ def main() -> int:
         "para": ("configs/para_download.yaml", "SOARING_PARA_DATA_ROOT"),
         "hang": ("configs/delta_download.yaml", "SOARING_DELTA_DATA_ROOT"),
     }
-    spectra = {"horizontal": [], "vertical_baro": [], "vertical_gnss": []}
+    spectra: dict[str, list] = {
+        "horizontal": [],
+        "vertical_baro": [],
+        "vertical_gnss": [],
+    }
     counts = dict.fromkeys(spectra, 0)
     freqs = None
 

@@ -24,7 +24,8 @@ class HttpConfig:
     """Network parameters and rate-limiting settings for the FFVL server.
 
     Attributes:
-        impersonate: TLS fingerprint that ``curl_cffi`` should impersonate (e.g. ``"chrome"``).
+        impersonate: TLS fingerprint that ``curl_cffi`` should impersonate (e.g.
+        ``"chrome"``).
         workers: Number of parallel downloads.
         timeout_s: Timeout per individual request, in seconds.
         max_retries: Maximum retry attempts per request before giving up.
@@ -55,9 +56,9 @@ class Config:
     """
 
     data_root: Path
-    season_start: int 
-    season_end: int 
-    base_url: str 
+    season_start: int
+    season_end: int
+    base_url: str
     list_path: str = "/cfd/liste/{year}"
     xml_query: str = "?xml=1"
     http: HttpConfig = field(default_factory=HttpConfig)
@@ -163,11 +164,26 @@ def load_config(
     source = raw.get("source", {}) or {}
     http_raw = raw.get("http", {}) or {}
 
+    # Required keys are read explicitly so that a config missing one says which one.
+    # `int(None)` and `Config(base_url=None)` would otherwise fail later, with a
+    # TypeError naming a builtin instead of the file and the key at fault.
+    missing = [
+        name
+        for name, value in (
+            ("seasons.start", seasons.get("start")),
+            ("seasons.end", seasons.get("end")),
+            ("source.base_url", source.get("base_url")),
+        )
+        if value is None
+    ]
+    if missing:
+        raise KeyError(f"{path}: missing required config key(s) {missing}")
+
     return Config(
         data_root=_expand(str(data_root_str)),
-        season_start=int(seasons.get("start")),
-        season_end=int(seasons.get("end")),
-        base_url=source.get("base_url"),
+        season_start=int(seasons["start"]),
+        season_end=int(seasons["end"]),
+        base_url=str(source["base_url"]),
         list_path=source.get("list_path", "/cfd/liste/{year}"),
         xml_query=source.get("xml_query", "?xml=1"),
         http=HttpConfig(**{

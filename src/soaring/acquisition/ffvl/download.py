@@ -195,7 +195,7 @@ def download_season(
         to_download = to_download[:limit]
 
     if dry_run:
-        # Count how many would already be present vs to download, without network access.
+        # How many are already present vs to download, with no network access.
         for rec in to_download:
             target = igc_path(cfg.igc_dir, rec.season_year, rec.date, rec.flight_id)
             if target.exists():
@@ -233,7 +233,7 @@ def download_season(
                 )
 
     logger.info(
-        "[%s] downloaded %d, skipped %d, failed %d, without track %d (out of %d flights)",
+        "[%s] downloaded %d, skipped %d, failed %d, no track %d (of %d flights)",
         result.season,
         result.n_downloaded,
         result.n_skipped,

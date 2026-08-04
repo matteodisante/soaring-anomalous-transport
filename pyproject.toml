@@ -7,7 +7,7 @@ name = "soaring"
 version = "0.1.0"
 description = "Tesi: anomalous transport in soaring flights. Monorepo (oggi: acquisizione dati .igc dalla CFD FFVL)."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "Matteo Di Sante", email = "m.disante06@gmail.com" }]
 keywords = ["soaring", "paragliding", "IGC", "anomalous transport", "FFVL", "CFD"]
@@ -67,7 +67,7 @@ packages = ["src/soaring"]
 # ---------------------------------------------------------------------------
 [tool.ruff]
 line-length = 88
-target-version = "py310"
+target-version = "py312"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
@@ -106,7 +106,12 @@ addopts = "-ra --strict-markers"
 pythonpath = ["src"]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
+# `mypy src tests` analyses two roots at once; without these the test files' submodule
+# imports (`from soaring.acquisition.ffvl import naming`) resolve against the wrong base
+# and report attributes that exist at runtime.
+mypy_path = "src"
+explicit_package_bases = true
 warn_unused_configs = true
 disallow_untyped_defs = false
 ignore_missing_imports = true   # curl_cffi/tqdm non sempre hanno stub

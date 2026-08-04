@@ -41,7 +41,7 @@ import pandas as pd
 
 from . import catalog as catalog_mod
 from .catalog_xml import fetch_season_xml, load_season_records, season_xml_path
-from .config import Config, DELTA_CONFIG_PATH, PARA_CONFIG_PATH, load_config
+from .config import DELTA_CONFIG_PATH, PARA_CONFIG_PATH, Config, load_config
 from .download import download_seasons
 from .housekeeping import clean_appledouble
 from .http import Fetcher
@@ -72,7 +72,9 @@ def _resolve_seasons(cfg: Config, seasons_arg: str) -> list[int]:
     return parse_seasons_arg(seasons_arg, cfg.season_start, cfg.season_end)
 
 
-def _check_data_root(cfg: Config, data_root_env: str = "SOARING_FFVL_DATA_ROOT") -> None:
+def _check_data_root(
+    cfg: Config, data_root_env: str = "SOARING_FFVL_DATA_ROOT"
+) -> None:
     """Aborts early with a clear message if ``data_root`` is not usable.
 
     The committed config ships a placeholder and the real data lives on an external
@@ -96,7 +98,7 @@ def _check_data_root(cfg: Config, data_root_env: str = "SOARING_FFVL_DATA_ROOT")
             "not mounted, was renamed, or data_root is still the placeholder.\n\n"
             "Set it (the environment variable always overrides the config file):\n"
             f"    export {data_root_env}=/Volumes/<your-disk>/<data-dir>\n"
-            f"or edit 'data_root' in the config YAML, then make sure the disk is mounted.\n"
+            "or edit 'data_root' in the config YAML, then mount the disk.\n"
         )
 
 
@@ -294,7 +296,7 @@ def build_parser(prog: str = "soaring-para") -> argparse.ArgumentParser:
     """Builds the CLI argument parser.
 
     Args:
-        prog: Program name shown in ``--help`` (``"soaring-ffvl"`` or ``"soaring-delta"``).
+        prog: Program name in ``--help`` (``"soaring-ffvl"`` / ``"soaring-delta"``).
 
     Returns:
         The parser configured with all subcommands.
@@ -371,8 +373,8 @@ def main(
         argv: Arguments (for testing); if ``None`` uses ``sys.argv``.
         prog: Program name shown in ``--help``.
         default_config: Path to the default configuration file; overridden by
-            ``--config`` on the command line. Defaults to :data:`~.config.PARA_CONFIG_PATH`
-            for the ``soaring-para`` entry point.
+            ``--config``. Defaults to :data:`~.config.PARA_CONFIG_PATH` for the
+            ``soaring-para`` entry point.
         data_root_env: Name of the environment variable that overrides ``data_root``.
 
     Returns:

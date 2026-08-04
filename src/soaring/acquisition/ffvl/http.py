@@ -48,7 +48,10 @@ def new_session(http_cfg: HttpConfig) -> cffi_requests.Session:
     Returns:
         A ready-to-use session.
     """
-    return cffi_requests.Session(impersonate=http_cfg.impersonate)
+    # The library types this as a Literal of the fingerprints it ships; it arrives here
+    # as a config string, and validating it against that Literal at runtime would pin
+    # the repo to one curl_cffi version's list.
+    return cffi_requests.Session(impersonate=http_cfg.impersonate)  # type: ignore[arg-type]
 
 
 def looks_like_challenge(body: bytes) -> bool:

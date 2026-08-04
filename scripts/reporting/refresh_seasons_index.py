@@ -33,8 +33,8 @@ if _SRC not in sys.path:
 def main() -> int:
     """Copy each reachable SSD ``seasons_index.csv`` into the repo; best-effort."""
     from soaring.acquisition.ffvl.config import (
-        PARA_CONFIG_PATH,
         DELTA_CONFIG_PATH,
+        PARA_CONFIG_PATH,
         load_config,
     )
 

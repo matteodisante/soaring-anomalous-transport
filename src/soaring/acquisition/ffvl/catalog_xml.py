@@ -69,7 +69,8 @@ class FlightRecord:
     def has_igc(self) -> bool:
         """``True`` if the flight has a downloadable `.igc` track.
 
-        Many flights (especially historical ones) expose an ``igc_tracklog_link`` that is
+        Many flights (especially historical ones) expose an ``igc_tracklog_link`` that
+        is
         only the base folder ``.../igcfiles/`` without a filename: a placeholder, not a
         downloadable file. :func:`_clean_igc_link` normalises it to an empty string, so
         here it is sufficient to check that the link is not empty.
