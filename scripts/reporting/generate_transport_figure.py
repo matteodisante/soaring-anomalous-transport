@@ -248,6 +248,10 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
         total = float(np.hypot(sampling, systematic))
         alphas[p] = (point, total)
         put(f"AlphaOrder{_ORDER_WORD[p]}", f"{point:.2f}")
+        # H = alpha/2, emitted rather than left to the reader: Sec. 3.6 compares it against
+        # a published Hurst exponent, and a halved number typed into prose stops tracking
+        # the data the moment the fit moves.
+        put(f"HurstOrder{_ORDER_WORD[p]}", f"{0.5 * point:.3f}")
         put(f"AlphaOrder{_ORDER_WORD[p]}Err", f"{total:.2f}")
         put(f"AlphaOrder{_ORDER_WORD[p]}ErrSampling", f"{sampling:.3f}")
         put(f"AlphaOrder{_ORDER_WORD[p]}ErrRange", f"{systematic:.3f}")

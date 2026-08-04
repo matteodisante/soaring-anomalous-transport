@@ -25,7 +25,7 @@ and are recorded as such in §6a.
 | 9 | A 535-word paragraph running a page and a half; two more above 450 | density | fixed |
 | 10 | `smooth_crossover` overflowed on its way to the minimum | latent | fixed |
 | 11 | ~16 further archive measurements in the body are typed rather than generated | contract breach | reported |
-| 12 | Four catalogued observables remain unmeasured | scope | reported |
+| 12 | Three catalogued observables remain unmeasured | scope | reported |
 | 13 | The abstract described the document as a plan; Chapter 3 contains measurements | understatement | fixed |
 | 14 | The introduction pointed the modelling decision at the wrong chapter, and promised measurements the body does not make | wrong reference | fixed |
 | 15 | The first-passage exponent, tried here as a cross-check, moves by 0.5 across the available radii | negative result | reported |
@@ -100,7 +100,7 @@ the raw archive by a pipeline that reproduces exactly on a sample of 500.
 ### 1.5 The provenance of every figure — **confirmed, one finding**
 
 Every generated figure was rendered **from the PDF**, not from a `savefig` PNG, and its
-caption checked against its axes. Eleven of twelve are included exactly once.
+caption checked against its axes. All twelve are now included exactly once; one was not.
 
 > **Finding 3.** `transport.pdf` was included **zero** times. The figure behind Chapter 3's
 > central measurement — the filtered variation, the order scan, the closed-against-open task
@@ -324,9 +324,10 @@ reports 0 of 484.
   lags, the closed-against-open separation at 60 s and 12 000 s. Each would need a generator
   to emit it and its pass re-run. A new check reports this class by value from now on
   (`check_generated_macros.py`), which is how the two that *were* fixable were found.
-- **Five catalogued observables.** Finding 12: the propagator collapse by histogram,
-  $P_0(t)$, the turning-angle distribution, first-passage times and the speed distributions
-  are defined and not measured. `PROMPT-VERIFY` says an unbuilt thing is a finding and not a
+- **Three catalogued observables.** Finding 12: $P_0(t)$, the turning-angle distribution
+  and the speed distributions are defined and not measured. (First-passage times were tried
+  here and do not serve — §7a. The propagator's scaling collapse is answered through its
+  moments.) `PROMPT-VERIFY` says an unbuilt thing is a finding and not a
   task to absorb, so they are reported. Two of them would give $H$ independently of the
   second moment and are the strongest available next check on the headline number.
 
