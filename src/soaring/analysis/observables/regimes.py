@@ -37,6 +37,8 @@ curved function, and the two cases are indistinguishable to a piecewise fit.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import numpy as np
 
 __all__ = [
@@ -93,7 +95,9 @@ def effective_dof(t: np.ndarray, y: np.ndarray) -> float:
     return float(max(2.0, good.sum() * (1.0 - r) / (1.0 + r)))
 
 
-def piecewise_fit(x: np.ndarray, y: np.ndarray, breaks: np.ndarray):
+def piecewise_fit(
+    x: np.ndarray, y: np.ndarray, breaks: np.ndarray
+) -> tuple[np.ndarray, float, Callable[[np.ndarray], np.ndarray]]:
     """Continuous piecewise-linear least squares with the breakpoints given.
 
     Continuity is imposed by construction rather than by a penalty: the basis is
@@ -126,7 +130,7 @@ def select_breakpoints(
     max_breaks: int = 2,
     min_points: int = 4,
     dof: float | None = None,
-):
+) -> dict:
     """Choose the number and position of the breakpoints by BIC on the effective d.o.f.
 
     The search over positions is exhaustive on the lag grid, which is affordable at this
@@ -273,7 +277,9 @@ def spurious_breakpoints(
     }
 
 
-def smooth_crossover(t: np.ndarray, y: np.ndarray, *, p0=None):
+def smooth_crossover(
+    t: np.ndarray, y: np.ndarray, *, p0: list[float] | None = None
+) -> dict | None:
     """Fit ``y = A t^a1 [1 + (t/tau)^w]^((a2-a1)/w)`` -- two branches with a free sharpness.
 
     A piecewise fit assumes the bend is a corner. This one measures how wide it is, and

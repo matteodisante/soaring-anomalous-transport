@@ -735,7 +735,7 @@ def clean_flight(
             ``"hang gliders"``): the two types have markedly different speed envelopes,
             so one shared bound is either too loose for the slower or clips the faster.
         alt_source: The channel stage (i) adopted, which decides the frozen-lock
-        witness.
+            witness.
 
     Returns:
         The :class:`Cleaned` record.

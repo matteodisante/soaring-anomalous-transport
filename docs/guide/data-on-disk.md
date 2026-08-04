@@ -368,7 +368,7 @@ then splits what it is handed into row groups of its own default size — which 
 header above says 43 row groups for an archive written in 16 batches. So a flight *can*
 straddle a boundary, and a reader that iterates row groups and groups by `flight_id` sees
 it as two flights. Read this file through
-[`soaring.analysis.derived.stream_flights`](../reference/soaring/analysis/derived.md),
+[`soaring.analysis.derived.stream_flights`](../reference.md#analysisderived),
 never with `read_row_group` directly: it holds back the last flight of each row group and
 prepends it to the next, so it always yields whole flights.
 

@@ -25,7 +25,7 @@ class HttpConfig:
 
     Attributes:
         impersonate: TLS fingerprint that ``curl_cffi`` should impersonate (e.g.
-        ``"chrome"``).
+            ``"chrome"``).
         workers: Number of parallel downloads.
         timeout_s: Timeout per individual request, in seconds.
         max_retries: Maximum retry attempts per request before giving up.

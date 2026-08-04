@@ -63,7 +63,9 @@ def net_drift(positions: np.ndarray, dt: float = 1.0) -> np.ndarray:
     return (positions[-1] - positions[0]) / duration
 
 
-def remove_drift(positions: np.ndarray, dt: float = 1.0, *, velocity=None) -> np.ndarray:
+def remove_drift(
+    positions: np.ndarray, dt: float = 1.0, *, velocity: np.ndarray | None = None
+) -> np.ndarray:
     """Subtract a constant drift, by default the flight's own net velocity.
 
     Args:
@@ -121,7 +123,10 @@ def filtered_variation(
 
 
 def hurst_from_variations(
-    lags_s: np.ndarray, variation: np.ndarray, *, fit_range=None
+    lags_s: np.ndarray,
+    variation: np.ndarray,
+    *,
+    fit_range: tuple[float, float] | None = None,
 ) -> tuple[float, float]:
     """``(H, rms residual in dex)`` from a straight line through ``log V`` vs ``log lag``.
 
@@ -138,7 +143,9 @@ def hurst_from_variations(
     return float(fit[0] / 2.0), float(np.std(residual))
 
 
-def wavelet_variance(positions: np.ndarray, dt: float = 1.0, *, order: int = 2):
+def wavelet_variance(
+    positions: np.ndarray, dt: float = 1.0, *, order: int = 2
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """The logscale diagram: variance of the detail coefficients, octave by octave.
 
     A Haar-like cascade with ``order`` vanishing moments, applied within the series. Each
@@ -179,7 +186,7 @@ def centring_bias(
     *,
     n: int = 4096,
     n_flights: int = 200,
-    lags=None,
+    lags: np.ndarray | None = None,
     seed: int = 0,
 ) -> dict:
     """How much in-sample drift removal moves a known exponent, as a function of lag.

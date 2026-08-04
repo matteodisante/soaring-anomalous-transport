@@ -39,7 +39,9 @@ __all__ = [
 ]
 
 
-def brownian(n: int, dt: float = 1.0, *, speed: float = 10.0, seed: int | None = None):
+def brownian(
+    n: int, dt: float = 1.0, *, speed: float = 10.0, seed: int | None = None
+) -> np.ndarray:
     """An uncorrelated 2-D random walk, ``MSD = (speed^2) t``.
 
     Args:
@@ -58,7 +60,7 @@ def brownian(n: int, dt: float = 1.0, *, speed: float = 10.0, seed: int | None =
 
 def fractional_brownian(
     n: int, hurst: float, dt: float = 1.0, *, scale: float = 10.0, seed: int | None = None
-):
+) -> np.ndarray:
     """Two independent fractional Brownian motions, ``MSD ~ t^(2H)``.
 
     Built by the Davies--Harte circulant embedding, which is exact rather than
@@ -136,7 +138,7 @@ def levy_walk(
     speed: float = 12.0,
     min_duration: float = 5.0,
     seed: int | None = None,
-):
+) -> np.ndarray:
     """Ballistic flights of Pareto-distributed duration, at constant speed.
 
     The walk moves at a fixed speed and reorients at renewal times drawn from
@@ -182,7 +184,7 @@ def persistent_walk(
     *,
     speed: float = 12.0,
     seed: int | None = None,
-):
+) -> np.ndarray:
     """A correlated random walk: constant speed, heading decorrelating over ``tau``.
 
     Ballistic below ``tau`` and diffusive above it. One of these is not anomalous; a
@@ -209,7 +211,9 @@ def persistent_walk(
     return np.vstack([np.zeros((1, 2)), np.cumsum(velocity[:-1] * dt, axis=0)])
 
 
-def with_drift(positions: np.ndarray, velocity, dt: float = 1.0) -> np.ndarray:
+def with_drift(
+    positions: np.ndarray, velocity: np.ndarray, dt: float = 1.0
+) -> np.ndarray:
     """Add a constant drift to a trajectory.
 
     The operation the whole frame discussion is about: a drift adds ``|v|^2 t^2`` to the

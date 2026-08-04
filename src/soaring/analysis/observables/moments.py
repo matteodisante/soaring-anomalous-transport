@@ -75,7 +75,14 @@ def _increments(positions: np.ndarray, lag: int, order: int = 1) -> np.ndarray:
     return np.hypot(acc[::span, 0], acc[::span, 1])
 
 
-def moment_spectrum(positions, lags, q_grid=Q_GRID, *, order: int = 1, tail=0.01):
+def moment_spectrum(
+    positions: np.ndarray,
+    lags: np.ndarray,
+    q_grid: tuple[float, ...] = Q_GRID,
+    *,
+    order: int = 1,
+    tail: float = 0.01,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """``(moments, tail_share, counts)`` over a lag grid and a set of moment orders.
 
     Args:
@@ -111,7 +118,13 @@ def moment_spectrum(positions, lags, q_grid=Q_GRID, *, order: int = 1, tail=0.01
     return moments, tail_share, counts
 
 
-def bilinear_fit(q_grid, q_nu, *, knee0=1.7, min_departure=0.02):
+def bilinear_fit(
+    q_grid: np.ndarray,
+    q_nu: np.ndarray,
+    *,
+    knee0: float = 1.7,
+    min_departure: float = 0.02,
+) -> dict | None:
     """Fit ``q nu(q)`` with a free knee, and say whether the knee is worth having.
 
     For a Lévy walk with tail index :math:`\\alpha`, ``q nu(q) = q/alpha`` below
@@ -178,7 +191,13 @@ def bilinear_fit(q_grid, q_nu, *, knee0=1.7, min_departure=0.02):
     }
 
 
-def quantile_ratios(positions, lags, probabilities=(0.75, 0.9, 0.99), *, order: int = 1):
+def quantile_ratios(
+    positions: np.ndarray,
+    lags: np.ndarray,
+    probabilities: tuple[float, ...] = (0.75, 0.9, 0.99),
+    *,
+    order: int = 1,
+) -> np.ndarray:
     """``q_p / q_0.5`` of the increment magnitude, per lag: a fit-free shape index.
 
     Flat in lag means the distribution keeps its shape and only its scale changes, which is

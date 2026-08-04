@@ -45,7 +45,9 @@ __all__ = [
 ]
 
 
-def velocity_autocorrelation(velocity: np.ndarray, max_lag: int | None = None):
+def velocity_autocorrelation(
+    velocity: np.ndarray, max_lag: int | None = None
+) -> tuple[np.ndarray, np.ndarray]:
     """``<v(t) . v(t+tau)>`` by FFT, normalised to 1 at zero lag.
 
     The record's own mean velocity is removed first, so what is returned is the correlation
@@ -82,7 +84,11 @@ def velocity_autocorrelation(velocity: np.ndarray, max_lag: int | None = None):
     return np.arange(max_lag + 1), acf[: max_lag + 1] / acf[0]
 
 
-def vacf_tail_exponent(lags: np.ndarray, correlation: np.ndarray, fit_range=None):
+def vacf_tail_exponent(
+    lags: np.ndarray,
+    correlation: np.ndarray,
+    fit_range: tuple[float, float] | None = None,
+) -> tuple[float, float, int]:
     """``(gamma, alpha_implied, n_lags)`` from a power-law fit to the tail of ``C(tau)``.
 
     Green--Kubo in its scaling form: a correlation decaying as ``tau^-gamma`` with
@@ -116,7 +122,9 @@ def vacf_tail_exponent(lags: np.ndarray, correlation: np.ndarray, fit_range=None
     return -slope, 2.0 + slope, int(good.sum())
 
 
-def persistence_runs(positions: np.ndarray, max_sinuosity: float, min_length: int = 5):
+def persistence_runs(
+    positions: np.ndarray, max_sinuosity: float, min_length: int = 5
+) -> np.ndarray:
     """Non-overlapping stretches whose sinuosity stays under ``max_sinuosity``.
 
     Sinuosity is arc length over chord, so it is one for a straight stretch and grows as the
@@ -164,8 +172,12 @@ def persistence_runs(positions: np.ndarray, max_sinuosity: float, min_length: in
     return np.asarray(lengths, dtype=int)
 
 
-def inspection_biased_runs(positions: np.ndarray, max_sinuosity: float,
-                           min_length: int = 5, stride: int = 1):
+def inspection_biased_runs(
+    positions: np.ndarray,
+    max_sinuosity: float,
+    min_length: int = 5,
+    stride: int = 1,
+) -> np.ndarray:
     """The length of the run **containing** each sampled instant: the wrong way, on purpose.
 
     Kept so the inspection bias can be measured on the data at hand rather than taken on

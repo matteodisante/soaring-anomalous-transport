@@ -22,6 +22,8 @@ curve is bent.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import numpy as np
 
 __all__ = [
@@ -32,7 +34,7 @@ __all__ = [
 ]
 
 
-def cluster_labels(frame, level: str) -> np.ndarray:
+def cluster_labels(frame: "pd.DataFrame", level: str) -> np.ndarray:
     """Integer cluster ids for a resampling level.
 
     Args:
@@ -103,11 +105,11 @@ def intraclass_correlation(values: np.ndarray, labels: np.ndarray) -> float:
 def cluster_bootstrap(
     curves: np.ndarray,
     labels: np.ndarray,
-    statistic,
+    statistic: Callable[[np.ndarray], float],
     *,
     n_resamples: int = 200,
     seed: int = 0,
-):
+) -> tuple[float, np.ndarray]:
     """Resample whole clusters with replacement and recompute a statistic.
 
     Args:
@@ -139,7 +141,9 @@ def cluster_bootstrap(
     return point, np.asarray(replicates)
 
 
-def sampling_covariance(curves: np.ndarray, labels: np.ndarray, *, n_resamples=200, seed=0):
+def sampling_covariance(
+    curves: np.ndarray, labels: np.ndarray, *, n_resamples: int = 200, seed: int = 0
+) -> dict:
     """Per-lag sampling error of ``log10`` of the mean curve, and its lag-to-lag correlation.
 
     This is what a breakpoint null has to be built from. Reading the noise scale off the
