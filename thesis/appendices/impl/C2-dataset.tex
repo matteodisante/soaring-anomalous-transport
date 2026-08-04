@@ -28,23 +28,27 @@ Census scan, diagnostic figures and macros & implemented & Sec.~\ref{impl:prepro
 \hline
 Glider-label normalisation & designed & Sec.~\ref{impl:glider} \\
 \hline
-Altitude-channel choice (\texttt{alt\_source}) & designed & Sec.~\ref{impl:altchannel} \\
+Altitude-channel choice (\texttt{alt\_source}) & \rev{implemented, unit-tested} & Sec.~\ref{impl:altchannel} \\
 \hline
-Fix-level cleaning (three detectors) & designed and thresholded & Sec.~\ref{impl:fixlevel} \\
+Fix-level cleaning (three detectors) & \rev{implemented, unit-tested} & Sec.~\ref{impl:fixlevel} \\
 \hline
 Validation battery for the cleaning & planned, follows the cleaning & Sec.~\ref{impl:fixlevel} \\
 \hline
-Trimming of ground phases, interior guard & designed & Sec.~\ref{impl:trimming} \\
+Trimming of ground phases, interior guard & \rev{implemented, unit-tested} & Sec.~\ref{impl:trimming} \\
 \hline
-Flight-level filtering & designed and thresholded & Sec.~\ref{impl:flightfilter} \\
+Flight-level filtering & \rev{implemented, unit-tested} & Sec.~\ref{impl:flightfilter} \\
 \hline
-ENU conversion & designed (exact transform) & Sec.~\ref{impl:enu} \\
+ENU conversion & \rev{implemented, unit-tested} & Sec.~\ref{impl:enu} \\
 \hline
-Uniform sampling and segmentation & designed and thresholded & Sec.~\ref{impl:uniform} \\
+Uniform sampling and segmentation & \rev{implemented, unit-tested} & Sec.~\ref{impl:uniform} \\
 \hline
-Smoothing and differentiation & designed; timescales measured & Sec.~\ref{impl:savgol} \\
+Smoothing and differentiation & \rev{implemented; timescales measured} & Sec.~\ref{impl:savgol} \\
 \hline
-Preliminary characterization & planned & Sec.~\ref{impl:prelim} \\
+Preliminary characterization & \rev{implemented} & Sec.~\ref{impl:prelim} \\
+\hline
+\rev{MSD audit (residuals, controls, isotropy)} & \rev{implemented} & \rev{Sec.~\ref{impl:obs-global}} \\
+\hline
+\rev{Ensemble MSD (Sec.~\ref{sec:obs-global})} & \rev{implemented, unit-tested} & \rev{Sec.~\ref{impl:obs-global}} \\
 \hline
 \end{tabular}
 \caption{Implementation status of the pipeline steps, collecting the status remarks
@@ -57,6 +61,241 @@ steps follow the designed ones.}%
 \end{flowblock}
 
 \input{appendices/impl/C1-acquisition}
+
+\section{\rev{Where the data lives}}
+\label{impl:onDisk}
+
+\begin{revblock}
+Everything is on one external disk and nothing is in the repository, so a reader who has
+the disk can locate any number this thesis quotes. There is one root per discipline,
+identically laid out, found through an environment variable rather than a hard-coded
+path (\path{SOARING_PARA_DATA_ROOT}, \path{SOARING_DELTA_DATA_ROOT}); the repository keeps
+only the small versioned \path{data/<discipline>/seasons_index.csv}, so the season tables
+of Sec.~\ref{sec:coverage} build without the disk mounted.
+
+\begin{center}
+\footnotesize
+% sizes are the paraglider root's; the hang-glider one has the same shape, with ~25x
+% fewer retained flights and ~37x fewer bytes
+\begin{tabular}{|p{4.6cm}|l|p{6.1cm}|}
+\hline
+\textbf{Path} & \textbf{Size} & \textbf{What it is} \\
+\hline
+\multicolumn{3}{|l|}{\itshape raw/ --- immutable, never modified after download} \\
+\hline
+\path{raw/igc/<season>/} & \num{186052} files &
+  the track files, one directory per season, named \path{<date>_<flight_id>.igc} \\
+\hline
+\path{raw/raw_xml/<year>.xml} & 27 files &
+  the season listings exactly as the site served them: the provenance of the catalog \\
+\hline
+\multicolumn{3}{|l|}{\itshape catalog/ --- regenerable from raw/, metadata only} \\
+\hline
+\path{catalog/catalog.csv} & \SI{87}{\mega\byte} &
+  one row per listed flight, 23 columns (Sec.~\ref{sec:catalog}) \\
+\hline
+\path{catalog/seasons_index.csv} & \SI{2}{\kilo\byte} &
+  one row per season: listed, with a track, downloaded \\
+\hline
+\multicolumn{3}{|l|}{\itshape logs/ --- what the acquisition did} \\
+\hline
+\path{logs/download.log},\newline\path{logs/failures.csv} & \SI{80}{\kilo\byte} &
+  the run log and the retry registry, one row per track that could not be fetched \\
+\hline
+\multicolumn{3}{|l|}{\itshape derived/ --- regenerable from raw/, everything the analysis makes} \\
+\hline
+\path{derived/track_scan.parquet} & \SI{8.5}{\mega\byte} &
+  the census cache: one scalar row per parsed flight (Sec.~\ref{impl:preproc}) \\
+\hline
+\path{derived/fixes.parquet} & \SI{43}{\giga\byte} &
+  the processed trajectories: $1.36\times10^{9}$ rows for paragliders \\
+\hline
+\path{derived/segments.parquet} & \SI{4}{\mega\byte} &
+  one row per segment the splitting produced, retained or not \\
+\hline
+\path{derived/flights_meta.parquet} & \SI{10}{\mega\byte} &
+  one row per flight \emph{attempted}, dropped ones included \\
+\hline
+\end{tabular}
+\end{center}
+
+The three levels are a rule and not a habit: \path{raw/} is never written to after the
+download, \path{catalog/} is a function of \path{raw/}, and \path{derived/} is a function
+of both. Deleting \path{derived/} costs computation and never data. It also means the two
+census families cannot be confused: \path{track_scan.parquet} describes \emph{parsed}
+tracks and is what the \texttt{\textbackslash StatScan*} macros query, because a cut must
+be audited on the population it acts on; \path{flights_meta.parquet} describes what the
+pipeline \emph{did}, and is what the \texttt{\textbackslash StatPipe*} macros query.
+
+\paragraph{The trajectory table.} \path{fixes.parquet} carries one row per grid point of
+every retained segment, keyed \path{(source, flight_id, segment_id)}. Printed as it is on
+disk (the hang-glider root; \path{scripts/reporting/show_dataset.py} produces this view):
+
+{\footnotesize
+\begin{verbatim}
+34,389,245 rows in 43 row groups, 1,156.0 MB on disk, ZSTD
+
+dtypes:
+  source  str      t  float32      v_E  float32      interpolated     bool
+  flight_id str    E  float32      v_N  float32      edge             bool
+  segment_id int16 N  float32      v_z  float32      hampel_flagged   bool
+                   z  float32      a_*  float32      alt_invalidated  bool
+
+head(4), columns 1-9:
+    source flight_id  segment_id    t          E           N           z       v_E       v_N
+hangglider       975           0  0.0  -2.644085   -4.948205 1458.585693 13.275144  1.215108
+hangglider       975           0 10.0 111.172691  -33.921207 1460.657104  9.778760 -5.975531
+hangglider       975           0 20.0 198.742096 -103.775276 1468.514282  8.025670 -6.961107
+hangglider       975           0 30.0 279.220947 -138.911942 1463.914307  7.008325 -2.623670
+
+head(4), columns 10-17:
+      v_z       a_E       a_N       a_z  interpolated  edge  hampel_flagged  alt_invalidated
+-0.532143 -0.436803 -1.029317  0.192857         False  True           False            False
+ 0.721429 -0.262474 -0.408811  0.057857         False  True           False            False
+ 0.625000 -0.088144  0.211696 -0.077143         False False           False            False
+-1.466667  0.072790  0.463077 -0.047143         False False            True            False
+\end{verbatim}
+}
+
+\noindent The four rows are the first four grid points of a \SI{10}{\second} logger:
+$t$ starts at zero, $E$ and $N$ within metres of it, $z$ at its measured
+\SI{1458}{\metre}. Coordinates are \texttt{float32}, a part in $10^{7}$ on a coordinate
+of tens of kilometres and orders below the GPS noise on it. The file is written in
+batches of 400 flights, and an analysis streams it rather than loading
+\SI{43}{\giga\byte}---which is how the mean-squared displacement of
+Sec.~\ref{sec:obs-global} is computed.
+
+\rev{A row group is not a batch, and the difference cost a measurement. The writer hands
+Parquet 400 flights at a time; Parquet then cuts what it is handed into row groups of
+its own default size, which is why the header above reads \num{43} row groups for an
+archive written in \num{16} batches. A reader that takes a row group for a unit of
+flights therefore meets, at each boundary, one flight arriving as two fragments---and
+processes it as two flights. The ensemble MSD counted \num{157134} paraglider flights
+where the pipeline had written \num{156017}, \SI{0.7}{\percent} too many; worse, the
+time-averaged MSD is computed \emph{within} a segment and cut at half its length, so a
+straddling segment stopped answering at half of its longer fragment instead of half of
+itself, and the longest segments---the ones that carry the long-lag tail, and the ones
+likeliest to straddle---were the ones truncated. The reading was thus biased by the
+writer's buffering rather than by the data. Every consumer now goes through one reader,
+\path{soaring.analysis.derived.stream_flights}, which holds back the last flight of each
+row group and prepends it to the next, so what it yields is always a whole flight; it
+raises rather than continues if the writer's ordering ever stops holding. The dataset
+verifier reads through it too, since it had the same blind spot in a worse place: the
+step \emph{joining} two fragments was never differenced, so it was never checked, and a
+check with a blind spot reports success over it.}
+
+The three timing conventions a reader of this table has to know are argued elsewhere in
+the chapter and worth restating together: $t$ is zero at the first fix of free flight
+\emph{of the parent flight}, so a segment never restarts it (Sec.~\ref{sec:uniform});
+$E$ and $N$ are zero at that same fix (Sec.~\ref{sec:enu}); and $z$ is the adopted
+altitude at its measured value, never re-zeroed. The only times in another clock are
+\path{ground_phase_start_s} and \path{ground_phase_end_s} in \path{flights_meta}, which
+are in the recorded clock of the IGC file because the integrity gate counts its removals
+inside that window.
+
+\paragraph{The segment table.} One row per segment the splitting produced, retained or
+not, and the reason for each drop:
+
+{\footnotesize
+\begin{verbatim}
+    source flight_id  segment_id  t_start   t_end  n_fix  n_fix_raw  frac_interpolated
+hangglider       975           0      0.0 20640.0   2065       2064           0.001453
+hangglider      1032           0      0.0 14175.0      0        691           0.001479
+
+  censored_start  censored_end   kept                 drop_reason
+           False         False   True                        <NA>
+           False         False  False channel_not_reconstructable
+\end{verbatim}
+}
+
+\noindent \path{n_fix} counts the rows the segment contributed to \path{fixes} (zero when
+dropped) against \path{n_fix_raw}, its measured fixes. \path{segment_id} is assigned at
+split time and stays stable, so a gap in the numbering is itself the record of a drop.
+
+\paragraph{The flight table.} One row per flight \emph{attempted}, forty-one columns, read
+down rather than across---one retained flight beside one the flight-level filter rejected:
+
+{\footnotesize
+\begin{verbatim}
+                     a retained flight           a dropped one
+source                      hangglider              hangglider
+flight_id                          975                     830
+pipeline_version                 1.1.0                   1.1.0
+drop_stage                         NaN           flight_filter
+drop_reason                        NaN  duration_below_minimum
+alt_source                        baro                    gnss
+n_fix_raw                         2099                     349
+n_fix_clean                       2069                     348
+n_removed_frozen                    30                       0
+n_flagged_kept                      40                       8
+n_boundaried                         0                       0
+integrity_fraction                 0.0                0.004587
+ground_phase_start_s             300.0                   485.0
+duration_flight_s              20645.0                  1085.0
+path_km                     283.408578                6.044969
+lat0                         43.812717                     NaN
+dt_native_s                       10.0                     NaN
+n_segments_kept                    1.0                     NaN
+savgol_window_horiz                5.0                     NaN
+\end{verbatim}
+}
+
+\noindent (abridged: the full forty-one are listed in Sec.~\ref{impl:onDisk}.) A dropped flight
+keeps everything the stages \emph{before} the verdict had already measured---flight 830
+was judged on a duration of \SI{1085}{\second}, and its cleaning counters remain
+auditable even though none of its fixes reached the trajectory table. That is what makes
+the removals a census rather than an absence.
+
+\paragraph{What is not stored.} Anything that is pure algebra of the stored columns---the
+speed $|\mathbf{v}|$, the heading, the angular velocity, the turn radius, the glide ratio,
+the mechanical energy---is computed at analysis time and never materialised. Only the
+outputs of a non-trivial parametric step are kept, which is what makes the table's size a
+function of the archive rather than of the questions asked of it.
+
+\paragraph{Checking it.}\label{impl:verify} \path{scripts/verify_dataset.py} reads the
+three tables back and tests, on the data itself, the properties this chapter claims:
+completeness within a segment, a strictly increasing and uniform time base, no impossible
+step between two interior samples of a segment (Sec.~\ref{sec:fixlevel}), the origin at
+$r(0)=0$, reachability---$|\mathbf{r}(t)|\le v_{xy}^{\max}\,t$ for every sample---and
+referential integrity between the tables. Each check names the section it comes from, so
+a failure says which claim is false rather than only that something is wrong.
+
+Reachability is the one check stated without reference to anything the pipeline did: it
+follows from the frame and the speed bound alone, because the flight began at the origin.
+That is what makes it able to catch a defect no per-step test can see. A flight whose
+\emph{first} fix is corrupt has every step plausible---it simply sits, in the archive,
+\SI{4500}{\kilo\metre} from where it says it began, with the whole trajectory referred to
+that point (Sec.~\ref{sec:fixlevel}).
+
+The qualification in the third check is not a hedge but the statement being precise.
+The bound is a claim about \emph{measured} motion, and two kinds of sample in the table
+are not measurements. At a segment edge the smoothing polynomial is evaluated off-centre
+(Sec.~\ref{sec:savgol}), so its position carries more variance than a centred one and
+on a slow logger can imply a step over the bound where the underlying fixes do not.
+Across a bridged gap the monotone cubic is a reconstruction, and its slope may exceed
+the secant it spans---a hole crossed at \SI{42}{\metre\per\second}, itself under the
+bound and so legitimately bridged, leaves interpolated points implying nearly
+\SI{60}{\metre\per\second}. Both kinds are flagged in the table for exactly this
+reason (\path{edge}, \path{interpolated}), so the check reads the invariant between
+samples that are measured and centred, and \emph{reports} the excess on the others.
+That reported number is one of the acceptance criteria Sec.~\ref{sec:savgol} asks for:
+measured, rather than assumed away.
+
+The script found two defects this text would otherwise have asserted without warrant.
+A randomised robustness suite (\path{test_pipeline_robustness.py}, which combines
+injected spikes, null-island runs, frozen locks, time defects, gaps and offsets at
+random and asserts only these invariants) found two more, and both were faults in the
+\emph{statement} rather than in the pipeline: the invariant had been written without
+either qualification above. A third, the corrupt opening block of
+Sec.~\ref{sec:fixlevel}, was found by neither: it was found by the ensemble MSD of
+Chapter~\ref{ch:next-steps} being wrong, which is the expensive way to find a bug, and
+the reachability check above is what makes it cheap next time. It also found one in the
+cleaning---a track crossing the
+antimeridian is read as motionless, because the great-circle distance is correctly aware
+of the wrap and therefore reads the two numerical extremes of a straddling bounding box
+as metres apart. No flight in the present archive reaches within ten degrees of that
+meridian; the further sources of Sec.~\ref{sec:acquisition} may.
+\end{revblock}
 
 \section{The IGC tracklog format}
 \label{impl:igcformat}
@@ -131,6 +370,20 @@ once) from the cost of \emph{asking} it a question (instant, as often as a thres
 changes). Every \texttt{\textbackslash StatScan*} macro, and the flight-level and
 sampling diagnostics of Figs.~\ref{fig:preproc} and~\ref{fig:gaps}, are functions of these
 columns alone.
+
+\rev{\emph{What the census is not.} It is measured on the \textbf{raw} archive, one parse
+of the \texttt{B} records with no cleaning, no trimming and no filtering---which is the
+only thing it could be, since its purpose is to choose the thresholds that cleaning,
+trimming and filtering then apply, and a threshold chosen on the population that survives
+it is chosen circularly. So every \texttt{\textbackslash StatScan*} number in this thesis
+is a statement about the archive \emph{as recorded}: a duration is the recorded span and
+not the airborne one, a path includes whatever a corrupt fix contributed, and a
+retained-fraction curve is what a cut would keep if applied alone to the raw population.
+The retained ensemble has its own numbers and its own family, \texttt{\textbackslash
+StatPipe*}, computed from \path{flights_meta.parquet} after all seven stages have run
+(Table~\ref{tab:pipecensus}); where a quantity appears in both, the two are not expected
+to agree, and the difference is precisely what the pipeline did. The two families are
+never mixed in one statement.}
 \end{revblock}
 
 \path{generate_census_stats.py} recomputes the quoted macros from that cache against
@@ -306,16 +559,13 @@ This section gives the working definitions the narrative (Sec.~\ref{sec:fixlevel
 words: the three detectors, their parameters, the order they run in, and how the whole step
 is validated. In the order of Table~\ref{tab:cleaning}, the three families map onto a
 robust local test (a short window of context), a structural rule (a whole run), and an
-absolute bound (no context). Status: Table~\ref{tab:impl-status} -- the detectors
-are designed and thresholded on the data, their parameters already config keys
-(Table~\ref{tab:fixlevel-params}); the routine that applies them is the next
-implementation step.
+absolute bound (no context). Status: Table~\ref{tab:impl-status}.
 
 The detectors run in a fixed order, which the subsections below follow:
 \begin{enumerate}[label=(\arabic*), itemsep=0pt, topsep=3pt]
   \item format validity, at decode time (Sec.~\ref{impl:igcformat});
   \item time defects: backward steps, then duplicates;
-  \item position outliers (Hampel flag $+$ impossibility gate);
+  \item position outliers (\rev{the impossibility gate; the Hampel flag is recorded, not required---Sec.~\ref{sec:fixlevel}});
   \item frozen-lock runs;
   \item altitude: absolute bounds and altitude outliers.
 \end{enumerate}
@@ -388,10 +638,13 @@ The flag itself is context-sensitive -- a \SI{30}{\metre\per\second} step out of
 \SI{12}{\metre\per\second} glide is flagged while the same step passes unremarked where it
 is ordinary -- but a flag alone does not delete (next paragraph): a
 flagged-but-physically-possible fix is \emph{kept}, its flag recorded as a per-flight
-anomaly count alongside the integrity-gate counters. The identical test runs on the
-horizontal position and, independently, on the adopted altitude channel, so a vertical
-spike invalidates the altitude alone and the horizontal position stays (the channel
-decoupling of Sec.~\ref{sec:fixlevel}).
+anomaly count alongside the integrity-gate counters. \rev{The test runs on the horizontal
+position \emph{alone}. An earlier draft of this appendix had it running on the adopted
+altitude channel as well, which the three-part argument of Sec.~\ref{sec:fixlevel}
+supersedes: on $z$ an absolute bound is sufficient where on $xy$ it is not, a local test
+on $z$ would flag the thermal entries the segmentation is built on, and a false vertical
+flag is expensive exactly where it is most likely. The vertical is therefore cleaned by
+its absolute bounds and by nothing else.}
 
 \paragraph{From flag to action.} The identifier only
 \emph{flags}; it never repairs. A flagged horizontal fix is \emph{deleted} as a node -- not
@@ -403,11 +656,12 @@ the median-substituting filter itself: the local median enters only as the refer
 for the residual $r_k$, never as an output value.
 
 \begin{description}
-  \item[Position.] Deletion requires two conditions: the fix must be flagged \emph{and}
-        its implied in-and-out speed must exceed the absolute $v_{xy}$ bound. The gate
-        narrows the identifier's deletions to what the bound already deems impossible\flow{;
-        the one benign false positive, the genuine under-sampled tight turn, is kept
-        (Sec.~\ref{sec:fixlevel})}.
+  \item[Position.] \rev{Deletion is the impossibility gate: a fix goes when it is
+        unreachable from the last accepted fix at the absolute $v_{xy}$ bound \emph{and}
+        the removal of the block it belongs to lets the track rejoin within that bound.
+        The flag is neither necessary nor sufficient---why it cannot be required is
+        Sec.~\ref{sec:fixlevel}---and the genuine under-sampled tight turn is kept because
+        it flies at an ordinary speed, not because anything exempts it.}
   \item[\rev{Byte-identical, on the parsed table.}] \rev{The frozen-lock witness of
         Eq.~\eqref{eq:frozenlock} is specified on the raw \texttt{B} records, but the
         parser returns decoded floats and keeps no raw text. No raw text is needed: the
@@ -422,10 +676,44 @@ for the residual $r_k$, never as an output value.
         an impossible step -- the scan stops deleting and marks a split at the step,
         handled like a long gap (Sec.~\ref{impl:uniform}): both sides are genuine, only
         the transition is unknown.
-  \item[Altitude.] A flagged altitude is marked missing on the flag alone\flow{ (a
-        deferral: Sec.~\ref{sec:fixlevel})}. On a GNSS-fallback flight the
-        absolute $|v_z|$ bound (calibrated on the barometric channel) does not apply,
-        and this test is the only vertical cleaner.
+  \item[\rev{How long a block may run.}] \rev{\enquote{Bounded} needs a number, and it
+        is the Hampel half-width $w$: a block that has not rejoined within
+        \SI{\PreprocHampelWindowS}{\second} is called a discontinuity instead. The
+        value is reused rather than introduced, and it also fixes the scale at which the
+        two cases part---an offset smaller than $v_{xy}^{\max}w\approx\SI{900}{\metre}$
+        becomes reachable from the anchor before the block expires and is removed as an
+        excursion rather than split. That is a real limit of the rule and a bounded one:
+        at most one block of genuine fixes, at a discontinuity, against the alternative
+        of splitting a flight in two for every isolated spike.}
+  \item[\rev{The postcondition, and its counter.}] \rev{After the scan, any step
+        between two \emph{surviving} fixes that still breaks the bound is made a segment
+        boundary (Sec.~\ref{sec:fixlevel}). The number of boundaries this adds is
+        recorded per flight as \path{n_boundaried} in \path{flights_meta}, alongside the
+        other cleaning counters: it is the audit of a rule that would otherwise repair
+        without saying so, and it is expected to be small---a large value would indict
+        the scan rather than the data.}
+  \item[Altitude.] \rev{No flag reaches it: the vertical is cleaned by the absolute
+        bounds of Table~\ref{tab:cleaning} alone, which mark the value missing and never
+        touch the fix\flow{ (a deferral: Sec.~\ref{sec:fixlevel})}. Both bounds act on
+        the channel the flight \emph{adopted}, whichever it is. The $|v_z|$ bound was
+        placed on barometric distributions, but what it expresses is a climb/sink
+        envelope of the aircraft, which does not change with the instrument reading it;
+        leaving a GNSS-fallback flight with no vertical cleaner at all --- the
+        consequence of dropping the local test --- would be the worse reading. It fires
+        more often there, and the rate is recorded per \path{alt_source} so the audit
+        can see by how much.}
+  \item[\rev{Isolated, not sustained.}] \rev{The $|v_z|$ bound marks an altitude
+        missing when the record jumps away from it and back --- both adjoining steps past
+        the bound, with opposite signs. This is check~(5) below made operational: a
+        \emph{run} of super-threshold steps of one sign is a sustained manoeuvre, a
+        spiral dive holding \SIrange{15}{20}{\metre\per\second} of real sink, and it is
+        counted and left alone rather than censored.}
+  \item[\rev{The first fix.}] \rev{An anchor-carrying scan never questions its own first
+        anchor, and no rule here supplies one: the discontinuity is left as a
+        discontinuity, for the reason Sec.~\ref{sec:fixlevel} gives. The guarantee is
+        enforced one stage later, by the reach criterion of
+        Sec.~\ref{sec:flightfilter}, and checked on the written table
+        (Sec.~\ref{impl:verify}).}
 \end{description}
 This is the \emph{default to keep} rule of Sec.~\ref{sec:fixlevel}: removal requires
 positive, corroborated evidence.
@@ -595,11 +883,26 @@ The interior-ground guard of Sec.~\ref{sec:trimming} keeps
 \texttt{ground\_flatness\_m} (\SI{\PreprocGroundFlatnessM}{\metre}) in the same group.
 \rev{The flatness is tested on the \emph{detrended} altitude, as Sec.~\ref{sec:trimming}
 requires: fit a straight line to the adopted channel over the candidate stint by least
-squares, subtract it, and compare the range of the residual against
-\texttt{ground\_flatness\_m}. The linear term is the barometric drift, which over a stint
-of $T_{\mathrm{ground}}$ is already of the order of the tolerance; the residual is what is
-left of genuine vertical motion. No new config key is needed --- the tolerance now applies
-to the residual rather than to the raw range, and that is the whole change.} \flow{Below
+squares, subtract it, and compare the residual's central span---its 5th to 95th
+percentile---against \texttt{ground\_flatness\_m}. The linear term is the barometric
+drift, which over a stint of $T_{\mathrm{ground}}$ is already of the order of the
+tolerance; the residual is what is left of genuine vertical motion, and the central span
+rather than the full range because a range grows with the length of the stint and a
+central span does not (Sec.~\ref{sec:trimming}). No new config key is needed.}
+
+\begin{revblock}
+Building it made one thing explicit that the rule as stated leaves open. Detrending cannot
+by itself separate a pressure drift from a steady climb, because both are linear and the
+fit removes either completely: a wing thermalling at \SI{1}{\metre\per\second} in still
+air holds a ground speed near zero, gains \SI{700}{\metre} over a $T_{\mathrm{ground}}$
+stint, and leaves a detrended residual of \emph{zero} --- so the flatness condition alone
+would excise it as a mid-flight landing, which is precisely the failure this guard exists
+to avoid. What separates the two is the \emph{rate}: drift runs at tens of metres per
+hour, a soaring climb two orders of magnitude faster. The fitted slope is therefore
+bounded as well, at $\delta_z/\tau_{\mathrm{freeze}}$ --- the frozen-lock rule's own
+statement of what counts as motionless, read as a rate, so the guard borrows a number the
+configuration already fixes instead of introducing one.
+\end{revblock} \flow{Below
 $T_{\mathrm{ground}}$ the same predicate is stored as a list of suspect intervals per
 flight, which the segmentation later maps onto the phases they touch (consumption of the
 flag: Sec.~\ref{sec:trimming}).}
@@ -613,6 +916,18 @@ measurements behind the path floor and the upper duration bound, and the totals 
 Figure~\ref{fig:preproc}, are quoted through macros computed from the shared track scan
 (Sec.~\ref{impl:preproc}); the headline duration and path medians are quoted in
 Sec.~\ref{sec:prelim}.}
+
+\rev{The plausibility and reach bounds of Sec.~\ref{sec:flightfilter} are not further
+\texttt{flight\_level} keys: both read \path{max_horizontal_speed_mps} from the
+\texttt{fix\_level} block, so the same number governs a single step, a whole-flight
+average and a whole-flight displacement, and the three cannot drift apart. Both are
+evaluated on the trimmed track, after the per-block sums of the duration and the path, and
+they are the last of the whole-flight cuts because each is a statement about a record the
+earlier ones have already accepted. The extent they need is returned by
+\path{flight_quantities} alongside the duration and the path, from the same haversine
+call, so it costs nothing: the maximum of a vector the function already forms. Unlike the
+duration and the path it is \emph{not} summed per block---a displacement from a fixed
+origin has nothing to sum---which is why a split does not weaken it.}
 
 \begin{revblock}
 The chain behind every number quoted in Sec.~\ref{sec:flightfilter} is short enough to
@@ -765,4 +1080,74 @@ already in place when it reads its window.
 
 \section{Preliminary characterization}
 \label{impl:prelim}
-\flow{See Sec.~\ref{sec:prelim}; status: Table~\ref{tab:impl-status}.}
+\begin{revblock}
+\path{scripts/reporting/generate_prelim_figure.py} produces both figures of
+Sec.~\ref{sec:prelim} and the \texttt{\textbackslash StatPrelim*} macros. It reads three
+things: the per-flight summary and the per-lag positions \path{audit_msd.py} wrote
+(Sec.~\ref{impl:obs-global}), \path{flights_meta.parquet} for the take-off coordinates,
+and the season catalogue for \path{wing_class} and \path{season}. The join on
+\path{flight_id} resolves for \SI{99.99}{\percent} of retained flights.
+
+Reading the audit arrays rather than the fix table is what makes the stratification
+affordable: a stratified MSD is then a row selection on a matrix already in memory, so the
+three stratifications and the isotropy check together cost one pass that has already been
+paid, instead of one \SI{43}{\giga\byte} scan each.
+\end{revblock}
+
+\paragraph{\rev{The basemap.}} \rev{The take-off panels are drawn on Natural Earth
+admin-0 country polygons (public domain), which give the coastline and the borders in one
+layer and carry the overseas departments inside the France feature---which is what puts
+La~R\'eunion on the map at all. The geometry is not fetched at draw time and Cartopy is
+not a dependency: \path{scripts/reporting/build_basemap.py} downloads it once, keeps the
+rings that intersect each panel, decimates them (\SI{0.01}{\degree} for France,
+\SI{0.001}{\degree} for La~R\'eunion, \SI{0.25}{\degree} for the world frame) and writes
+\path{data/basemap.json}, which is committed at \SI{0.76}{\mega\byte}. The figure then
+needs nothing but Matplotlib and regenerates from a clean checkout with no network. Rings
+are kept whole rather than clipped to the frame---Matplotlib clips to the axes anyway, and
+clipping a polygon properly would need the geometry library the arrangement exists to
+avoid. Re-run the builder only to change a panel's extent.}
+
+\paragraph{\rev{The three frames.}} \rev{Metropolitan France
+$\lambda\in[-5.5,10]$, $\varphi\in[41,51.5]$; La~R\'eunion $\lambda\in[55.15,55.92]$,
+$\varphi\in[-21.42,-20.82]$; the world panel for everything outside both. The split is
+the archive's, not a choice: \num{\StatPrelimParaReunionFlights} paraglider flights launch
+on La~R\'eunion and \num{\StatPrelimParaElsewhereFlights} outside France altogether, and a
+single frame that held them would render metropolitan France four pixels wide. Each panel
+sets its aspect to $1/\cos\varphi$ at its own mid-latitude, so the coastline has its true
+shape rather than a stretched one.}
+
+\paragraph{\rev{The orographic boxes.}} \rev{The strata are longitude/latitude boxes
+rather than polygons traced from the map: a box that is written down can be checked
+against a gazetteer, and the test the strata support is whether the curves separate, not
+where exactly the Alps end. Alps $\lambda\in[5.4,10.0]$, $\varphi\in[43.8,46.6]$; Pyrenees
+$\lambda\in[-1.9,3.3]$, $\varphi\in[42.0,43.5]$; Massif Central $\lambda\in[1.8,4.6]$,
+$\varphi\in[43.6,46.2]$; anything else inside $\lambda\in[-6,10]$,
+$\varphi\in[41,52]$ is \enquote{lowland} and anything outside it is \enquote{abroad}. The
+boxes are coarse and overlap along their edges, with the first match winning in the order
+listed; they are a stratification, not a geography, and the test they support is whether
+the curves separate rather than where exactly the Alps end.}
+
+\paragraph{\rev{The stratum floor.}} \rev{A stratum below \num{2000} flights is pooled
+into the residual group rather than drawn. Below that the curve's own sampling error at
+the long-lag end is comparable to the separations being tested for, and a panel that draws
+it invites the reader to compare noise. The floor is why the hang-glider archive, at
+\num{\StatPrelimHangFlights} flights, contributes only to the isotropy panel: one wing
+class and one orographic group clear it, so the stratified panels would compare a stratum
+against itself.}
+
+\paragraph{\rev{The isotropy test.}} \rev{The variance ratio is computed on the same
+per-lag position matrix, column by column, over the flights covering that lag. The
+Kolmogorov--Smirnov comparison runs at four lags spanning the fit range, on the signed
+components rather than their magnitudes, so that a difference in \emph{spread} and a
+difference in \emph{shape} both register. Only the distance is quoted. At
+\num{\StatPrelimParaFlights} flights the two-sample $p$-value underflows to zero for any
+departure worth naming, so it separates nothing; the distance is the effect size and is
+what the text reads.}
+
+\paragraph{\rev{Stratum departure.}} \rev{Each stratum's curve is divided by the pooled
+curve over the fit range and the largest $|{\cdot}-1|$ recorded. Two summaries are
+generated: the maximum over strata (\texttt{\textbackslash StatPrelim*MaxDeparturePct})
+and the median over strata (\texttt{*TypicalDeparturePct}). The maximum alone reads as a
+statement about the smallest and noisiest stratum, which is what it usually is; the median
+is what distinguishes an axis along which the ensemble genuinely splits from one along
+which a single small group wanders. Both are quoted in Sec.~\ref{sec:prelim}.}
