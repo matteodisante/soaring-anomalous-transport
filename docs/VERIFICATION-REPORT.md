@@ -4,7 +4,7 @@ The pass specified by `PROMPT-VERIFY.md`, run after the implementation tasks of 
 Organised by that document's sections. **Confirmed** means checked here, by running
 something; **suspected** means argued and not checked. The two are never mixed.
 
-Fifteen findings. Twelve are fixed, two are reported and not fixed, one is a limitation of
+Eighteen findings. Fifteen are fixed, two are reported and not fixed, one is a limitation of
 this pass rather than of the work. Three of the fixes were themselves wrong when first made
 and are recorded as such in §6a.
 
@@ -29,6 +29,9 @@ and are recorded as such in §6a.
 | 13 | The abstract described the document as a plan; Chapter 3 contains measurements | understatement | fixed |
 | 14 | The introduction pointed the modelling decision at the wrong chapter, and promised measurements the body does not make | wrong reference | fixed |
 | 15 | The first-passage exponent, tried here as a cross-check, moves by 0.5 across the available radii | negative result | reported |
+| 16 | Fig. 3.3's caption lettered four panels; the figure has six, and (c) named the wrong one | wrong caption | fixed |
+| 17 | Chapter 3 never put its exponent beside the published one it cites in Chapter 4 | missing comparison | fixed |
+| 18 | One narrow table column was justified where its neighbours were ragged, causing 17 of 27 underfull boxes | typesetting | fixed |
 
 ---
 
@@ -195,11 +198,33 @@ document; and the density measurement below. **This is the largest gap in this p
 > boundaries: Chapter 2's longest falls to 337 words. Chapter 3 was already at a median of 93.
 > **Fixed.**
 
-### 3.4 Typesetting — **confirmed**
+### 3.4 Typesetting — **confirmed, one finding**
 
-On a full build: **0 overfull boxes**, 27 underfull (all residual `\hbox` badness in narrow
-`p{}` columns and URLs), 0 undefined references, no float wider than the text block. Checked
-on rendered pages as well as in the log.
+On a full build: **0 overfull boxes**, **0 undefined references**, no float wider than the
+text block, checked on rendered pages as well as in the log.
+
+> **Finding 18.** 27 underfull boxes, and 17 of them came from one column. The tooling table
+> in the implementation appendix has three narrow `p{}` columns; the first two carried
+> `\raggedright\arraybackslash` and the third did not, making it the only justified narrow
+> column in the document — and 5.9 cm cannot justify prose carrying tokens like
+> `SOARING_PARA_DATA_ROOT`. **Fixed**, 27 → 10: five `\hbox` in bibliography entries whose
+> URLs cannot break, five `\vbox` from float placement.
+
+### 3.4a The exponent against the literature — **confirmed, one finding**
+
+> **Finding 17.** Chapter 4 cites Vilpellet et al. for a global $H\approx0.88$ and Chapter 3
+> never set its own number beside it. It reproduces it, on the estimator that matches: the
+> plain increment gives $H=0.876$ for paragliders and $0.852$ for hang gliders, the first of
+> which rounds to the published figure at the precision that figure is quoted to. The
+> second-order variation gives $1.009$ and $0.972$.
+>
+> The gap is the chapter's own measurement from the other side. The difference between the
+> two orders *is* the flown course, and on this archive the course **suppresses**
+> displacement rather than inflating it, since most retained flights fly a closed triangle
+> that comes home — so a published exponent obtained without removing the course is expected
+> to sit below one obtained with it, by about the amount seen. **Fixed**, with $H$ emitted by
+> the generator rather than halved in prose: the first draft of the paragraph typed 0.875 and
+> 0.850 by hand, which is exactly the breach Finding 8's new check exists to catch.
 
 ### 3.5 What belongs where — **confirmed, one finding**
 
