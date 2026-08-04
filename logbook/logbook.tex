@@ -929,6 +929,38 @@ Goal: implementable through step (vii) included, no ranges left.
         with the new thresholds (the path-cut line moved to 10\,km).
 \end{description}
 
+\paragraph{2026-08 --- Global transport measured, and three ways it could have been wrong.}
+The displacement statistic about take-off turned out to be unusable for an exponent, for
+three reasons that compound: each flight carries its own course, the CFD scores closed
+tasks so 56\% of flights fly a triangle and come home, and the strata of Sec.~2.8 are
+incompatible at 40--62\%. Subtracting the course is not the repair it looks like --- the
+natural estimate uses the record's own endpoint, which turns the series into a bridge and
+returns $\alpha=1.35$ on synthetic data of true 1.50, with no safe lag range.
+
+What works is filtering rather than subtracting: an order-$p$ difference annihilates every
+polynomial of degree $p-1$, so no drift is estimated and none can be estimated badly. Over
+60--2000\,s the second-order filtered variation gives $\alpha=2.02\pm0.10$ for paragliders
+and $1.94\pm0.13$ for hang gliders, the two disciplines agreeing within their
+uncertainties. Removing the course \emph{raises} the exponent by 0.27, which is the
+opposite of what a drift does and follows from the closed tasks suppressing net
+displacement.
+
+The estimator survives what the ensemble MSD does not: cutting the archive by cadence,
+wing class, season and task type moves the exponent by 0.02, 0.06, 0.03 and 0.10, where
+the same strata departed from the pooled ensemble MSD by 40\% and 62\%. Chapter~3 is
+written on that, and reports one effective exponent over a declared window rather than a
+regime count --- breakpoint selection returns one break and surrogates return one 16\% of
+the time.
+
+Four errors of my own were caught by writing the tests rather than by reading the code: a
+factor-two normalisation error in the synthetic fractional-noise generator, invisible to
+any exponent test; a false-positive rate that was circular by construction, comparing a
+bent curve against copies of its own curvature; a ``clean range'' criterion that tightened
+as the archive grew, so it measured the sample size; and 101 phantom test passes from five
+Finder-style duplicate files. The reading $\alpha=2$ as ``ballistic, nothing to see'' was
+also wrong and was caught by calibration: a locally straight process reads 3.02 on this
+estimator and a straight line reads zero, so 2 means persistent and still rough.
+
 \paragraph{2026-08 --- The pipeline built, and the first MSD audited.}
 Stages (i)--(vii) implemented end to end and run over both archives: 155{,}788
 paraglider flights retained of 186{,}052 (83.7\%) and 6132 of
@@ -1030,7 +1062,12 @@ phase splitting.
         pooled MSD) or orographic group (62\%), though they are by season
         (12\%) --- so the archive may be pooled over time, not over class or
         terrain. Remaining: displacement maps.
-  \item \textbf{Whole-trajectory observables (Sec.~3.1, no segmentation).} Characterise
+  \item \textbf{Global transport (Ch.~3, no segmentation).} \textbf{Measured} (2026-08):
+        the filtered-variation exponent over 60--2000\,s, $2.02\pm0.10$ and
+        $1.94\pm0.13$, stable under every stratification the archive allows. Still to
+        build in that chapter: the propagator and its collapse, the moment spectrum within
+        a stratum, the velocity autocorrelation, the persistence times with the
+        inspection-bias correction, and the shuffle surrogates. Characterise
         the data with observables that need no phases. \textbf{Both MSD estimators are
         built and audited} (2026-08): a single exponent describes the time-averaged curve
         ($\alpha_{\mathrm{TA}}=1.732$ and $1.688$, residual under 4\%) and

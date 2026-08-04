@@ -312,8 +312,16 @@ Handle at ingestion (empirically observed on the real files):
 | 5 | `audit_msd.py` | per-flight positions at every lag, into `$AUDIT_DIR` | ~20 min |
 | 6 | `audit_msd_report.py` | `audit.tex` (`\StatAudit*`) | seconds |
 | 7 | `generate_prelim_figure.py` | `prelim_{ensemble,strata}.pdf`, `prelim.tex` | seconds |
-| 8 | `check_generated_macros.py` | nothing; fails if a quoted macro is unwritten | instant |
-| 9 | `latexmk` | `thesis/main.pdf` | ~1 min |
+| 8 | `generate_dataset_stats.py` | `dataset_stats.tex`, `dataset_seasons.pdf` | seconds |
+| 9 | `measure_variations.py` | per-flight filtered variations, into `$AUDIT_DIR` | ~25 min |
+| 10 | `generate_transport_figure.py` | `transport.tex`, `transport.pdf` | ~1 min |
+| 11 | `check_generated_macros.py` | nothing; fails if a quoted macro is unwritten | instant |
+| 12 | `latexmk` | `thesis/main.pdf` | ~1 min |
+
+Steps 9 and 10 are Chapter 3's measurement. Step 9 is the third full traversal of the fix
+table; it keeps one filtered-variation curve per flight per filter order, so every
+stratification step 10 performs — by cadence, wing class, season and declared task — is a
+row selection rather than another 43 GB scan.
 
 Steps 5–7 are the audit and the preliminary characterization. Step 5 is a second streaming
 pass that keeps what step 3 averages away — each flight's position at each lag — because

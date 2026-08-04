@@ -100,6 +100,22 @@ on the next build. To add a new module, a single `:::` line here is enough.
 
 ::: soaring.analysis.observables.transport
 
+## `analysis.observables.variations` — trend-robust scaling estimators
+
+::: soaring.analysis.observables.variations
+
+## `analysis.observables.regimes` — how many regimes, and where
+
+::: soaring.analysis.observables.regimes
+
+## `analysis.observables.synthetic` — processes whose answer is known
+
+::: soaring.analysis.observables.synthetic
+
+## `analysis.stats.bootstrap` — counting independent things
+
+::: soaring.analysis.stats.bootstrap
+
 ## `analysis.figures` — drawing, kept apart from computing
 
 ::: soaring.analysis.figures.preproc
