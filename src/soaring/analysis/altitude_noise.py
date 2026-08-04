@@ -437,41 +437,6 @@ def collect(
     return acc
 
 
-def make_altitude_noise_figure(
-    samples: dict[str, list[Path]],
-    *,
-    stat_samples: dict[str, list[Path]] | None = None,
-    stat_n_jobs: int = 1,
-    precomputed_baro_stats: dict[str, tuple[int, int]] | None = None,
-) -> Figure:
-    """Collect the diagnostics and build the altitude noise figure in one call.
-
-    A thin convenience wrapper around :func:`collect` +
-    :func:`render_altitude_noise_figure` for callers that only need the figure.
-    Callers that also need the underlying counts
-    (e.g. to report a confidence interval for panel (d), as
-    ``scripts/reporting/generate_altitude_noise_figure.py`` does) should call
-    :func:`collect` and :func:`render_altitude_noise_figure` separately instead, so the
-    data is not parsed twice.
-
-    Args:
-        samples: Mapping ``discipline -> list of .igc paths``, used for panels (a)/(b).
-        stat_samples: Optional, typically much larger mapping used only for panel (d).
-        stat_n_jobs: Worker processes for the panel-(d) census/sample.
-        precomputed_baro_stats: See :func:`collect`.
-
-    Returns:
-        The Matplotlib figure (not saved).
-    """
-    acc = collect(
-        samples,
-        stat_samples=stat_samples,
-        stat_n_jobs=stat_n_jobs,
-        precomputed_baro_stats=precomputed_baro_stats,
-    )
-    return render_altitude_noise_figure(acc, list(samples))
-
-
 def render_altitude_noise_figure(acc: _Accumulator, disciplines: list[str]) -> Figure:
     """Render the barometric-vs-GNSS altitude noise figure from collected diagnostics.
 

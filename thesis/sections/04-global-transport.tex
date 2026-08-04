@@ -240,9 +240,8 @@ therefore reported as \emph{effective} exponents over a stated range, and the qu
 how many regimes each curve really holds is left open here; it is what the
 sections below take up with estimators built for it. The time-averaged
 values are
-$\alpha_{\mathrm{TA}}=\StatMsdTaParaAlpha\pm\StatMsdTaParaAlphaErr$
-($H=\StatMsdTaParaHurst$) for paragliders and
-$\StatMsdTaHangAlpha\pm\StatMsdTaHangAlphaErr$ ($H=\StatMsdTaHangHurst$) for hang gliders,
+$\alpha_{\mathrm{TA}}=\StatMsdTaParaAlpha$ ($H=\StatMsdTaParaHurst$) for paragliders and
+$\StatMsdTaHangAlpha$ ($H=\StatMsdTaHangHurst$) for hang gliders,
 over \SIrange{\StatMsdTaParaFitMinS}{\StatMsdTaParaFitMaxS}{\second} and
 \SIrange{\StatMsdTaHangFitMinS}{\StatMsdTaHangFitMaxS}{\second}. Both lie well above the
 Brownian $\alpha=1$ and below the ballistic $\alpha=2$, so on the time-averaged statistic
@@ -253,18 +252,29 @@ crossover it averages over, and it is not a growth law the motion obeys. The ens
 curve's own result is stated in \emph{Origin of the crossover}: it is not an exponent but
 a timescale.
 
-\paragraph{What the $\pm$ means.}
-The uncertainty quoted with $\alpha_{\mathrm{TA}}$ is a \emph{bootstrap over flights}:
-\num{200} ensembles of the same size drawn with replacement from the archive, each
-refitted over the same range, and the standard deviation of their exponents reported. It
-answers one question and only that one---how much the exponent would move if the archive
-held a different draw of flights---and on \num{\StatMsdParaFlights} paraglider flights the
-answer is $\pm\StatMsdTaParaAlphaErr$ for the time average and
-$\pm\StatMsdParaAlphaErr$ for the ensemble fit.
+\paragraph{Why neither figure above carries a $\pm$.}
+Both are quoted bare, and the omission is deliberate. The natural uncertainty to attach is
+a bootstrap over flights: \num{200} ensembles of the same size drawn with replacement,
+each refitted over the same range, and the standard deviation of their exponents reported.
+On this archive it returns $\pm\StatMsdTaParaAlphaErr$, which is not an uncertainty on
+these numbers but an artefact of two assumptions the archive breaks.
+
+It treats \num{\StatMsdParaFlights} flights as independent records. They are not: two
+wings launched from one site on one day flew the same air, and the intraclass correlation
+of a per-flight scaling statistic at that level is \StatVarParaIccDaySite\
+(Sec.~\ref{sec:transport-measure}). And it treats the sampling error as the whole error,
+where the dominant term is the movement of the exponent when the fitted range changes ---
+fifty times larger, on the estimator where both have been measured. A curve that is a
+systematic arch has no single exponent for a sampling error to be an error \emph{of}.
+
+The exponents that carry an interval in this chapter are those of
+Sec.~\ref{sec:transport-measure}, where the resampling unit is justified by measurement
+and the range dependence is reported beside the sampling term.
 
 The least-squares error on the fitted slope is the other number one might quote, and for
 each estimator it is the larger of the two: $\StatMsdTaParaAlphaErrOls$ on the paraglider
-time average, $\StatMsdParaAlphaErrOls$ on the paraglider ensemble fit. That is not a
+time average, $\StatMsdParaAlphaErrOls$ on the paraglider ensemble fit --- still an order
+of magnitude below the range dependence. That is not a
 disagreement about the same quantity but a measurement of a different one. Least squares
 asks how well a \emph{straight line} describes the fitted points, treating each residual
 as an independent draw; the residuals here are neither independent---every lag is an

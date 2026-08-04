@@ -112,6 +112,28 @@ Census macros (\texttt{\textbackslash StatScan\dots}) &
   identically, the largest departure being \SI{0.016}{\metre}---the \texttt{float32}
   quantum at a coordinate of \SI{100}{\kilo\metre}.} \\
 \hline
+\rev{--- (an analysis product)} & \rev{\protect\path{measure_variations.py}, \protect\path{measure_shape.py}} &
+  \rev{The second and third streaming passes. The first keeps a filtered variation per
+  flight per filter order; the second keeps what the moments and the persistence runs need,
+  which is the increments themselves. Both write to \path{--out}, outside the repository,
+  and both are comparable in cost to the MSD pass.} \\
+\hline
+\rev{Table~\ref{tab:orderscan}, Fig.~\ref{fig:transport}, \texttt{\textbackslash StatVar*}} &
+  \rev{\protect\path{generate_transport_figure.py}} &
+  \rev{The order scan, its uncertainty split into sampling and range, the four
+  stratifications and the regime fit (Sec.~\ref{sec:transport-measure}). Reads the
+  variation pass, so a stratification is a row selection. Minutes.} \\
+\hline
+\rev{Fig.~\ref{fig:shape}, \texttt{\textbackslash StatShape*}} &
+  \rev{\protect\path{generate_shape_figure.py}} &
+  \rev{The moment spectrum and its tail control, the velocity autocorrelation and the
+  persistence runs (Sec.~\ref{sec:transport-shape}). Minutes.} \\
+\hline
+\rev{--- (a disk artefact, not a thesis one)} & \rev{\protect\path{write_ssd_readme.py}} &
+  \rev{Writes a README at the root of the data disk, generated from the disk itself so it
+  cannot describe a layout the disk no longer has. It has no caller in this table because
+  its output does not live here; re-run it after a processing run.} \\
+\hline
 \rev{--- (a check, not a product)} & \rev{\protect\path{check_generated_macros.py}} &
   \rev{Reads both sides of the contract this table describes---the macros
   \path{thesis/generated/} writes, and the macros the thesis quotes---and fails if the
