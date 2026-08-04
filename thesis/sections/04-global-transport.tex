@@ -844,8 +844,8 @@ $C=\StatShapeParaVacfAtFloor$ at the lower end of the grid and no sign change an
 where a change of sign would be the anti-persistence a circling wing produces. It is also
 the one observable in this chapter whose range is set by the pipeline rather than by the
 archive: the grid starts at \SI{\StatShapeParaFitMinS}{\second} because that is the
-smoothing scale of the slowest logger, and the correlation has already fallen below $1/e$
-there.
+smoothing scale of the slowest logger, and the correlation falls below $1/e$ by
+\SI{\StatShapeParaVacfDecayS}{\second}, within the first two lags of the grid.
 
 That last fact and the exponent look incompatible, and it is worth showing that they are
 not. A memory already spent by \SI{\StatVarParaFitMinS}{\second} would leave the motion
@@ -909,9 +909,9 @@ different answer.
   lag, with the Gaussian value and the Lévy-walk calibration marked and the quoted range
   shaded; it is flat and clearly above zero inside that range and climbs outside it, where
   the declared task governs the trajectory. (d)~The velocity autocorrelation, log--log with
-  the fitted tail dashed: positive throughout, already below $1/e$ at the lower end of the
-  grid --- which is the smoothing scale rather than a property of the flying --- and decaying
-  too slowly to be integrable. (e)~Survival of the persistence-run durations at three
+  the fitted tail dashed: positive throughout, below $1/e$ within the first two lags of the
+  grid --- whose lower end is the smoothing scale rather than a property of the flying --- and
+  decaying too slowly to be integrable. (e)~Survival of the persistence-run durations at three
   geometric thresholds; that they do not lie parallel is the statement that no run length is
   distinguished. (f)~The same thing as one number: the fitted tail index against the
   threshold that defines a run. Computed by

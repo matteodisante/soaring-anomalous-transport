@@ -87,3 +87,15 @@ logbook/*.lot
 # con un numero (es. 01_fondamenta.md, C2-dataset.tex).
 * [0-9].*
 * [0-9][0-9].*
+
+# LaTeX run from the repository root instead of thesis/ or logbook/. It happens when a
+# shell keeps its working directory across commands, and the artefacts land beside the
+# source tree where nothing else ignores them.
+/main.aux
+/main.fdb_latexmk
+/main.fls
+/main.log
+/main.out
+/main.pdf
+/main.toc
+/main.synctex.gz
