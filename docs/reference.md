@@ -108,6 +108,10 @@ on the next build. To add a new module, a single `:::` line here is enough.
 
 ::: soaring.analysis.observables.moments
 
+## `analysis.observables.persistence` — memory in time and in geometry
+
+::: soaring.analysis.observables.persistence
+
 ## `analysis.observables.regimes` — how many regimes, and where
 
 ::: soaring.analysis.observables.regimes
