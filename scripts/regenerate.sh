@@ -45,6 +45,10 @@
 #                  distinct run length as a candidate and measures a KS distance on the
 #                  tail at each, which on the paragliders' ~3e6 runs is ~15 min. The scan
 #                  is exact and the cost is the price of not choosing the cut-off by eye.
+#  12b. propagator -- the fourth traversal: histograms of the increments per lag per
+#                  component, from which the exponent is read off the bulk rather than off a
+#                  moment, and the scaling collapse is tested rather than assumed. Comparable
+#                  in cost to step 11.
 #  13. contract -- every macro the thesis quotes must now exist. An undefined one inside
 #                  \SI{} is a *fatal* LaTeX error, not a warning, so this runs before the
 #                  build and its failure is the useful message.
