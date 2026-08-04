@@ -1,13 +1,17 @@
 \chapter{Global transport}
 \label{impl:global}
-\rev{This chapter mirrors Chapter~\ref{ch:global}. Of it, the two mean-squared-displacement
-estimators and their audit are built, and Sec.~\ref{impl:obs-global} is a populated record
-of them; the remaining observables are stated in the body and not yet implemented.}
+\rev{This chapter mirrors Chapter~\ref{ch:global}. Built and recorded here: the two
+mean-squared-displacement estimators and their audit, the filtered-variation family that
+replaces them as a source of exponents, the moment spectrum, the non-Gaussian parameter, the
+velocity autocorrelation and its tail, and the persistence runs. Three observables the body
+catalogues are defined and not measured, and Table~\ref{tab:obs-status} says which.}
 
 \section{Observables on the whole trajectory}
 \label{impl:obs-global}
 \rev{The mean-squared displacement of Sec.~\ref{sec:obs-global} is implemented and
-unit-tested; the rest of the section's observables are not. The estimators live in
+unit-tested, as are four more of that section's observables; the shape ones are documented
+below and the three that are not measured are named in Table~\ref{tab:obs-status}. The
+estimators live in
 \path{soaring.analysis.observables.transport} and the figure, the curve table and the
 \texttt{\textbackslash StatMsd*} macros come from one pass of
 \path{generate_msd_figure.py} (Table~\ref{tab:impl-repro}). A second pass,
@@ -70,9 +74,13 @@ errors at long lags would be dominated by the last decade alone. It returns the
 least-squares error on the slope, which is written out as
 \texttt{\textbackslash StatMsd*AlphaErrOls} and is \emph{not} the quoted uncertainty.
 \path{bootstrap_alpha_error} resamples \num{200} ensembles of flights with replacement,
-refits each over the same range, and reports the standard deviation; that is the quoted
-$\pm$. The argument for preferring it, and the synthetic check that establishes it
-measures sampling uncertainty, are in Sec.~\ref{sec:obs-global}.}
+refits each over the same range, and reports the standard deviation as
+\texttt{\textbackslash StatMsd*AlphaErr}. Neither figure is attached to an exponent in the
+body: both MSD exponents are quoted bare, because the bootstrap treats clustered flights as
+independent records and because the range dependence is fifty times larger where both have
+been measured. Sec.~\ref{sec:obs-global} makes that argument and gives the synthetic check
+that establishes what each of the two errors measures; the exponents that do carry an
+interval are those of Sec.~\ref{sec:transport-measure}.}
 
 \paragraph{\rev{The cohorts.}} \rev{Three fixed-duration cohorts at $T=1$, $2$ and
 \SI{4}{\hour}. Within a cohort every member is present at every lag up to $T$, so the

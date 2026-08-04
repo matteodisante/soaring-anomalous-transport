@@ -74,8 +74,14 @@ Stats macros; Tables~\ref{tab:seasons-para},~\ref{tab:seasons-hang} &
   touching the archive: nothing there recomputes an estimator, so a change to the drawing
   need not cost another pass over $10^{9}$ rows.} \\
 \hline
-\rev{Table~\ref{tab:pipecensus}; \texttt{\textbackslash StatPipe*}} & \rev{\path{generate_pipeline_census.py}} &
+\rev{\texttt{\textbackslash StatPipe*}, the per-stage shares quoted around
+  Table~\ref{tab:pipecensus}} & \rev{\path{generate_pipeline_census.py}} &
   \rev{Queries \path{flights_meta.parquet}; instant.} \\
+\hline
+\rev{Table~\ref{tab:pipecensus} itself; \texttt{\textbackslash StatData*},
+  \texttt{\textbackslash DataCascade*}} &
+  \rev{\path{generate_dataset_stats.py}} &
+  \rev{Reads \path{flights_meta.parquet} and the catalogue; seconds.} \\
 \hline
 Census macros (\texttt{\textbackslash StatScan\dots}) &
   \path{generate_census_stats.py} &

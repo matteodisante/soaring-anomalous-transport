@@ -625,9 +625,8 @@ rather than on the altitude statistics: both groups are segmented with the same 
 compared, per discipline, on the fraction of airborne time each phase accounts for. The two
 estimates of each fraction are compatible when they agree within their uncertainties; a
 disagreement in any phase is the signal that the noisier channel is biasing the phase
-assignment. One number per phase per group is a deliberately simple check, and it is the
-right one, because the fraction of time per phase is exactly what the vertical channel
-feeds (Sec.~\ref{sec:prelim}).} If the noisier GNSS-only flights were to bias a
+assignment. One number per phase per group is enough for it: the fraction
+of time per phase is what the vertical channel feeds (Sec.~\ref{sec:prelim}).} If the noisier GNSS-only flights were to bias a
 vertical statistic, that analysis is restricted to the barometric flights -- still the large
 majority -- while the horizontal analyses keep the full sample. Forcing GNSS on \emph{all}
 flights, to avoid the mix, would be the wrong trade: it would needlessly degrade the vertical
@@ -729,8 +728,8 @@ within it. The identifier's role is to flag and to attribute---to say which fix 
 neighbourhood departs from it---and to supply the per-flight anomaly count; the reason it
 cannot also be required is argued below.}
 
-A genuine but under-sampled tight turn is kept either way, and it is worth seeing why,
-because it is what a naive speed-only rule would get wrong and what the identifier was
+A genuine but under-sampled tight turn is kept either way. It is what a naive speed-only
+rule would get wrong and what the identifier was
 originally there to protect. The Hampel test measures a departure from the local median
 track, and a tight thermalling circle produces exactly such a departure: at a
 \SI{10}{\second} cadence a circle of a few tens of metres in diameter puts consecutive
@@ -845,8 +844,6 @@ Table~\ref{tab:workingparams}}; their reasonableness
 is then checked a posteriori on the fraction of fixes each rule removes (paragraph
 \emph{Validating the cleaning} below).
 
-(Status: the routine
-that walks a trajectory applying the three detectors is still to be built.)
 
 \paragraph{Removal policy.}
 A speed bound alone cannot attribute a defect: the speed belongs to the segment
@@ -1346,8 +1343,9 @@ mode above. \rev{A stint is cut only when \emph{both} of the following hold:}
   \item \rev{$v_{xy}<v_0$ continuously for at least
         $T_{\mathrm{ground}}=\SI{\PreprocInteriorGroundMin}{\minute}$---far beyond any
         search phase, so no genuine slow phase reaches this length;}
-  \item \rev{the adopted altitude channel flat over the whole stint, its range staying
-        within $\delta_z^{\mathrm{gr}}=\SI{\PreprocGroundFlatnessM}{\metre}$ once the slow
+  \item \rev{the adopted altitude channel flat over the whole stint, the central span of
+        its detrended values staying within
+        $\delta_z^{\mathrm{gr}}=\SI{\PreprocGroundFlatnessM}{\metre}$ once the slow
         barometric drift has been removed---a wing at zero ground speed in real air still
         moves vertically, the same independent-sensor argument as
         Eq.~\eqref{eq:frozenlock}.}
@@ -1416,8 +1414,8 @@ outlier identifier. \rev{Flagged waits are reported, not merely used internally:
 count, and the share of the total waiting-time mass they carry, are given per discipline
 alongside the two $\psi(\tau)$ fits, so the reader can see how much of the tail rests on
 them.} $T_{\mathrm{ground}}$ and $\delta_z^{\mathrm{gr}}$ are parameters
-of this guard; they will join the \texttt{trimming} block of the configuration file when
-the guard is implemented, with working values \rev{as in Table~\ref{tab:workingparams}}.
+of this guard and sit in the \texttt{trimming} block of the configuration file, with the
+values \rev{of Table~\ref{tab:workingparams}}.
 
 \subsection{Flight-level filtering}
 \label{sec:flightfilter}
@@ -2495,9 +2493,10 @@ $1.4\times10^{9}$, which Sec.~\ref{impl:obs-global} accounts for.
 \paragraph{What the cascade costs, and whether it costs it evenly.}
 Table~\ref{tab:pipecensus} reads the discards as a cascade, and one criterion dominates:
 \StatDataParaWorstCutRemoved\ paraglider flights, \SI{\StatDataParaWorstCutPct}{\percent}
-of those still standing, leave nothing behind after resampling. That is an order of
-magnitude more than any threshold Sec.~\ref{sec:preproc} argues for, and it is a rule
-about record quality rather than about flight, so it deserves a check the others do not.
+of those still standing, leave nothing behind after resampling. That is four times the next
+largest cut, it is a rule about record quality rather than about flight, and it is not a
+threshold Sec.~\ref{sec:preproc} argues for at all --- so it deserves a check the others do
+not.
 
 It fails that check in one respect and passes it in another. Across native cadences the
 sparsity rule is markedly uneven: it removes
@@ -2603,10 +2602,12 @@ confound. Class and geography are relevant strata, and the difference is itself 
 rather than a nuisance: a competition wing covers ground faster than a recreational one,
 and thermals over a mountain range are anchored to slopes and organised along ridges
 whereas over flat terrain they drift with the wind, so the persistence of the glides and
-the spacing of the climbs need not be the same. Every transport statistic of
-Chapter~\ref{ch:global} is therefore reported per class and per orographic group as
-well as pooled, and a pooled exponent is read as an average over strata that are known to
-differ, not as a property of a homogeneous population.
+the spacing of the climbs need not be the same. The exponent of
+Chapter~\ref{ch:global} is therefore reported by wing class as well as pooled, alongside
+cuts by native cadence, season and declared task
+(Table~\ref{tab:strata-alpha}); the orographic cut is made here, on the ensemble MSD, which
+is the statistic it separates. A pooled exponent is read as an average over strata that are
+known to differ, not as a property of a homogeneous population.
 \end{revblock}
 
 \begin{figure}[htbp]

@@ -240,7 +240,7 @@ savgol_window_horiz                5.0                     NaN
 \end{verbatim}
 }
 
-\noindent (abridged: the full forty-one are listed in Sec.~\ref{impl:onDisk}.) A dropped flight
+\noindent (abridged: the table carries \num{47} columns in all.) A dropped flight
 keeps everything the stages \emph{before} the verdict had already measured---flight 830
 was judged on a duration of \SI{1085}{\second}, and its cleaning counters remain
 auditable even though none of its fixes reached the trajectory table. That is what makes
@@ -306,9 +306,9 @@ independently of any flight-dynamics judgement: that the time is a valid 24-hour
 hemisphere letter is one of the two valid characters; and that the decoded
 latitude/longitude fall within $[-90,90]$/$[-180,180]$ degrees. A record failing any of
 these is dropped as unparseable, on the same footing as a record with the wrong length or
-a non-numeric field. \flow{This format-validity check is implemented and unit-tested; the fix-level
-plausibility checks, a distinct stage, are designed but not yet built
-(Sec.~\ref{impl:fixlevel}, Table~\ref{tab:impl-status}).}
+a non-numeric field. \flow{This format-validity check and the fix-level plausibility checks are distinct stages,
+and both are implemented and unit-tested (Sec.~\ref{impl:fixlevel},
+Table~\ref{tab:impl-status}).}
 
 \section{Flight metadata and the catalog}
 \label{impl:catalog}
@@ -581,11 +581,12 @@ tracking the block's running bounding box to test its bounding diameter against 
 the cost is $O(N)$ in the number of fixes.
 
 \subsubsection{\flow{Time-base defects}}
-The parser already rebuilds a
-monotone clock: it unwraps the UTC-midnight roll-over (a drop of $\sim$\SI{86400}{\second}
-advances the day count) and clamps residual backward jitter with a running maximum
-(Sec.~\ref{impl:igcformat}). The redesign changes one behaviour: a backward step that is
-\emph{not} a roll-over is no longer silently clamped but removed -- the fix with the corrupt
+The parser unwraps the UTC-midnight roll-over --- a drop of
+$\sim$\SI{86400}{\second} advances the day count --- and \emph{leaves} residual backward
+jitter in place (Sec.~\ref{impl:igcformat}). That is deliberate, and it is the one behaviour
+the redesign changed: the parser used to flatten the jitter with a running maximum, which is
+a repair, and repairing it there destroys the evidence this stage has to act on. A backward
+step that is \emph{not} a roll-over is now removed rather than absorbed -- the fix with the corrupt
 time is deleted as a node, just as a fix with a corrupt position is. A corrupted timestamp
 is recorded as a defect rather than silently repaired. Which fix carries the corrupt time
 is decided by minimal removal: delete the smallest set whose removal leaves a strictly
@@ -894,7 +895,7 @@ central span does not (Sec.~\ref{sec:trimming}). No new config key is needed.}
 Building it made one thing explicit that the rule as stated leaves open. Detrending cannot
 by itself separate a pressure drift from a steady climb, because both are linear and the
 fit removes either completely: a wing thermalling at \SI{1}{\metre\per\second} in still
-air holds a ground speed near zero, gains \SI{700}{\metre} over a $T_{\mathrm{ground}}$
+air holds a ground speed near zero, gains \SI{600}{\metre} over a $T_{\mathrm{ground}}$
 stint, and leaves a detrended residual of \emph{zero} --- so the flatness condition alone
 would excise it as a mid-flight landing, which is precisely the failure this guard exists
 to avoid. What separates the two is the \emph{rate}: drift runs at tens of metres per
@@ -948,8 +949,11 @@ name in full, so that a count can be traced to the code that produced it:
 Two consequences follow, and both matter for reading the numbers. The counts are
 \emph{marginal}: each is the effect of one criterion applied alone to the whole parsed
 population, not of the cascade. And they are pre-cleaning: the scan runs on parsed tracks,
-so every count in Sec.~\ref{sec:flightfilter} is recomputed once the fix-level stage
-exists, and should be read as the present best estimate rather than as a final figure.
+so a count in Sec.~\ref{sec:flightfilter} is what the criterion removes from the parsed
+archive and not from the cleaned one. That is deliberate and is argued for above
+(\emph{What the census is not}): a threshold chosen on the population the cleaning has
+already reshaped would be chosen against its own effect. The post-cleaning counts are the
+cascade of Sec.~\ref{sec:pipelinemap}, and the two answer different questions.
 \end{revblock}
 
 \subsection{From geographic to local Cartesian coordinates}

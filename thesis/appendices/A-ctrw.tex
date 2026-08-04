@@ -31,15 +31,19 @@ Since steps and waiting times are independent,
 For large $t$ the mean number of renewals in $[0,t]$ follows from the renewal equation and
 the Tauberian theorem applied to the Laplace transform of $\psi$. Because
 $\hat\psi(s)\equiv\int_0^\infty e^{-s\tau}\psi(\tau)\,\mathrm{d}\tau \simeq
-1-(\tau_0 s)^\alpha+\cdots$ for $s\to 0$ (a consequence of $\psi$ having a power-law
-tail with exponent $1+\alpha$), the renewal theorem gives
+1-\Gamma(1-\alpha)\,(\tau_0 s)^\alpha+\cdots$ for $s\to 0$ (a consequence of $\psi$
+having a power-law tail with exponent $1+\alpha$ and amplitude $\alpha\tau_0^\alpha$), the
+renewal theorem gives
 \begin{equation}
-  \langle n(t)\rangle \sim \frac{t^\alpha}{\tau_0^\alpha\,\Gamma(1+\alpha)}, \qquad t\to\infty .
+  \langle n(t)\rangle \sim
+  \frac{t^\alpha}{\Gamma(1-\alpha)\,\Gamma(1+\alpha)\,\tau_0^\alpha}
+  = \frac{\sin\pi\alpha}{\pi\alpha}\,\Bigl(\frac{t}{\tau_0}\Bigr)^{\!\alpha},
+  \qquad t\to\infty .
 \end{equation}
 Hence the \textbf{EA-MSD} grows sub-linearly,
 \begin{equation}
   \mathrm{MSD}(t) = \langle x^2(t)\rangle
-  \sim \frac{\sigma^2}{\tau_0^\alpha\,\Gamma(1+\alpha)}\,t^\alpha
+  \sim \frac{\sigma^2}{\Gamma(1-\alpha)\,\Gamma(1+\alpha)\,\tau_0^\alpha}\,t^\alpha
   \equiv K_\alpha\,t^\alpha , \qquad 0<\alpha<1 .
   \label{eq:ctrw-enmsd}
 \end{equation}
