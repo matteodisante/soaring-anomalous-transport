@@ -54,6 +54,12 @@ LEVELS = ("flight", "day_site", "day", "pilot")
 # their start by construction, which is what saturates a displacement statistic.
 _CLOSED = "triangle"
 
+# The fitted range, stated rather than discovered. Its lower end is above the slowest
+# logger's smoothing scale (5 samples at dt = 10 s is 50 s); its upper end is where the
+# flight-duration censoring begins to bite on the median flight. Every exponent is quoted
+# with the range it was fitted over, and with how much it moves when the range changes.
+FIT_RANGE_S = (60.0, 2000.0)
+
 _PDF_METADATA = {"Creator": "soaring.analysis", "Producer": "soaring.analysis", "CreationDate": None}
 
 
@@ -70,28 +76,40 @@ def load(slug: str, audit_dir: Path):
     }
 
 
-def task_ceiling(lags, curves, closed, *, tolerance=0.05):
-    """The lag above which closed and open tasks stop agreeing, in seconds.
+def task_systematic(lags, curves, closed, fit_range):
+    """How much the declared task moves the exponent, as the closed/open difference.
 
-    Both populations fly the same air and the same wings; what differs is where the task
-    sends them. So long as their curves agree, the statistic is measuring motion. The
-    first lag at which they differ by more than ``tolerance`` in the local slope is where
-    it starts measuring the scoring rule instead, and it is the honest upper end of any
-    transport fit.
+    The CFD scores closed tasks, so most flights fly a triangle and return towards their
+    start. That suppresses a plain displacement statistic at long lags by construction.
+    There is no lag below which the effect is absent -- the two populations differ at every
+    lag and the difference grows smoothly, from 0.03 in the local slope at 60 s to 1.1 at
+    12000 s -- so a "ceiling" above which the measurement is clean does not exist and any
+    threshold on the difference merely picks an arbitrary point on a smooth curve, at a
+    place that moves with the sample size.
+
+    What can be done instead is to fit both populations and report the gap as a systematic.
+    It is also the sharpest demonstration of why the chapter uses a filtered variation: on
+    the plain increment the gap reaches 0.28 over a wide range, and on the second-order
+    variation it stays under 0.15, because a difference of curvature does not care that
+    the course eventually comes home.
+
+    Returns:
+        ``(alpha_open, alpha_closed, slope_open, slope_closed)``.
     """
     from soaring.analysis.observables.regimes import local_slope
+    from soaring.analysis.observables.variations import hurst_from_variations
 
     with np.errstate(invalid="ignore"):
-        shut = local_slope(lags, np.nanmean(curves[closed], axis=0), 0.25)
-        open_ = local_slope(lags, np.nanmean(curves[~closed], axis=0), 0.25)
-    gap = np.abs(shut - open_)
-    usable = np.isfinite(gap)
-    if not usable.any():
-        return float("nan"), shut, open_
-    over = usable & (gap > tolerance)
-    if not over.any():
-        return float(lags[usable][-1]), shut, open_
-    return float(lags[np.flatnonzero(over)[0]]), shut, open_
+        mean_closed = np.nanmean(curves[closed], axis=0)
+        mean_open = np.nanmean(curves[~closed], axis=0)
+    alpha_closed = 2.0 * hurst_from_variations(lags, mean_closed, fit_range=fit_range)[0]
+    alpha_open = 2.0 * hurst_from_variations(lags, mean_open, fit_range=fit_range)[0]
+    return (
+        alpha_open,
+        alpha_closed,
+        local_slope(lags, mean_open, 0.25),
+        local_slope(lags, mean_closed, 0.25),
+    )
 
 
 def measure(discipline: str, loaded: dict, macros: dict) -> dict:
@@ -121,10 +139,16 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
         if "flight_type" in frame
         else np.zeros(len(frame), bool)
     )
-    ceiling, slope_closed, slope_open = task_ceiling(lags, loaded["orders"][1], closed)
     put("ClosedPct", f"{100 * closed.mean():.0f}")
-    put("TaskCeilingS", f"{ceiling:.0f}")
-    put("FitMinS", f"{lags[0]:.0f}")
+    put("FitMinS", f"{FIT_RANGE_S[0]:.0f}")
+    put("FitMaxS", f"{FIT_RANGE_S[1]:.0f}")
+    put("FitDecades", f"{np.log10(FIT_RANGE_S[1] / FIT_RANGE_S[0]):.1f}")
+    task = {
+        p: task_systematic(lags, loaded["orders"][p], closed, FIT_RANGE_S) for p in ORDERS
+    }
+    for p in ORDERS:
+        put(f"TaskGapOrder{p}", f"{task[p][0] - task[p][1]:+.2f}")
+    slope_open, slope_closed = task[1][2], task[1][3]
 
     # ---- how much clustering there is, at each level --------------------------------
     reference = np.log10(
@@ -149,7 +173,7 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
     put("Clusters", f"{np.unique(labels).size}")
 
     # ---- the order scan, with clustered intervals -----------------------------------
-    window = (lags >= lags[0]) & (lags <= ceiling)
+    window = (lags >= FIT_RANGE_S[0]) & (lags <= FIT_RANGE_S[1])
     put("FitLags", f"{int(window.sum())}")
     alphas = {}
     for p in ORDERS:
@@ -212,7 +236,6 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
         "orders": loaded["orders"],
         "slope_closed": slope_closed,
         "slope_open": slope_open,
-        "ceiling": ceiling,
         "window": window,
     }
 
@@ -231,7 +254,7 @@ def draw(measured: dict):
         with np.errstate(invalid="ignore"):
             mean2 = np.nanmean(m["orders"][2], axis=0)
         curve_ax.loglog(lags, mean2, color=colour, label=discipline)
-        curve_ax.axvspan(lags[m["window"]][0], m["ceiling"], color="0.92", zorder=0)
+        curve_ax.axvspan(*FIT_RANGE_S, color="0.92", zorder=0)
 
         for p, style in zip(ORDERS, ("-", "--", ":")):
             with np.errstate(invalid="ignore"):
@@ -241,12 +264,11 @@ def draw(measured: dict):
 
         task_ax.semilogx(lags, m["slope_closed"], "-", color=colour, label=f"{discipline}, closed")
         task_ax.semilogx(lags, m["slope_open"], "--", color=colour, label=f"{discipline}, open")
-        task_ax.axvline(m["ceiling"], color=colour, lw=0.8, ls=":")
 
         with np.errstate(invalid="ignore"):
             slope_ax.semilogx(lags, local_slope(lags, np.nanmean(m["orders"][2], 0), 0.25),
                               color=colour, label=discipline)
-        slope_ax.axvspan(lags[m["window"]][0], m["ceiling"], color="0.92", zorder=0)
+        slope_ax.axvspan(*FIT_RANGE_S, color="0.92", zorder=0)
 
     curve_ax.set_xlabel("lag (s)")
     curve_ax.set_ylabel(r"$V_2(\Delta)$ (m$^2$)")
