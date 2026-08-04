@@ -258,6 +258,57 @@ Follow `global_analysis_sketches/` §1–§3, in its own execution order (§3.7.
 its four gates. The order below is that order; do not reorder it, because each stage's
 validity depends on the one above.
 
+### The plan for Chapter 3, and where it overrules the sketches
+
+`global_analysis_sketches/04_chapter3_plan.md` is the prioritised inventory: nine sections
+of ESSENTIAL/VALUABLE/OPTIONAL methods organised as the chapter's argument, an explicit
+out-of-scope list for Chapter 4, and a rejection table with reasons. **Follow it.** It was
+built by six independent method surveys plus an adversarial pass, and several of its
+entries were checked against the written curves rather than argued.
+
+It overrules the sketches and the current thesis in five places, each with a reason worth
+reading before disagreeing:
+
+1. **The resolution budget is 4–6 effective degrees of freedom per curve**, not 80: the
+   residuals are correlated across lags because every lag averages the same flights. So
+   **K = 1 breakpoint is estimable, K = 2 marginal, K ≥ 3 is not claimable**, and any
+   exponent quoted tighter than **±0.02** is a reporting error. Declare the budget in the
+   chapter and repeat it in every caption.
+2. **The `±0.001` uncertainties are wrong by one to two orders of magnitude.** They treat
+   155 788 flights as independent records; flights cluster by day and site. Replace the
+   per-flight bootstrap with a **clustered bootstrap at day × site**, and justify the
+   clustering level by reporting the intra-class correlation of the per-flight exponent at
+   flight / day / day × site / pilot / season.
+3. **The moment spectrum is not "the main test" here**, contrary to the sketches' §2.2. A
+   mixture of monofractals is itself multifractal, the stratum incompatibility is already
+   measured at 40 % and 62 %, and 1.7 decades cannot separate a curved from a linear
+   `ζ(q)`. It survives within a stratum, `q ≤ 3`, as one section among several — never as
+   the discriminator the chapter rests on.
+4. **The air frame is rejected as a frame, and for a sharper reason than §E1a gives.** The
+   hodograph fails *systematically on straight glides* — precisely the segments that carry
+   the displacement — so integrating an interpolated wind through them measures the
+   interpolation rule. Measured convergence: 34–44 % of windows at `dt ≤ 4 s`, 8–9 % at
+   10 s, biased towards climb. Wind is retained as a **stratifier**, and any TAS-derived
+   number must carry the coverage fraction beside it.
+5. **Per-flight exponent fitting is rejected**, and with it the per-flight `α` histogram
+   the heterogeneity protocol of `03_diagnostica.md` §3.1.2 assumes. The median flight
+   supports 0.89 decades, giving `s.e.(α) ≈ 0.2–0.3` — comparable to the whole EA/TA gap.
+   The heterogeneity test survives in grouped form (100–500 flights matched on duration
+   and site) or as a hierarchical measurement-error model, not as a histogram.
+
+Two defects it found in code already written, both to fix in E1:
+
+- **The Savitzky–Golay window has a floor of five *samples*,** so the velocity is a 5 s
+  derivative at 1 Hz and a 50 s one at 10 s. The thesis states the floor but not its
+  consequence: **nothing velocity-derived may be pooled across cadence classes.** The fix
+  is one protocol, not three — declare the smoothing scale, coarse-grain every observable
+  to a common scale, and validate by decimating the 1 Hz flights to 2, 5 and 10 s with
+  re-smoothing at the decimated cadence.
+- **The local-slope band is the wrong quantity.** The interquartile range of the
+  within-window pairwise slopes divided by `√n` measures how straight the window is, not
+  how uncertain the slope is. Delete it and replace it with a clustered-bootstrap band,
+  pointwise and sup-norm-calibrated.
+
 ### E1 — foundations (`01_fondamenta.md`)
 
 - The validity mask, the sampling step and the two Savitzky–Golay series (§1.1–1.2). Much

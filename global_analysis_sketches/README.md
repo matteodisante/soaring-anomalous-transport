@@ -9,6 +9,7 @@ be measured on the dataset without first segmenting a flight into its phases.
 | `01_fondamenta.md` | data schema, sampling step and filtering, lag grid and `N_eff`, wind from the sliding-window hodograph, the three drifts, centred increments, isotropy |
 | `02_trasporto.md` | MSD by FFT, the moment spectrum, PDF scaling and collapse, VACF and heading correlation, geometric persistence times, block and shuffle tests |
 | `03_diagnostica.md` | the heterogeneity confound, the vertical channel, bootstrap over flights, the 15-row consistency table, what remains precluded, output schema and execution order |
+| `04_chapter3_plan.md` | the prioritised inventory the chapter is actually built from: nine sections of ESSENTIAL/VALUABLE/OPTIONAL methods organised as the argument, the out-of-scope list for Chapter 4, and a rejection table with reasons |
 
 ## How to read them against the code
 
@@ -24,7 +25,17 @@ facts, the repository wins; where they disagree about method, they win.**
 - The ERA5 cross-check (§1.4.2, GATE B) needs reanalysis data the repository does not have.
   The hodograph wind is implemented; that gate is recorded as unmet.
 
-## Two places where they correct the thesis
+## `04_chapter3_plan.md` overrules the first three
+
+Written 2026-08-04 from six independent method surveys and an adversarial pass, and checked
+against the written curves rather than argued. Where it and files 01–03 disagree, it wins:
+it knows the dataset, and they were written before it existed. Its five substantive
+reversals are the resolution budget (4–6 effective d.o.f., so no more than two regimes are
+claimable and no exponent tighter than ±0.02), the clustering of the bootstrap at day×site,
+the demotion of the moment spectrum from "the main test" to one stratum-level section, the
+rejection of the air frame, and the rejection of per-flight exponent fitting.
+
+## Two places where files 01–03 correct the thesis
 
 Both were written before the measurement that confirmed them, and both are load-bearing.
 
