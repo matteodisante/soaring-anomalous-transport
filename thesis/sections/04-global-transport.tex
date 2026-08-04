@@ -647,7 +647,29 @@ because they differ by a factor of fifty and only the second is worth arguing ab
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:orderscan} gives the scan. Three things in it are the result.
+\begin{figure}[htbp]
+  \centering
+  \IfFileExists{generated/transport.pdf}{%
+    \includegraphics[width=\linewidth]{generated/transport}%
+  }{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/generate\_transport\_figure.py}.}}%
+  }
+  \caption{\rev{The filtered variation, on which the exponent is read.
+  (a)~$V_2(\Delta)$ against lag, log--log, with the fitted range shaded. (b)~The local
+  $H=\tfrac12\,\mathrm{d}\log V_p/\mathrm{d}\log\Delta$ at the three filter orders: inside
+  the fitted range $p=1$ runs below $p=2$ and $p=3$, which is the flown course being read
+  as a lower exponent, and the three separate beyond it. (c)~The same local slope at
+  $p=1$, with the ensemble split by declared task; closed and open courses track each other
+  to about \SI{3000}{\second} and part company after it, which is where the scoring rule
+  rather than the air governs the displacement. (d)~The local slope of $V_2$, the quantity
+  the fit averages over the shaded range. Computed by
+  \texttt{scripts/reporting/generate\_transport\_figure.py}.}}
+  \label{fig:transport}
+\end{figure}
+
+Table~\ref{tab:orderscan} gives the scan, and Figure~\ref{fig:transport} the curves behind
+it. Three things in them are the result.
 
 \paragraph{Removing the course raises the exponent.}
 $\alpha_1$ and $\alpha_2$ differ by $\StatVarParaDriftShare$\ for paragliders and
