@@ -251,7 +251,8 @@ within-flight estimator that annihilates any polynomial trend. Over
 \SIrange{\StatVarParaFitMinS}{\StatVarParaFitMaxS}{\second} that estimator gives
 $\alpha=\StatVarParaAlphaOrderTwo\pm\StatVarParaAlphaOrderTwoErr$ for paragliders and
 $\StatVarHangAlphaOrderTwo\pm\StatVarHangAlphaOrderTwoErr$ for hang gliders --- strongly
-super-diffusive, and unmoved by every stratification the archive allows. Beyond the second
+super-diffusive, and moved by no stratification the archive allows by more than its own
+uncertainty. Beyond the second
 moment, the spectrum of moments is straight, so the motion is monofractal and is
 \emph{not} a L\'evy walk; the propagator is nonetheless not Gaussian; and no leg duration is
 distinguished, which is a constraint on any segmentation attempted next.
@@ -274,11 +275,16 @@ plan rather than a result.}
 
 \appendix
 % ---- Per-chapter appendix numbering (July 2026 review pass): an appendix is numbered
-% ---- after the body chapter where it is first cited -- "Appendix 2.A" for the first
-% ---- appendix cited in Chapter 2, and so on. All three appendices below are first cited
-% ---- in Chapter 2; they appear in citation order (PSD in Sec. 2.7.1, CTRW in Sec. 2.7.2,
-% ---- geodesy in Sec. 2.7.5). \appendix has just reset the chapter counter and set
-% ---- \thechapter to \Alph{chapter}; the prefix is added on top of that.
+% ---- after the body chapter where it FIRST CITES it -- "Appendix 2.A" for the first
+% ---- appendix cited in Chapter 2, and so on. \appendix has just reset the chapter counter
+% ---- and set \thechapter to \Alph{chapter}; the prefix is added on top of that.
+% ----
+% ---- The citations, checked rather than assumed (August 2026 verification pass): PSD from
+% ---- Sec. 2.7.1, geodesy from Sec. 2.7.5, CTRW from Chapter 3 and from nowhere else. So
+% ---- the CTRW appendix belongs to Chapter 3 and is numbered 3.A below, and the input order
+% ---- is citation order across the whole body rather than within Chapter 2. Before this
+% ---- pass it was lettered 2.B and placed ahead of the geodesy appendix, which broke both
+% ---- halves of the rule the divider page states to the reader.
 \renewcommand{\thechapter}{2.\Alph{chapter}}
 % ---- Divider page (July 2026 pass): states the numbering convention to the reader --
 % ---- the comment above only serves the maintainer. Hand-built in the style of a
@@ -294,17 +300,24 @@ plan rather than a result.}
 \begin{flowblock}
 \begin{center}
 \begin{minipage}{0.78\textwidth}
-The appendices are numbered after the body chapter they support: Appendices 2.A, 2.B
-and 2.C all belong to Chapter~2, and follow one another in the order in which the text
-first cites them.
+Each appendix is numbered after the body chapter that first cites it: Appendices 2.A
+and 2.B belong to Chapter~2, Appendix 3.A to Chapter~3. They follow one another in the
+order in which the text first cites them.
 \end{minipage}
 \end{center}
 \end{flowblock}
 \vfil\vfil
 \newpage
 \input{appendices/B-psd}
-\input{appendices/A-ctrw}
 \input{appendices/geodesy}
+% ---- The CTRW appendix is cited only from Chapter 3, so it is 3.A. Resetting the counter
+% ---- makes it reclaim the anchor names the Chapter-2 appendices already used, and every
+% ---- PDF link to it would land on Appendix 2.A; \theHchapter gives it its own namespace,
+% ---- the same remedy the implementation part applies for the same reason.
+\renewcommand{\thechapter}{3.\Alph{chapter}}
+\renewcommand{\theHchapter}{ctrw.\Alph{chapter}}
+\setcounter{chapter}{0}
+\input{appendices/A-ctrw}
 \input{appendices/C-implementation}
 
 \end{document}

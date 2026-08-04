@@ -24,10 +24,11 @@ displacement $\mathbf{x}$, and the joint density $\psi(\mathbf{x},\tau)$ of the 
 the transport. The L\'evy walk is not a separate framework but the particular case in which
 the two are coupled through a constant speed $v$,}
 \begin{equation}
-  \rev{\psi(\mathbf{x},\tau) = \tfrac{1}{2}\,\delta\!\left(|\mathbf{x}| - v\tau\right) w(\tau),}
+  \rev{\psi(\mathbf{x},\tau) \propto \delta\!\left(|\mathbf{x}| - v\tau\right) w(\tau),}
   \label{eq:levywalk}
 \end{equation}
-\rev{so that each waiting time is spent travelling ballistically rather than standing
+\rev{with the direction drawn uniformly, so that each waiting time is spent travelling
+ballistically rather than standing
 still~\cite{zaburdaev2015}. Anomalous transport of this kind has been reported in
 random-search strategies~\cite{viswanathan1999}, in disordered
 media~\cite{bouchaud1990}, and in turbulent flows~\cite{solomon1993}.}
@@ -89,15 +90,17 @@ been assembled and verified and is described in \rev{Chapter~\ref{ch:dataset}}; 
 collection continues and will be extended to further sources, in particular sailplanes and
 competition flights} (Sec.~\ref{sec:acquisition}). \rev{The dataset
 (Secs.~\ref{sec:igcformat}--\ref{sec:coverage}) and its cleaning-and-filtering pipeline
-(Sec.~\ref{sec:preproc}) are described in Chapter~\ref{ch:dataset}; the segmentation, the
-transport analysis and modelling, and the extension to competition flights define the work
-ahead} (Chapter~\ref{ch:global}).
+(Sec.~\ref{sec:preproc}) are described in Chapter~\ref{ch:dataset}, and the transport of the
+unsegmented trajectory is measured in Chapter~\ref{ch:global}; the segmentation, the
+modelling it enables (Chapter~\ref{ch:phases}), and the extension to competition flights
+define the work ahead.}
 
 \section{Scope of this document}
 
 This document reports the current state of the project and is revised as the work proceeds.
-Its statistics, tables, and figures are produced directly from the dataset by the
-analysis code, so the numbers quoted in the text cannot drift from the data they describe.
+The statistics it quotes, and the tables and figures that carry them, are generated from
+the dataset by the analysis code rather than typed, so those numbers cannot drift from the
+data they describe.
 Chapter~\ref{ch:dataset} follows the data end to end: its acquisition and the
 reproducibility of the pipeline (Sec.~\ref{sec:acquisition}); the tracklog format and the
 flight catalog (Secs.~\ref{sec:igcformat}--\ref{sec:catalog}); the glider categories and
@@ -107,11 +110,15 @@ that turns the raw logs into analysis-ready trajectories (Sec.~\ref{sec:preproc}
 first characterization of the cleaned dataset (Sec.~\ref{sec:prelim}); and a
 one-map summary of the whole pipeline that closes the chapter
 (Sec.~\ref{sec:pipelinemap}).
-Chapter~\ref{ch:global} sets out the planned transport analysis and modelling.
+Chapter~\ref{ch:global} measures the transport of that ensemble on the whole trajectory,
+without segmenting a flight: the estimator and the exponent it returns
+(Secs.~\ref{sec:variations}--\ref{sec:transport-nulls}), and what a second moment cannot say
+(Sec.~\ref{sec:transport-shape}). Chapter~\ref{ch:phases} sets out the phase segmentation
+and the modelling it enables; none of it is implemented yet.
 
 Throughout, the discussion keeps to the scientific and statistical reasoning behind each
 choice. Implementation-level detail (code modules, configuration values, sample sizes,
 computation times, reproduction commands) is collected in \nameref{app:implementation},
-from p.~\pageref{app:implementation}. The appendix is organised chapter by chapter to
-mirror the body; each body section points to its entry as ``implementation details:
-Sec.~X''.
+from p.~\pageref{app:implementation}. That part is organised chapter by chapter to
+mirror the body, and the body links into it at each point where an implementation detail was
+trimmed out of the text, as ``implementation details: Sec.~X''.
