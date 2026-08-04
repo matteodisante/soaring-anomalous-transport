@@ -88,6 +88,7 @@ def run(discipline: str, out_dir: Path) -> int:
         stream_flights(derived / "fixes.parquet", ["segment_id", "t", "E", "N", "v_E", "v_N"]), 1
     ):
         ordered = flight.sort_values(["segment_id", "t"], kind="stable")
+        vacf_flight = False
         flight_id = str(ordered["flight_id"].iloc[0])
         keep_tail = (count % TAIL_SUBSAMPLE) == 0
 
@@ -130,13 +131,15 @@ def run(discipline: str, out_dir: Path) -> int:
                     good = np.isfinite(sampled)
                     vacf_sum[good] += sampled[good]
                     vacf_n[good] += 1
-                    vacf_count += 1
+                    vacf_flight = True
 
             for sinuosity in SINUOSITIES:
                 lengths = persistence_runs(positions, sinuosity)
                 if lengths.size:
                     runs[sinuosity].append(lengths * step)
 
+        if vacf_flight:
+            vacf_count += 1
         rows.append({"flight_id": flight_id})
         if count % 20_000 == 0:
             print(f"  {discipline}: {count} flights", flush=True)

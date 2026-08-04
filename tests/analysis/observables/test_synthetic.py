@@ -66,3 +66,31 @@ def test_with_drift_adds_a_ballistic_term():
     drifted = S.with_drift(clean, (10.0, 0.0))
     assert msd_exponent(clean, lo=8, hi=512) == pytest.approx(1.0, abs=0.08)
     assert msd_exponent(drifted, lo=8, hi=512) > 1.7
+
+
+@pytest.mark.parametrize("hurst", [0.7, 0.9])
+def test_the_hosking_fallback_is_stationary_and_matches_the_exact_autocovariance(hurst):
+    """The fallback path, checked against theory rather than against the fast path.
+
+    Davies-Harte is exact and is what runs; Hosking is the fallback when the embedding is
+    not non-negative definite, and it was updating the Durbin-Levinson coefficients in
+    place. From order three the reflection step then reads entries the same loop has
+    already overwritten, and the output stops being stationary fGn -- the variance drifted
+    across the record. Nothing tested the fallback at all, which is how a generator error
+    survives: an estimator validated against a broken generator is validated against the
+    breakage.
+    """
+    from soaring.analysis.observables.synthetic import _fgn_hosking
+
+    reps = 300
+    sample = np.array([_fgn_hosking(256, hurst, np.random.default_rng(k)) for k in range(reps)])
+
+    # Stationary: no drift in the variance from one end of the record to the other.
+    assert sample[:, :20].var() == pytest.approx(1.0, abs=0.06)
+    assert sample[:, -20:].var() == pytest.approx(1.0, abs=0.06)
+
+    # And the right memory: gamma(k) = (|k+1|^2H - 2|k|^2H + |k-1|^2H) / 2.
+    for k in range(1, 5):
+        theory = 0.5 * (abs(k + 1) ** (2 * hurst) - 2 * abs(k) ** (2 * hurst) + abs(k - 1) ** (2 * hurst))
+        measured = float(np.mean(sample[:, :-k] * sample[:, k:]))
+        assert measured == pytest.approx(theory, abs=0.05)

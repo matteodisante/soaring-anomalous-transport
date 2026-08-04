@@ -123,8 +123,13 @@ def _fgn_hosking(n: int, hurst: float, rng: np.random.Generator) -> np.ndarray:
         for j in range(i - 1):
             phi[i - 1] -= phi[j] * autocov(i - j - 1)
         phi[i - 1] /= variance
+        # The reflection step must read the PREVIOUS order's coefficients. Updating phi in
+        # place makes it read entries this same loop has already overwritten from i = 3 on,
+        # and the series stops being stationary: at H = 0.9 the variance drifted from 0.91
+        # at the start of the record to 1.18 at its end.
+        previous = phi[: i - 1].copy()
         for j in range(i - 1):
-            phi[j] -= phi[i - 1] * phi[i - j - 2]
+            phi[j] = previous[j] - phi[i - 1] * previous[i - j - 2]
         variance *= 1 - phi[i - 1] ** 2
         series[i] = np.sqrt(variance) * rng.normal() + phi[: i].dot(series[i - 1 :: -1][: i])
     return series
@@ -206,7 +211,12 @@ def persistent_walk(
     # Ornstein-Uhlenbeck on the heading angle: <cos(theta(t)-theta(0))> = exp(-t/tau).
     diffusion = np.sqrt(2.0 * dt / tau)
     turns = rng.normal(0.0, diffusion, size=n - 1)
-    heading = np.concatenate([[rng.uniform(0, 2 * np.pi)], np.cumsum(turns)])
+    # The initial angle has to be added to the whole walk, not prepended to it: writing
+    # concatenate([[theta0], cumsum(turns)]) gives step 1 a random heading and then restarts
+    # every later step from zero, so the ensemble acquires a course along +x that no
+    # isotropic process has. It showed as a mean endpoint a quarter of a standard deviation
+    # off the origin.
+    heading = rng.uniform(0, 2 * np.pi) + np.concatenate([[0.0], np.cumsum(turns)])
     velocity = speed * np.column_stack([np.cos(heading), np.sin(heading)])
     return np.vstack([np.zeros((1, 2)), np.cumsum(velocity[:-1] * dt, axis=0)])
 

@@ -142,8 +142,26 @@ def test_a_locally_smooth_process_reads_above_two_not_at_it():
     def alpha_two(track):
         return 2 * V.hurst_from_variations(lags, V.filtered_variation(track, lags, order=2))[0]
 
+    # Chapter 3 quotes 3.02 for this exact configuration, so the value is pinned and not
+    # only the bound; across seeds 0-7 the median is 3.00 and the range 2.94 to 3.02.
+    assert alpha_two(S.persistent_walk(20000, 3000.0, seed=2)) == pytest.approx(3.02, abs=0.03)
     assert alpha_two(S.persistent_walk(20000, 3000.0, seed=2)) > 2.7
+    # Observed well OUTSIDE its correlation time the same process is rough again.
     assert alpha_two(S.persistent_walk(20000, 30.0, seed=2)) < 2.4
+
+
+def test_the_persistent_walk_has_no_course_of_its_own():
+    """An isotropic heading walk must not drift; it used to, along +x.
+
+    heading = concatenate([[theta0], cumsum(turns)]) gave step 1 a random heading and then
+    restarted every later step from zero, so every realisation headed along +x and the
+    ensemble mean endpoint sat a quarter of a standard deviation off the origin. An
+    estimator validated against a generator with a built-in course is validated against the
+    course.
+    """
+    ends = np.array([np.asarray(S.persistent_walk(4000, 200.0, seed=k))[-1] for k in range(200)])
+    assert abs(ends[:, 0].mean()) < 0.15 * ends[:, 0].std()
+    assert abs(ends[:, 1].mean()) < 0.15 * ends[:, 1].std()
 
 
 def test_the_ratio_of_the_two_orders_matches_the_closed_form():

@@ -64,7 +64,10 @@ def cluster_labels(frame: "pd.DataFrame", level: str) -> np.ndarray:
         key = key + "|" + frame[extra].astype(str)
     # A missing key is not a shared cluster; give each such row its own.
     unknown = frame[columns].isna().any(axis=1).to_numpy()
-    codes = key.astype("category").cat.codes.to_numpy().copy()
+    # int64, not the categorical's own width. cat.codes is int8 or int16 when the level
+    # count allows, and the synthetic ids assigned to missing-key rows below run past the
+    # existing maximum -- past 127 they wrap and those rows join real clusters silently.
+    codes = key.astype("category").cat.codes.to_numpy().astype(np.int64)
     codes[unknown] = codes.max() + 1 + np.arange(unknown.sum())
     return codes
 
