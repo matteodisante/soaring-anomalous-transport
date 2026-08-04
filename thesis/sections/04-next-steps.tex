@@ -209,17 +209,32 @@ other units: across the fitted decades the ensemble curve runs from
 \StatAuditParaTaSlopeMin--\StatAuditParaTaSlopeMax\ and
 \StatAuditHangTaSlopeMin--\StatAuditHangTaSlopeMax\ on the time-averaged one.
 
-So the time-averaged curve is a power law and the ensemble curve is not, over the decades
-each is read on. The time-averaged exponents are
+The size of a residual is only half of what decides whether an exponent describes a curve,
+and taken alone it is misleading. A Wald--Wolfowitz runs test on the \emph{sign} of the
+residuals says the rest. Over its fitted range the time-averaged curve leaves
+\num{\StatAuditParaTaResidLags} residuals in \num{\StatAuditParaTaResidRuns} sign runs
+where independent scatter would give \num{\StatAuditParaTaResidRunsExpected}
+($z=\StatAuditParaTaResidRunsZ$), and the hang gliders the same
+($z=\StatAuditHangTaResidRunsZ$); the ensemble curve is worse still,
+$z=\StatAuditParaEaResidRunsZ$ and $\StatAuditHangEaResidRunsZ$. The residuals of both
+curves are arranged, not scattered: each is a systematic arch and the fitted line is a
+chord across it.
+
+So neither estimator is a power law in the strict sense, and the difference between them is
+of degree. The time-averaged curve departs from its line by a factor of four to eight less
+and its slope wanders over a range a third as wide, which is enough to make an exponent a
+useful summary of it and not enough to make it a description. Both exponents below are
+therefore reported as \emph{effective} exponents over a stated range, and the question of
+how many regimes each curve really holds is left open here; it is what
+Chapter~\ref{ch:next-steps} takes up with an estimator built for it. The time-averaged
+values are
 $\alpha_{\mathrm{TA}}=\StatMsdTaParaAlpha\pm\StatMsdTaParaAlphaErr$
 ($H=\StatMsdTaParaHurst$) for paragliders and
 $\StatMsdTaHangAlpha\pm\StatMsdTaHangAlphaErr$ ($H=\StatMsdTaHangHurst$) for hang gliders,
 over \SIrange{\StatMsdTaParaFitMinS}{\StatMsdTaParaFitMaxS}{\second} and
-\SIrange{\StatMsdTaHangFitMinS}{\StatMsdTaHangFitMaxS}{\second}; a residual under
-\SI{4}{\percent} across two and a half decades is what makes those numbers a description
-of the curve. Both lie well above the Brownian $\alpha=1$ and below the ballistic
-$\alpha=2$, so on the time-averaged statistic cross-country soaring is strongly
-super-diffusive. The straight line through the ensemble curve,
+\SIrange{\StatMsdTaHangFitMinS}{\StatMsdTaHangFitMaxS}{\second}. Both lie well above the
+Brownian $\alpha=1$ and below the ballistic $\alpha=2$, so on the time-averaged statistic
+cross-country soaring is strongly super-diffusive over the range where it is read. The straight line through the ensemble curve,
 $\alpha_{\mathrm{EA}}=\StatMsdParaAlpha$ and $\StatMsdHangAlpha$, is drawn in panel~(a)
 and generated as \texttt{\textbackslash StatMsd*Alpha}; it is used below to locate the
 crossover it averages over, and it is not a growth law the motion obeys. The ensemble
@@ -449,9 +464,10 @@ honestly: the per-flight \path{split_jump_max_m} the cleaning records is measure
 trimming, so it counts jumps inside a ground phase that never reach the analysis.
 
 \paragraph{The results, and their scope.}
-The two estimators return two results, of different kinds. From the time average, an
+The two estimators return two results, of different kinds. From the time average, an effective
 exponent: $\StatMsdTaParaAlpha$ and $\StatMsdTaHangAlpha$, transport well above Brownian,
-on a curve a power law describes to within \SI{4}{\percent} over two and a half decades.
+on a curve whose departure from a single power law is small in size and systematic in
+arrangement.
 From the ensemble average, a timescale rather than an exponent: displacement from take-off
 crosses over near \SI{\StatAuditParaEaSlopeMaxAt}{\second} for paragliders and
 \SI{\StatAuditHangEaSlopeMaxAt}{\second} for hang gliders, where the population leaves its

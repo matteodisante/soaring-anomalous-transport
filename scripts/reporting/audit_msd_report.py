@@ -81,13 +81,40 @@ def local_slope(t: np.ndarray, y: np.ndarray, half: float = SLOPE_HALF_DECADES):
 def power_law_residual(t: np.ndarray, y: np.ndarray) -> tuple[float, float]:
     """``(alpha, rms residual in dex)`` of the best power law through ``(t, y)``.
 
-    The residual is the number that decides whether an exponent is a description or a
-    summary. Least squares always returns a slope; what it does not return, and what is
-    quoted here beside it, is how far the curve wanders from the line it fitted.
+    Least squares always returns a slope; what it does not return is how far the curve
+    wanders from the line it fitted. The size of that wander is quoted beside every
+    exponent -- but see :func:`residual_runs`, because size is only half the question.
     """
     fit = np.polyfit(np.log10(t), np.log10(y), 1)
     residual = np.log10(y) - np.polyval(fit, np.log10(t))
     return float(fit[0]), float(np.std(residual))
+
+
+def residual_runs(t: np.ndarray, y: np.ndarray) -> tuple[int, float, float]:
+    """Wald--Wolfowitz runs test on the sign of the power-law residuals.
+
+    The rms residual is the wrong statistic for deciding whether a power law describes a
+    curve, and quoting it alone is how a systematic bend passes for a good fit. A residual
+    of 3.8 % rms sounds small; if its sign changes four times where chance would change it
+    eighteen, the curve is an arch and the fit is a chord across it. Only the arrangement
+    of the residuals can say that, and this is the test that reads it.
+
+    Returns:
+        ``(runs, expected_runs, z)``. Under the null of independent signs the run count is
+        asymptotically normal, so ``|z| > 2`` is a curve with structure the exponent does
+        not describe, whatever the residual's size.
+    """
+    fit = np.polyfit(np.log10(t), np.log10(y), 1)
+    signs = np.sign(np.log10(y) - np.polyval(fit, np.log10(t)))
+    runs = 1 + int((signs[1:] != signs[:-1]).sum())
+    n_pos, n_neg = int((signs > 0).sum()), int((signs < 0).sum())
+    n = n_pos + n_neg
+    if n_pos == 0 or n_neg == 0 or n < 3:
+        return runs, float(runs), 0.0
+    expected = 1.0 + 2.0 * n_pos * n_neg / n
+    variance = (expected - 1.0) * (expected - 2.0) / (n - 1)
+    z = (runs - expected) / np.sqrt(variance) if variance > 0 else 0.0
+    return runs, float(expected), float(z)
 
 
 def _curve(frame: pd.DataFrame, discipline: str, estimator: str):
@@ -154,6 +181,11 @@ def audit(discipline: str, audit_dir: Path) -> dict[str, str]:
     }.items():
         inside = (t >= rng[0]) & (t <= rng[1])
         alpha, residual = power_law_residual(t[inside], y[inside])
+        runs, expected_runs, runs_z = residual_runs(t[inside], y[inside])
+        put(f"{label}ResidRuns", f"{runs}")
+        put(f"{label}ResidRunsExpected", f"{expected_runs:.0f}")
+        put(f"{label}ResidRunsZ", f"{runs_z:.1f}")
+        put(f"{label}ResidLags", f"{int(inside.sum())}")
         slopes = local_slope(t, y)[inside]
         put(f"{label}Alpha", f"{alpha:.3f}")
         put(f"{label}ResidDex", f"{residual:.4f}")
