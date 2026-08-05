@@ -154,7 +154,10 @@ def quantiles_from_histogram(
 
 
 def scaling_from_quantiles(
-    lags_s: np.ndarray, quantiles: np.ndarray, *, fit_range=None
+    lags_s: np.ndarray,
+    quantiles: np.ndarray,
+    *,
+    fit_range: tuple[float, float] | None = None,
 ) -> dict:
     """``H`` from each quantile's growth with the lag, and how far the four disagree.
 

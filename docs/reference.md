@@ -92,6 +92,10 @@ on the next build. To add a new module, a single `:::` line here is enough.
 
 ::: soaring.analysis.preproc.pipeline
 
+## `analysis.altitude_noise` — the barometric-against-GNSS noise measurement
+
+::: soaring.analysis.altitude_noise
+
 ## `analysis.derived`
 
 ::: soaring.analysis.derived
@@ -115,6 +119,10 @@ on the next build. To add a new module, a single `:::` line here is enough.
 ## `analysis.observables.regimes` — how many regimes, and where
 
 ::: soaring.analysis.observables.regimes
+
+## `analysis.observables.propagator` — the exponent from the bulk of the distribution
+
+::: soaring.analysis.observables.propagator
 
 ## `analysis.observables.synthetic` — processes whose answer is known
 
