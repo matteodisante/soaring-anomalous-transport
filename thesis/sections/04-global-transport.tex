@@ -1042,6 +1042,51 @@ different answer.
   \label{fig:shape}
 \end{figure}
 
+\section{The kinematics, and where the persistence comes from}
+\label{sec:transport-kinematics}
+\begin{revblock}
+Three of the observables catalogued in Sec.~\ref{sec:obs-global} need no scaling argument at
+all: they are the marginal distributions of what the pipeline already computes. They are
+reported here because each is quoted against the value an unstructured process would give,
+which is what makes them measurements rather than descriptions.
+
+\paragraph{The turning angles.}
+The angle between successive displacement vectors, taken at a stride of
+\SI{\StatKinParaAngleStrideS}{\second} so that it is the flying and not the smoothing that
+is measured. Its median is \SI{\StatKinParaAngleMedianDeg}{\degree} for paragliders and
+\SI{\StatKinHangAngleMedianDeg}{\degree} for hang gliders, over
+\num{\StatKinParaAngles} angles; \SI{\StatKinParaAngleForwardPct}{\percent} and
+\SI{\StatKinHangAngleForwardPct}{\percent} fall below \SI{30}{\degree}. An isotropic
+reorientation gives a median of \SI{90}{\degree} and \SI{13}{\percent} below thirty.
+
+That is the microscopic origin of everything the chapter has measured about memory. A
+velocity autocorrelation that stays positive and decays as a power law, and increments still
+correlated at \SI{\StatVarParaFitMaxS}{\second}, are the ensemble consequence of a wing that
+turns by ten degrees at a time. The distribution is strongly forward-peaked, which is a
+correlated random walk and not a memoryless one, and this is where the persistent random walk
+that Chapter~\ref{ch:phases} works towards gets its warrant.
+
+\paragraph{Speed and vertical velocity.}
+The horizontal speed has a median of \SI{\StatKinParaSpeedMedianMs}{\metre\per\second} for
+paragliders and \SI{\StatKinHangSpeedMedianMs}{\metre\per\second} for hang gliders, with
+ninetieth percentiles of \SI{\StatKinParaSpeedNinetyMs}{\metre\per\second} and
+\SI{\StatKinHangSpeedNinetyMs}{\metre\per\second}. The ratio between the disciplines is the
+ratio of their flying, and the ninety-ninth percentiles,
+\SI{\StatKinParaSpeedNinetyNineMs}{\metre\per\second} and
+\SI{\StatKinHangSpeedNinetyNineMs}{\metre\per\second}, sit well inside the fix-level bounds
+of Sec.~\ref{sec:fixlevel}, which is a check on the cleaning as much as a statement about
+the flying.
+
+The vertical velocity is centred just below zero ---
+\SI{\StatKinParaVerticalMedianMs}{\metre\per\second} and
+\SI{\StatKinHangVerticalMedianMs}{\metre\per\second} --- with a 10--90 band of
+\SIrange{\StatKinParaVerticalTenMs}{\StatKinParaVerticalNinetyMs}{\metre\per\second}. A wing
+climbs \SI{\StatKinParaClimbingPct}{\percent} and
+\SI{\StatKinHangClimbingPct}{\percent} of the time. A cross-country flight that neither gains
+nor loses net altitude over hours must climb about half of it, so that near-half is the
+consistency the vertical channel owes the rest of the pipeline, and it pays it.
+\end{revblock}
+
 \section{What this establishes}
 \label{sec:transport-verdict}
 \begin{revblock}

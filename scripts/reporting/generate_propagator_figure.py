@@ -141,6 +141,65 @@ def measure(discipline: str, cadences, macros: dict) -> dict:
     return {"rows": rows, "drawn": drawn}
 
 
+def _from_histogram(counts, edges, probabilities):
+    """Quantiles of a linearly binned histogram, interpolated within the bin."""
+    counts = np.asarray(counts, dtype=float)
+    centres = 0.5 * (edges[:-1] + edges[1:])
+    total = counts.sum()
+    if total <= 0:
+        return [float("nan")] * len(probabilities)
+    cumulative = np.cumsum(counts) / total
+    return [float(np.interp(p, cumulative, centres)) for p in probabilities]
+
+
+def kinematics(discipline: str, path: Path, macros: dict) -> dict:
+    """The three observables Sec. 3.1 catalogues and nothing measured, until now.
+
+    They need no scaling argument: they are the marginal distributions of what the pipeline
+    already computes. Each is quoted against the value an unstructured process would give,
+    which is what makes it a measurement rather than a description --- an isotropic walk
+    turns by 90 degrees in the median, and a flight that neither gains nor loses net altitude
+    climbs half the time.
+    """
+    if not path.is_file():
+        return {}
+    data = np.load(path)
+    if "angle_counts" not in data:
+        return {}
+    tag = DISCIPLINES[discipline][1]
+
+    def put(name, value):
+        macros[f"StatKin{tag}{name}"] = value
+
+    angle, angle_edges = data["angle_counts"], data["angle_edges"]
+    centres = 0.5 * (angle_edges[:-1] + angle_edges[1:])
+    median = _from_histogram(angle, angle_edges, [0.5])[0]
+    put("Angles", f"{int(angle.sum())}")
+    put("AngleStrideS", f"{int(data['angle_stride'][0])}")
+    put("AngleMedianDeg", f"{np.degrees(median):.0f}")
+    put("AngleForwardPct", f"{100 * angle[centres < np.pi / 6].sum() / angle.sum():.0f}")
+
+    speed = _from_histogram(data["speed_counts"], data["speed_edges"], [0.5, 0.9, 0.99])
+    put("SpeedMedianMs", f"{speed[0]:.1f}")
+    put("SpeedNinetyMs", f"{speed[1]:.1f}")
+    put("SpeedNinetyNineMs", f"{speed[2]:.1f}")
+
+    vertical = data["vertical_counts"]
+    v_edges = data["vertical_edges"]
+    v_centres = 0.5 * (v_edges[:-1] + v_edges[1:])
+    quantiles = _from_histogram(vertical, v_edges, [0.1, 0.5, 0.9])
+    put("VerticalMedianMs", f"{quantiles[1]:+.2f}")
+    put("VerticalTenMs", f"{quantiles[0]:+.2f}")
+    put("VerticalNinetyMs", f"{quantiles[2]:+.2f}")
+    put("ClimbingPct", f"{100 * vertical[v_centres > 0].sum() / vertical.sum():.0f}")
+
+    return {
+        "angle": (angle, angle_edges),
+        "speed": (data["speed_counts"], data["speed_edges"]),
+        "vertical": (vertical, v_edges),
+    }
+
+
 def calibration(macros: dict) -> None:
     """What an exactly self-similar process gives on the same window, measured not assumed.
 
@@ -244,6 +303,9 @@ def main() -> int:
             continue
         result = measure(discipline, cadences, macros)
         if result:
+            result["kinematics"] = kinematics(
+                discipline, args.audit_dir / f"propagator_{slug}.npz", macros
+            )
             measured[discipline] = result
 
     if missing and not args.allow_partial:
