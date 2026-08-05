@@ -265,12 +265,35 @@ range dependence are both measured below, on the estimator that replaces this on
 exponents that carry an interval in this chapter are that estimator's.
 
 \paragraph{The two ends of the range.}
-Below the foot of every fit range the curves carry small bumps, from the coverage rule
-meeting a lag grid of consecutive integers and from the smoothed samples at a segment's
-ends \impldetails{impl:global}. Nothing below \SI{\StatMsdParaFitMinS}{\second} in
-Figure~\ref{fig:msd} is read as motion. At the other end the ceiling is set by coverage:
-the ensemble collapses onto a handful of long flights at the longest lags, which is why
-each fit stops well inside the plotted range. One limitation belongs to the ensemble
+Below the foot of every fit range the curves carry two artefacts, both measured. The first
+is the coverage rule meeting a lag grid of consecutive integers: a class of loggers of
+interval $\Delta t$ has its fixes in phase across flights, so at a lag that is not a multiple
+of $\Delta t$ every one of them answers with a fix up to $\Delta t/2$ away and the error
+alternates with the lag instead of averaging out. Splitting by cadence measures it ---
+\SI{2}{\second} loggers alternate by
+\SI{\StatAuditParaCadenceTwoSecAlternationPct}{\percent} between even and odd lags and the
+mixture by \SI{\StatAuditParaCadenceMixedAlternationPct}{\percent}, while \SI{1}{\hertz}
+loggers, which meet every integer lag exactly, return
+\SI{\StatAuditParaCadenceOneSecAlternationPct}{\percent}. That the \SI{1}{\hertz} class
+returns nothing is the control on the measurement rather than a result of it.
+
+The second is the smoothing evaluated off-centre at a segment's ends, which the table flags
+\path{edge}. Those samples are \SI{\StatEdgeParaSamplePct}{\percent} of the fixes and the
+ensemble estimator, unlike the dataset verifier, does not qualify by the flag. Recomputing
+the curve without them on \num{\StatEdgeParaFlights} flights moves it by
+\SI{\StatEdgeParaShortPct}{\percent} below
+\SI{\StatEdgeParaShortLagS}{\second} and by \SI{\StatEdgeParaLongPct}{\percent} above
+\SI{\StatEdgeParaLongLagS}{\second} \impldetails{impl:global}: two orders of magnitude
+between the two regions, which is what a defect of the segment ends should look like, since
+the first samples of a record are exactly the flagged ones. Nothing below
+\SI{\StatMsdParaFitMinS}{\second} in Figure~\ref{fig:msd} is read as motion.
+
+At the other end the ceiling is set by coverage. The ensemble holds
+\num{\StatAuditParaFlightsFitLag} flights at
+\SI{\StatAuditParaFlightsFitLagS}{\second} and
+\num{\StatAuditParaFlightsWideLag} at \SI{\StatAuditParaFlightsWideLagS}{\second}, so past
+the fitted range the average is a statistic over a survivorship-selected minority, which is
+why each fit stops well inside the plotted range. One limitation belongs to the ensemble
 estimator alone. A segment keeps its parent's origin (Sec.~\ref{sec:uniform}), so a
 boundary at a re-acquisition offset leaves an unknown instrument constant in every
 subsequent absolute position; it enters $\langle|\mathbf{r}(t)|^2\rangle$ and cancels out
