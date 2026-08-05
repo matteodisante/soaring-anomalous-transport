@@ -44,9 +44,9 @@ is read over, and the run lengths such a description would rest on have no scale
 tail index falling from \StatShapeParaBetaStraight\ to \StatShapeParaBetaLoose\ as the
 threshold that declares a turn is scanned. It is not Gaussian either: the non-Gaussian
 parameter is $\StatShapeParaNonGaussMedian$ for paragliders and
-$\StatShapeHangNonGaussMedian$ for hang gliders, flat across the lags over which it is
-read, so one exponent governing every moment states how the increment distribution scales
-and nothing about its shape.
+$\StatShapeHangNonGaussMedian$ for hang gliders in the median, rising to an interior maximum
+near \SI{\StatShapeParaNonGaussPeakS}{\second}, so one exponent governing every moment
+states how the increment distribution scales and nothing about its shape.
 \end{revblock}
 
 \section{Displacement from take-off measures the launch geometry}
@@ -445,9 +445,15 @@ Figure~\ref{fig:transport} carries the local slope of $V_2$ and that of the ense
 one pair of axes, over the lags both cover. The arch that dominates the ensemble curve near
 \SI{\StatAuditParaEaSlopeMaxAt}{\second}, and that carries its local slope through a swing
 of \StatAuditParaEaSlopeSwing\ for paragliders and \StatAuditHangEaSlopeSwing\ for hang
-gliders, has no counterpart in the filtered variation: the local slope of $V_2$ declines
-gently across the fitted range and does not turn. How large that decline is, in exponent
-units, is the range dependence reported in the next section.
+gliders, is three times smaller in the filtered variation and of the opposite sign. The
+local slope of $V_2$ swings by \StatVarParaSlopeLocalSwing\ and
+\StatVarHangSlopeLocalSwing\ inside the fitted range, and it turns twice: a maximum of
+\StatVarParaSlopeLocalMax\ near \SI{\StatVarParaSlopeLocalMaxAtS}{\second}, a minimum of
+\StatVarParaSlopeLocalMin\ at \SI{\StatVarParaSlopeLocalMinAtS}{\second}, and a rise
+after it. Where the ensemble curve is an arch the filtered variation is a dip, so the two
+are not the same structure attenuated but different structures --- which is what the removal
+of the common origin and the flown course was supposed to achieve. How large that swing is,
+in exponent units, is the range dependence reported in the next section.
 
 \paragraph{Removing the course raises the exponent.}
 $\alpha_1$ and $\alpha_2$ differ by $\StatVarParaDriftShare$ for paragliders and
@@ -1111,10 +1117,25 @@ are unrelated quantities.
 
 Over \SIrange{\StatShapeParaNonGaussMinS}{\StatShapeParaNonGaussMaxS}{\second} the median
 value is \StatShapeParaNonGaussMedian\ for paragliders and \StatShapeHangNonGaussMedian\
-for hang gliders. Both are flat across that window: end to end the parameter moves by
-\StatShapeParaNonGaussDrift\ and \StatShapeHangNonGaussDrift, so neither archive shows the
-decay towards zero that a central-limit Gaussianisation setting in at long lags would
-produce, and neither shows a maximum at intermediate lags.
+for hang gliders. Neither is flat across it. Both rise to an interior
+maximum and fall back: \StatShapeParaNonGaussPeak\ at
+\SI{\StatShapeParaNonGaussPeakS}{\second} for paragliders, against
+\StatShapeParaNonGaussAtFloor\ at the lower end of the window and
+\StatShapeParaNonGaussAtCeiling\ at the upper, a factor of
+\StatShapeParaNonGaussPeakRatio; and \StatShapeHangNonGaussPeak\ at
+\SI{\StatShapeHangNonGaussPeakS}{\second} for hang gliders. The rise and the fall are each
+monotone over seven or more consecutive lags, so this is a shape and not scatter.
+
+A maximum at two to four hundred seconds is a scale, and the chapter has otherwise found
+none: the moment spectrum is straight, the run-length tail index has no stable value, and the
+exponent is read as a single effective number over the whole window. What the maximum says is
+narrower than a scale in the transport --- it is the lag at which the \emph{shape} of the
+increment distribution departs furthest from Gaussian, with the departure smaller both below
+it and above it. Below, the increments are averages over a smoothing window and a few
+heading changes; above, a central-limit Gaussianisation begins to act. Reporting the two ends
+of that curve as a difference, which an earlier version of this section did, is the chord of
+an arch --- the error diagnosed for the ensemble MSD in Sec.~\ref{sec:obs-global} and
+repeated here.
 
 \paragraph{What those values are worth.}
 A number of this size is readable only against what the same estimator returns on processes

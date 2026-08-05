@@ -196,6 +196,20 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
     for p in ORDERS:
         put(f"TaskGapOrder{_ORDER_WORD[p]}", f"{task[p][0] - task[p][1]:+.2f}")
     slope_open, slope_closed = task[1][2], task[1][3]
+    # The local slope of V_2 inside the fitted range. The chapter compares its swing against
+    # the ensemble MSD's, and said it "does not turn" -- it does, by 0.28 and 0.48, with a
+    # maximum near 100 s and a minimum near 600 s. A dip, where the ensemble curve is an arch.
+    from soaring.analysis.observables.regimes import local_slope as _ls
+
+    v2_slope = _ls(lags, np.nanmean(loaded["orders"][2], axis=0))
+    fitted = (lags >= FIT_RANGE_S[0]) & (lags <= FIT_RANGE_S[1])
+    inside = fitted & np.isfinite(v2_slope)
+    if inside.any():
+        put("SlopeLocalMin", f"{np.nanmin(v2_slope[inside]):.2f}")
+        put("SlopeLocalMax", f"{np.nanmax(v2_slope[inside]):.2f}")
+        put("SlopeLocalSwing", f"{np.nanmax(v2_slope[inside]) - np.nanmin(v2_slope[inside]):.2f}")
+        put("SlopeLocalMinAtS", f"{lags[inside][np.nanargmin(v2_slope[inside])]:.0f}")
+        put("SlopeLocalMaxAtS", f"{lags[inside][np.nanargmax(v2_slope[inside])]:.0f}")
     # The two ends of the separation the verdict quotes. Typed by hand until this pass, and
     # the whole argument for where the fitted range stops rests on them.
     separation = np.abs(slope_closed - slope_open)

@@ -126,12 +126,24 @@ def measure(discipline: str, data: dict, macros: dict) -> dict:
             & (lags <= TRANSPORT_RANGE_S[1])
         )
         if quoted.any():
-            put("NonGaussMinS", f"{lags[quoted][0]:.0f}")
-            put("NonGaussMaxS", f"{lags[quoted][-1]:.0f}")
-            put("NonGaussMin", f"{np.nanmin(non_gaussian[quoted]):+.2f}")
-            put("NonGaussMax", f"{np.nanmax(non_gaussian[quoted]):+.2f}")
-            put("NonGaussMedian", f"{np.nanmedian(non_gaussian[quoted]):+.2f}")
-            put("NonGaussDrift", f"{non_gaussian[quoted][-1] - non_gaussian[quoted][0]:+.2f}")
+            values, at = non_gaussian[quoted], lags[quoted]
+            peak = int(np.nanargmax(values))
+            put("NonGaussMinS", f"{at[0]:.0f}")
+            put("NonGaussMaxS", f"{at[-1]:.0f}")
+            put("NonGaussMin", f"{np.nanmin(values):+.3f}")
+            put("NonGaussMax", f"{np.nanmax(values):+.3f}")
+            put("NonGaussMedian", f"{np.nanmedian(values):+.3f}")
+            # The curve has an interior maximum, so where it is and how far it stands above
+            # the ends is the measurement. The end-to-end difference this used to report is
+            # the CHORD OF AN ARCH -- the error this project diagnoses in the ensemble MSD
+            # and then committed here: it read +0.02 on a curve that rises sevenfold and
+            # falls back.
+            put("NonGaussPeak", f"{values[peak]:+.3f}")
+            put("NonGaussPeakS", f"{at[peak]:.0f}")
+            put("NonGaussAtFloor", f"{values[0]:+.3f}")
+            put("NonGaussAtCeiling", f"{values[-1]:+.3f}")
+            put("NonGaussPeakRatio", f"{values[peak] / max(values[0], 1e-9):.1f}")
+            put("NonGaussInterior", "yes" if 0 < peak < len(values) - 1 else "no")
         beyond = usable & np.isfinite(non_gaussian) & (lags > TRANSPORT_RANGE_S[1])
         if beyond.any():
             put("NonGaussBeyond", f"{np.nanmax(non_gaussian[beyond]):+.2f}")
