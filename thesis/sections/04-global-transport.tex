@@ -481,13 +481,22 @@ returns nothing is the control on the measurement rather than a result of it
 A second effect is present over the same lags. The smoothing of Sec.~\ref{sec:savgol}
 evaluates its polynomial off-centre at the ends of a segment, and the table flags those
 samples as \path{edge}; the ensemble estimator, unlike the dataset verifier, does not
-qualify its samples by that flag, so they enter. They are under \SI{1}{\percent} of the
-fixes and they carry almost every step the fix-level speed bound would refuse:
+qualify its samples by that flag, so they enter. They are
+\SI{\StatEdgeParaSamplePct}{\percent} of the fixes and they carry almost every step the
+fix-level speed bound would refuse:
 \num{\StatVerifyParaEdgeStepsOver} in-segment steps above it touch a reconstructed sample
 against \num{\StatVerifyParaMeasuredStepsOver} that do not, out of
-\num{\StatPipeParaInSegmentSteps}. Their effect on the curve is confined to the same short-lag region:
-excluding them moves the MSD by up to \SI{13}{\percent} below \SI{10}{\second} and by
-under \SI{0.2}{\percent} above \SI{60}{\second}.
+\num{\StatPipeParaInSegmentSteps}.
+
+Their effect on the curve is large where they sit and negligible where the chapter reads it.
+Recomputing the ensemble MSD on the same \num{\StatEdgeParaFlights} flights with the edge
+samples excluded moves it by up to \SI{\StatEdgeParaShortPct}{\percent} below
+\SI{\StatEdgeParaShortLagS}{\second} and by \SI{\StatEdgeParaLongPct}{\percent} above
+\SI{\StatEdgeParaLongLagS}{\second}, and \SI{\StatEdgeHangShortPct}{\percent} and
+\SI{\StatEdgeHangLongPct}{\percent} for hang gliders. The short-lag figure is the larger of
+the two by two orders of magnitude, which is what a defect of the segment ends should look
+like: the first samples of a record are exactly the flagged ones, so at a lag of a few
+seconds they are most of what answers, and at a lag of a minute they are almost none of it.
 
 Neither effect touches anything quoted. Both are confined below \SI{100}{\second}, the
 lower end of every fit range is \SI{\StatMsdParaFitMinS}{\second}, and

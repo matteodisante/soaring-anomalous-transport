@@ -74,47 +74,50 @@ fi
 
 step() { printf '\n=== %s ===\n' "$1"; }
 
-step "1/15  invariants (verify_dataset.py)"
+step "1/16  invariants (verify_dataset.py)"
 "$PY" scripts/verify_dataset.py
 
-step "2/15  pipeline census -> StatPipe*, tab:pipecensus"
+step "2/16  pipeline census -> StatPipe*, tab:pipecensus"
 "$PY" scripts/reporting/generate_pipeline_census.py
 
-step "3/15  MSD -> fig:msd, msd_curve.csv, StatMsd*   (the slow one)"
+step "3/16  MSD -> fig:msd, msd_curve.csv, StatMsd*   (the slow one)"
 "$PY" scripts/reporting/generate_msd_figure.py
 
-step "4/15  raw-archive census -> StatScan*, Preproc*"
+step "4/16  raw-archive census -> StatScan*, Preproc*"
 "$PY" scripts/reporting/generate_census_stats.py
 
-step "5/15  MSD audit pass -> per-flight positions at every lag"
+step "5/16  MSD audit pass -> per-flight positions at every lag"
 "$PY" scripts/reporting/audit_msd.py --out "$AUDIT_DIR"
 
-step "6/15  audit report -> StatAudit*"
+step "6/16  audit report -> StatAudit*"
 "$PY" scripts/reporting/audit_msd_report.py --audit-dir "$AUDIT_DIR"
 
-step "7/15  preliminary characterization -> fig:prelim-*, StatPrelim*"
+step "7/16  preliminary characterization -> fig:prelim-*, StatPrelim*"
 "$PY" scripts/reporting/generate_prelim_figure.py --audit-dir "$AUDIT_DIR"
 
-step "8/15  dataset statistics -> tab:cascade, fig:seasons, StatData*"
+step "8/16  dataset statistics -> tab:cascade, fig:seasons, StatData*"
 "$PY" scripts/reporting/generate_dataset_stats.py
 
-step "9/15  filtered variations -> per-flight curves, one per filter order"
+step "9/16  filtered variations -> per-flight curves, one per filter order"
 "$PY" scripts/reporting/measure_variations.py --out "$AUDIT_DIR"
 
-step "10/15  transport measurement -> tab:orderscan, fig:transport, StatVar*"
+step "10/16  transport measurement -> tab:orderscan, fig:transport, StatVar*"
 "$PY" scripts/reporting/generate_transport_figure.py --audit-dir "$AUDIT_DIR"
 
-step "11/15  shape pass -> increments, velocity memory, persistence runs"
+step "11/16  shape pass -> increments, velocity memory, persistence runs"
 "$PY" scripts/reporting/measure_shape.py --out "$AUDIT_DIR"
 
-step "12/15  shape measurement -> tab:shape, fig:shape, StatShape*"
+step "12/16  shape measurement -> tab:shape, fig:shape, StatShape*"
 "$PY" scripts/reporting/generate_shape_figure.py --audit-dir "$AUDIT_DIR"
 
-step "13/15  propagator -- the increments themselves, for the exponent read off the bulk"
+step "13/16  propagator -- the increments themselves, for the exponent read off the bulk"
 "$PY" scripts/reporting/measure_propagator.py --out "$AUDIT_DIR"
 "$PY" scripts/reporting/generate_propagator_figure.py --audit-dir "$AUDIT_DIR"
 
-step "14/15  macro contract: everything the thesis quotes must exist"
+step "14/16  edge-sample effect -> StatEdge*, the size of what the MSD reads and the verifier does not"
+"$PY" scripts/reporting/measure_edge_effect.py
+
+step "15/16  macro contract: everything the thesis quotes must exist"
 "$PY" scripts/reporting/check_generated_macros.py
 
 if [[ "${1:-}" == "--no-build" ]]; then
@@ -122,6 +125,6 @@ if [[ "${1:-}" == "--no-build" ]]; then
     exit 0
 fi
 
-step "15/15  thesis"
+step "16/16  thesis"
 cd thesis && latexmk -pdf -interaction=nonstopmode main.tex >/dev/null
 echo "built thesis/main.pdf"
