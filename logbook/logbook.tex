@@ -1087,12 +1087,18 @@ phase splitting.
         distinguished leg duration --- a prediction about any segmentation. \textbf{First-passage times were tried and do not
         serve}: $T(L)$ is measured from take-off, so it carries the launch geometry into the
         space domain and its exponent moves between 1.51 and 2.03 across the available radii
-        --- the ensemble-MSD crossover seen along the space axis. Still to build: the
-        propagator of the \emph{increments} and its scaling collapse read off histograms
-        rather than moments, with the return probability $P_0(\Delta)$ falling out of the
-        same histograms; the turning-angle distribution; and the speed/vertical-velocity
-        distributions. The first heads the list: it avoids both the moment and the origin,
-        which is what every check tried so far has failed on.
+        --- the ensemble-MSD crossover seen along the space axis. \textbf{The propagator of the increments is
+        built} (2026-08) and is the only estimate of $H$ here that comes from neither a
+        moment nor the common origin: quantiles of $|\Delta x|$ read off histograms, one
+        streaming pass, twelve minutes. $H=0.901$ for paragliders over six cadence classes
+        and 489 million increments, $0.885$ for hang gliders, against $0.876$ from the plain
+        increment and $1.009$ from the second-order variation --- three routes agreeing near
+        0.9, and within a hundredth of the published figure. It also shows the scaling form
+        is \emph{not} exactly satisfied: $H$ falls from $0.926$ at the lower quartile and
+        median to $0.872$ at the upper quartile and ninetieth percentile, a spread of $0.077$
+        against $0.004$ on an exactly self-similar process --- the centre of the distribution
+        spreads faster than its flanks. Still to build: the turning-angle distribution and
+        the speed/vertical-velocity distributions.
   \item \textbf{Segmentation (Sec.~3.2).} Study J\'er\'emie's internship report and code,
         then re-examine the transition/search/climb HMM (binary features: sign of
         vertical speed, curvature-angle persistence, straightness) --- decide whether to
