@@ -794,6 +794,94 @@ effective exponent over a declared range --- which is how
 Table~\ref{tab:orderscan} reports it.
 \end{revblock}
 
+\section{The exponent without a moment}
+\label{sec:transport-propagator}
+\begin{revblock}
+Everything above is a second moment. That is a narrow base for the chapter's central number,
+and this archive has already shown twice what it costs: the ensemble average of a squared
+displacement measured the launch geometry rather than the motion, and the first-passage time,
+tried as an escape, carries the same origin into the space domain
+\impldetails{impl:global}. What is wanted is an exponent that comes from neither a moment nor
+a common origin.
+
+The distribution of the increments supplies one. For a self-similar process
+\begin{equation}
+  P(x,\Delta)=\Delta^{-H}\,F\!\left(\frac{x}{\Delta^{H}}\right),
+  \label{eq:increment-scaling}
+\end{equation}
+so \emph{every} quantile of $|x|$ grows as $\Delta^{H}$. A quantile is an order statistic: it
+is fixed by the middle of the distribution, where every flight contributes, and a heavy tail
+moves it not at all. The estimator is one streaming pass keeping a histogram of $|\Delta x|$
+per lag, per component and per native cadence, from which the quantiles are read
+\impldetails{impl:global}.
+
+\paragraph{What it returns.}
+$H=\StatPropParaHurst$ for paragliders over \num{\StatPropParaCadences} cadence classes and
+$\StatPropHangHurst$ for hang gliders, on
+\SIrange{\StatPropParaFitMinS}{\StatPropParaFitMaxS}{\second} and
+\num{\StatPropParaIncrements} increments. Across cadences spanning a factor of ten in the
+smoothing scale the estimate moves between \StatPropParaHurstMin\ and
+\StatPropParaHurstMax --- the pipeline is not what it is reading.
+
+Set beside the two estimators that are moments: the plain increment gives
+$H=\StatVarParaHurstOrderOne$ and the second-order variation
+$\StatVarParaHurstOrderTwo$. The bulk of the distribution sits between them, nearer the
+first, and within a hundredth of the value reported for human soaring by Vilpellet et
+al.~\cite{vilpellet2026}. Three routes, two of them second moments in different frames and
+one of them no moment at all, agree on an exponent near \num{0.9}.
+
+\paragraph{And what it costs the exponent.}
+Equation~\eqref{eq:increment-scaling} makes a stronger claim than any single exponent, and
+the same histograms test it: the four quantiles must give the \emph{same} slope. They do not.
+Fitted separately, $H$ falls from $\StatPropParaHurstBulk$ at the lower quartile and the
+median to $\StatPropParaHurstFlank$ at the upper quartile and the ninetieth percentile, and
+the same fall appears in both disciplines, on both components and at every cadence
+(Figure~\ref{fig:propagator}b). The spread across quantiles is
+\StatPropParaQuantileSpread\ and \StatPropHangQuantileSpread\ against
+\StatPropCalibSpread\ on an exactly self-similar process measured the same way over the same
+window with less data \impldetails{impl:global}.
+
+So the scaling form is not exactly satisfied over the range this chapter reads. The centre of
+the increment distribution spreads faster than its flanks, which is a distribution changing
+shape with the scale and not a single self-similar process. The collapse says the same in the
+other panel: \StatPropParaCollapseDex\ dex of scatter in the bulk, and visible separation
+where the flanks fall away (Figure~\ref{fig:propagator}c).
+
+This is a qualification of the exponent rather than a refutation of it. A departure of
+\num{0.05} between the bulk and the flank of the same distribution is small beside the
+distance from Brownian, and no reading of these curves puts the transport near $\alpha=1$.
+But it is an independent reason, beside the range dependence of
+Sec.~\ref{sec:transport-measure}, why a single $\alpha$ quoted to three figures would claim
+more than this archive supports.
+
+\paragraph{The anisotropy reaches the exponent.}
+Section~\ref{sec:prelim} measures the two horizontal components as incompatible in
+amplitude. They differ in exponent as well, by
+\num{0.018} for paragliders ($\StatPropParaHurstEast$ east against
+$\StatPropParaHurstNorth$ north) and more for hang gliders. Pooling the components would
+average that away, which is why they are kept apart here and in Sec.~\ref{sec:prelim}.
+\end{revblock}
+
+\begin{figure}[htbp]
+  \centering
+  \IfFileExists{generated/propagator.pdf}{%
+    \includegraphics[width=\linewidth]{generated/propagator}%
+  }{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/generate\_propagator\_figure.py}.}}%
+  }
+  \caption{\rev{The exponent read from the distribution of the increments rather than from a
+  moment of it. (a)~The 25th, 50th, 75th and 90th percentiles of $|\Delta x|$ against the
+  lag, log--log, at the finest cadence of each discipline; a self-similar process gives four
+  parallel lines. (b)~The exponent fitted at each percentile separately, one curve per
+  cadence and component, against the dashed single exponent an exactly self-similar process
+  would give. Every curve falls from the bulk to the flank. (c)~The same histograms rescaled
+  by $\Delta^{H}$: they coincide through the bulk and part company where the flanks fall
+  away, which is panel~(b) seen from the other side. Computed by
+  \texttt{scripts/reporting/generate\_propagator\_figure.py}.}}
+  \label{fig:propagator}
+\end{figure}
+
 \section{Beyond the second moment}
 \label{sec:transport-shape}
 \begin{revblock}

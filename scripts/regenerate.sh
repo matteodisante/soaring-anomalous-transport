@@ -45,14 +45,15 @@
 #                  distinct run length as a candidate and measures a KS distance on the
 #                  tail at each, which on the paragliders' ~3e6 runs is ~15 min. The scan
 #                  is exact and the cost is the price of not choosing the cut-off by eye.
-#  12b. propagator -- the fourth traversal: histograms of the increments per lag per
-#                  component, from which the exponent is read off the bulk rather than off a
-#                  moment, and the scaling collapse is tested rather than assumed. Comparable
-#                  in cost to step 11.
-#  13. contract -- every macro the thesis quotes must now exist. An undefined one inside
+#  13. propagator -- the fourth traversal: histograms of the increments per lag, per
+#                  component and per native cadence, from which the exponent is read off the
+#                  bulk rather than off a moment, and the scaling collapse is tested rather
+#                  than assumed. Twelve minutes over both archives: histograms only, no
+#                  per-segment decomposition, which is what makes it the cheap traversal.
+#  14. contract -- every macro the thesis quotes must now exist. An undefined one inside
 #                  \SI{} is a *fatal* LaTeX error, not a warning, so this runs before the
 #                  build and its failure is the useful message.
-#  14. build    -- the thesis.
+#  15. build    -- the thesis.
 #
 # Usage:
 #   SOARING_PARA_DATA_ROOT=... SOARING_DELTA_DATA_ROOT=... scripts/regenerate.sh [--no-build]
@@ -73,43 +74,47 @@ fi
 
 step() { printf '\n=== %s ===\n' "$1"; }
 
-step "1/14  invariants (verify_dataset.py)"
+step "1/15  invariants (verify_dataset.py)"
 "$PY" scripts/verify_dataset.py
 
-step "2/14  pipeline census -> StatPipe*, tab:pipecensus"
+step "2/15  pipeline census -> StatPipe*, tab:pipecensus"
 "$PY" scripts/reporting/generate_pipeline_census.py
 
-step "3/14  MSD -> fig:msd, msd_curve.csv, StatMsd*   (the slow one)"
+step "3/15  MSD -> fig:msd, msd_curve.csv, StatMsd*   (the slow one)"
 "$PY" scripts/reporting/generate_msd_figure.py
 
-step "4/14  raw-archive census -> StatScan*, Preproc*"
+step "4/15  raw-archive census -> StatScan*, Preproc*"
 "$PY" scripts/reporting/generate_census_stats.py
 
-step "5/14  MSD audit pass -> per-flight positions at every lag"
+step "5/15  MSD audit pass -> per-flight positions at every lag"
 "$PY" scripts/reporting/audit_msd.py --out "$AUDIT_DIR"
 
-step "6/14  audit report -> StatAudit*"
+step "6/15  audit report -> StatAudit*"
 "$PY" scripts/reporting/audit_msd_report.py --audit-dir "$AUDIT_DIR"
 
-step "7/14  preliminary characterization -> fig:prelim-*, StatPrelim*"
+step "7/15  preliminary characterization -> fig:prelim-*, StatPrelim*"
 "$PY" scripts/reporting/generate_prelim_figure.py --audit-dir "$AUDIT_DIR"
 
-step "8/14  dataset statistics -> tab:cascade, fig:seasons, StatData*"
+step "8/15  dataset statistics -> tab:cascade, fig:seasons, StatData*"
 "$PY" scripts/reporting/generate_dataset_stats.py
 
-step "9/14  filtered variations -> per-flight curves, one per filter order"
+step "9/15  filtered variations -> per-flight curves, one per filter order"
 "$PY" scripts/reporting/measure_variations.py --out "$AUDIT_DIR"
 
-step "10/14  transport measurement -> tab:orderscan, fig:transport, StatVar*"
+step "10/15  transport measurement -> tab:orderscan, fig:transport, StatVar*"
 "$PY" scripts/reporting/generate_transport_figure.py --audit-dir "$AUDIT_DIR"
 
-step "11/14  shape pass -> increments, velocity memory, persistence runs"
+step "11/15  shape pass -> increments, velocity memory, persistence runs"
 "$PY" scripts/reporting/measure_shape.py --out "$AUDIT_DIR"
 
-step "12/14  shape measurement -> tab:shape, fig:shape, StatShape*"
+step "12/15  shape measurement -> tab:shape, fig:shape, StatShape*"
 "$PY" scripts/reporting/generate_shape_figure.py --audit-dir "$AUDIT_DIR"
 
-step "13/14  macro contract: everything the thesis quotes must exist"
+step "13/15  propagator -- the increments themselves, for the exponent read off the bulk"
+"$PY" scripts/reporting/measure_propagator.py --out "$AUDIT_DIR"
+"$PY" scripts/reporting/generate_propagator_figure.py --audit-dir "$AUDIT_DIR"
+
+step "14/15  macro contract: everything the thesis quotes must exist"
 "$PY" scripts/reporting/check_generated_macros.py
 
 if [[ "${1:-}" == "--no-build" ]]; then
@@ -117,6 +122,6 @@ if [[ "${1:-}" == "--no-build" ]]; then
     exit 0
 fi
 
-step "14/14  thesis"
+step "15/15  thesis"
 cd thesis && latexmk -pdf -interaction=nonstopmode main.tex >/dev/null
 echo "built thesis/main.pdf"
