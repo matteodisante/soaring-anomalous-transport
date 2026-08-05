@@ -33,7 +33,7 @@ comparison that needs no null and is twenty to fifty times clear of it.
 | 9 | A 535-word paragraph running a page and a half; two more above 450 | density | fixed |
 | 10 | `smooth_crossover` overflowed on its way to the minimum | latent | fixed |
 | 11 | ~16 further archive measurements in the body are typed rather than generated | contract breach | reported |
-| 12 | Three catalogued observables remain unmeasured | scope | reported |
+| 12 | Three catalogued observables remain unmeasured — one has since been built (§8) | scope | partly closed |
 | 13 | The abstract described the document as a plan; Chapter 3 contains measurements | understatement | fixed |
 | 14 | The introduction pointed the modelling decision at the wrong chapter, and promised measurements the body does not make | wrong reference | fixed |
 | 15 | The first-passage exponent, tried here as a cross-check, moves by 0.5 across the available radii | negative result | reported |
@@ -524,8 +524,10 @@ reports 0 of 484.
   lags, the closed-against-open separation at 60 s and 12 000 s. Each would need a generator
   to emit it and its pass re-run. A new check reports this class by value from now on
   (`check_generated_macros.py`), which is how the two that *were* fixable were found.
-- **Three catalogued observables.** Finding 12: $P_0(t)$, the turning-angle distribution
-  and the speed distributions are defined and not measured. (First-passage times were tried
+- **Two catalogued observables.** Finding 12: the turning-angle distribution and the speed
+  distributions are defined and not measured. The third, the propagator and the return
+  probability, has since been built (§8); the peak height falls out of the same histograms
+  and is not yet emitted as a macro. (First-passage times were tried
   here and do not serve — §7a. The propagator's scaling collapse is answered through its
   moments.) `PROMPT-VERIFY` says an unbuilt thing is a finding and not a
   task to absorb, so they are reported. Two of them would give $H$ independently of the
@@ -591,14 +593,30 @@ The first-passage time is measured in the space domain, but from take-off, so it
 launch geometry into the space domain with it and its exponent moves by 0.5 across the
 available radii (§7a). It cannot arbitrate a difference of 0.1.
 
-What is left is the observable that avoids both the moment and the origin: the propagator of
-the **increments**, $P(\Delta\mathbf r,\Delta)$, and its collapse $t^{H}P \to F(x/t^H)$ read
-off histograms rather than moments. The moment spectrum already says all moments scale with
-one exponent, which is the collapse in moment form; what a histogram would add is the
-low-order and negative-order behaviour, where the bulk of the distribution lives and where a
-crossover in shape shows before it shows in the variance. The peak height
-$P_0(\Delta)\sim\Delta^{-dH}$ falls straight out of the same histograms. It is one streaming
-pass over data already on disk, and it is the measurement this thesis most needs next.
+What was left was the observable that avoids both the moment and the origin: the propagator
+of the **increments**, and its collapse read off histograms rather than moments. **It has
+since been built**, and it did two things.
+
+It supplied the third leg. $H = 0.901$ and $0.885$ from the quantiles of $|\Delta x|$ ---
+order statistics, no moment, no origin --- against $0.876$ from the plain increment and
+$1.009$ from the second-order variation, and within a hundredth of the published figure.
+Across cadences spanning a factor of ten in the smoothing scale the estimate moves by $0.035$.
+
+And it partly answered the question this section asks, in the direction of the doubt rather
+than against it. The scaling form is **not** exactly satisfied: $H$ falls from $0.926$ at the
+lower quartile and median to $0.872$ at the upper quartile and ninetieth percentile, a spread
+of $0.077$ and $0.098$ against $0.004$ on an exactly self-similar process measured the same
+way over the same window with less data. The centre of the increment distribution spreads
+faster than its flanks. That is a shape drifting with the scale, which is the mildest form of
+what §8 fears: not a crossover masquerading as a scaling law, but a scaling law that is not
+quite one.
+
+So the answer to §8 is now partial rather than open. Three independent routes agree on
+$H \approx 0.9$, which is more than the chapter had; and the distribution they agree about is
+not exactly self-similar, which is less than the chapter claimed. What would still settle it
+is the range: 1.5 decades cannot separate a slow crossover from a law, and no estimator
+changes that. Only a source with longer flights, or a segmentation that removes the task
+geometry from the long end, would.
 
 ---
 
