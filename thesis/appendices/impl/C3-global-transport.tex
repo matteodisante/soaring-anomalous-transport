@@ -3,14 +3,14 @@
 \rev{This chapter mirrors Chapter~\ref{ch:global}. Built and recorded here: the two
 mean-squared-displacement estimators and their audit, the filtered-variation family that
 replaces them as a source of exponents, the moment spectrum, the non-Gaussian parameter, the
-velocity autocorrelation and its tail, and the persistence runs. Three observables the body
-catalogues are defined and not measured, and Table~\ref{tab:obs-status} says which.}
+velocity autocorrelation and its tail, and the persistence runs. One observable the body catalogues
+is defined and not measured, and Sec.~\ref{sec:transport-kinematics} says which.}
 
 \section{Observables on the whole trajectory}
 \label{impl:obs-global}
 \rev{The mean-squared displacement of Sec.~\ref{sec:obs-global} is implemented and
-unit-tested, as are four more of that section's observables; the shape ones are documented
-below and the three that are not measured are named in Table~\ref{tab:obs-status}. The
+unit-tested, as is every other observable Chapter~\ref{ch:global} defines except the return
+probability, which Sec.~\ref{sec:transport-kinematics} names as the one gap. The
 estimators live in
 \path{soaring.analysis.observables.transport} and the figure, the curve table and the
 \texttt{\textbackslash StatMsd*} macros come from one pass of
@@ -242,7 +242,7 @@ estimated badly, and the order scan is what reads off how much drift there was.}
 \paragraph{\rev{The variation pass, and why stratifying is free.}} \rev{
 \path{measure_variations.py} traverses the fix table once and keeps, per flight and per
 filter order, one curve over the lag grid together with the flight's cadence, wing class,
-season and declared task. Every stratification of Sec.~\ref{sec:transport-nulls} is then a
+season and declared task. Every stratification of Sec.~\ref{sec:transport-measure} is then a
 row selection on that table rather than another pass over $1.4\times10^{9}$ rows, which is
 what makes four cuts affordable where one would otherwise be a day's work.}
 
