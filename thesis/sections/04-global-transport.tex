@@ -266,24 +266,25 @@ exponents that carry an interval in this chapter are that estimator's.
 
 \paragraph{The two ends of the range.}
 Below the foot of every fit range the curves carry two artefacts, both measured. The first
-is the coverage rule meeting a lag grid of consecutive integers: a class of loggers of
-interval $\Delta t$ has its fixes in phase across flights, so at a lag that is not a multiple
-of $\Delta t$ every one of them answers with a fix up to $\Delta t/2$ away and the error
-alternates with the lag instead of averaging out. Splitting by cadence measures it ---
-\SI{2}{\second} loggers alternate by
-\SI{\StatAuditParaCadenceTwoSecAlternationPct}{\percent} between even and odd lags and the
-mixture by \SI{\StatAuditParaCadenceMixedAlternationPct}{\percent}, while \SI{1}{\hertz}
-loggers, which meet every integer lag exactly, return
-\SI{\StatAuditParaCadenceOneSecAlternationPct}{\percent}. That the \SI{1}{\hertz} class
-returns nothing is the control on the measurement rather than a result of it.
+is the coverage rule meeting a lag grid of consecutive integers. Each flight's lag is
+measured from its own first fix, so a class of loggers of interval $\Delta t$ answers every
+lag with a fix at a multiple of $\Delta t$: at a lag that is not one, every flight of the
+class is off in the same direction by up to $\Delta t/2$, and the error alternates with the
+lag rather than averaging out. Splitting by cadence measures it --- \SI{2}{\second} loggers
+alternate by \SI{\StatAuditParaCadenceTwoSecAlternationPct}{\percent} between even and odd
+lags and the mixture by \SI{\StatAuditParaCadenceMixedAlternationPct}{\percent}, while
+\SI{1}{\hertz} loggers, which meet every integer lag exactly, return
+\SI{\StatAuditParaCadenceOneSecAlternationPct}{\percent}. That last figure is the control
+on the measurement rather than a result of it: a class that meets the grid exactly should
+show no alternation, and it returns a value smaller than the affected class by a factor of
+thirty.
 
 The second is the smoothing evaluated off-centre at a segment's ends, which the table flags
 \path{edge}. Those samples are \SI{\StatEdgeParaSamplePct}{\percent} of the fixes and the
 ensemble estimator, unlike the dataset verifier, does not qualify by the flag. Recomputing
-the curve without them on \num{\StatEdgeParaFlights} flights moves it by
-\SI{\StatEdgeParaShortPct}{\percent} below
-\SI{\StatEdgeParaShortLagS}{\second} and by \SI{\StatEdgeParaLongPct}{\percent} above
-\SI{\StatEdgeParaLongLagS}{\second} \impldetails{impl:global}: two orders of magnitude
+the curve without them on \num{\StatEdgeParaFlights} flights moves it by at most
+\SI{\StatEdgeParaShortPct}{\percent} below \SI{\StatEdgeParaShortLagS}{\second} and by at
+most \SI{\StatEdgeParaLongPct}{\percent} above \SI{\StatEdgeParaLongLagS}{\second} \impldetails{impl:global}: two orders of magnitude
 between the two regions, which is what a defect of the segment ends should look like, since
 the first samples of a record are exactly the flagged ones. Nothing below
 \SI{\StatMsdParaFitMinS}{\second} in Figure~\ref{fig:msd} is read as motion.
