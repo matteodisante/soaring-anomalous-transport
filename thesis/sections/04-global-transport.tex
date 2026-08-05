@@ -470,9 +470,12 @@ zeroed at take-off, so a class of loggers of interval $\Delta t$ has its fixes a
 multiples of $\Delta t$ \emph{in phase across flights}, and at a lag that is not such a
 multiple every one of them answers with a fix up to $\Delta t/2$ away, so the error
 alternates with the lag instead of averaging out. Splitting the archive by cadence
-measures it: \SI{2}{\second} loggers alone alternate by \SI{6.5}{\percent} between even
-and odd lags, \SI{1}{\hertz} loggers---which meet every integer lag exactly---by
-\SI{-0.05}{\percent}, and the mixture by \SI{0.70}{\percent}
+measures it: \SI{2}{\second} loggers alone alternate by
+\SI{\StatAuditParaCadenceTwoSecAlternationPct}{\percent} between even and odd lags,
+\SI{1}{\hertz} loggers---which meet every integer lag exactly---by
+\SI{\StatAuditParaCadenceOneSecAlternationPct}{\percent}, and the mixture by
+\SI{\StatAuditParaCadenceMixedAlternationPct}{\percent}. That the \SI{1}{\hertz} class
+returns nothing is the control on the measurement rather than a result of it
 (Sec.~\ref{impl:obs-global}).
 
 A second effect is present over the same lags. The smoothing of Sec.~\ref{sec:savgol}
@@ -482,7 +485,7 @@ qualify its samples by that flag, so they enter. They are under \SI{1}{\percent}
 fixes and they carry almost every step the fix-level speed bound would refuse:
 \num{\StatVerifyParaEdgeStepsOver} in-segment steps above it touch a reconstructed sample
 against \num{\StatVerifyParaMeasuredStepsOver} that do not, out of
-\num{1363818736}. Their effect on the curve is confined to the same short-lag region:
+\num{\StatPipeParaInSegmentSteps}. Their effect on the curve is confined to the same short-lag region:
 excluding them moves the MSD by up to \SI{13}{\percent} below \SI{10}{\second} and by
 under \SI{0.2}{\percent} above \SI{60}{\second}.
 
@@ -498,8 +501,9 @@ that is a property of the distribution rather than a fault. The MSD \emph{is} th
 $|\mathbf{r}(t)|^2$, and that distribution broadens enormously with the lag: its 10--90
 band spans two orders of magnitude by \SI{1000}{\second}. A mean over a broad,
 right-skewed distribution sits well above its median. Where it matters is at the very
-longest lags, where the ensemble collapses---\num{2319} flights at \SI{30000}{\second},
-against \num{154840} at \SI{1700}{\second}---so the mean becomes a statistic over a few
+longest lags, where the ensemble collapses---\num{\StatAuditParaFlightsWideLag} flights at
+\SI{\StatAuditParaFlightsWideLagS}{\second}, against \num{\StatAuditParaFlightsFitLag} at
+\SI{\StatAuditParaFlightsFitLagS}{\second}---so the mean becomes a statistic over a few
 long flights and its standard error rises to \SI{10}{\percent}. That is the reason the fit
 stops where it does and not at the end of the plotted range.
 
@@ -1073,8 +1077,9 @@ of the range --- correlated, not smooth.
 
 What the chapter cannot do is extend that range. Below it the trajectory has been smoothed
 by the pipeline; above it the declared task takes over, and the separation between closed
-and open courses grows from \num{0.03} in the local slope at \SI{60}{\second} to
-\num{1.13} at \SI{12000}{\second}. The window in which this archive speaks about transport
+and open courses grows from \num{\StatVarParaTaskSlopeGapLow} in the local slope at
+\SI{\StatVarParaTaskSlopeGapLowS}{\second} to \num{\StatVarParaTaskSlopeGapHigh} at
+\SI{\StatVarParaTaskSlopeGapHighS}{\second}. The window in which this archive speaks about transport
 rather than about the scoring rule is \StatVarParaFitDecades\ decades wide, and the
 pre-asymptotic character of what is measured in it follows from the system rather than from
 the method: a soaring day ends, so there is a physical cutoff and no amount of data moves

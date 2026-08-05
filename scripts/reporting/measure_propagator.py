@@ -54,7 +54,10 @@ def _derived(discipline: str):
 
 def run(discipline: str, out_dir: Path, limit: int | None = None) -> int:
     from soaring.analysis.derived import stream_flights
-    from soaring.analysis.observables.propagator import PropagatorAccumulator
+    from soaring.analysis.observables.propagator import (
+        KinematicAccumulator,
+        PropagatorAccumulator,
+    )
 
     derived = _derived(discipline)
     if derived is None:
@@ -64,10 +67,17 @@ def run(discipline: str, out_dir: Path, limit: int | None = None) -> int:
     lags_s = np.unique(np.round(np.geomspace(LAG_MIN_S, LAG_MAX_S, N_LAGS)))
     accumulators: dict[float, PropagatorAccumulator] = {}
     seconds_of: dict[float, np.ndarray] = {}
+    # The three observables Sec. 3.1 catalogues and nothing measured. They need no lag grid,
+    # so they cost one histogram each on a pass that is reading the fix table anyway.
+    kinematics = KinematicAccumulator()
     flights = 0
 
     for count, flight in enumerate(
-        stream_flights(derived / "fixes.parquet", ["segment_id", "t", "E", "N"]), 1
+        stream_flights(
+            derived / "fixes.parquet",
+            ["segment_id", "t", "E", "N", "v_E", "v_N", "v_z"],
+        ),
+        1,
     ):
         ordered = flight.sort_values(["segment_id", "t"], kind="stable")
         for _, segment in ordered.groupby("segment_id", sort=False):
@@ -88,6 +98,10 @@ def run(discipline: str, out_dir: Path, limit: int | None = None) -> int:
                 [segment["E"].to_numpy(dtype=float), segment["N"].to_numpy(dtype=float)]
             )
             accumulators[step].add(positions)
+            velocity = np.column_stack(
+                [segment["v_E"].to_numpy(dtype=float), segment["v_N"].to_numpy(dtype=float)]
+            )
+            kinematics.add(positions, velocity, segment["v_z"].to_numpy(dtype=float))
         flights += 1
         if count % 20_000 == 0:
             print(f"  {discipline}: {count} flights", flush=True)
@@ -101,6 +115,7 @@ def run(discipline: str, out_dir: Path, limit: int | None = None) -> int:
     slug = DISCIPLINES[discipline][0]
     out_dir.mkdir(parents=True, exist_ok=True)
     payload: dict[str, np.ndarray] = {"cadences": np.array(sorted(accumulators))}
+    payload.update(kinematics.to_dict())
     for step, acc in accumulators.items():
         tag = f"dt{step:g}".replace(".", "p")
         payload[f"{tag}_counts"] = acc.counts

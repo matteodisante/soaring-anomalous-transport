@@ -196,6 +196,14 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
     for p in ORDERS:
         put(f"TaskGapOrder{_ORDER_WORD[p]}", f"{task[p][0] - task[p][1]:+.2f}")
     slope_open, slope_closed = task[1][2], task[1][3]
+    # The two ends of the separation the verdict quotes. Typed by hand until this pass, and
+    # the whole argument for where the fitted range stops rests on them.
+    separation = np.abs(slope_closed - slope_open)
+    for label, target in (("Low", 60.0), ("High", 12000.0)):
+        i = int(np.argmin(np.abs(lags - target)))
+        if np.isfinite(separation[i]):
+            put(f"TaskSlopeGap{label}", f"{separation[i]:.2f}")
+            put(f"TaskSlopeGap{label}S", f"{lags[i]:.0f}")
 
     # ---- how much clustering there is, at each level --------------------------------
     reference = np.log10(

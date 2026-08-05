@@ -107,6 +107,31 @@ def _meta_path(discipline: str) -> Path | None:
     return path if path.is_file() else None
 
 
+def _step_count(discipline: str) -> str | None:
+    """In-segment steps in the fix table: rows minus segments, from the metadata alone.
+
+    A step is between two consecutive fixes *within* a segment, so a table of ``n`` rows
+    across ``s`` segments holds ``n - s`` of them. Both counts are in the Parquet footers,
+    so this costs two file opens and no scan -- which is why it lives here and not in the
+    verifier, where the same number is computed on a full traversal that nothing else needs.
+    """
+    import pyarrow.parquet as pq
+
+    from soaring.acquisition.ffvl import config as cfgmod
+
+    _, env, attr = DISCIPLINES[discipline]
+    try:
+        cfg = cfgmod.load_config(str(getattr(cfgmod, attr)), data_root_env=env)
+    except (FileNotFoundError, KeyError):
+        return None
+    fixes, segments = cfg.derived_dir / "fixes.parquet", cfg.derived_dir / "segments.parquet"
+    if not (fixes.is_file() and segments.is_file()):
+        return None
+    rows = pq.ParquetFile(fixes).metadata.num_rows
+    kept = pq.read_table(segments, columns=["kept"]).column("kept").to_pylist()
+    return f"{rows - sum(1 for k in kept if k)}"
+
+
 def _macros(tag: str, meta) -> dict[str, str]:
     r"""The ``\StatPipe*`` numbers for one discipline."""
     import numpy as np
@@ -210,6 +235,9 @@ def main() -> int:
         metas[discipline] = meta
         for name, value in _macros(tag, meta).items():
             lines.append(f"\\newcommand{{\\{name}}}{{{value}}}")
+        steps = _step_count(discipline)
+        if steps is not None:
+            lines.append(f"\\newcommand{{\\StatPipe{tag}InSegmentSteps}}{{{steps}}}")
         kept = int(meta["drop_reason"].isna().sum())
         share = 100.0 * kept / max(len(meta), 1)
         print(f"[{discipline}] {kept}/{len(meta)} retained ({share:.1f} %)")

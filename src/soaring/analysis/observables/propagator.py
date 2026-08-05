@@ -46,10 +46,13 @@ from __future__ import annotations
 import numpy as np
 
 __all__ = [
+    "KinematicAccumulator",
     "PropagatorAccumulator",
     "collapse_residual",
+    "peak_scaling",
     "quantiles_from_histogram",
     "scaling_from_quantiles",
+    "turning_angles",
 ]
 
 # Five decades of increment magnitude, from a metre to a hundred kilometres, at about two
@@ -269,3 +272,119 @@ def collapse_residual(
     with np.errstate(invalid="ignore"):
         spread = np.nanstd(stacked, axis=0)
     return float(np.nanmedian(spread))
+
+
+def peak_scaling(lags_s: np.ndarray, counts: np.ndarray, edges: np.ndarray,
+                 *, fit_range=None, fraction: float = 0.1) -> tuple[float, int]:
+    """``H`` from the height of the propagator at its centre, ``P_0 ~ Delta^-H``.
+
+    The third reading of the same histograms, and the one that uses least of the
+    distribution: the density near zero. Where a quantile is set by the middle of the
+    distribution and a moment by its tail, this is set by its very centre, so it fails
+    differently from both --- which is the whole reason to compute it.
+
+    ``P_0`` is estimated as the density averaged over the smallest ``fraction`` of the
+    distribution by probability, rather than at a single bin, because a logarithmic grid has
+    no bin at zero and one bin anywhere is counting noise. The estimate is therefore of the
+    density near the centre, which scales the same way.
+
+    Returns:
+        ``(hurst, n_lags)``, with ``hurst`` the negative slope of ``log P_0`` against
+        ``log Delta``.
+    """
+    lags_s = np.asarray(lags_s, dtype=float)
+    counts = np.asarray(counts, dtype=float)
+    edges = np.asarray(edges, dtype=float)
+    widths = np.diff(edges)
+
+    usable = np.isfinite(lags_s) & (lags_s > 0) & (counts.sum(axis=1) > 0)
+    if fit_range is not None:
+        usable &= (lags_s >= fit_range[0]) & (lags_s <= fit_range[1])
+    rows = np.flatnonzero(usable)
+    if rows.size < 4:
+        return float("nan"), 0
+
+    peak = []
+    for i in rows:
+        total = counts[i].sum()
+        cumulative = np.cumsum(counts[i]) / total
+        upto = int(np.searchsorted(cumulative, fraction, side="left"))
+        if upto < 1:
+            peak.append(np.nan)
+            continue
+        mass = counts[i, :upto].sum() / total
+        span = edges[upto] - edges[0]
+        peak.append(mass / span if span > 0 else np.nan)
+    peak = np.array(peak)
+    good = np.isfinite(peak) & (peak > 0)
+    if good.sum() < 4:
+        return float("nan"), 0
+    slope = np.polyfit(np.log10(lags_s[rows][good]), np.log10(peak[good]), 1)[0]
+    return float(-slope), int(good.sum())
+
+
+def turning_angles(positions: np.ndarray, stride: int = 1) -> np.ndarray:
+    """Angles between successive displacement vectors, in radians on ``[0, pi]``.
+
+    The microscopic origin of the persistence the velocity autocorrelation measures: a
+    distribution peaked at zero is a correlated walk, a flat one is memoryless
+    reorientation. Taken at a stride, since at a one-second cadence the angle between
+    consecutive fixes is dominated by the smoothing rather than by the flying.
+
+    Zero-length steps carry no direction and are dropped rather than assigned one.
+    """
+    positions = np.asarray(positions, dtype=float)
+    step = max(1, int(stride))
+    steps = positions[step::step] - positions[:-step:step]
+    if len(steps) < 2:
+        return np.empty(0)
+    first, second = steps[:-1], steps[1:]
+    norms = np.hypot(first[:, 0], first[:, 1]) * np.hypot(second[:, 0], second[:, 1])
+    good = norms > 0
+    if not good.any():
+        return np.empty(0)
+    dot = (first[good, 0] * second[good, 0] + first[good, 1] * second[good, 1]) / norms[good]
+    return np.arccos(np.clip(dot, -1.0, 1.0))
+
+
+class KinematicAccumulator:
+    """Histograms of the turning angle, the horizontal speed and the vertical velocity.
+
+    The three observables Sec. 3.1 catalogues and nothing measured. They need no lag grid
+    and no scaling argument --- they are the marginal distributions of what the pipeline
+    already computes --- so they cost one histogram each and are folded into a pass that is
+    reading the fix table anyway.
+    """
+
+    ANGLE_EDGES = np.linspace(0.0, np.pi, 91)
+    SPEED_EDGES = np.linspace(0.0, 45.0, 181)
+    VERTICAL_EDGES = np.linspace(-15.0, 15.0, 241)
+
+    def __init__(self, *, angle_stride: int = 5):
+        self.angle_stride = int(angle_stride)
+        self.angle = np.zeros(self.ANGLE_EDGES.size - 1, dtype=np.int64)
+        self.speed = np.zeros(self.SPEED_EDGES.size - 1, dtype=np.int64)
+        self.vertical = np.zeros(self.VERTICAL_EDGES.size - 1, dtype=np.int64)
+
+    def add(self, positions: np.ndarray, velocity: np.ndarray, vertical: np.ndarray) -> None:
+        angles = turning_angles(positions, self.angle_stride)
+        if angles.size:
+            self.angle += np.histogram(angles, bins=self.ANGLE_EDGES)[0]
+        speed = np.hypot(velocity[:, 0], velocity[:, 1])
+        speed = speed[np.isfinite(speed)]
+        if speed.size:
+            self.speed += np.histogram(speed, bins=self.SPEED_EDGES)[0]
+        vertical = vertical[np.isfinite(vertical)]
+        if vertical.size:
+            self.vertical += np.histogram(vertical, bins=self.VERTICAL_EDGES)[0]
+
+    def to_dict(self) -> dict:
+        return {
+            "angle_counts": self.angle,
+            "angle_edges": self.ANGLE_EDGES,
+            "speed_counts": self.speed,
+            "speed_edges": self.SPEED_EDGES,
+            "vertical_counts": self.vertical,
+            "vertical_edges": self.VERTICAL_EDGES,
+            "angle_stride": np.array([self.angle_stride]),
+        }

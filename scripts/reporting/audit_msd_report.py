@@ -340,6 +340,38 @@ def audit(discipline: str, audit_dir: Path) -> dict[str, str]:
     duration = np.vstack([s[:common] for s in duration_slopes])
     put("DurationSpread", f"{np.nanmax(duration.max(0) - duration.min(0)):.2f}")
 
+    # ---- B2b: the coverage artefact, and how far the ensemble collapses -------------
+    # The three numbers the body quotes for the even/odd alternation at short lags, and the
+    # two flight counts that say why the fit stops where it does. All five were typed by
+    # hand until this pass; each is a property of this archive and belongs to a generator.
+    integers = (lags >= 8) & (lags <= 60) & (np.abs(lags - np.round(lags)) < 1e-9)
+    for label, member in (
+        ("CadenceTwoSec", np.isclose(flights.native_dt_s.to_numpy(), 2.0)),
+        ("CadenceOneSec", np.isclose(flights.native_dt_s.to_numpy(), 1.0)),
+        ("CadenceMixed", np.ones(len(flights), dtype=bool)),
+    ):
+        if member.sum() < 300:
+            continue
+        curve = np.nanmean(squared[member], 0)
+        # Alternation: the zig-zag between even and odd integer lags, measured against a
+        # smooth trend rather than against the neighbouring points, since a moving average
+        # over a zig-zag inherits it. A cubic in log-lag is smooth on this window by
+        # construction and cannot absorb a period-two oscillation.
+        index = np.flatnonzero(integers)
+        if index.size < 8:
+            continue
+        x, y = np.log10(lags[index]), np.log10(curve[index])
+        residual = y - np.polyval(np.polyfit(x, y, 3), x)
+        even = np.round(lags[index]).astype(int) % 2 == 0
+        alternating = residual[even].mean() - residual[~even].mean()
+        put(f"{label}AlternationPct", f"{100 * (10**alternating - 1):+.2f}")
+
+    covered_at = np.isfinite(squared).sum(axis=0)
+    for label, target in (("Wide", 30000.0), ("Fit", 1700.0)):
+        i = int(np.argmin(np.abs(lags - target)))
+        put(f"Flights{label}LagS", f"{lags[i]:.0f}")
+        put(f"Flights{label}Lag", f"{covered_at[i]}")
+
     # ---- B3: when the population leaves the launch area ----------------------------
     radius = np.hypot(east, north)
     departure, leaves, early = departure_times(lags, radius, DEPARTURE_RADIUS_M)
