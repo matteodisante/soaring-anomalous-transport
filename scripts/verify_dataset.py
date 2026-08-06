@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 r"""Check the processed dataset against the invariants the thesis claims for it.
 
-``scripts/preprocess.py`` writes three tables; this reads them back and tests, on the
-data itself, the properties Chapter 2 states. Each check names the section it comes
+``scripts/preprocess.py`` writes four tables; this reads back the three that carry the
+invariants -- fixes, segments and flight metadata -- and tests, on the data itself, the
+properties Chapter 2 states. Each check names the section it comes
 from, so a failure says which claim is false rather than only that something is wrong:
 
 * **completeness** (sec:uniform) -- within a retained segment every grid point carries a

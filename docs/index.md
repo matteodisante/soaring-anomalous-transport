@@ -11,7 +11,7 @@ Fédérale de Distance (CFD)** of the [FFVL](https://www.ffvl.fr), for both para
 **Pre-processing** (`soaring.analysis.preproc`, `soaring.analysis.igc`) turns raw tracklogs
 into analysis-ready trajectories: the altitude channel, fix-level cleaning, trimming,
 flight-level filtering, the ENU conversion, resampling onto each flight's own cadence, and
-Savitzky--Golay smoothing. Seven stages, driven by `scripts/preprocess.py` into three Parquet
+Savitzky--Golay smoothing. Seven stages, driven by `scripts/preprocess.py` into four Parquet
 tables on the SSD.
 
 **Analysis** (`soaring.analysis.observables`, `soaring.analysis.stats`) holds the transport
@@ -54,7 +54,9 @@ uv run soaring-para status
 - **Code** (this repo): the installable package `soaring` (see
   [API Reference](reference.md)), and the command-line entry points under `scripts/` that
   drive it (see [The scripts](guide/scripts.md)).
-- **Data** (on the SSD, `data_root`): never in the repo, and nothing kept locally instead.
+- **Data** (on the SSD, `data_root`): the flight archive is never in the repo. What the
+  repository does version is in `data/` -- the two per-season summary CSVs and the basemap
+  the take-off maps are drawn on, so the figures need neither network nor disk.
   The layout groups by maturity — `raw/` is untouched acquisition output, `catalog/` the
   tables derived from it, `derived/` everything the pipeline writes. What each file holds,
   column by column, is [What is on the SSD](guide/data-on-disk.md).
@@ -103,7 +105,8 @@ things about it constrain the code and belong here.
 Every number the document quotes comes through a generated macro that a script in
 `scripts/reporting/` writes into `thesis/generated/`. Nothing is typed. A macro quoted and
 never written is a fatal LaTeX error, so `scripts/reporting/check_generated_macros.py` reads
-both sides of that contract before any build.
+both sides of that contract in a second and with no build. `regenerate.sh` runs it as step 15,
+before the rebuild; `build_docs.sh thesis`, which only recompiles, does not.
 
 `scripts/regenerate.sh` rebuilds everything that descends from the processed dataset, in the
 one order that is correct, and the compiled `thesis/main.pdf` is kept in the repository.

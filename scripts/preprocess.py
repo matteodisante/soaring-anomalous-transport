@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-r"""Run the pre-processing pipeline over an archive and write the three tables.
+r"""Run the pre-processing pipeline over an archive and write the four tables.
 
 Stages (i)-(vii) of the thesis chapter "The dataset" (sec:preproc), chained by
 ``soaring.analysis.preproc.pipeline.run_flight``, applied to every ``.igc`` file of a
-discipline. Three Parquet tables land in ``<data_root>/derived/``:
+discipline. Four Parquet tables land in ``<data_root>/derived/``:
 
 * ``fixes.parquet`` -- one row per grid point of every retained segment, keyed
   ``(source, flight_id, segment_id)``. Written incrementally, one row group per batch of
@@ -15,6 +15,9 @@ discipline. Three Parquet tables land in ``<data_root>/derived/``:
 * ``flights_meta.parquet`` -- one row per flight *attempted*, including the ones the
   pipeline dropped: the census of what was removed is as much a result as what was kept,
   and it is what the removal audit of sec:fixlevel reads.
+* ``suspect_intervals.parquet`` -- the slow-and-flat stints stage (iii) flags and does not
+  treat, written even when empty so that its absence means "written by an older version"
+  rather than "none found". 859 rows on the paraglider archive, 12 on the hang-glider one.
 
 The raw data lives on an external disk and may be absent (a fresh checkout, or CI); the
 roots come from ``SOARING_PARA_DATA_ROOT`` / ``SOARING_DELTA_DATA_ROOT``. A discipline

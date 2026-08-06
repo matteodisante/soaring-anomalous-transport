@@ -6,7 +6,7 @@ quotes is written by one of them into `thesis/generated/`.
 
 They fall into three kinds, and the difference matters because it is a difference of hours.
 
-**Pipeline** — turns the raw archive into the three Parquet tables on the SSD. Run once per
+**Pipeline** — turns the raw archive into the four Parquet tables on the SSD. Run once per
 archive, or again when a threshold changes.
 
 **Passes** — stream `fixes.parquet` end to end and write an intermediate array outside the
@@ -53,8 +53,8 @@ outside the repository.
 
 ### `scripts/preprocess.py`
 Runs the seven-stage pipeline over an archive and writes `fixes.parquet`,
-`segments.parquet` and `flights_meta.parquet` into `<data_root>/derived/`.
-`--discipline`, `--jobs`, `--limit`, `--seed`.
+`segments.parquet`, `flights_meta.parquet` and `suspect_intervals.parquet` into
+`<data_root>/derived/`. `--discipline`, `--jobs`, `--limit`, `--seed`.
 
 ### `scripts/verify_dataset.py`
 Checks the written tables against the invariants Chapter 2 claims for them, and writes
