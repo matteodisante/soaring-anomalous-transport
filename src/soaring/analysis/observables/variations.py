@@ -86,7 +86,7 @@ def remove_drift(
 
 
 def filtered_variation(
-    positions: np.ndarray, lags: np.ndarray, order: int = 1, dt: float = 1.0
+    positions: np.ndarray, lags: np.ndarray, order: int = 1
 ) -> np.ndarray:
     """``V_p(lag) = < |A_p r|^2 >``, the order-``p`` filtered variation.
 
@@ -97,12 +97,14 @@ def filtered_variation(
 
     Args:
         positions: ``(n, 2)`` positions on a uniform grid.
-        lags: Lags in samples.
+        lags: Lags in samples, not in seconds. The conversion is the caller's, because
+            only the caller knows the cadence of the record it is holding; see
+            ``measure_variations.py``, which does it per segment.
         order: Filter order, 1 to 3.
-        dt: Grid step, in seconds (used only to keep the returned lags in seconds).
 
     Returns:
-        ``V_p`` at each lag, ``nan`` where the series is too short to supply one value.
+        ``V_p`` at each lag, in the same order as ``lags``, ``nan`` where the series is too
+        short to supply one value. The lags themselves are not returned.
     """
     kernel = _FILTERS[order]
     out = np.full(len(lags), np.nan)

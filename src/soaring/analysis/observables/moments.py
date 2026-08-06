@@ -31,10 +31,11 @@ exponent of this chapter is measured on order-2 differences, because order 1 car
 flight's course and the declared task. But the Lévy-walk signature lives in the
 *displacement*, and a second difference of a piecewise-straight path is zero except at its
 corners, so the filter that removes the contamination also removes the thing being looked
-for. Measured on a synthetic Lévy walk of tail index 1.5, order 1 recovers the knee at 1.52
-with a right-hand slope of 0.96 -- the ballistic front, as the theory says -- while order 2
-puts the knee at 2.34 with a slope of 0.86, which is neither the right answer nor a wrong
-answer to a different question.
+for. Measured on a synthetic Lévy walk of tail index 1.5, under the protocol the tests pin
+(``LAGS = geomspace(20, 3000, 14)``, ``n = 200000``, ``counts > 20``), order 1 recovers the
+knee at 1.56-1.65 over four seeds with a right-hand slope of 0.92-0.95 -- the ballistic
+front, as the theory says -- while order 2 puts it anywhere between 1.93 and 2.90 with a
+slope of 0.78-0.89, which is neither the right answer nor a wrong
 
 So the spectrum is computed at order 1, where it is diagnostic, and read only where the
 closed and open task populations agree; the order is an argument and both are available.
@@ -93,7 +94,8 @@ def moment_spectrum(
         tail: Fraction of the largest samples whose share of the moment is reported.
 
     Returns:
-        ``moments[i, j]`` is ``<|A_2 r|^q>`` at ``lags[i]`` and ``q_grid[j]``;
+        ``moments[i, j]`` is ``<|A_p r|^q>`` with ``p = order`` (1 by default, the plain
+        increment) at ``lags[i]`` and ``q_grid[j]``;
         ``tail_share[i, j]`` is the fraction of that sum carried by the largest ``tail`` of
         the samples; ``counts[i]`` is how many non-overlapping windows the lag supplied.
     """
@@ -140,12 +142,15 @@ def bilinear_fit(
     line already fits to an rms of 0.0031. So the knee is declared only when BIC prefers it,
     **and** the straight line leaves a residual above ``min_departure``, **and** the knee
     sits inside the grid rather than on its edge. On the same synthetic pair those three
-    give: fractional Brownian motion, no knee; Lévy walk of index 1.5, a knee at 1.57 with a
-    right-hand slope of 0.96.
+    give: fractional Brownian motion, no knee (``linear_rms`` 0.0031 at ``seed=1``); Lévy walk
+    of index 1.5, a knee at 1.56-1.65 over four seeds with a right-hand slope of 0.92-0.95.
 
     Returns:
         ``{"knee", "slope_low", "slope_high", "rms", "linear_slope", "linear_rms",
-        "prefers_bilinear"}``, or ``None`` if the fit does not converge.
+        "linear_departure", "prefers_bilinear"}``, or ``None`` if the fit does not converge.
+        ``linear_departure`` is the same number as ``linear_rms``, kept under the name the
+        thesis macro carries (``generate_shape_figure.py`` writes ``\Stat*LinearDeparture``
+        from it).
     """
     from scipy.optimize import curve_fit
 
