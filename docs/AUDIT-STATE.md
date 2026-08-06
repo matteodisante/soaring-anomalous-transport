@@ -119,6 +119,30 @@ because the gap filler bridged the range, but the classification rested on a fal
 stored tables predate the fix and still carry those four flights; they change at the next full
 pipeline run.**
 
+### D3 — the velocity-memory exponent is quoted as a power law and is not one
+
+**Verified here, fix half-applied.** The chapter says the tail of $C(\tau)$ "is a power law of
+$\gamma = 0.61$ and $0.57$" over fifteen lags. Measured on the stored `vacf` with the repo's own
+`local_slope` at the window the fit uses, the local exponent runs **0.302 → 0.841** for
+paragliders, monotonically, a factor of 2.78, and **0.341 → 0.662 → 0.619** for hang gliders. The
+single fit leaves residuals of 0.106 dex (para) and 0.055 dex (hang) — an arch, which is the
+chord-across-a-bend error this chapter diagnoses elsewhere.
+
+What does not change is the conclusion, and it comes out stronger: **every local slope is below
+one**, in both disciplines, at all fifteen lags. Non-integrability is what Green–Kubo needs, and
+it holds pointwise rather than only on the fitted average.
+
+`generate_shape_figure.py` now emits `\StatShape*VacfGammaLocalMin/Max/Ratio/BelowOne` and
+`...VacfGammaResidualDex` beside the fitted value. **The reduction had not finished when this was
+written, so `shape.tex` does not yet carry them and no sentence quotes them.** To finish: re-run
+`generate_shape_figure.py --audit-dir <dir>`, then replace "the measured tail is a power law of
+γ = …" at `04-global-transport.tex:1321` and the same phrase in the verdict at `:1494` with the
+local range and the pointwise statement. Nothing else depends on it.
+
+The audit's own prescription here should **not** be followed: it wanted the Green–Kubo floor
+raised from 1.39 to ≈1.70 on the strength of a de-biased γ. That is the wrong direction — a floor
+on α needs an *upper* bound on γ — and at 1.70 the hang-glider α₁ of 1.70 would fail its own test.
+
 ## Left, in the order I would take it
 
 None of the following has been verified by me. They are the audit's claims, and this repository's

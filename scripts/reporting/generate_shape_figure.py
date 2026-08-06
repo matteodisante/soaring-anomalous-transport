@@ -232,6 +232,7 @@ def measure(discipline: str, data: dict, macros: dict) -> dict:
         if beyond.any():
             put("NonGaussBeyond", f"{np.nanmax(non_gaussian[beyond]):+.2f}")
 
+
     # The velocity memory.
     vacf = data.get("vacf", np.zeros(0))
     good = np.isfinite(vacf) & (vacf != 0)
@@ -254,6 +255,28 @@ def measure(discipline: str, data: dict, macros: dict) -> dict:
             put("VacfTailMinS", f"{lags[positive][0]:.0f}")
             put("VacfTailMaxS", f"{lags[positive][-1]:.0f}")
             put("VacfImpliedAlphaFloor", f"{implied:.2f}")
+            # Whether one exponent is the right description of those lags is a separate
+            # question from what its value is, and a straight line through a bend is the
+            # error this chapter diagnoses elsewhere. The local slope answers it on the
+            # same lags the fit used. What Green-Kubo needs is not the fitted value but
+            # that every local slope is below one, which is the stronger statement.
+            from soaring.analysis.observables.regimes import local_slope
+
+            gamma_local = -local_slope(lags[positive], vacf[positive], 0.25)
+            finite = np.isfinite(gamma_local)
+            if finite.sum() > 3:
+                values = gamma_local[finite]
+                put("VacfGammaLocalMin", f"{np.nanmin(values):.2f}")
+                put("VacfGammaLocalMax", f"{np.nanmax(values):.2f}")
+                put("VacfGammaLocalRatio", f"{np.nanmax(values) / max(np.nanmin(values), 1e-9):.1f}")
+                put("VacfGammaBelowOne", "yes" if np.nanmax(values) < 1.0 else "no")
+                coefficients = np.polyfit(
+                    np.log(lags[positive]), np.log(vacf[positive]), 1
+                )
+                residual = np.log10(vacf[positive]) - np.polyval(
+                    coefficients, np.log(lags[positive])
+                ) / np.log(10)
+                put("VacfGammaResidualDex", f"{np.ptp(residual):.3f}")
             put("VacfIntegrable", "yes" if gamma > 1.0 else "no")
 
     # The persistence runs, scanned over the geometric threshold.
