@@ -8,8 +8,8 @@ when you want to know what a column holds without opening a 43 GB Parquet.
 
 For each artefact it prints the shape, the dtypes and the first rows -- the three things
 you would ask a DataFrame yourself. Wide tables are shown in two halves rather than
-truncated with an ellipsis, and ``flights_meta`` is transposed: 41 columns across is
-unreadable, 41 down is a list you can check off.
+truncated with an ellipsis, and ``flights_meta`` is transposed: forty-odd columns across
+is unreadable, the same list read downward is one you can check off.
 
     SOARING_PARA_DATA_ROOT=... SOARING_DELTA_DATA_ROOT=... \
     uv run python scripts/reporting/show_dataset.py --discipline "hang gliders"
@@ -170,8 +170,11 @@ def show(discipline: str) -> None:
 
     path = root / "derived" / "flights_meta.parquet"
     if path.is_file():
-        _banner("derived/flights_meta.parquet  -- transposed: 41 columns read down")
         meta = pd.read_parquet(path)
+        _banner(
+            "derived/flights_meta.parquet  -- transposed: "
+            f"{len(meta.columns)} columns read down"
+        )
         kept = meta[meta["drop_reason"].isna()]
         dropped = meta[meta["drop_reason"].notna()]
         print(

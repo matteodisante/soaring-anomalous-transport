@@ -123,7 +123,7 @@ Key mechanics that reconcile the blueprint with the repo:
   invalidate the altitude channel only (horizontal position kept). A **flight-level integrity
   gate** drops any flight that cleaning had to rebuild past a small fraction `f`. The keys
   (`w, k, ε_min, ε, δ_z, τ_freeze, f`) live under `fix_level` in the YAML as working
-  values, fixed a priori (the routine that applies them is still to build). No inter-fix
+  values, fixed a priori and still awaiting the a-posteriori sweep. No inter-fix
   time-gap bound here — gaps handled once at (vi). (Thesis `sec:fixlevel`.)
 - **Flight-level cuts (iv).** Duration window 40 min ≤ T ≤ 16 h (the upper bound removes
   loggers left running: 15 census "flights" of 16–166 h); **path length** ≥ 20 km (set in
@@ -341,8 +341,12 @@ Handle at ingestion (empirically observed on the real files):
 | 8 | `generate_dataset_stats.py` | `dataset_stats.tex`, `dataset_seasons.pdf` | seconds |
 | 9 | `measure_variations.py` | per-flight filtered variations, into `$AUDIT_DIR` | ~25 min |
 | 10 | `generate_transport_figure.py` | `transport.tex`, `transport.pdf` | ~1 min |
-| 11 | `check_generated_macros.py` | nothing; fails if a quoted macro is unwritten | instant |
-| 12 | `latexmk` | `thesis/main.pdf` | ~1 min |
+| 11 | `measure_shape.py` | increments, velocity memory, persistence runs, into `$AUDIT_DIR` | ~2.5 h |
+| 12 | `generate_shape_figure.py` | `shape.tex`, `shape.pdf` | ~15 min |
+| 13 | `measure_propagator.py` + `generate_propagator_figure.py` | `propagator.tex`, `propagator.pdf` | ~12 min |
+| 14 | `measure_edge_effect.py` | `edge_effect.tex` (`\StatEdge*`) | minutes, subsampled |
+| 15 | `check_generated_macros.py` | nothing; fails if a quoted macro is unwritten | instant |
+| 16 | `latexmk` | `thesis/main.pdf` | ~1 min |
 
 Steps 9 and 10 are Chapter 3's measurement. Step 9 is the third full traversal of the fix
 table; it keeps one filtered-variation curve per flight per filter order, so every

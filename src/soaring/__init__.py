@@ -1,8 +1,9 @@
 """Code for the master's thesis *anomalous transport in soaring flights*.
 
-Thesis monorepo. Currently contains only the :mod:`soaring.acquisition` sub-package
-(acquisition of `.igc` flight data from the CFD FFVL). Analyses and simulations will be
-added in the future as further sub-packages.
+Two sub-packages, in the order the data moves through them:
+:mod:`soaring.acquisition` downloads and catalogues the `.igc` tracks of the CFD FFVL, and
+:mod:`soaring.analysis` cleans them into the analysis dataset and measures the transport
+statistics on it.
 """
 
 __version__ = "0.1.0"

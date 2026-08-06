@@ -3,10 +3,10 @@
 Stages (i)-(vii) of the thesis chapter "The dataset" (sec:preproc), in the order in
 which they must run -- the order is argued there and is not an implementation choice::
 
-    (i)   altitude channel      sec:altchannel   -- to build
-    (ii)  fix-level cleaning    sec:fixlevel     -- to build
-    (iii) ground-phase trimming sec:trimming     -- to build
-    (iv)  flight-level filter   sec:flightfilter -- to build
+    (i)   altitude channel      sec:altchannel   :mod:`.altchannel`
+    (ii)  fix-level cleaning    sec:fixlevel     :mod:`.cleaning`
+    (iii) ground-phase trimming sec:trimming     :mod:`.trimming`
+    (iv)  flight-level filter   sec:flightfilter :mod:`.flightfilter`
     (v)   geographic -> ENU     sec:enu          :mod:`.enu`
     (vi)  uniform resampling    sec:uniform      :mod:`.resample`
     (vii) Savitzky-Golay        sec:savgol       :mod:`.smoothing`

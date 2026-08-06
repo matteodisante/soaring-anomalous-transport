@@ -36,7 +36,7 @@
 #                  cadence, wing class, season and task without touching the fix table.
 #  10. transport -- Chapter 3's measurement: the order scan, its uncertainty, the
 #                  stratifications and the regime fit. Minutes.
-#  11. shape    -- the third traversal: the increments themselves, for the moment
+#  11. shape    -- the fourth traversal: the increments themselves, for the moment
 #                  spectrum, the velocity memory and the persistence runs. The longest
 #                  step by far: ~2.5 h on the paraglider archive, since the persistence
 #                  runs are decomposed per segment at three thresholds.
@@ -45,15 +45,20 @@
 #                  distinct run length as a candidate and measures a KS distance on the
 #                  tail at each, which on the paragliders' ~3e6 runs is ~15 min. The scan
 #                  is exact and the cost is the price of not choosing the cut-off by eye.
-#  13. propagator -- the fourth traversal: histograms of the increments per lag, per
+#  13. propagator -- the fifth traversal: histograms of the increments per lag, per
 #                  component and per native cadence, from which the exponent is read off the
 #                  bulk rather than off a moment, and the scaling collapse is tested rather
 #                  than assumed. Twelve minutes over both archives: histograms only, no
 #                  per-segment decomposition, which is what makes it the cheap traversal.
-#  14. contract -- every macro the thesis quotes must now exist. An undefined one inside
+#  14. edge     -- the sixth traversal, and the only subsampled one: the ensemble MSD
+#                  computed twice on the same flights, once over all samples and once over
+#                  interior ones, to measure what the edge-flagged samples do to the curve
+#                  rather than assert it. A subsample suffices because the effect is a
+#                  property of the segment ends, which every flight has.
+#  15. contract -- every macro the thesis quotes must now exist. An undefined one inside
 #                  \SI{} is a *fatal* LaTeX error, not a warning, so this runs before the
 #                  build and its failure is the useful message.
-#  15. build    -- the thesis.
+#  16. build    -- the thesis.
 #
 # Usage:
 #   SOARING_PARA_DATA_ROOT=... SOARING_DELTA_DATA_ROOT=... scripts/regenerate.sh [--no-build]

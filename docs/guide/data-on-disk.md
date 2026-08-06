@@ -26,11 +26,11 @@ Slow-and-flat stints too short to excise, one row per stint: `source`, `flight_i
 `t_start`, `t_end` in the re-zeroed clock. Stage (iii) produces them so the ψ(τ) fits can
 be re-run with and without them as a sensitivity check. Written even when empty.
 
-> **The views below are from pipeline 1.1.0** (run of 2026-08-03, morning). Pipeline
-> 1.2.0 adds `extent_km` to `flights_meta` and two drop reasons; re-run
-> `show_dataset.py` after the next full pass and paste the output over them. The page is
-> only worth what its freshness is — that is why every block here is generated and none
-> is typed.
+> **The views below are from pipeline 1.3.0.** The nine blocks that `show_dataset.py`
+> produces reproduce byte for byte against the archive as it stands, checked rather than
+> assumed; the others — the directory tree, the `.igc` and XML excerpts, a log extract —
+> are quoted from their own sources. Re-run `show_dataset.py` after the next full pass and
+> paste its output over the generated ones. The page is only worth what its freshness is.
 
 ## The two roots
 
@@ -466,10 +466,22 @@ hangglider       975           0      0.0 20640.0   2065       2064           0.
 hangglider      1032           0      0.0 14175.0      0        691           0.001479              1.000000           False         False False channel_not_reconstructable
 hangglider      1037           0      0.0 17660.0   1767       1766           0.000000              0.000000           False         False  True                        <NA>
 hangglider      1049           0      0.0 19698.0      0        960           0.000000              1.000000           False         False False channel_not_reconstructable
+```
 
-==============================================================================
-derived/flights_meta.parquet  -- transposed: 41 columns read down
-==============================================================================
+`n_fix` counts the rows the segment contributed to `fixes` (zero when dropped) against
+`n_fix_raw`, its measured fixes. `censored_start`/`censored_end` are `True` only at a
+boundary a *split* created: the flight's own first and last boundary truncate the phase in
+progress too, but they are a different thing, and are told apart by these being `False`.
+`segment_id` is assigned at split time and stays stable, so a gap in the numbering is
+itself the record of a drop.
+
+## `derived/flights_meta.parquet` — one row per flight *attempted*
+
+Including the ones the pipeline dropped: the census of what was removed is as much a
+result as what was kept. 47 columns, which read down rather than across — one retained
+flight beside one the flight filter rejected:
+
+```
 6,716 rows x 47 columns (6,132 retained, 584 dropped)
 
                      a retained flight           a dropped one
@@ -516,66 +528,6 @@ n_segments_kept                    1.0                     NaN
 frac_interpolated             0.001453                     NaN
 frac_z_reconstructed          0.001453                     NaN
 z_gap_max_s                       10.0                     NaN
-was_resampled                     True                    None
-savgol_order                       3.0                     NaN
-savgol_window_horiz                5.0                     NaN
-savgol_window_vert                 5.0                     NaN
-```
-
-`n_fix` counts the rows the segment contributed to `fixes` (zero when dropped) against
-`n_fix_raw`, its measured fixes. `censored_start`/`censored_end` are `True` only at a
-boundary a *split* created: the flight's own first and last boundary truncate the phase in
-progress too, but they are a different thing, and are told apart by these being `False`.
-`segment_id` is assigned at split time and stays stable, so a gap in the numbering is
-itself the record of a drop.
-
-## `derived/flights_meta.parquet` — one row per flight *attempted*
-
-Including the ones the pipeline dropped: the census of what was removed is as much a
-result as what was kept. 41 columns, which read down rather than across — one retained
-flight beside one the flight filter rejected:
-
-```
-6,716 rows x 41 columns (6,117 retained, 599 dropped)
-
-                     a retained flight           a dropped one
-source                      hangglider              hangglider
-flight_id                          975                     830
-pipeline_version                 1.0.0                   1.0.0
-drop_stage                         NaN           flight_filter
-drop_reason                        NaN  duration_below_minimum
-alt_source                        baro                    gnss
-baro_present_frac                  1.0                     0.0
-baro_range_m                    1977.0                     0.0
-n_alt_missing_raw                    0                     349
-n_fix_raw                         2099                     349
-n_fix_clean                       2069                     348
-n_merged_duplicates                  0                       0
-n_removed_backward                   0                       0
-n_removed_spike                      0                       1
-n_removed_frozen                    30                       0
-n_alt_out_of_band                    0                       0
-n_alt_vz_spike                       0                       0
-n_flagged_kept                      40                       8
-n_vz_runs                            0                       0
-n_boundaried                         0                       0
-integrity_fraction                 0.0                0.004587
-ground_phase_start_s             300.0                   485.0
-ground_phase_end_s             20945.0                  1570.0
-trimmed_fraction              0.002464                0.376437
-n_interior_excised                   0                       0
-n_suspect_stints                     0                       0
-duration_flight_s              20645.0                  1085.0
-path_km                     283.408578                6.044969
-alt_range_m                     1977.0                     NaN
-lat0                         43.812717                     NaN
-lon0                          6.809883                     NaN
-alt0                            1459.0                     NaN
-dt_native_s                       10.0                     NaN
-g_max_s                           20.0                     NaN
-n_segments                         1.0                     NaN
-n_segments_kept                    1.0                     NaN
-frac_interpolated             0.001453                     NaN
 was_resampled                     True                    None
 savgol_order                       3.0                     NaN
 savgol_window_horiz                5.0                     NaN
