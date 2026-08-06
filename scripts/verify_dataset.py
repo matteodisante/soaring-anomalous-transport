@@ -324,15 +324,32 @@ def verify(
 
 def main() -> int:
     """Verify every reachable discipline; non-zero exit if any invariant fails."""
+    import argparse
+
     from soaring.analysis.config import load_preproc_config
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    # The reductions already refuse this, and for the reason that applies here twice over:
+    # ``verify.tex`` is rewritten wholesale, so one unreachable data root does not leave the
+    # other discipline's macros alone -- it deletes them. The build then dies hundreds of
+    # lines later on an undefined control sequence inside \SI{}, naming the sentence rather
+    # than the root that was never exported. Fatal by default; the escape hatch is asked for.
+    parser.add_argument(
+        "--allow-partial",
+        action="store_true",
+        help="write the macros for whichever disciplines are reachable, instead of failing",
+    )
+    args = parser.parse_args()
 
     cfg = load_preproc_config()
     total = 0
+    missing: list[str] = []
     quoted: dict[str, str] = {}
     for discipline in DISCIPLINES:
         derived = _derived_dir(discipline)
         if derived is None:
             print(f"[{discipline}] no processed dataset; skipped.")
+            missing.append(discipline)
             continue
         failures, macros = verify(
             discipline, derived, cfg.fix.max_horizontal_speed_mps[discipline]
@@ -343,6 +360,15 @@ def main() -> int:
         if not failures:
             print("  every invariant holds.")
         total += len(failures)
+
+    if missing and not args.allow_partial:
+        roots = ", ".join(DISCIPLINES[d][0] for d in missing)
+        print(
+            f"\nUnreachable: {', '.join(missing)}. verify.tex NOT rewritten -- it would have "
+            f"lost the macros of the missing discipline and broken the build with an error "
+            f"naming the wrong line. Export {roots}, or pass --allow-partial."
+        )
+        return 1
 
     if quoted:
         out = (

@@ -17,8 +17,21 @@ over it costs minutes to hours depending on what it computes per flight.
 `.pdf` figures. Seconds to minutes. This is the split that lets a stratification be a row
 selection rather than another traversal.
 
-`scripts/regenerate.sh` runs all of them in the one order that is correct, and its header
-explains why the order is a constraint rather than a convenience.
+`scripts/regenerate.sh` runs all sixteen in the one order that is correct, and its header
+explains why the order is a constraint rather than a convenience. Every script that touches the
+archive needs both roots exported, whichever discipline it is asked for, because the generated
+`.tex` files carry both and a partial one breaks the build:
+
+```bash
+export SOARING_PARA_DATA_ROOT=/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc
+export SOARING_DELTA_DATA_ROOT=/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc
+scripts/regenerate.sh              # everything, then the thesis build
+scripts/regenerate.sh --no-build   # everything, stopping before latexmk
+PY=python3 scripts/regenerate.sh   # override the interpreter (default .venv/bin/python)
+```
+
+It refuses to start while `scripts/preprocess.py` is still running — a `pgrep` guard, because
+measuring a table that is still being written gives numbers that are wrong and look fine.
 
 ---
 
@@ -59,7 +72,10 @@ Runs the seven-stage pipeline over an archive and writes `fixes.parquet`,
 ### `scripts/verify_dataset.py`
 Checks the written tables against the invariants Chapter 2 claims for them, and writes
 `thesis/generated/verify.tex`. A full traversal. Step 1 of `regenerate.sh`, because a failure
-here invalidates everything downstream.
+here invalidates everything downstream. It rewrites `verify.tex` wholesale, so an unreachable
+data root would delete the other discipline's macros rather than leave them alone; it therefore
+refuses to write at all unless both roots are exported, and `--allow-partial` is the escape
+hatch. `--help` costs nothing.
 
 ### `scripts/check_reproducible.py`
 Draws a seeded sample of retained flights, finds their raw IGC files, runs them through
@@ -111,7 +127,9 @@ of the segment ends that every flight has.
 
 ### `scripts/reporting/generate_msd_figure.py`
 Streams the fix table itself rather than reading an array, so it is a pass in cost.
-Writes `msd.pdf`, `msd.tex`, `msd_curve.csv`.
+Writes `msd.pdf`, `msd.tex`, `msd_curve.csv`. `--redraw` re-renders the figure and the macros
+from the committed `msd_curve.csv` in seconds, without touching the archive: use it for every
+change that is about the drawing rather than the measurement.
 
 ### `scripts/reporting/generate_transport_figure.py`
 `--audit-dir`, `--allow-partial` → `transport.pdf`, `transport.tex`.
@@ -141,11 +159,18 @@ Reads `flights_meta.parquet`. → `pipeline_census.tex`.
 Reads the cached raw-archive scan, never rescans. → `census.tex`.
 
 ### `scripts/reporting/generate_stats.py`
-Reads the committed `data/*/seasons_index.csv` snapshots. → `stats.tex`.
+Reads the committed `data/*/seasons_index.csv` snapshots. → `stats.tex`,
+`seasons_table_para.tex`, `seasons_table_hang.tex`. Run by the pre-commit hook, as is
+`generate_census_stats.py`.
 
 ### `scripts/reporting/generate_preproc_figure.py`
 → `preproc_diagnostics.pdf`, `fixlevel_diagnostics.pdf`, `gap_diagnostics.pdf`,
-`sampling_intervals.pdf`.
+`sampling_intervals.pdf`. Filed here for its outputs, but it is not a reduction: it calls
+`load_or_scan_tracks`, which scans the raw archive and writes
+`<data_root>/derived/track_scan.parquet` (8.5 MB paragliders, 0.4 MB hang gliders). It is the
+only producer of that cache, and both `generate_census_stats.py` and
+`generate_altitude_noise_figure.py` read it, so it has to run before either of them. Minutes
+when the cache is cold.
 
 ### `scripts/reporting/generate_altitude_noise_figure.py`
 → `altitude_noise.pdf`.
@@ -156,6 +181,7 @@ Reads the committed `data/*/seasons_index.csv` snapshots. → `stats.tex`.
 
 ### `scripts/reporting/check_generated_macros.py`
 Reads both sides of the macro contract and reports the difference in a second, with no build.
+`--quiet` prints only the verdict.
 A macro quoted and never written is a fatal LaTeX error inside `\SI{}`, diagnosed from a
 symptom that names the wrong line, so this runs before the build. It also reports macro names
 LaTeX cannot accept, and typed numbers in the body that a generated macro already carries.
