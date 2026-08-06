@@ -128,3 +128,22 @@ def test_the_presence_threshold_lives_in_the_config_and_nowhere_else():
     configured = load_preproc_config().alt_channel.baro_present_min
     assert configured == BARO_PRESENT_MIN
     assert 0.0 < configured <= 1.0
+
+
+def test_a_blank_barometric_field_is_absent_and_not_fully_present():
+    """`nan != 0` is True, so a channel written blank used to read as 100 % present.
+
+    The threshold is 0.95, so a blank channel passed it and the pipeline adopted an altitude
+    that is not there. Four flights in the archive reached the analysis dataset that way,
+    identifiable by a NaN `baro_range_m` on a flight recorded as barometric.
+    """
+    _, channel = adopt_alt_channel(_flight(np.full(10, np.nan)), ALT_CHANNEL)
+    assert channel.baro_present_frac == 0.0
+    assert channel.alt_source == "gnss"
+
+
+def test_a_half_blank_barometric_field_is_half_present():
+    baro = np.concatenate([np.full(5, np.nan), np.full(5, 1000.0)])
+    _, channel = adopt_alt_channel(_flight(baro), ALT_CHANNEL)
+    assert channel.baro_present_frac == pytest.approx(0.5)
+    assert channel.alt_source == "gnss"

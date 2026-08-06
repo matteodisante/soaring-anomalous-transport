@@ -235,6 +235,11 @@ def baro_present_fraction(fixes: pd.DataFrame) -> float:
     A value near ``0`` means the logger has no pressure sensor (the whole ``baro_alt``
     channel is written as zero), so the flight must fall back to the GNSS altitude.
 
+    A blank or unusable field is ``nan`` (see :func:`_altitude`), and ``nan != 0.0`` is
+    ``True``, so a logger writing blanks used to be reported as carrying a channel at full
+    presence -- the opposite of the truth, and enough to have the pipeline adopt an altitude
+    that is not there. Missing counts as absent.
+
     Args:
         fixes: Table returned by :func:`parse_igc`.
 
@@ -243,7 +248,8 @@ def baro_present_fraction(fixes: pd.DataFrame) -> float:
     """
     if len(fixes) == 0:
         return 0.0
-    return float((fixes["baro_alt"].to_numpy() != 0.0).mean())
+    baro = fixes["baro_alt"].to_numpy(dtype=float)
+    return float((np.isfinite(baro) & (baro != 0.0)).mean())
 
 
 def median_sampling_period(fixes: pd.DataFrame) -> float:

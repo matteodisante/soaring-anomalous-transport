@@ -112,7 +112,10 @@ def adopt_alt_channel(
         raise ValueError(f"the parsed table is missing the column(s) {missing}")
 
     baro = fixes["baro_alt"].to_numpy(dtype=float)
-    present = baro != _ABSENT_ALT_M
+    # ``nan`` is what a blank or unusable altitude field decodes to, and ``nan != 0`` is
+    # True, so a channel written entirely blank used to be counted as fully present and
+    # adopted. Four flights in the archive reached the analysis dataset that way.
+    present = np.isfinite(baro) & (baro != _ABSENT_ALT_M)
     present_frac = float(present.mean()) if baro.size else 0.0
     baro_range = (
         float(baro[present].max() - baro[present].min()) if present.any() else 0.0
