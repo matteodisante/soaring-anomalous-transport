@@ -782,8 +782,11 @@ sampling noise --- \StatVarParaNoiseSigmaDex\ dex per lag for paragliders and
 \StatVarHangNoiseSigmaDex\ for hang gliders, carrying the measured lag-to-lag correlation ---
 the same procedure returns a break \SI{\StatVarParaFalsePositivePct}{\percent} and
 \SI{\StatVarHangFalsePositivePct}{\percent} of the time \impldetails{impl:global}. A rule that
-invents a break that often on a curve that has none cannot be quoted as having found one, and
-neither count is established.
+invents a break on more than half of the curves that have none cannot be quoted as having found
+one, and neither count is established. That the two disciplines return the same rate to within a
+point, on archives differing by a factor of twenty-five in size, is the first sign of where the
+limit lies: the surrogate is set by the lag-to-lag correlation and the number of lags, which the
+two share, and not by how much data stands behind each lag.
 
 The reason is the resolution of the data rather than the fitting rule. The residuals of any fit
 to these curves are correlated across lags, because every lag is an average over the same

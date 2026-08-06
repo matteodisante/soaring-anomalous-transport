@@ -165,8 +165,14 @@ def sampling_covariance(
         curves, labels, as_log, n_resamples=n_resamples, seed=seed
     )
     sigma = np.nanstd(replicates, axis=0)
-    centred = replicates - np.nanmean(replicates, axis=0)
-    usable = np.isfinite(sigma) & (sigma > 0)
+    # Standardised before pooling, because the lags do not share a scale: sigma runs over two
+    # orders of magnitude across the full grid, so a correlation taken on the raw deviations is
+    # dominated by the loudest lags and reads far below the truth. On an exact AR(1) with
+    # rho = 0.90 and one lag forty times noisier, pooling raw returns 0.05 and standardising
+    # returns 0.885. The floor is relative rather than ``> 0`` so that a lag whose sigma has
+    # collapsed to rounding is dropped instead of being amplified into pure noise.
+    usable = np.isfinite(sigma) & (sigma > 1e-6 * np.nanmedian(sigma))
+    centred = (replicates - np.nanmean(replicates, axis=0)) / np.where(usable, sigma, np.nan)
     if usable.sum() > 3:
         a = centred[:, usable][:, :-1].ravel()
         b = centred[:, usable][:, 1:].ravel()

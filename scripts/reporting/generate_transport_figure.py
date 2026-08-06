@@ -312,11 +312,21 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
 
     # ---- how many regimes, against a null the shape cannot leak into ----------------
     mean_curve = np.nanmean(loaded["orders"][2], axis=0)
-    noise = sampling_covariance(loaded["orders"][2], labels, n_resamples=80, seed=11)
-    sigma = float(np.nanmedian(noise["sigma_dex"][window]))
+    # Measured inside the fitted window, not over the whole grid. sigma was already windowed
+    # and the correlation was not, so the null was built with the noise scale of the window and
+    # the correlation of the grid -- and those are not the same number: on this archive the
+    # whole-grid value is 0.33 where the window's is 0.97. A correlation that low makes the
+    # surrogate whiter, which produces fewer spurious breaks, which understates the very
+    # false-positive rate this null exists to report.
+    noise = sampling_covariance(
+        loaded["orders"][2][:, window], labels, n_resamples=80, seed=11
+    )
+    sigma = float(np.nanmedian(noise["sigma_dex"]))
     chosen_fit = select_breakpoints(lags[window], mean_curve[window], max_breaks=2)
+    # 500 rather than 200: at 200 the rate moves by two points between seeds, which is larger
+    # than the last digit the macro prints.
     null = spurious_breakpoints(
-        lags[window], mean_curve[window], n_surrogates=200, seed=13,
+        lags[window], mean_curve[window], n_surrogates=500, seed=13,
         sigma=sigma, autocorrelation=noise["autocorrelation"],
     )
     put("Dof", f"{effective_dof(lags[window], mean_curve[window]):.1f}")
