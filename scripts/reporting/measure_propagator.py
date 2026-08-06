@@ -101,7 +101,9 @@ def run(discipline: str, out_dir: Path, limit: int | None = None) -> int:
             velocity = np.column_stack(
                 [segment["v_E"].to_numpy(dtype=float), segment["v_N"].to_numpy(dtype=float)]
             )
-            kinematics.add(positions, velocity, segment["v_z"].to_numpy(dtype=float))
+            kinematics.add(
+                positions, velocity, segment["v_z"].to_numpy(dtype=float), dt=step
+            )
         flights += 1
         if count % 20_000 == 0:
             print(f"  {discipline}: {count} flights", flush=True)

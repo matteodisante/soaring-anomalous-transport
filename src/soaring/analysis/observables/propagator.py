@@ -331,8 +331,14 @@ def turning_angles(positions: np.ndarray, stride: int = 1) -> np.ndarray:
 
     The microscopic origin of the persistence the velocity autocorrelation measures: a
     distribution peaked at zero is a correlated walk, a flat one is memoryless
-    reorientation. Taken at a stride, since at a one-second cadence the angle between
-    consecutive fixes is dominated by the smoothing rather than by the flying.
+    reorientation.
+
+    ``stride`` is a count of **samples**, not seconds, and is meant to be the width of the
+    smoothing window: ``savgol_window(5.0, dt, 3)`` returns five samples at every retained
+    cadence, so a five-sample stride makes the two successive displacement vectors share no
+    sample, at every cadence, which is what stops the angle from measuring the filter
+    instead of the flying. Converting it to seconds would defeat that -- at a five-second
+    cadence ``round(5/dt)`` is one sample, and both vectors would sit inside one window.
 
     Zero-length steps carry no direction and are dropped rather than assigned one.
     """
@@ -366,13 +372,29 @@ class KinematicAccumulator:
     def __init__(self, *, angle_stride: int = 5):
         self.angle_stride = int(angle_stride)
         self.angle = np.zeros(self.ANGLE_EDGES.size - 1, dtype=np.int64)
+        # The stride is a count of samples, so the same stride is a different interval on
+        # each cadence class, and the pooled histogram mixes them: 89 % of paraglider fixes
+        # are at 1 Hz but only 62 % of hang-glider ones, so the discipline comparison across
+        # the pooled histogram is partly a comparison of logger populations. A second
+        # histogram restricted to 1 Hz segments makes that comparison at a matched stride,
+        # and there the stride really is five seconds.
+        self.angle_one_hz = np.zeros(self.ANGLE_EDGES.size - 1, dtype=np.int64)
         self.speed = np.zeros(self.SPEED_EDGES.size - 1, dtype=np.int64)
         self.vertical = np.zeros(self.VERTICAL_EDGES.size - 1, dtype=np.int64)
 
-    def add(self, positions: np.ndarray, velocity: np.ndarray, vertical: np.ndarray) -> None:
+    def add(
+        self,
+        positions: np.ndarray,
+        velocity: np.ndarray,
+        vertical: np.ndarray,
+        dt: float | None = None,
+    ) -> None:
         angles = turning_angles(positions, self.angle_stride)
         if angles.size:
-            self.angle += np.histogram(angles, bins=self.ANGLE_EDGES)[0]
+            counted = np.histogram(angles, bins=self.ANGLE_EDGES)[0]
+            self.angle += counted
+            if dt is not None and float(dt) == 1.0:
+                self.angle_one_hz += counted
         speed = np.hypot(velocity[:, 0], velocity[:, 1])
         speed = speed[np.isfinite(speed)]
         if speed.size:
@@ -390,4 +412,5 @@ class KinematicAccumulator:
             "vertical_counts": self.vertical,
             "vertical_edges": self.VERTICAL_EDGES,
             "angle_stride": np.array([self.angle_stride]),
+            "angle_counts_one_hz": self.angle_one_hz,
         }

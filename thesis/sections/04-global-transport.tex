@@ -1283,12 +1283,26 @@ have contradicted the position statistic outright.
 \paragraph{The turning angles.}
 The persistence has a microscopic form and it is measured, in the same units a walker
 model would use: the angle between successive horizontal displacement vectors, taken at a
-stride of \SI{\StatKinParaAngleStrideS}{\second} so that it is the flying and not the
-smoothing that is read. Its median is \SI{\StatKinParaAngleMedianDeg}{\degree} for
-paragliders, over \num{\StatKinParaAngles} angles, and
-\SI{\StatKinHangAngleMedianDeg}{\degree} for hang gliders over \num{\StatKinHangAngles};
-\SI{\StatKinParaAngleForwardPct}{\percent} and \SI{\StatKinHangAngleForwardPct}{\percent}
-of them fall within $\pi/6$ of the previous heading. Memoryless reorientation is the
+stride of \num{\StatKinParaAngleStrideSamples} samples so that it is the flying and not the
+smoothing that is read. The stride is a count of samples rather than an interval on purpose:
+the smoothing window is five samples at every retained cadence \impldetails{impl:global}, so
+a five-sample stride leaves the two displacement vectors sharing none, which an interval in
+seconds would not do at the coarse end. Its median is
+\SI{\StatKinParaAngleMedianDeg}{\degree} for paragliders, over \num{\StatKinParaAngles}
+angles, and \SI{\StatKinHangAngleMedianDeg}{\degree} for hang gliders over
+\num{\StatKinHangAngles}; \SI{\StatKinParaAngleForwardPct}{\percent} and
+\SI{\StatKinHangAngleForwardPct}{\percent} of them fall within $\pi/6$ of the previous
+heading.
+
+Those two medians are not read at the same interval, because the disciplines do not carry the
+same loggers: \SI{\StatKinParaAngleOneHzSharePct}{\percent} of paraglider angles come from
+\SI{1}{\hertz} segments against \SI{\StatKinHangAngleOneHzSharePct}{\percent} of
+hang-glider ones, so part of the gap between them is a gap between logger populations.
+Restricted to \SI{1}{\hertz} segments, where the five samples are \SI{5}{\second} and the
+comparison is matched, the medians are
+\SI{\StatKinParaAngleMedianOneHzDeg}{\degree} and
+\SI{\StatKinHangAngleMedianOneHzDeg}{\degree}. The difference survives the matching and
+loses about a quarter of its size. Memoryless reorientation is the
 reference, and it is nowhere near: its median is a right angle, and the share it leaves
 within $\pi/6$ is the fraction of the half-turn that cone spans.
 

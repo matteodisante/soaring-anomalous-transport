@@ -142,14 +142,20 @@ def measure(discipline: str, cadences, macros: dict) -> dict:
 
 
 def _from_histogram(counts, edges, probabilities):
-    """Quantiles of a linearly binned histogram, interpolated within the bin."""
+    """Quantiles of a linearly binned histogram, interpolated across the bin.
+
+    The cumulative count after bin ``i`` is the mass below ``edges[i+1]``, not the mass
+    below the bin's centre, so the two arrays passed to ``interp`` have to be the edges and
+    a cumulative that starts at zero. Pairing ``cumsum(counts)`` with the centres instead
+    shifts every quantile down by half a bin, uniformly and silently: on a distribution
+    whose true median is zero, the vertical grid used here returns -0.0625.
+    """
     counts = np.asarray(counts, dtype=float)
-    centres = 0.5 * (edges[:-1] + edges[1:])
     total = counts.sum()
     if total <= 0:
         return [float("nan")] * len(probabilities)
-    cumulative = np.cumsum(counts) / total
-    return [float(np.interp(p, cumulative, centres)) for p in probabilities]
+    cumulative = np.concatenate([[0.0], np.cumsum(counts)]) / total
+    return [float(np.interp(p, cumulative, edges)) for p in probabilities]
 
 
 def kinematics(discipline: str, path: Path, macros: dict) -> dict:
@@ -175,9 +181,21 @@ def kinematics(discipline: str, path: Path, macros: dict) -> dict:
     centres = 0.5 * (angle_edges[:-1] + angle_edges[1:])
     median = _from_histogram(angle, angle_edges, [0.5])[0]
     put("Angles", f"{int(angle.sum())}")
-    put("AngleStrideS", f"{int(data['angle_stride'][0])}")
+    # The stride is a sample count. It was emitted as "...S" and typeset inside \SI{}{\second},
+    # which is false wherever the cadence is not 1 Hz -- 10.7 % of paraglider fixes and 38.3 %
+    # of hang-glider ones. The name now says what the number is.
+    put("AngleStrideSamples", f"{int(data['angle_stride'][0])}")
     put("AngleMedianDeg", f"{np.degrees(median):.0f}")
     put("AngleForwardPct", f"{100 * angle[centres < np.pi / 6].sum() / angle.sum():.0f}")
+    # The same median over 1 Hz segments only, where five samples are five seconds, so the
+    # two disciplines are compared at a matched stride rather than across their logger mixes.
+    if "angle_counts_one_hz" in data:
+        one_hz = data["angle_counts_one_hz"]
+        if one_hz.sum() > 0:
+            matched = _from_histogram(one_hz, angle_edges, [0.5])[0]
+            put("AnglesOneHz", f"{int(one_hz.sum())}")
+            put("AngleMedianOneHzDeg", f"{np.degrees(matched):.1f}")
+            put("AngleOneHzSharePct", f"{100 * one_hz.sum() / angle.sum():.0f}")
 
     speed = _from_histogram(data["speed_counts"], data["speed_edges"], [0.5, 0.9, 0.99])
     put("SpeedMedianMs", f"{speed[0]:.1f}")
