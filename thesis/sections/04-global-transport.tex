@@ -1318,10 +1318,22 @@ Green--Kubo turns on: multiplying $C$ by a constant moves every value on it and 
 $\gamma$ where it was.
 
 Over \SIrange{\StatShapeParaVacfTailMinS}{\StatShapeParaVacfTailMaxS}{\second}, which is
-\num{\StatShapeParaVacfTailLags} lags and the same lags in both disciplines, the measured
-tail is a power law of $\gamma=\StatShapeParaVacfTailGamma$ for paragliders and
-\StatShapeHangVacfTailGamma\ for hang gliders. Neither is integrable. The memory is not
-spent at the bottom of the grid, only small there, and the objection does not stand.
+\num{\StatShapeParaVacfTailLags} lags and the same lags in both disciplines, a single power
+law fitted to the tail gives $\gamma=\StatShapeParaVacfTailGamma$ for paragliders and
+\StatShapeHangVacfTailGamma\ for hang gliders. One exponent is not a good description of
+those lags, and this chapter is in no position to pretend otherwise: the local slope runs from
+\StatShapeParaVacfGammaLocalMin\ to \StatShapeParaVacfGammaLocalMax\ across them, a factor
+of \StatShapeParaVacfGammaLocalRatio, and from \StatShapeHangVacfGammaLocalMin\ to
+\StatShapeHangVacfGammaLocalMax\ for hang gliders, leaving the single line with residuals of
+\StatShapeParaVacfGammaResidualDex\ and \StatShapeHangVacfGammaResidualDex\ dex --- an arch,
+which is the same chord-across-a-bend this section refuses elsewhere.
+
+What the argument needs is not the fitted value. Green--Kubo turns on integrability, and
+\emph{every} local slope is below unity, in both disciplines and at all
+\num{\StatShapeParaVacfTailLags} lags. Non-integrability therefore holds pointwise rather than
+on a fitted average, which is the stronger statement and the one that does not depend on the
+tail being a power law at all. The memory is not spent at the bottom of the grid, only small
+there, and the objection does not stand.
 
 \paragraph{The comparison is one-sided.}
 Two features of the estimate push $\gamma$ up, and both are known in sign. The correlation
@@ -1491,8 +1503,10 @@ walk's knee would leave on this grid. The \emph{pooled} propagator is neverthele
 $\alpha^{\mathrm{NG}}=\StatShapeParaNonGaussMedian$ and $\StatShapeHangNonGaussMedian$ in the
 median over the window, each rising to an interior maximum and falling back rather than holding
 a level. The velocity autocorrelation is positive at every lag of the grid,
-and its tail is a power law of $\gamma=\StatShapeParaVacfTailGamma$ and
-\StatShapeHangVacfTailGamma, non-integrable in both, which is what sustains correlated
+and its local decay exponent stays below unity at every lag of the fitted range in both
+disciplines --- \StatShapeParaVacfGammaLocalMin\ to \StatShapeParaVacfGammaLocalMax\ for
+paragliders, so non-integrable pointwise rather than as one fitted number, which is what
+sustains correlated
 increments to \SI{\StatVarParaFitMaxS}{\second} from a correlation already below $1/e$ by
 \SI{\StatShapeParaVacfDecayS}{\second}. No leg duration is distinguished: the tail index of
 the persistence-run durations moves from \StatShapeParaBetaStraight\ to

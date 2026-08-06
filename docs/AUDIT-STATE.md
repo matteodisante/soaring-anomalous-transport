@@ -132,12 +132,10 @@ What does not change is the conclusion, and it comes out stronger: **every local
 one**, in both disciplines, at all fifteen lags. Non-integrability is what Green–Kubo needs, and
 it holds pointwise rather than only on the fitted average.
 
-`generate_shape_figure.py` now emits `\StatShape*VacfGammaLocalMin/Max/Ratio/BelowOne` and
-`...VacfGammaResidualDex` beside the fitted value. **The reduction had not finished when this was
-written, so `shape.tex` does not yet carry them and no sentence quotes them.** To finish: re-run
-`generate_shape_figure.py --audit-dir <dir>`, then replace "the measured tail is a power law of
-γ = …" at `04-global-transport.tex:1321` and the same phrase in the verdict at `:1494` with the
-local range and the pointwise statement. Nothing else depends on it.
+**Applied.** `generate_shape_figure.py` emits `\StatShape*VacfGammaLocalMin/Max/Ratio/BelowOne`
+and `...VacfGammaResidualDex` beside the fitted value, and both sentences that called the tail a
+power law — the body and the verdict — now give the local range and the pointwise statement
+instead. The fitted value is still reported, as a fit rather than as a description.
 
 The audit's own prescription here should **not** be followed: it wanted the Green–Kubo floor
 raised from 1.39 to ≈1.70 on the strength of a de-biased γ. That is the wrong direction — a floor
