@@ -32,9 +32,11 @@
    `configs/preprocessing.yaml` (documented, grouped by pipeline level), never hard-coded;
    `load_preproc_config` reads it into typed dataclasses. Acquisition config is separate
    (`configs/*_download.yaml`, `soaring.acquisition.ffvl.config`).
-3. **Traceability.** Each output row/table carries the pipeline version, the config hash
-   and the git commit — stored as Parquet footer key–value metadata, so the dataset
-   documents itself.
+3. **Traceability.** `flights_meta` carries the pipeline version as a column
+   (`pipeline_version`). Nothing else is recorded: the Parquet footers hold only the Arrow
+   and pandas schemas, and neither the config hash nor the git commit is stored. What ties a
+   table to the code that wrote it is `scripts/check_reproducible.py`, which re-runs a seeded
+   sample through the pipeline as it stands and compares column by column.
 4. **No redundant storage.** Anything that is pure algebra of stored columns (`v_tot`,
    spherical angles, curvature/`ω`, turn radius, glide ratio, mechanical energy, absolute
    altitude) is computed *lazily* at analysis time — never materialized. Only the outputs
@@ -206,9 +208,11 @@ script and propagates everywhere without a rescan.
 
 `track_stats` also computes a few per-flight QC fields, free byproducts of the same scan:
 `baro_present_frac`, `max_vxy_mps`, `max_vz_mps`, `baro_alt_min_m`, `baro_alt_max_m`.
-A flight counts as **barometric** when `baro_present_frac` ≥ `BARO_PRESENT_MIN` = **0.95** (raised from 0.5 on 2026-08-02; defined once in
-`soaring.analysis.altitude_noise` and imported by `preprocessing`, so cleaning, census and
-PSD cannot drift). The change reclassified 241 paraglider flights and no hang-glider ones
+A flight counts as **barometric** when `baro_present_frac` ≥ `baro_present_min` = **0.95** (raised from 0.5 on 2026-08-02). It is written twice: as
+`alt_channel.baro_present_min` in `configs/preprocessing.yaml`, which the pipeline reads
+(`preproc/altchannel.py:121`), and as `BARO_PRESENT_MIN` in `soaring.analysis.altitude_noise`,
+which the census and the PSD read. They cannot drift because
+`test_the_presence_threshold_lives_in_the_config_and_nowhere_else` asserts they are equal. The change reclassified 241 paraglider flights and no hang-glider ones
 (0.13 % of the archive) — the direct measurement of how bimodal presence is.
 `baro_present_frac` is consumed by the altitude-noise figure's fallback-rate panel (thesis
 `sec:altchannel`), which prefers this cache (`altitude_noise.baro_presence_from_scan`) over its own
@@ -268,19 +272,41 @@ Two implementation choices, made when stage (vi) was built:
 
 ### `flights_meta` (one row per flight)
 
-Single Parquet. Identity + provenance (`source`, `flight_id`, `global_flight_id?`,
-`pipeline_version`, `config_hash`, `processed_at`); cleaned catalog fields (§7 recodes);
-georeference (`lat0`, `lon0`, `alt0` — the measured altitude at the origin fix, informational only); timing (`t_signal_*`, `duration_signal_s`,
-`duration_flight_s`, `ground_phase_{start,end}_s`); cleaning diagnostics (`n_fix_raw`,
-`n_fix_clean`, `frac_interpolated`, `dt_native_s`, `was_resampled`, `alt_source`); filtering
-params (`savgol_window_horiz/vert`, `savgol_order`). Fields unavailable for a source stay
-`null`.
+Single Parquet, 47 columns, one row per flight **attempted** — the dropped ones are kept,
+because the census of what was removed is as much a result as what was kept. Checked against
+`pipeline.FlightRecord`:
+
+- **identity** — `source`, `flight_id`, `pipeline_version`;
+- **fate** — `drop_stage`, `drop_reason`, `error_detail`. Null on a retained flight; the
+  removal cascade of the thesis is read off them;
+- **altitude channel** — `alt_source`, `baro_present_frac`, `baro_range_m`,
+  `n_alt_missing_raw`;
+- **cleaning counters** — `n_fix_raw`, `n_fix_clean`, `n_merged_duplicates`,
+  `n_removed_backward`, `n_removed_spike`, `n_removed_frozen`, `n_alt_out_of_band`,
+  `n_alt_vz_spike`, `n_flagged_kept`, `n_vz_runs`, `n_alt_level_shift`, `split_jump_max_m`,
+  `n_boundaried`, `integrity_fraction`;
+- **trimming** — `ground_phase_start_s`, `ground_phase_end_s`, `trimmed_fraction`,
+  `n_interior_excised`, `n_suspect_stints`;
+- **flight-level quantities the filter reads** — `duration_flight_s`, `path_km`,
+  `alt_range_m`, `extent_km`;
+- **georeference** — `lat0`, `lon0`, `alt0` (the measured altitude at the origin fix,
+  informational only);
+- **resampling** — `dt_native_s`, `g_max_s`, `n_segments`, `n_segments_kept`,
+  `frac_interpolated`, `frac_z_reconstructed`, `z_gap_max_s`, `was_resampled`;
+- **smoothing** — `savgol_order`, `savgol_window_horiz`, `savgol_window_vert`.
+
+Fields unavailable for a source stay `null`. There is no `global_flight_id`, no
+`config_hash`, no `processed_at` and no signal-time pair: those were in an early design and
+were never written.
 
 ## Storage & engine
 
-- **`fixes`**: Parquet + **Polars** (lazy / out-of-core) — ~186k flights × ~10⁴ fixes ≈ 10⁹
-  rows, too large for pandas-in-RAM; columnar reads + predicate pushdown on
-  `(source, flight_id)`. Adds `polars`/`pyarrow` deps.
+- **`fixes`**: Parquet, written row group by row group with `pyarrow.parquet.ParquetWriter`
+  and read back the same way through `soaring.analysis.derived.stream_flights`, one pandas
+  frame per flight — 1.36 × 10⁹ rows and 43 GB, far too large for pandas-in-RAM, and never
+  read with `read_parquet`. Polars was considered here and not adopted: the access pattern is
+  a single sequential sweep per pass, which pyarrow already does without a second dataframe
+  library in the dependency set.
 - **catalog / `flights_meta`**: small — pandas + CSV (catalog, unchanged) / single Parquet.
 
 ## Catalog quirks

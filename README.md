@@ -99,12 +99,14 @@ output), `catalog/` (tables derived from it), `derived/` (the analysis dataset):
 │   ├── derived/
 │   │   ├── fixes.parquet             # 1,363,998,292 rows, 43.4 GB — the cleaned fixes
 │   │   ├── segments.parquet          #   281,777 rows — contiguous stretches within a flight
-│   │   ├── flights_meta.parquet      #   186,052 rows — one per flight, post-filter
+│   │   ├── flights_meta.parquet      #   186,052 rows — one per flight attempted
+│   │   │                             #                 (155,788 retained)
 │   │   ├── suspect_intervals.parquet #       859 rows — slow-and-flat stints, left open
 │   │   └── track_scan.parquet        #   186,025 rows — pre-processing scan cache
 │   └── logs/
 └── hang_gliders/delta_cfd_igc/       # same layout: 34,525,108 fixes, 13,222 segments,
-    …                                 # 6716 flights, 12 suspect intervals
+    …                                 # 6716 flights attempted (6132 retained),
+                                      # 12 suspect intervals
 ```
 
 Row counts measured from the Parquet footers on the current archive.

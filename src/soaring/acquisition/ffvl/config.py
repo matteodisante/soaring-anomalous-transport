@@ -157,7 +157,7 @@ def load_config(
     if not data_root_str:
         raise KeyError(
             "Missing 'data_root' in the configuration file "
-            "(or set the SOARING_FFVL_DATA_ROOT environment variable)."
+            f"(or set the {data_root_env} environment variable)."
         )
 
     seasons = raw.get("seasons", {}) or {}

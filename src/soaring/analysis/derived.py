@@ -10,8 +10,8 @@ That distinction is the reason this module exists. Reading a row group and group
 rows by ``flight_id`` looks like it iterates over flights, and does, right up to the
 flight that happens to straddle the boundary: that one arrives as two fragments, in two
 different row groups, and is processed as two flights. The consequences are not
-cosmetic. The ensemble MSD counted 157134 paraglider flights where the archive holds
-156017; the time-averaged MSD, which is computed *within* a segment, lost
+cosmetic. The ensemble MSD counted 157134 paraglider flights where the pipeline had then
+written 156017 (the archive holds 155788 today); the time-averaged MSD, which is computed *within* a segment, lost
 every pair of samples spanning a boundary and every lag longer than the truncated
 fragment, so the longest segments -- the ones that carry the long-lag tail, and the ones
 most likely to straddle -- were the ones cut short; and the dataset verifier never
