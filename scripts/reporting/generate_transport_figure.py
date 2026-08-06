@@ -201,7 +201,12 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
     # maximum near 100 s and a minimum near 600 s. A dip, where the ensemble curve is an arch.
     from soaring.analysis.observables.regimes import local_slope as _ls
 
-    v2_slope = _ls(lags, np.nanmean(loaded["orders"][2], axis=0))
+    # The window has to be the one panel (d) draws, or the chapter quotes a swing off a curve
+    # the reader is not looking at. Every other call here passes 0.25 explicitly; this one took
+    # the 0.15 default, which reads a swing of 0.28 where the drawn curve swings 0.26. Widening
+    # the window damps the feature rather than creating it -- with no smoothing at all the
+    # paraglider swing is 0.35 -- so 0.25 is also the conservative choice.
+    v2_slope = _ls(lags, np.nanmean(loaded["orders"][2], axis=0), 0.25)
     fitted = (lags >= FIT_RANGE_S[0]) & (lags <= FIT_RANGE_S[1])
     inside = fitted & np.isfinite(v2_slope)
     if inside.any():
