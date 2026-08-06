@@ -135,8 +135,11 @@ Key mechanics that reconcile the blueprint with the repo:
   2026-08-02: 75 m only excluded a dead sensor, 600 m asks for the altitude budget a
   ≥40 min cross-country actually spends. Cheap either way — retained share of barometric
   flights 69.8 % → 68.1 % para, 83.0 % → 81.1 % hang, so both sit on the same plateau.
-  Caveat: the census stores only the *barometric* extremes, so this cut cannot yet be
-  audited on the GNSS-fallback minority). Path length = sum of great-circle steps (not extent/displacement).
+  The cut is auditable on both channels: `flights_meta.alt_range_m` is the range of the
+  *adopted* channel, stored beside `alt_source`, non-null for 184,188 paraglider and 6,568
+  hang-glider flights — the ones that reach stage (iv) — of which 129,555 and 5,542 are
+  barometric. Its bite is on disk as `altitude_range_below_minimum`: 4,960 paraglider
+  flights, 2.67 %, and 153 hang-glider ones, 2.28 %). Path length = sum of great-circle steps (not extent/displacement).
   A minimum-fix-count cut is dropped as redundant with the duration cut.
 - **Uniform Δt (vi).** Native `Δt` per flight (no common cadence). Uniform ⇒ use as is;
   mildly irregular ⇒ resample onto the native grid across small gaps (each filled point
@@ -180,8 +183,9 @@ Key mechanics that reconcile the blueprint with the repo:
   recomputed on interior samples only); and a segment with fewer than `w` samples cannot
   be smoothed at all, so it is dropped with reason `shorter_than_smoothing_window`. The
   90 s segment gate of (vi) guarantees the window fits **up to Δt = 22.5 s** — beyond
-  that, in the thin slow-logger tail, this drop is what covers the difference. It is
-  observed: 1 segment in 307 on a 116-flight raw sample.
+  that, in the thin slow-logger tail, this drop is what covers the difference. Measured on
+  the archive: 89 of 281,777 paraglider segments (0.032 %) and none of the 13,222
+  hang-glider ones; exactly one paraglider flight was lost entirely to it.
 
 ## Reporting-stage scan cache (not the production `fixes`/`flights_meta` tables)
 
@@ -448,8 +452,9 @@ mirrored in the thesis appendix (`impl:fixlevel`, `impl:trimming`) in the same p
   corrupt has no impossible step left to inflate the path, so it passes every other cut and
   simply sits thousands of kilometres from its own origin. Five paraglider flights in run 4
   sat 4500 km out; because the ensemble MSD averages `|r|²`, five records in 156 017 moved
-  it by seven orders of magnitude. Costs 0.03 % (para) / 0.05 % (hang) on a 4000-flight
-  sample, and reuses the existing number. Re-checked on the written tables by
+  it by seven orders of magnitude. On the full run it costs 228 paraglider flights (0.12 %)
+  and 7 hang-glider ones (0.10 %), recorded as `extent_out_of_reach_of_the_first_fix`, and
+  reuses the existing number. Re-checked on the written tables by
   `verify_dataset.py` as `|r(t)| ≤ v_xy_max · t` — the one invariant stated in terms of the
   frame and the bound alone, so it holds whatever the pipeline did.
 - **No Hampel test on `z`.** `sec:fixlevel` argues it (three reasons); `impl:fixlevel`
