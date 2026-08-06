@@ -80,3 +80,31 @@ def test_sampling_covariance_is_a_property_of_the_noise_not_of_the_shape():
     # 0.1 in natural log over 400 flights is ~0.043/sqrt(400) dex per lag.
     assert np.nanmedian(result["sigma_dex"]) < 0.01
     assert result["n_clusters"] == 400
+
+
+def test_the_lag_correlation_survives_one_much_noisier_lag():
+    """Pooled without standardising, one loud lag drives the correlation to zero.
+
+    The lags of a variation curve do not share a scale -- sigma runs over two orders of
+    magnitude across the full grid, because coverage decays -- so a correlation taken on the
+    raw deviations is a variance-weighted average dominated by whichever lag is loudest.
+    That matters beyond the estimator: the breakpoint null is built from this number, a
+    smaller correlation makes the surrogate whiter, and a whiter surrogate breaks less
+    often, so the error flows straight into an understated false-positive rate.
+
+    Here the answer is known: the curves are an exact AR(1) along the lag axis.
+    """
+    rng = np.random.default_rng(4)
+    n_curves, n_lags, rho_true = 400, 22, 0.90
+    z = rng.standard_normal((n_curves, n_lags))
+    x = np.zeros_like(z)
+    x[:, 0] = z[:, 0]
+    for i in range(1, n_lags):
+        x[:, i] = rho_true * x[:, i - 1] + np.sqrt(1 - rho_true**2) * z[:, i]
+
+    # One lag forty times noisier than the rest, which is milder than the real grid.
+    scale = np.where(np.arange(n_lags) == 18, 40.0, 1.0)
+    curves = np.exp((x * scale) * 0.01)
+
+    result = sampling_covariance(curves, np.arange(n_curves), n_resamples=80, seed=7)
+    assert result["autocorrelation"] == pytest.approx(rho_true, abs=0.1)
