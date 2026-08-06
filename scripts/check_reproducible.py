@@ -93,8 +93,27 @@ def _disagreement(old, new) -> str | None:
     for column in _NUMERIC:
         a = old[column].to_numpy(dtype=float)
         b = new[column].to_numpy(dtype=float)
-        scale = max(1.0, float(np.nanmax(np.abs(a))) if a.size else 1.0)
-        worst = float(np.nanmax(np.abs(a - b))) if a.size else 0.0
+        if not a.size:
+            continue
+        # Where a value is missing has to be compared before how much it differs by. The
+        # difference is taken with nanmax, which SKIPS the NaNs rather than failing on them:
+        # a value that turned NaN leaves |a - b| undefined there, nanmax steps over it, and
+        # a flight whose z channel had gone missing entirely came back as "identical". The
+        # comparison is the guarantee behind sec:reproducible, so the missing-value pattern
+        # is part of what must agree, not a gap in what is checked.
+        missing_old, missing_new = np.isnan(a), np.isnan(b)
+        if not np.array_equal(missing_old, missing_new):
+            moved = int((missing_old != missing_new).sum())
+            appeared = int((missing_new & ~missing_old).sum())
+            return (
+                f"`{column}` differs in {moved} missing values "
+                f"({appeared} newly missing, {moved - appeared} newly present)"
+            )
+        both = ~missing_old
+        if not both.any():
+            continue
+        scale = max(1.0, float(np.max(np.abs(a[both]))))
+        worst = float(np.max(np.abs(a[both] - b[both])))
         if worst > 10.0 * _FLOAT32_RELATIVE * scale:
             return f"`{column}` differs by {worst:.4g} (scale {scale:.4g})"
     return None
