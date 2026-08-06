@@ -5,7 +5,7 @@ and its comments, and the documentation. Each finding was recomputed or executed
 acted on, and several of the audits' own claims did not survive that. This file records what
 was applied, what was rejected and why, and what is left.
 
-Everything below refers to commits between `f70d8b3` and `54216a5`.
+Everything below refers to commits between `f70d8b3` and `dd3ce11`.
 
 ---
 
@@ -100,18 +100,30 @@ but the diagnosis in the audit was the wrong way round.
 
 ---
 
+### The two high-severity code findings, since verified and fixed
+
+**A value that turned NaN was reported as exact agreement** (`41408cf`). `check_reproducible.py`
+is the guarantee behind Chapter 2's reproducibility claim, and it took its difference with
+`np.nanmax`, which *skips* NaNs rather than failing on them. One value of `z` turning NaN in a
+four-row frame gave a verdict of 0.0 — identical — and a wholly missing column gave `nan`, which
+is not greater than any threshold either. The missing-value pattern is now compared first, in
+both directions. Re-run on the archive afterwards: 80 flights, 80 identical, 0 disagreeing, so
+the stricter comparison did not turn real data into false alarms.
+
+**A blank barometric channel read as fully present** (`dd3ce11`). `_altitude` returns `nan` for a
+blank field, by design; both places that measured presence tested `baro != 0`, and `nan != 0` is
+True. A logger writing blanks was therefore reported at 100 % presence, passed the 95 % threshold,
+and had its absent altitude adopted. Measured bite: 3 paraglider and 1 hang-glider flight retained
+with `alt_source = baro` and a NaN `baro_range_m`. Nothing downstream reports a wrong number,
+because the gap filler bridged the range, but the classification rested on a false reading. **The
+stored tables predate the fix and still carry those four flights; they change at the next full
+pipeline run.**
+
 ## Left, in the order I would take it
 
-Two high-severity code findings from the audit, **not yet verified by me** and therefore not to be
-believed until they are:
-
-1. **`altitude_noise`: a blank barometric field may be counted as present and then crash the PSD
-   run.** Reported as high. If true it is a robustness bug rather than a wrong number.
-2. **`check_reproducible.py` may report exact agreement when a value turns NaN, and may not compare
-   `segment_id`.** If true, the reproducibility check is weaker than the thesis says it is, which
-   would matter for Chapter 2's claims.
-
-Then, in descending order: `stream_flights` stitching a non-contiguous flight; `persistence_runs`
+None of the following has been verified by me. They are the audit's claims, and this repository's
+experience is that roughly a third of such claims do not survive recomputation — so treat each as
+a lead, not a defect, until it is reproduced. In descending order: `stream_flights` stitching a non-contiguous flight; `persistence_runs`
 being quadratic; `velocity_autocorrelation` returning mismatched arrays for an explicit
 `max_lag=0`; the IGC parser's bare `int()` on the degrees field; `preprocess.py` able to leave
 `derived/` describing two different runs.
