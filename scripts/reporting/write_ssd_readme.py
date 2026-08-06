@@ -95,7 +95,12 @@ def _describe(discipline: str) -> list[str]:
         f"| `raw/igc/<season>/` | **the input.** One `.igc` tracklog per flight, plain "
         f"text, named `<date>_<flight_id>.igc`. {raw_files:,} files. Irreplaceable: "
         f"everything else on the disk is rebuilt from these | {_human(raw_bytes)} |",
-        f"| `catalog/` | the season XML the flights were listed from, as downloaded | "
+        f"| `raw/raw_xml/` | **the provenance.** One XML export per season, exactly as the "
+        f"site returned it. Irreplaceable for the same reason as the tracks: the listing it "
+        f"records is not archived anywhere else | "
+        f"{_human(_tree_size(root / 'raw' / 'raw_xml')[0])} |",
+        f"| `catalog/` | **rebuildable.** `catalog.csv` and `seasons_index.csv`, regenerated "
+        f"from the XML by `soaring-{{para,delta}} build-catalog` | "
         f"{_human(_tree_size(root / 'catalog')[0])} |",
         f"| `derived/` | **rebuildable.** The processed tables below, written by "
         f"`scripts/preprocess.py` | {_human(_tree_size(cfg.derived_dir)[0])} |",
@@ -185,9 +190,10 @@ def main(argv=None) -> int:
         "SOARING_DELTA_DATA_ROOT=/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc",
         "```",
         "",
-        "**What is irreplaceable and what is not.** `raw/igc/` and `catalog/` are the "
+        "**What is irreplaceable and what is not.** `raw/igc/` and `raw/raw_xml/` are the "
         "downloaded record and cannot be regenerated if the source withdraws a flight; "
-        "back those up. Everything under `derived/` is a pure function of them "
+        "back those up. `catalog/` is rebuilt from the XML by `build-catalog`, and "
+        "everything under `derived/` is a pure function of the tracks "
         "and of the ",
         "code, and can be deleted and rebuilt with `scripts/preprocess.py` — which is "
         "checked, not assumed: `scripts/check_reproducible.py` re-runs a sample of "
