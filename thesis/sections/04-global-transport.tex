@@ -1205,8 +1205,10 @@ of Gaussian flights of differing amplitude produces on its own. That is the null
 value has to be read against, and it can be built from the order-1 variations, which are the
 same second moment on the same increments \impldetails{impl:global}.
 
-The null is \emph{above} the measurement, at every lag where the reconstruction reproduces
-the pooled second moment the shape pass measured, in both archives: at
+The null is \emph{above} the measurement at \num{\StatShapeParaNullAbove} of the
+\num{\StatShapeParaNullLags} lags where the reconstruction reproduces the pooled second moment
+the shape pass measured, and at \num{\StatShapeHangNullAbove} of
+\num{\StatShapeHangNullLags} for hang gliders --- every one of them in both archives. At
 \SI{\StatShapeParaNullFloorS}{\second} it reads \StatShapeParaNullAtFloor\ against a
 measured \StatShapeParaNonGaussAtFloor\ for paragliders, and
 \StatShapeHangNullAtFloor\ against \StatShapeHangNonGaussAtFloor\ for hang gliders.
@@ -1277,7 +1279,10 @@ segments, and to \StatCirclingHangTrough\ at \SI{\StatCirclingHangTroughS}{\seco
 \StatCirclingHangCrest\ at \SI{\StatCirclingHangCrestS}{\second} over
 \num{\StatCirclingHangSegments} hang-glider ones \impldetails{impl:global}. The minimum sits
 at half the maximum's lag in both disciplines, which is the circle and not a coincidence of
-the estimator.
+the estimator. Nowhere in that decade does $C$ approach zero: its smallest value between
+\SI{1}{\second} and \SI{60}{\second} is \StatCirclingParaMin\ for paragliders and
+\StatCirclingHangMin\ for hang gliders, so the absence of a sign change is not a near miss
+resolved by the coarser grid but a wide margin.
 
 So the first constraint on Chapter~\ref{ch:phases} is not what it was going to be. A phase
 decomposition does not have to \emph{produce} an anti-persistence that nothing else shows:
@@ -1330,7 +1335,9 @@ which is the same chord-across-a-bend this section refuses elsewhere.
 
 What the argument needs is not the fitted value. Green--Kubo turns on integrability, and
 \emph{every} local slope is below unity, in both disciplines and at all
-\num{\StatShapeParaVacfTailLags} lags. Non-integrability therefore holds pointwise rather than
+\num{\StatShapeParaVacfTailLags} lags --- the generator checks it and reports
+\StatShapeParaVacfGammaBelowOne\ for paragliders and
+\StatShapeHangVacfGammaBelowOne\ for hang gliders. Non-integrability therefore holds pointwise rather than
 on a fitted average, which is the stronger statement and the one that does not depend on the
 tail being a power law at all. The memory is not spent at the bottom of the grid, only small
 there, and the objection does not stand.
@@ -1373,7 +1380,8 @@ same loggers: \SI{\StatKinParaAngleOneHzSharePct}{\percent} of paraglider angles
 \SI{1}{\hertz} segments against \SI{\StatKinHangAngleOneHzSharePct}{\percent} of
 hang-glider ones, so part of the gap between them is a gap between logger populations.
 Restricted to \SI{1}{\hertz} segments, where the five samples are \SI{5}{\second} and the
-comparison is matched, the medians are
+comparison is matched --- \num{\StatKinParaAnglesOneHz} angles against
+\num{\StatKinHangAnglesOneHz} --- the medians are
 \SI{\StatKinParaAngleMedianOneHzDeg}{\degree} and
 \SI{\StatKinHangAngleMedianOneHzDeg}{\degree}. The difference survives the matching and
 loses about a quarter of its size. Memoryless reorientation is the
