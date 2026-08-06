@@ -71,7 +71,7 @@ uv run python scripts/check_reproducible.py    # re-runs a seeded sample through
 ### 3. Regenerate the analysis
 
 ```bash
-scripts/regenerate.sh                          # 16 steps: passes, reductions, macros, figures
+scripts/regenerate.sh                          # 17 steps: passes, reductions, macros, figures
 ```
 
 The order is a constraint rather than a convenience, and the script's header says why.

@@ -1180,11 +1180,48 @@ They are not averaged either. Over the window the hang-glider parameter never fa
 \StatShapeHangNonGaussMin\ and the paraglider parameter never rises above
 \StatShapeParaNonGaussMax, so the two do not overlap at any lag in it, and the separation
 between them is larger than the movement either curve shows from one end of the window to
-the other. Whatever makes these increments heavier-tailed than Gaussian acts more strongly
-on the smaller and slower discipline, by the ratio of \StatShapeHangNonGaussMedian\ to
-\StatShapeParaNonGaussMedian. That asymmetry is a property of the two archives rather than
+the other. Whatever produces the difference acts more strongly on the smaller and \emph{faster}
+discipline, by the ratio of \StatShapeHangNonGaussMedian\ to
+\StatShapeParaNonGaussMedian --- the hang-glider median ground speed is
+\SI{\StatKinHangSpeedMedianMs}{\metre\per\second} against
+\SI{\StatKinParaSpeedMedianMs}{\metre\per\second}, as this section reports below. That asymmetry is a property of the two archives rather than
 scatter between them, and any mechanism Chapter~\ref{ch:phases} proposes for the shape of
 the increment distribution has to reproduce it.
+
+\paragraph{What the pooled parameter is a statement about.}
+It is pooled by construction: \path{measure_shape.py} accumulates the moments over every
+flight before taking any ratio, so the value is a property of the whole population of
+increments and not of any flight's propagator. Those are different quantities, and the
+identity between them is exact. Writing $S_f$ for a flight's own second moment at a lag and
+$a_f$ for its own non-Gaussian parameter, and weighting by the windows each flight supplies,
+\begin{equation}
+  1 + \alpha^{\mathrm{NG}}_{\text{pooled}}
+    = \frac{\mathbb{E}_n\!\left[(1 + a_f)\,S_f^{2}\right]}{\mathbb{E}_n[S_f]^{2}} .
+  \label{eq:pooled-nongauss}
+\end{equation}
+Setting every $a_f$ to zero --- every flight exactly Gaussian, at the archive's own window
+counts and its own amplitudes --- leaves $\mathrm{CV}^{2}(S_f)$, the excess that a population
+of Gaussian flights of differing amplitude produces on its own. That is the null the measured
+value has to be read against, and it can be built from the order-1 variations, which are the
+same second moment on the same increments \impldetails{impl:global}.
+
+The null is \emph{above} the measurement, at every lag where the reconstruction reproduces
+the pooled second moment the shape pass measured, in both archives: at
+\SI{\StatShapeParaNullFloorS}{\second} it reads \StatShapeParaNullAtFloor\ against a
+measured \StatShapeParaNonGaussAtFloor\ for paragliders, and
+\StatShapeHangNullAtFloor\ against \StatShapeHangNonGaussAtFloor\ for hang gliders.
+Subtracting it, the within-flight excess is \emph{negative} --- \StatShapeParaWithinFlight\
+and \StatShapeHangWithinFlight\ in the median --- so a flight's own increment distribution
+is not heavy-tailed at all but flatter than Gaussian, which is what a wing holding a
+characteristic airspeed should give.
+
+This changes what the number means rather than what it is. The pooled propagator genuinely is
+not Gaussian, because a mixture of Gaussians of differing width is not one; but the excess is
+the width mixture and not a tail, and the quantity to reproduce is the between-flight
+amplitude spread, $\mathrm{CV}(S_f) = \StatShapeParaAmplitudeCv$ against
+$\StatShapeHangAmplitudeCv$ at \SI{\StatShapeParaNullFloorS}{\second}. The refusal of the
+L\'evy walk is untouched: it rests on the moment spectrum, which is measured per lag and not
+pooled across flights of different amplitude.
 
 \paragraph{Beyond the fitted range.}
 $\alpha_2^{\mathrm{NG}}$ climbs, to \StatShapeParaNonGaussBeyond\ and
@@ -1220,11 +1257,33 @@ by a double loop, and averaged across records at each lag of the grid the moment
 Two things come off the measured curve directly (Figure~\ref{fig:shape}). It is positive
 throughout and changes sign nowhere on the grid: $C=\StatShapeParaVacfAtFloor$ for
 paragliders at the floor and $\StatShapeHangVacfAtFloor$ for hang gliders, decaying from
-there without a zero crossing. A sign change is what a circling wing produces, since half a
-turn later its velocity points the other way, and there is none. At the ensemble level the
-circling does not survive the average, which is the first constraint on
-Chapter~\ref{ch:phases}: a phase decomposition has to \emph{produce} the anti-persistence
-of a climb, because no statistic on the unsegmented trajectory carries it.
+there without a zero crossing.
+
+A sign change is what a \emph{single} circling wing produces, since half a turn later its
+velocity points the other way. An ensemble of them does not produce one, and that is a
+statement about the ensemble rather than about the flying: radius and phase disperse across
+flights, so the average of many circles cannot go negative even when every record in it
+turns. What survives an average is the shape, not the sign --- a minimum at half a period,
+where a wing's velocity is least aligned with its own velocity a half-period earlier, and a
+maximum at the period, where it is aligned again.
+
+Both are there, and the reason the grid of Figure~\ref{fig:shape} does not show them is that
+it begins at \SI{\StatShapeParaVacfTailMinS}{\second} and the whole feature lies below its first
+lag. Measured at native cadence on the \SI{1}{\hertz} segments, where a lag in samples is a
+lag in seconds, $C$ falls to \StatCirclingParaTrough\ at
+\SI{\StatCirclingParaTroughS}{\second} and recovers to \StatCirclingParaCrest\ at
+\SI{\StatCirclingParaCrestS}{\second} over \num{\StatCirclingParaSegments} paraglider
+segments, and to \StatCirclingHangTrough\ at \SI{\StatCirclingHangTroughS}{\second} and
+\StatCirclingHangCrest\ at \SI{\StatCirclingHangCrestS}{\second} over
+\num{\StatCirclingHangSegments} hang-glider ones \impldetails{impl:global}. The minimum sits
+at half the maximum's lag in both disciplines, which is the circle and not a coincidence of
+the estimator.
+
+So the first constraint on Chapter~\ref{ch:phases} is not what it was going to be. A phase
+decomposition does not have to \emph{produce} an anti-persistence that nothing else shows:
+the unsegmented ensemble already carries the circling, with a period of
+\SIrange{\StatCirclingHangCrestS}{\StatCirclingParaCrestS}{\second}, and that is a number a
+segmentation can be held to rather than asked to invent.
 
 The second is that $C$ is already small at the bottom of the grid. It falls below $1/e$ by
 \SI{\StatShapeParaVacfDecayS}{\second} for paragliders and
@@ -1428,9 +1487,10 @@ Every moment scales with that one exponent. Over the fitted range and $q$ from
 paragliders and \StatShapeHangNuSpread\ for hang gliders, and the moment spectrum departs
 from a line through the origin by \StatShapeParaLinearDeparture\ and
 \StatShapeHangLinearDeparture\ in rms, an order of magnitude below the departure a Lévy
-walk's knee would leave on this grid. The propagator is nevertheless not Gaussian:
-$\alpha^{\mathrm{NG}}=\StatShapeParaNonGaussMedian$ and $\StatShapeHangNonGaussMedian$, flat
-across the same window. The velocity autocorrelation is positive at every lag of the grid,
+walk's knee would leave on this grid. The \emph{pooled} propagator is nevertheless not Gaussian, though as a mixture of widths rather than as a tail:
+$\alpha^{\mathrm{NG}}=\StatShapeParaNonGaussMedian$ and $\StatShapeHangNonGaussMedian$ in the
+median over the window, each rising to an interior maximum and falling back rather than holding
+a level. The velocity autocorrelation is positive at every lag of the grid,
 and its tail is a power law of $\gamma=\StatShapeParaVacfTailGamma$ and
 \StatShapeHangVacfTailGamma, non-integrable in both, which is what sustains correlated
 increments to \SI{\StatVarParaFitMaxS}{\second} from a correlation already below $1/e$ by
@@ -1519,11 +1579,15 @@ decomposed.
         $H=\StatPropParaHurstEast$ east against \StatPropParaHurstNorth\ north for
         paragliders, and \StatPropHangHurstEast\ against \StatPropHangHurstNorth\ for hang
         gliders. Pooling presupposes an isotropy this ensemble does not have.
-  \item The non-Gaussian parameter is $\StatShapeParaNonGaussMedian$ for paragliders and
-        $\StatShapeHangNonGaussMedian$ for hang gliders over the same window: whatever makes
-        these increments heavier-tailed than Gaussian acts about fourfold more strongly on
-        the smaller, slower wing. Any mechanism proposed for the phase structure has to
-        produce that gap rather than average it away.
+  \item The pooled non-Gaussian parameter is $\StatShapeParaNonGaussMedian$ for paragliders
+        and $\StatShapeHangNonGaussMedian$ for hang gliders over the same window, and against
+        a matched Gaussian null both sit \emph{below} it, by
+        $\StatShapeParaWithinFlight$ and $\StatShapeHangWithinFlight$. What is handed on is
+        therefore a between-flight amplitude spread and not an increment tail:
+        $\mathrm{CV}(S_f) = \StatShapeParaAmplitudeCv$ against $\StatShapeHangAmplitudeCv$ at
+        \SI{\StatShapeParaNullFloorS}{\second}, with per-flight propagators flatter than
+        Gaussian. A phase decomposition has to produce that spread across records, and it must
+        not produce a heavy tail within one.
   \item The ergodicity question is handed on in the two forms that need no power law. The
         first is the drift of the exponent with the time already flown, obtained by running
         the same within-segment estimator on successive stretches of a record: an ageing

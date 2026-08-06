@@ -349,8 +349,9 @@ Handle at ingestion (empirically observed on the real files):
 | 12 | `generate_shape_figure.py` | `shape.tex`, `shape.pdf` | ~15 min |
 | 13 | `measure_propagator.py` + `generate_propagator_figure.py` | `propagator.tex`, `propagator.pdf` | ~12 min |
 | 14 | `measure_edge_effect.py` | `edge_effect.tex` (`\StatEdge*`) | minutes, subsampled |
-| 15 | `check_generated_macros.py` | nothing; fails if a quoted macro is unwritten | instant |
-| 16 | `latexmk` | `thesis/main.pdf` | ~1 min |
+| 15 | `measure_circling.py` | `circling.tex` (`\StatCircling*`) | minutes, subsampled |
+| 16 | `check_generated_macros.py` | nothing; fails if a quoted macro is unwritten | instant |
+| 17 | `latexmk` | `thesis/main.pdf` | ~1 min |
 
 Steps 9 and 10 are Chapter 3's measurement. Step 9 is the third full traversal of the fix
 table; it keeps one filtered-variation curve per flight per filter order, so every

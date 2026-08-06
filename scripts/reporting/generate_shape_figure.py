@@ -68,6 +68,90 @@ def load(slug: str, audit_dir: Path):
     return dict(np.load(path)) if path.is_file() else None
 
 
+def matched_gaussian_null(slug: str, audit_dir: Path, data: dict, macros: dict) -> None:
+    """What a pooled non-Gaussian parameter reads when every flight is exactly Gaussian.
+
+    The pooled parameter is not a statement about the shape of an increment distribution
+    until it is compared with this. Writing ``S_f`` for a flight's own second moment and
+    ``a_f`` for its own non-Gaussian parameter, the pooled value obeys
+
+        1 + alpha_pooled = E_n[(1 + a_f) S_f^2] / E_n[S_f]^2,
+
+    an identity rather than an approximation, with the expectations weighted by the number of
+    windows each flight supplies. Setting every ``a_f`` to zero leaves ``CV^2(S_f)``: the
+    excess a population of Gaussian flights of differing amplitude produces on its own. So a
+    measured value *below* this null is a population of flights whose individual propagators
+    are flatter than Gaussian, and one above it is a heavy tail.
+
+    ``S_f`` comes from the order-1 filtered variation, which is the same second moment on the
+    same increments, so the two are comparable lag by lag -- but only where the two passes put
+    a lag in the same place, and only where the reconstruction returns the pooled second
+    moment the shape pass measured. Both are checked here rather than assumed, and a lag that
+    fails either is dropped: the alternative is a comparison between two different quantities
+    that looks like a result.
+
+    The null is built isotropic. The archive is mildly anisotropic, and anisotropy raises the
+    Gaussian value (19/18 at a two-to-one ratio of component variances), so an isotropic null
+    is the conservative one when the finding is that the null already exceeds the measurement.
+    """
+    import pandas as pd
+
+    curves_path = audit_dir / f"variations_{slug}.npz"
+    flights_path = audit_dir / f"variation_flights_{slug}.parquet"
+    if not (curves_path.is_file() and flights_path.is_file()):
+        return
+    curves = np.load(curves_path)
+    frame = pd.read_parquet(flights_path, columns=["duration_s"])
+    duration = frame["duration_s"].to_numpy(dtype=float)
+    var_lags, first_order = curves["lags_s"], curves["order1"]
+    if first_order.shape[0] != duration.size:
+        return
+
+    lags = np.asarray(data["lags_s"], dtype=float)
+    moment = np.asarray(data["moment"], dtype=float)
+    q_grid = np.asarray(data["q_grid"], dtype=float)
+    two = int(np.argmin(np.abs(q_grid - 2.0)))
+    four = int(np.argmin(np.abs(q_grid - 4.0)))
+    measured = moment[:, four] / (2.0 * moment[:, two] ** 2) - 1.0
+
+    rows = []
+    for j, lag in enumerate(lags):
+        if not (TRANSPORT_RANGE_S[0] <= lag <= TRANSPORT_RANGE_S[1]):
+            continue
+        i = int(np.argmin(np.abs(var_lags - lag)))
+        if abs(var_lags[i] - lag) > 0.02 * lag:
+            continue
+        second = first_order[:, i]
+        windows = np.floor(duration / var_lags[i])
+        good = np.isfinite(second) & (second > 0) & (windows > 0)
+        if good.sum() < 100:
+            continue
+        weight, value = windows[good], second[good]
+        pooled = float(np.sum(weight * value) / np.sum(weight))
+        if not np.isfinite(moment[j, two]) or abs(pooled / moment[j, two] - 1.0) > 0.03:
+            continue
+        null = float(np.sum(weight * value**2) / np.sum(weight) / pooled**2 - 1.0)
+        rows.append((lag, measured[j], null))
+
+    if len(rows) < 2:
+        return
+    lag_at, measured_at, null_at = (np.array(c) for c in zip(*rows))
+    tag = DISCIPLINES[discipline_of(slug)][1]
+    macros[f"StatShape{tag}NullLags"] = f"{len(rows)}"
+    macros[f"StatShape{tag}NullAbove"] = f"{int((null_at > measured_at).sum())}"
+    macros[f"StatShape{tag}NullAtFloor"] = f"{null_at[0]:+.3f}"
+    macros[f"StatShape{tag}NullFloorS"] = f"{lag_at[0]:.0f}"
+    macros[f"StatShape{tag}WithinFlight"] = f"{np.median(measured_at - null_at):+.3f}"
+    macros[f"StatShape{tag}AmplitudeCv"] = f"{np.sqrt(max(null_at[0], 0.0)):.2f}"
+
+
+def discipline_of(slug: str) -> str:
+    for name, (candidate, _) in DISCIPLINES.items():
+        if candidate == slug:
+            return name
+    raise KeyError(slug)
+
+
 def measure(discipline: str, data: dict, macros: dict) -> dict:
     from soaring.analysis.observables.moments import bilinear_fit
     from soaring.analysis.observables.persistence import tail_index, vacf_tail_exponent
@@ -300,6 +384,7 @@ def main() -> int:
             missing.append(discipline)
             continue
         measured[discipline] = measure(discipline, data, macros)
+        matched_gaussian_null(slug, args.audit_dir, data, macros)
     if missing and not args.allow_partial:
         print(
             f"{', '.join(missing)}: pass not reachable. shape.tex would be written for the "

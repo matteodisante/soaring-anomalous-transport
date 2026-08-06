@@ -55,10 +55,14 @@
 #                  interior ones, to measure what the edge-flagged samples do to the curve
 #                  rather than assert it. A subsample suffices because the effect is a
 #                  property of the segment ends, which every flight has.
-#  15. contract -- every macro the thesis quotes must now exist. An undefined one inside
+#  15. circling -- the velocity autocorrelation at native cadence on the 1 Hz segments. The
+#                  shape pass evaluates every integer lag and then keeps only its geometric
+#                  grid, whose floor is 60 s, so the circling period at ~21 s falls below the
+#                  first lag it retains. Cheap: one histogram-free average over a subsample.
+#  16. contract -- every macro the thesis quotes must now exist. An undefined one inside
 #                  \SI{} is a *fatal* LaTeX error, not a warning, so this runs before the
 #                  build and its failure is the useful message.
-#  16. build    -- the thesis.
+#  17. build    -- the thesis.
 #
 # Usage:
 #   SOARING_PARA_DATA_ROOT=... SOARING_DELTA_DATA_ROOT=... scripts/regenerate.sh [--no-build]
@@ -79,50 +83,53 @@ fi
 
 step() { printf '\n=== %s ===\n' "$1"; }
 
-step "1/16  invariants (verify_dataset.py)"
+step "1/17  invariants (verify_dataset.py)"
 "$PY" scripts/verify_dataset.py
 
-step "2/16  pipeline census -> StatPipe*, tab:pipecensus"
+step "2/17  pipeline census -> StatPipe*, tab:pipecensus"
 "$PY" scripts/reporting/generate_pipeline_census.py
 
-step "3/16  MSD -> fig:msd, msd_curve.csv, StatMsd*   (the slow one)"
+step "3/17  MSD -> fig:msd, msd_curve.csv, StatMsd*   (the slow one)"
 "$PY" scripts/reporting/generate_msd_figure.py
 
-step "4/16  raw-archive census -> StatScan*, Preproc*"
+step "4/17  raw-archive census -> StatScan*, Preproc*"
 "$PY" scripts/reporting/generate_census_stats.py
 
-step "5/16  MSD audit pass -> per-flight positions at every lag"
+step "5/17  MSD audit pass -> per-flight positions at every lag"
 "$PY" scripts/reporting/audit_msd.py --out "$AUDIT_DIR"
 
-step "6/16  audit report -> StatAudit*"
+step "6/17  audit report -> StatAudit*"
 "$PY" scripts/reporting/audit_msd_report.py --audit-dir "$AUDIT_DIR"
 
-step "7/16  preliminary characterization -> fig:prelim-*, StatPrelim*"
+step "7/17  preliminary characterization -> fig:prelim-*, StatPrelim*"
 "$PY" scripts/reporting/generate_prelim_figure.py --audit-dir "$AUDIT_DIR"
 
-step "8/16  dataset statistics -> tab:cascade, fig:seasons, StatData*"
+step "8/17  dataset statistics -> tab:cascade, fig:seasons, StatData*"
 "$PY" scripts/reporting/generate_dataset_stats.py
 
-step "9/16  filtered variations -> per-flight curves, one per filter order"
+step "9/17  filtered variations -> per-flight curves, one per filter order"
 "$PY" scripts/reporting/measure_variations.py --out "$AUDIT_DIR"
 
-step "10/16  transport measurement -> tab:orderscan, fig:transport, StatVar*"
+step "10/17  transport measurement -> tab:orderscan, fig:transport, StatVar*"
 "$PY" scripts/reporting/generate_transport_figure.py --audit-dir "$AUDIT_DIR"
 
-step "11/16  shape pass -> increments, velocity memory, persistence runs"
+step "11/17  shape pass -> increments, velocity memory, persistence runs"
 "$PY" scripts/reporting/measure_shape.py --out "$AUDIT_DIR"
 
-step "12/16  shape measurement -> tab:shape, fig:shape, StatShape*"
+step "12/17  shape measurement -> tab:shape, fig:shape, StatShape*"
 "$PY" scripts/reporting/generate_shape_figure.py --audit-dir "$AUDIT_DIR"
 
-step "13/16  propagator -- the increments themselves, for the exponent read off the bulk"
+step "13/17  propagator -- the increments themselves, for the exponent read off the bulk"
 "$PY" scripts/reporting/measure_propagator.py --out "$AUDIT_DIR"
 "$PY" scripts/reporting/generate_propagator_figure.py --audit-dir "$AUDIT_DIR"
 
-step "14/16  edge-sample effect -> StatEdge*, the size of what the MSD reads and the verifier does not"
+step "14/17  edge-sample effect -> StatEdge*, the size of what the MSD reads and the verifier does not"
 "$PY" scripts/reporting/measure_edge_effect.py
 
-step "15/16  macro contract: everything the thesis quotes must exist"
+step "15/17  circling -> StatCircling*, the VACF at native cadence, below the shape pass's grid"
+"$PY" scripts/reporting/measure_circling.py
+
+step "16/17  macro contract: everything the thesis quotes must exist"
 "$PY" scripts/reporting/check_generated_macros.py
 
 if [[ "${1:-}" == "--no-build" ]]; then
@@ -130,6 +137,6 @@ if [[ "${1:-}" == "--no-build" ]]; then
     exit 0
 fi
 
-step "16/16  thesis"
+step "17/17  thesis"
 cd thesis && latexmk -pdf -interaction=nonstopmode main.tex >/dev/null
 echo "built thesis/main.pdf"

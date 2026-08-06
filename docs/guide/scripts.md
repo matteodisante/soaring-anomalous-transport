@@ -17,7 +17,7 @@ over it costs minutes to hours depending on what it computes per flight.
 `.pdf` figures. Seconds to minutes. This is the split that lets a stratification be a row
 selection rather than another traversal.
 
-`scripts/regenerate.sh` runs all sixteen in the one order that is correct, and its header
+`scripts/regenerate.sh` runs all seventeen in the one order that is correct, and its header
 explains why the order is a constraint rather than a convenience. Every script that touches the
 archive needs both roots exported, whichever discipline it is asked for, because the generated
 `.tex` files carry both and a partial one breaks the build:
@@ -111,6 +111,14 @@ the paraglider archive, because the runs are decomposed per segment at three thr
 Histograms of `|Δx|` per lag, per component and per native cadence, plus the turning-angle,
 speed and vertical-velocity histograms. Twelve minutes over both archives: histograms only,
 no per-segment decomposition. `--discipline`, `--out`, `--limit`.
+
+### `scripts/reporting/measure_circling.py`
+Averages the velocity autocorrelation at **native cadence** over 1 Hz segments and writes
+`thesis/generated/circling.tex`. It exists because `measure_shape.py` evaluates every integer
+lag and then keeps only its geometric grid, whose floor is 60 s — and the circling period is
+about 21 s, so the whole feature sits below the first lag that pass retains. Restricted to
+1 Hz because a lag in samples is a lag in seconds only there. `--limit` (default 25000
+flights per discipline), and the sample size reaches the thesis as a macro.
 
 ### `scripts/reporting/measure_edge_effect.py`
 Computes the ensemble MSD twice on the same flights, once over all samples and once over
