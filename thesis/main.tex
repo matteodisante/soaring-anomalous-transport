@@ -126,10 +126,12 @@
 % ---- pass their argument through unchanged.
 \definecolor{revblue}{HTML}{1565C0}
 \definecolor{revorange}{HTML}{E07B00}
+\definecolor{errorred}{rgb}{1,0,0}
 \newif\ifrevmode
 \revmodetrue
 \newcommand{\rev}[1]{\ifrevmode\textcolor{revblue}{#1}\else#1\fi}
 \newcommand{\flow}[1]{\ifrevmode\textcolor{revorange}{#1}\else#1\fi}
+\newcommand{\err}[1]{\ifrevmode\textcolor{errorred}{#1}\else#1\fi}
 % Block forms of \rev/\flow for material that spans sectioning commands, floats or lists
 % (a plain \textcolor argument must not contain \section&c.).
 \newenvironment{revblock}{\ifrevmode\color{revblue}\fi}{}
@@ -222,7 +224,7 @@
 \vfill
 {\large Academic year 2025--2026\par}
 \vspace{1em}
-{\small Working draft --- generated on \StatGenerated.\\
+{\small Working draft --- last modified \today.\\
 Sources and code: \url{https://github.com/matteodisante/soaring-anomalous-transport}\par}
 \end{titlepage}
 

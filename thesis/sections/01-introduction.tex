@@ -17,47 +17,86 @@ Intermittent and directionally persistent motion of this kind is one of the sett
 in which \emph{anomalous transport} arises. Let $\mathbf{r}(t)$ denote the horizontal position of a flight, measured from take-off.
 Transport is anomalous when the mean-squared displacement grows as a non-trivial power of
 time, $\langle |\mathbf{r}(t)|^2\rangle \sim t^{\alpha}$ with $\alpha \neq 1$, as opposed to
-the linear growth ($\alpha = 1$) of ordinary Brownian diffusion. \rev{The continuous-time
-random walk (CTRW) is the standard modelling framework for such
+the linear growth ($\alpha = 1$) of ordinary Brownian diffusion. The continuous-time
+random walk (CTRW) is one of the standard modelling frameworks for such
 regimes~\cite{metzler2000}: the walker waits a random time $\tau$, then makes a random
 displacement $\mathbf{x}$, and the joint density $\psi(\mathbf{x},\tau)$ of the two fixes
-the transport. The L\'evy walk is not a separate framework but the particular case in which
-the two are coupled through a constant speed $v$,}
+the transport. When the two are independent, $\psi(\mathbf{x},\tau) =
+\lambda(\mathbf{x})\,w(\tau)$, a heavy-tailed $w$ makes the walk subdiffusive, while a
+heavy-tailed $\lambda$ makes it a L\'evy flight, in which an arbitrarily long displacement
+is made instantaneously and the second moment diverges. The L\'evy walk is not a separate
+framework but the opposite, fully coupled case, which relates 
+displacement to duration through a constant speed $v$,
 \begin{equation}
-  \rev{\psi(\mathbf{x},\tau) \propto \delta\!\left(|\mathbf{x}| - v\tau\right) w(\tau),}
+  \psi(\mathbf{x},\tau) \propto \delta\!\left(|\mathbf{x}| - v\tau\right) w(\tau),
   \label{eq:levywalk}
 \end{equation}
-\rev{with the direction drawn uniformly, so that each waiting time is spent travelling
+with the direction drawn uniformly, so that each waiting time is spent travelling
 ballistically rather than standing
 still~\cite{zaburdaev2015}. Anomalous transport of this kind has been reported in
 random-search strategies~\cite{viswanathan1999}, in disordered
-media~\cite{bouchaud1990}, and in turbulent flows~\cite{solomon1993}.}
+media~\cite{bouchaud1990}, and in turbulent flows~\cite{solomon1993}.
 
-\rev{The soaring cycle lies somewhere between the uncoupled and the fully coupled case, and
-it has three parts rather than two: a directed glide, then a search phase, then a localized
-climb. The glides are legs flown at a nearly constant speed, as in a L\'evy walk; the search
-and the climb that end each leg are episodes of slow, localized motion, closer to the waits
-of an uncoupled CTRW. Whether those two phases can be collapsed into a single waiting phase
-is a modelling decision that the data have to support, and it is argued for where the
-quantitative model is built (Sec.~\ref{sec:modelling}). One feature is captured by
-neither limiting case: successive glides need not point in independent directions. The model
-this thesis works towards is therefore a persistent random walk in continuous time---one
-whose successive leg directions are correlated, with waiting times between legs.}
+Both are renewal processes: each step draws a fresh pair $(\mathbf{x},\tau)$
+independently of every step before it, so the walk retains no memory beyond its current
+position. Correlated CTRWs relax that assumption. Correlating successive jumps alone already
+moves the exponent---it can turn the walk superdiffusive---and separates the ensemble average
+from the time average~\cite{tejedor2010}; imposing power-law correlated noise on the jump
+lengths and the waiting times together gives a process carrying scale-free displacements,
+scale-free waiting times, and the long-range memory of fractional Brownian motion at
+once~\cite{schulz2013}.
 
-\rev{Which of these ingredients the data actually require is settled by measurement, not
-assumed in advance, and the order of the measurement is the order of what it needs.
-Chapter~\ref{ch:global} takes the whole trajectory, unsegmented, and asks what class of
-transport it is: an exponent, whether one exponent governs every moment, how long a heading
-survives, and whether any leg duration is distinguished. Chapter~\ref{ch:phases} then
-splits the flight into its phases, which is what the leg lengths and waiting times of the
-model require, and the minimal model is built on what both return. The persistence in
-particular is a working hypothesis about angular memory, which only the measured heading
-correlations can confirm or rule out.}
+The soaring cycle has three parts rather than two: a directed glide, then a search
+phase, then a localized climb. The glide is a leg flown at nearly constant speed---the
+coupling of Eq.~\eqref{eq:levywalk}, and the only feature of it the cycle inherits, since the
+uniform direction drawn alongside that coupling is itself one of the things to be tested. The
+search and the climb that end each leg are episodes of slow, localized motion, closer to the
+waits of an uncoupled CTRW; whether they can be collapsed into a single waiting phase is a
+modelling decision the data have to support (Sec.~\ref{sec:modelling}).
+
+Whether the resulting sequence of legs is renewal is left open until it can be measured.
+It can fail in four ways, each its own measurement: successive glide \emph{directions},
+successive glide \emph{lengths} and successive \emph{waiting times} may each be correlated,
+and a waiting time may be correlated with the \emph{length of the glide beside it}. Two of
+the four have a mechanism behind them. A glide heading is set by the route flown, the pilot's
+strategy, and the state of the air mass, wind and terrain, none of which changes on the
+timescale of one glide. The wait--length coupling has no sign fixable in advance: what limits
+a glide is the altitude available at its start, and a waiting time is search and climb
+together, of which only the climb converts waiting into height while the search consumes
+it---so what a pooled waiting time shows depends on how the two mix, one more reason the
+collapse has to be argued from the data. These are reasons to look, not results: none of the
+four is assumed here, and since each relates consecutive legs, and a leg exists only once a
+flight has been cut into phases, none can be tested before the segmentation of
+Chapter~\ref{ch:phases}.
+
+The model this thesis works towards is the minimal one consistent with whichever of the
+four survive; its working hypothesis is a persistent random walk in continuous time---legs at
+finite speed, waiting times between them, correlated leg directions---and that persistence
+stands or falls on the measurement. \rev{Chapter~\ref{ch:global} comes first because it needs no
+segmentation. It reads four things off the unsegmented trajectory: the exponent at which
+displacement grows with the time lag; whether moments of every order share that one exponent,
+as a self-similar process requires; how long a heading
+survives, read from the decay of the velocity autocorrelation; and whether any duration over
+which a flight holds its heading is distinguished, or whether those durations carry the
+power-law tail a L\'evy walk needs. Together they fix the class of transport.}
+What that chapter cannot do is reach the four correlations, and the reason is what each of
+them is indexed by. The four compare one leg with the next, so their index is the leg number,
+and it exists only once the flight has been cut. Every statistic in Chapter~\ref{ch:global}
+is indexed by a time lag instead: it compares the trajectory at two instants a fixed interval
+apart, without knowing - if any - either instant falls in. A glide is approximately straight, 
+so a heading held across a lag shorter than one glide is persistence
+\emph{within} a leg, and a velocity autocorrelation that stays positive at those lags reports
+that and not whether the direction of one glide predicts the direction of the next; at longer
+lags the two are mixed rather than separated. The chapter can therefore show that the heading
+has memory without showing that the memory is of the leg-to-leg kind the model needs, and the
+other three correlations, which compare the lengths and the waiting times of legs that have
+not been delimited, it cannot reach at all.
+Chapter~\ref{ch:phases} cuts the flight, and the model is built on what both return.
 Whether the trajectories of real soaring flights belong to an anomalous regime, and of which
 type, is the question addressed in this thesis.
 
 Soaring has previously been studied mainly as a control problem---how to centre and exploit
-a thermal efficiently, including by reinforcement learning~\cite{reddy2016}. The present
+a thermal efficiently ~\cite{reddy2016}. The present
 work is statistical instead: it asks which transport properties emerge at the level of the
 ensemble of observed trajectories. Its direct precedent is the study of Vilpellet et
 al.~\cite{vilpellet2026}, who analysed a large set of human soaring flights and found a
@@ -71,29 +110,29 @@ analysis, and re-examines both the phase segmentation and the transport analysis
 
 \section{Objectives}
 
-The thesis pursues \rev{the following} objectives:
+The thesis pursues the following objectives:
 \begin{enumerate}
   \item to assemble a large, reproducible, and documented dataset of real soaring flights;
-  \item \rev{to clean and filter the raw GPS logs into analysis-ready trajectories, and to
-        define, measure and analyze suitable transport observables---the test for anomalous
-        transport is carried out on those observables, as soon as the trajectories exist;}
-  \item \rev{to define a segmentation strategy for the transition--search--climb cycle and
-        characterize the motion statistics within each phase;}
-  \item \rev{to build a minimal stochastic model able to reproduce the empirical
-        statistics;}
-  \item \rev{to extend the dataset to competition flights and examine how flying in
-        competition changes the motion relative to solo flights.}
+  \item to clean and filter the raw GPS logs into analysis-ready trajectories, and to
+        define, measure and analyze suitable transport observables exploited for testing anomalous
+        transport;
+  \item to define a segmentation strategy for the transition--search--climb cycle and
+        characterize the motion statistics within each phase;
+  \item to build a minimal stochastic model able to reproduce the empirical
+        statistics;
+  \item to extend the dataset to competition flights and examine how flying in
+        competition changes the motion relative to solo flights.
 \end{enumerate}
 A first dataset---the archive of the \emph{Coupe F\'ed\'erale de Distance} (CFD) of the
 French free-flight federation (FFVL), covering paraglider and hang-glider flights---has
-been assembled and verified and is described in \rev{Chapter~\ref{ch:dataset}}; \rev{data
+been assembled and verified and is described in Chapter~\ref{ch:dataset}; data
 collection continues and will be extended to further sources, in particular sailplanes and
-competition flights} (Sec.~\ref{sec:acquisition}). \rev{The dataset
+competition flights (Sec.~\ref{sec:acquisition}).The dataset
 (Secs.~\ref{sec:igcformat}--\ref{sec:coverage}) and its cleaning-and-filtering pipeline
 (Sec.~\ref{sec:preproc}) are described in Chapter~\ref{ch:dataset}, and the transport of the
 unsegmented trajectory is measured in Chapter~\ref{ch:global}; the segmentation, the
 modelling it enables (Chapter~\ref{ch:phases}), and the extension to competition flights
-define the work ahead.}
+define the work ahead.
 
 \section{Scope of this document}
 
