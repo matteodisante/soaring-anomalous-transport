@@ -37,14 +37,10 @@
 #  10. transport -- Chapter 3's measurement: the order scan, its uncertainty, the
 #                  stratifications and the regime fit. Minutes.
 #  11. shape    -- the fourth traversal: the increments themselves, for the moment
-#                  spectrum, the velocity memory and the persistence runs. The longest
-#                  step by far: ~2.5 h on the paraglider archive, since the persistence
-#                  runs are decomposed per segment at three thresholds.
-#  12. shapefig -- their reduction into tab:shape and \StatShape*. Not instant like the
-#                  other reductions: the Clauset-Shalizi-Newman cut-off scans every
-#                  distinct run length as a candidate and measures a KS distance on the
-#                  tail at each, which on the paragliders' ~3e6 runs is ~15 min. The scan
-#                  is exact and the cost is the price of not choosing the cut-off by eye.
+#                  spectrum and the velocity memory. A full pass over the fix table.
+#  12. shapefig -- their reduction into tab:shape and \StatShape*: the tail exponent of
+#                  the autocorrelation, and the matched Gaussian null the non-Gaussianity
+#                  is read against.
 #  13. propagator -- the fifth traversal: histograms of the increments per lag, per
 #                  component and per native cadence, from which the exponent is read off the
 #                  bulk rather than off a moment, and the scaling collapse is tested rather
@@ -125,7 +121,7 @@ step "9/17  filtered variations -> per-flight curves, one per filter order"
 step "10/17  transport measurement -> tab:orderscan, fig:transport, StatVar*"
 "$PY" scripts/reporting/generate_transport_figure.py --audit-dir "$AUDIT_DIR"
 
-step "11/17  shape pass -> increments, velocity memory, persistence runs"
+step "11/17  shape pass -> increments and velocity memory"
 "$PY" scripts/reporting/measure_shape.py --out "$AUDIT_DIR"
 
 step "12/17  shape measurement -> tab:shape, fig:shape, StatShape*"
@@ -143,6 +139,7 @@ step "15/17  circling -> StatCircling*, the VACF at native cadence, below the sh
 
 step "16/17  macro contract: everything the thesis quotes must exist"
 "$PY" scripts/reporting/check_generated_macros.py
+"$PY" scripts/reporting/generate_provenance.py
 
 if [[ "${1:-}" == "--no-build" ]]; then
     echo $'\nskipping the thesis build (--no-build).'

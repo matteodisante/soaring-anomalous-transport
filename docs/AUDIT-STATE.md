@@ -7,6 +7,32 @@ was applied, what was rejected and why, and what is left.
 
 Everything below refers to commits between `f70d8b3` and `dd3ce11`.
 
+!!! warning "This is a record, not the current state"
+    A second pass over the code ran on **2026-08-25**, and this file has to be read against
+    what has happened since `dd3ce11`, which is asymmetric:
+
+    - **The code claims mostly still stand.** One module out of 41 under `src/` changed in
+      between, so what this file says about estimators and their fixes is still about the
+      code that is there.
+    - **The thesis claims are void.** `03-dataset.tex` and `04-global-transport.tex` were
+      rewritten afterwards — around 4,000 lines of churn — so any argument here about a
+      paragraph, a section or a number in the thesis is about text that no longer exists.
+      Recheck before believing.
+
+    **Every lead in *Left, in the order I would take it* has now been resolved**, and the
+    section is kept for what it says about how such leads should be read. Outcomes:
+    `persistence_runs` being quadratic is moot, the estimator having been removed in
+    `897c45c`; the IGC parser's bare `int()` and `stream_flights` reassembling a
+    non-contiguous flight were both real and are fixed; `preprocess.py` leaving `derived/`
+    describing two runs was real and now has a marker the regeneration refuses to run past;
+    `velocity_autocorrelation` was right about the function and wrong about the input — an
+    explicit `max_lag=0` is silently ignored rather than mismatched, and it is a *negative*
+    value that returns arrays of different lengths. That is the file's own prediction, that
+    roughly a third of such claims do not survive recomputation, holding for itself.
+
+    The four candidate physics models below have still not been written into the thesis, and
+    the condition on them has not changed.
+
 ---
 
 ## Applied, and why

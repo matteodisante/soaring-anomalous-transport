@@ -47,18 +47,19 @@ and every pass takes `--out`, every reduction `--audit-dir`. They are analysis p
 rather than thesis products: reproducible from the SSD by re-running the pass, and large
 enough that versioning them would be wrong.
 
-| file | written by | paragliders | hang gliders |
-|---|---|---|---|
-| `audit_positions_<slug>.npz` | `audit_msd.py` | 74 MB | 3 MB |
-| `audit_flights_<slug>.parquet` | `audit_msd.py` | 14.4 MB | 0.6 MB |
-| `variations_<slug>.npz` | `measure_variations.py` | 46.5 MB | 1.9 MB |
-| `variation_flights_<slug>.parquet` | `measure_variations.py` | 3.2 MB | 0.2 MB |
-| `shape_<slug>.npz` | `measure_shape.py` | 204 MB | 6.8 MB |
-| `propagator_<slug>.npz` | `measure_propagator.py` | 0.46 MB | 0.15 MB |
+| file | written by | paragliders | hang gliders | what sets the size |
+|---|---|---|---|---|
+| `audit_positions_<slug>.npz` | `audit_msd.py` | 73.72 MB | 2.67 MB | one row per flight, one column per lag |
+| `audit_flights_<slug>.parquet` | `audit_msd.py` | 14.39 MB | 0.61 MB | one row per flight |
+| `variations_<slug>.npz` | `measure_variations.py` | 46.47 MB | 1.87 MB | one curve per flight per filter order |
+| `variation_flights_<slug>.parquet` | `measure_variations.py` | 3.25 MB | 0.22 MB | one row per flight |
+| `shape_<slug>.npz` | `measure_shape.py` | 5 KB | 5 KB | moment spectrum and one autocorrelation, averaged over flights |
+| `propagator_<slug>.npz` | `measure_propagator.py` | 0.45 MB | 0.15 MB | histograms per lag per component |
 
-`<slug>` is `para` or `hang`. Every size is what the file actually came out at on the current
-archive, measured rather than estimated. The whole set is about 350 MB, which is why it lives
-outside the repository.
+`<slug>` is `para` or `hang`. The sizes are measured on the current archive rather than
+estimated, and the last column is what they scale with, so a number that has gone stale is
+recognisable as one. The set comes to about 144 MB, which is why it lives outside the
+repository.
 
 ---
 
