@@ -87,6 +87,9 @@ def run(discipline: str, limit: int) -> dict[str, str]:
             velocity = np.column_stack(
                 [segment["v_E"].to_numpy(dtype=float), segment["v_N"].to_numpy(dtype=float)]
             )
+            # max_lag is in samples and MAX_LAG_S is in seconds; the two are the same
+            # number only because the 1 Hz filter above has already excluded every other
+            # cadence. Reuse this line anywhere else and it needs dividing by the step.
             _, correlation = velocity_autocorrelation(velocity, max_lag=MAX_LAG_S)
             good = np.isfinite(correlation)
             total[: correlation.size][good] += correlation[good]

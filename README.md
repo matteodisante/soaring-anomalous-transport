@@ -125,6 +125,9 @@ at the root of the disk so it explains itself when it is not plugged into this r
 Guides + API Reference (auto-generated from docstrings) are published at
 **<https://matteodisante.github.io/soaring-anomalous-transport/>**.
 
+To go from a number or a figure in the thesis to the code behind it, start at
+[Where each number comes from](docs/guide/provenance.md).
+
 MkDocs is an optional extra rather than a default dependency, so preview it with:
 
 ```bash
@@ -135,9 +138,10 @@ uv run --extra docs mkdocs serve   # http://127.0.0.1:8000
 
 [`thesis/`](thesis/) is the LaTeX thesis: acquisition method, dataset description, global
 transport, and next steps. Every number it quotes is a generated macro rather than a typed
-one — `thesis/generated/` holds fourteen `.tex` files, of which `stats.tex` and the two
-season tables descend from the snapshots in [`data/`](data/) and the other eleven from the
-processed tables on the SSD, by way of `scripts/regenerate.sh`. The compiled
+one. `thesis/generated/` holds them: `stats.tex` and the two season tables descend from
+the snapshots in [`data/`](data/), and the rest from the processed tables on the SSD, by
+way of `scripts/regenerate.sh`. [Where each number comes from](docs/guide/provenance.md)
+maps every one of them back to the script that wrote it. The compiled
 `thesis/main.pdf` is kept in the repo.
 
 ```bash

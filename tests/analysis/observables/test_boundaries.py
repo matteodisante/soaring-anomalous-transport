@@ -73,3 +73,16 @@ def test_cluster_bootstrap_with_a_single_cluster_does_not_hang_or_raise():
     )
     assert point == pytest.approx(1.0)
     assert replicates.shape == (5,)
+
+
+@pytest.mark.parametrize("max_lag", [0, -3, 10_000])
+def test_the_vacf_returns_matching_arrays_for_any_max_lag(max_lag):
+    """``max_lag or n // 4`` read an explicit 0 as unset and let a negative through.
+
+    A negative one produced an empty lag array beside a full correlation array, which a
+    caller zipping the two would consume without noticing.
+    """
+    velocity = np.random.default_rng(0).normal(size=(400, 2))
+    lags, correlation = P.velocity_autocorrelation(velocity, max_lag=max_lag)
+    assert lags.size == correlation.size
+    assert 1 <= lags.size <= velocity.shape[0]

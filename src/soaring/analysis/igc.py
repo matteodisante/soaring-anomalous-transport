@@ -66,13 +66,14 @@ def _lat(token: str) -> float:
             ``[-90, 90]`` -- i.e. the token is not a valid encoding, not merely an
             unlikely one.
     """
+    # `int` accepts a leading sign and surrounding whitespace, so "-12" and " 12" both
+    # parse and both land inside their bound -- decoding to a position that is merely
+    # *wrong* rather than rejected, which is the one outcome a validity check must not
+    # allow. Both fields are fixed-width digits by the format, so both are required to
+    # be digits.
+    if not token[0:2].isdigit():
+        raise ValueError(f"invalid latitude degrees: {token!r}")
     deg = int(token[0:2])
-    # `int` accepts a leading sign and surrounding whitespace, so "-1234" and "
-    # 1234" both parse and both land inside the < 60000 bound -- decoding to a
-    # position that is merely *wrong* rather than rejected, which is the one outcome
-    # a validity check must not allow. The field is five digits by the format, so it
-    # is required to be five digits.
-
     if not token[2:7].isdigit():
         raise ValueError(f"invalid latitude minutes: {token!r}")
     minutes_raw = int(token[2:7])
@@ -97,6 +98,8 @@ def _lon(token: str) -> float:
             ``[-180, 180]`` -- i.e. the token is not a valid encoding, not merely an
             unlikely one.
     """
+    if not token[0:3].isdigit():
+        raise ValueError(f"invalid longitude degrees: {token!r}")
     deg = int(token[0:3])
     if not token[3:8].isdigit():
         raise ValueError(f"invalid longitude minutes: {token!r}")

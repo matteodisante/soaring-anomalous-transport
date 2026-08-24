@@ -50,7 +50,9 @@ def velocity_autocorrelation(
     n = len(velocity)
     if n < 8:
         return np.empty(0, dtype=int), np.empty(0)
-    max_lag = max_lag or n // 4
+    # `max_lag or n // 4` would read an explicit 0 as "unset", and would let a negative
+    # value through to return a lag array and a correlation array of different lengths.
+    max_lag = n // 4 if max_lag is None else max(0, min(int(max_lag), n - 1))
     centred = velocity - velocity.mean(axis=0)
     size = 1 << int(np.ceil(np.log2(2 * n)))
     acf = np.zeros(n)

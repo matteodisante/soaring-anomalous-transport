@@ -99,6 +99,8 @@ def test_empty_file_returns_empty_frame(tmp_path):
     ("bad_record", "reason"),
     [
         ("B1143394460469N00542796EA0147001556", "latitude minutes >= 60"),
+        ("B114339-432469N00542796EA0147001556", "signed latitude degrees"),
+        ("B1143394432469N 0542796EA0147001556", "spaced longitude degrees"),
         ("B1143394432469X00542796EA0147001556", "invalid latitude hemisphere"),
         ("B1143399100000N00542796EA0147001556", "latitude out of range (91 deg)"),
         ("B1143394432469N00560469EA0147001556", "longitude minutes >= 60"),
