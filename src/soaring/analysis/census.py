@@ -20,17 +20,14 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from .altitude_noise import BARO_PRESENT_MIN
+from .igc import baro_present_fraction, median_sampling_period, parse_igc
+
 # Mean Earth radius (IUGG), the sphere the great-circle distance is measured on.
 _EARTH_RADIUS_M = 6371008.8
 
 # The per-fix quantities the fix-level bounds act on, in the order the panels use.
 _FIXLEVEL_QUANTITIES = ("v_xy", "v_z", "altitude")
-
-from .altitude_noise import BARO_PRESENT_MIN
-
-_BARO_PRESENT_MIN = BARO_PRESENT_MIN
-from .igc import baro_present_fraction, median_sampling_period, parse_igc
-from .preproc.resample import split_bound_s
 
 
 def great_circle_m(
@@ -270,7 +267,7 @@ def _fix_level_arrays(fixes: pd.DataFrame) -> dict[str, np.ndarray]:
     lon = fixes["lon"].to_numpy()
     step = great_circle_m(lat[:-1], lon[:-1], lat[1:], lon[1:])
     out = {"v_xy": step[ok] / dt[ok], "v_z": np.empty(0), "altitude": np.empty(0)}
-    if baro_present_fraction(fixes) >= _BARO_PRESENT_MIN:
+    if baro_present_fraction(fixes) >= BARO_PRESENT_MIN:
         baro = fixes["baro_alt"].to_numpy()
         out["v_z"] = np.abs(np.diff(baro))[ok] / dt[ok]
         out["altitude"] = baro

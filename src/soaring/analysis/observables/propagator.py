@@ -298,7 +298,6 @@ def peak_scaling(lags_s: np.ndarray, counts: np.ndarray, edges: np.ndarray,
     lags_s = np.asarray(lags_s, dtype=float)
     counts = np.asarray(counts, dtype=float)
     edges = np.asarray(edges, dtype=float)
-    widths = np.diff(edges)
 
     usable = np.isfinite(lags_s) & (lags_s > 0) & (counts.sum(axis=1) > 0)
     if fit_range is not None:

@@ -32,13 +32,9 @@ Three properties of the pre-processed data shape how it is computed here.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-
-if TYPE_CHECKING:
-    from matplotlib.figure import Figure
 
 # A flight contributes to a lag when it has a fix within half its native step of it.
 # Half a step, and not a fixed tolerance, because the cadence spans 1 s to tens of

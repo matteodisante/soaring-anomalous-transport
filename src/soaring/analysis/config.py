@@ -10,16 +10,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
-
-import numpy as np
-
-import pandas as pd
-
-
-if TYPE_CHECKING:
-    from matplotlib.figure import Figure
-
 # Mean Earth radius (metres), the usual choice for a haversine great-circle distance.
 
 # The authoritative threshold file (repo ``configs/preprocessing.yaml``).

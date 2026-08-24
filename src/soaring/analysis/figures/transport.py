@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from ..observables.transport import local_slope
+
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
 

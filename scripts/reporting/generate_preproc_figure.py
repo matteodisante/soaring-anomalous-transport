@@ -141,7 +141,7 @@ def main() -> int:
 
     cfg = load_preproc_config()
     OUT_DIAG.parent.mkdir(parents=True, exist_ok=True)
-    make_flightlevel_diagnostics_figure(scans, cfg.flight).savefig(
+    make_flightlevel_diagnostics_figure(scans, cfg.flight, cfg.alt_channel).savefig(
         OUT_DIAG, metadata=_PDF_METADATA, bbox_inches="tight"
     )
     make_gap_diagnostics_figure(scans, cfg.sampling).savefig(

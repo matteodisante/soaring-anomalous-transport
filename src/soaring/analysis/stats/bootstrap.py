@@ -23,8 +23,12 @@ curve is bent.
 from __future__ import annotations
 
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 __all__ = [
     "cluster_bootstrap",
@@ -34,7 +38,7 @@ __all__ = [
 ]
 
 
-def cluster_labels(frame: "pd.DataFrame", level: str) -> np.ndarray:
+def cluster_labels(frame: pd.DataFrame, level: str) -> np.ndarray:
     """Integer cluster ids for a resampling level.
 
     Args:

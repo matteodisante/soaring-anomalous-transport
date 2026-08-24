@@ -13,21 +13,30 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
+from ..census import retention_curve
+from ..preproc.resample import split_bound_s
+
+if TYPE_CHECKING:
+    from matplotlib.figure import Figure
+
+    from ..config import (
+        AltChannelThresholds,
+        FixLevelThresholds,
+        FlightLevelThresholds,
+        SamplingThresholds,
+    )
+
 _DISC_COLOR = {
     "paragliders": "#3477a8",
     "hang gliders": "#b5482a",
     "sailplanes": "#3d8c54",
 }
 
-from ..census import _FIXLEVEL_QUANTITIES, fraction_retained, retention_curve
-from ..config import load_preproc_config
-
-if TYPE_CHECKING:
-    from matplotlib.figure import Figure
-
 
 def make_flightlevel_diagnostics_figure(
-    scans: dict[str, pd.DataFrame], flight_level: FlightLevelThresholds
+    scans: dict[str, pd.DataFrame],
+    flight_level: FlightLevelThresholds,
+    alt_channel: AltChannelThresholds,
 ) -> Figure:
     """Flight-level filtering diagnostics, per discipline, from full-census track data.
 
@@ -46,6 +55,8 @@ def make_flightlevel_diagnostics_figure(
             ``baro_alt_min_m``, ``baro_alt_max_m``), each a full census
             (:func:`scan_tracks` over every track).
         flight_level: The adopted thresholds to mark.
+        alt_channel: The altitude-channel thresholds, for the presence cut that decides
+            which flights the barometric panels are entitled to describe.
 
     Returns:
         The Matplotlib figure (not saved).
@@ -73,7 +84,7 @@ def make_flightlevel_diagnostics_figure(
         # fallback minority needs the GNSS extremes in the scan, i.e. a full rescan
         # (thesis, sec:flightfilter).
         present = pd.to_numeric(s["baro_present_frac"], errors="coerce")
-        has_baro = present >= BARO_PRESENT_MIN
+        has_baro = present >= alt_channel.baro_present_min
         alt_range = pd.to_numeric(s["baro_alt_max_m"], errors="coerce") - pd.to_numeric(
             s["baro_alt_min_m"], errors="coerce"
         )
