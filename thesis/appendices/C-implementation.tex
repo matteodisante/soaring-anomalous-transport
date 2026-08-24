@@ -120,8 +120,8 @@ Census macros (\texttt{\textbackslash StatScan\dots}) &
 \hline
 \rev{--- (an analysis product)} & \rev{\protect\path{measure_variations.py}, \protect\path{measure_shape.py}} &
   \rev{The second and third streaming passes. The first keeps a filtered variation per
-  flight per filter order; the second keeps what the moments and the persistence runs need,
-  which is the increments themselves. Both write to \path{--out}, outside the repository,
+  flight per filter order; the second keeps what the moment spectrum needs, which is the
+  increments themselves. Both write to \path{--out}, outside the repository,
   and both are comparable in cost to the MSD pass.} \\
 \hline
 \rev{Table~\ref{tab:orderscan}, Fig.~\ref{fig:transport}, \texttt{\textbackslash StatVar*}} &
@@ -132,8 +132,8 @@ Census macros (\texttt{\textbackslash StatScan\dots}) &
 \hline
 \rev{Fig.~\ref{fig:shape}, \texttt{\textbackslash StatShape*}} &
   \rev{\protect\path{generate_shape_figure.py}} &
-  \rev{The moment spectrum and its tail control, the velocity autocorrelation and the
-  persistence runs (Sec.~\ref{sec:transport-shape}). Minutes.} \\
+  \rev{The moment spectrum and its tail control, and the velocity autocorrelation
+  (Sec.~\ref{sec:transport-shape}). Minutes.} \\
 \hline
 \rev{--- (a disk artefact, not a thesis one)} & \rev{\protect\path{write_ssd_readme.py}} &
   \rev{Writes a README at the root of the data disk, generated from the disk itself so it

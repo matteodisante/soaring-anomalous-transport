@@ -2,8 +2,8 @@
 \label{impl:global}
 \rev{This chapter mirrors Chapter~\ref{ch:global}. Built and recorded here: the two
 mean-squared-displacement estimators and their audit, the filtered-variation family that
-replaces them as a source of exponents, the moment spectrum, the non-Gaussian parameter, the
-velocity autocorrelation and its tail, and the persistence runs. One observable the body catalogues
+replaces them as a source of exponents, the moment spectrum, the non-Gaussian parameter, and
+the velocity autocorrelation and its tail. One observable the body catalogues
 is defined and not measured, and Sec.~\ref{sec:transport-kinematics} says which.}
 
 \section{Observables on the whole trajectory}
@@ -245,21 +245,6 @@ filter order, one curve over the lag grid together with the flight's cadence, wi
 season and declared task. Every stratification of Sec.~\ref{sec:transport-measure} is then a
 row selection on that table rather than another pass over $1.4\times10^{9}$ rows, which is
 what makes four cuts affordable where one would otherwise be a day's work.}
-
-\paragraph{\rev{The persistence runs, and the bias that decomposition avoids.}}
-\rev{\path{persistence_runs} walks the record greedily from its start, extending a run while
-the sinuosity --- arc length over chord --- stays under the threshold and beginning the next
-run where the last one ended, with a floor of five samples. The stopping rule is
-\emph{first violation}: the condition is not monotone in the endpoint, since a stretch can
-come back inside the threshold after leaving it, so the rule is stated rather than implied.
-No sample belongs to two runs, and that is the point. Sampling the run length at every
-instant instead returns each run in proportion to its own length --- the length-biased
-distribution, whose tail index is one below the truth. \path{inspection_biased_runs}
-implements the wrong way on purpose so the size of the error can be measured: on synthetic
-runs of known index \num{2.0} the two estimators return \num{2.0} and \num{1.1}. At the
-values this archive shows that is not a bias to correct afterwards but a different answer.
-The first implementation of the biased estimator measured the residual life instead of the
-containing run, which is a third quantity again; a test caught it.}
 
 \paragraph{\rev{First-passage times, and why they are not reported.}} \rev{The audit arrays
 keep each flight's position at every lag, so the first-passage time $T(L)$ --- the first time
