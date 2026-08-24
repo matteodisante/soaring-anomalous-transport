@@ -81,6 +81,18 @@ if pgrep -f "scripts/preprocess.py" >/dev/null 2>&1; then
     exit 1
 fi
 
+# The pgrep above catches a run that is still going. This catches the worse case: one that
+# died halfway and left no process behind, so the tables disagree about which run they
+# describe and nothing is around to say so.
+for root in "${SOARING_PARA_DATA_ROOT:-}" "${SOARING_DELTA_DATA_ROOT:-}"; do
+    if [[ -n "$root" && -f "$root/derived/.run_incomplete" ]]; then
+        echo "refusing to run: $root/derived/ is from an unfinished preprocess.py run." >&2
+        cat "$root/derived/.run_incomplete" >&2
+        echo "Re-run scripts/preprocess.py for that archive; the marker clears itself." >&2
+        exit 1
+    fi
+done
+
 step() { printf '\n=== %s ===\n' "$1"; }
 
 step "1/17  invariants (verify_dataset.py)"

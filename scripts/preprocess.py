@@ -39,6 +39,7 @@ import sys
 import time
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import asdict
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -155,6 +156,19 @@ def run_discipline(discipline: str, limit: int, jobs: int, seed: int) -> int:
     out_dir = acq.derived_dir
     out_dir.mkdir(parents=True, exist_ok=True)
     fixes_path = out_dir / "fixes.parquet"
+    # fixes.parquet is overwritten from the first batch, while flights_meta and segments
+    # are only written after the last flight. Between those two moments the directory
+    # holds a partial fix table beside the *previous* run's metadata, and a generator
+    # reading it produces numbers that are wrong and look right. regenerate.sh refuses to
+    # start while this script is alive, which covers the concurrent case and not the one
+    # that matters more: a run that died halfway leaves no process to detect. This marker
+    # survives the crash and says so.
+    #
+    # A temporary file renamed into place at the end would leave the old run usable
+    # instead of merely flagged, but it wants a second copy of a 40 GiB table on a disk
+    # that has 70 GiB free, and it would stop fitting as the archive grows.
+    incomplete = out_dir / ".run_incomplete"
+    incomplete.write_text(f"{discipline} started {datetime.now(UTC).isoformat()}\n")
     print(f"[{discipline}] {len(paths)} tracks -> {out_dir} ({jobs} workers)")
 
     metas: list[dict] = []
@@ -206,6 +220,9 @@ def run_discipline(discipline: str, limit: int, jobs: int, seed: int) -> int:
         if suspects
         else pd.DataFrame(columns=["source", "flight_id", "t_start", "t_end"])
     ).to_parquet(out_dir / "suspect_intervals.parquet", compression="zstd")
+    # Every table is on disk and they describe the same run: the directory is consistent
+    # again, so the marker goes.
+    incomplete.unlink(missing_ok=True)
     elapsed = time.perf_counter() - t0
     print(
         f"[{discipline}] {kept}/{len(paths)} flights kept "
