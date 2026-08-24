@@ -1,28 +1,23 @@
-# Pre-processing pipeline — implementation blueprint
+# The pre-processing pipeline
 
-!!! success "Status: built (2026-08-03)"
-    Every stage below is implemented under `soaring.analysis.preproc/` (one module per
-    stage, chained by `pipeline.run_flight`) and driven over an archive by
-    `scripts/preprocess.py`. This page is now a *map* of that code rather than a plan for
-    it; where a rule needed a decision the specification left open, the decision is
-    recorded in the stage module's docstring and mirrored into the thesis appendix.
+What turns a raw `.igc` tracklog into the analysis-ready trajectories the transport
+estimators read: seven stages, one module each under `soaring.analysis.preproc/`, chained
+by `pipeline.run_flight` and driven over an archive by `scripts/preprocess.py`.
 
-!!! note "What this page is for now"
-    It stays the map of steps, schemas, config keys and storage — one page to read before
-    touching the pipeline — but it is no longer the plan it was written as. It is
-    *transitional*: as the API Reference grows it retires into the code plus a short usage
-    guide, and it is **not** maintained as a second copy forever.
+This page is the map of the code: the stages in order, the schema each one writes, the
+config keys it reads, and how to rebuild any of it. Read it before touching the pipeline.
 
-    The **why** (justification, method, hyperparameter reasoning) lives in the thesis,
-    chapter *The dataset*, section *Trajectory pre-processing* (`sec:preproc`) — not here.
-    The **numbers** (all thresholds) live in
-    `configs/preprocessing.yaml` (loaded via `load_preproc_config`) — not here. This page
-    links to both; where it repeats a headline threshold for readability, the YAML stays
-    authoritative. That is how we avoid a thesis/doc that drift.
+Two things deliberately live elsewhere, and this page links to them rather than copying
+them:
 
-    On any conflict, the thesis is normative and this page must be corrected — and where
-    building the code showed the thesis itself to be incomplete, the thesis was corrected
-    in the same pass (see *Decisions taken while building*).
+- **The reasoning** — why a rule exists, why a threshold sits where it does — is in the
+  thesis, chapter *The dataset*, section *Trajectory pre-processing* (`sec:preproc`), with
+  the implementation detail in appendix `impl:*`.
+- **The numbers** — every threshold — are in `configs/preprocessing.yaml`, loaded through
+  `load_preproc_config`. Where a headline value is repeated here for readability, the YAML
+  is what the code reads and what the thesis quotes.
+
+On any disagreement the thesis is normative and this page is the one to correct.
 
 ## Design principles
 
@@ -78,7 +73,7 @@ coordinates (great-circle speeds); (v) converts to the metric ENU frame; (vi)–
 | vii | Savitzky–Golay smooth + differentiate | ENU | pos/vel/acc | `analysis.preproc.smoothing.smooth_flight` | `sec:savgol` |
 | viii | Write `fixes` + `segments` + `flights_meta` | all | Parquet | `scripts/preprocess.py` (chain: `analysis.preproc.pipeline.run_flight`) | — |
 
-Key mechanics that reconcile the blueprint with the repo:
+Mechanics worth knowing before reading the stage modules:
 
 - **Altitude channel (i).** The parser returns *both* channels; the pipeline picks one per
   flight (`alt_source`), never splices. Barometric where present **and alive**
@@ -331,27 +326,35 @@ Handle at ingestion (empirically observed on the real files):
 
 ## Regenerating everything after a run
 
-`scripts/regenerate.sh` runs, in order:
+`scripts/regenerate.sh` runs the steps below, in the one order that is correct: a
+generator reads `<data_root>/derived/`, which `preprocess.py` rewrites in place, so the
+script refuses to start while a pre-processing run is still writing.
 
-| # | step | writes | cost |
+The last column is what sets the cost, and it is given as a **kind of work** rather than
+a duration. A *full traversal* streams the whole fix table, which is where the hours go; a
+*reduction* reads arrays a traversal already wrote into `$AUDIT_DIR` and costs minutes at
+most. The wall-clock time of either depends on the archive, the disk and the machine, so
+quoting one here would be a number that goes stale without anything failing.
+
+| # | step | writes | work |
 |---|---|---|---|
-| 1 | `verify_dataset.py` | `verify.tex` (`\StatVerify*`) | one full scan |
-| 2 | `generate_pipeline_census.py` | `pipeline_census.tex`, `tab:pipecensus` | seconds |
-| 3 | `generate_msd_figure.py` | `msd.pdf`, `msd_curve.csv`, `msd.tex` | ~20 min |
-| 4 | `generate_census_stats.py` | `census.tex` (`\StatScan*`, `\Preproc*`) | seconds |
-| 5 | `audit_msd.py` | per-flight positions at every lag, into `$AUDIT_DIR` | ~20 min |
-| 6 | `audit_msd_report.py` | `audit.tex` (`\StatAudit*`) | seconds |
-| 7 | `generate_prelim_figure.py` | `prelim_{ensemble,strata}.pdf`, `prelim.tex` | seconds |
-| 8 | `generate_dataset_stats.py` | `dataset_stats.tex`, `dataset_seasons.pdf` | seconds |
-| 9 | `measure_variations.py` | per-flight filtered variations, into `$AUDIT_DIR` | ~25 min |
-| 10 | `generate_transport_figure.py` | `transport.tex`, `transport.pdf` | ~1 min |
-| 11 | `measure_shape.py` | increments and velocity memory, into `$AUDIT_DIR` | ~1 h |
-| 12 | `generate_shape_figure.py` | `shape.tex`, `shape.pdf` | ~15 min |
-| 13 | `measure_propagator.py` + `generate_propagator_figure.py` | `propagator.tex`, `propagator.pdf` | ~12 min |
-| 14 | `measure_edge_effect.py` | `edge_effect.tex` (`\StatEdge*`) | minutes, subsampled |
-| 15 | `measure_circling.py` | `circling.tex` (`\StatCircling*`) | minutes, subsampled |
+| 1 | `verify_dataset.py` | `verify.tex` (`\StatVerify*`) | full traversal |
+| 2 | `generate_pipeline_census.py` | `pipeline_census.tex`, `tab:pipecensus` | from `flights_meta` |
+| 3 | `generate_msd_figure.py` | `msd.pdf`, `msd_curve.csv`, `msd.tex` | full traversal |
+| 4 | `generate_census_stats.py` | `census.tex` (`\StatScan*`, `\Preproc*`) | from the scan cache |
+| 5 | `audit_msd.py` | per-flight positions at every lag, into `$AUDIT_DIR` | full traversal |
+| 6 | `audit_msd_report.py` | `audit.tex` (`\StatAudit*`) | reduction |
+| 7 | `generate_prelim_figure.py` | `prelim_{ensemble,map,strata}.pdf`, `prelim.tex` | reduction |
+| 8 | `generate_dataset_stats.py` | `dataset_stats.tex`, `dataset_seasons.pdf` | from `flights_meta` |
+| 9 | `measure_variations.py` | per-flight filtered variations, into `$AUDIT_DIR` | full traversal |
+| 10 | `generate_transport_figure.py` | `transport.tex`, `transport.pdf` | reduction |
+| 11 | `measure_shape.py` | increments and velocity memory, into `$AUDIT_DIR` | full traversal |
+| 12 | `generate_shape_figure.py` | `shape.tex`, `shape.pdf` | reduction, with a tail-cutoff scan |
+| 13 | `measure_propagator.py` + `generate_propagator_figure.py` | `propagator.tex`, `propagator.pdf` | full traversal, histograms only |
+| 14 | `measure_edge_effect.py` | `edge_effect.tex` (`\StatEdge*`) | subsampled traversal |
+| 15 | `measure_circling.py` | `circling.tex` (`\StatCircling*`) | subsampled traversal |
 | 16 | `check_generated_macros.py` | nothing; fails if a quoted macro is unwritten | instant |
-| 17 | `latexmk` | `thesis/main.pdf` | ~1 min |
+| 17 | `latexmk` | `thesis/main.pdf` | build |
 
 Steps 9 and 10 are Chapter 3's measurement. Step 9 is the third full traversal of the fix
 table; it keeps one filtered-variation curve per flight per filter order, so every
@@ -364,24 +367,30 @@ the questions the audit asks (does the curve's shape survive a fixed logger cade
 fixed duration, the removal of the common heading?) are different reductions of a
 per-flight quantity that no longer exists once the average has been taken. Step 7 reads
 step 5's arrays rather than the fix table, which is what makes a stratified MSD a row
-selection instead of another 43 GB scan. `$AUDIT_DIR` defaults to `$TMPDIR/soaring-audit`
-and holds a few hundred MB per discipline; it is an analysis product, not a thesis one.
+selection instead of another 43 GB scan. `$AUDIT_DIR` holds a few hundred MB per discipline;
+it is an analysis product rather than a thesis one, which is why it lives outside the repo.
 
-It **refuses to start
-while `preprocess.py` is alive**, because the driver rewrites `<data_root>/derived/` in
-place and writes `flights_meta.parquet` only after its last flight — so a generator run
-against a live archive reads a partial fix table beside the *previous* run's metadata and
-produces numbers that are wrong and look right. That is not hypothetical; it happened.
+!!! warning "Point `$AUDIT_DIR` somewhere that survives"
+    It defaults to `$TMPDIR/soaring-audit`, which on macOS is under `/var/folders/` — a
+    directory the system empties on its own schedule. What it holds is hours of traversal,
+    and the steps that reduce those arrays cannot tell a missing cache from a fresh start.
+    For any run worth keeping, set `AUDIT_DIR` to a path on the data disk instead.
+
+The guard against a live `preprocess.py` is not hypothetical: the driver writes
+`flights_meta.parquet` only after its last flight, so a generator started too early reads a
+partial fix table beside the *previous* run's metadata, and produces numbers that are wrong
+and look right. That happened once, which is why the check exists.
 
 The macro contract is checked before the build and not after, because an undefined
 generated macro inside a `\SI{}` is a **fatal** LaTeX error, not a warning: siunitx fails
 to parse the argument, the braces unbalance, and the build dies with dozens of `Extra }`
 errors pointing at lines that are perfectly correct.
 
-## Decisions taken while building (2026-08-03)
+## Where the specification left a choice
 
-Each is a place where the specification did not determine the answer, and each is
-mirrored in the thesis appendix (`impl:fixlevel`, `impl:trimming`) in the same pass:
+Building the pipeline turned up rules the thesis did not fully determine. Each decision
+below is the one the code makes, and each is mirrored in the thesis appendix
+(`impl:fixlevel`, `impl:trimming`) so that the two cannot drift:
 
 - **The impossibility gate deletes; the Hampel flag does not gate.** The identifier's
   50 % breakdown point is a stated property, and the archive exceeds it: scattered runs of
@@ -482,31 +491,24 @@ mirrored in the thesis appendix (`impl:fixlevel`, `impl:trimming`) in the same p
   up to Δt = 22.5 s.
 - **The `segments` table records every segment**, kept or not, with the reason.
 
-## Open items
+## What is still open
 
-- ~~The Savitzky–Golay `τ_c` are placeholders~~ **Measured** (2026-07,
-  `estimate_savgol_timescales.py`): all three knees at ~0.2 Hz → `τ_c = 5 s`, the typical
-  floor being IGC quantization on every channel. Confirm with the sec:savgol validation
-  (flat residual spectrum, one-step window stability) on the production ENU series.
-- The `alt_channel` liveness bound and the flight-level duration window /
-  altitude-activity floor are census-motivated additions (thesis `sec:flightfilter`,
-  `sec:altchannel`); audit them on the first production run.
-- Duplicate uploads: before pooling, check whether the same physical flight appears twice
-  (same pilot and date, near-identical track); the catalog does not guard against it.
-- The `sampling` cuts (`max_gap_factor`/`max_gap_seconds`/`max_missing_fraction`) and the
-  fix-level **absolute bounds** (thesis `tab:cleaning`) are set and **audited** on the real
-  data (`make_gap_diagnostics_figure`,
-  thesis `sec:uniform`; `make_fixlevel_diagnostics_figure`, `sec:fixlevel`). Revisit only if a future
-  source's distributions place a cut outside its implausible tail. `max_gap_seconds` is a
-  **working value** (census impact in the `StatScan*GapSplit*` macros: the cap mostly
-  affects the slow-cadence hang-glider half) → freeze it via the a-posteriori sweep of the
-  split fractions (same procedure as the cleaning thresholds).
-- The fix-level **robust-outlier** (`w, k, ε_min`), **frozen-lock** (`ε, δ_z, τ_freeze`),
-  integrity `f`, segment-gate and interior-ground values are **in the YAML as working
-  values**, fixed a priori. Primary validation (July 2026 review pass, thesis
-  `sec:fixlevel`): audit the per-rule removal fractions over the archive and sweep each
-  threshold around its working value (plateau ⇒ keep). Injected defects and the
-  downstream-invariance sweep are the deeper, *targeted* follow-up for rules the audit
-  leaves in doubt — they bound the false negatives the removal audit cannot see.
-- Actual `flight_id` cross-source intersection check → confirms the `(source, flight_id)` key.
-- Sailplane catalog schema → document as above once the source is in hand.
+- The `alt_channel` liveness bound and the flight-level duration window and
+  altitude-activity floor were added on census evidence rather than derived
+  (thesis `sec:flightfilter`, `sec:altchannel`). They have run over the full archive since;
+  what has not been done is a sweep of each around its working value to show a plateau.
+- **Duplicate uploads.** Nothing guards against the same physical flight appearing twice —
+  same pilot, same date, near-identical track. The catalogue has no such key, so this has
+  to be a similarity check before any pooling that assumes independent flights.
+- `max_gap_seconds` is a working value. The census impact is visible in the
+  `\StatScan*GapSplit*` macros — the cap mostly moves the slow-cadence hang-glider half —
+  and freezing it wants the same a-posteriori sweep of split fractions used for the
+  cleaning thresholds.
+- The fix-level robust-outlier (`w, k, ε_min`), frozen-lock (`ε, δ_z, τ_freeze`), integrity
+  `f`, segment-gate and interior-ground values sit in the YAML as working values fixed a
+  priori. The removal-fraction audit over the archive is done; injected defects and a
+  downstream-invariance sweep are the deeper follow-up, and they are what would bound the
+  false negatives the removal audit cannot see.
+- A `flight_id` cross-source intersection check, to confirm that `(source, flight_id)` is
+  really the key.
+- The sailplane catalogue schema, to be documented once that source is in hand.

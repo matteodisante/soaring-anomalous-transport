@@ -107,8 +107,8 @@ autocorrelation. `--discipline`, `--out`.
 
 ### `scripts/reporting/measure_propagator.py`
 Histograms of `|Δx|` per lag, per component and per native cadence, plus the turning-angle,
-speed and vertical-velocity histograms. Twelve minutes over both archives: histograms only,
-no per-segment decomposition. `--discipline`, `--out`, `--limit`.
+speed and vertical-velocity histograms. The cheap traversal: histograms only, with no
+per-segment decomposition. `--discipline`, `--out`, `--limit`.
 
 ### `scripts/reporting/measure_circling.py`
 Averages the velocity autocorrelation at **native cadence** over 1 Hz segments and writes
@@ -141,10 +141,9 @@ change that is about the drawing rather than the measurement.
 `--audit-dir`, `--allow-partial` → `transport.pdf`, `transport.tex`.
 
 ### `scripts/reporting/generate_shape_figure.py`
-`--audit-dir`, `--allow-partial` → `shape.pdf`, `shape.tex`. Not instant like the other
-reductions: the Clauset–Shalizi–Newman cut-off scans every distinct run length as a candidate
-and measures a KS distance on the tail at each, which on the paragliders' run collection is
-about fifteen minutes.
+`--audit-dir`, `--allow-partial` → `shape.pdf`, `shape.tex`. Reads the moment spectrum and
+the velocity autocorrelation that the shape pass wrote, fits the tail exponent of the
+autocorrelation, and builds the matched Gaussian null the non-Gaussianity is read against.
 
 ### `scripts/reporting/generate_propagator_figure.py`
 `--audit-dir`, `--allow-partial` → `propagator.pdf`, `propagator.tex`.

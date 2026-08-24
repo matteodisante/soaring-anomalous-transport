@@ -31,6 +31,10 @@ linking each flight to its file and its URLs.
 | Paragliders | 1999–2025 | ~203,000 | ~186,000 | `soaring-para` |
 | Hang gliders | 2001–2025 | ~9,300 | ~6,750 | `soaring-delta` |
 
+Rounded, and for orientation only: the CFD gains a season every year. The exact counts are
+regenerated from the catalogues into `thesis/generated/stats.tex` (`\StatPara*`,
+`\StatHang*`, `\StatTotal*`) — see [Where each number comes from](guide/provenance.md).
+
 ## Quick start
 
 ```bash
