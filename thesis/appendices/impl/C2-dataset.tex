@@ -323,6 +323,26 @@ possible the true class is recovered from the raw \texttt{aile} (wing-model) fie
 normalisation runs at the fix-level/pre-processing stage (Sec.~\ref{impl:fixlevel}) and
 is defined in Sec.~\ref{sec:glider}. Status: Table~\ref{tab:impl-status}.
 
+\begin{flowblock}
+\paragraph{Provenance of the EN/FAI class ladders.} The two systems of
+Table~\ref{tab:aileclass} are not documented on equal terms. The FAI classes come from the
+Sporting Code~\cite{fai_sc7_2024}, which the FAI publishes for free: anyone can download the
+current edition and check a definition against it. The EN classes come from a
+\emph{European standard}, which is a different kind of document. Standards are drafted by
+the European Committee for Standardization (CEN) and then published and \emph{sold} by the
+national standards bodies --- AFNOR in France, DIN in Germany, BSI in the United Kingdom ---
+as copyrighted documents, priced per copy at a few hundred euros. There is no public
+version: unlike a law or a sporting code, the authoritative text of EN~926-2 cannot be
+consulted without buying it, and it cannot be quoted here.
+
+The EN entries of Table~\ref{tab:aileclass} are therefore condensed from Table~1 of the
+\emph{final draft} of the standard, \mbox{FprEN~926-2:2012}, the version submitted to
+formal vote, which the CEN working group circulated publicly~\cite{fpren926_2_2012}. That
+draft is the closest thing to the source text that is openly available, and the class
+descriptions in it are unlikely to have moved in the published \mbox{EN~926-2:2013}, though
+that has not been checked against the published text.
+\end{flowblock}
+
 \section{Coverage and statistics}
 \label{impl:coverage}
 The season tables of Sec.~\ref{sec:coverage} are typeset from the versioned
@@ -552,6 +572,32 @@ a pathological tail was a classification artefact rather than a sensor one.}
 \flow{The liveness threshold is \texttt{baro\_min\_range\_m} (key \texttt{alt\_channel};
 value in Table~\ref{tab:pipelinemap}); rule and rationale in Sec.~\ref{sec:altchannel}.}
 
+\flow{\paragraph{Why GNSS altitude is vertically noisier.} The asymmetry behind the
+vertical dilution of precision is geometric: a receiver sees satellites only above the
+horizon, so the ranging directions bracket it in the horizontal plane but all arrive from
+the same side vertically, leaving the vertical coordinate the worst-determined one. The GPS
+performance standard commits to \SI{8}{\metre} horizontal against \SI{13}{\metre} vertical
+error at \SI{95}{\percent} globally, and \SI{15}{\metre} against \SI{33}{\metre} at the
+worst site~\cite{gps_sps_ps_2020}. Multipath --- the direct signal arriving together with
+replicas delayed by reflection off terrain or the pilot's own equipment --- biases the
+range on timescales of minutes rather than adding independent noise from fix to
+fix~\cite{garciacrespillo2024}, which is why it raises the low-frequency end of the
+spectrum rather than the high-frequency floor read in panel~(c) above.}
+
+\flow{\paragraph{What the liveness test does not catch.} The statistic
+\texttt{baro\_min\_range\_m} is a single whole-flight $\max-\min$, so a barometer that
+records normally for the first ten minutes and then freezes keeps a range of hundreds of
+metres, is judged alive, is adopted, and delivers a vertical velocity of identically zero
+over most of the flight --- precisely the outcome the test exists to prevent. Nothing
+downstream closes the gap: the frozen-lock rule of Sec.~\ref{sec:fixlevel} needs the
+\emph{position} to be frozen, and a cruising wing never trips it; the flight-level
+altitude-activity cut consumes the same extremum difference and inherits the same
+blindness. A test that did close it would be a \emph{local} one --- a moving-window range,
+or a longest-constant-run bound --- and that is a new threshold with its own failure mode
+against a wing genuinely holding altitude, so it is not adopted here on the strength of an
+argument alone. What the present rule guarantees is exactly this: a channel constant
+throughout is refused, one that dies partway is not.}
+
 \subsection{Fix-level cleaning}
 \label{impl:fixlevel}
 
@@ -656,6 +702,22 @@ the \emph{Hampel identifier}, the detection half of the eponymous filter, not
 the median-substituting filter itself: the local median enters only as the reference
 for the residual $r_k$, never as an output value.
 
+\flow{\paragraph{Why the flag is not required.} The rule was originally a
+conjunction --- flagged \emph{and} impossible --- and running it over the archive exposed a
+limit in the \emph{flag}. The Hampel identifier has a breakdown point of \SI{50}{\percent}:
+past that, the median moves onto the corruption instead of resisting it. Some loggers write
+the null position $(0,0)$ for scattered runs of a few seconds each; where several such runs
+fall inside one \SI{\PreprocHampelWindowS}{\second} window they exceed half of it, the
+median follows them, the corrupt fixes score a residual of \emph{zero} and go unflagged,
+and it is the good fixes around them that are flagged instead. On one such flight the
+identifier caught 17 of 99 null fixes, and every survivor left a step of some
+\SI{5000}{\kilo\metre} in the record. The rule adopted is therefore the impossibility gate
+on its own: a genuine tight circle is still never a candidate, because it flies at an
+ordinary speed, and the attribution the flag supplied is instead supplied by the rejoining
+test, which names the block whose removal restores the trend. The change bites only where
+the identifier is outside its own stated range of validity, which is precisely where the
+conjunction failed.}
+
 \begin{description}
   \item[Position.] \rev{Deletion is the impossibility gate: a fix goes when it is
         unreachable from the last accepted fix at the absolute $v_{xy}$ bound \emph{and}
@@ -709,12 +771,52 @@ for the residual $r_k$, never as an output value.
         \emph{run} of super-threshold steps of one sign is a sustained manoeuvre, a
         spiral dive holding \SIrange{15}{20}{\metre\per\second} of real sink, and it is
         counted and left alone rather than censored.}
+  \item[\flow{Why not a Hampel test on $z$ too.}] \flow{The obvious symmetric design ---
+        a local-outlier test on the altitude, corroborated by the climb-rate bound, on the
+        same footing as the horizontal rule --- is wrong here, for three reasons. First,
+        an absolute bound is \emph{sufficient} on $z$ and insufficient on $xy$: the
+        vertical envelope is narrow and known (no wing in this dataset sustains
+        $|v_z|>\SI{\PreprocMaxVSpeedMps}{\metre\per\second}$, no altitude outside
+        $[\PreprocMinAltM,\PreprocMaxAltM]\,\si{\metre}$ is sensor-plausible), whereas a
+        \SI{50}{\metre} horizontal spike is an impossible \SI{50}{\metre\per\second} at a
+        \SI{1}{\second} cadence but an unremarkable \SI{5}{\metre\per\second} at
+        \SI{10}{\second}, so the same defect passes or fails the bound depending on the
+        logger and needs a local, scale-free test the vertical case does not. Second, a
+        Hampel test on $z$ would flag the physics: the residual from a local median is
+        largest where the signal turns fastest, and on the altitude channel that means
+        thermal entries and exits, where $v_z$ swings by several \si{\metre\per\second}
+        within seconds (Sec.~\ref{sec:uniform}) --- exactly the transitions the phase
+        segmentation is built on. A horizontal circle, by contrast, can be told from a
+        spike by its speed, a corroborating witness the vertical channel lacks: the
+        quantity that would have to arbitrate a suspected altitude spike \emph{is} the
+        climb rate, the quantity under suspicion. Third, the costs are not symmetric: a
+        false vertical flag is interpolated back cheaply, except across a thermal entry,
+        where the interpolation erases the very transition it should preserve, so a
+        cheap-looking false positive is expensive exactly where it is most likely.
+        Keeping the vertical rule to a bound that only fires on the physically impossible
+        avoids that failure mode altogether.}
   \item[\rev{The first fix.}] \rev{An anchor-carrying scan never questions its own first
         anchor, and no rule here supplies one: the discontinuity is left as a
         discontinuity, for the reason Sec.~\ref{sec:fixlevel} gives. The guarantee is
         enforced one stage later, by the reach criterion of
         Sec.~\ref{sec:flightfilter}, and checked on the written table
         (Sec.~\ref{impl:verify}).}
+  \item[\flow{Two rules tried, both wrong.}] \flow{An impossible step is a statement
+        about a \emph{pair} of fixes and says nothing about which endpoint is wrong; away
+        from the ends the bounded-removal test settles it by evidence (which removal
+        restores the trend), but at the very first fix there is no trend behind the step
+        to ask. Two attribution rules were tried regardless, and both failed, in opposite
+        directions. One fired on the first impossible step, which accuses the earlier end
+        always: applied to an ordinary position spike three seconds into a record, it
+        deleted the good fixes and promoted the spike to origin. The other fired on a
+        discontinuity the scan itself declares near the start --- a discontinuity
+        survives only where no bounded removal after the step restored the trend --- but
+        the split is placed at the first fix of the block that could not be rejoined, and
+        that block lies \emph{after} the step whenever the corruption simply outlasts $w$:
+        a \SI{50}{\second} corrupt run five seconds in therefore deleted five good fixes,
+        kept fifty bad ones, and left the origin \SI{5039}{\kilo\metre} out. What such a
+        rule would have bought is the recovery of two flights in \num{156017}, against a
+        failure mode demonstrated twice.}
 \end{description}
 This is the \emph{default to keep} rule of Sec.~\ref{sec:fixlevel}: removal requires
 positive, corroborated evidence.
@@ -739,6 +841,36 @@ points are implementation-level.
 A run the rule condemns is marked as a data gap; the split it induces is realised at the
 uniform-sampling stage (Sec.~\ref{impl:uniform}), on the same footing as a native long
 gap.
+
+\flow{\paragraph{The margins, quantified.} A circling wing turns at
+$R=v^2/(g\tan\phi)$\footnote{\flow{The coordinated-turn relation: in a steady banked turn
+the lift $L$ balances gravity vertically, $L\cos\phi=mg$, while its horizontal component
+provides the centripetal force, $L\sin\phi=mv^2/R$; dividing the two gives
+$\tan\phi=v^2/(gR)$, i.e.\ $R=v^2/(g\tan\phi)$.}}, so the tightest paraglider circles
+($v\approx\SI{10}{\metre\per\second}$ at a bank of $\phi\approx35^\circ$, ordinary values
+for tight thermalling) give $2R\approx\SI{30}{\metre}$, and hang gliders, which fly
+faster, turn wider ($v\approx\SI{13}{\metre\per\second}$ at the same bank gives
+$2R\gtrsim\SI{50}{\metre}$). Against the working value of $\delta_{xy}$, the diameter test
+misses by a factor of at least $2$ for the tightest paraglider circles and $\gtrsim3$ for
+hang gliders, more for anything wider --- ratios to be rescaled if $\delta_{xy}$ moves.
+Barometrically, a climb of order \SI{1}{\metre\per\second} sustained over
+$\tau_{\mathrm{freeze}}$ moves the barometer by $\gtrsim\SI{60}{\metre}$ against the
+flatness tolerance $\delta_z$, an order of magnitude margin. Both would have to fail well
+outside their designed range at once, on the same run, for the conjunction to cut a
+genuine climb: on a barometric flight the rule is, in this sense, conservative by
+construction, and errs towards keeping.}
+
+\flow{\paragraph{Why the duration condition abstains.} A run that is spatially collapsed
+and witnessed but lasts less than $\tau_{\mathrm{freeze}}$ is kept, deliberately: at
+durations of a few tens of seconds a collapsed run and a genuine slow, horizontally
+localized stretch --- a search, the core of a tight climb --- are not distinguishable by
+these signatures, and cutting on them would remove the very events the analysis measures.
+The cost is bounded by the threshold itself: a kept short freeze lengthens one waiting
+time by at most $\tau_{\mathrm{freeze}}$, small against the tail of $\psi(\tau)$ where the
+anomalous exponent is read, whereas a wrongly cut climb removes a waiting time outright.
+Short freezes that do get through leave a run of interpolated-looking, near-identical
+positions, and the $\psi(\tau)$ sensitivity checks sweep $\tau_{\mathrm{freeze}}$
+precisely to bound how much of the tail depends on this choice.}
 \end{flowblock}
 
 \subsubsection{\flow{Absolute bounds and gates}}
@@ -908,6 +1040,27 @@ $T_{\mathrm{ground}}$ the same predicate is stored as a list of suspect interval
 flight, which the segmentation later maps onto the phases they touch (consumption of the
 flag: Sec.~\ref{sec:trimming}).}
 
+\flow{\paragraph{Why the central span, not the full range.} A full range is a maximum
+statistic: over zero-mean noise it grows without bound with the number of samples, as
+$2\sigma\sqrt{2\ln n}$. At the metre-scale barometric noise of this archive it reads
+\SI{4.6}{\metre} over a 60-sample stint and \SI{7.1}{\metre} over \num{3000}, so against a
+\SI{5}{\metre} tolerance the same motionless pilot would pass the test on a one-minute
+stint and fail it on a ten-minute one, on noise alone --- and since an interior stint must
+last $T_{\mathrm{ground}}$ to be considered at all, it would fail on every stint the rule
+is ever offered. The central span carries the same units and reading and sits at
+$3.3\sigma$ whatever the stint's length, so $\delta_z^{\mathrm{gr}}$ means the same thing
+on a stint of any duration; a genuine climb of hundreds of metres exceeds it either way.}
+
+\flow{\paragraph{The GNSS-fallback abstention.} The intended rule widens the tolerance on
+a GNSS-fallback flight to match that channel's noise; the widening is not implemented,
+because the factor it needs is a measured ratio between the two channels' short-timescale
+noise, and a first measurement on the archive did not reproduce the ordering
+Fig.~\ref{fig:altnoise} reports. Until that is settled, the single barometric tolerance is
+applied to both channels, which on a noisier one simply means the flatness condition is
+not met and the stint is kept --- the conservative half of the intended rule, since the
+error this guard exists to avoid is excising a genuine climb. The cost is that a
+mid-flight landing on a GNSS-fallback flight is neither excised nor flagged.}
+
 \subsection{Flight-level filtering}
 \label{impl:flightfilter}
 \flow{The three cuts of Sec.~\ref{sec:flightfilter} are the
@@ -1009,6 +1162,38 @@ among low-order methods immaterial), realising the completeness invariant of
 Secs.~\ref{sec:fixlevel} and~\ref{sec:uniform}. Each filled grid point is flagged in an
 \path{interpolated} boolean column of \path{fixes}, and \path{frac_interpolated} records
 the per-segment fraction for the integrity gate.}
+
+\flow{\paragraph{Why linear for the altitude, cubic for the horizontal.} The asymmetry
+follows from what each channel is used for. The altitude is differentiated once more than
+the horizontal coordinates before it is read --- $v_z$ is the segmentation's discriminant
+--- so an interpolation artefact in $z$ propagates directly into a phase assignment,
+whereas the same artefact in $E$ or $N$ is absorbed by the smoothing. Linear interpolation
+cannot overshoot, and its error over a hole of width $g$ is bounded by
+$\max|\ddot z|\,g^2/8$\footnote{\flow{On an interval of width $g$ the difference between a
+$C^2$ function $z$ and the chord through its endpoints is
+$z(t)-p(t)=\tfrac12\,\ddot z(\xi)\,(t-t_0)(t-t_0-g)$ for some $\xi$ in the interval; the
+quadratic factor is largest at the midpoint, where it equals $g^2/4$, giving
+$|z-p|\le\max|\ddot z|\,g^{2}/8$.}}, whereas a cubic is more accurate where the second
+derivative is smooth and worse exactly where it is not --- the transitions a phase
+assignment turns on.}
+
+\flow{\paragraph{The test flight that forced the \texttt{z\_reconstructed} flag.} $g_{\max}$
+bounds the interval between two \emph{fixes}, not an interval over which a fix exists but
+carries no altitude value; that case is not rare, since the vertical channel can be absent
+while the horizontal record is perfect (a logger writing no barometric value, or one the
+fix-level cleaning removed). No time gap opens there, so no split is declared, and the
+linear fill spans the hole whatever its length. On a test flight missing \SI{500}{\second}
+of altitude the filled $z$ departed from the truth by up to \SI{540}{\metre}, the smoothing
+differentiated the straight line into a vertical velocity that was pure invention, and the
+record read $\texttt{frac\_interpolated}=0$ with \texttt{was\_resampled} false --- the
+flight declaring itself uniform as recorded, because the \texttt{interpolated} flag is a
+statement about the time base alone. The vertical therefore carries its own per-fix flag,
+\texttt{z\_reconstructed}, with the per-segment share \texttt{frac\_z\_reconstructed} and,
+per flight, the longest unbroken run \texttt{z\_gap\_max\_s}, reported next to the fraction
+because a fraction alone cannot separate a hundred two-second holes, which a straight line
+bridges well, from one twelve-minute hole, which it does not. Any analysis of the vertical
+excludes on that flag; the horizontal analyses are untouched by it, which is why the flag
+is per channel rather than one for all three.}
 
 \flow{Figures~\ref{fig:gaps} and~\ref{fig:sampling} are rendered by
 \path{make_gap_diagnostics_figure} and \path{make_sampling_figure} from the shared track
