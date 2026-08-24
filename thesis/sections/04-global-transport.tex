@@ -236,9 +236,13 @@ the operator vanishes identically on every polynomial trajectory of degree $p-1$
   \;\sim\;\Delta^{\alpha_p},
   \label{eq:variation}
 \end{equation}
-averaged over every admissible $t$ and flight, on one horizontal component at a time ---
-Sec.~\ref{sec:prelim} forbids pooling the two marginals --- and invariant under a rotation
-of the frame. For a self-similar process with stationary increments $\alpha_p=2H$ at every
+averaged over every admissible $t$ and flight and summed over the two horizontal
+components, which is what makes it invariant under a rotation of the frame: an anisotropic
+ensemble must not return a different exponent for having been measured with north somewhere
+else. The propagator of Sec.~\ref{sec:transport-propagator} does the opposite and keeps the
+components apart, because the ensemble is anisotropic (Sec.~\ref{sec:prelim}) and a
+one-dimensional marginal is exactly what it reads; the two are different statistics of the
+same trajectories rather than one of them pooled. For a self-similar process with stationary increments $\alpha_p=2H$ at every
 order, with only the prefactor depending on $p$: $p=1$ is the plain increment and is blind
 to the origin, $p=2$ to a constant velocity, $p=3$ to a constant acceleration, so no drift
 is estimated at any order and none can be estimated badly. The three orders are not
@@ -393,8 +397,9 @@ not an interval built on the second, so which of them carries the independent me
 has to be settled before either is quoted.
 
 \paragraph{The resampling unit.}
-The quantity clustered is the logarithm of each flight's own first-order variation at a lag
-in the middle of the grid, the per-flight input every fit in this chapter averages over. Its
+The quantity clustered is the logarithm of each flight's own first-order variation at the
+lag nearest the geometric centre of the fitted window, the per-flight input every fit in
+this chapter averages over. Its
 \flow{intraclass correlation at a level $\ell$ is
 \begin{equation}
   \mathrm{ICC}_\ell = \frac{\sigma^2_{\text{between},\,\ell}}

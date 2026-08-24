@@ -225,10 +225,14 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
             put(f"TaskSlopeGap{label}S", f"{lags[i]:.0f}")
 
     # ---- how much clustering there is, at each level --------------------------------
-    reference = np.log10(
-        np.where(loaded["orders"][1][:, len(lags) // 3] > 0,
-                 loaded["orders"][1][:, len(lags) // 3], np.nan)
-    )
+    # One lag has to stand for the per-flight input the fits average over, and it is taken
+    # at the geometric centre of the fitted window -- by value, not by position in the lag
+    # array, whose length is set by LAG_MAX_S over in measure_variations.py. An index would
+    # move on its own the day that grid is extended, and nothing here would say so.
+    probe = int(np.argmin(np.abs(np.log(lags) - np.log(np.sqrt(FIT_RANGE_S[0] * FIT_RANGE_S[1])))))
+    v1 = loaded["orders"][1][:, probe]
+    reference = np.log10(np.where(v1 > 0, v1, np.nan))
+    put("IccLagS", f"{lags[probe]:.0f}")
     icc = {}
     for level in LEVELS:
         try:
