@@ -196,17 +196,16 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
     for p in ORDERS:
         put(f"TaskGapOrder{_ORDER_WORD[p]}", f"{task[p][0] - task[p][1]:+.2f}")
     slope_open, slope_closed = task[1][2], task[1][3]
-    # The local slope of V_2 inside the fitted range. The chapter compares its swing against
-    # the ensemble MSD's, and said it "does not turn" -- it does, by 0.28 and 0.48, with a
-    # maximum near 100 s and a minimum near 600 s. A dip, where the ensemble curve is an arch.
-    from soaring.analysis.observables.regimes import local_slope as _ls
+    # The local slope of V_2 inside the fitted range: it dips where the ensemble MSD arches,
+    # which is the comparison the macros below are written for.
+    from soaring.analysis.observables.regimes import local_slope
 
-    # The window has to be the one panel (d) draws, or the chapter quotes a swing off a curve
-    # the reader is not looking at. Every other call here passes 0.25 explicitly; this one took
-    # the 0.15 default, which reads a swing of 0.28 where the drawn curve swings 0.26. Widening
-    # the window damps the feature rather than creating it -- with no smoothing at all the
-    # paraglider swing is 0.35 -- so 0.25 is also the conservative choice.
-    v2_slope = _ls(lags, np.nanmean(loaded["orders"][2], axis=0), 0.25)
+    # The window has to be the one panel (d) draws, or the swing is quoted off a curve the
+    # reader is not looking at. Every other call here passes 0.25 explicitly and this one
+    # once took the 0.15 default, which reads a larger swing than the drawn curve has.
+    # Widening the window damps the feature rather than creating it, so 0.25 is also the
+    # conservative choice.
+    v2_slope = local_slope(lags, np.nanmean(loaded["orders"][2], axis=0), 0.25)
     fitted = (lags >= FIT_RANGE_S[0]) & (lags <= FIT_RANGE_S[1])
     inside = fitted & np.isfinite(v2_slope)
     if inside.any():
@@ -271,8 +270,10 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
         # refitting each half of the window. Quoting the bootstrap alone would put four
         # significant figures on a number whose second is not determined.
         half = np.flatnonzero(window)
-        lower = np.zeros_like(window); lower[half[: len(half) // 2 + 1]] = True
-        upper = np.zeros_like(window); upper[half[len(half) // 2 :]] = True
+        lower = np.zeros_like(window)
+        lower[half[: len(half) // 2 + 1]] = True
+        upper = np.zeros_like(window)
+        upper[half[len(half) // 2 :]] = True
         mean_curve = np.nanmean(curves, axis=0)
         halves = [exponent(mean_curve, mask=m) for m in (lower, upper)]
         systematic = float(abs(halves[0] - halves[1]) / 2.0)
@@ -367,7 +368,7 @@ def draw(measured: dict):
         curve_ax.loglog(lags, mean2, color=colour, label=discipline)
         curve_ax.axvspan(*FIT_RANGE_S, color="0.92", zorder=0)
 
-        for p, style in zip(ORDERS, ("-", "--", ":")):
+        for p, style in zip(ORDERS, ("-", "--", ":"), strict=True):
             with np.errstate(invalid="ignore"):
                 mean = np.nanmean(m["orders"][p], axis=0)
             order_ax.semilogx(lags, local_slope(lags, mean, 0.25) / 2.0, style,

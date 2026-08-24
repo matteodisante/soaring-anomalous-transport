@@ -64,7 +64,6 @@ def test_increments_do_not_overlap():
 
 
 def test_the_tail_share_flags_a_moment_carried_by_one_sample():
-    rng = np.random.default_rng(0)
     track = S.brownian(20000, seed=1)
     track[10000:] += np.array([1e6, 0.0])      # one enormous jump
     _, tail_share, counts = M.moment_spectrum(track, LAGS[:6], order=1)

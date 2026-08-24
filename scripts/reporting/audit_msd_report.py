@@ -335,7 +335,7 @@ def audit(discipline: str, audit_dir: Path) -> dict[str, str]:
         if member.sum() < 300:
             continue
         slopes = local_slope(lags, np.nanmean(squared[member], 0))
-        duration_slopes.append([slopes[i] for i, p in zip(probe_idx, probes) if p <= threshold])
+        duration_slopes.append([slopes[i] for i, p in zip(probe_idx, probes, strict=True) if p <= threshold])
     common = min(len(s) for s in duration_slopes)
     duration = np.vstack([s[:common] for s in duration_slopes])
     put("DurationSpread", f"{np.nanmax(duration.max(0) - duration.min(0)):.2f}")

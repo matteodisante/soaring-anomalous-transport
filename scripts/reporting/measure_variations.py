@@ -95,7 +95,7 @@ def run(discipline: str, out_dir: Path) -> int:
             lags_samples = np.round(lags_s / step).astype(int)
             for p in ORDERS:
                 value = filtered_variation(positions, lags_samples, order=p)
-                span = lags_samples * (p if p > 1 else 1)
+                span = lags_samples * p
                 n_windows = np.maximum(times.size - span, 0)
                 usable = np.isfinite(value) & (n_windows > 0) & (lags_samples >= 1)
                 total[p][usable] += value[usable] * n_windows[usable]

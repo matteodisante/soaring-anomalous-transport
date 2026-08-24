@@ -240,7 +240,7 @@ def _density(ax, lon, lat, extent, cell, cmap="magma_r"):
     )
 
 
-def draw_maps(loaded: dict) -> "object":
+def draw_maps(loaded: dict) -> object:
     """Where the retained ensemble launches, on three geographic frames."""
     import matplotlib.pyplot as plt
 
@@ -315,7 +315,7 @@ def draw_maps(loaded: dict) -> "object":
     return fig
 
 
-def draw_ensemble(loaded: dict) -> "object":
+def draw_ensemble(loaded: dict) -> object:
     """What the retained records look like: duration, path and cadence."""
     import matplotlib.pyplot as plt
 
@@ -345,7 +345,7 @@ def draw_ensemble(loaded: dict) -> "object":
     return fig
 
 
-def draw_strata(loaded: dict) -> "object":
+def draw_strata(loaded: dict) -> object:
     """Whether the retained ensemble may be pooled: isotropy, then three stratifications."""
     import matplotlib.pyplot as plt
 
@@ -406,7 +406,7 @@ def macros(loaded: dict) -> dict[str, str]:
         frame, lags = data["flights"], data["lags"]
         east, north = data["east"], data["north"]
 
-        def put(name, value):
+        def put(name, value, tag=tag):
             out[f"StatPrelim{tag}{name}"] = value
 
         put("Flights", f"{len(frame)}")

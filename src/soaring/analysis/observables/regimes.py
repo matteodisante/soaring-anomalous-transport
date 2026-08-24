@@ -158,7 +158,8 @@ def select_breakpoints(
     def bic(rss, k_params):
         return n_eff * np.log(max(rss, 1e-300) / len(x)) + k_params * np.log(n_eff)
 
-    best = None
+    # k = 0 always supplies exactly one candidate, so this is never returned empty.
+    best: dict = {}
     for k in range(0, max_breaks + 1):
         candidates = (
             [np.array([])]
@@ -169,7 +170,7 @@ def select_breakpoints(
             breaks = x[np.asarray(index, dtype=int)] if len(index) else np.array([])
             coefficients, rss, _ = piecewise_fit(x, v, breaks)
             score = bic(rss, 2 + 2 * k)
-            if best is None or score < best["bic"]:
+            if not best or score < best["bic"]:
                 slopes = [coefficients[1]]
                 for j in range(k):
                     slopes.append(slopes[-1] + coefficients[2 + j])

@@ -180,16 +180,16 @@ def scaling_from_quantiles(
     if fit_range is not None:
         good &= (lags_s >= fit_range[0]) & (lags_s <= fit_range[1])
 
-    per = []
+    slopes: list[float] = []
     for column in range(quantiles.shape[1]):
         usable = good & np.isfinite(quantiles[:, column]) & (quantiles[:, column] > 0)
         if usable.sum() < 4:
-            per.append(np.nan)
+            slopes.append(float("nan"))
             continue
-        per.append(
+        slopes.append(
             float(np.polyfit(np.log10(lags_s[usable]), np.log10(quantiles[usable, column]), 1)[0])
         )
-    per = np.array(per)
+    per = np.array(slopes)
     finite = np.isfinite(per)
     return {
         "hurst": float(np.median(per[finite])) if finite.any() else float("nan"),
@@ -306,18 +306,18 @@ def peak_scaling(lags_s: np.ndarray, counts: np.ndarray, edges: np.ndarray,
     if rows.size < 4:
         return float("nan"), 0
 
-    peak = []
+    densities: list[float] = []
     for i in rows:
         total = counts[i].sum()
         cumulative = np.cumsum(counts[i]) / total
         upto = int(np.searchsorted(cumulative, fraction, side="left"))
         if upto < 1:
-            peak.append(np.nan)
+            densities.append(float("nan"))
             continue
         mass = counts[i, :upto].sum() / total
         span = edges[upto] - edges[0]
-        peak.append(mass / span if span > 0 else np.nan)
-    peak = np.array(peak)
+        densities.append(float(mass / span) if span > 0 else float("nan"))
+    peak = np.array(densities)
     good = np.isfinite(peak) & (peak > 0)
     if good.sum() < 4:
         return float("nan"), 0

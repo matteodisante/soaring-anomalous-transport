@@ -124,7 +124,7 @@ def matched_gaussian_null(slug: str, audit_dir: Path, data: dict, macros: dict) 
 
     if len(rows) < 2:
         return
-    lag_at, measured_at, null_at = (np.array(c) for c in zip(*rows))
+    lag_at, measured_at, null_at = (np.array(c) for c in zip(*rows, strict=True))
     tag = DISCIPLINES[discipline_of(slug)][1]
     macros[f"StatShape{tag}NullLags"] = f"{len(rows)}"
     macros[f"StatShape{tag}NullAbove"] = f"{int((null_at > measured_at).sum())}"

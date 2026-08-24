@@ -99,19 +99,19 @@ def moment_spectrum(
         ``tail_share[i, j]`` is the fraction of that sum carried by the largest ``tail`` of
         the samples; ``counts[i]`` is how many non-overlapping windows the lag supplied.
     """
-    lags = np.asarray(lags, dtype=int)
-    q_grid = np.asarray(q_grid, dtype=float)
-    moments = np.full((lags.size, q_grid.size), np.nan)
-    tail_share = np.full((lags.size, q_grid.size), np.nan)
-    counts = np.zeros(lags.size, dtype=int)
+    lag_grid = np.asarray(lags, dtype=int)
+    orders = np.asarray(q_grid, dtype=float)
+    moments = np.full((lag_grid.size, orders.size), np.nan)
+    tail_share = np.full((lag_grid.size, orders.size), np.nan)
+    counts = np.zeros(lag_grid.size, dtype=int)
 
-    for i, lag in enumerate(lags):
+    for i, lag in enumerate(lag_grid):
         magnitude = _increments(positions, int(lag), order)
         counts[i] = magnitude.size
         if magnitude.size < 8:
             continue
         keep = max(1, int(round(tail * magnitude.size)))
-        for j, q in enumerate(q_grid):
+        for j, q in enumerate(orders):
             weighted = magnitude**q
             total = weighted.sum()
             moments[i, j] = total / magnitude.size
@@ -225,16 +225,16 @@ def quantile_ratios(
     fractional Brownian motion of 10^5 samples the ratio wanders by 0.18 across the full
     grid and by 0.06 across the lags that clear the floor.
     """
-    lags = np.asarray(lags, dtype=int)
-    probabilities = np.asarray(probabilities, dtype=float)
-    floor = max(20.0, 10.0 / (1.0 - float(probabilities.max())))
-    ratios = np.full((lags.size, probabilities.size), np.nan)
-    for i, lag in enumerate(lags):
+    lag_grid = np.asarray(lags, dtype=int)
+    probs = np.asarray(probabilities, dtype=float)
+    floor = max(20.0, 10.0 / (1.0 - float(probs.max())))
+    ratios = np.full((lag_grid.size, probs.size), np.nan)
+    for i, lag in enumerate(lag_grid):
         magnitude = _increments(positions, int(lag), order)
         if magnitude.size < floor:
             continue
         median = np.median(magnitude)
         if median <= 0:
             continue
-        ratios[i] = np.quantile(magnitude, probabilities) / median
+        ratios[i] = np.quantile(magnitude, probs) / median
     return ratios

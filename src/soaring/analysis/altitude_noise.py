@@ -216,7 +216,7 @@ def baro_presence_stats(
     return baro_absent, n_flights
 
 
-def baro_presence_from_scan(scan: "pd.DataFrame") -> tuple[int, int]:
+def baro_presence_from_scan(scan: pd.DataFrame) -> tuple[int, int]:
     """Barometric-absence count from an already-parsed track scan (no re-parsing).
 
     Uses the ``baro_present_frac`` column that

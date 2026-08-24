@@ -256,7 +256,7 @@ def draw(measured: dict):
             continue
         lags, quantiles, counts, edges, fitted, component = m["drawn"][0]
         window = (lags >= FIT_RANGE_S[0]) & (lags <= FIT_RANGE_S[1])
-        for column, style in zip(range(quantiles.shape[1]), ("-", "--", "-.", ":")):
+        for column, style in zip(range(quantiles.shape[1]), ("-", "--", "-.", ":"), strict=True):
             quantile_ax.loglog(lags[window], quantiles[window, column], style, color=colour, lw=1.1)
         quantile_ax.plot([], [], color=colour, label=f"{discipline} ({component})")
 
