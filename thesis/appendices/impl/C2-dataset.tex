@@ -837,6 +837,11 @@ points are implementation-level.
   \item \emph{Bookkeeping.} On a barometric flight the \texttt{V} flag and the zeroed
         GNSS altitude are recorded as corroborating diagnostics only; they fill the
         witness slot on GNSS-fallback flights alone (Eq.~\eqref{eq:frozenlock}).
+  \item \rev{\emph{A declaration must speak for the run.} Where the recorder's
+        declarations are the witness, they are required on more than half the run's
+        fixes rather than on any one of them. A single \texttt{V} flag inside an
+        otherwise healthy stretch is a momentary loss of a satellite, which every flight
+        has; it is the sustained declaration that testifies to a frozen receiver.}
 \end{itemize}
 A run the rule condemns is marked as a data gap; the split it induces is realised at the
 uniform-sampling stage (Sec.~\ref{impl:uniform}), on the same footing as a native long

@@ -398,8 +398,9 @@ has to be settled before either is quoted.
 
 \paragraph{The resampling unit.}
 The quantity clustered is the logarithm of each flight's own first-order variation at the
-lag nearest the geometric centre of the fitted window, the per-flight input every fit in
-this chapter averages over. Its
+lag nearest the geometric centre of the fitted window
+(\SI{\StatVarParaIccLagS}{\second}), the per-flight input every fit in this chapter
+averages over. Its
 \flow{intraclass correlation at a level $\ell$ is
 \begin{equation}
   \mathrm{ICC}_\ell = \frac{\sigma^2_{\text{between},\,\ell}}
@@ -459,9 +460,13 @@ power law rather than by sampling, and is not an interval on the exponent
 \impldetails{impl:global}.
 
 \paragraph{What sets the two ends of the window.}
-Below, the smoothing floor of \num{\PreprocSavgolMinWindow} samples (Sec.~\ref{sec:savgol})
-sets \SI{\StatVarParaFitMinS}{\second} above the scale over which every retained cadence has
-been made smooth. Above, the declared task governs: closed and open courses separate in
+Below, the smoothing window is $\max(\tau_c,\,\PreprocSavgolMinWindow\,\Delta t)$
+(Sec.~\ref{sec:savgol}): its floor is in \emph{samples}, so in seconds it widens with the
+logger's step. \SI{\StatVarParaFitMinS}{\second} therefore sits above it for
+\SI{\StatVarParaSmoothedBelowFitPct}{\percent} of retained paraglider flights and
+\SI{\StatVarHangSmoothedBelowFitPct}{\percent} of hang-glider ones; the slow remainder is
+smoothed over more than the shortest fitted lag, and enters the average with the few
+windows so sparse a record supplies. Above, the declared task governs: closed and open courses separate in
 local slope by \num{\StatVarParaTaskSlopeGapLow} at
 \SI{\StatVarParaTaskSlopeGapLowS}{\second} and by \num{\StatVarParaTaskSlopeGapHigh} at
 \SI{\StatVarParaTaskSlopeGapHighS}{\second} for paragliders, from

@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -81,14 +82,29 @@ def load(slug: str, audit_dir: Path):
     }
 
 
+def _nanmean(values, axis=0):
+    """``np.nanmean``, without the warning an all-NaN column earns but does not need.
+
+    At the long-lag end of the grid no flight of one kind reaches the lag, so that column
+    is all NaN and its mean is NaN -- which is the right answer, and which numpy announces
+    as a RuntimeWarning. ``np.errstate`` does not reach it: "Mean of empty slice" is raised
+    through ``warnings``, not through the floating-point error state, so five errstate
+    blocks in this file were silencing nothing. One place to say so, and one to fix.
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        return np.nanmean(values, axis=axis)
+
+
 def task_systematic(lags, curves, closed, fit_range):
     """How much the declared task moves the exponent, as the closed/open difference.
 
     The CFD scores closed tasks, so most flights fly a triangle and return towards their
     start. That suppresses a plain displacement statistic at long lags by construction.
     There is no lag below which the effect is absent -- the two populations differ at every
-    lag and the difference grows smoothly, from 0.03 in the local slope at 60 s to 1.1 at
-    12000 s -- so a "ceiling" above which the measurement is clean does not exist and any
+    lag and the difference grows smoothly across the whole grid, its size at either end
+    being what the \StatVar*TaskSlopeGap* macros report -- so a "ceiling" above which the
+    measurement is clean does not exist and any
     threshold on the difference merely picks an arbitrary point on a smooth curve, at a
     place that moves with the sample size.
 
@@ -104,9 +120,8 @@ def task_systematic(lags, curves, closed, fit_range):
     from soaring.analysis.observables.regimes import local_slope
     from soaring.analysis.observables.variations import hurst_from_variations
 
-    with np.errstate(invalid="ignore"):
-        mean_closed = np.nanmean(curves[closed], axis=0)
-        mean_open = np.nanmean(curves[~closed], axis=0)
+    mean_closed = _nanmean(curves[closed])
+    mean_open = _nanmean(curves[~closed])
     alpha_closed = 2.0 * hurst_from_variations(lags, mean_closed, fit_range=fit_range)[0]
     alpha_open = 2.0 * hurst_from_variations(lags, mean_open, fit_range=fit_range)[0]
     return (
@@ -151,8 +166,7 @@ def stratified_exponents(lags, curves, frame, column, fit_range, *, minimum=2000
     out = {}
     for level in counts[counts >= minimum].index:
         member = (frame[column] == level).to_numpy()
-        with np.errstate(invalid="ignore"):
-            mean_curve = np.nanmean(curves[member], axis=0)
+        mean_curve = _nanmean(curves[member])
         alpha = 2.0 * hurst_from_variations(lags, mean_curve, fit_range=fit_range)[0]
         if np.isfinite(alpha):
             out[str(level)] = (alpha, int(member.sum()))
@@ -248,6 +262,22 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
     put("BootstrapLevel", chosen.replace("_", " and "))
     labels = cluster_labels(frame, chosen)
     put("Clusters", f"{np.unique(labels).size}")
+
+    # The fit floor is argued from the smoothing scale, and the Savitzky-Golay window has
+    # its floor in *samples*, so in seconds it grows with the logger's step: a slow logger
+    # is smoothed over more than the shortest fitted lag. The share that is not is measured
+    # here rather than asserted, through the same function the pipeline smooths with.
+    from soaring.analysis.config import load_preproc_config
+    from soaring.analysis.preproc.smoothing import savgol_window
+
+    savgol = load_preproc_config().savgol
+    steps, inverse = np.unique(
+        frame["native_dt_s"].to_numpy(dtype=float), return_inverse=True
+    )
+    spans = np.array(
+        [savgol_window(savgol.tau_c_horizontal_s, s, savgol.polyorder) * s for s in steps]
+    )[inverse]
+    put("SmoothedBelowFitPct", f"{100 * (spans <= FIT_RANGE_S[0]).mean():.1f}")
 
     # ---- the order scan, with clustered intervals -----------------------------------
     window = (lags >= FIT_RANGE_S[0]) & (lags <= FIT_RANGE_S[1])
@@ -363,23 +393,20 @@ def draw(measured: dict):
     for discipline, m in measured.items():
         colour = COLORS[discipline]
         lags = m["lags"]
-        with np.errstate(invalid="ignore"):
-            mean2 = np.nanmean(m["orders"][2], axis=0)
+        mean2 = _nanmean(m["orders"][2])
         curve_ax.loglog(lags, mean2, color=colour, label=discipline)
         curve_ax.axvspan(*FIT_RANGE_S, color="0.92", zorder=0)
 
         for p, style in zip(ORDERS, ("-", "--", ":"), strict=True):
-            with np.errstate(invalid="ignore"):
-                mean = np.nanmean(m["orders"][p], axis=0)
+            mean = _nanmean(m["orders"][p])
             order_ax.semilogx(lags, local_slope(lags, mean, 0.25) / 2.0, style,
                               color=colour, lw=1.2, label=f"{discipline}, $p={p}$")
 
         task_ax.semilogx(lags, m["slope_closed"], "-", color=colour, label=f"{discipline}, closed")
         task_ax.semilogx(lags, m["slope_open"], "--", color=colour, label=f"{discipline}, open")
 
-        with np.errstate(invalid="ignore"):
-            slope_ax.semilogx(lags, local_slope(lags, np.nanmean(m["orders"][2], 0), 0.25),
-                              color=colour, label=discipline)
+        slope_ax.semilogx(lags, local_slope(lags, _nanmean(m["orders"][2]), 0.25),
+                          color=colour, label=discipline)
         slope_ax.axvspan(*FIT_RANGE_S, color="0.92", zorder=0)
 
     curve_ax.set_xlabel("lag (s)")

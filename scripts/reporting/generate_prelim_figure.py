@@ -479,6 +479,9 @@ def macros(loaded: dict) -> dict[str, str]:
             # separates an axis along which the ensemble genuinely splits from one along
             # which a single small group wanders.
             put(f"{name}TypicalDeparturePct", f"{100 * float(np.median(spread)):.0f}")
+    # Discipline-independent, so it carries no tag: the floor below which a stratum is
+    # counted but not drawn. Quoted by the text and by two captions, which had it typed.
+    out["StatPrelimMinStratum"] = str(MIN_STRATUM)
     return out
 
 

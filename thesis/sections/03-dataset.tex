@@ -1684,8 +1684,8 @@ classes (Sec.~\ref{sec:glider}), from recreational EN\,A/B wings to CCC racing w
 whose kinematics differ substantially. Before treating the flights of one discipline as
 draws from a single statistical process, the subpopulations are checked. The test is the
 horizontal MSD computed within each stratum and read against the pooled curve over the
-same lags; the two disciplines are never pooled, and a stratum below \num{2000} flights is
-not drawn as if it were a measurement. The class normalisation of Sec.~\ref{sec:glider}
+same lags; the two disciplines are never pooled, and a stratum below
+\num{\StatPrelimMinStratum} flights is not drawn as if it were a measurement. The class normalisation of Sec.~\ref{sec:glider}
 runs first, since as long as one wing class appears under several spellings a stratum is
 not a well-defined set of flights.
 
@@ -1788,7 +1788,7 @@ known to differ, not as a property of a homogeneous population.
   isotropy, and neither discipline reaches it over the shaded band, which is the lag range
   the transport analysis reads. (b--d)~The ensemble MSD computed within each stratum and
   divided by the pooled curve, for paragliders, by wing class, by orographic group and by
-  season; strata below \num{2000} flights are not drawn. Class and terrain separate the
+  season; strata below \num{\StatPrelimMinStratum} flights are not drawn. Class and terrain separate the
   curves, season does not. Computed by
   \texttt{scripts/reporting/generate\_prelim\_figure.py}.}}
   \label{fig:prelim-strata}
