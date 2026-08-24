@@ -110,8 +110,8 @@ def defined_macros() -> dict[str, str]:
     return out
 
 
-def used_in(defined: set[str]) -> dict[str, set[str]]:
-    r"""Macro or figure name -> the thesis files that use it.
+def used_in(defined: set[str]) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
+    r"""``(macros, figures)``, each mapping a name to the thesis files that use it.
 
     Every control sequence in the sources is collected and intersected with the names
     the generators define, rather than filtered by an expected prefix. A family added
@@ -119,15 +119,16 @@ def used_in(defined: set[str]) -> dict[str, set[str]]:
     -- which matches no ``Stat``/``Preproc`` convention, and is quoted in Ch. 2 -- is
     not reported missing.
     """
-    where: dict[str, set[str]] = defaultdict(set)
+    macros: dict[str, set[str]] = defaultdict(set)
+    figures: dict[str, set[str]] = defaultdict(set)
     for source in SOURCES:
         text = source.read_text()
         label = source.relative_to(THESIS).as_posix()
         for name in set(re.findall(r"\\(\w+)", text)) & defined:
-            where[name].add(label)
+            macros[name].add(label)
         for figure in _FIGURE.findall(text):
-            where[figure].add(label)
-    return where
+            figures[figure].add(label)
+    return macros, figures
 
 
 def collect() -> tuple[dict, dict, list[str]]:
@@ -136,7 +137,7 @@ def collect() -> tuple[dict, dict, list[str]]:
     step_of = steps()
     by_hook = hook_scripts()
     defines = defined_macros()
-    used = used_in(set(defines))
+    used, figures = used_in(set(defines))
     problems: list[str] = []
 
     artefacts: dict[str, dict] = {}
@@ -165,8 +166,23 @@ def collect() -> tuple[dict, dict, list[str]]:
             "step": step_of.get(script or ""),
             "hook": script in by_hook,
             # LaTeX includes a figure without its extension.
-            "used_in": sorted(used.get(path.name, ()) or used.get(path.stem, ())),
+            "used_in": sorted(figures.get(path.stem, ()) or used.get(path.name, ())),
         }
+
+    # A figure the thesis includes but that is not on disk does not fail the build:
+    # every \includegraphics sits inside \IfFileExists, which substitutes a box telling
+    # the reader to generate it. That is the right fallback for files kept out of the
+    # repository, and it is also why a figure can go missing, or stay years old, with
+    # nothing protesting. Nothing else checks this, so it is checked here.
+    on_disk = {path.name for path in GENERATED.glob("*")}
+    for name, places in sorted(figures.items()):
+        if name in on_disk or f"{name}.pdf" in on_disk:
+            continue
+        where = ", ".join(places)
+        problems.append(
+            f"{name}.pdf: included by {where} but not in thesis/generated/ -- "
+            "the build will show a placeholder box in its place"
+        )
 
     macros = {
         name: {"file": source, "used_in": sorted(used.get(name, ()))}
