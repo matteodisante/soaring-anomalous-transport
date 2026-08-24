@@ -397,6 +397,18 @@ def make_sampling_figure(scans: dict[str, pd.DataFrame]) -> Figure:
     return fig
 
 
+def _finite(values) -> np.ndarray:
+    """The finite samples of one channel, as a float array.
+
+    Every per-fix channel can arrive with gaps -- the vertical speed most of all, since
+    it is a difference of altitudes and a fix without one leaves a nan behind -- and the
+    range calculations below are all quantiles, which propagate a single nan into every
+    bin edge.
+    """
+    array = np.asarray(values if values is not None else (), dtype=float)
+    return array[np.isfinite(array)]
+
+
 def make_fixlevel_diagnostics_figure(
     distributions: dict[str, dict[str, np.ndarray]], fix_level: FixLevelThresholds
 ) -> Figure:
@@ -442,9 +454,13 @@ def make_fixlevel_diagnostics_figure(
         # distribution, and widening it the same way mostly shrinks the informative
         # part of the panel to make room for a rare secondary population already
         # visible at the narrower range.
-        per_disc = [
-            d[key] for d in distributions.values() if d.get(key, np.empty(0)).size
-        ]
+        # Non-finite samples are dropped before anything is measured off them: one of
+        # them makes every quantile below nan, and a nan bin edge reaches numpy as
+        # "arange: cannot compute length" -- an error naming the histogram rather than
+        # the channel that carried it. The vertical speed is where they come from, being
+        # a difference of altitudes: a fix whose altitude is missing leaves one behind.
+        samples = {disc: _finite(d.get(key)) for disc, d in distributions.items()}
+        per_disc = [v for v in samples.values() if v.size]
         pooled = np.concatenate(per_disc or [np.array([0.0])])
         lo = min(float(np.quantile(pooled, 0.001)), *all_cut_values)
         if wide_tail:
@@ -469,8 +485,7 @@ def make_fixlevel_diagnostics_figure(
             bins = np.arange(np.floor(lo) - 0.5, np.ceil(hi) + 1.5, 1.0)
         else:
             bins = np.linspace(lo, hi, 60)
-        for disc, d in distributions.items():
-            v = d.get(key, np.empty(0))
+        for disc, v in samples.items():
             if v.size:
                 ax.hist(
                     v,
