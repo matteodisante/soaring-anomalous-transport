@@ -22,11 +22,6 @@ comparing them catches a class of error in either. The comparison is made throug
 scaling form and is one-sided; the reason is in
 ``soaring.analysis.observables.persistence``.
 
-**Is there a separation of scales?** The persistence runs say how far the wing goes before
-it turns. If their tail index is stable as the geometric threshold is scanned, there is a
-scale to separate; if it moves, there is not, and that is a prediction about any
-segmentation attempted later.
-
 Writes ``thesis/generated/shape.tex`` and ``shape.pdf``.
 """
 
@@ -48,12 +43,6 @@ OUT_FIG = ROOT / "thesis" / "generated" / "shape.pdf"
 
 DISCIPLINES = {"paragliders": ("para", "Para"), "hang gliders": ("hang", "Hang")}
 COLORS = {"paragliders": "#3477a8", "hang gliders": "#b5482a"}
-SINUOSITIES = (1.05, 1.15, 1.30)
-
-# A LaTeX control sequence takes letters only, so the threshold is spelled out in the
-# macro name. This is the second generator to need the rule, which is why the macro
-# checker refuses an unusable name rather than leaving it for the build to hit.
-_SINUOSITY_WORD = {1.05: "Straight", 1.15: "Gentle", 1.30: "Loose"}
 MIN_SAMPLES = 500
 
 # The window every exponent in Chapter 3 is fitted on. Quantities that are sensitive to the
@@ -154,7 +143,7 @@ def discipline_of(slug: str) -> str:
 
 def measure(discipline: str, data: dict, macros: dict) -> dict:
     from soaring.analysis.observables.moments import bilinear_fit
-    from soaring.analysis.observables.persistence import tail_index, vacf_tail_exponent
+    from soaring.analysis.observables.persistence import vacf_tail_exponent
 
     tag = DISCIPLINES[discipline][1]
     lags, q_grid = data["lags_s"], data["q_grid"]
@@ -279,35 +268,17 @@ def measure(discipline: str, data: dict, macros: dict) -> dict:
                 put("VacfGammaResidualDex", f"{np.ptp(residual):.3f}")
             put("VacfIntegrable", "yes" if gamma > 1.0 else "no")
 
-    # The persistence runs, scanned over the geometric threshold.
-    betas: dict[float, float] = {}
-    for sinuosity in SINUOSITIES:
-        lengths = data.get(f"runs_{str(sinuosity).replace('.', 'p')}", np.zeros(0))
-        if lengths.size < 100:
-            continue
-        beta, cut = tail_index(lengths)
-        betas[sinuosity] = beta
-        name = _SINUOSITY_WORD[sinuosity]
-        put(f"Beta{name}", f"{beta:.2f}")
-        put(f"Median{name}S", f"{np.median(lengths):.0f}")
-        put(f"Runs{name}", f"{lengths.size}")
-        put(f"Cut{name}S", f"{cut:.0f}")
-    if len(betas) > 1:
-        spread = max(betas.values()) - min(betas.values())
-        put("BetaSpread", f"{spread:.2f}")
-        put("BetaStable", "no" if spread > 0.3 else "yes")
-
     return {"lags": lags, "q_grid": q_grid, "q_nu": q_nu, "usable": usable,
             "moment": moment, "tail": tail, "vacf": vacf, "fit": fitted, "data": data,
             "gamma": float(macros.get(f"StatShape{tag}VacfTailGamma", "nan")),
-            "non_gaussian": non_gaussian, "betas": betas}
+            "non_gaussian": non_gaussian}
 
 
 def draw(measured: dict):
     import matplotlib.pyplot as plt
 
-    fig, axes = plt.subplots(2, 3, figsize=(13.8, 7.4))
-    (spec_ax, tail_ax, gauss_ax), (vacf_ax, runs_ax, beta_ax) = axes
+    fig, axes = plt.subplots(2, 2, figsize=(9.5, 7.4))
+    (spec_ax, tail_ax), (gauss_ax, vacf_ax) = axes
 
     for discipline, m in measured.items():
         colour = COLORS[discipline]
@@ -332,20 +303,6 @@ def draw(measured: dict):
             gauss_ax.semilogx(m["lags"][keep], m["non_gaussian"][keep], "o-", color=colour,
                               ms=3, label=discipline)
 
-        betas = []
-        for sinuosity, style in zip(SINUOSITIES, ("-", "--", ":")):
-            lengths = m["data"].get(f"runs_{str(sinuosity).replace('.', 'p')}", np.zeros(0))
-            if lengths.size < 100:
-                continue
-            edges = np.geomspace(max(lengths.min(), 1), lengths.max(), 40)
-            survival = np.array([(lengths >= e).mean() for e in edges])
-            runs_ax.loglog(edges, survival, style, color=colour, lw=1.1,
-                           label=f"{discipline}, $s\\leq{sinuosity}$")
-            betas.append((sinuosity, m["betas"].get(sinuosity, np.nan)))
-        if betas:
-            beta_ax.plot([s for s, _ in betas], [b for _, b in betas], "o-", color=colour,
-                         ms=5, label=discipline)
-
     spec_ax.set_xlabel("$q$")
     spec_ax.set_ylabel(r"$q\,\nu(q)$")
     spec_ax.set_title("(a) moment spectrum: straight means monofractal", fontsize=10, loc="left")
@@ -367,12 +324,6 @@ def draw(measured: dict):
     # chapter also calls alpha_2 and which is a different quantity.
     gauss_ax.set_ylabel(r"$\alpha_2^{\mathrm{NG}}(\Delta)$")
     gauss_ax.set_title("(c) non-Gaussian parameter", fontsize=10, loc="left")
-    runs_ax.set_xlabel("run duration (s)")
-    runs_ax.set_ylabel("$P(T>\\tau)$")
-    runs_ax.set_title("(e) persistence runs, by geometric threshold", fontsize=10, loc="left")
-    beta_ax.set_xlabel(r"sinuosity threshold $s_{\max}$")
-    beta_ax.set_ylabel(r"tail index $\beta$")
-    beta_ax.set_title("(f) and how the tail index moves with it", fontsize=10, loc="left")
     for ax in axes.ravel():
         ax.legend(frameon=False, fontsize=7)
     fig.tight_layout()

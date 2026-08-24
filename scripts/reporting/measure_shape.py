@@ -2,15 +2,13 @@
 r"""One streaming pass for the observables that need the increments themselves.
 
 The variation pass keeps a second moment per flight per lag, which is enough for an
-exponent and not enough for anything about *shape*. Three observables need more, and all
-three need the same traversal, so they share one:
+exponent and not enough for anything about *shape*. Two observables need more, and both
+need the same traversal, so they share one:
 
 * the **moment spectrum** :math:`\langle|\Delta\mathbf{r}|^q\rangle`, which discriminates a
   Lévy walk from a correlated Gaussian process in one figure;
 * the **velocity autocorrelation**, whose integral must reproduce the displacement if the
-  position and velocity channels are consistent;
-* the **persistence runs**, which say how far the wing goes before it turns, with the
-  non-overlapping decomposition that avoids the inspection bias.
+  position and velocity channels are consistent.
 
 The moments are accumulated as pooled sums, since a moment of the ensemble is a sum over
 every increment of every flight and not an average of per-flight moments; the per-flight
@@ -40,7 +38,6 @@ DISCIPLINES = {
 
 LAG_MIN_S, LAG_MAX_S, N_LAGS = 60.0, 8000.0, 24
 VACF_MAX_S = 1200.0
-SINUOSITIES = (1.05, 1.15, 1.30)
 
 # Flights whose increments are kept whole, for the pooled tail control. One in this many.
 TAIL_SUBSAMPLE = 40
@@ -62,10 +59,7 @@ def _derived_and_catalog(discipline: str):
 def run(discipline: str, out_dir: Path) -> int:
     from soaring.analysis.derived import stream_flights
     from soaring.analysis.observables.moments import Q_GRID, _increments
-    from soaring.analysis.observables.persistence import (
-        persistence_runs,
-        velocity_autocorrelation,
-    )
+    from soaring.analysis.observables.persistence import velocity_autocorrelation
 
     derived, catalog_path = _derived_and_catalog(discipline)
     if derived is None:
@@ -80,7 +74,6 @@ def run(discipline: str, out_dir: Path) -> int:
     moment_count = np.zeros(n_lag)
     vacf_sum = None
     vacf_count = 0
-    runs = {s: [] for s in SINUOSITIES}
     tail_pool = {i: [] for i in range(n_lag)}
     rows: list[dict] = []
 
@@ -133,11 +126,6 @@ def run(discipline: str, out_dir: Path) -> int:
                     vacf_n[good] += 1
                     vacf_flight = True
 
-            for sinuosity in SINUOSITIES:
-                lengths = persistence_runs(positions, sinuosity)
-                if lengths.size:
-                    runs[sinuosity].append(lengths * step)
-
         if vacf_flight:
             vacf_count += 1
         rows.append({"flight_id": flight_id})
@@ -169,8 +157,6 @@ def run(discipline: str, out_dir: Path) -> int:
         tail_share=tail_share,
         vacf=np.where(vacf_n > 0, vacf_sum / np.maximum(vacf_n, 1), np.nan) if vacf_sum is not None else np.zeros(0),
         vacf_flights=np.array([vacf_count]),
-        **{f"runs_{str(s).replace('.', 'p')}": np.concatenate(runs[s]) if runs[s] else np.zeros(0)
-           for s in SINUOSITIES},
     )
     print(f"{discipline}: {len(rows)} flights, {n_lag} lags -> {out_dir}")
     return 0
