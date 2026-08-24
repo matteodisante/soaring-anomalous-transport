@@ -70,7 +70,12 @@ if TYPE_CHECKING:
 #          exceeds what the speed bound allows in its duration is dropped. That first
 #          fix becomes the origin of the local frame, so getting it wrong displaces
 #          every coordinate of the record (sec:fixlevel, sec:flightfilter).
-PIPELINE_VERSION = "1.3.0"
+# 1.3.1 -- the IGC parser requires the *degrees* field of a coordinate to be digits, as
+#          it already required the minutes. `int` accepts a leading sign or space, so
+#          "-123456N" decoded to a plausible latitude instead of being rejected. No stored
+#          table changes: a scan of 3000 files across both archives, 21 million B records,
+#          found no such token, and the rule can only reject what was accepted before.
+PIPELINE_VERSION = "1.3.1"
 
 # The reason a flight carries when the driver could not run the pipeline over it at all
 # -- an unreadable file, a parser failure, a bug. It lives here, with the other stage
