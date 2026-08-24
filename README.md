@@ -25,8 +25,8 @@ Parquet tables per discipline. See [the pipeline guide](docs/guide/preprocessing
 
 **Analysis** (`soaring.analysis.observables`, `soaring.analysis.stats`) — the transport
 estimators: mean-square displacement and its time-averaged counterpart, filtered variations,
-the moment spectrum, persistence runs, the increment propagator, regime detection, synthetic
-null processes, and the clustered bootstrap.
+the moment spectrum, the velocity autocorrelation, the increment propagator, regime
+detection, synthetic null processes, and the clustered bootstrap.
 
 📖 **Documentation:** <https://matteodisante.github.io/soaring-anomalous-transport/>
 

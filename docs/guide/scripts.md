@@ -102,10 +102,8 @@ class, season and declared task alongside. Every stratification in Chapter 3 is 
 selection on that table. `--discipline`, `--out`.
 
 ### `scripts/reporting/measure_shape.py`
-The observables that need the increments themselves: the moment spectrum, the velocity
-autocorrelation, and the persistence runs. The longest step — about two and a half hours on
-the paraglider archive, because the runs are decomposed per segment at three thresholds.
-`--discipline`, `--out`.
+The observables that need the increments themselves: the moment spectrum and the velocity
+autocorrelation. `--discipline`, `--out`.
 
 ### `scripts/reporting/measure_propagator.py`
 Histograms of `|Δx|` per lag, per component and per native cadence, plus the turning-angle,

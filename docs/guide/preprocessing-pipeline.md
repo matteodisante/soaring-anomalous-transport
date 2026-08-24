@@ -345,7 +345,7 @@ Handle at ingestion (empirically observed on the real files):
 | 8 | `generate_dataset_stats.py` | `dataset_stats.tex`, `dataset_seasons.pdf` | seconds |
 | 9 | `measure_variations.py` | per-flight filtered variations, into `$AUDIT_DIR` | ~25 min |
 | 10 | `generate_transport_figure.py` | `transport.tex`, `transport.pdf` | ~1 min |
-| 11 | `measure_shape.py` | increments, velocity memory, persistence runs, into `$AUDIT_DIR` | ~2.5 h |
+| 11 | `measure_shape.py` | increments and velocity memory, into `$AUDIT_DIR` | ~1 h |
 | 12 | `generate_shape_figure.py` | `shape.tex`, `shape.pdf` | ~15 min |
 | 13 | `measure_propagator.py` + `generate_propagator_figure.py` | `propagator.tex`, `propagator.pdf` | ~12 min |
 | 14 | `measure_edge_effect.py` | `edge_effect.tex` (`\StatEdge*`) | minutes, subsampled |

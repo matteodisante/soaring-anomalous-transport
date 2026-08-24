@@ -16,10 +16,9 @@ tables on the SSD.
 
 **Analysis** (`soaring.analysis.observables`, `soaring.analysis.stats`) holds the transport
 estimators — the two mean-squared-displacement averages, the filtered variations, the moment
-spectrum, the velocity autocorrelation and persistence runs, the increment propagator, the
-regime fitting and the clustered bootstrap — together with the synthetic processes each one
-is validated against. Numerical simulation of a transport model is the next sub-package and
-does not exist yet.
+spectrum, the velocity autocorrelation, the increment propagator, the regime fitting and the
+clustered bootstrap — together with the synthetic processes each one is validated against.
+Numerical simulation of a transport model is the next sub-package and does not exist yet.
 
 ## What it does, in brief
 
