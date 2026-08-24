@@ -206,9 +206,22 @@ def family(name: str) -> str:
     return match.group(1) if match else name
 
 
+def _repo_blob() -> str:
+    """The base URL for linking a source file, from ``mkdocs.yml``'s ``repo_url``.
+
+    Read rather than repeated: the site already declares where the repository is, and a
+    second copy here would be one more thing to keep in step. A relative path cannot be
+    used -- the scripts are not part of the documentation tree, and ``mkdocs --strict``
+    fails a link that leaves it.
+    """
+    text = (ROOT / "mkdocs.yml").read_text()
+    match = re.search(r"^repo_url:\s*(\S+)", text, re.M)
+    return f"{match.group(1).rstrip('/')}/blob/main" if match else ""
+
+
 def _link(script: str | None) -> str:
     """A script as a link into the repository, or an em dash if it is unknown."""
-    return f"[`{script}`](../../{script})" if script else "—"
+    return f"[`{script}`]({_repo_blob()}/{script})" if script else "—"
 
 
 def _when(info: dict) -> str:
