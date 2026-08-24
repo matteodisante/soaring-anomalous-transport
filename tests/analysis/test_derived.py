@@ -116,3 +116,23 @@ def test_a_flight_split_across_the_file_raises_instead_of_being_yielded_twice(tm
     path = _write(tmp_path, scrambled, row_group_size=40)
     with pytest.raises(ValueError, match="not contiguous"):
         list(stream_flights(path))
+
+
+def test_a_flight_split_inside_one_row_group_raises(tmp_path):
+    """Discontiguity is refused, not repaired -- including within a single row group.
+
+    The reader holds back the last flight of each row group so that a flight straddling a
+    boundary is reassembled. Holding back every row carrying that flight_id, rather than
+    the trailing run of it, would also splice together a flight that appears twice inside
+    one row group: the fragments would be joined, the flight between them would keep its
+    own rows, and nothing would say the file's ordering guarantee had failed.
+    """
+    frame = pd.DataFrame(
+        {"flight_id": ["a"] * 3 + ["b"] * 3 + ["a"] * 2, "t": np.arange(8.0)}
+    )
+    path = tmp_path / "fixes.parquet"
+    pq.write_table(
+        pa.Table.from_pandas(frame, preserve_index=False), path, row_group_size=1000
+    )
+    with pytest.raises(ValueError, match="not contiguous"):
+        list(stream_flights(path))

@@ -31,6 +31,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 
@@ -86,12 +87,17 @@ def stream_flights(
             continue
         if carry is not None:
             frame = pd.concat([carry, frame], ignore_index=True)
-        # The last flight of a row group may continue in the next one. Every other
-        # flight in it is complete and can go out now.
+        # The last flight of a row group may continue in the next one. Every other flight
+        # in it is complete and can go out now. What is held back is the trailing *run*,
+        # not every row carrying that flight_id: selecting by id would splice together a
+        # flight that appears twice in one row group, which is the discontiguity this
+        # reader exists to refuse rather than to repair. Held back as a run, the earlier
+        # block goes out through `emit` and the later one meets it in `finished`.
         ids = frame["flight_id"].to_numpy()
-        pending = ids == ids[-1]
-        carry = frame[pending].reset_index(drop=True)
-        yield from emit(frame[~pending])
+        changes = np.flatnonzero(ids[1:] != ids[:-1])
+        start = int(changes[-1]) + 1 if changes.size else 0
+        carry = frame.iloc[start:].reset_index(drop=True)
+        yield from emit(frame.iloc[:start])
 
     if carry is not None and not carry.empty:
         yield from emit(carry)
