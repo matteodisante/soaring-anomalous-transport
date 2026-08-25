@@ -27,9 +27,10 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .disciplines import Discipline
 
-# A data_root the shipped config still carries as a placeholder, e.g.
-# `/Volumes/<YOUR_DISK>/paragliders/ffvl_cfd_igc`. It is a path that resolves, exists
-# nowhere, and is indistinguishable from an unmounted disk unless it is looked for.
+# A data_root left as a placeholder, e.g. `/Volumes/<YOUR_DISK>/paragliders/igc`.
+# It is a path that resolves, exists nowhere, and is indistinguishable from an unmounted
+# disk unless it is looked for -- which is why it is looked for. Both configs in this
+# repository carry a real path now; a checkout on another machine will not.
 _PLACEHOLDER = ("<", ">")
 
 
@@ -62,7 +63,7 @@ def unreachable_reason(
     root = str(cfg.data_root)
     if any(ch in root for ch in _PLACEHOLDER):
         return (
-            f"{discipline.name}: data_root is still the shipped placeholder ({root}). "
+            f"{discipline.name}: data_root is still a placeholder ({root}). "
             f"Export {discipline.env} to point at the real archive -- without it this "
             "discipline is skipped and whatever is written covers the other one alone."
         )

@@ -40,12 +40,12 @@ Every generator refuses to write when it reaches one archive and not the other. 
 fails silently, losing a curve while the build succeeds. `--allow-partial` is the escape
 hatch where a one-discipline run is meant.
 
-The commonest cause is not an unmounted disk. `configs/para_download.yaml` ships `data_root`
-as a placeholder while `configs/delta_download.yaml` carries a real path, so **without
-`SOARING_PARA_DATA_ROOT` exported the paraglider archive is unreachable and the hang-glider
-one is not** — half of everything, from a run that otherwise looks normal. The refusal names
-that case specifically, and separates it from an unmounted disk and from a missing pass,
-because the three have different fixes.
+The refusal names its cause, and separates an unconfigured `data_root` from an unmounted
+disk and from a missing pass, because the three have different fixes. The first of those
+used to be the commonest: `configs/para_download.yaml` shipped a placeholder while
+`configs/delta_download.yaml` carried a real path, so a run without
+`SOARING_PARA_DATA_ROOT` reached one archive and not the other and looked normal doing it.
+Both configs now carry a real path, and the environment variable still overrides either.
 
 `--help` is safe on every script, including the eleven with no argument parser: it prints
 what the script does and exits without touching the archive.

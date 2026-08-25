@@ -5,8 +5,10 @@ Two CLI tools share the same interface: `soaring-para` (paragliders) and `soarin
 
 ## First: set `data_root` (required)
 
-`data_root` is where the raw data is written and **must point to the external disk**. The
-repository ships **placeholder** values on purpose, so you must set it before running anything.
+`data_root` is where the raw data is written and **must point to the external disk**. Both
+config files carry a real path — the author's disk — because several things run with no
+environment at all, the pre-commit hook among them, and a placeholder there makes them
+resolve nothing and exit quietly. On any other machine, override it.
 
 The recommended way is the environment variable — it always overrides the config file:
 
@@ -24,9 +26,9 @@ or [`configs/delta_download.yaml`](https://github.com/matteodisante/soaring-anom
 Either way, make sure the **external disk is mounted** first.
 
 !!! warning "If `data_root` is not set, the CLI stops immediately with a clear message"
-    Every command checks `data_root` at startup. If it still points to the placeholder,
-    to an **unmounted** disk, or to a disk that was **renamed**, the command aborts right
-    away with an explanation and the fix — *before* any download or write.
+    Every command checks `data_root` at startup. If it points to an **unmounted** disk,
+    to a disk that was **renamed**, or to a placeholder, the command aborts right away
+    with an explanation and the fix — *before* any download or write.
 
     This is safe by design: the macOS mount point `/Volumes` is not user-writable, so a
     wrong path can never cause a silent download to the wrong place.

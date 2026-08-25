@@ -261,9 +261,10 @@ build succeeds. The refusal names the cause — an unset environment variable, a
 disk, a missing pass — because those have different fixes. `--allow-partial` overrides it
 when a one-discipline run is what you want.
 
-The commonest cause is the first of those: `configs/para_download.yaml` ships a
-`data_root` placeholder, so **without `SOARING_PARA_DATA_ROOT` exported the paraglider
-archive is silently unreachable** while the hang-glider one resolves from the YAML alone.
+Both `configs/*_download.yaml` carry a real `data_root`, so a run on the author's machine
+needs no environment at all; the variables above override it anywhere else. A config left
+on a placeholder is one of the causes the refusal names, since it is indistinguishable from
+a mounted disk until it is looked for.
 
 Finally, and before any build:
 

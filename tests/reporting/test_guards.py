@@ -42,9 +42,13 @@ class TestPartialWriteRefusal:
 
 
 class TestUnreachableReason:
-    def test_the_shipped_placeholder_is_named_as_such(self, monkeypatch):
-        """The failure that caused this module: a data_root nobody configured."""
-        monkeypatch.delenv("SOARING_PARA_DATA_ROOT", raising=False)
+    def test_a_placeholder_data_root_is_named_as_such(self, monkeypatch):
+        """The failure that caused this module: a data_root nobody configured.
+
+        Driven through the environment rather than the shipped config, so the test
+        says what the function does, not what the YAML currently happens to hold.
+        """
+        monkeypatch.setenv("SOARING_PARA_DATA_ROOT", "/Volumes/<YOUR_DISK>/paragliders")
         reason = unreachable_reason(DISCIPLINES["paragliders"])
         assert reason is not None
         assert "placeholder" in reason

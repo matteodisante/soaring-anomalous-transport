@@ -2,11 +2,15 @@
 # Schema and defaults: see src/soaring/acquisition/ffvl/config.py
 # Use the CLI entry point: soaring-delta <subcommand>
 
-# Root directory for raw data — keep it on the external disk, separate from
-# the paraglider data (ffvl_cfd_igc/).
-# The recommended, machine-independent way to set it is the environment variable:
+# Root directory for raw data -- keep it on the external disk, separate from the paraglider data.
+# The environment variable always overrides this line:
 #     export SOARING_DELTA_DATA_ROOT=/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc
-# which always overrides this line. Otherwise, edit the placeholder below.
+# It is the way to set it on a machine whose disk is mounted elsewhere. This file carries
+# a real path rather than a placeholder because the pre-commit hook runs
+# refresh_seasons_index.py and generate_census_stats.py with no environment at all: with a
+# placeholder here they resolve nothing, exit quietly, and the hook silently stops keeping
+# the committed snapshots and census.tex up to date. Both configs carry a real path for
+# that reason, and both are overridable.
 data_root: /Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc
 
 # Seasons to process. The year is the START year of the season:
