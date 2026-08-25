@@ -1,161 +1,137 @@
 # soaring-anomalous-transport
 
-[![python](https://img.shields.io/badge/python-3.12%2B-blue)](pyproject.toml)
 [![Tests](https://github.com/matteodisante/soaring-anomalous-transport/actions/workflows/tests.yml/badge.svg)](https://github.com/matteodisante/soaring-anomalous-transport/actions/workflows/tests.yml)
-[![codecov](https://codecov.io/gh/matteodisante/soaring-anomalous-transport/branch/main/graph/badge.svg)](https://codecov.io/gh/matteodisante/soaring-anomalous-transport)
 [![docs](https://img.shields.io/badge/docs-online-brightgreen)](https://matteodisante.github.io/soaring-anomalous-transport/)
+[![python](https://img.shields.io/badge/python-3.12%2B-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-Code for the master's thesis **_anomalous transport in soaring flights_**.
+Master's thesis on **anomalous transport in soaring flights**, and the code that produced
+every number in it. Both live here, in one repository, on purpose: no measurement in the
+document is typed by hand, so the text and the code that backs it cannot drift apart
+without the build failing.
 
-The repository holds three subsystems, in the order the data moves through them.
+**Work in progress.** Three chapters are measured and written; the fourth is a plan.
 
-**Acquisition** (`soaring.acquisition.ffvl`) — `.igc` tracks from the **Coupe Fédérale de
-Distance (CFD)** of the [FFVL](https://federation.ffvl.fr), for two glider types:
+📄 [`thesis/main.pdf`](thesis/main.pdf) · 📖 [Documentation](https://matteodisante.github.io/soaring-anomalous-transport/) · 📓 [`logbook/logbook.pdf`](logbook/logbook.pdf)
 
-| Source | Glider | CLI | Env var |
-|--------|--------|-----|---------|
-| [parapente.ffvl.fr](https://parapente.ffvl.fr/cfd/liste) | Paragliders | `soaring-para` | `SOARING_PARA_DATA_ROOT` |
-| [delta.ffvl.fr](https://delta.ffvl.fr/cfd/liste) | Hang gliders | `soaring-delta` | `SOARING_DELTA_DATA_ROOT` |
+## Where the thesis is
 
-**Pre-processing** (`soaring.analysis.preproc`) — the seven-stage cleaning pipeline:
-altitude-channel choice, cleaning, trimming, flight-level filtering, projection to a local
-ENU frame, resampling, and Savitzky–Golay smoothing. It turns the raw archive into four
-Parquet tables per discipline. See [the pipeline guide](docs/guide/preprocessing-pipeline.md).
+| | Chapter | State |
+|---|---|---|
+| 1 | Introduction | written |
+| 2 | The dataset | **measured and written** — acquisition from the FFVL CFD, and the seven-stage pre-processing pipeline that turns roughly 190 000 raw `.igc` tracklogs into the analysis ensemble |
+| 3 | Global transport | **measured and written** — everything the un-segmented ensemble can be asked, and the class of transport it fixes |
+| 4 | Flight phases | **a plan, not a result** — segmentation into climb / glide / search, and the modelling it would enable. None of it is implemented |
 
-**Analysis** (`soaring.analysis.observables`, `soaring.analysis.stats`) — the transport
-estimators: mean-square displacement and its time-averaged counterpart, filtered variations,
-the moment spectrum, the velocity autocorrelation, the increment propagator, regime
-detection, synthetic null processes, and the clustered bootstrap.
+Appendices 2.A–2.B (PSD, geodesy), 3.A (CTRW), and an implementation appendix per chapter.
+A numerical simulation of a transport model is the next sub-package and does not exist yet.
 
-📖 **Documentation:** <https://matteodisante.github.io/soaring-anomalous-transport/>
+## What the measurements say so far
 
-## Quick start
+Over one window of about 1.5 decades, measured within a retained segment by an estimator
+that annihilates a polynomial trend rather than estimating one, cross-country soaring is:
 
-Python 3.12 or newer.
+- **super-diffusive**, at an exponent the two disciplines agree on within uncertainty —
+  which is not guaranteed, since paragliders and hang gliders differ in speed and glide ratio;
+- **monofractal** — the moment spectrum is straight, with no Lévy knee, so it is **not the
+  Lévy walk this thesis was framed around**;
+- **not Gaussian** either, but through a *between-flight amplitude spread* rather than a
+  heavy tail within any one record: against a matched Gaussian null both disciplines sit
+  below it;
+- **directionally persistent**, with a non-integrable velocity memory — which is what
+  reconciles a fast-decaying autocorrelation with correlated increments;
+- **never isotropic**, in amplitude and in exponent alike, so the two horizontal components
+  are analysed separately and never pooled.
 
-```bash
-uv sync                                        # environment + dependencies
-```
+Three cautions belong beside those, because the code makes them explicit and a figure does not:
 
-### 1. Acquire
+- **The ensemble MSD about take-off is a crossover, not a power law.** Its shape is set by
+  the geometry of the launch site — displacement from take-off bends where the population
+  leaves its launch area. The reported exponent comes from the within-segment filtered
+  variation instead; the ensemble curve is kept as the measurement of that contamination.
+- **Scaling inside the window is approximate.** The exponent moves when the fitted range is
+  halved by more than the sampling error, and the fit carries a budget for one exponent,
+  not for a count of regimes.
+- **Correlations between flight legs are untested, not established.** They cannot be tested
+  before the segmentation exists, and nothing here says that a glide points at the next
+  thermal.
 
-```bash
-# --- Paragliders (parapente.ffvl.fr, seasons 1999–2025) ---
-export SOARING_PARA_DATA_ROOT=/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc
-uv run soaring-para fetch-xml --seasons 1999  # archive the XMLs
-uv run soaring-para download  --seasons 1999  # download .igc files (resumable)
-uv run soaring-para build-catalog             # catalog.csv + seasons_index.csv
-uv run soaring-para status                    # per-season summary
-uv run soaring-para verify                    # integrity check of .igc files
-uv run soaring-para clean                     # remove '._*' sidecars (macOS/exFAT)
+Four further measurements were tried and **withdrawn**, each for a stated reason rather
+than because it disagreed. The chapter says which and why; that record is part of the result.
 
-# --- Hang gliders (delta.ffvl.fr, seasons 2001–2025) ---
-export SOARING_DELTA_DATA_ROOT=/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc
-uv run soaring-delta fetch-xml --seasons all
-uv run soaring-delta download  --seasons all
-uv run soaring-delta build-catalog
-uv run soaring-delta status
-```
-
-`--seasons` accepts `all`, a single year (`2014`), a range (`2010-2015`), or a list (`2010,2012`).
-
-### 2. Pre-process
-
-```bash
-uv run python scripts/preprocess.py            # --discipline, --jobs, --limit, --seed
-uv run python scripts/verify_dataset.py        # invariants the thesis claims for the tables
-uv run python scripts/check_reproducible.py    # re-runs a seeded sample through the pipeline
-```
-
-### 3. Regenerate the analysis
-
-```bash
-scripts/regenerate.sh                          # 17 steps: passes, reductions, macros, figures
-```
-
-The order is a constraint rather than a convenience, and the script's header says why.
-[The scripts guide](docs/guide/scripts.md) explains what each one reads and writes, and why
-the expensive streaming passes are kept separate from the cheap reductions.
-
-## Where the data goes
-
-The flight archive is **not** in the repo; it lives in `data_root` on the external SSD. What
-the repository does keep is in [`data/`](data/): the two per-season summary CSVs and the
-basemap the take-off maps are drawn on, so the figures need no network and no disk.
-
-Each source has its own directory, grouped by maturity — `raw/` (untouched acquisition
-output), `catalog/` (tables derived from it), `derived/` (the analysis dataset):
+## What is in the repository
 
 ```text
-/Volumes/SSD_DISANTE/
-├── paragliders/ffvl_cfd_igc/
-│   ├── raw/
-│   │   ├── raw_xml/1999.xml …        # archived XML exports (provenance)
-│   │   └── igc/1999-2000/….igc       # tracks, one subdirectory per season
-│   ├── catalog/
-│   │   ├── catalog.csv               # 1 row/flight: metadata + local_path
-│   │   └── seasons_index.csv
-│   ├── derived/
-│   │   ├── fixes.parquet             # 1,363,998,292 rows, 43.4 GB — the cleaned fixes
-│   │   ├── segments.parquet          #   281,777 rows — contiguous stretches within a flight
-│   │   ├── flights_meta.parquet      #   186,052 rows — one per flight attempted
-│   │   │                             #                 (155,788 retained)
-│   │   ├── suspect_intervals.parquet #       859 rows — slow-and-flat stints, left open
-│   │   └── track_scan.parquet        #   186,025 rows — pre-processing scan cache
-│   └── logs/
-└── hang_gliders/delta_cfd_igc/       # same layout: 34,525,108 fixes, 13,222 segments,
-    …                                 # 6716 flights attempted (6132 retained),
-                                      # 12 suspect intervals
+thesis/       the LaTeX thesis, and thesis/generated/ — every measured number, as macros
+src/soaring/  the installable package: acquisition, pre-processing, estimators
+  acquisition/ffvl/     .igc download and cataloguing from the two CFD sites
+  analysis/preproc/     the seven-stage cleaning pipeline, one module per stage
+  analysis/observables/ the transport estimators, and the synthetic nulls they are validated against
+  analysis/stats/       the clustered bootstrap
+  reporting/            what the reporting scripts share: the disciplines, the macro contract
+scripts/      the command-line entry points that drive the package
+  reporting/            the passes (stream the archive) and the reductions (write .tex and .pdf)
+docs/         the published documentation (MkDocs + mkdocstrings)
+configs/      every threshold, external to the code: acquisition and pre-processing YAML
+data/         the only versioned data: two per-season summary CSVs and a basemap
+tests/        512 tests, mirroring src/ module for module
+logbook/      a working logbook: the chronology and the reasoning, with a generated timeline
+revisions/    the annotated PDFs and answers from the two review passes
+global_analysis_sketches/  the July 2026 specification the analysis was built from
 ```
 
-Row counts measured from the Parquet footers on the current archive.
+**The flight archive is not in the repository.** It lives on an external SSD, organised by
+maturity (`raw/`, `catalog/`, `derived/`), and comes to 1.36 × 10⁹ cleaned fixes and 43 GB
+of Parquet for paragliders alone. What is versioned here is the two small `seasons_index.csv`
+snapshots and the basemap, so the figures need neither the network nor the disk.
 
-`.igc` filename scheme: **`{date}_{flightID}.igc`**. The `flightID` opens the flight page
-directly (paragliders: `https://parapente.ffvl.fr/cfd/liste/vol/{flightID}`; hang gliders:
-`https://delta.ffvl.fr/cfd/liste/vol/{flightID}`), so any file can be traced back without a
-lookup dictionary (details: [From the .igc file to the flight](docs/guide/igc-to-flight.md)).
+## The contract between the code and the thesis
 
-A description of every table, column and dtype is in
-[what is on the data disk](docs/guide/data-on-disk.md), and `write_ssd_readme.py` puts a copy
-at the root of the disk so it explains itself when it is not plugged into this repository.
+This is the one thing to understand before changing anything, and the only part not
+documented better elsewhere.
+
+**No measured number is typed into the thesis.** Every one is a `\newcommand` written by a
+script into `thesis/generated/` and quoted by name: the thesis says `\StatVarParaAlphaOrderTwo`, never the digits it
+stands for. Four mechanisms keep that honest:
+
+- **`scripts/regenerate.sh`** re-measures everything in the one order that is correct, and
+  its header says why the order is a constraint rather than a convenience. It refuses to
+  start while `preprocess.py` is still writing, and refuses again if a previous run died
+  half-way and left the derived tables describing two different runs.
+- **`soaring.reporting.write_macros`** refuses to write a macro name LaTeX cannot parse. A
+  name with a digit in it defines a *shorter* macro taking arguments, which fails the build
+  from a definition nothing even quotes.
+- **`soaring.reporting.guards`** refuses two silent half-results: a file written for one
+  discipline of two (the thesis then fails on the absent one's macros, or a figure quietly
+  loses a curve), and a `--help` that a script without an argument parser would otherwise
+  treat as an instruction to start a pass over the archive.
+- **`scripts/reporting/check_generated_macros.py`** reads both sides of the contract in a
+  second and with no build: every macro the thesis quotes must exist, and a typed number
+  that a generated macro already carries is reported as the same failure in the other
+  direction.
+- **A pre-commit hook** (`git config core.hooksPath .githooks`) keeps the cheap, deterministic
+  parts in sync on every commit — the season snapshots, the headline statistics, the logbook
+  timeline, and the two PDFs.
+
+The corollary for anyone editing: **change a threshold in `configs/`, not in the code, and
+re-run the generator that owns the number** — [Where each number comes from](https://matteodisante.github.io/soaring-anomalous-transport/guide/provenance/)
+maps every macro back to the script that wrote it, and is itself generated so it cannot go stale.
 
 ## Documentation
 
-Guides + API Reference (auto-generated from docstrings) are published at
-**<https://matteodisante.github.io/soaring-anomalous-transport/>**.
+Installing, acquiring the data, the pre-processing pipeline stage by stage, what is on the
+data disk column by column, the transport estimators, and the provenance of every number
+are all at **<https://matteodisante.github.io/soaring-anomalous-transport/>** — and are
+deliberately not repeated here.
 
-To go from a number or a figure in the thesis to the code behind it, start at
-[Where each number comes from](docs/guide/provenance.md).
-
-MkDocs is an optional extra rather than a default dependency, so preview it with:
-
-```bash
-uv run --extra docs mkdocs serve   # http://127.0.0.1:8000
-```
-
-## Thesis document
-
-[`thesis/`](thesis/) is the LaTeX thesis: acquisition method, dataset description, global
-transport, and next steps. Every number it quotes is a generated macro rather than a typed
-one. `thesis/generated/` holds them: `stats.tex` and the two season tables descend from
-the snapshots in [`data/`](data/), and the rest from the processed tables on the SSD, by
-way of `scripts/regenerate.sh`. [Where each number comes from](docs/guide/provenance.md)
-maps every one of them back to the script that wrote it. The compiled
-`thesis/main.pdf` is kept in the repo.
+Two pages are the entry points: [The pre-processing pipeline](https://matteodisante.github.io/soaring-anomalous-transport/guide/preprocessing-pipeline/)
+for Chapter 2, and [The global-transport measurement](https://matteodisante.github.io/soaring-anomalous-transport/guide/global-transport/)
+for Chapter 3.
 
 ```bash
-scripts/regenerate.sh            # re-measure everything, then rebuild
-scripts/build_docs.sh thesis     # recompile only, from the macros already generated
+uv sync                             # environment
+uv run pytest                       # the test suite
+uv run --extra docs mkdocs serve    # the documentation, at 127.0.0.1:8000
 ```
-
-`scripts/reporting/check_generated_macros.py` reads both sides of that contract in a second
-and with no build, which matters because a macro quoted and never written is a fatal LaTeX
-error diagnosed from a symptom that names the wrong line.
-
-A pre-commit hook keeps the stats and the PDF in sync on every commit — enable it once
-with `git config core.hooksPath .githooks`. A working **logbook** (`logbook/`) tracks the
-chronology and the reasoning; its timeline is auto-generated from the git history by the
-same pre-commit hook.
 
 License: MIT.
