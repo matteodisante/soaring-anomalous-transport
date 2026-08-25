@@ -782,6 +782,105 @@ are kept apart here and in Sec.~\ref{sec:prelim}.
   \label{fig:propagator}
 \end{figure}
 
+\section{The exponent, split by component}
+\label{sec:transport-axisroutes}
+\begin{revblock}
+Sec.~\ref{sec:transport-propagator} already split $H$ into its two horizontal components
+for one route, the increment quantiles, because Sec.~\ref{sec:prelim} measures the archive
+as anisotropic and a pooled one-dimensional marginal would average that away. The question
+here is whether the split is a property of that one estimator or of the motion: put the
+same east/north decomposition through every other route this chapter computes, and see
+whether they agree.
+
+\paragraph{Which routes, and which is not a fifth exponent.}
+Three routes accept the same treatment for the same reason the quantile route does:
+$\overline{\delta^2(\Delta)}$ (Sec.~\ref{sec:obs-global}) and the filtered variation at
+orders 1 and 2 (Sec.~\ref{sec:variations}) all reduce, before any sum over components, to a
+mean square of a within-segment coordinate difference, so reading one coordinate at a time
+costs no new estimator --- only feeding it its own component and a column of zeros for the
+other. Order 3, the task-systematic check, the cadence/class/season stratification and the
+regime fit are left pooled, as before.
+
+The ensemble MSD is the fourth, and it is not a fifth measurement of $H$.
+Sec.~\ref{sec:transport-verdict} withdrew it because displacement from take-off crosses
+over where the population leaves its launch area, and hand-over item~(i) states that the
+contamination is not confined to the observable that exposed it. Read here per component,
+it is a diagnostic on that contamination and not a route to the exponent:
+Table~\ref{tab:axisroutes} keeps its row apart from the other three, and no number in it is
+to be averaged into the bracket of Sec.~\ref{sec:transport-propagator}.
+
+\begin{table}[htbp]
+\centering\small
+\ifrevmode\color{revblue}\fi
+\renewcommand{\arraystretch}{1.2}
+\caption{\rev{$H$ by component, on every route besides the quantiles that reads one axis
+at a time. The time average and the two filtered-variation orders are fitted over
+\SIrange{\StatVarParaFitMinS}{\StatVarParaFitMaxS}{\second}, the window
+Table~\ref{tab:threeroutes} uses; the ensemble row is fitted on its own, coverage-limited
+range instead --- \SIrange{\StatMsdParaFitMinS}{\StatMsdParaFitMaxS}{\second} for
+paragliders, \SIrange{\StatMsdHangFitMinS}{\StatMsdHangFitMaxS}{\second} for hang gliders
+(Sec.~\ref{sec:obs-global}) --- and is not on the same footing as the three below it.}}
+\label{tab:axisroutes}
+\begin{tabular}{@{}l l c c@{}}
+\toprule
+& \textbf{route} & \boldmath$H$ \textbf{east} & \boldmath$H$ \textbf{north} \\
+\midrule
+\multirow{4}{*}{paragliders}
+ & ensemble MSD (diagnostic, \emph{not} an exponent)
+   & \StatMsdParaHurstEast\ $\pm$ \StatMsdParaHurstEastErr
+   & \StatMsdParaHurstNorth\ $\pm$ \StatMsdParaHurstNorthErr \\
+ & time-averaged MSD
+   & \StatMsdTaParaHurstEast\ $\pm$ \StatMsdTaParaHurstEastErr
+   & \StatMsdTaParaHurstNorth\ $\pm$ \StatMsdTaParaHurstNorthErr \\
+ & plain increment $V_1$
+   & \StatVarParaHurstOrderOneEast\ $\pm$ \StatVarParaHurstOrderOneEastErr
+   & \StatVarParaHurstOrderOneNorth\ $\pm$ \StatVarParaHurstOrderOneNorthErr \\
+ & second-order variation $V_2$
+   & \StatVarParaHurstOrderTwoEast\ $\pm$ \StatVarParaHurstOrderTwoEastErr
+   & \StatVarParaHurstOrderTwoNorth\ $\pm$ \StatVarParaHurstOrderTwoNorthErr \\
+\addlinespace
+\multirow{4}{*}{hang gliders}
+ & ensemble MSD (diagnostic, \emph{not} an exponent)
+   & \StatMsdHangHurstEast\ $\pm$ \StatMsdHangHurstEastErr
+   & \StatMsdHangHurstNorth\ $\pm$ \StatMsdHangHurstNorthErr \\
+ & time-averaged MSD
+   & \StatMsdTaHangHurstEast\ $\pm$ \StatMsdTaHangHurstEastErr
+   & \StatMsdTaHangHurstNorth\ $\pm$ \StatMsdTaHangHurstNorthErr \\
+ & plain increment $V_1$
+   & \StatVarHangHurstOrderOneEast\ $\pm$ \StatVarHangHurstOrderOneEastErr
+   & \StatVarHangHurstOrderOneNorth\ $\pm$ \StatVarHangHurstOrderOneNorthErr \\
+ & second-order variation $V_2$
+   & \StatVarHangHurstOrderTwoEast\ $\pm$ \StatVarHangHurstOrderTwoEastErr
+   & \StatVarHangHurstOrderTwoNorth\ $\pm$ \StatVarHangHurstOrderTwoNorthErr \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{The three trustworthy routes, against the quantile split.}
+Table~\ref{tab:threeroutes} already reads $H=\StatPropParaHurstEast$ east against
+\StatPropParaHurstNorth\ north for paragliders, and \StatPropHangHurstEast\ against
+\StatPropHangHurstNorth\ for hang gliders (Sec.~\ref{sec:transport-propagator}, quoted
+there without a resampled error, only the quantile self-consistency spread).
+The time average and both filtered-variation orders order the two components the same
+way. Three routes built from three different statistics of the same trajectories --- a
+sliding window, a polynomial-annihilating filter at two orders, and an order statistic of
+the increment distribution --- agreeing on which axis carries more of the exponent is a
+stronger statement than any one of their magnitudes, which the routes do not agree on to
+the same precision.
+
+\paragraph{The withdrawn route, read per component.}
+The ensemble row of Table~\ref{tab:axisroutes} answers a narrower question: is the
+launch-geometry contamination itself isotropic? Read against the trustworthy time average
+beside it, the gap is $\StatMsdParaAlphaGapEast$ east and $\StatMsdParaAlphaGapNorth$ north
+for paragliders (\StatMsdHangAlphaGapEast\ and \StatMsdHangAlphaGapNorth\ for hang
+gliders), against $\StatMsdParaAlphaGap$ pooled (Sec.~\ref{sec:obs-global}). Neither
+gap is confined to one component, so the contamination hand-over item~(i) describes is not
+a one-axis effect in either discipline; which of the two carries the larger gap is not even
+the same axis in both, east for paragliders and north for hang gliders, so this is a
+constraint on the launch geometry at each site and not a fifth reading of the transport
+exponent.
+\end{revblock}
+
 \section{The archive is not a L\'evy walk}
 \label{sec:transport-shape}
 \begin{revblock}
@@ -1221,6 +1320,9 @@ decomposed.
         $H=\StatPropParaHurstEast$ east against \StatPropParaHurstNorth\ north for
         paragliders, and \StatPropHangHurstEast\ against \StatPropHangHurstNorth\ for hang
         gliders. Pooling presupposes an isotropy this ensemble does not have.
+        Sec.~\ref{sec:transport-axisroutes} puts the same split through the time average
+        and both filtered-variation orders and finds the same ordering; the pooled
+        quantile route is not the only estimator that sees it.
   \item The pooled non-Gaussian parameter is $\StatShapeParaNonGaussMedian$ for paragliders
         and $\StatShapeHangNonGaussMedian$ for hang gliders, and against a matched Gaussian
         null both sit \emph{below} it, by $\StatShapeParaWithinFlight$ and

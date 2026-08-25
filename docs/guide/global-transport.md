@@ -62,6 +62,7 @@ figure. Steps are the numbered steps of `scripts/regenerate.sh`.
 | `sec:variations` — the filtered variation | `observables.variations` | `measure_variations.py` (9) | `generate_transport_figure.py` (10) | `\StatVar*` |
 | `sec:transport-measure` — the uncertainty on the exponent | `stats.bootstrap`, `observables.regimes` | — (reads step 9) | `generate_transport_figure.py` (10) | `\StatVar*` |
 | `sec:transport-propagator` — the exponent from the quantiles | `observables.propagator` | `measure_propagator.py` (13) | `generate_propagator_figure.py` (13) | `\StatProp*` |
+| `sec:transport-axisroutes` — the exponent, split by component | `observables.transport`, `observables.variations` | — (reads steps 3, 9) | `generate_msd_figure.py` (3), `generate_transport_figure.py` (10) | `\StatMsd*`, `\StatMsdTa*`, `\StatVar*` |
 | `sec:transport-shape` — not a Lévy walk | `observables.moments` | `measure_shape.py` (11) | `generate_shape_figure.py` (12) | `\StatShape*` |
 | `sec:transport-gaussian` — the propagator is not Gaussian | `observables.moments` | `measure_shape.py` (11) | `generate_shape_figure.py` (12) | `\StatShape*` |
 | `sec:transport-memory` — the memory of the heading | `observables.persistence` | `measure_shape.py` (11), `measure_circling.py` (15) | `generate_shape_figure.py` (12) | `\StatShape*`, `\StatCircling*` |
@@ -82,7 +83,8 @@ than a preference:
   residual per-flight course adds $|v_d|^2\Delta^2$ to it, so the curve turns ballistic at
   long lags whatever the motion does. What it yields is a *timescale* — where the
   population leaves its launch area — not an exponent. `audit_msd.py` still runs, because
-  measuring the size of that contamination is what licenses withdrawing it.
+  measuring the size of that contamination is what licenses withdrawing it — including, per
+  component, whether that contamination is itself isotropic (`sec:transport-axisroutes`).
 - **The filtered variation never estimates a drift.** A finite difference of order $p$
   annihilates any polynomial of degree $p-1$ identically. The order scan is the useful
   part: $\hat H_1 - \hat H_2$ is how much of the apparent exponent was course, and
@@ -204,7 +206,8 @@ window is:
 - **Directionally persistent**, with a velocity memory whose tail is non-integrable — which
   is what reconciles a fast-decaying $C(\tau)$ with correlated increments.
 - **Never isotropic**, in amplitude *and* in exponent: $H$ differs between the east and
-  north components.
+  north components, on the quantile route and, in the same direction, on the time average
+  and both filtered-variation orders (`sec:transport-axisroutes`).
 
 Two cautions the code makes explicit and a reader of the figures might not:
 

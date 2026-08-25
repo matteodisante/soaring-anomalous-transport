@@ -409,6 +409,62 @@ def test_the_bootstrap_error_on_alpha_is_the_honest_one():
     )
 
 
+def test_the_accumulator_recovers_each_axis_own_exponent_when_fed_the_other_zeroed():
+    """East-only and north-only MSD, from feeding `.add` a zeroed column for the other.
+
+    `MSDAccumulator.add` sums `east**2 + north**2` with no other dependence on either
+    array, so a zeroed column leaves the other's own square untouched. On two independent
+    fBm axes of different H this must recover each axis's own exponent independently, not
+    something between the two -- which is what licenses the same trick for the per-axis
+    global-transport analysis (generate_msd_figure.py's East/North accumulators).
+    """
+    from soaring.analysis.observables import synthetic as S
+
+    h_east, h_north = 0.6, 0.9
+    lags = np.arange(1.0, 33.0)
+    acc_east = MSDAccumulator(lags, keep_samples=False)
+    acc_north = MSDAccumulator(lags, keep_samples=False)
+    full_t = np.arange(0.0, 129.0)
+    for k in range(1500):
+        track = S.anisotropic_fractional_brownian(129, h_east, h_north, seed=k)
+        zeros = np.zeros(track.shape[0])
+        acc_east.add(full_t, track[:, 0], zeros)
+        acc_north.add(full_t, zeros, track[:, 1])
+
+    fit_east = fit_msd_exponent(acc_east.result(), t_min_s=1.0, t_max_s=32.0, min_flights=100)
+    fit_north = fit_msd_exponent(acc_north.result(), t_min_s=1.0, t_max_s=32.0, min_flights=100)
+    assert fit_east.alpha == pytest.approx(2 * h_east, abs=0.05)
+    assert fit_north.alpha == pytest.approx(2 * h_north, abs=0.05)
+
+
+def test_the_time_averaged_accumulator_recovers_each_axis_own_exponent_when_fed_the_other_zeroed():
+    """The TAMSD twin of the ensemble accumulator's zero-trick test above.
+
+    `TAMSDAccumulator.add` reduces to `time_averaged_msd(east, north, dt_s)`, itself built
+    from `east**2 + north**2` plus a per-component autocorrelation, so a zeroed column
+    contributes exactly zero to the other's estimate. TAMSD is the route the chapter cross-
+    checks V1 against, and had no test pinning this property before the per-axis analysis
+    needed it.
+    """
+    from soaring.analysis.observables import synthetic as S
+    from soaring.analysis.observables.transport import TAMSDAccumulator
+
+    h_east, h_north = 0.6, 0.9
+    lags = np.arange(1.0, 33.0)
+    acc_east = TAMSDAccumulator(lags)
+    acc_north = TAMSDAccumulator(lags)
+    for k in range(250):
+        track = S.anisotropic_fractional_brownian(400, h_east, h_north, seed=k)
+        zeros = np.zeros(track.shape[0])
+        acc_east.add(track[:, 0], zeros, 1.0)
+        acc_north.add(zeros, track[:, 1], 1.0)
+
+    fit_east = fit_msd_exponent(acc_east.result(), t_min_s=1.0, t_max_s=32.0, min_flights=100)
+    fit_north = fit_msd_exponent(acc_north.result(), t_min_s=1.0, t_max_s=32.0, min_flights=100)
+    assert fit_east.alpha == pytest.approx(2 * h_east, abs=0.05)
+    assert fit_north.alpha == pytest.approx(2 * h_north, abs=0.05)
+
+
 def test_the_local_slope_is_robust_to_a_single_bad_lag():
     """The estimator behind panel (c) has to survive one lag knocked out.
 

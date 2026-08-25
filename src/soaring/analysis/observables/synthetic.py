@@ -31,6 +31,7 @@ from __future__ import annotations
 import numpy as np
 
 __all__ = [
+    "anisotropic_fractional_brownian",
     "brownian",
     "fractional_brownian",
     "levy_walk",
@@ -82,6 +83,41 @@ def fractional_brownian(
     increments = np.column_stack([_fgn(n - 1, hurst, rng) for _ in range(2)])
     increments *= scale * dt**hurst / np.sqrt(2.0)
     return np.vstack([np.zeros((1, 2)), np.cumsum(increments, axis=0)])
+
+
+def anisotropic_fractional_brownian(
+    n: int,
+    hurst_east: float,
+    hurst_north: float,
+    dt: float = 1.0,
+    *,
+    scale: float = 10.0,
+    seed: int | None = None,
+) -> np.ndarray:
+    """Two *independent* fractional Brownian motions, at two different exponents.
+
+    ``fractional_brownian`` gives both columns the same ``H`` by construction, since it is
+    a model of an isotropic process. This is the anisotropic counterpart, for validating a
+    per-axis estimator against two exponents it cannot get by averaging: built from two
+    unrelated calls to ``fractional_brownian``, so a column-blind estimator that silently
+    pooled the axes would recover something between the two truths rather than either one.
+
+    Args:
+        n: Number of samples.
+        hurst_east: The east column's Hurst exponent, ``0 < H < 1``.
+        hurst_north: The north column's Hurst exponent, ``0 < H < 1``.
+        dt: Grid step, in seconds.
+        scale: Displacement scale at unit lag, in metres, shared by both columns.
+        seed: Seed for the east column; the north column is seeded independently so the
+            two are not the same draw at different exponents.
+
+    Returns:
+        ``(n, 2)`` positions in metres, starting at the origin.
+    """
+    east = fractional_brownian(n, hurst_east, dt, scale=scale, seed=seed)[:, 0]
+    north_seed = None if seed is None else seed + 1_000_003
+    north = fractional_brownian(n, hurst_north, dt, scale=scale, seed=north_seed)[:, 0]
+    return np.column_stack([east, north])
 
 
 def _fgn(n: int, hurst: float, rng: np.random.Generator) -> np.ndarray:

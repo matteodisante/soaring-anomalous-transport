@@ -69,7 +69,11 @@ Stats macros; Tables~\ref{tab:seasons-para},~\ref{tab:seasons-hang} &
   \path{soaring.analysis.derived.stream_flights}, and accumulates in that single pass
   both estimators and the three fixed-duration cohorts (Sec.~\ref{sec:obs-global});
   ${\sim}\SI{20}{\minute}$ on the paraglider archive. The cohorts cost nothing beyond
-  three more accumulators, because the expensive step is the read. \path{--redraw}
+  three more accumulators, because the expensive step is the read; the east-only and
+  north-only twins for Sec.~\ref{sec:transport-axisroutes} cost the same nothing for the
+  ensemble estimator, but roughly triple the time average's share of the pass, since
+  \texttt{time\_averaged\_msd}'s per-segment FFT now runs once per component rather than
+  once pooled. \path{--redraw}
   re-renders the figure from the written \path{msd_curve.csv} in a second, without
   touching the archive: nothing there recomputes an estimator, so a change to the drawing
   need not cost another pass over $10^{9}$ rows.} \\
@@ -128,7 +132,10 @@ Census macros (\texttt{\textbackslash StatScan\dots}) &
   \rev{\protect\path{generate_transport_figure.py}} &
   \rev{The order scan, its uncertainty split into sampling and range, the four
   stratifications and the regime fit (Sec.~\ref{sec:transport-measure}). Reads the
-  variation pass, so a stratification is a row selection. Minutes.} \\
+  variation pass, so a stratification is a row selection. Also emits the order-1 and
+  order-2 east/north macros of Sec.~\ref{sec:transport-axisroutes}, fitted the same way
+  and read off sibling arrays the variation pass writes alongside the pooled ones.
+  Minutes.} \\
 \hline
 \rev{Fig.~\ref{fig:shape}, \texttt{\textbackslash StatShape*}} &
   \rev{\protect\path{generate_shape_figure.py}} &

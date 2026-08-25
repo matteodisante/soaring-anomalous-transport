@@ -49,6 +49,9 @@ OUT_FIG = ROOT / "thesis" / "generated" / "transport.pdf"
 
 ORDERS = (1, 2, 3)
 
+# The two orders measure.py also read per component -- see AXIS_ORDERS there for why not 3.
+AXIS_ORDERS = (1, 2)
+
 # A LaTeX control sequence takes letters only, so the filter order is spelled out in the
 # macro name. The checker catches this, but only once a generator has already written the
 # unusable name -- the definition itself is what fails, whether or not anything quotes it.
@@ -80,6 +83,11 @@ def load(slug: str, audit_dir: Path):
     return {
         "lags_s": data["lags_s"],
         "orders": {p: data[f"order{p}"] for p in ORDERS},
+        # Sibling keys, not a restructuring of "orders": task_systematic,
+        # stratified_exponents, the regime block and draw() all index "orders" directly
+        # and stay pooled-only, untouched by these.
+        "orders_east": {p: data[f"order{p}_east"] for p in AXIS_ORDERS},
+        "orders_north": {p: data[f"order{p}_north"] for p in AXIS_ORDERS},
         "flights": pd.read_parquet(table),
     }
 
@@ -327,6 +335,38 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
 
     put("DriftShare", f"{alphas[1][0] - alphas[2][0]:+.2f}")
     put("OrderAgreement", f"{abs(alphas[2][0] - alphas[3][0]):.2f}")
+
+    # ---- the same order scan, per component ------------------------------------------
+    # Orders 1 and 2 only (AXIS_ORDERS), the same clustered bootstrap and the same
+    # range-halving systematic as the pooled loop above -- reusing `lower`/`upper`, which
+    # depend only on `window` and are still holding the values that loop last set. Not
+    # extended to the task check, the stratifications or the regime fit below: this
+    # addition is the order-scan table alone, read per component, for
+    # sec:transport-axisroutes.
+    axis_curve_sets = (("East", loaded["orders_east"]), ("North", loaded["orders_north"]))
+    for axis_name, axis_orders in axis_curve_sets:
+        for p in AXIS_ORDERS:
+            curves = axis_orders[p]
+
+            def exponent(mean_curve, mask=window):
+                hurst, _ = hurst_from_variations(lags[mask], mean_curve[mask])
+                return 2.0 * hurst
+
+            point, replicates = cluster_bootstrap(
+                curves, labels, exponent, n_resamples=120, seed=7
+            )
+            sampling = float(np.nanstd(replicates))
+            mean_curve = np.nanmean(curves, axis=0)
+            halves = [exponent(mean_curve, mask=m) for m in (lower, upper)]
+            systematic = float(abs(halves[0] - halves[1]) / 2.0)
+            total = float(np.hypot(sampling, systematic))
+            word = _ORDER_WORD[p]
+            put(f"AlphaOrder{word}{axis_name}", f"{point:.2f}")
+            put(f"HurstOrder{word}{axis_name}", f"{0.5 * point:.3f}")
+            put(f"HurstOrder{word}{axis_name}Err", f"{0.5 * total:.3f}")
+            put(f"AlphaOrder{word}{axis_name}Err", f"{total:.2f}")
+            put(f"AlphaOrder{word}{axis_name}ErrSampling", f"{sampling:.3f}")
+            put(f"AlphaOrder{word}{axis_name}ErrRange", f"{systematic:.3f}")
 
     # ---- does the answer depend on who is in the ensemble? --------------------------
     # Every one of these is a row selection on the matrix already in memory, so the

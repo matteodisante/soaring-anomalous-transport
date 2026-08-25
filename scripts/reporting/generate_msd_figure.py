@@ -95,6 +95,18 @@ def _accumulate(path: Path, lags):
 
     ensemble = MSDAccumulator(lags)
     time_averaged = TAMSDAccumulator(lags)
+    # East-only and north-only twins, fed a zeroed column for the other component. Both
+    # accumulators reduce to `east**2 + north**2` with no other dependence on either array
+    # (transport.py), so a zeroed column leaves the other's own square untouched --
+    # tests/analysis/test_transport.py pins this on two independent fBm axes of known,
+    # different H. Cheap for the ensemble; costs the time average a second and third FFT
+    # pass per segment, since `time_averaged_msd` no longer shares one call across both
+    # components. These feed sec:transport-axisroutes's per-component table, not a fifth
+    # headline curve.
+    ensemble_east = MSDAccumulator(lags)
+    ensemble_north = MSDAccumulator(lags)
+    ta_east = TAMSDAccumulator(lags)
+    ta_north = TAMSDAccumulator(lags)
     # The fixed-duration cohorts. Only flights lasting at least t contribute to MSD(t),
     # so the ensemble behind the curve *changes with the lag* and its long-lag end is an
     # average over the flights that kept going -- which are not a random sample of the
@@ -120,6 +132,9 @@ def _accumulate(path: Path, lags):
         times = ordered["t"].to_numpy()
         east, north = ordered["E"].to_numpy(), ordered["N"].to_numpy()
         ensemble.add(times, east, north)
+        zeros = np.zeros_like(east)
+        ensemble_east.add(times, east, zeros)
+        ensemble_north.add(times, zeros, north)
         duration = float(times[-1]) if times.size else 0.0
         for threshold, accumulator in cohorts.items():
             if duration >= threshold:
@@ -134,6 +149,9 @@ def _accumulate(path: Path, lags):
             step = float(np.median(np.diff(times)))
             east_s, north_s = segment["E"].to_numpy(), segment["N"].to_numpy()
             time_averaged.add(east_s, north_s, step)
+            zeros_s = np.zeros_like(east_s)
+            ta_east.add(east_s, zeros_s, step)
+            ta_north.add(zeros_s, north_s, step)
             span = float(times[-1] - times[0])
             for threshold, ta_cohort in ta_cohorts.items():
                 if span >= threshold:
@@ -151,6 +169,14 @@ def _accumulate(path: Path, lags):
         # reports understates the truth about fivefold.
         ensemble.stacked_samples(),
         time_averaged.stacked_samples(),
+        # East/north twins, bundled rather than added as eight more positional slots: each
+        # value is (result, stacked_samples), exactly what the pooled pair above already is.
+        {
+            "ensemble_east": (ensemble_east.result(), ensemble_east.stacked_samples()),
+            "ensemble_north": (ensemble_north.result(), ensemble_north.stacked_samples()),
+            "ta_east": (ta_east.result(), ta_east.stacked_samples()),
+            "ta_north": (ta_north.result(), ta_north.stacked_samples()),
+        },
     )
 
 
@@ -271,6 +297,7 @@ def main() -> int:
             n_segments,
             samples,
             ta_samples,
+            axis_results,
         ) = _accumulate(derived / "fixes.parquet", lags)
         t_min, t_max = coverage_limited_range(result, t_min_s=FIT_MIN_S)
         fit = fit_msd_exponent(result, t_min_s=t_min, t_max_s=t_max)
@@ -286,6 +313,19 @@ def main() -> int:
         ta_boot = bootstrap_alpha_error(
             ta_samples, lags, t_min_s=ta_fit.t_min, t_max_s=ta_fit.t_max
         )
+        # East/north, fitted exactly like the pooled curve above -- same coverage-limited
+        # range logic, same bootstrap. Coverage depends only on t/dt_s/length, never on the
+        # position values, so this is not assumed to land on the pooled fit range; it is
+        # verified to (sec:transport-axisroutes quotes the pooled StatMsd*FitMinS/FitMaxS
+        # for the axis rows on the strength of that).
+        axis_fits = {}
+        for name, (axis_result, axis_samples) in axis_results.items():
+            a_min, a_max = coverage_limited_range(axis_result, t_min_s=FIT_MIN_S)
+            axis_fit = fit_msd_exponent(axis_result, t_min_s=a_min, t_max_s=a_max)
+            axis_boot = bootstrap_alpha_error(
+                axis_samples, lags, t_min_s=axis_fit.t_min, t_max_s=axis_fit.t_max
+            )
+            axis_fits[name] = (axis_fit, axis_boot)
         print(
             f"[{discipline}] {n_flights} flights, {n_segments} segments\n"
             f"    ensemble      alpha = {fit.alpha:.3f} +/- {boot:.3f} (bootstrap; "
@@ -368,6 +408,7 @@ def main() -> int:
                 )
 
         curves = [("ensemble", result), ("time_averaged", ta_result)]
+        curves += [(name, axis_result) for name, (axis_result, _) in axis_results.items()]
         curves += [
             (f"cohort_{int(threshold)}s", curve)
             for threshold, curve in sorted(cohort_results.items())
@@ -401,6 +442,43 @@ def main() -> int:
             # subtraction of two macros: LaTeX would print "1.918-1.732" where the
             # sentence promises a number.
             (f"StatMsd{tag}AlphaGap", f"{fit.alpha - ta_fit.alpha:.3f}"),
+        ]
+        # East/north: sec:transport-axisroutes reads these against the pooled FitMinS/
+        # FitMaxS/Flights/Segments macros above rather than duplicating them, since
+        # coverage does not depend on the component. Every axis fit still emits its own
+        # AlphaErrOls, matching the pooled convention, even though the chapter never quotes
+        # it -- the CSV and the macro contract carry it for the same reason the pooled one
+        # is kept.
+        fit_ee, boot_ee = axis_fits["ensemble_east"]
+        fit_en, boot_en = axis_fits["ensemble_north"]
+        fit_te, boot_te = axis_fits["ta_east"]
+        fit_tn, boot_tn = axis_fits["ta_north"]
+        macros += [
+            (f"StatMsd{tag}AlphaEast", f"{fit_ee.alpha:.3f}"),
+            (f"StatMsd{tag}AlphaEastErr", f"{boot_ee:.3f}"),
+            (f"StatMsd{tag}AlphaEastErrOls", f"{fit_ee.alpha_err:.3f}"),
+            (f"StatMsd{tag}HurstEast", f"{fit_ee.alpha / 2:.3f}"),
+            (f"StatMsd{tag}HurstEastErr", f"{boot_ee / 2:.3f}"),
+            (f"StatMsd{tag}AlphaNorth", f"{fit_en.alpha:.3f}"),
+            (f"StatMsd{tag}AlphaNorthErr", f"{boot_en:.3f}"),
+            (f"StatMsd{tag}AlphaNorthErrOls", f"{fit_en.alpha_err:.3f}"),
+            (f"StatMsd{tag}HurstNorth", f"{fit_en.alpha / 2:.3f}"),
+            (f"StatMsd{tag}HurstNorthErr", f"{boot_en / 2:.3f}"),
+            # Read against the trustworthy time average, not against each other: the gap
+            # is the diagnostic sec:transport-axisroutes uses to ask whether the withdrawn
+            # route's contamination is itself isotropic.
+            (f"StatMsd{tag}AlphaGapEast", f"{fit_ee.alpha - fit_te.alpha:.3f}"),
+            (f"StatMsd{tag}AlphaGapNorth", f"{fit_en.alpha - fit_tn.alpha:.3f}"),
+            (f"StatMsdTa{tag}AlphaEast", f"{fit_te.alpha:.3f}"),
+            (f"StatMsdTa{tag}AlphaEastErr", f"{boot_te:.3f}"),
+            (f"StatMsdTa{tag}AlphaEastErrOls", f"{fit_te.alpha_err:.3f}"),
+            (f"StatMsdTa{tag}HurstEast", f"{fit_te.alpha / 2:.3f}"),
+            (f"StatMsdTa{tag}HurstEastErr", f"{boot_te / 2:.3f}"),
+            (f"StatMsdTa{tag}AlphaNorth", f"{fit_tn.alpha:.3f}"),
+            (f"StatMsdTa{tag}AlphaNorthErr", f"{boot_tn:.3f}"),
+            (f"StatMsdTa{tag}AlphaNorthErrOls", f"{fit_tn.alpha_err:.3f}"),
+            (f"StatMsdTa{tag}HurstNorth", f"{fit_tn.alpha / 2:.3f}"),
+            (f"StatMsdTa{tag}HurstNorthErr", f"{boot_tn / 2:.3f}"),
         ]
         # The cohort spread is the number the thesis needs: the largest departure of any
         # cohort's exponent from the pooled one. Small means the pooled exponent is not

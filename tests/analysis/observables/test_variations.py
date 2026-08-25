@@ -226,6 +226,26 @@ def test_the_wavelet_diagram_has_slope_two_h_and_is_unbiased_where_the_archive_s
     assert slope / 2 == pytest.approx(hurst, abs=0.02)
 
 
+@pytest.mark.parametrize("order", [1, 2])
+def test_the_east_and_north_components_recover_their_own_exponent_independently(order):
+    """A component-wise H must not be an average of the two axes' true exponents.
+
+    Built from two independent processes at H = 0.6 and H = 0.9, so an estimator that
+    leaked the pooled (rotation-invariant) statistic's blending of both axes into a
+    single-column read would recover something between the two truths rather than each
+    one on its own. This licenses reading `filtered_variation` on a single column, which
+    is what the per-axis global-transport analysis does.
+    """
+    h_east, h_north = 0.6, 0.9
+    tracks = [
+        S.anisotropic_fractional_brownian(8192, h_east, h_north, seed=s) for s in range(8)
+    ]
+    east = np.mean([_hurst(t[:, :1], order) for t in tracks])
+    north = np.mean([_hurst(t[:, 1:], order) for t in tracks])
+    assert east == pytest.approx(h_east, abs=0.05)
+    assert north == pytest.approx(h_north, abs=0.05)
+
+
 def test_including_the_first_octaves_is_what_biased_it():
     """The default is not a preference: min_octave=0 reproduces the bias it was set to avoid."""
     pooled = None

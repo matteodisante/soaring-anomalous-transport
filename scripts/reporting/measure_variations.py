@@ -14,9 +14,16 @@ afterwards --- the clustered bootstrap, the order scan, the stratified curves, t
 fit and its null --- is then a reduction of that matrix and costs no further pass over the
 43 GB of fixes.
 
+For ``p = 1, 2`` it also keeps the east-only and north-only curves alongside the pooled
+one, for sec:transport-axisroutes's per-component table: ``filtered_variation`` sums over
+whichever columns it is given, so a single-column read costs no new estimator, only a
+second and third call per segment per order. Order 3 stays pooled only, since nothing
+downstream fits it per component.
+
 Writes ``variations_<discipline>.npz`` (one row per flight, one column per lag, one array
-per order) and ``variation_flights_<discipline>.parquet`` (the clustering keys and the
-stratifiers) into ``--out``.
+per order, plus ``orderN_east``/``orderN_north`` for ``N`` in 1, 2) and
+``variation_flights_<discipline>.parquet`` (the clustering keys and the stratifiers) into
+``--out``.
 """
 
 from __future__ import annotations
@@ -43,6 +50,11 @@ from soaring.reporting import DISCIPLINES  # noqa: E402
 LAG_MIN_S, LAG_MAX_S, N_LAGS = 60.0, 20_000.0, 36
 ORDERS = (1, 2, 3)
 
+# Orders read per component too: the plain increment and the headline drift-filtered one.
+# Not order 3, which nothing downstream fits per axis -- it would triple the cost of the
+# one order that buys nothing new over what order 2 per axis already checks.
+AXIS_ORDERS = (1, 2)
+
 
 def run(discipline: str, out_dir: Path) -> int:
     from soaring.analysis.derived import stream_flights
@@ -57,6 +69,7 @@ def run(discipline: str, out_dir: Path) -> int:
     lags_s = np.unique(np.round(np.geomspace(LAG_MIN_S, LAG_MAX_S, N_LAGS)))
     rows: list[dict] = []
     per_order = {p: [] for p in ORDERS}
+    per_order_axis = {p: {"E": [], "N": []} for p in AXIS_ORDERS}
 
     for count, flight in enumerate(
         stream_flights(derived / "fixes.parquet", ["segment_id", "t", "E", "N"]), 1
@@ -67,6 +80,9 @@ def run(discipline: str, out_dir: Path) -> int:
         # must not be outvoted by a short one that happens to sit in the same flight.
         total = {p: np.zeros(lags_s.size) for p in ORDERS}
         weight = {p: np.zeros(lags_s.size) for p in ORDERS}
+        total_axis = {
+            p: {"E": np.zeros(lags_s.size), "N": np.zeros(lags_s.size)} for p in AXIS_ORDERS
+        }
         native = np.nan
         for _, segment in ordered.groupby("segment_id", sort=False):
             times = segment["t"].to_numpy(dtype=float)
@@ -87,6 +103,17 @@ def run(discipline: str, out_dir: Path) -> int:
                 usable = np.isfinite(value) & (n_windows > 0) & (lags_samples >= 1)
                 total[p][usable] += value[usable] * n_windows[usable]
                 weight[p][usable] += n_windows[usable]
+                if p in AXIS_ORDERS:
+                    # `usable`/`n_windows` depend only on lag, order and segment length --
+                    # filtered_variation's own NaN rule is `span >= len(positions)`, never
+                    # on positions.shape[1] or its values -- so east-only and north-only
+                    # share this same order's pooled mask exactly; only the numerator
+                    # differs, and the pooled `weight[p]` above is reused unchanged below.
+                    for axis_key, column in (("E", positions[:, :1]), ("N", positions[:, 1:])):
+                        value_axis = filtered_variation(column, lags_samples, order=p)
+                        total_axis[p][axis_key][usable] += (
+                            value_axis[usable] * n_windows[usable]
+                        )
 
         if not np.any(weight[1] > 0):
             continue
@@ -96,6 +123,19 @@ def run(discipline: str, out_dir: Path) -> int:
                     np.where(weight[p] > 0, total[p] / np.maximum(weight[p], 1), np.nan
                     ).astype(np.float32)
                 )
+        for p in AXIS_ORDERS:
+            with np.errstate(invalid="ignore", divide="ignore"):
+                for axis_key in ("E", "N"):
+                    # Normalised by the pooled weight[p], not a separate axis weight: the
+                    # two are identical by construction (see the comment above), so a
+                    # second array would only be a second place for them to drift apart.
+                    per_order_axis[p][axis_key].append(
+                        np.where(
+                            weight[p] > 0,
+                            total_axis[p][axis_key] / np.maximum(weight[p], 1),
+                            np.nan,
+                        ).astype(np.float32)
+                    )
         rows.append(
             {
                 "flight_id": str(ordered["flight_id"].iloc[0]),
@@ -129,6 +169,14 @@ def run(discipline: str, out_dir: Path) -> int:
         out_dir / f"variations_{slug}.npz",
         lags_s=lags_s,
         **{f"order{p}": np.vstack(per_order[p]) for p in ORDERS},
+        # Sibling keys, not a rename of the above: generate_shape_figure.py reads
+        # `order1`/`order2` from this same file for its Gaussian null and must keep
+        # working unchanged.
+        **{
+            f"order{p}_{axis_name}": np.vstack(per_order_axis[p][axis_key])
+            for p in AXIS_ORDERS
+            for axis_key, axis_name in (("E", "east"), ("N", "north"))
+        },
     )
     frame.to_parquet(out_dir / f"variation_flights_{slug}.parquet")
     print(f"{discipline}: {len(frame)} flights, {lags_s.size} lags -> {out_dir}")
