@@ -137,3 +137,11 @@ on the next build. To add a new module, a single `:::` line here is enough.
 ::: soaring.analysis.figures.preproc
 
 ::: soaring.analysis.figures.msd
+
+## `reporting` — what the reporting scripts share
+
+::: soaring.reporting.disciplines
+
+::: soaring.reporting.macros
+
+::: soaring.reporting.guards
