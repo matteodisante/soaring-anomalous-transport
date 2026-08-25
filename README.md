@@ -12,7 +12,7 @@ without the build failing.
 
 **Work in progress.** Three chapters are measured and written; the fourth is a plan.
 
-📄 [`thesis/main.pdf`](thesis/main.pdf) · 📖 [Documentation](https://matteodisante.github.io/soaring-anomalous-transport/) · 📓 [`logbook/logbook.pdf`](logbook/logbook.pdf)
+📄 [`thesis/main.pdf`](thesis/main.pdf) · 📖 [Documentation](https://matteodisante.github.io/soaring-anomalous-transport/)
 
 ## Where the thesis is
 
@@ -24,7 +24,6 @@ without the build failing.
 | 4 | Flight phases | **a plan, not a result** — segmentation into climb / glide / search, and the modelling it would enable. None of it is implemented |
 
 Appendices 2.A–2.B (PSD, geodesy), 3.A (CTRW), and an implementation appendix per chapter.
-A numerical simulation of a transport model is the next sub-package and does not exist yet.
 
 ## What the measurements say so far
 
@@ -33,8 +32,8 @@ that annihilates a polynomial trend rather than estimating one, cross-country so
 
 - **super-diffusive**, at an exponent the two disciplines agree on within uncertainty —
   which is not guaranteed, since paragliders and hang gliders differ in speed and glide ratio;
-- **monofractal** — the moment spectrum is straight, with no Lévy knee, so it is **not the
-  Lévy walk this thesis was framed around**;
+- **monofractal** — the moment spectrum is straight, with no Lévy knee, so it is **not a
+  Lévy walk**;
 - **not Gaussian** either, but through a *between-flight amplitude spread* rather than a
   heavy tail within any one record: against a matched Gaussian null both disciplines sit
   below it;
@@ -55,9 +54,6 @@ Three cautions belong beside those, because the code makes them explicit and a f
 - **Correlations between flight legs are untested, not established.** They cannot be tested
   before the segmentation exists, and nothing here says that a glide points at the next
   thermal.
-
-Four further measurements were tried and **withdrawn**, each for a stated reason rather
-than because it disagreed. The chapter says which and why; that record is part of the result.
 
 ## What is in the repository
 
