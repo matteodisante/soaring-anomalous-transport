@@ -26,7 +26,7 @@ from soaring.analysis.figures.preproc import (
     make_gap_diagnostics_figure,
     make_sampling_figure,
 )
-from soaring.analysis.figures.transport import make_msd_figure
+from soaring.analysis.figures.msd import make_msd_figure
 from soaring.analysis.observables.transport import MSDResult
 
 

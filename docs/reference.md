@@ -136,4 +136,4 @@ on the next build. To add a new module, a single `:::` line here is enough.
 
 ::: soaring.analysis.figures.preproc
 
-::: soaring.analysis.figures.transport
+::: soaring.analysis.figures.msd
