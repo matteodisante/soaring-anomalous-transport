@@ -214,6 +214,13 @@ def measure(discipline: str, cadences, macros: dict) -> dict:
         if np.isfinite(worst):
             put("HurstQuantileErrMax", f"{worst:.4f}")
 
+    # The east/north twins of DrawnHurst, for panel (c)'s per-component collapse: each
+    # column rescales by its own row's H, not the modulus's, since H differs by component
+    # and a shared scale would misdraw the collapse for the two that do not own it.
+    for variable, name in (("E", "East"), ("N", "North")):
+        if variable in drawn:
+            put(f"DrawnHurst{name}", f"{drawn[variable]['fitted']['hurst']:.3f}")
+
     return {"rows": rows, "drawn": drawn, "fastest": fastest}
 
 
@@ -328,31 +335,42 @@ _PERCENTILE_STYLE = (("25th", "-"), ("50th", "--"), ("75th", "-."), ("90th", ":"
 _VARIABLE_STYLE = (("R", "|Δr|", "o-"), ("E", "|Δx| east", "s--"), ("N", "|Δy| north", "^:"))
 
 
+#: Column label for panels (a) and (c), now one sub-panel per variable rather than the
+#: modulus alone. Reuses _VARIABLE_STYLE's own labels so the two cannot drift apart.
+_VARIABLE_LABEL = {variable: label for variable, label, _ in _VARIABLE_STYLE}
+
+
 def draw(measured: dict):
-    """The three panels, all at the fastest native cadence of each discipline."""
+    """Panels (a) and (c), one sub-panel per variable; panel (b) unchanged, all three at
+    the fastest native cadence of each discipline."""
     import matplotlib.pyplot as plt
     from matplotlib.lines import Line2D
 
-    fig, axes = plt.subplots(1, 3, figsize=(13.6, 4.3))
-    quantile_ax, drift_ax, collapse_ax = axes
+    fig, axes = plt.subplots(2, 4, figsize=(16.8, 7.6))
+    quantile_axes = {"R": axes[0, 0], "E": axes[0, 1], "N": axes[0, 2]}
+    drift_ax = axes[0, 3]
+    collapse_axes = {"R": axes[1, 0], "E": axes[1, 1], "N": axes[1, 2]}
+    legend_ax = axes[1, 3]
 
     for discipline, m in measured.items():
         colour = DISCIPLINES[discipline].color
         drawn = m.get("drawn") or {}
         if "R" not in drawn:
             continue
-        d = drawn["R"]
-        lags, quantiles = d["lags"], d["quantiles"]
-        counts, edges, fitted = d["counts"], d["edges"], d["fitted"]
-        window = (lags >= FIT_RANGE_S[0]) & (lags <= FIT_RANGE_S[1])
 
-        # (a) the four percentiles of the modulus, at this discipline's fastest cadence.
-        for column, (_, style) in enumerate(_PERCENTILE_STYLE):
-            quantile_ax.loglog(
-                lags[window], quantiles[window, column], style, color=colour, lw=1.2
-            )
+        # (a) the four percentiles, one sub-panel per variable.
+        for variable, ax in quantile_axes.items():
+            if variable not in drawn:
+                continue
+            d = drawn[variable]
+            lags, quantiles = d["lags"], d["quantiles"]
+            window = (lags >= FIT_RANGE_S[0]) & (lags <= FIT_RANGE_S[1])
+            for column, (_, style) in enumerate(_PERCENTILE_STYLE):
+                ax.loglog(
+                    lags[window], quantiles[window, column], style, color=colour, lw=1.2
+                )
 
-        # (b) the same fit per percentile, for each of the three variables.
+        # (b) the same fit per percentile, for each of the three variables (unchanged).
         for variable, _, marker in _VARIABLE_STYLE:
             if variable not in drawn:
                 continue
@@ -361,19 +379,26 @@ def draw(measured: dict):
                 marker, color=colour, ms=4, lw=1.0, alpha=0.85,
             )
 
-        # (c) the collapse of the modulus, at this row's own exponent.
-        centres = np.sqrt(edges[:-1] * edges[1:])
-        widths = np.diff(edges)
-        for i in np.flatnonzero(window)[::3]:
-            if counts[i].sum() <= 0:
+        # (c) the collapse, one sub-panel per variable, each at that row's own exponent
+        # -- H differs by component, so E and N do not share R's scale.
+        for variable, ax in collapse_axes.items():
+            if variable not in drawn:
                 continue
-            scale = lags[i] ** fitted["hurst"]
-            density = counts[i] / counts[i].sum() / widths
-            keep = density > 0
-            collapse_ax.loglog(
-                centres[keep] / scale, density[keep] * scale,
-                color=colour, lw=0.8, alpha=0.6,
-            )
+            d = drawn[variable]
+            lags, counts, edges, fitted = d["lags"], d["counts"], d["edges"], d["fitted"]
+            window = (lags >= FIT_RANGE_S[0]) & (lags <= FIT_RANGE_S[1])
+            centres = np.sqrt(edges[:-1] * edges[1:])
+            widths = np.diff(edges)
+            for i in np.flatnonzero(window)[::3]:
+                if counts[i].sum() <= 0:
+                    continue
+                scale = lags[i] ** fitted["hurst"]
+                density = counts[i] / counts[i].sum() / widths
+                keep = density > 0
+                ax.loglog(
+                    centres[keep] / scale, density[keep] * scale,
+                    color=colour, lw=0.8, alpha=0.6,
+                )
 
     disciplines = [d for d in measured if (measured[d].get("drawn") or {}).get("R")]
     colour_keys = [
@@ -381,45 +406,50 @@ def draw(measured: dict):
                label=f"{d} ({measured[d]['fastest']:g} s)")
         for d in disciplines
     ]
-
-    quantile_ax.set_xlabel(r"lag $\Delta$ (s)")
-    quantile_ax.set_ylabel(r"percentile of $|\Delta \mathbf{r}|$ (m)")
-    quantile_ax.set_title("(a) how each percentile grows", fontsize=10, loc="left")
     style_keys = [
         Line2D([], [], color="0.35", lw=1.2, ls=style, label=f"{name} percentile")
         for name, style in _PERCENTILE_STYLE
     ]
-    first = quantile_ax.legend(handles=colour_keys, frameon=False, fontsize=7, loc="upper left")
-    quantile_ax.add_artist(first)
-    quantile_ax.legend(handles=style_keys, frameon=False, fontsize=7, loc="lower right")
-
-    drift_ax.set_xlabel("percentile of the increment")
-    drift_ax.set_ylabel("$H$ fitted at that percentile alone")
-    drift_ax.set_title("(b) one exponent would be a flat line", fontsize=10, loc="left")
-    drift_ax.set_xticks([25, 50, 75, 90])
     variable_keys = [
         Line2D([], [], color="0.35", lw=1.0, marker=marker[0], ls=marker[1:], ms=4,
                label=label)
         for _, label, marker in _VARIABLE_STYLE
     ]
+
+    for variable, ax in quantile_axes.items():
+        ax.set_xlabel(r"lag $\Delta$ (s)")
+        title = f"(a) {_VARIABLE_LABEL[variable]}" if variable == "R" else _VARIABLE_LABEL[variable]
+        ax.set_title(title, fontsize=10, loc="left")
+    quantile_axes["R"].set_ylabel("percentile of the increment (m)")
+
+    drift_ax.set_xlabel("percentile of the increment")
+    drift_ax.set_ylabel("$H$ fitted at that percentile alone")
+    drift_ax.set_title("(b) one exponent would be a flat line", fontsize=10, loc="left")
+    drift_ax.set_xticks([25, 50, 75, 90])
     second = drift_ax.legend(handles=colour_keys, frameon=False, fontsize=7, loc="lower left")
     drift_ax.add_artist(second)
     drift_ax.legend(handles=variable_keys, frameon=False, fontsize=7, loc="upper right")
 
-    collapse_ax.set_xlabel(r"$|\Delta \mathbf{r}| \,/\, \Delta^{H}$")
-    collapse_ax.set_ylabel(r"$\Delta^{H} P$")
-    # The far-left decades are a handful of counts per bin and show nothing; the story is
-    # the bulk and the flank, which is where the curves part company.
-    collapse_ax.set_xlim(3e-2, 1.2e2)
-    collapse_ax.set_ylim(1e-4, 1.0)
-    collapse_ax.set_title("(c) the collapse, and where it fails", fontsize=10, loc="left")
-    collapse_ax.legend(
+    for variable, ax in collapse_axes.items():
+        # The far-left decades are a handful of counts per bin and show nothing; the
+        # story is the bulk and the flank, which is where the curves part company.
+        ax.set_xlim(3e-2, 1.2e2)
+        ax.set_ylim(1e-4, 1.0)
+        ax.set_xlabel(r"increment $/\, \Delta^{H}$")
+        title = f"(c) {_VARIABLE_LABEL[variable]}" if variable == "R" else _VARIABLE_LABEL[variable]
+        ax.set_title(title, fontsize=10, loc="left")
+    collapse_axes["R"].set_ylabel(r"$\Delta^{H} P$")
+
+    legend_ax.axis("off")
+    legend_ax.legend(
         handles=[
             *colour_keys,
-            Line2D([], [], color="0.35", lw=0.8, label="one lag inside the fit window"),
+            *style_keys,
+            Line2D([], [], color="0.35", lw=0.8, label="one lag inside the fit window (c)"),
         ],
-        frameon=False, fontsize=7, loc="lower left",
+        frameon=False, fontsize=8, loc="center",
     )
+
     fig.tight_layout()
     return fig
 

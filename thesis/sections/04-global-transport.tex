@@ -762,23 +762,25 @@ are kept apart here and in Sec.~\ref{sec:prelim}.
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
     \texttt{scripts/reporting/generate\_propagator\_figure.py}.}}}
   \caption{\rev{The exponent read from the distribution of the increments, not from a
-  moment of it. All three panels use each discipline's fastest native cadence,
+  moment of it. All seven panels use each discipline's fastest native cadence,
   \SI{\StatPropParaDrawnDtS}{\second}, where the histograms hold the most increments.
-  Panels (a) and (c) use the modulus $|\Delta\mathbf{r}|$; panel (b) sets it beside the two
-  components.
-  \textbf{(a)}~The 25th, 50th, 75th and 90th percentiles of $|\Delta\mathbf{r}|$ against
-  lag, log--log, over the fit window
-  \SIrange{\StatPropParaFitMinS}{\StatPropParaFitMaxS}{\second}. Four parallel lines would
-  mean one exponent describes every part of the distribution.
-  \textbf{(b)}~The slope of each of those four lines, fitted separately. A flat line would
-  mean the same thing. The three marker styles are the modulus and the two components; all
-  of them fall from the 25th percentile to the 90th, so the disagreement is not a property
-  of one direction.
-  \textbf{(c)}~The histograms behind (a), rescaled by $\Delta^{H}$, one curve per lag
-  inside the fit window and every third lag drawn. $H$ is that row's own value,
-  \StatPropParaDrawnHurst\ for paragliders and \StatPropHangDrawnHurst\ for hang gliders.
-  If the scaling form held exactly the curves would lie on top of one another; they do
-  through the bulk and separate at the flanks.}}
+  \textbf{(a)}~The 25th, 50th, 75th and 90th percentiles against lag, log--log, over the
+  fit window \SIrange{\StatPropParaFitMinS}{\StatPropParaFitMaxS}{\second}, one column for
+  the modulus $|\Delta\mathbf{r}|$ and one for each horizontal component. Four parallel
+  lines would mean one exponent describes every part of that column's distribution.
+  \textbf{(b)}~The slope of each of those four lines, fitted separately, with the modulus
+  and the two components overlaid in one panel rather than split into columns --- it is
+  already the comparison across variables that (a) and (c) split apart. A flat line would
+  mean the same thing as in (a). All three fall from the 25th percentile to the 90th, so
+  the disagreement is not a property of one direction.
+  \textbf{(c)}~The histograms behind each column of (a), rescaled by $\Delta^{H}$, one
+  curve per lag inside the fit window and every third lag drawn. $H$ is that column's own
+  value: \StatPropParaDrawnHurst\ (modulus), \StatPropParaDrawnHurstEast\ (east),
+  \StatPropParaDrawnHurstNorth\ (north) for paragliders, and correspondingly
+  \StatPropHangDrawnHurst, \StatPropHangDrawnHurstEast, \StatPropHangDrawnHurstNorth\ for
+  hang gliders --- not a value shared across columns, since $H$ differs by component. If
+  the scaling form held exactly the curves of one column would lie on top of one another;
+  they do through the bulk and separate at the flanks, in every column.}}
   \label{fig:propagator}
 \end{figure}
 

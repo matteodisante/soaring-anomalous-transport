@@ -340,41 +340,47 @@ quoting one here would be a number that goes stale without anything failing.
 |---|---|---|---|
 | 1 | `verify_dataset.py` | `verify.tex` (`\StatVerify*`) | full traversal |
 | 2 | `generate_pipeline_census.py` | `pipeline_census.tex`, `tab:pipecensus` | from `flights_meta` |
-| 3 | `generate_msd_figure.py` | `msd.pdf`, `msd_curve.csv`, `msd.tex` | full traversal |
-| 4 | `generate_census_stats.py` | `census.tex` (`\StatScan*`, `\Preproc*`) | from the scan cache |
-| 5 | `audit_msd.py` | per-flight positions at every lag, into `$AUDIT_DIR` | full traversal |
-| 6 | `audit_msd_report.py` | `audit.tex` (`\StatAudit*`) | reduction |
-| 7 | `generate_prelim_figure.py` | `prelim_{ensemble,map,strata}.pdf`, `prelim.tex` | reduction |
-| 8 | `generate_dataset_stats.py` | `dataset_stats.tex`, `dataset_seasons.pdf` | from `flights_meta` |
-| 9 | `measure_variations.py` | per-flight filtered variations, into `$AUDIT_DIR` | full traversal |
-| 10 | `generate_transport_figure.py` | `transport.tex`, `transport.pdf` | reduction |
-| 11 | `measure_shape.py` | increments and velocity memory, into `$AUDIT_DIR` | full traversal |
-| 12 | `generate_shape_figure.py` | `shape.tex`, `shape.pdf` | reduction, with a tail-cutoff scan |
-| 13 | `measure_propagator.py` + `generate_propagator_figure.py` | `propagator.tex`, `propagator.pdf` | full traversal, histograms only |
-| 14 | `measure_edge_effect.py` | `edge_effect.tex` (`\StatEdge*`) | subsampled traversal |
-| 15 | `measure_circling.py` | `circling.tex` (`\StatCircling*`) | subsampled traversal |
-| 16 | `check_generated_macros.py` | nothing; fails if a quoted macro is unwritten | instant |
-| 17 | `latexmk` | `thesis/main.pdf` | build |
+| 3 | `measure_msd.py` | MSD/TAMSD curves and bootstrap samples, into `$AUDIT_DIR` | full traversal |
+| 4 | `generate_msd_figure.py` | `msd.pdf`, `msd_curve.csv`, `msd.tex` | reduction |
+| 5 | `generate_census_stats.py` | `census.tex` (`\StatScan*`, `\Preproc*`) | from the scan cache |
+| 6 | `audit_msd.py` | per-flight positions at every lag, into `$AUDIT_DIR` | full traversal |
+| 7 | `audit_msd_report.py` | `audit.tex` (`\StatAudit*`) | reduction |
+| 8 | `generate_prelim_figure.py` | `prelim_{ensemble,map,strata}.pdf`, `prelim.tex` | reduction |
+| 9 | `generate_dataset_stats.py` | `dataset_stats.tex`, `dataset_seasons.pdf` | from `flights_meta` |
+| 10 | `measure_variations.py` | per-flight filtered variations, into `$AUDIT_DIR` | full traversal |
+| 11 | `generate_transport_figure.py` | `transport.tex`, `transport.pdf` | reduction |
+| 12 | `measure_shape.py` | increments and velocity memory, into `$AUDIT_DIR` | full traversal |
+| 13 | `generate_shape_figure.py` | `shape.tex`, `shape.pdf` | reduction, with a tail-cutoff scan |
+| 14 | `measure_propagator.py` + `generate_propagator_figure.py` | `propagator.tex`, `propagator.pdf` | full traversal, histograms only |
+| 15 | `measure_edge_effect.py` | `edge_effect.tex` (`\StatEdge*`) | subsampled traversal |
+| 16 | `measure_circling.py` | `circling.tex` (`\StatCircling*`) | subsampled traversal |
+| 17 | `check_generated_macros.py` | nothing; fails if a quoted macro is unwritten | instant |
+| 18 | `latexmk` | `thesis/main.pdf` | build |
 
-Steps 9 and 10 are Chapter 3's measurement. Step 9 is the third full traversal of the fix
-table; it keeps one filtered-variation curve per flight per filter order, so every
-stratification step 10 performs — by cadence, wing class, season and declared task — is a
-row selection rather than another 43 GB scan.
+Steps 10 and 11 are Chapter 3's measurement. Step 10 is the third full traversal of the fix
+table; it keeps one filtered-variation curve per flight per filter order (and, at orders 1
+and 2, per horizontal component too — `sec:transport-axisroutes`), so every stratification
+step 11 performs — by cadence, wing class, season and declared task — is a row selection
+rather than another 43 GB scan.
 
-Steps 5–7 are the audit and the preliminary characterization. Step 5 is a second streaming
-pass that keeps what step 3 averages away — each flight's position at each lag — because
-the questions the audit asks (does the curve's shape survive a fixed logger cadence, a
-fixed duration, the removal of the common heading?) are different reductions of a
-per-flight quantity that no longer exists once the average has been taken. Step 7 reads
-step 5's arrays rather than the fix table, which is what makes a stratified MSD a row
+Steps 6–8 are the audit and the preliminary characterization. Step 6 is the second
+streaming pass, and keeps what step 3 averages away — each flight's position at each lag —
+because the questions the audit asks (does the curve's shape survive a fixed logger
+cadence, a fixed duration, the removal of the common heading?) are different reductions of
+a per-flight quantity that no longer exists once the average has been taken. Step 8 reads
+step 6's arrays rather than the fix table, which is what makes a stratified MSD a row
 selection instead of another 43 GB scan. `$AUDIT_DIR` holds a few hundred MB per discipline;
 it is an analysis product rather than a thesis one, which is why it lives outside the repo.
 
 !!! warning "Point `$AUDIT_DIR` somewhere that survives"
     It defaults to `$TMPDIR/soaring-audit`, which on macOS is under `/var/folders/` — a
     directory the system empties on its own schedule. What it holds is hours of traversal,
-    and the steps that reduce those arrays cannot tell a missing cache from a fresh start.
-    For any run worth keeping, set `AUDIT_DIR` to a path on the data disk instead.
+    and the steps that reduce those arrays cannot tell a missing cache from a fresh start:
+    a reduction pointed at a directory with no matching pass output just reports the pass
+    as unreachable, silently, rather than warning that the cache is gone. For any run worth
+    keeping, set `AUDIT_DIR` to a path on the data disk instead — this repository's own
+    `/Volumes/SSD_DISANTE/derived-audit` — so a change to a fit range, a bootstrap count or
+    a figure's styling costs only the reduction it touches.
 
 The guard against a live `preprocess.py` is not hypothetical: the driver writes
 `flights_meta.parquet` only after its last flight, so a generator started too early reads a

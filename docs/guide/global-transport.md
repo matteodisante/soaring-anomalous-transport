@@ -58,16 +58,16 @@ figure. Steps are the numbered steps of `scripts/regenerate.sh`.
 
 | chapter section | estimator module | pass | reduction | macros |
 |---|---|---|---|---|
-| `sec:obs-global` — displacement from take-off | `observables.transport` | `audit_msd.py` (5) | `audit_msd_report.py` (6), `generate_msd_figure.py` (3) | `\StatMsd*`, `\StatAudit*` |
-| `sec:variations` — the filtered variation | `observables.variations` | `measure_variations.py` (9) | `generate_transport_figure.py` (10) | `\StatVar*` |
-| `sec:transport-measure` — the uncertainty on the exponent | `stats.bootstrap`, `observables.regimes` | — (reads step 9) | `generate_transport_figure.py` (10) | `\StatVar*` |
-| `sec:transport-propagator` — the exponent from the quantiles | `observables.propagator` | `measure_propagator.py` (13) | `generate_propagator_figure.py` (13) | `\StatProp*` |
-| `sec:transport-axisroutes` — the exponent, split by component | `observables.transport`, `observables.variations` | — (reads steps 3, 9) | `generate_msd_figure.py` (3), `generate_transport_figure.py` (10) | `\StatMsd*`, `\StatMsdTa*`, `\StatVar*` |
-| `sec:transport-shape` — not a Lévy walk | `observables.moments` | `measure_shape.py` (11) | `generate_shape_figure.py` (12) | `\StatShape*` |
-| `sec:transport-gaussian` — the propagator is not Gaussian | `observables.moments` | `measure_shape.py` (11) | `generate_shape_figure.py` (12) | `\StatShape*` |
-| `sec:transport-memory` — the memory of the heading | `observables.persistence` | `measure_shape.py` (11), `measure_circling.py` (15) | `generate_shape_figure.py` (12) | `\StatShape*`, `\StatCircling*` |
-| `sec:transport-kinematics` — speed and vertical velocity | `observables.propagator` (`KinematicAccumulator`) | `measure_propagator.py` (13) | `generate_propagator_figure.py` (13) | `\StatKin*` |
-| — the edge-sample effect | `observables.transport` | `measure_edge_effect.py` (14) | same script | `\StatEdge*` |
+| `sec:obs-global` — displacement from take-off | `observables.transport` | `measure_msd.py` (3), `audit_msd.py` (6) | `generate_msd_figure.py` (4), `audit_msd_report.py` (7) | `\StatMsd*`, `\StatAudit*` |
+| `sec:variations` — the filtered variation | `observables.variations` | `measure_variations.py` (10) | `generate_transport_figure.py` (11) | `\StatVar*` |
+| `sec:transport-measure` — the uncertainty on the exponent | `stats.bootstrap`, `observables.regimes` | — (reads step 10) | `generate_transport_figure.py` (11) | `\StatVar*` |
+| `sec:transport-propagator` — the exponent from the quantiles | `observables.propagator` | `measure_propagator.py` (14) | `generate_propagator_figure.py` (14) | `\StatProp*` |
+| `sec:transport-axisroutes` — the exponent, split by component | `observables.transport`, `observables.variations` | — (reads steps 3, 10) | `generate_msd_figure.py` (4), `generate_transport_figure.py` (11) | `\StatMsd*`, `\StatMsdTa*`, `\StatVar*` |
+| `sec:transport-shape` — not a Lévy walk | `observables.moments` | `measure_shape.py` (12) | `generate_shape_figure.py` (13) | `\StatShape*` |
+| `sec:transport-gaussian` — the propagator is not Gaussian | `observables.moments` | `measure_shape.py` (12) | `generate_shape_figure.py` (13) | `\StatShape*` |
+| `sec:transport-memory` — the memory of the heading | `observables.persistence` | `measure_shape.py` (12), `measure_circling.py` (16) | `generate_shape_figure.py` (13) | `\StatShape*`, `\StatCircling*` |
+| `sec:transport-kinematics` — speed and vertical velocity | `observables.propagator` (`KinematicAccumulator`) | `measure_propagator.py` (14) | `generate_propagator_figure.py` (14) | `\StatKin*` |
+| — the edge-sample effect | `observables.transport` | `measure_edge_effect.py` (15) | same script | `\StatEdge*` |
 
 `observables.synthetic` appears in no row because it measures nothing on the archive: it
 generates the processes the other seven are validated against (see
@@ -103,7 +103,7 @@ Stated once here; each is a constant at the top of the script named.
 
 | grid | range | points | set by |
 |---|---|---|---|
-| MSD / audit | 1 s – 43 200 s | 90, geometric | `audit_msd.py`, `generate_msd_figure.py` |
+| MSD / audit | 1 s – 43 200 s | 90, geometric | `audit_msd.py`, `measure_msd.py` |
 | filtered variation | 60 s – 20 000 s | 36, geometric | `measure_variations.py` |
 | moment spectrum, VACF | 60 s – 8000 s | 24, geometric | `measure_shape.py` |
 | propagator histograms | 30 s – 4000 s | 20, geometric | `measure_propagator.py` |
@@ -236,25 +236,47 @@ at the next thermal, and no figure or docstring should be written as though it d
 
 ## Reproducing it
 
-Steps 3–15 of `scripts/regenerate.sh`, which is also the only correct order — its header
+Steps 3–16 of `scripts/regenerate.sh`, which is also the only correct order — its header
 says why for each. Both data roots must be exported whichever discipline is asked for,
-because the generated `.tex` files carry both and a partial one breaks the build:
+because the generated `.tex` files carry both and a partial one breaks the build. Set
+`AUDIT_DIR` to somewhere that survives a reboot — the default is a temp directory that
+does not:
 
 ```bash
 export SOARING_PARA_DATA_ROOT=/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc
 export SOARING_DELTA_DATA_ROOT=/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc
+export AUDIT_DIR=/Volumes/SSD_DISANTE/derived-audit
 
 scripts/regenerate.sh --no-build      # everything, stopping before latexmk
 ```
 
+Every pass below writes one `<name>_<discipline>.npz` (or `.parquet`) per discipline into
+`AUDIT_DIR` and every reduction only reads it, so once a pass has run, changing a fit
+range, a bootstrap count or a figure's styling and re-running only its reduction costs
+seconds rather than the pass again. Nothing here skips a pass automatically because its
+output already exists — re-running one you do not need is a choice, not a requirement,
+but skipping one you do need silently reads a stale array, so re-run a pass explicitly
+whenever the *computation* changes, not only when its output is missing.
+
 To re-run one measurement, run its pass and then its reduction, in that order, with a
-shared `--out` / `--audit-dir`:
+shared `--out` / `--audit-dir` — pointed at the persistent directory, not the temp-dir
+default, unless the run is genuinely a one-off:
 
 ```bash
-AUDIT_DIR=${TMPDIR:-/tmp}/soaring-audit
+AUDIT_DIR=/Volumes/SSD_DISANTE/derived-audit
 
 uv run python scripts/reporting/measure_variations.py --out "$AUDIT_DIR"
 uv run python scripts/reporting/generate_transport_figure.py --audit-dir "$AUDIT_DIR"
+```
+
+`generate_msd_figure.py` (Sec. 3.1's opening measurement, and Sec. 3.5's ensemble/
+time-averaged rows) is the one estimator with no dedicated pass name of its own to
+remember: it is `measure_msd.py` that streams the archive, this script that reduces what
+it wrote.
+
+```bash
+uv run python scripts/reporting/measure_msd.py --out "$AUDIT_DIR"
+uv run python scripts/reporting/generate_msd_figure.py --audit-dir "$AUDIT_DIR"
 ```
 
 Every generator that reaches one discipline of two **refuses to write** rather than

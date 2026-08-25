@@ -17,7 +17,7 @@ over it costs minutes to hours depending on what it computes per flight.
 `.pdf` figures. Seconds to minutes. This is the split that lets a stratification be a row
 selection rather than another traversal.
 
-`scripts/regenerate.sh` runs all seventeen in the one order that is correct, and its header
+`scripts/regenerate.sh` runs all eighteen in the one order that is correct, and its header
 explains why the order is a constraint rather than a convenience. Every script that touches the
 archive needs both roots exported, whichever discipline it is asked for, because the generated
 `.tex` files carry both and a partial one breaks the build:
@@ -47,36 +47,42 @@ used to be the commonest: `configs/para_download.yaml` shipped a placeholder whi
 `SOARING_PARA_DATA_ROOT` reached one archive and not the other and looked normal doing it.
 Both configs now carry a real path, and the environment variable still overrides either.
 
-`--help` is safe on every script, including the eleven with no argument parser: it prints
+`--help` is safe on every script, including the ten with no argument parser: it prints
 what the script does and exits without touching the archive.
 
 ---
 
 ## Where the intermediate arrays go
 
-Not into the repository and not onto the SSD. `regenerate.sh` uses
+Not into the repository — they are analysis products rather than thesis products,
+reproducible from the SSD by re-running the pass, and large enough that versioning them
+would be wrong. `regenerate.sh` uses
 
 ```
 AUDIT_DIR=${AUDIT_DIR:-${TMPDIR:-/tmp}/soaring-audit}
 ```
 
-and every pass takes `--out`, every reduction `--audit-dir`. They are analysis products
-rather than thesis products: reproducible from the SSD by re-running the pass, and large
-enough that versioning them would be wrong.
+and every pass takes `--out`, every reduction `--audit-dir`. The default is a temp
+directory a reboot clears, which is fine for a one-shot run but throws away hours of
+traversal for nothing: **point `AUDIT_DIR` at a path on the data disk instead** —
+`/Volumes/SSD_DISANTE/derived-audit` on the author's machine — so that a change to a fit
+range, a bootstrap count or a figure's styling costs only the reduction that reads the
+cached array, not the pass that wrote it.
 
 | file | written by | paragliders | hang gliders | what sets the size |
 |---|---|---|---|---|
+| `msd_<slug>.npz` | `measure_msd.py` | 216.8 MB | 7.86 MB | MSD/TAMSD curves (pooled, east, north, cohorts) and their per-flight/per-segment bootstrap samples |
 | `audit_positions_<slug>.npz` | `audit_msd.py` | 73.72 MB | 2.67 MB | one row per flight, one column per lag |
 | `audit_flights_<slug>.parquet` | `audit_msd.py` | 14.39 MB | 0.61 MB | one row per flight |
-| `variations_<slug>.npz` | `measure_variations.py` | 46.47 MB | 1.87 MB | one curve per flight per filter order |
+| `variations_<slug>.npz` | `measure_variations.py` | 117 MB | 4.7 MB | one curve per flight per filter order, plus east/north at orders 1-2 |
 | `variation_flights_<slug>.parquet` | `measure_variations.py` | 3.25 MB | 0.22 MB | one row per flight |
 | `shape_<slug>.npz` | `measure_shape.py` | 5 KB | 5 KB | moment spectrum and one autocorrelation, averaged over flights |
 | `propagator_<slug>.npz` | `measure_propagator.py` | 0.45 MB | 0.15 MB | histograms per lag per component |
 
 `<slug>` is `para` or `hang`. The sizes are measured on the current archive rather than
 estimated, and the last column is what they scale with, so a number that has gone stale is
-recognisable as one. The set comes to about 144 MB, which is why it lives outside the
-repository.
+recognisable as one. The set comes to a few hundred MB, which is why it lives outside the
+repository — but on the persistent disk, not a directory that disappears on its own.
 
 ---
 
@@ -107,6 +113,13 @@ tables *this code* would write.
 ## Passes
 
 Each streams `fixes.parquet` and writes an array to `--out`.
+
+### `scripts/reporting/measure_msd.py`
+The ensemble and time-averaged MSD, their east-only and north-only twins
+(`sec:transport-axisroutes`), and the fixed-duration cohorts, all from one traversal — plus
+the per-flight (ensemble) or per-segment (time-averaged) samples each of those needs for
+its bootstrap, since a naive least-squares error understates the truth by about fivefold.
+`--discipline`, `--out`.
 
 ### `scripts/reporting/audit_msd.py`
 Keeps each flight's position at every lag, rather than the average over flights, so the audit
@@ -150,10 +163,11 @@ of the segment ends that every flight has.
 `--audit-dir` → `audit.tex`, `msd_curve.csv`.
 
 ### `scripts/reporting/generate_msd_figure.py`
-Streams the fix table itself rather than reading an array, so it is a pass in cost.
-Writes `msd.pdf`, `msd.tex`, `msd_curve.csv`. `--redraw` re-renders the figure and the macros
-from the committed `msd_curve.csv` in seconds, without touching the archive: use it for every
-change that is about the drawing rather than the measurement.
+`--audit-dir`, `--allow-partial` → `msd.pdf`, `msd.tex`, `msd_curve.csv`. Reads what
+`measure_msd.py` wrote, so it is a reduction in cost like every other one here, not the
+pass its name might suggest. `--redraw` goes one step cheaper still, re-rendering the
+figure and the macros from the committed `msd_curve.csv` alone, without even reading
+`--audit-dir`: use it for a change that is about the drawing rather than the measurement.
 
 ### `scripts/reporting/generate_transport_figure.py`
 `--audit-dir`, `--allow-partial` → `transport.pdf`, `transport.tex`.

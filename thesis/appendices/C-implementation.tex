@@ -64,19 +64,19 @@ Stats macros; Tables~\ref{tab:seasons-para},~\ref{tab:seasons-hang} &
   disciplines on 8 workers. \path{../verify_dataset.py} checks the result against the
   invariants of Ch.~\ref{ch:dataset}.} \\
 \hline
-\rev{Figure~\ref{fig:msd}; \texttt{\textbackslash StatMsd*}} & \rev{\path{generate_msd_figure.py}} &
-  \rev{Streams \path{fixes.parquet} once, through
+\rev{Figure~\ref{fig:msd}; \texttt{\textbackslash StatMsd*}} & \rev{\protect\path{measure_msd.py}, \protect\path{generate_msd_figure.py}} &
+  \rev{The former streams \path{fixes.parquet} once, through
   \path{soaring.analysis.derived.stream_flights}, and accumulates in that single pass
-  both estimators and the three fixed-duration cohorts (Sec.~\ref{sec:obs-global});
-  ${\sim}\SI{20}{\minute}$ on the paraglider archive. The cohorts cost nothing beyond
-  three more accumulators, because the expensive step is the read; the east-only and
-  north-only twins for Sec.~\ref{sec:transport-axisroutes} cost the same nothing for the
-  ensemble estimator, but roughly triple the time average's share of the pass, since
-  \texttt{time\_averaged\_msd}'s per-segment FFT now runs once per component rather than
-  once pooled. \path{--redraw}
-  re-renders the figure from the written \path{msd_curve.csv} in a second, without
-  touching the archive: nothing there recomputes an estimator, so a change to the drawing
-  need not cost another pass over $10^{9}$ rows.} \\
+  both estimators, their east-only and north-only twins (Sec.~\ref{sec:transport-axisroutes})
+  and the three fixed-duration cohorts (Sec.~\ref{sec:obs-global});
+  ${\sim}\SI{20}{\minute}$ on the paraglider archive before the twins, more now, since
+  \texttt{time\_averaged\_msd}'s per-segment FFT runs once per component for them rather
+  than once pooled -- the cohorts cost nothing beyond three more accumulators, because
+  the expensive step is the read. The latter fits every curve, runs the bootstraps and
+  draws the figure from what was written; seconds. \path{--redraw}
+  re-renders the figure from the written \path{msd_curve.csv} in a second more, without
+  even the reduction: nothing there recomputes an estimator, so a change to the drawing
+  need not cost a re-fit.} \\
 \hline
 \rev{\texttt{\textbackslash StatPipe*}, the per-stage shares quoted around
   Table~\ref{tab:pipecensus}} & \rev{\path{generate_pipeline_census.py}} &
@@ -122,11 +122,13 @@ Census macros (\texttt{\textbackslash StatScan\dots}) &
   identically, the largest departure being \SI{0.016}{\metre}---the \texttt{float32}
   quantum at a coordinate of \SI{100}{\kilo\metre}.} \\
 \hline
-\rev{--- (an analysis product)} & \rev{\protect\path{measure_variations.py}, \protect\path{measure_shape.py}} &
-  \rev{The second and third streaming passes. The first keeps a filtered variation per
-  flight per filter order; the second keeps what the moment spectrum needs, which is the
-  increments themselves. Both write to \path{--out}, outside the repository,
-  and both are comparable in cost to the MSD pass.} \\
+\rev{--- (an analysis product)} & \rev{\protect\path{measure_msd.py}, \protect\path{measure_variations.py}, \protect\path{measure_shape.py}} &
+  \rev{The first, second and third streaming passes. The first keeps the MSD curves and
+  the per-flight/per-segment samples their bootstrap needs; the second a filtered
+  variation per flight per filter order; the third what the moment spectrum needs, which
+  is the increments themselves. All three write to \path{--out}, outside the repository
+  -- kept on a persistent disk rather than a directory a reboot clears, so a reduction
+  downstream of any of them costs seconds and not the pass again.} \\
 \hline
 \rev{Table~\ref{tab:orderscan}, Fig.~\ref{fig:transport}, \texttt{\textbackslash StatVar*}} &
   \rev{\protect\path{generate_transport_figure.py}} &
