@@ -42,6 +42,15 @@ _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
 
+# The sys.path line above is what makes this resolvable when the script is run
+# directly, so the import cannot move to the top of the file.
+from soaring.reporting import (  # noqa: E402
+    DISCIPLINES,
+    partial_write_refusal,
+    unreachable_reason,
+    write_macros,
+)
+
 OUT_MAP = ROOT / "thesis" / "generated" / "prelim_map.pdf"
 OUT_ENSEMBLE = ROOT / "thesis" / "generated" / "prelim_ensemble.pdf"
 OUT_STRATA = ROOT / "thesis" / "generated" / "prelim_strata.pdf"
@@ -49,12 +58,6 @@ OUT_TEX = ROOT / "thesis" / "generated" / "prelim.tex"
 # Coastlines and borders, cropped and committed by build_basemap.py so that the
 # figure regenerates offline and without a geospatial stack.
 BASEMAP = ROOT / "data" / "basemap.json"
-
-DISCIPLINES = {
-    "paragliders": ("para", "Para", "SOARING_PARA_DATA_ROOT", "PARA_CONFIG_PATH"),
-    "hang gliders": ("hang", "Hang", "SOARING_DELTA_DATA_ROOT", "DELTA_CONFIG_PATH"),
-}
-COLORS = {"paragliders": "#3477a8", "hang gliders": "#b5482a"}
 
 # Map cell, in degrees. Fine enough that a single busy site is one cell and coarse
 # enough that the sparse lowlands do not dissolve into single-flight speckle.
@@ -109,19 +112,6 @@ _PDF_METADATA = {
 }
 
 
-def _derived_dir(discipline: str):
-    from soaring.acquisition.ffvl import config as cfgmod
-
-    _, _, env, attr = DISCIPLINES[discipline]
-    try:
-        cfg = cfgmod.load_config(str(getattr(cfgmod, attr)), data_root_env=env)
-    except (FileNotFoundError, KeyError):
-        return None, None
-    if not (cfg.derived_dir / "flights_meta.parquet").is_file():
-        return None, None
-    return cfg.derived_dir, cfg.catalog_path
-
-
 def _within(lat, lon, extent):
     """Boolean mask of the points inside a ``(lon_min, lat_min, lon_max, lat_max)``."""
     return (
@@ -143,8 +133,10 @@ def orographic_group(lat: pd.Series, lon: pd.Series) -> np.ndarray:
 
 def load(discipline: str, audit_dir: Path):
     """The retained ensemble, its per-lag positions and its stratum labels."""
-    slug = DISCIPLINES[discipline][0]
-    derived, catalog_path = _derived_dir(discipline)
+    glider = DISCIPLINES[discipline]
+    slug = glider.slug
+    derived = glider.derived_dir("flights_meta.parquet")
+    catalog_path = glider.catalog_path()
     positions = audit_dir / f"audit_positions_{slug}.npz"
     if derived is None or not positions.is_file():
         return None
@@ -322,7 +314,7 @@ def draw_ensemble(loaded: dict) -> object:
     fig, (dur_ax, path_ax, dt_ax) = plt.subplots(1, 3, figsize=(11.4, 3.5))
 
     for discipline, data in loaded.items():
-        frame, color = data["flights"], COLORS[discipline]
+        frame, color = data["flights"], DISCIPLINES[discipline].color
         dur_ax.hist(frame.duration_s / 3600, bins=np.linspace(0, 10, 80),
                     histtype="step", density=True, color=color, label=discipline)
         path_ax.hist(frame.path_m / 1000, bins=np.linspace(0, 300, 80),
@@ -357,7 +349,8 @@ def draw_strata(loaded: dict) -> object:
         with np.errstate(invalid="ignore"):
             ratio = np.nanmean(east**2, 0) / np.nanmean(north**2, 0)
         drawable = np.isfinite(ratio) & (lags >= 1.0)
-        iso_ax.semilogx(lags[drawable], ratio[drawable], color=COLORS[discipline],
+        iso_ax.semilogx(lags[drawable], ratio[drawable],
+                        color=DISCIPLINES[discipline].color,
                         label=discipline)
     iso_ax.axhline(1.0, color="0.3", lw=0.8, ls="--")
     iso_ax.axvspan(FIT_MIN_S, FIT_MAX_S, color="0.9", zorder=0)
@@ -402,7 +395,7 @@ def macros(loaded: dict) -> dict[str, str]:
 
     out: dict[str, str] = {}
     for discipline, data in loaded.items():
-        tag = DISCIPLINES[discipline][1]
+        tag = DISCIPLINES[discipline].tag
         frame, lags = data["flights"], data["lags"]
         east, north = data["east"], data["north"]
 
@@ -488,27 +481,41 @@ def macros(loaded: dict) -> dict[str, str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--audit-dir", type=Path, required=True)
+    parser.add_argument("--allow-partial", action="store_true")
     args = parser.parse_args()
 
     import matplotlib
     matplotlib.use("Agg")
 
     loaded = {}
+    missing = []
     for discipline in DISCIPLINES:
         data = load(discipline, args.audit_dir)
-        if data is not None:
+        if data is None:
+            missing.append(discipline)
+        else:
             loaded[discipline] = data
     if not loaded:
         print("no audit inputs reachable; prelim figures not written")
+        return 1
+    refusal = partial_write_refusal(
+        missing, "the prelim figures", allow_partial=args.allow_partial,
+        reasons=[
+            unreachable_reason(DISCIPLINES[d], "flights_meta.parquet")
+            for d in missing
+        ],
+    )
+    if refusal:
+        print(refusal)
         return 1
 
     draw_maps(loaded).savefig(OUT_MAP, metadata=_PDF_METADATA, bbox_inches="tight")
     draw_ensemble(loaded).savefig(OUT_ENSEMBLE, metadata=_PDF_METADATA)
     draw_strata(loaded).savefig(OUT_STRATA, metadata=_PDF_METADATA)
     values = macros(loaded)
-    lines = ["% Generated by scripts/reporting/generate_prelim_figure.py -- do not edit."]
-    lines += [f"\\newcommand{{\\{k}}}{{{v}}}" for k, v in values.items()]
-    OUT_TEX.write_text("\n".join(lines) + "\n")
+    write_macros(
+        OUT_TEX, values, generator="scripts/reporting/generate_prelim_figure.py"
+    )
     print(f"wrote {OUT_MAP.name}, {OUT_ENSEMBLE.name}, {OUT_STRATA.name}, {OUT_TEX.name} "
           f"({len(values)} macros)")
     for k, v in values.items():

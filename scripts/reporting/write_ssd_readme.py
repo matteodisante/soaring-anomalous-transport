@@ -33,10 +33,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-DISCIPLINES = {
-    "paragliders": ("SOARING_PARA_DATA_ROOT", "PARA_CONFIG_PATH"),
-    "hang gliders": ("SOARING_DELTA_DATA_ROOT", "DELTA_CONFIG_PATH"),
-}
+from soaring.reporting import DISCIPLINES
 
 # What each derived table is, in one line. The full column documentation is in the repo.
 _TABLES = {
@@ -75,11 +72,10 @@ def _tree_size(path: Path) -> tuple[int, int]:
 
 def _describe(discipline: str) -> list[str]:
     """The section of the README for one discipline's root."""
-    from soaring.acquisition.ffvl import config as cfgmod
-
-    env, attr = DISCIPLINES[discipline]
+    glider = DISCIPLINES[discipline]
+    env = glider.env
     try:
-        cfg = cfgmod.load_config(str(getattr(cfgmod, attr)), data_root_env=env)
+        cfg = glider.config()
     except (FileNotFoundError, KeyError):
         return [
             f"## {discipline}\n\nNot reachable from this machine's configuration.\n"

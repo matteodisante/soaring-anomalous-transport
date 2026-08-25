@@ -26,19 +26,14 @@ _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
 
-DISCIPLINES = {
-    "paragliders": ("SOARING_PARA_DATA_ROOT", "PARA_CONFIG_PATH"),
-    "hang gliders": ("SOARING_DELTA_DATA_ROOT", "DELTA_CONFIG_PATH"),
-}
-
+# The sys.path line above is what makes this resolvable when the script is run
+# directly, so the import cannot move to the top of the file.
+from soaring.reporting import DISCIPLINES  # noqa: E402
 
 def _root(discipline: str) -> Path | None:
     """The discipline's data root, or ``None`` if it is not reachable."""
-    from soaring.acquisition.ffvl import config as cfgmod
-
-    env, attr = DISCIPLINES[discipline]
     try:
-        cfg = cfgmod.load_config(str(getattr(cfgmod, attr)), data_root_env=env)
+        cfg = DISCIPLINES[discipline].config()
     except (FileNotFoundError, KeyError):
         return None
     return cfg.data_root if cfg.data_root.is_dir() else None

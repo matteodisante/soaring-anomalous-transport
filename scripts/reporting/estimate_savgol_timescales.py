@@ -42,6 +42,10 @@ _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
 
+# The sys.path line above is what makes this resolvable when the script is run
+# directly, so the import cannot move to the top of the file.
+from soaring.reporting import bare_cli  # noqa: E402
+
 N_SAMPLE = 900  # seeded sample per discipline; a few hundred 1 Hz survivors suffice
 SEED = 42
 NPERSEG = 256
@@ -167,4 +171,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    bare_cli(__doc__)
+
     raise SystemExit(main())

@@ -42,7 +42,8 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from preprocess import DISCIPLINES, _process_one, _resolve
+from preprocess import _process_one, _resolve
+from soaring.reporting import DISCIPLINES
 
 # The kinematic columns, compared numerically, and the flags, compared exactly. A flag
 # is a decision the pipeline made, so it either agrees or the code has changed.
@@ -139,7 +140,7 @@ def check(discipline: str, sample: int, seed: int) -> list[str]:
     stored = _stored(derived, wanted)
 
     paths = {p.stem.split("_")[-1]: p for p in acq.igc_dir.rglob("*.igc")}
-    source = DISCIPLINES[discipline][0]
+    source = DISCIPLINES[discipline].source
     jobs = [
         (str(paths[flight_id]), source, discipline)
         for flight_id in sorted(stored)

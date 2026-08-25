@@ -36,7 +36,16 @@ import re
 import sys
 from pathlib import Path
 
-THESIS = Path(__file__).resolve().parents[2] / "thesis"
+ROOT = Path(__file__).resolve().parents[2]
+_SRC = str(ROOT / "src")
+if _SRC not in sys.path:
+    sys.path.insert(0, _SRC)
+
+# The sys.path line above is what makes this resolvable when the script is run
+# directly, so the import cannot move to the top of the file.
+from soaring.reporting import bare_cli  # noqa: E402
+
+THESIS = ROOT / "thesis"
 GENERATED = THESIS / "generated"
 
 # Macro families written by a generator. A macro outside these prefixes is hand-written
@@ -194,4 +203,6 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    bare_cli(__doc__, known=['--quiet'])
+
     raise SystemExit(main())

@@ -47,11 +47,9 @@ _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
 
-# discipline key (the config's, and the per-discipline speed bound's) -> source value
-DISCIPLINES = {
-    "paragliders": ("paraglider", "SOARING_PARA_DATA_ROOT", "PARA_CONFIG_PATH"),
-    "hang gliders": ("hangglider", "SOARING_DELTA_DATA_ROOT", "DELTA_CONFIG_PATH"),
-}
+# The sys.path line above is what makes this resolvable when the script is run
+# directly, so the import cannot move to the top of the file.
+from soaring.reporting import DISCIPLINES  # noqa: E402
 
 # Flights per row group. Large enough that the Parquet footer stays small, small enough
 # that a batch of trajectories is a few hundred megabytes rather than a few hundred
@@ -111,11 +109,8 @@ def _process_one(job):
 
 def _resolve(discipline: str):
     """The discipline's acquisition config, or ``None`` if its data is not reachable."""
-    from soaring.acquisition.ffvl import config as cfgmod
-
-    _, env, attr = DISCIPLINES[discipline]
     try:
-        cfg = cfgmod.load_config(str(getattr(cfgmod, attr)), data_root_env=env)
+        cfg = DISCIPLINES[discipline].config()
     except (FileNotFoundError, KeyError):
         return None
     return cfg if cfg.igc_dir.is_dir() else None
@@ -147,7 +142,7 @@ def run_discipline(discipline: str, limit: int, jobs: int, seed: int) -> int:
     if acq is None:
         print(f"[{discipline}] no IGC data reachable; skipped.")
         return 0
-    source = DISCIPLINES[discipline][0]
+    source = DISCIPLINES[discipline].source
 
     paths = sorted(acq.igc_dir.rglob("*.igc"))
     if limit and len(paths) > limit:

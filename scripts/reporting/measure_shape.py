@@ -30,10 +30,9 @@ _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
 
-DISCIPLINES = {
-    "paragliders": ("para", "SOARING_PARA_DATA_ROOT", "PARA_CONFIG_PATH"),
-    "hang gliders": ("hang", "SOARING_DELTA_DATA_ROOT", "DELTA_CONFIG_PATH"),
-}
+# The sys.path line above is what makes this resolvable when the script is run
+# directly, so the import cannot move to the top of the file.
+from soaring.reporting import DISCIPLINES  # noqa: E402
 
 LAG_MIN_S, LAG_MAX_S, N_LAGS = 60.0, 8000.0, 24
 VACF_MAX_S = 1200.0
@@ -42,25 +41,12 @@ VACF_MAX_S = 1200.0
 TAIL_SUBSAMPLE = 40
 
 
-def _derived_and_catalog(discipline: str):
-    from soaring.acquisition.ffvl import config as cfgmod
-
-    _, env, attr = DISCIPLINES[discipline]
-    try:
-        cfg = cfgmod.load_config(str(getattr(cfgmod, attr)), data_root_env=env)
-    except (FileNotFoundError, KeyError):
-        return None, None
-    if not (cfg.derived_dir / "fixes.parquet").is_file():
-        return None, None
-    return cfg.derived_dir, cfg.catalog_path
-
-
 def run(discipline: str, out_dir: Path) -> int:
     from soaring.analysis.derived import stream_flights
     from soaring.analysis.observables.moments import Q_GRID, _increments
     from soaring.analysis.observables.persistence import velocity_autocorrelation
 
-    derived, catalog_path = _derived_and_catalog(discipline)
+    derived = DISCIPLINES[discipline].derived_dir()
     if derived is None:
         print(f"{discipline}: fixes.parquet not reachable, skipping")
         return 1
@@ -131,7 +117,7 @@ def run(discipline: str, out_dir: Path) -> int:
         if count % 20_000 == 0:
             print(f"  {discipline}: {count} flights", flush=True)
 
-    slug = DISCIPLINES[discipline][0]
+    slug = DISCIPLINES[discipline].slug
     out_dir.mkdir(parents=True, exist_ok=True)
     tails = {}
     for i in range(n_lag):

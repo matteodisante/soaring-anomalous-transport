@@ -23,10 +23,19 @@ from __future__ import annotations
 
 import json
 import math
+import sys
 import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+_SRC = str(ROOT / "src")
+if _SRC not in sys.path:
+    sys.path.insert(0, _SRC)
+
+# The sys.path line above is what makes this resolvable when the script is run
+# directly, so the import cannot move to the top of the file.
+from soaring.reporting import bare_cli  # noqa: E402
+
 OUT = ROOT / "data" / "basemap.json"
 
 SOURCE = (
@@ -146,4 +155,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    bare_cli(__doc__)
+
     raise SystemExit(main())

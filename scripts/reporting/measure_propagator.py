@@ -31,25 +31,13 @@ _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
 
-DISCIPLINES = {
-    "paragliders": ("para", "SOARING_PARA_DATA_ROOT", "PARA_CONFIG_PATH"),
-    "hang gliders": ("hang", "SOARING_DELTA_DATA_ROOT", "DELTA_CONFIG_PATH"),
-}
+# The sys.path line above is what makes this resolvable when the script is run
+# directly, so the import cannot move to the top of the file.
+from soaring.reporting import DISCIPLINES  # noqa: E402
 
 # The window Chapter 3 reads every exponent on, plus a margin either side so the fit has
 # somewhere to be checked against.
 LAG_MIN_S, LAG_MAX_S, N_LAGS = 30.0, 4000.0, 20
-
-
-def _derived(discipline: str):
-    from soaring.acquisition.ffvl import config as cfgmod
-
-    _, env, attr = DISCIPLINES[discipline]
-    try:
-        cfg = cfgmod.load_config(str(getattr(cfgmod, attr)), data_root_env=env)
-    except (FileNotFoundError, KeyError):
-        return None
-    return cfg.derived_dir if (cfg.derived_dir / "fixes.parquet").is_file() else None
 
 
 def run(discipline: str, out_dir: Path, limit: int | None = None) -> int:
@@ -59,7 +47,7 @@ def run(discipline: str, out_dir: Path, limit: int | None = None) -> int:
         PropagatorAccumulator,
     )
 
-    derived = _derived(discipline)
+    derived = DISCIPLINES[discipline].derived_dir()
     if derived is None:
         print(f"{discipline}: fixes.parquet not reachable")
         return 1
@@ -114,7 +102,7 @@ def run(discipline: str, out_dir: Path, limit: int | None = None) -> int:
         print(f"{discipline}: nothing accumulated")
         return 1
 
-    slug = DISCIPLINES[discipline][0]
+    slug = DISCIPLINES[discipline].slug
     out_dir.mkdir(parents=True, exist_ok=True)
     payload: dict[str, np.ndarray] = {"cadences": np.array(sorted(accumulators))}
     payload.update(kinematics.to_dict())

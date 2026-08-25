@@ -74,12 +74,9 @@ _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
 
-# Macro-name prefix per discipline (matches the \StatPara/\StatHang style of stats.tex).
-_DISCIPLINES = {
-    "Para": ("configs/para_download.yaml", "SOARING_PARA_DATA_ROOT"),
-    "Hang": ("configs/delta_download.yaml", "SOARING_DELTA_DATA_ROOT"),
-}
-
+# The sys.path line above is what makes this resolvable when the script is run
+# directly, so the import cannot move to the top of the file.
+from soaring.reporting import DISCIPLINES, bare_cli, check_name  # noqa: E402
 
 def _fmt(value: float, decimals: int) -> str:
     """Format to ``decimals`` places, dropping a trailing all-zero fraction.
@@ -304,7 +301,6 @@ def main() -> int:
     try:
         import pandas as pd
 
-        from soaring.acquisition.ffvl.config import load_config
         from soaring.analysis.config import load_preproc_config
     except ImportError as exc:
         print(f"census stats: missing dependency ({exc}); keeping the committed file.")
@@ -315,9 +311,10 @@ def main() -> int:
     flight = preproc.flight
 
     scans, catalogs = {}, {}
-    for prefix, (config_path, env) in _DISCIPLINES.items():
+    for glider in DISCIPLINES.values():
+        prefix = glider.tag
         try:
-            cfg = load_config(str(ROOT / config_path), data_root_env=env)
+            cfg = glider.config()
         except (FileNotFoundError, KeyError):
             print(f"census stats: no config/data root for {prefix}; keeping the file.")
             return 0
@@ -340,15 +337,19 @@ def main() -> int:
         "% generate_preproc_figure.py (full rescan), then rerun this script.",
     ]
     for name, value in _config_macros(preproc).items():
+        check_name(name)
         lines.append(f"\\newcommand{{\\{name}}}{{{value}}}")
     for prefix, scan in scans.items():
         for name, value in _scan_macros(prefix, scan, sampling).items():
+            check_name(name)
             lines.append(f"\\newcommand{{\\{name}}}{{{value}}}")
         for name, value in _filtering_macros(prefix, scan, flight).items():
+            check_name(name)
             lines.append(f"\\newcommand{{\\{name}}}{{{value}}}")
         catalog = catalogs.get(prefix)
         if catalog is not None:
             for name, value in _placeholder_date_macros(prefix, catalog).items():
+                check_name(name)
                 lines.append(f"\\newcommand{{\\{name}}}{{{value}}}")
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
@@ -359,4 +360,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    bare_cli(__doc__)
+
     raise SystemExit(main())

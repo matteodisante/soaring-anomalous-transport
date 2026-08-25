@@ -31,10 +31,15 @@ _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
 
-DISCIPLINES = {
-    "paragliders": ("Para", "SOARING_PARA_DATA_ROOT", "PARA_CONFIG_PATH"),
-    "hang gliders": ("Hang", "SOARING_DELTA_DATA_ROOT", "DELTA_CONFIG_PATH"),
-}
+# The sys.path line above is what makes this resolvable when the script is run
+# directly, so the import cannot move to the top of the file.
+from soaring.reporting import (  # noqa: E402
+    DISCIPLINES,
+    bare_cli,
+    check_name,
+    partial_write_refusal,
+    unreachable_reason,
+)
 
 # Drop reasons in pipeline order, with the label the table prints for each. A reason the
 # run never produced is left out of the table rather than shown as a row of zeros.
@@ -96,15 +101,8 @@ def _check_labels_cover_the_code() -> None:
 
 def _meta_path(discipline: str) -> Path | None:
     """The discipline's ``flights_meta.parquet``, or ``None`` if it is not reachable."""
-    from soaring.acquisition.ffvl import config as cfgmod
-
-    _, env, attr = DISCIPLINES[discipline]
-    try:
-        cfg = cfgmod.load_config(str(getattr(cfgmod, attr)), data_root_env=env)
-    except (FileNotFoundError, KeyError):
-        return None
-    path = cfg.derived_dir / "flights_meta.parquet"
-    return path if path.is_file() else None
+    derived = DISCIPLINES[discipline].derived_dir("flights_meta.parquet")
+    return derived / "flights_meta.parquet" if derived is not None else None
 
 
 def _step_count(discipline: str) -> str | None:
@@ -117,15 +115,11 @@ def _step_count(discipline: str) -> str | None:
     """
     import pyarrow.parquet as pq
 
-    from soaring.acquisition.ffvl import config as cfgmod
-
-    _, env, attr = DISCIPLINES[discipline]
-    try:
-        cfg = cfgmod.load_config(str(getattr(cfgmod, attr)), data_root_env=env)
-    except (FileNotFoundError, KeyError):
+    derived = DISCIPLINES[discipline].derived_dir()
+    if derived is None:
         return None
-    fixes, segments = cfg.derived_dir / "fixes.parquet", cfg.derived_dir / "segments.parquet"
-    if not (fixes.is_file() and segments.is_file()):
+    fixes, segments = derived / "fixes.parquet", derived / "segments.parquet"
+    if not segments.is_file():
         return None
     rows = pq.ParquetFile(fixes).metadata.num_rows
     kept = pq.read_table(segments, columns=["kept"]).column("kept").to_pylist()
@@ -226,7 +220,8 @@ def main() -> int:
 
     _check_labels_cover_the_code()
     metas, lines = {}, []
-    for discipline, (tag, _, _) in DISCIPLINES.items():
+    for discipline, glider in DISCIPLINES.items():
+        tag = glider.tag
         path = _meta_path(discipline)
         if path is None:
             print(f"[{discipline}] no processed dataset; skipped.")
@@ -234,9 +229,11 @@ def main() -> int:
         meta = pd.read_parquet(path)
         metas[discipline] = meta
         for name, value in _macros(tag, meta).items():
+            check_name(name)
             lines.append(f"\\newcommand{{\\{name}}}{{{value}}}")
         steps = _step_count(discipline)
         if steps is not None:
+            check_name(f"StatPipe{tag}InSegmentSteps")
             lines.append(f"\\newcommand{{\\StatPipe{tag}InSegmentSteps}}{{{steps}}}")
         kept = int(meta["drop_reason"].isna().sum())
         share = 100.0 * kept / max(len(meta), 1)
@@ -245,6 +242,15 @@ def main() -> int:
     if not metas:
         print("No processed dataset reachable; nothing to do.")
         return 0
+    refusal = partial_write_refusal(
+        [d for d in DISCIPLINES if d not in metas], OUT.name,
+        allow_partial="--allow-partial" in sys.argv[1:],
+        reasons=[unreachable_reason(DISCIPLINES[d], "flights_meta.parquet")
+                 for d in DISCIPLINES if d not in metas],
+    )
+    if refusal:
+        print(refusal)
+        return 1
 
     lines += _drop_table(metas)
     OUT.parent.mkdir(parents=True, exist_ok=True)
@@ -259,4 +265,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    bare_cli(__doc__, known=["--allow-partial"])
+
     raise SystemExit(main())

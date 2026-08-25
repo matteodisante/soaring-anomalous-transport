@@ -37,28 +37,16 @@ _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
 
+# The sys.path line above is what makes this resolvable when the script is run
+# directly, so the import cannot move to the top of the file.
+from soaring.reporting import DISCIPLINES  # noqa: E402
+
 # The lag grid of generate_msd_figure.py, so that the audit and the figure speak about
 # the same lags and a discrepancy between them is a discrepancy of substance.
 LAG_MIN_S, LAG_MAX_S, N_LAGS = 1.0, 43_200.0, 90
 
-DISCIPLINES = {
-    "paragliders": ("SOARING_PARA_DATA_ROOT", "PARA_CONFIG_PATH"),
-    "hang gliders": ("SOARING_DELTA_DATA_ROOT", "DELTA_CONFIG_PATH"),
-}
-
 # The estimator's own floor on the coverage tolerance (transport.MSDAccumulator).
 MIN_TOLERANCE_S = 0.5
-
-
-def _derived_dir(discipline: str) -> Path | None:
-    from soaring.acquisition.ffvl import config as cfgmod
-
-    env, attr = DISCIPLINES[discipline]
-    try:
-        cfg = cfgmod.load_config(str(getattr(cfgmod, attr)), data_root_env=env)
-    except (FileNotFoundError, KeyError):
-        return None
-    return cfg.derived_dir if (cfg.derived_dir / "fixes.parquet").is_file() else None
 
 
 def _sample_flight(times, east, north, lags):
@@ -87,7 +75,7 @@ def _sample_flight(times, east, north, lags):
 def run(discipline: str, out_dir: Path) -> int:
     from soaring.analysis.derived import stream_flights
 
-    derived = _derived_dir(discipline)
+    derived = DISCIPLINES[discipline].derived_dir()
     if derived is None:
         print(f"{discipline}: derived/fixes.parquet not reachable, skipping")
         return 1

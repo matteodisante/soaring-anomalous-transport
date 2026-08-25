@@ -29,6 +29,10 @@ _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
 
+# The sys.path line above is what makes this resolvable when the script is run
+# directly, so the import cannot move to the top of the file.
+from soaring.reporting import bare_cli  # noqa: E402
+
 
 def main() -> int:
     """Copy each reachable SSD ``seasons_index.csv`` into the repo; best-effort."""
@@ -73,4 +77,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    bare_cli(__doc__)
+
     raise SystemExit(main())

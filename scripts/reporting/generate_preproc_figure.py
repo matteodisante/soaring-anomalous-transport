@@ -69,6 +69,15 @@ _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
 
+# The sys.path line above is what makes this resolvable when the script is run
+# directly, so the import cannot move to the top of the file.
+from soaring.reporting import (  # noqa: E402
+    DISCIPLINES,
+    bare_cli,
+    partial_write_refusal,
+    unreachable_reason,
+)
+
 # Deterministic PDF metadata -> committing the figures produces clean diffs.
 _PDF_METADATA = {
     "Creator": "soaring.analysis",
@@ -124,6 +133,16 @@ def main() -> int:
     if not configs:
         print("No IGC data reachable on the SSD; keeping the committed figures.")
         return 0
+    refusal = partial_write_refusal(
+        [d for d in DISCIPLINES if d not in configs],
+        "the pre-processing diagnostic figures",
+        allow_partial="--allow-partial" in sys.argv[1:],
+        reasons=[unreachable_reason(DISCIPLINES[d], "fixes.parquet")
+                 for d in DISCIPLINES if d not in configs],
+    )
+    if refusal:
+        print(refusal)
+        return 1
 
     scans = {}
     for disc, cfg_disc in configs.items():
@@ -174,4 +193,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    bare_cli(__doc__, known=["--allow-partial"])
+
     raise SystemExit(main())
