@@ -44,19 +44,28 @@ plugins:
             members_order: source
             filters: ["!^_"]
 
+# Grouped by the stage of the work each page belongs to, which is also the order the data
+# moves: acquisition, then the dataset the pipeline builds from it, then what is measured on
+# that dataset. Two of the sections have a thesis chapter behind them -- "The dataset" is
+# Ch. 2 and "The analysis" is Ch. 3 -- and the guide in each is the map of the code that
+# chapter's numbers come out of.
 nav:
   - Home: index.md
-  - Guide:
-      - Installation: guide/installation.md
+  - Acquisition:
       - Data source (FFVL): guide/data-source.md
       - Downloading the data: guide/downloading.md
       - From the .igc file to the flight: guide/igc-to-flight.md
+  - The dataset:
       - The pre-processing pipeline: guide/preprocessing-pipeline.md
       - What is on the SSD: guide/data-on-disk.md
+  - The analysis:
+      - The global-transport measurement: guide/global-transport.md
       - The scripts: guide/scripts.md
       - Where each number comes from: guide/provenance.md
+  - Reference:
+      - Installation: guide/installation.md
       - Bibliography (verification & local archive): guide/bibliography.md
-  - API Reference: reference.md
+      - API Reference: reference.md
 
 markdown_extensions:
   - admonition

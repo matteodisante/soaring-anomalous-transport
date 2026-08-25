@@ -270,6 +270,12 @@ plan rather than a result.}
 \clearpage
 \pagenumbering{arabic}
 
+% ---- The filenames run one ahead of the printed chapter numbers, because
+% ---- 02-data-acquisition.tex is \input inside 03-dataset.tex as its opening section
+% ---- rather than being a chapter of its own. So: 03-dataset is Chapter 2,
+% ---- 04-global-transport is Chapter 3, 05-flight-phases is Chapter 4. The files are not
+% ---- renamed on purpose -- it would churn the provenance table, the revision records and
+% ---- the git history for an alignment this comment supplies.
 \input{sections/01-introduction}
 \input{sections/03-dataset}
 \input{sections/04-global-transport}
