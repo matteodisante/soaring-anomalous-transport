@@ -33,6 +33,108 @@ def test_the_quantiles_recover_the_exponent_without_touching_a_moment(hurst):
     assert fitted["hurst"] == pytest.approx(hurst, abs=0.04)
 
 
+def test_the_per_quantile_error_is_the_fit_precision_not_the_scaling_form_test():
+    """The OLS slope error and the spread test two different things.
+
+    A process straddling its own correlation time gives quantiles that visibly disagree
+    (large spread) while each quantile's own log-log fit can still be a tight straight
+    line over the range it is read on (small per-quantile error). One number cannot
+    stand in for the other.
+    """
+    lags = np.unique(np.round(np.geomspace(4, 512, 14)).astype(int))
+    acc = _accumulate(lambda n, k: S.persistent_walk(n, 60.0, seed=k), lags)
+    quantiles = np.array(
+        [P.quantiles_from_histogram(acc.counts[0, i], acc.edges)
+         for i in range(lags.size)]
+    )
+    fitted = P.scaling_from_quantiles(lags.astype(float), quantiles)
+    errors = fitted["per_quantile_err"]
+    assert errors.shape == fitted["per_quantile"].shape
+    assert np.all(np.isfinite(errors))
+    assert np.all(errors >= 0)
+
+
+def test_too_few_points_gives_nan_hurst_and_nan_error_together():
+    """The error must not silently survive a fit that itself failed."""
+    lags = np.array([10.0, 20.0])
+    quantiles = np.array([[1.0, 2.0, 3.0, 4.0], [2.0, 4.0, 6.0, 8.0]])
+    fitted = P.scaling_from_quantiles(lags, quantiles)
+    assert np.all(np.isnan(fitted["per_quantile"]))
+    assert np.all(np.isnan(fitted["per_quantile_err"]))
+
+
+def test_the_modulus_recovers_the_same_exponent_as_the_components_when_isotropic():
+    """|dr| and |dx| must agree when nothing is special about the frame.
+
+    It is what licenses setting the modulus exponent beside the MSD's.
+    """
+    lags = np.unique(np.round(np.geomspace(4, 256, 12)).astype(int))
+    acc = _accumulate(
+        lambda n, k: S.fractional_brownian(n, 0.75, seed=k), lags, reps=24
+    )
+    fitted = {}
+    for v, name in enumerate(P.VARIABLES):
+        quantiles = np.array(
+            [P.quantiles_from_histogram(acc.counts[v, i], acc.edges)
+             for i in range(lags.size)]
+        )
+        fitted[name] = P.scaling_from_quantiles(lags.astype(float), quantiles)["hurst"]
+    assert fitted["R"] == pytest.approx(0.75, abs=0.04)
+    assert fitted["R"] == pytest.approx(fitted["E"], abs=0.03)
+    assert fitted["R"] == pytest.approx(fitted["N"], abs=0.03)
+
+
+def test_the_block_bootstrap_error_exceeds_the_least_squares_one():
+    """The reason the OLS error is not quoted: its points are not independent.
+
+    Consecutive lags are built from the same records, so a fit sees a straighter line
+    than the data earns. Resampling whole blocks keeps that dependence inside the
+    resampling unit, and must return a larger number -- on real flights, where a block
+    also holds a genuine cluster of correlated records, larger still.
+    """
+    lags = np.unique(np.round(np.geomspace(4, 256, 12)).astype(int))
+    acc = P.PropagatorAccumulator(lags, n_blocks=16)
+    for k in range(64):
+        acc.add(np.asarray(S.fractional_brownian(2**13, 0.75, seed=k)), block=k % 16)
+    quantiles = np.array(
+        [P.quantiles_from_histogram(acc.counts[2, i], acc.edges)
+         for i in range(lags.size)]
+    )
+    ols = P.scaling_from_quantiles(lags.astype(float), quantiles)["per_quantile_err"]
+    boot = P.hurst_bootstrap_error(
+        lags.astype(float), acc.block_quantiles()[:, 2], n_resamples=200
+    )
+    assert boot["n_blocks"] == 16
+    assert np.isfinite(boot["hurst_err"])
+    assert boot["hurst_err"] > np.nanmedian(ols)
+
+
+def test_the_bootstrap_error_is_reproducible_and_degrades_to_nan():
+    """A quoted error must be the same on a re-run, and absent when unearned."""
+    lags = np.unique(np.round(np.geomspace(4, 256, 12)).astype(int))
+    acc = P.PropagatorAccumulator(lags, n_blocks=8)
+    for k in range(32):
+        acc.add(np.asarray(S.fractional_brownian(2**13, 0.7, seed=k)), block=k % 8)
+    blocks = acc.block_quantiles()[:, 2]
+    first = P.hurst_bootstrap_error(lags.astype(float), blocks, n_resamples=80, seed=3)
+    again = P.hurst_bootstrap_error(lags.astype(float), blocks, n_resamples=80, seed=3)
+    assert first["hurst_err"] == again["hurst_err"]
+
+    too_few = P.hurst_bootstrap_error(lags.astype(float), blocks[:2], n_resamples=80)
+    assert np.isnan(too_few["hurst_err"])
+    assert np.all(np.isnan(too_few["per_quantile_err"]))
+
+
+def test_an_accumulator_with_no_blocks_allocates_none_and_still_works():
+    """The default path -- tests and the calibration -- must not pay for the blocks."""
+    lags = np.unique(np.round(np.geomspace(4, 128, 8)).astype(int))
+    acc = P.PropagatorAccumulator(lags)
+    acc.add(np.asarray(S.fractional_brownian(2**12, 0.6, seed=0)))
+    assert acc.block_counts is None
+    assert acc.block_quantiles().shape[0] == 0
+    assert acc.counts.sum() > 0
+
+
 @pytest.mark.parametrize("hurst", [0.5, 0.9])
 def test_the_four_quantiles_agree_when_the_process_is_self_similar(hurst):
     """Their spread is a test of the scaling form, not an error bar on the exponent."""

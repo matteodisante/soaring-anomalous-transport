@@ -579,28 +579,43 @@ along the space axis instead of the time axis --- and the check is withdrawn as 
 independent of it.
 
 \paragraph{The propagator of the increments.}
-Write $\Delta x(t_0,\Delta)=x(t_0+\Delta)-x(t_0)$ for the increment of one horizontal
-component over a lag $\Delta$, inside a retained segment and never across the gap that ends
-one (Sec.~\ref{sec:uniform}). Pooled over starting times and flights, its distribution is
-the propagator of the increments,
+Write $\Delta\mathbf{r}(t_0,\Delta)=\mathbf{r}(t_0+\Delta)-\mathbf{r}(t_0)$ for the
+horizontal increment over a lag $\Delta$, inside a retained segment and never across the
+gap that ends one (Sec.~\ref{sec:uniform}). Pooled over starting times and flights, the
+distribution of its modulus $r=|\Delta\mathbf{r}|$ is the propagator of the increments, and
+for a self-similar process with stationary increments it takes the scaling form
 \begin{equation}
-  P(x,\Delta)\,\mathrm{d}x=\Pr\!\bigl(\Delta x\in[x,\,x+\mathrm{d}x]\bigr),
-\end{equation}
-and for a self-similar process with stationary increments it takes the scaling form
-\begin{equation}
-  P(x,\Delta)=\Delta^{-H}\,F\!\left(\frac{x}{\Delta^{H}}\right),
+  P(r,\Delta)=\Delta^{-H}\,F\!\left(\frac{r}{\Delta^{H}}\right),
   \label{eq:increment-scaling}
 \end{equation}
-with $F$ a fixed density independent of the lag, defined on one component since pooling the
-two would presuppose the isotropy Sec.~\ref{sec:prelim} rejects. Every quantile of
-$|\Delta x|$ then grows as $\Delta^{H}$: writing $q_p(\Delta)$ for the $p$th quantile,
-$\log q_p$ against $\log\Delta$ is a straight line of slope $H$ at every $p$, fixed by the
-middle of the distribution where every flight contributes and a heavy tail moves it not at
-all. Neither of the two defects of the earlier estimates enters here: no moment for a few
-large increments to set, and no absolute position for the launch site to bias. The four
-levels read are the lower quartile, the median, the upper quartile and the ninetieth
-percentile, from one streaming pass keeping a histogram of $|\Delta x|$ per lag, per
-component and per native cadence \impldetails{impl:global}.
+with $F$ a fixed density independent of the lag. Every quantile of $r$ then grows as
+$\Delta^{H}$: writing $q_p(\Delta)$ for the $p$th quantile, $\log q_p$ against
+$\log\Delta$ is a straight line of slope $H$ at every $p$, fixed by the middle of the
+distribution where every flight contributes and a heavy tail moves it not at all. Neither
+of the two defects of the earlier estimates enters here: no moment for a few large
+increments to set, and no absolute position for the launch site to bias. The four levels
+read are the lower quartile, the median, the upper quartile and the ninetieth percentile,
+from one streaming pass keeping a histogram per lag and per native cadence
+\impldetails{impl:global}.
+
+\paragraph{Why the modulus, and what the components are still for.}
+The exponent has to be measured on the same quantity as the estimators it is being checked
+against. The ensemble MSD averages $E^2+N^2$ and the filtered variation sums the squared
+difference over both components to stay invariant under a rotation of the frame
+(Sec.~\ref{sec:variations}); both are statements about $|\Delta\mathbf{r}|$, so only a
+modulus exponent can be set beside them in Table~\ref{tab:threeroutes}. Reading $H$ off one
+component and comparing it with those would be comparing two different quantities, and on
+this ensemble they are numerically different as well.
+
+That is not the same as pooling the two components into one histogram, which would be the
+error Sec.~\ref{sec:prelim} forbids: pooling presupposes that $E$ and $N$ share a
+distribution, and they do not. The modulus presupposes nothing --- it is a scalar built
+from both, and it is the scalar the other two estimators already use. The components are
+therefore measured separately as well, and kept apart, because their disagreement is itself
+a result: it is reported below and carried into Chapter~\ref{ch:phases} as a constraint. So
+the pass histograms all three of $|\Delta x|$, $|\Delta y|$ and $|\Delta\mathbf{r}|$; the
+modulus answers what the transport exponent is, and the components answer whether one
+exponent can stand for both directions.
 
 \paragraph{What it returns.}
 $H=\StatPropParaHurst$ for paragliders and $\StatPropHangHurst$ for hang gliders, over
@@ -658,20 +673,80 @@ Equation~\eqref{eq:increment-scaling} claims the four quantiles share a slope. T
 fitted separately, $H$ falls from \StatPropParaHurstBulk\ at the lower quartile and the
 median to \StatPropParaHurstFlank\ at the upper quartile and the ninetieth percentile for
 paragliders, and from \StatPropHangHurstBulk\ to \StatPropHangHurstFlank\ for hang gliders,
-in the same direction in both disciplines, on both components and at every cadence
-(Figure~\ref{fig:propagator}b). The spread across the four quantiles is
-\StatPropParaQuantileSpread\ and \StatPropHangQuantileSpread, against \StatPropCalibSpread\
-on an exactly self-similar process fitted the same way with less data
-\impldetails{impl:global}; rescaling the histograms by $\Delta^{H}$ leaves
-\StatPropParaCollapseDex\ and \StatPropHangCollapseDex\ dex of scatter through the bulk,
-with visible separation at the flanks (Figure~\ref{fig:propagator}c). The scaling form is
-therefore only approximate: the centre of the increment distribution spreads faster than
-its flanks, a distribution changing shape with scale rather than a single self-similar one.
-That qualifies the exponent rather than refuting it --- the distance from bulk to flank is
-small beside the distance of either from the Brownian value, and no reading of these curves
-puts the transport near it --- but it is a second reason, independent of the range
-dependence of $\alpha_2$, why a single exponent quoted to three figures would claim more
-than this archive supports.
+in the same direction in both disciplines, on the modulus and on both components alike,
+and at every native cadence measured (Figure~\ref{fig:propagator}b draws the three
+variables at \SI{\StatPropParaDrawnDtS}{\second}).
+Table~\ref{tab:quantileH} gives the four fits one at a time, on the modulus at the fastest
+cadence, each with an error that resamples whole day-and-site clusters rather than trusting
+the lags of the fit to be independent points. That error is small ---
+\StatPropParaHurstQuantileErrMax\ at worst for paragliders and
+\StatPropHangHurstQuantileErrMax\ for hang gliders --- and it is small for a reason that
+is not a courtesy of the estimator: \num{\StatPropParaDrawnBlocks} blocks of day-and-site
+clusters over an archive this size leave almost nothing for the sampling to move. The
+comparison that matters is therefore between that error and the spread down the column,
+which is \num{145} and \num{24} times it. The quantiles disagreeing is not sampling
+noise, and no error bar of this kind will make it one.
+
+It is worth saying which way that cuts, because the naive alternative points the other
+way. The least-squares error of the same fit is \StatPropParaDrawnHurstErrOls\ and
+\StatPropHangDrawnHurstErrOls, \emph{larger} than the resampled one by up to a factor of
+twenty. That is not the resampling being optimistic: an ordinary least-squares error on a
+log--log fit measures how far the points sit off a straight line, and here they sit off it
+because the relation is genuinely a little curved --- which is the finding of this section,
+not an uncertainty about it. It also treats lags built from the same flights as independent
+observations, which they are not. So neither number is a reason to write the exponent to
+three figures: what limits it is not how well the archive is sampled --- the archive is
+large enough that the sampling error is negligible --- but the systematic spread, across
+the quantiles here, across native cadences (\StatPropParaHurstMin\ to
+\StatPropParaHurstMax\ for paragliders), and with the fitted range in
+Sec.~\ref{sec:transport-measure}. The spread
+across the four quantiles is \StatPropParaQuantileSpread\ and \StatPropHangQuantileSpread,
+against \StatPropCalibSpread\ on an exactly self-similar process fitted the same way with
+less data \impldetails{impl:global}. It is wider on the modulus than on either component
+---\StatPropParaQuantileSpreadEast\ east and \StatPropParaQuantileSpreadNorth\ north for
+paragliders, \StatPropHangQuantileSpreadEast\ and \StatPropHangQuantileSpreadNorth\ for
+hang gliders (Figure~\ref{fig:propagator}b)--- and that ordering is the expected one rather
+than a surprise: a small $|\Delta x|$ is not a small displacement, since the wing may be
+going due north, so a component's lower quantiles mix barely moving with moving across the
+axis being read, and flatten the drift by averaging the two. The modulus separates them,
+and reports more of it.
+
+Rescaling the histograms by $\Delta^{H}$ leaves
+\StatPropParaCollapseDex\ and \StatPropHangCollapseDex\ dex of scatter through the bulk ---
+a factor of \StatPropParaCollapseFactor\ and \StatPropHangCollapseFactor\ in the rescaled
+density, close enough that the curves read as one by eye --- with visible separation only
+at the flanks (Figure~\ref{fig:propagator}c). The scaling form is therefore only approximate: the centre
+of the increment distribution spreads faster than its flanks, a distribution changing shape
+with scale rather than a single self-similar one. That qualifies the exponent rather than
+refuting it --- the distance from bulk to flank is small beside the distance of either from
+the Brownian value, and no reading of these curves puts the transport near it --- but it is
+a second reason, independent of the range dependence of $\alpha_2$, why a single exponent
+quoted to three figures would claim more than this archive supports.
+
+\begin{table}[htbp]
+\centering\small
+\ifrevmode\color{revblue}\fi
+\renewcommand{\arraystretch}{1.2}
+\caption{\rev{$H$ fitted separately at each percentile of $|\Delta\mathbf{r}|$, at the
+fastest native cadence (\SI{\StatPropParaDrawnDtS}{\second}) over
+\SIrange{\StatPropParaFitMinS}{\StatPropParaFitMaxS}{\second}. No error column: resampling
+\num{\StatPropParaDrawnBlocks} blocks of whole day-and-site clusters moves each of these
+figures by at most \StatPropParaHurstQuantileErrMax\ and \StatPropHangHurstQuantileErrMax,
+which would print as a column of zeros at the precision shown. The differences down the
+column are one to two orders of magnitude larger than that, and they are the point of the
+table.}}
+\label{tab:quantileH}
+\begin{tabular}{@{}l c c@{}}
+\toprule
+\textbf{percentile of $|\Delta\mathbf{r}|$} & \boldmath$H$ \textbf{paragliders} & \boldmath$H$ \textbf{hang gliders} \\
+\midrule
+25th          & \StatPropParaHurstTwentyFifth   & \StatPropHangHurstTwentyFifth \\
+50th (median) & \StatPropParaHurstMedian        & \StatPropHangHurstMedian \\
+75th          & \StatPropParaHurstSeventyFifth  & \StatPropHangHurstSeventyFifth \\
+90th          & \StatPropParaHurstNinetieth     & \StatPropHangHurstNinetieth \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \paragraph{The anisotropy reaches the exponent.}
 The two horizontal components differ in exponent as well as amplitude:
@@ -686,12 +761,24 @@ are kept apart here and in Sec.~\ref{sec:prelim}.
   \IfFileExists{generated/propagator.pdf}{\includegraphics[width=\linewidth]{generated/propagator}}{%
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
     \texttt{scripts/reporting/generate\_propagator\_figure.py}.}}}
-  \caption{\rev{The exponent read from the distribution of the increments rather than a
-  moment of it. (a)~25th/50th/75th/90th percentiles of $|\Delta x|$ against lag, log--log; a
-  self-similar process gives four parallel lines. (b)~Exponent fitted at each percentile
-  separately, against the dashed self-similar value; every curve falls from bulk to flank.
-  (c)~Histograms rescaled by $\Delta^{H}$: they coincide through the bulk and part company
-  at the flanks.}}
+  \caption{\rev{The exponent read from the distribution of the increments, not from a
+  moment of it. All three panels use each discipline's fastest native cadence,
+  \SI{\StatPropParaDrawnDtS}{\second}, where the histograms hold the most increments.
+  Panels (a) and (c) use the modulus $|\Delta\mathbf{r}|$; panel (b) sets it beside the two
+  components.
+  \textbf{(a)}~The 25th, 50th, 75th and 90th percentiles of $|\Delta\mathbf{r}|$ against
+  lag, log--log, over the fit window
+  \SIrange{\StatPropParaFitMinS}{\StatPropParaFitMaxS}{\second}. Four parallel lines would
+  mean one exponent describes every part of the distribution.
+  \textbf{(b)}~The slope of each of those four lines, fitted separately. A flat line would
+  mean the same thing. The three marker styles are the modulus and the two components; all
+  of them fall from the 25th percentile to the 90th, so the disagreement is not a property
+  of one direction.
+  \textbf{(c)}~The histograms behind (a), rescaled by $\Delta^{H}$, one curve per lag
+  inside the fit window and every third lag drawn. $H$ is that row's own value,
+  \StatPropParaDrawnHurst\ for paragliders and \StatPropHangDrawnHurst\ for hang gliders.
+  If the scaling form held exactly the curves would lie on top of one another; they do
+  through the bulk and separate at the flanks.}}
   \label{fig:propagator}
 \end{figure}
 

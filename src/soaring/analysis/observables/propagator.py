@@ -46,9 +46,11 @@ from __future__ import annotations
 import numpy as np
 
 __all__ = [
+    "VARIABLES",
     "KinematicAccumulator",
     "PropagatorAccumulator",
     "collapse_residual",
+    "hurst_bootstrap_error",
     "peak_scaling",
     "quantiles_from_histogram",
     "scaling_from_quantiles",
@@ -63,30 +65,73 @@ EDGES = np.geomspace(1.0, 1.0e5, 241)
 QUANTILES = (0.25, 0.50, 0.75, 0.90)
 
 
+#: The three variables histogrammed at each lag, in the order stored. ``E`` and
+#: ``N`` are the two horizontal components; ``R`` is the modulus of the same vector
+#: difference. The modulus is the one commensurate with the rest of the chapter -- the
+#: ensemble MSD sums ``E**2 + N**2`` and the filtered variation sums over the components
+#: to stay rotation invariant, so both are statements about ``|dr|`` and only a modulus
+#: exponent can be set beside them. The components are kept because this archive is
+#: anisotropic and their *difference* is the finding; they are not interchangeable with
+#: the modulus, and on an anisotropic ensemble the modulus is not a power law of either.
+VARIABLES = ("E", "N", "R")
+
+
 class PropagatorAccumulator:
-    """Histograms of ``|dx|`` and ``|dy|`` at each lag, accumulated one flight at a time.
+    """Histograms of ``|dx|``, ``|dy|`` and ``|dr|`` at each lag, one flight at a time.
 
     Args:
         lags: Lags in samples, one column of the histogram per entry.
         order: Difference order. 1 is the plain increment, which is what the scaling form
             above is written for.
         edges: Bin edges in metres; :data:`EDGES` by default.
+        n_blocks: Keep a separate histogram per block as well as the pooled one, so that
+            the reduction can resample blocks and get an uncertainty that is not the
+            least-squares error of a fit whose points are not independent. One by
+            default, which allocates nothing extra.
     """
 
-    def __init__(self, lags: np.ndarray, *, order: int = 1, edges: np.ndarray = EDGES):
+    def __init__(
+        self,
+        lags: np.ndarray,
+        *,
+        order: int = 1,
+        edges: np.ndarray = EDGES,
+        n_blocks: int = 1,
+    ):
         self.lags = np.asarray(lags, dtype=int)
         self.order = int(order)
         self.edges = np.asarray(edges, dtype=float)
-        # [component, lag, bin]
-        self.counts = np.zeros((2, self.lags.size, self.edges.size - 1), dtype=np.int64)
-        self.totals = np.zeros((2, self.lags.size), dtype=np.int64)
+        self.n_blocks = max(int(n_blocks), 1)
+        n_bins = self.edges.size - 1
+        # [variable, lag, bin], variables in the order of VARIABLES.
+        self.counts = np.zeros((3, self.lags.size, n_bins), dtype=np.int64)
+        self.totals = np.zeros((3, self.lags.size), dtype=np.int64)
+        # int32 because this is the array that scales with the block count, and a
+        # block's busiest bin holds a few million counts -- far below the limit.
+        self.block_counts = (
+            np.zeros((self.n_blocks, 3, self.lags.size, n_bins), dtype=np.int32)
+            if self.n_blocks > 1
+            else None
+        )
 
-    def add(self, positions: np.ndarray) -> None:
-        """Accumulate one uniformly sampled record."""
+    def add(self, positions: np.ndarray, block: int | None = None) -> None:
+        """Accumulate one uniformly sampled record.
+
+        Args:
+            positions: ``(n, 2)`` positions on a uniform grid.
+            block: Which resampling block this record belongs to. Records sharing a
+                cluster must share a block or the resampling breaks the clustering it
+                exists to respect.
+        """
         from soaring.analysis.observables.moments import _KERNELS
 
         positions = np.asarray(positions, dtype=float)
         kernel = _KERNELS[self.order]
+        block_counts = self.block_counts
+        slot = (
+            None if block_counts is None or block is None
+            else int(block) % self.n_blocks
+        )
         for i, lag in enumerate(self.lags):
             span = (len(kernel) - 1) * int(lag)
             if lag < 1 or span >= len(positions):
@@ -99,13 +144,40 @@ class PropagatorAccumulator:
             # Stride by the span so no sample enters two windows, for the same reason the
             # moment spectrum does: an overlapping window counts one excursion many times.
             acc = acc[::span] if span > 0 else acc
-            for component in range(2):
-                magnitude = np.abs(acc[:, component])
+            east, north = acc[:, 0], acc[:, 1]
+            magnitudes = (np.abs(east), np.abs(north), np.hypot(east, north))
+            for variable, magnitude in enumerate(magnitudes):
                 magnitude = magnitude[magnitude > 0]
                 if magnitude.size == 0:
                     continue
-                self.counts[component, i] += np.histogram(magnitude, bins=self.edges)[0]
-                self.totals[component, i] += magnitude.size
+                binned = np.histogram(magnitude, bins=self.edges)[0]
+                self.counts[variable, i] += binned
+                self.totals[variable, i] += magnitude.size
+                if slot is not None and block_counts is not None:
+                    block_counts[slot, variable, i] += binned
+
+    def block_quantiles(self, probabilities=QUANTILES) -> np.ndarray:
+        """Each block's own quantiles, ``[block, variable, lag, probability]``.
+
+        What the reduction resamples. The per-block histograms are not written out: a
+        block holds enough increments to place a quantile precisely, so its quantiles
+        carry everything the resampling needs at a thousandth of the size.
+
+        Returns:
+            The array, or an empty one when no blocks were kept.
+        """
+        if self.block_counts is None:
+            return np.zeros((0, 3, self.lags.size, len(probabilities)))
+        out = np.full(
+            (self.n_blocks, 3, self.lags.size, len(probabilities)), np.nan, dtype=float
+        )
+        for b in range(self.n_blocks):
+            for variable in range(3):
+                for i in range(self.lags.size):
+                    out[b, variable, i] = quantiles_from_histogram(
+                        self.block_counts[b, variable, i], self.edges, probabilities
+                    )
+        return out
 
     def to_dict(self) -> dict:
         return {
@@ -114,6 +186,7 @@ class PropagatorAccumulator:
             "counts": self.counts,
             "totals": self.totals,
             "order": np.array([self.order]),
+            "block_quantiles": self.block_quantiles(),
         }
 
 
@@ -166,13 +239,23 @@ def scaling_from_quantiles(
     is a test of the scaling form rather than an error bar on it: quantiles that march at
     different rates are a distribution changing shape, which no single exponent describes.
 
+    ``per_quantile_err`` is the least-squares standard error of each slope
+    (``np.polyfit(..., cov=True)``, the same convention as :func:`~soaring.analysis.
+    observables.transport.fit_msd_exponent`). It is the precision of the log-log fit
+    itself and nothing else: on this pass every lag's quantile is read off a
+    histogram of millions of increments, so the fit is essentially noiseless and the
+    error is small almost by construction. It answers "is this line straight to the
+    resolution of the fit", not "how much would this exponent move on another sample
+    of flights". For the second question use :func:`hurst_bootstrap_error`, which is
+    what the chapter quotes.
+
     Args:
         lags_s: Lags in seconds.
         quantiles: ``(n_lags, n_quantiles)`` from :func:`quantiles_from_histogram`.
         fit_range: ``(low, high)`` in seconds; the whole range by default.
 
     Returns:
-        ``{"hurst", "spread", "per_quantile", "lags_used"}``.
+        ``{"hurst", "spread", "per_quantile", "per_quantile_err", "lags_used"}``.
     """
     lags_s = np.asarray(lags_s, dtype=float)
     quantiles = np.asarray(quantiles, dtype=float)
@@ -181,21 +264,119 @@ def scaling_from_quantiles(
         good &= (lags_s >= fit_range[0]) & (lags_s <= fit_range[1])
 
     slopes: list[float] = []
+    errors: list[float] = []
     for column in range(quantiles.shape[1]):
         usable = good & np.isfinite(quantiles[:, column]) & (quantiles[:, column] > 0)
         if usable.sum() < 4:
             slopes.append(float("nan"))
+            errors.append(float("nan"))
             continue
-        slopes.append(
-            float(np.polyfit(np.log10(lags_s[usable]), np.log10(quantiles[usable, column]), 1)[0])
+        coefficients, covariance = np.polyfit(
+            np.log10(lags_s[usable]), np.log10(quantiles[usable, column]), 1, cov=True
         )
+        slopes.append(float(coefficients[0]))
+        errors.append(float(np.sqrt(covariance[0, 0])))
     per = np.array(slopes)
+    per_err = np.array(errors)
     finite = np.isfinite(per)
     return {
         "hurst": float(np.median(per[finite])) if finite.any() else float("nan"),
         "spread": float(per[finite].max() - per[finite].min()) if finite.sum() > 1 else float("nan"),
         "per_quantile": per,
+        "per_quantile_err": per_err,
         "lags_used": int(good.sum()),
+    }
+
+
+def hurst_bootstrap_error(
+    lags_s: np.ndarray,
+    block_quantiles: np.ndarray,
+    *,
+    fit_range: tuple[float, float] | None = None,
+    n_resamples: int = 400,
+    seed: int = 0,
+) -> dict:
+    """Cluster-robust error on ``H``, by resampling the blocks the pass kept.
+
+    The least-squares error of the log--log fit is not an honest uncertainty here,
+    for two reasons that both push the same way. The residuals are not independent:
+    consecutive lags are built from the same fixes, so a quantile that sits high at
+    one lag sits high at the next, and ordinary least squares reads that shared
+    displacement as a well determined line. And every lag is pooled over the same
+    flights, so the sample size the fit thinks it has is the number of *lags*, when
+    the number of independent things in the archive is the number of *clusters of
+    flights* -- the air over one site on one day being what two flights actually have
+    in common (:mod:`soaring.analysis.stats.bootstrap`).
+
+    Blocks are resampled with replacement and the statistic recomputed on each resample.
+    Since only the blocks' quantiles are kept and not their histograms, the resampled
+    statistic is fitted to the mean of the drawn blocks' quantiles rather than to the
+    quantiles of their pooled histogram. The two agree when the blocks are of comparable
+    size, which is what assigning whole clusters to blocks by hash is for, and this
+    function supplies only the *spread* -- the central value comes from the pooled
+    histogram either way.
+
+    Args:
+        lags_s: Lags in seconds.
+        block_quantiles: ``(n_blocks, n_lags, n_quantiles)`` for one variable, from
+            :meth:`PropagatorAccumulator.block_quantiles`.
+        fit_range: ``(low, high)`` in seconds, as for :func:`scaling_from_quantiles`.
+        n_resamples: How many resamples to draw.
+        seed: Seed for the resampling, so the reported error is reproducible.
+
+    Returns:
+        ``{"hurst_err", "per_quantile_err", "n_blocks", "n_resamples"}``; the errors are
+        ``nan`` when fewer than three blocks carry usable quantiles.
+    """
+    lags_s = np.asarray(lags_s, dtype=float)
+    block_quantiles = np.asarray(block_quantiles, dtype=float)
+    if block_quantiles.ndim != 3 or block_quantiles.shape[0] < 3:
+        n_q = block_quantiles.shape[-1] if block_quantiles.ndim == 3 else 0
+        return {
+            "hurst_err": float("nan"),
+            "per_quantile_err": np.full(n_q, np.nan),
+            "n_blocks": (
+                int(block_quantiles.shape[0]) if block_quantiles.ndim == 3 else 0
+            ),
+            "n_resamples": 0,
+        }
+
+    usable = np.flatnonzero(np.isfinite(block_quantiles).any(axis=(1, 2)))
+    n_q = block_quantiles.shape[2]
+    if usable.size < 3:
+        return {
+            "hurst_err": float("nan"),
+            "per_quantile_err": np.full(n_q, np.nan),
+            "n_blocks": int(usable.size),
+            "n_resamples": 0,
+        }
+
+    rng = np.random.default_rng(seed)
+    hursts = np.full(n_resamples, np.nan)
+    per = np.full((n_resamples, n_q), np.nan)
+    for draw in range(n_resamples):
+        picked = rng.choice(usable, size=usable.size, replace=True)
+        with np.errstate(invalid="ignore"):
+            resampled = np.nanmean(block_quantiles[picked], axis=0)
+        fitted = scaling_from_quantiles(lags_s, resampled, fit_range=fit_range)
+        hursts[draw] = fitted["hurst"]
+        per[draw] = fitted["per_quantile"]
+
+    finite = np.isfinite(hursts)
+    return {
+        "hurst_err": (
+            float(np.std(hursts[finite], ddof=1)) if finite.sum() > 1 else float("nan")
+        ),
+        "per_quantile_err": np.array(
+            [
+                float(np.std(per[np.isfinite(per[:, k]), k], ddof=1))
+                if np.isfinite(per[:, k]).sum() > 1
+                else float("nan")
+                for k in range(n_q)
+            ]
+        ),
+        "n_blocks": int(usable.size),
+        "n_resamples": int(finite.sum()),
     }
 
 
