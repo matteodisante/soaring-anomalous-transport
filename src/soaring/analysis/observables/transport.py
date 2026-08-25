@@ -141,7 +141,7 @@ class MSDAccumulator:
         """
         self.lags = np.asarray(lags, dtype=float)
         self._sum = np.zeros(self.lags.size)
-        self._sum_sq = np.zeros(self.lags.size)
+        self._sum_disp4 = np.zeros(self.lags.size)  # sum of |r(t)|^4, for the variance
         self._count = np.zeros(self.lags.size, dtype=np.int64)
         self._samples: list[np.ndarray] | None = [] if keep_samples else None
 
@@ -178,12 +178,12 @@ class MSDAccumulator:
             self.lags >= native_dt
         )
 
-        squared = np.where(covered, position[nearest], 0.0)
-        self._sum += squared
-        self._sum_sq += squared**2
+        disp2 = np.where(covered, position[nearest], 0.0)  # |r(t)|^2, already squared
+        self._sum += disp2
+        self._sum_disp4 += disp2**2
         self._count += covered
         if self._samples is not None:
-            self._samples.append(np.where(covered, squared, np.nan).astype(np.float32))
+            self._samples.append(np.where(covered, disp2, np.nan).astype(np.float32))
 
     def stacked_samples(self) -> np.ndarray | None:
         """The per-flight ``|r(t)|^2``, one row per flight, or ``None`` if not kept.
@@ -202,7 +202,7 @@ class MSDAccumulator:
         with np.errstate(invalid="ignore", divide="ignore"):
             mean = np.where(n > 0, self._sum / np.maximum(n, 1), np.nan)
             variance = np.where(
-                n > 1, self._sum_sq / np.maximum(n, 1) - mean**2, np.nan
+                n > 1, self._sum_disp4 / np.maximum(n, 1) - mean**2, np.nan
             )
             sem = np.sqrt(np.maximum(variance, 0.0) / np.maximum(n, 1))
         percentiles: list[np.ndarray] | list[None] = [None, None, None]
