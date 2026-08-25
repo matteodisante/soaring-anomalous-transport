@@ -33,6 +33,23 @@ PY=python3 scripts/regenerate.sh   # override the interpreter (default .venv/bin
 It refuses to start while `scripts/preprocess.py` is still running — a `pgrep` guard, because
 measuring a table that is still being written gives numbers that are wrong and look fine.
 
+## Reaching one discipline of two
+
+Every generator refuses to write when it reaches one archive and not the other. A truncated
+`.tex` makes the thesis fail to build on the absent discipline's macros; a truncated *figure*
+fails silently, losing a curve while the build succeeds. `--allow-partial` is the escape
+hatch where a one-discipline run is meant.
+
+The commonest cause is not an unmounted disk. `configs/para_download.yaml` ships `data_root`
+as a placeholder while `configs/delta_download.yaml` carries a real path, so **without
+`SOARING_PARA_DATA_ROOT` exported the paraglider archive is unreachable and the hang-glider
+one is not** — half of everything, from a run that otherwise looks normal. The refusal names
+that case specifically, and separates it from an unmounted disk and from a missing pass,
+because the three have different fixes.
+
+`--help` is safe on every script, including the eleven with no argument parser: it prints
+what the script does and exits without touching the archive.
+
 ---
 
 ## Where the intermediate arrays go
@@ -74,9 +91,9 @@ Runs the seven-stage pipeline over an archive and writes `fixes.parquet`,
 Checks the written tables against the invariants Chapter 2 claims for them, and writes
 `thesis/generated/verify.tex`. A full traversal. Step 1 of `regenerate.sh`, because a failure
 here invalidates everything downstream. It rewrites `verify.tex` wholesale, so an unreachable
-data root would delete the other discipline's macros rather than leave them alone; it therefore
-refuses to write at all unless both roots are exported, and `--allow-partial` is the escape
-hatch. `--help` costs nothing.
+data root would delete the other discipline's macros rather than leave them alone, so it
+refuses to write unless both roots are exported — the rule that now holds for every
+generator (above).
 
 ### `scripts/check_reproducible.py`
 Draws a seeded sample of retained flights, finds their raw IGC files, runs them through
