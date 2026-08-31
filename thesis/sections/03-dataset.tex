@@ -1553,19 +1553,11 @@ three-dimensional point it says \emph{3D position}; a bare \enquote{position} is
 
 \section{Preliminary characterization}
 \label{sec:prelim}
-\rev{This section concerns what the whole of Sec.~\ref{sec:preproc} leaves behind. Three
-of its stages discard --- the fix-level cleaning through the integrity gate, the
-flight-level filtering against a stated criterion, and the resampling, whose sparsity or
-minimum-duration rule is the single largest loss in the cascade (Table~\ref{tab:pipecensus})
---- while the conversion and the smoothing drop nothing. Its point is to establish the
-basic statistics on that retained ensemble, recomputing quantities such as the native-rate
-distribution on the flights actually used rather than on every parsed flight as
-Figs.~\ref{fig:gaps} and~\ref{fig:sampling} do. None of the checks below requires the
-phase segmentation, so all run as soon as the pipeline does; two of them constrain what the
-transport analysis of Chapter~\ref{ch:global} is allowed to do, and both come out against
-the simpler option.}
+The point of this section is to establish the
+basic statistics of the retained ensemble. None of the checks below requires the
+phase segmentation, so all run as soon as the pipeline does.
 
-\begin{revblock}
+
 \paragraph{Trajectory statistics.}
 For each retained flight: airborne duration $T$, total horizontal path length, number of
 valid fixes and native sampling interval $\Delta t$. Their distributions
@@ -1584,68 +1576,70 @@ the median---and slower-logging, with a median $\Delta t$ of
 \SI{\StatPrelimHangMedianDtS}{\second} against \SI{\StatPrelimParaMedianDtS}{\second} and
 only \SI{\StatPrelimHangOneHertzPct}{\percent} at \SI{1}{\hertz}.
 
-These are not the raw-archive figures of Sec.~\ref{sec:coverage}: the retained median
-duration exceeds the recorded median \SI{\StatScanParaMedianDurH}{\hour} because the
-duration floor and the altitude-activity floor remove short and inactive records, and the
-retained median path is close to the recorded \SI{\StatScanParaMedianPathKm}{\kilo\metre}
-because the \SI{\PreprocMinPathKm}{\kilo\metre} path floor bites on few flights
-(Table~\ref{tab:pipecensus}). Nothing in the retained ensemble is an outlier in the sense
-the filtering was meant to catch: the table carries \num{\StatAuditParaNonFiniteFixes}
-non-finite coordinates and \num{\StatAuditParaNonMonotoneFlights} non-monotone clocks, and
+
+Nothing in the retained ensemble is an outlier in the sense
+the filtering was meant to catch: the on-disk tables of the retained flights carry
+\num{\StatAuditParaNonFiniteFixes} non-finite coordinates and
+\num{\StatAuditParaNonMonotoneFlights} non-monotone clocks, and
 the fastest step between two \emph{measured} samples is
 \SI{\StatVerifyParaWorstMeasuredMs}{\metre\per\second} against the fix-level bound of
 \SI{45}{\metre\per\second}---an excess of under a tenth, on \num{\StatVerifyParaMeasuredStepsOver} steps out of
 $1.4\times10^{9}$, which Sec.~\ref{impl:obs-global} accounts for.
 
-\paragraph{What the cascade costs, and whether it costs it evenly.}
-Table~\ref{tab:pipecensus} reads the discards as a cascade, and one criterion dominates:
-\StatDataParaWorstCutRemoved\ paraglider flights, \SI{\StatDataParaWorstCutPct}{\percent}
-of those still standing, leave nothing behind after resampling. That is four times the next
-largest cut, it is a rule about record quality rather than about flight, and it is not a
-threshold Sec.~\ref{sec:preproc} argues for at all --- so it deserves a check the others do
-not.
 
-It fails that check in one respect and passes it in another. Across native cadences the
-sparsity rule is markedly uneven: it removes
-\SI{\StatDataParaSparsityByCadenceMinPct}{\percent} of the flights at its most forgiving
-cadence and \SI{\StatDataParaSparsityByCadenceMaxPct}{\percent} at
-\SI{\StatDataParaSparsityWorstCadenceS}{\second}, so the retained ensemble is enriched in
-the loggers whose grids are easiest to fill. Across time it is even: over the
-\num{\StatDataParaSeasonsBig} seasons carrying at least a thousand flights the retention
-rate stays between \SI{\StatDataParaRetentionMinBigPct}{\percent} and
-\SI{\StatDataParaRetentionMaxBigPct}{\percent} (Fig.~\ref{fig:seasons}b), so two decades of
-changing logger technology have not left the pipeline eating one era of the archive. The
-seasons below that size are the ladder's first years, when it carried tens of flights, and
-their rates are noise rather than trend.
+\paragraph{What the cascade costs, and whether it costs it evenly.}
+Table~\ref{tab:pipecensus} reads the discards as a cascade: end to end it leaves
+\SI{\StatDataParaRetainedPct}{\percent} of attempted paraglider flights standing against
+\SI{\StatDataHangRetainedPct}{\percent} of hang-glider ones.
+
+For paragliders one criterion carries the cost, the resampling sparsity rule:
+\StatDataParaWorstCutRemoved\ flights, \SI{\StatDataParaWorstCutPct}{\percent} of the 
+remaining flights yield no valid points post-resampling, which is \num{\StatDataParaWorstToSecondRatio}
+times the impact of the next filter, namely altitude activity below the floor (\SI{\StatDataParaSecondCutPct}{\percent}).
+Unlike the cuts of Sec.~\ref{sec:flightfilter},
+set by the minimal-threshold strategy against the retained-fraction curve, the missing-fraction
+and minimum-duration gates of Sec.~\ref{sec:uniform} are config defaults, not swept or
+derived, and the rule falls unevenly by native cadence: from
+\SI{\StatDataParaSparsityByCadenceMinPct}{\percent} to
+\SI{\StatDataParaSparsityByCadenceMaxPct}{\percent} across the six most common ones. Not by
+season: Fig.~\ref{fig:seasons}b plots the cascade's total retention rate, every criterion
+combined, but since the sparsity rule accounts for most of the paraglider loss its
+unevenness would show up there; it does not, staying between
+\SI{\StatDataParaRetentionMinBigPct}{\percent} and \SI{\StatDataParaRetentionMaxBigPct}{\percent}
+over the \num{\StatDataParaSeasonsBig} seasons carrying at least a thousand flights.
+
+For hang gliders the same criterion is again the largest,
+\SI{\StatDataHangWorstCutPct}{\percent} of those standing, but only
+\num{\StatDataHangWorstToSecondRatio} times the next cut, altitude activity again
+(\SI{\StatDataHangSecondCutPct}{\percent}), against \num{\StatDataParaWorstToSecondRatio}
+for paragliders: no single criterion dominates the hang-glider cascade the way the
+sparsity rule dominates the paraglider one.
+
 
 \paragraph{Where the flights are.}
-The take-off sites need three frames rather than one, because the CFD is a French ladder
-flown partly outside France. Figure~\ref{fig:prelim-map} gives them, on coastlines and
-borders rather than on bare axes: metropolitan France, La~R\'eunion, and the rest of the
+The distribution of take-off sites is presented across three separate panels to account for 
+the geographic coverage of the CFD. Figure~\ref{fig:prelim-map} displays these sites against 
+coastline and national borders, covering metropolitan France, La~R\'eunion, and the rest of the
 world. Of the retained paraglider flights \SI{\StatPrelimParaMetroPct}{\percent} launch in
 metropolitan France, \SI{\StatPrelimParaReunionPct}{\percent}
 (\num{\StatPrelimParaReunionFlights} flights) on La~R\'eunion, and
 \SI{\StatPrelimParaElsewherePct}{\percent} (\num{\StatPrelimParaElsewhereFlights})
 elsewhere---the Canaries, Andalusia, the Italian Alps, and further out Colombia, Nepal,
-India, South Africa and Brazil. The hang gliders are more domestic still, at
-\SI{\StatPrelimHangMetroPct}{\percent}. The overseas and foreign flights are kept: they
-are the same discipline flown under the same rules, and the geographic stratification
-below is where a difference between terrains would show up.
+India, South Africa and Brazil. The hang gliders are slightly more domestic, at
+\SI{\StatPrelimHangMetroPct}{\percent}.
 
 Within metropolitan France the ensemble does not sample the country evenly. It occupies
-\num{\StatPrelimParaSites} distinct take-off sites at a hundredth of a degree, and
+\num{\StatPrelimParaSites} distinct take-off sites, where distinct sites are launches
+rounded to a hundredth of a degree ($\sim$\SI{1}{\kilo\meter}), and
 \SI{\StatPrelimParaGroupAlpsPct}{\percent} of it launches inside the Alpine box alone,
 against \SI{\StatPrelimParaGroupPyreneesPct}{\percent} in the Pyrenees,
 \SI{\StatPrelimParaGroupMassifCentralPct}{\percent} in the Massif Central and
-\SI{\StatPrelimParaGroupLowlandPct}{\percent} elsewhere in France. The density is drawn on
-a \SI{0.15}{\degree} cell with the count on a logarithmic colour scale, since at
-\num{\StatPrelimParaFlights} flights individual markers saturate over the Alps and stop
-answering the question the map is drawn for; La~R\'eunion, seventy kilometres across, gets
-a cell fifteen times finer. The orographic groups are longitude and latitude boxes, drawn
+\SI{\StatPrelimParaGroupLowlandPct}{\percent} elsewhere in France.
+The orographic groups are longitude and latitude boxes, drawn
 on Fig.~\ref{fig:prelim-map}a and listed with their edges in the mirror of this section
-\impldetails{impl:prelim}; they are used below to define strata, and the map itself is not
-the test.
+\impldetails{impl:prelim}. 
 
+\begin{revblock}
 \paragraph{Isotropy, and what it costs.}
 The transport analysis would like to study the one-dimensional marginal of the propagator
 in place of the full two-dimensional density (Sec.~\ref{sec:obs-global}), a substantial
@@ -1743,7 +1737,9 @@ known to differ, not as a property of a homogeneous population.
     \texttt{scripts/reporting/generate\_prelim\_figure.py} from the processed dataset on
     the SSD (not versioned).}}%
   }
-  \caption{\rev{Take-off sites of the retained ensemble, on three frames.
+  \caption{\rev{Take-off sites of the retained ensemble, on three frames, pooling both
+  disciplines throughout---the per-discipline metropolitan share quoted in the text
+  is close but not identical to panel (a)'s.
   (a)~Metropolitan France, density on a \SI{0.15}{\degree} cell and a logarithmic colour
   scale; the dashed boxes are the orographic groups used as strata in
   Fig.~\ref{fig:prelim-strata}. (b)~La~R\'eunion, on a \SI{0.01}{\degree} cell, the one
@@ -1864,7 +1860,8 @@ a criterion late in the cascade tests a population the earlier ones have already
 so a percentage of the archive would understate it. Read this way one cut dominates, and
 it is not one the text argues a threshold for---%
 \StatDataParaWorstCutRemoved\ paraglider flights, \SI{\StatDataParaWorstCutPct}{\percent}
-of those still standing, leave nothing behind after resampling. The marginal effect of
+of those still standing (\StatDataHangWorstCutRemoved\ hang-glider flights,
+\SI{\StatDataHangWorstCutPct}{\percent}), leave nothing behind after resampling. The marginal effect of
 each cut on the raw population is a different quantity and is what the
 \texttt{\textbackslash StatScan*} numbers of Secs.~\ref{sec:flightfilter}
 and~\ref{sec:uniform} report. Generated by \protect\path{generate_dataset_stats.py} from

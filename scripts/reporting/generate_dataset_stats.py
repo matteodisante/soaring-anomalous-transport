@@ -238,10 +238,17 @@ def macros(discipline: str, meta: pd.DataFrame) -> dict[str, str]:
     )
     out[f"DataCascade{tag}Rows"] = "%\n" + rows
 
-    worst = casc.loc[casc.share_of_standing.idxmax()]
+    by_share = casc.sort_values("share_of_standing", ascending=False)
+    worst = by_share.iloc[0]
     put("WorstCutLabel", str(worst.label))
     put("WorstCutPct", f"{worst.share_of_standing:.1f}")
     put("WorstCutRemoved", _tex_int(worst.removed))
+    if len(by_share) > 1:
+        second = by_share.iloc[1]
+        put("SecondCutLabel", str(second.label))
+        put("SecondCutPct", f"{second.share_of_standing:.1f}")
+        put("SecondCutRemoved", _tex_int(second.removed))
+        put("WorstToSecondRatio", f"{worst.share_of_standing / second.share_of_standing:.1f}")
     put("Criteria", str(len(casc)))
     put("Attempted", _tex_int(len(meta)))
     put("Retained", _tex_int(len(kept)))
