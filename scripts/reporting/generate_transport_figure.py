@@ -42,7 +42,7 @@ if _SRC not in sys.path:
 
 # The sys.path line above is what makes this resolvable when the script is run
 # directly, so the import cannot move to the top of the file.
-from soaring.reporting import DISCIPLINES, write_macros  # noqa: E402
+from soaring.reporting import DISCIPLINES, canonical_wing_class, write_macros  # noqa: E402
 
 OUT_TEX = ROOT / "thesis" / "generated" / "transport.tex"
 OUT_FIG = ROOT / "thesis" / "generated" / "transport.pdf"
@@ -74,12 +74,19 @@ FIT_RANGE_S = (60.0, 2000.0)
 _PDF_METADATA = {"Creator": "soaring.analysis", "Producer": "soaring.analysis", "CreationDate": None}
 
 
-def load(slug: str, audit_dir: Path):
+def load(discipline: str, audit_dir: Path):
+    slug = DISCIPLINES[discipline].slug
     npz = audit_dir / f"variations_{slug}.npz"
     table = audit_dir / f"variation_flights_{slug}.parquet"
     if not npz.is_file() or not table.is_file():
         return None
     data = np.load(npz)
+    flights = pd.read_parquet(table)
+    if "wing_class" in flights:
+        # The cached table carries the raw FFVL code (measure_variations.py passes the
+        # catalog column straight through); canonicalised here, in the cheap reduction,
+        # rather than in the heavy pass that wrote the cache.
+        flights["wing_class"] = canonical_wing_class(discipline, flights["wing_class"])
     return {
         "lags_s": data["lags_s"],
         "orders": {p: data[f"order{p}"] for p in ORDERS},
@@ -88,7 +95,7 @@ def load(slug: str, audit_dir: Path):
         # and stay pooled-only, untouched by these.
         "orders_east": {p: data[f"order{p}_east"] for p in AXIS_ORDERS},
         "orders_north": {p: data[f"order{p}_north"] for p in AXIS_ORDERS},
-        "flights": pd.read_parquet(table),
+        "flights": flights,
     }
 
 
@@ -158,7 +165,7 @@ def stratified_exponents(lags, curves, frame, column, fit_range, *, minimum=2000
     *Wing class* and *orographic group* are the heterogeneity confound. A
     superposition of ordinary processes with different persistence times imitates
     a single anomalous one, and Sec. 2.8 has already measured these strata as
-    incompatible at 40 and 62 per cent on the ensemble MSD.
+    incompatible at 51 and 62 per cent on the ensemble MSD.
 
     *Season* is the control that should come out flat, since Sec. 2.8 found it
     compatible; a stratifier that separates here and not there would indict the
@@ -492,9 +499,8 @@ def main() -> int:
     macros: dict[str, str] = {}
     missing: list[str] = []
     measured: dict[str, dict] = {}
-    for discipline, glider in DISCIPLINES.items():
-        slug = glider.slug
-        loaded = load(slug, args.audit_dir)
+    for discipline in DISCIPLINES:
+        loaded = load(discipline, args.audit_dir)
         if loaded is None:
             print(f"{discipline}: variation pass not found")
             missing.append(discipline)

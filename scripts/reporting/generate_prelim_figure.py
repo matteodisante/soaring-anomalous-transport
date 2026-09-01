@@ -44,8 +44,10 @@ if _SRC not in sys.path:
 
 # The sys.path line above is what makes this resolvable when the script is run
 # directly, so the import cannot move to the top of the file.
+from soaring.analysis.stats.bootstrap import cluster_bootstrap, cluster_labels  # noqa: E402
 from soaring.reporting import (  # noqa: E402
     DISCIPLINES,
+    canonical_wing_class,
     partial_write_refusal,
     unreachable_reason,
     write_macros,
@@ -81,6 +83,16 @@ FRAMES = {
 # The lag range the transport analysis reads, so a stratum comparison is made where the
 # exponent is read and not over lags nothing is quoted from.
 FIT_MIN_S, FIT_MAX_S = 120.0, 13_021.0
+
+# The isotropy band: resampling whole (take-off site, day) clusters rather than flights,
+# the same unit measure_propagator.py resamples H at -- flights sharing a site and a day
+# shared the same convective conditions and are not independent draws. Checked against
+# flight-only and site-only alternatives: ICC(E(t)^2, day_site) runs 0.37-0.83 over the
+# decade grid, comparable to or above the propagator's 0.57-0.63, and above the
+# site-only level throughout.
+ISO_BOOT_LEVEL = "day_site"
+ISO_BOOT_RESAMPLES = 200
+ISO_BOOT_SEED = 0
 
 # A stratum below this contributes a curve too noisy to compare and is pooled into the
 # residual group instead of being drawn as if it were a measurement.
@@ -151,11 +163,16 @@ def load(discipline: str, audit_dir: Path):
         catalog = pd.read_csv(catalog_path, low_memory=False)
         catalog["flight_id"] = catalog["flight_id"].astype(str)
         frame = frame.merge(
-            catalog[["flight_id", "wing_class", "season"]], on="flight_id", how="left"
+            catalog[["flight_id", "wing_class", "season", "date", "takeoff"]],
+            on="flight_id",
+            how="left",
         )
+        frame["wing_class"] = canonical_wing_class(discipline, frame["wing_class"])
     else:
         frame["wing_class"] = np.nan
         frame["season"] = np.nan
+        frame["date"] = np.nan
+        frame["takeoff"] = np.nan
 
     frame["group"] = orographic_group(frame.lat0, frame.lon0)
     assert len(frame) == data["E"].shape[0], "audit rows and flight rows disagree"
@@ -172,6 +189,23 @@ def stratified_msd(east, north, lags, mask):
     squared = east[mask] ** 2 + north[mask] ** 2
     with np.errstate(invalid="ignore"):
         return np.nanmean(squared, axis=0)
+
+
+def iso_ratio_band(east, north, frame):
+    """Median and 10-90% band of ``<E^2>/<N^2>`` over a (site, day) cluster bootstrap."""
+    labels = cluster_labels(frame, ISO_BOOT_LEVEL)
+    curves = np.stack([east**2, north**2], axis=-1)
+
+    def ratio(mean_curve):
+        with np.errstate(invalid="ignore"):
+            return mean_curve[:, 0] / mean_curve[:, 1]
+
+    with np.errstate(invalid="ignore"):
+        _, replicates = cluster_bootstrap(
+            curves, labels, ratio, n_resamples=ISO_BOOT_RESAMPLES, seed=ISO_BOOT_SEED
+        )
+        lo, med, hi = np.nanpercentile(replicates, [10, 50, 90], axis=0)
+    return lo, med, hi
 
 
 def _strata(frame: pd.DataFrame, column: str) -> list[tuple[str, np.ndarray]]:
@@ -346,14 +380,13 @@ def draw_strata(loaded: dict) -> object:
 
     for discipline, data in loaded.items():
         lags, east, north = data["lags"], data["east"], data["north"]
-        with np.errstate(invalid="ignore"):
-            ratio = np.nanmean(east**2, 0) / np.nanmean(north**2, 0)
-        drawable = np.isfinite(ratio) & (lags >= 1.0)
-        iso_ax.semilogx(lags[drawable], ratio[drawable],
-                        color=DISCIPLINES[discipline].color,
-                        label=discipline)
+        lo, med, hi = iso_ratio_band(east, north, data["flights"])
+        drawable = np.isfinite(med) & (lags >= 1.0)
+        color = DISCIPLINES[discipline].color
+        iso_ax.fill_between(lags[drawable], lo[drawable], hi[drawable],
+                             color=color, alpha=0.25, lw=0)
+        iso_ax.semilogx(lags[drawable], med[drawable], color=color, label=discipline)
     iso_ax.axhline(1.0, color="0.3", lw=0.8, ls="--")
-    iso_ax.axvspan(FIT_MIN_S, FIT_MAX_S, color="0.9", zorder=0)
     iso_ax.set_xlabel("elapsed time $t$ (s)")
     iso_ax.set_ylabel(r"$\langle E^2\rangle\,/\,\langle N^2\rangle$")
     iso_ax.set_title("(a) isotropy: per-component variance ratio", fontsize=10, loc="left")
@@ -379,7 +412,6 @@ def draw_strata(loaded: dict) -> object:
                     ax.semilogx(lags, curve / pooled, color=colormap(index), lw=1.2,
                                 label=f"{name} ({mask.sum():,})")
             ax.axhline(1.0, color="0.3", lw=0.8, ls="--")
-            ax.axvspan(FIT_MIN_S, FIT_MAX_S, color="0.9", zorder=0)
             ax.set_xlabel("elapsed time $t$ (s)")
             ax.set_ylabel("MSD / pooled MSD")
             ax.set_ylim(0.0, 2.5)
@@ -391,8 +423,6 @@ def draw_strata(loaded: dict) -> object:
 
 def macros(loaded: dict) -> dict[str, str]:
     """The ``\\StatPrelim*`` family: every number Sec.~\\ref{sec:prelim} quotes."""
-    from scipy.stats import ks_2samp
-
     out: dict[str, str] = {}
     for discipline, data in loaded.items():
         tag = DISCIPLINES[discipline].tag
@@ -438,17 +468,6 @@ def macros(loaded: dict) -> dict[str, str]:
         put("IsoRatioMin", f"{ratio[window].min():.2f}")
         put("IsoRatioMax", f"{ratio[window].max():.2f}")
         put("IsoRatioMedian", f"{np.median(ratio[window]):.2f}")
-        statistics, probes = [], []
-        for probe in (FIT_MIN_S, 400.0, 1700.0, 7000.0):
-            index = int(np.argmin(np.abs(lags - probe)))
-            good = np.isfinite(east[:, index])
-            if good.sum() < 100:
-                continue
-            statistics.append(ks_2samp(east[good, index], north[good, index]).statistic)
-            probes.append(lags[index])
-        put("IsoKsMin", f"{min(statistics):.3f}")
-        put("IsoKsMax", f"{max(statistics):.3f}")
-        put("IsoKsLags", f"{len(statistics)}")
 
         # Stratum compatibility: the largest departure from the pooled curve, over the
         # same lags, as a ratio. Quoted rather than a p-value: at 1.5e5 flights every
@@ -475,6 +494,7 @@ def macros(loaded: dict) -> dict[str, str]:
     # Discipline-independent, so it carries no tag: the floor below which a stratum is
     # counted but not drawn. Quoted by the text and by two captions, which had it typed.
     out["StatPrelimMinStratum"] = str(MIN_STRATUM)
+    out["StatPrelimIsoBootResamples"] = str(ISO_BOOT_RESAMPLES)
     return out
 
 

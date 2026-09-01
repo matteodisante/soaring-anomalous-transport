@@ -26,7 +26,7 @@ Catalog and season index (\texttt{build-catalog}) & implemented & Sec.~\ref{impl
 \hline
 Census scan, diagnostic figures and macros & implemented & Sec.~\ref{impl:preproc}, Table~\ref{tab:impl-repro} \\
 \hline
-Glider-label normalisation & designed & Sec.~\ref{impl:glider} \\
+Glider-label normalisation & implemented, unit-tested & Sec.~\ref{impl:glider} \\
 \hline
 Altitude-channel choice (\texttt{alt\_source}) & \rev{implemented, unit-tested} & Sec.~\ref{impl:altchannel} \\
 \hline
@@ -318,10 +318,18 @@ Both \path{catalog.csv} and \path{seasons_index.csv} are regenerated on demand
 
 \section{Glider categories}
 \label{impl:glider}
-The placeholder class is the literal \enquote{0} in \path{aile_class}; where
-possible the true class is recovered from the raw \texttt{aile} (wing-model) field. The
-normalisation runs at the fix-level/pre-processing stage (Sec.~\ref{impl:fixlevel}) and
-is defined in Sec.~\ref{sec:glider}. Status: Table~\ref{tab:impl-status}.
+\path{aile\_class} is the FFVL's own code (\enquote{C ou 2}, \enquote{non homologuée}),
+not the EN/FAI label of Table~\ref{tab:aileclass}, so it is mapped rather than merely
+read: \path{soaring.reporting.glider\_class.canonical\_wing\_class} carries the map, one
+dictionary per discipline, and raises if a flight's raw code is not a key of it rather
+than letting an unrecognised value enter a stratum under its own spelling. The placeholder
+class, the literal \enquote{0} in \path{aile\_class}, and a blank entry both come back as
+\texttt{NaN} -- unclassified and excluded from a class stratum, not recovered from the
+wing-model field, since that would need a wing-model-to-class lookup this repository does
+not have. The mapping runs where the class is joined onto a discipline's flights for a
+class-stratified figure or macro (Sec.~\ref{sec:glider}), not at the fix-level stage,
+since \path{aile\_class} is catalog metadata (Sec.~\ref{impl:catalog}) rather than a
+per-fix quantity. Status: Table~\ref{tab:impl-status}.
 
 \begin{flowblock}
 \paragraph{Provenance of the EN/FAI class ladders.} The two systems of

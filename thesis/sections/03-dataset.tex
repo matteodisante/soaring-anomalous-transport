@@ -165,10 +165,11 @@ Rigide Class 5 & as Class~2, but in the roll axis only; no fairings \\
 \end{tabular}}
 \end{table}
 
-\rev{Two caveats bear on any use of \texttt{aile\_class}: it must be normalised before it
-can serve as a stratum (merging label variants onto one canonical value per discipline and,
-where possible, recovering a blank or placeholder entry from the wing model name), done at
-the pre-processing stage \impldetails{impl:glider}; and the class certifies the wing, not
+\rev{Two caveats bear on any use of \texttt{aile\_class}: it must be mapped onto one
+canonical label per discipline before it can serve as a stratum, since the field carries
+the FFVL's own code (\enquote{C ou 2}, \enquote{non homologuée}) rather than the EN/FAI
+label of Table~\ref{tab:aileclass}; the placeholder and a blank entry are left unclassified
+rather than guessed \impldetails{impl:glider}. And the class certifies the wing, not
 the pilot, which no processing can remove and which bounds what a class-stratified result
 can be taken to mean.}
 
@@ -1639,47 +1640,46 @@ The orographic groups are longitude and latitude boxes, drawn
 on Fig.~\ref{fig:prelim-map}a and listed with their edges in the mirror of this section
 \impldetails{impl:prelim}. 
 
-\begin{revblock}
-\paragraph{Isotropy, and what it costs.}
+
+\paragraph{Isotropy}
 The transport analysis would like to study the one-dimensional marginal of the propagator
 in place of the full two-dimensional density (Sec.~\ref{sec:obs-global}), a substantial
 simplification. The reduction is legitimate only if the process is isotropic, and isotropy
-cannot be assumed here. The CFD flights are not races flown together---each is a solo
-cross-country flight, later entered into a scoring ladder---but a single flight is
+cannot be assumed a priori here. It's important to highlight that a single flight could be
 strongly directed: a chosen route, the orography, the valley winds. Isotropy can therefore
 hold at best at the level of the \emph{ensemble}, and the check is run there.
 
 The primary test is the per-component variance ratio: for an isotropic process
 $\langle E(t)^2\rangle=\langle N(t)^2\rangle=\mathrm{MSD}(t)/2$ at every $t$, so the ratio
 $\langle E(t)^2\rangle/\langle N(t)^2\rangle$ should be identically $1$.
-Figure~\ref{fig:prelim-strata}a shows it is not. Over the lags the transport analysis
-reads it sits at \StatPrelimParaIsoRatioMedian\ for paragliders, between
-\StatPrelimParaIsoRatioMin\ and \StatPrelimParaIsoRatioMax\ and never touching unity: the
-north--south mean square exceeds the east--west by about a quarter, steadily and across
-three decades. The hang gliders are anisotropic the other way, at
-\StatPrelimHangIsoRatioMedian. A Kolmogorov--Smirnov comparison of the empirical
-distributions of $E(t)$ and $N(t)$ at \StatPrelimParaIsoKsLags\ lags agrees, with
-distances from \StatPrelimParaIsoKsMin\ to \StatPrelimParaIsoKsMax; at this sample size
-the associated $p$-values are numerically zero and carry no information, which is why the
-distance is quoted and the test is not.
+Figure~\ref{fig:prelim-strata}a shows it is not. The curve plotted is the median of a
+cluster bootstrap resampling (200 times) whole take-off-site-and-day groups, 
+with a 10--90\% band. Across all evaluated lags, the transport analysis shows that the paraglider 
+band remains bounded between \StatPrelimParaIsoRatioMin\ and \StatPrelimParaIsoRatioMax, 
+maintaining an approximately constant offset from unity without ever intersecting the unity line. 
+The hang gliders oscillate mildly instead: unlike the
+paragliders the ratio is not steady, swinging between values below unity and above it,
+from \StatPrelimHangIsoRatioMin\ to \StatPrelimHangIsoRatioMax.
 
-The consequence is operative. The two marginals $P(E(t)=x)$ and $P(N(t)=x)$ are analysed
-\emph{separately} rather than pooled, and the pooled 1-D marginal is not used as a stand-in
-for the 2-D propagator. That is the natural fallback and is informative in itself: unequal
-scaling exponents $H_E\neq H_N$, or equal exponents with different scaling functions,
-signal geometrically anisotropic transport, which for flights channelled along Alpine
-valleys is the expected outcome rather than a nuisance. The anisotropy is also a reason to
-read the ensemble MSD with the care Sec.~\ref{sec:obs-global} gives it, since
-$\langle|\mathbf{r}|^2\rangle$ sums two components that do not grow alike.
+The consequence is operative. The process cannot be treated as isotropic, so the two
+marginals $P(E(t)=x)$ and $P(N(t)=x)$ are analysed \emph{separately} rather than merged
+into a single one-dimensional sample and read as a stand-in for the 2-D propagator: the
+marginal of $E$ alone carries no information about $N$, or the other way round. Both
+directions are studied on their own, alongside the modulus
+$|\mathbf{r}(t)|=\sqrt{E(t)^2+N(t)^2}$. 
 
+
+\begin{revblock}
 \paragraph{Compatibility across strata.}
-The dataset spans more than two decades, two glider types and a range of performance
-classes (Sec.~\ref{sec:glider}), from recreational EN\,A/B wings to CCC racing wings,
-whose kinematics differ substantially. Before treating the flights of one discipline as
-draws from a single statistical process, the subpopulations are checked. The test is the
-horizontal MSD computed within each stratum and read against the pooled curve over the
-same lags; the two disciplines are never pooled, and a stratum below
-\num{\StatPrelimMinStratum} flights is not drawn as if it were a measurement. The class normalisation of Sec.~\ref{sec:glider}
+The dataset spans more than four decades, two glider types and a range of performance
+classes (Sec.~\ref{sec:glider}) whose kinematics differ substantially. Before treating the 
+flights of one discipline as
+draws from a single statistical process, the subpopulations are checked. 
+The test is the horizontal MSD computed within each stratum and read against the pooled curve,
+defined as the same statistic calculated across all flights of the discipline without any stratum split, 
+over the same lags; the two disciplines are never pooled, and a stratum below \num{\StatPrelimMinStratum}
+flights is not drawn: below that size, sampling noise risks dominating the curve.
+The class normalisation of Sec.~\ref{sec:glider}
 runs first, since as long as one wing class appears under several spellings a stratum is
 not a well-defined set of flights.
 
@@ -1737,17 +1737,13 @@ known to differ, not as a property of a homogeneous population.
     \texttt{scripts/reporting/generate\_prelim\_figure.py} from the processed dataset on
     the SSD (not versioned).}}%
   }
-  \caption{\rev{Take-off sites of the retained ensemble, on three frames, pooling both
-  disciplines throughout---the per-discipline metropolitan share quoted in the text
-  is close but not identical to panel (a)'s.
+  \caption{Take-off sites of the retained ensemble, on three frames, pooling both
+  disciplines throughout.
   (a)~Metropolitan France, density on a \SI{0.15}{\degree} cell and a logarithmic colour
   scale; the dashed boxes are the orographic groups used as strata in
   Fig.~\ref{fig:prelim-strata}. (b)~La~R\'eunion, on a \SI{0.01}{\degree} cell, the one
   overseas department with a substantial share. (c)~Everything else, one marker per
-  \SI{0.5}{\degree} cell with the area set by its count. Coastlines and borders are
-  Natural Earth admin-0, cropped and committed by
-  \texttt{scripts/reporting/build\_basemap.py} so that the figure regenerates offline
-  \impldetails{impl:prelim}.}}
+  \SI{0.5}{\degree} cell with the area set by its count.}
   \label{fig:prelim-map}
 \end{figure}
 
@@ -1780,9 +1776,12 @@ known to differ, not as a property of a homogeneous population.
     the SSD (not versioned).}}%
   }
   \caption{\rev{Whether the retained ensemble may be pooled. (a)~The per-component
-  variance ratio $\langle E^2\rangle/\langle N^2\rangle$ against elapsed time: unity is
-  isotropy, and neither discipline reaches it over the shaded band, which is the lag range
-  the transport analysis reads. (b--d)~The ensemble MSD computed within each stratum and
+  variance ratio $\langle E^2\rangle/\langle N^2\rangle$ against elapsed time, median and
+  10--90\% band over a cluster bootstrap resampling take-off site and day
+  (\StatPrelimIsoBootResamples\ resamples): unity is isotropy, and neither discipline's
+  band reaches it over \SIrange{\StatAuditParaFitMinS}{\StatAuditParaFitMaxS}{\second},
+  the lag range the transport analysis reads (shaded in b--d). (b--d)~The ensemble MSD
+  computed within each stratum and
   divided by the pooled curve, for paragliders, by wing class, by orographic group and by
   season; strata below \num{\StatPrelimMinStratum} flights are not drawn. Class and terrain separate the
   curves, season does not. Computed by

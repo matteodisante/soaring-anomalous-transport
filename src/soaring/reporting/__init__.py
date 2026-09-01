@@ -9,6 +9,8 @@ the one answer to each.
 
 * :mod:`~soaring.reporting.disciplines` -- the two archives, their names in a macro and
   in a filename, and the resolver that reaches their processed tables.
+* :mod:`~soaring.reporting.glider_class` -- the raw FFVL ``aile_class`` codes mapped onto
+  the canonical labels of Table~\ref{tab:aileclass}.
 * :mod:`~soaring.reporting.macros` -- writing the ``\\newcommand`` files, with the check
   for names LaTeX cannot accept applied at the point of writing.
 * :mod:`~soaring.reporting.guards` -- refusing to write a file covering one discipline
@@ -16,6 +18,7 @@ the one answer to each.
 """
 
 from .disciplines import DISCIPLINES, HANG_GLIDERS, PARAGLIDERS, Discipline
+from .glider_class import HANG_CLASS_MAP, PARA_CLASS_MAP, canonical_wing_class
 from .guards import bare_cli, partial_write_refusal, unreachable_reason
 from .macros import (
     MacroNameError,
@@ -29,12 +32,15 @@ from .macros import (
 
 __all__ = [
     "DISCIPLINES",
+    "HANG_CLASS_MAP",
     "HANG_GLIDERS",
     "PARAGLIDERS",
+    "PARA_CLASS_MAP",
     "Discipline",
     "MacroNameError",
     "MacroWriter",
     "bare_cli",
+    "canonical_wing_class",
     "check_name",
     "partial_write_refusal",
     "pct_of",
