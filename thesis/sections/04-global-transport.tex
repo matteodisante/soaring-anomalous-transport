@@ -14,11 +14,12 @@ holding \num{\StatMsdParaSegments} and \num{\StatMsdHangSegments} retained segme
 statistic below is computed within a retained segment and never across the gap that ends
 one (Sec.~\ref{sec:uniform}) \impldetails{impl:global}.
 
-Two constraints from Sec.~\ref{sec:prelim} hold throughout. The horizontal components are
+One constraint from Sec.~\ref{sec:prelim} holds throughout: the horizontal components are
 anisotropic --- the ratio of their mean squares sits at \StatPrelimParaIsoRatioMedian\ for
 paragliders and \StatPrelimHangIsoRatioMedian\ for hang gliders, never touching unity ---
 so the two marginals are measured separately and a pooled one-dimensional marginal never
-substitutes for the two-dimensional propagator. And the discipline is heterogeneous: read
+substitutes for the two-dimensional propagator. The discipline is also heterogeneous
+(Sec.~\ref{sec:strata-compat}): read
 against the pooled ensemble MSD, the typical wing class departs by
 \SI{\StatPrelimParaClassTypicalDeparturePct}{\percent} and the typical orographic group by
 \SI{\StatPrelimParaGroupTypicalDeparturePct}{\percent}, against
@@ -185,7 +186,7 @@ A displacement statistic on this archive is contaminated by the common origin ju
 diagnosed; by each flight's own course, which does not simply inflate it, since
 \SI{\StatVarParaClosedPct}{\percent} of retained paraglider flights fly a closed triangle
 that saturates displacement at a scoring-rule timescale rather than a flying one; and by the
-heterogeneity of Sec.~\ref{sec:prelim}, which lets a superposition of ordinary processes
+heterogeneity of Sec.~\ref{sec:strata-compat}, which lets a superposition of ordinary processes
 with different persistence times imitate a single anomalous one. None of the three is
 repaired by subtracting an estimate of it; the next section meets the specification by
 filtering instead.
@@ -387,6 +388,64 @@ the distribution of the increments rather than its second moment.
   \label{fig:transport}
 \end{figure}
 
+\section{Compatibility across strata}
+\label{sec:strata-compat}
+\begin{revblock}
+The dataset spans more than four decades, two glider types and a range of performance
+classes (Sec.~\ref{sec:glider}) whose kinematics differ substantially. Before treating the
+flights of one discipline as draws from a single statistical process, the subpopulations
+are checked. The test is the horizontal MSD computed within each stratum and read against
+the pooled curve, the same statistic calculated across all flights of the discipline
+without any stratum split, over the same lags; the two disciplines are never pooled, and a
+stratum below \num{\StatPrelimMinStratum} flights is not drawn: below that size, sampling
+noise risks dominating the curve. The class normalisation of Sec.~\ref{sec:glider} runs
+first, since as long as one wing class appears under several spellings a stratum is not a
+well-defined set of flights.
+
+Figure~\ref{fig:strata-compat} gives three axes and two answers. Across the
+\num{\StatPrelimParaClassStrata} wing classes the curves separate: the typical stratum
+departs from the pooled curve by \SI{\StatPrelimParaClassTypicalDeparturePct}{\percent}
+and the extreme by \SI{\StatPrelimParaClassMaxDeparturePct}{\percent}, with the CIVL
+competition wings above the pooled curve throughout and the EN\,A wings well below it.
+Across the \num{\StatPrelimParaGroupStrata} orographic groups they separate further, by
+\SI{\StatPrelimParaGroupTypicalDeparturePct}{\percent} typically and
+\SI{\StatPrelimParaGroupMaxDeparturePct}{\percent} at the extreme, with the Massif Central
+at half the pooled curve over the intermediate lags and the Alps above it. Across the
+\num{\StatPrelimParaSeasonStrata} seasons they do not: the typical departure is
+\SI{\StatPrelimParaSeasonTypicalDeparturePct}{\percent} and the largest
+\SI{\StatPrelimParaSeasonMaxDeparturePct}{\percent}, and the latter belongs to the smallest
+season in the archive.
+
+So the ensemble may be pooled over time and may not be pooled over wing class or over
+terrain. Season is not a relevant stratum and the archive's two-decade span is not a
+confound. Class and geography are relevant strata, and the difference is itself a result
+rather than a nuisance: a competition wing covers ground faster than a recreational one,
+and thermals over a mountain range are anchored to slopes and organised along ridges
+whereas over flat terrain they drift with the wind, so the persistence of the glides and
+the spacing of the climbs need not be the same. The exponent below is therefore reported
+by wing class as well as pooled, alongside cuts by native cadence, season and declared
+task (Table~\ref{tab:strata-alpha}); the orographic cut is made here, on the ensemble MSD,
+which is the statistic it separates. A pooled exponent is read as an average over strata
+that are known to differ, not as a property of a homogeneous population.
+\end{revblock}
+
+\begin{figure}[htbp]
+  \centering
+  \IfFileExists{generated/strata_compat.pdf}{%
+    \includegraphics[width=\linewidth]{generated/strata_compat}%
+  }{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/generate\_prelim\_figure.py} from the processed dataset on
+    the SSD (not versioned).}}%
+  }
+  \caption{\rev{Whether the retained ensemble may be pooled: the ensemble MSD computed
+  within each stratum and divided by the pooled curve, for paragliders, (a)~by wing class,
+  (b)~by orographic group and (c)~by season; strata below \num{\StatPrelimMinStratum}
+  flights are not drawn. Class and terrain separate the curves, season does not. Computed
+  by \texttt{scripts/reporting/generate\_prelim\_figure.py}.}}
+  \label{fig:strata-compat}
+\end{figure}
+
 \section{The uncertainty on the exponent}
 \label{sec:transport-measure}
 \begin{revblock}
@@ -485,7 +544,7 @@ the ensemble, on the same row-selection pass used throughout this chapter
 \ifrevmode\color{revblue}\fi
 \renewcommand{\arraystretch}{1.2}
 \caption{\rev{What $\alpha_2$ does when the paraglider ensemble is cut four ways, over the same
-range. The comparison that matters is with Sec.~\ref{sec:prelim}, where the same wing classes
+range. The comparison that matters is with Sec.~\ref{sec:strata-compat}, where the same wing classes
 departed from the pooled ensemble MSD by
 \SI{\StatPrelimParaClassTypicalDeparturePct}{\percent} and the orographic groups by
 \SI{\StatPrelimParaGroupTypicalDeparturePct}{\percent}. The declared task is entered as the
@@ -513,7 +572,7 @@ The cadence cut is a check on the pipeline: across \num{\StatVarParaCadenceStrat
 spanning the whole range of smoothing scales in the archive, the exponent spreads by only
 \StatVarParaCadenceSpreadAlpha, so whatever the estimator is reading, it is not the filter.
 Wing class and season are the heterogeneity confound measured on the ensemble MSD in
-Sec.~\ref{sec:prelim} (departures of \SI{\StatPrelimParaClassTypicalDeparturePct}{\percent}
+Sec.~\ref{sec:strata-compat} (departures of \SI{\StatPrelimParaClassTypicalDeparturePct}{\percent}
 and \SI{\StatPrelimParaGroupTypicalDeparturePct}{\percent}): here the exponent spreads by
 only \StatVarParaClassSpreadAlpha\ across \num{\StatVarParaClassStrata} wing classes and
 \StatVarParaSeasonSpreadAlpha\ across \num{\StatVarParaSeasonStrata} seasons, since a mixture
@@ -1197,7 +1256,7 @@ $\alpha_2=\StatVarParaAlphaOrderTwo\pm\StatVarParaAlphaOrderTwoErr$ for paraglid
 $\StatVarHangAlphaOrderTwo\pm\StatVarHangAlphaOrderTwoErr$ for hang gliders, on
 \num{\StatMsdParaFlights} and \num{\StatMsdHangFlights} flights. The wing classes that
 depart from the pooled ensemble MSD by
-\SI{\StatPrelimParaClassTypicalDeparturePct}{\percent} (Sec.~\ref{sec:prelim}) move this
+\SI{\StatPrelimParaClassTypicalDeparturePct}{\percent} (Sec.~\ref{sec:strata-compat}) move this
 exponent by \StatVarParaClassSpreadAlpha; native cadence, across a factor of ten in the
 scale below which the trajectory has been smoothed, moves it by
 \StatVarParaCadenceSpreadAlpha, season by \StatVarParaSeasonSpreadAlpha, and the declared

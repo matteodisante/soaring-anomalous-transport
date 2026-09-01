@@ -189,13 +189,14 @@ Savitzky--Golay $\tau_c$ (config values) &
   only to change a panel's extent; everything downstream then draws offline with no
   geospatial stack (Sec.~\ref{impl:prelim}). Needs the network.} \\
 \hline
-\rev{Figures~\ref{fig:prelim-map}, \ref{fig:prelim-ensemble}, \ref{fig:prelim-strata},
-  \texttt{\textbackslash StatPrelim*}} &
+\rev{Figures~\ref{fig:prelim-map}, \ref{fig:prelim-ensemble}, \ref{fig:prelim-isotropy},
+  \ref{fig:strata-compat}, \texttt{\textbackslash StatPrelim*}} &
   \rev{\protect\path{generate_prelim_figure.py}} &
-  \rev{Sec.~\ref{sec:prelim}: the retained-ensemble statistics, the three take-off maps,
-  the isotropy check, and the ensemble MSD within wing class, orographic group and season.
-  Reads the audit arrays rather than the fix table (Sec.~\ref{impl:prelim}), so a
-  stratified MSD is a row selection. Seconds, given \path{--audit-dir}.} \\
+  \rev{Sec.~\ref{sec:prelim}: the retained-ensemble statistics, the three take-off maps and
+  the isotropy check; and Sec.~\ref{sec:strata-compat} (Chapter~\ref{ch:global}): the
+  ensemble MSD within wing class, orographic group and season. Reads the audit arrays
+  rather than the fix table (Sec.~\ref{impl:prelim}), so a stratified MSD is a row
+  selection. Seconds, given \path{--audit-dir}.} \\
 \hline
 \end{tabular}
 \caption{Script that regenerates each auto-generated thesis figure or table. Run as

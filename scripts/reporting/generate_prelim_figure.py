@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-r"""The preliminary characterization of Sec.~\ref{sec:prelim}: three figures and its macros.
+r"""The preliminary characterization of Sec.~\ref{sec:prelim}: four figures and its macros.
 
 Everything here is a statement about the ensemble the pipeline *retains*, which is what
 separates it from the diagnostics of Chapter 2: ``fig:gaps`` and ``fig:sampling`` were
 computed on every parsed flight, as a filtering diagnostic, and the analysis needs the
 same quantities on the flights actually used.
 
-Three figures:
+Four figures:
 
 ``prelim_map.pdf``
     Where it launches, on real coastlines and borders: metropolitan France, La Reunion,
@@ -16,12 +16,17 @@ Three figures:
 ``prelim_ensemble.pdf``
     What its records look like. Airborne duration, flown path and native sampling
     interval, per discipline.
-``prelim_strata.pdf``
-    Whether it may be pooled. The per-component variance ratio that decides whether the
-    1-D marginal may replace the 2-D propagator, and the ensemble MSD computed within
-    wing class, within orographic group and within season.
+``prelim_isotropy.pdf``
+    Whether the 1-D marginal may replace the 2-D propagator: the per-component variance
+    ratio, paragliders against hang gliders. Stays in Chapter 2 -- it is a property of the
+    process, not of who is in the ensemble.
+``strata_compat.pdf``
+    Whether the ensemble may be pooled across wing class, orographic group and season, on
+    the raw MSD. Read by Chapter 3 (Sec.~\ref{sec:strata-compat}), which is the chapter
+    that needs the answer: the ensemble MSD here is what motivates the per-stratum
+    $\alpha_2$ check of Table~\ref{tab:strata-alpha}.
 
-All three read the per-flight positions ``audit_msd.py`` wrote -- one row per flight, one
+All four read the per-flight positions ``audit_msd.py`` wrote -- one row per flight, one
 column per lag -- so a stratified MSD is a row selection rather than another pass over
 the 43 GB fix table. Writes ``thesis/generated/prelim.tex``.
 """
@@ -55,7 +60,8 @@ from soaring.reporting import (  # noqa: E402
 
 OUT_MAP = ROOT / "thesis" / "generated" / "prelim_map.pdf"
 OUT_ENSEMBLE = ROOT / "thesis" / "generated" / "prelim_ensemble.pdf"
-OUT_STRATA = ROOT / "thesis" / "generated" / "prelim_strata.pdf"
+OUT_ISOTROPY = ROOT / "thesis" / "generated" / "prelim_isotropy.pdf"
+OUT_STRATA = ROOT / "thesis" / "generated" / "strata_compat.pdf"
 OUT_TEX = ROOT / "thesis" / "generated" / "prelim.tex"
 # Coastlines and borders, cropped and committed by build_basemap.py so that the
 # figure regenerates offline and without a geospatial stack.
@@ -371,12 +377,11 @@ def draw_ensemble(loaded: dict) -> object:
     return fig
 
 
-def draw_strata(loaded: dict) -> object:
-    """Whether the retained ensemble may be pooled: isotropy, then three stratifications."""
+def draw_isotropy(loaded: dict) -> object:
+    """Whether the 1-D marginal may replace the 2-D propagator: the variance ratio alone."""
     import matplotlib.pyplot as plt
 
-    fig, axes = plt.subplots(2, 2, figsize=(11.4, 8.0))
-    iso_ax, class_ax, group_ax, season_ax = axes.ravel()
+    fig, iso_ax = plt.subplots(1, 1, figsize=(5.5, 4.2))
 
     for discipline, data in loaded.items():
         lags, east, north = data["lags"], data["east"], data["north"]
@@ -389,16 +394,24 @@ def draw_strata(loaded: dict) -> object:
     iso_ax.axhline(1.0, color="0.3", lw=0.8, ls="--")
     iso_ax.set_xlabel("elapsed time $t$ (s)")
     iso_ax.set_ylabel(r"$\langle E^2\rangle\,/\,\langle N^2\rangle$")
-    iso_ax.set_title("(a) isotropy: per-component variance ratio", fontsize=10, loc="left")
     iso_ax.legend(frameon=False, fontsize=9)
+    fig.tight_layout()
+    return fig
 
-    # The three stratifications, paragliders only: the hang-glider archive is 4% of the
-    # size and a stratum of it would be a curve about a few hundred flights.
+
+def draw_strata(loaded: dict) -> object:
+    """Whether the retained ensemble may be pooled: the ensemble MSD, stratified three ways."""
+    import matplotlib.pyplot as plt
+
+    fig, (class_ax, group_ax, season_ax) = plt.subplots(1, 3, figsize=(11.4, 4.0))
+
+    # Paragliders only: the hang-glider archive is 4% of the size and a stratum of it
+    # would be a curve about a few hundred flights.
     data = loaded.get("paragliders")
     panels = [
-        (class_ax, "wing_class", "(b) MSD by wing class"),
-        (group_ax, "group", "(c) MSD by orographic group"),
-        (season_ax, "season", "(d) MSD by season"),
+        (class_ax, "wing_class", "(a) MSD by wing class"),
+        (group_ax, "group", "(b) MSD by orographic group"),
+        (season_ax, "season", "(c) MSD by season"),
     ]
     if data is not None:
         lags, east, north = data["lags"], data["east"], data["north"]
@@ -531,13 +544,14 @@ def main() -> int:
 
     draw_maps(loaded).savefig(OUT_MAP, metadata=_PDF_METADATA, bbox_inches="tight")
     draw_ensemble(loaded).savefig(OUT_ENSEMBLE, metadata=_PDF_METADATA)
+    draw_isotropy(loaded).savefig(OUT_ISOTROPY, metadata=_PDF_METADATA)
     draw_strata(loaded).savefig(OUT_STRATA, metadata=_PDF_METADATA)
     values = macros(loaded)
     write_macros(
         OUT_TEX, values, generator="scripts/reporting/generate_prelim_figure.py"
     )
-    print(f"wrote {OUT_MAP.name}, {OUT_ENSEMBLE.name}, {OUT_STRATA.name}, {OUT_TEX.name} "
-          f"({len(values)} macros)")
+    print(f"wrote {OUT_MAP.name}, {OUT_ENSEMBLE.name}, {OUT_ISOTROPY.name}, "
+          f"{OUT_STRATA.name}, {OUT_TEX.name} ({len(values)} macros)")
     for k, v in values.items():
         print(f"  {k:44s} {v}")
     return 0

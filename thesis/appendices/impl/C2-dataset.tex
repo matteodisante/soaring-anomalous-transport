@@ -1283,8 +1283,9 @@ already in place when it reads its window.
 \section{Preliminary characterization}
 \label{impl:prelim}
 \begin{revblock}
-\path{scripts/reporting/generate_prelim_figure.py} produces both figures of
-Sec.~\ref{sec:prelim} and the \texttt{\textbackslash StatPrelim*} macros. It reads three
+\path{scripts/reporting/generate_prelim_figure.py} produces the figures of
+Sec.~\ref{sec:prelim} and of Sec.~\ref{sec:strata-compat} (Chapter~\ref{ch:global}) and the
+\texttt{\textbackslash StatPrelim*} macros. It reads three
 things: the per-flight summary and the per-lag positions \path{audit_msd.py} wrote
 (Sec.~\ref{impl:obs-global}), \path{flights_meta.parquet} for the take-off coordinates,
 and the season catalogue for \path{wing_class} and \path{season}. The join on

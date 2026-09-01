@@ -1652,7 +1652,7 @@ hold at best at the level of the \emph{ensemble}, and the check is run there.
 The primary test is the per-component variance ratio: for an isotropic process
 $\langle E(t)^2\rangle=\langle N(t)^2\rangle=\mathrm{MSD}(t)/2$ at every $t$, so the ratio
 $\langle E(t)^2\rangle/\langle N(t)^2\rangle$ should be identically $1$.
-Figure~\ref{fig:prelim-strata}a shows it is not. The curve plotted is the median of a
+Figure~\ref{fig:prelim-isotropy} shows it is not. The curve plotted is the median of a
 cluster bootstrap resampling (200 times) whole take-off-site-and-day groups, 
 with a 10--90\% band. Across all evaluated lags, the transport analysis shows that the paraglider 
 band remains bounded between \StatPrelimParaIsoRatioMin\ and \StatPrelimParaIsoRatioMax, 
@@ -1666,50 +1666,10 @@ marginals $P(E(t)=x)$ and $P(N(t)=x)$ are analysed \emph{separately} rather than
 into a single one-dimensional sample and read as a stand-in for the 2-D propagator: the
 marginal of $E$ alone carries no information about $N$, or the other way round. Both
 directions are studied on their own, alongside the modulus
-$|\mathbf{r}(t)|=\sqrt{E(t)^2+N(t)^2}$. 
-
-
-\begin{revblock}
-\paragraph{Compatibility across strata.}
-The dataset spans more than four decades, two glider types and a range of performance
-classes (Sec.~\ref{sec:glider}) whose kinematics differ substantially. Before treating the 
-flights of one discipline as
-draws from a single statistical process, the subpopulations are checked. 
-The test is the horizontal MSD computed within each stratum and read against the pooled curve,
-defined as the same statistic calculated across all flights of the discipline without any stratum split, 
-over the same lags; the two disciplines are never pooled, and a stratum below \num{\StatPrelimMinStratum}
-flights is not drawn: below that size, sampling noise risks dominating the curve.
-The class normalisation of Sec.~\ref{sec:glider}
-runs first, since as long as one wing class appears under several spellings a stratum is
-not a well-defined set of flights.
-
-Figure~\ref{fig:prelim-strata}b--d gives three axes and two answers. Across the
-\num{\StatPrelimParaClassStrata} wing classes the curves separate: the typical stratum
-departs from the pooled curve by \SI{\StatPrelimParaClassTypicalDeparturePct}{\percent}
-and the extreme by \SI{\StatPrelimParaClassMaxDeparturePct}{\percent}, with the CIVL
-competition wings above the pooled curve throughout and the EN\,A wings well below it.
-Across the \num{\StatPrelimParaGroupStrata} orographic groups they separate further,
-by \SI{\StatPrelimParaGroupTypicalDeparturePct}{\percent} typically and
-\SI{\StatPrelimParaGroupMaxDeparturePct}{\percent} at the extreme, with the Massif Central
-at half the pooled curve over the intermediate lags and the Alps above it. Across the
-\num{\StatPrelimParaSeasonStrata} seasons they do not: the typical departure is
-\SI{\StatPrelimParaSeasonTypicalDeparturePct}{\percent} and the largest
-\SI{\StatPrelimParaSeasonMaxDeparturePct}{\percent}, and the latter belongs to the
-smallest season in the archive.
-
-So the ensemble may be pooled over time and may not be pooled over wing class or over
-terrain. Season is not a relevant stratum and the archive's two-decade span is not a
-confound. Class and geography are relevant strata, and the difference is itself a result
-rather than a nuisance: a competition wing covers ground faster than a recreational one,
-and thermals over a mountain range are anchored to slopes and organised along ridges
-whereas over flat terrain they drift with the wind, so the persistence of the glides and
-the spacing of the climbs need not be the same. The exponent of
-Chapter~\ref{ch:global} is therefore reported by wing class as well as pooled, alongside
-cuts by native cadence, season and declared task
-(Table~\ref{tab:strata-alpha}); the orographic cut is made here, on the ensemble MSD, which
-is the statistic it separates. A pooled exponent is read as an average over strata that are
-known to differ, not as a property of a homogeneous population.
-\end{revblock}
+$|\mathbf{r}(t)|=\sqrt{E(t)^2+N(t)^2}$. Whether the ensemble may be pooled across wing
+class, orographic group and season is a separate question from isotropy, and is answered
+in Chapter~\ref{ch:global} (Sec.~\ref{sec:strata-compat}), where it motivates the
+per-stratum exponent check of Table~\ref{tab:strata-alpha}.
 
 \begin{figure}[htbp]
   \centering
@@ -1741,7 +1701,7 @@ known to differ, not as a property of a homogeneous population.
   disciplines throughout.
   (a)~Metropolitan France, density on a \SI{0.15}{\degree} cell and a logarithmic colour
   scale; the dashed boxes are the orographic groups used as strata in
-  Fig.~\ref{fig:prelim-strata}. (b)~La~R\'eunion, on a \SI{0.01}{\degree} cell, the one
+  Fig.~\ref{fig:strata-compat} (Sec.~\ref{sec:strata-compat}). (b)~La~R\'eunion, on a \SI{0.01}{\degree} cell, the one
   overseas department with a substantial share. (c)~Everything else, one marker per
   \SI{0.5}{\degree} cell with the area set by its count.}
   \label{fig:prelim-map}
@@ -1755,38 +1715,33 @@ known to differ, not as a property of a homogeneous population.
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
     \texttt{scripts/reporting/generate\_dataset\_stats.py}.}}%
   }
-  \caption{\rev{The archive season by season. (a)~Flights attempted and retained, on a
+  \caption{The archive season by season. (a)~Flights attempted and retained, on a
   logarithmic scale: the ladder grows by three orders of magnitude over its life.
   (b)~Retention rate and (c)~median airborne duration of the survivors; open markers are
-  seasons of fewer than \num{1000} flights, whose rates are noise. Retention is flat across
+  seasons of fewer than \num{1000} flights. Retention is approximately flat across
   the substantial seasons, which is what says the cascade does not discard one era of the
-  archive preferentially. Computed by
-  \texttt{scripts/reporting/generate\_dataset\_stats.py}.}}
+  archive preferentially.}
   \label{fig:seasons}
 \end{figure}
 
 
 \begin{figure}[htbp]
   \centering
-  \IfFileExists{generated/prelim_strata.pdf}{%
-    \includegraphics[width=\linewidth]{generated/prelim_strata}%
+  \IfFileExists{generated/prelim_isotropy.pdf}{%
+    \includegraphics[width=0.55\linewidth]{generated/prelim_isotropy}%
   }{%
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
     \texttt{scripts/reporting/generate\_prelim\_figure.py} from the processed dataset on
     the SSD (not versioned).}}%
   }
-  \caption{\rev{Whether the retained ensemble may be pooled. (a)~The per-component
-  variance ratio $\langle E^2\rangle/\langle N^2\rangle$ against elapsed time, median and
+  \caption{\rev{The per-component variance ratio $\langle E^2\rangle/\langle N^2\rangle$
+  against elapsed time, median and
   10--90\% band over a cluster bootstrap resampling take-off site and day
   (\StatPrelimIsoBootResamples\ resamples): unity is isotropy, and neither discipline's
   band reaches it over \SIrange{\StatAuditParaFitMinS}{\StatAuditParaFitMaxS}{\second},
-  the lag range the transport analysis reads (shaded in b--d). (b--d)~The ensemble MSD
-  computed within each stratum and
-  divided by the pooled curve, for paragliders, by wing class, by orographic group and by
-  season; strata below \num{\StatPrelimMinStratum} flights are not drawn. Class and terrain separate the
-  curves, season does not. Computed by
+  the lag range the transport analysis reads. Computed by
   \texttt{scripts/reporting/generate\_prelim\_figure.py}.}}
-  \label{fig:prelim-strata}
+  \label{fig:prelim-isotropy}
 \end{figure}
 
 % ---------------------------------------------------------------------------
