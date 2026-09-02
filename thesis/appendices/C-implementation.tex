@@ -12,12 +12,15 @@
 % Independent numbering for this part: it mirrors the body, not the appendices, so its
 % chapters must not continue the A/B letter sequence of Appendices A-B (that would read as
 % "just more appendices of the same kind"), and, since the part itself is unnumbered above,
-% a part-number prefix would be unexplained -- so these chapters get a plain, independent
-% arabic sequence (1, 2, ...) instead, cascading automatically into \thesection/\thetable
-% etc. Also revert the heading word from "Appendix" (set by \appendix, in effect since
-% Appendix A) back to "Chapter", matching the body's own style.
+% a part-number prefix would be unexplained -- so these chapters get their own sequence
+% instead, cascading automatically into \thesection/\thetable etc. The I prefix keeps that
+% sequence readable against the body it mirrors (I2 is the implementation side of
+% Chapter 2) while making every number in this part unmistakably its own: without it a
+% cross-reference reads "Sec. 2.7.2" whichever part it points into, and Tables 2.1-2.2
+% existed twice in the thesis. Also revert the heading word from "Appendix" (set by
+% \appendix, in effect since Appendix A) back to "Chapter", matching the body's own style.
 \setcounter{chapter}{0}
-\renewcommand{\thechapter}{\arabic{chapter}}
+\renewcommand{\thechapter}{I\arabic{chapter}}
 % Distinct hyperref anchor namespace: without this, resetting the chapter counter makes
 % these chapters reuse the appendices' anchor names (appendix.A, section.C.1, ...) and all
 % PDF links to this part land on Appendix 2.A-2.C instead.
@@ -35,9 +38,11 @@ made in the main text: the exact code module and script that produced each figur
 table, the configuration values in force, sample sizes and computation times, and the
 status of each piece (implemented and tested, designed but not yet built, or planned). It
 is organised as a document within the document: its own chapters\flow{, numbered
-independently of the appendices,} mirror the body chapter by chapter. It is not meant to be read start to end -- the body links to the relevant
-place at the point where a detail was trimmed out of the text, via a cross-reference such
-as ``(implementation details: Sec.~3.5.2)''.
+independently of the appendices and prefixed with an \texttt{I},} mirror the body chapter
+by chapter\flow{: Chapter~I2 here is the implementation side of Chapter~2 there, and the
+prefix keeps the two apart in every cross-reference}. It is not meant to be read start to
+end -- the body links to the relevant place at the point where a detail was trimmed out of
+the text, via a cross-reference such as ``(implementation details: Sec.~I3.5.2)''.
 
 \printcontents[impl]{l}{0}{\section*{Contents of this part}}
 
@@ -97,7 +102,7 @@ Census macros (\texttt{\textbackslash StatScan\dots}) &
   (\texttt{BaroMiss}, Sec.~\ref{sec:altchannel}), against the thresholds in
   \path{configs/preprocessing.yaml}}\flow{, and re-exports those thresholds as the
   \texttt{\textbackslash Preproc*} macros quoted by the pipeline map
-  (Table~\ref{tab:pipelinemap})}\rev{.} \\
+  (Figure~\ref{fig:pipelinemap})}\rev{.} \\
 \hline
 \rev{--- (all of the above, in order)} & \rev{\path{../regenerate.sh}} &
   \rev{Runs every row of this table that depends on the processed dataset, in the one

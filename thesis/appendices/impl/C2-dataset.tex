@@ -578,7 +578,7 @@ still counted as barometric fell from \num{14878} to
 \num{\StatScanParaBaroMissMaxFixes} when the threshold moved, so most of what looked like
 a pathological tail was a classification artefact rather than a sensor one.}
 \flow{The liveness threshold is \texttt{baro\_min\_range\_m} (key \texttt{alt\_channel};
-value in Table~\ref{tab:pipelinemap}); rule and rationale in Sec.~\ref{sec:altchannel}.}
+value in Table~\ref{tab:workingparams}); rule and rationale in Sec.~\ref{sec:altchannel}.}
 
 \flow{\paragraph{Why GNSS altitude is vertically noisier.} The asymmetry behind the
 vertical dilution of precision is geometric: a receiver sees satellites only above the
@@ -945,10 +945,10 @@ $f$ & maximum deleted-plus-reconstructed fraction; past it the
 \hline
 \end{tabular}
 \caption{\rev{Fix-level cleaning: what each parameter of the robust and structural
-detectors does, and the physical scale that fixes it. The \emph{values} are deliberately
-not repeated here---they are in Table~\ref{tab:workingparams}, with the rest of the
-pipeline's working values, so that there is one place to read a number and one place to
-change it. They are fixed a priori and checked a posteriori on the per-rule removal
+detectors does, and the physical scale that fixes it. The \emph{values} are not repeated
+here: they are stated with the rules that use them in Sec.~\ref{sec:fixlevel}, and
+gathered with the rest of the pipeline's working values in
+Table~\ref{tab:workingparams}. They are fixed a priori and checked a posteriori on the per-rule removal
 fractions (Sec.~\ref{sec:fixlevel}), with the injected-defect calibration as the direct
 measurement of the error rates. All live as config keys under \texttt{fix\_level} in
 \texttt{configs/preprocessing.yaml}, alongside the absolute bounds of
@@ -1022,7 +1022,7 @@ matures.}
 \label{impl:trimming}
 \flow{The two thresholds of Eq.~\eqref{eq:trimming} ($v_0$, $T_0$) are the
 \texttt{TrimmingThresholds} dataclass, loaded from \path{configs/preprocessing.yaml}
-(key \texttt{trimming}); values in Table~\ref{tab:pipelinemap}.}
+(key \texttt{trimming}); values in Table~\ref{tab:workingparams}.}
 
 The interior-ground guard of Sec.~\ref{sec:trimming} keeps
 \texttt{interior\_ground\_s} ($T_{\mathrm{ground}}$, \SI{600}{\second}) and
@@ -1078,7 +1078,7 @@ mid-flight landing on a GNSS-fallback flight is neither excised nor flagged.}
 \label{impl:flightfilter}
 \flow{The three cuts of Sec.~\ref{sec:flightfilter} are the
 \texttt{FlightLevelThresholds} dataclass (key \path{flight_level} in
-\path{configs/preprocessing.yaml}); values in Table~\ref{tab:pipelinemap}. The census
+\path{configs/preprocessing.yaml}); values in Table~\ref{tab:workingparams}. The census
 measurements behind the path floor and the upper duration bound, and the totals of
 Figure~\ref{fig:preproc}, are quoted through macros computed from the shared track scan
 (Sec.~\ref{impl:preproc}); the headline duration and path medians are quoted in
@@ -1132,7 +1132,7 @@ Eqs.~\eqref{eq:ecef} and the ENU rotation is derived in Appendix~\ref{app:geodes
 \subsection{Uniform sampling within a flight}
 \label{impl:uniform}
 The sampling thresholds (key \texttt{sampling}, the \texttt{SamplingThresholds}
-dataclass\flow{; values in Table~\ref{tab:pipelinemap}}) act as follows.
+dataclass\flow{; values in Table~\ref{tab:workingparams}}) act as follows.
 \begin{description}
   \item[Split bound.] $g_{\max}=\min\big(\texttt{max\_gap\_factor}\times\Delta t,\,
         \max(\texttt{max\_gap\_seconds},\,2\,\Delta t)\big)$, pinned by the constraint
@@ -1258,7 +1258,7 @@ Table~\ref{tab:impl-status}):}
         \texttt{savgol}): \path{tau_c_horizontal_s} for $(E,N)$,
         \path{tau_c_vertical_baro_s} and \path{tau_c_vertical_gnss_s} for the vertical
         channel (the flight's adopted altitude, Sec.~\ref{sec:altchannel});
-        values in Table~\ref{tab:pipelinemap}.
+        values in Table~\ref{tab:workingparams}.
 \end{itemize}
 \end{flowblock}
 

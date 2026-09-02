@@ -383,6 +383,13 @@ def draw_isotropy(loaded: dict) -> object:
 
     fig, iso_ax = plt.subplots(1, 1, figsize=(5.5, 4.2))
 
+    # Inset: the same bands zoomed to 1e0-1e4 s. Past 1e4 s coverage falls off (few
+    # flights last that long) and the bootstrap band widens enough to swamp the y-scale,
+    # hiding whether the band ever holds unity over a zone rather than at a point in the
+    # decades that are actually well covered.
+    # Placement may need adjusting once run against the real (unversioned) dataset.
+    inset_ax = iso_ax.inset_axes([0.42, 0.55, 0.53, 0.4])
+
     for discipline, data in loaded.items():
         lags, east, north = data["lags"], data["east"], data["north"]
         lo, med, hi = iso_ratio_band(east, north, data["flights"])
@@ -391,10 +398,22 @@ def draw_isotropy(loaded: dict) -> object:
         iso_ax.fill_between(lags[drawable], lo[drawable], hi[drawable],
                              color=color, alpha=0.25, lw=0)
         iso_ax.semilogx(lags[drawable], med[drawable], color=color, label=discipline)
+
+        zoom = drawable & (lags <= 1e4)
+        inset_ax.fill_between(lags[zoom], lo[zoom], hi[zoom], color=color, alpha=0.25, lw=0)
+        inset_ax.semilogx(lags[zoom], med[zoom], color=color)
+
     iso_ax.axhline(1.0, color="0.3", lw=0.8, ls="--")
     iso_ax.set_xlabel("elapsed time $t$ (s)")
     iso_ax.set_ylabel(r"$\langle E^2\rangle\,/\,\langle N^2\rangle$")
     iso_ax.legend(frameon=False, fontsize=9)
+
+    inset_ax.axhline(1.0, color="0.3", lw=0.8, ls="--")
+    inset_ax.set_xlim(1.0, 1e4)
+    inset_ax.set_xticks([1e0, 1e2, 1e4])
+    inset_ax.tick_params(labelsize=7)
+    iso_ax.indicate_inset_zoom(inset_ax, edgecolor="0.4")
+
     fig.tight_layout()
     return fig
 
@@ -436,6 +455,14 @@ def draw_strata(loaded: dict) -> object:
 
 def macros(loaded: dict) -> dict[str, str]:
     """The ``\\StatPrelim*`` family: every number Sec.~\\ref{sec:prelim} quotes."""
+    from soaring.analysis.config import load_preproc_config
+
+    # The duration and path below are the *retained record*: they are measured over the
+    # segments that survived sec:uniform, not over the trimmed flight that sec:flightfilter
+    # tested. A flight reduced to one short segment therefore lands under the flight-level
+    # cuts even though it passed them, which is the left tail of fig:prelim-ensemble a/b.
+    flight_cut = load_preproc_config().flight
+
     out: dict[str, str] = {}
     for discipline, data in loaded.items():
         tag = DISCIPLINES[discipline].tag
@@ -444,6 +471,12 @@ def macros(loaded: dict) -> dict[str, str]:
 
         def put(name, value, tag=tag):
             out[f"StatPrelim{tag}{name}"] = value
+
+        below = (frame.duration_s < flight_cut.min_duration_s) | (
+            frame.path_m / 1000 < flight_cut.min_path_km
+        )
+        put("BelowCutFlights", f"{int(below.sum())}")
+        put("BelowCutPct", f"{100 * below.mean():.2f}")
 
         put("Flights", f"{len(frame)}")
         put("MedianDurH", f"{frame.duration_s.median() / 3600:.2f}")
