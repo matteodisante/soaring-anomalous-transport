@@ -11,7 +11,9 @@ a census number.
 
 The macros cover, per discipline: the number of scanned tracks; the barometric-absence
 fraction and its all-or-nothing structure (channel exactly zero when absent, complete
-when present); the prevalence of *individually* missing barometric values among the
+when present); the count and share of flights that break that pattern, present just
+under the cut rather than at zero (``StatScan*BaroBorderline{Count,Pct}``, quoted by
+``impl:altchannel``); the prevalence of *individually* missing barometric values among the
 flights that adopt the channel (``StatScan*BaroMiss{FlightsPct,MedianFixes,MaxFixes}``,
 quoted by the "Missing fixes" paragraph of thesis ``sec:altchannel``: share of
 barometric flights missing at least one value, and the median/maximum number of
@@ -70,6 +72,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "thesis" / "generated" / "census.tex"
 
+# How far below BARO_PRESENT_MIN still counts as "just under the cut" for the
+# borderline-presence census (impl:altchannel): shared between _scan_macros, which
+# counts the flights, and _config_macros, which quotes the resulting lower bound, so
+# the two can never say different things about the same band.
+NEAR_CUT_MARGIN_PCT = 5.0
+
 _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
@@ -104,6 +112,12 @@ def _scan_macros(prefix: str, scan, sampling) -> dict[str, str]:
     frac = scan["baro_present_frac"].to_numpy()
     absent = frac < BARO_PRESENT_MIN
 
+    # Bimodality holds almost everywhere but not quite: a thin band of flights present
+    # just under the cut, close enough that whether the GNSS fallback (sec:altchannel)
+    # actually lands on the more complete channel is untested there -- this scan carries
+    # no GNSS-completeness column to check against.
+    near_cut = (frac >= BARO_PRESENT_MIN - NEAR_CUT_MARGIN_PCT / 100.0) & absent
+
     dt = scan["dt_s"].to_numpy()
     dt = dt[np.isfinite(dt) & (dt > 0)]
 
@@ -135,6 +149,8 @@ def _scan_macros(prefix: str, scan, sampling) -> dict[str, str]:
         f"StatScan{prefix}NoBaroPct": _fmt(_pct(absent), 1),
         f"StatScan{prefix}BaroZeroPct": _fmt(_pct(frac[absent] == 0.0), 1),
         f"StatScan{prefix}BaroFullPct": _fmt(_pct(frac[~absent] == 1.0), 0),
+        f"StatScan{prefix}BaroBorderlineCount": str(int(near_cut.sum())),
+        f"StatScan{prefix}BaroBorderlinePct": _fmt(_pct(near_cut), 2),
         f"StatScan{prefix}BaroMissFlightsPct": _fmt(_pct(have_miss), 1),
         f"StatScan{prefix}BaroMissMedianFixes": str(
             int(np.median(miss[have_miss])) if have_miss.any() else 0
@@ -228,6 +244,9 @@ def _config_macros(preproc) -> dict[str, str]:
         "PreprocFrozenTauS": _fmt(fix.frozen_tau_s, 1),
         "PreprocIntegrityMaxPct": _fmt(100.0 * fix.integrity_max_fraction, 1),
         "PreprocBaroPresentMinPct": _fmt(100.0 * alt.baro_present_min, 0),
+        "PreprocBaroBorderlineLowPct": _fmt(
+            100.0 * alt.baro_present_min - NEAR_CUT_MARGIN_PCT, 0
+        ),
         "PreprocBaroMinRangeM": _fmt(alt.baro_min_range_m, 1),
         "PreprocTakeoffSpeedMps": _fmt(preproc.trimming.takeoff_speed_mps, 1),
         "PreprocSustainedS": _fmt(preproc.trimming.sustained_s, 1),

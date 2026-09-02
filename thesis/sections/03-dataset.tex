@@ -350,7 +350,11 @@ GNSS, unfiltered --- a non-negligible minority (Figure~\ref{fig:altnoise}d), mea
 \StatScanParaNoBaroPct\,\% of paraglider and \StatScanHangNoBaroPct\,\% of hang-glider
 flights scanned \impldetails{impl:altchannel}. That liveness test catches only a sensor
 dead for the whole recording, not one that freezes partway through, and nothing downstream
-closes that gap \impldetails{impl:altchannel}.
+closes that gap \impldetails{impl:altchannel}. Nor does the presence test check what it
+falls back to: \StatScanParaBaroBorderlineCount\ paraglider flights sit just under its
+cut rather than at zero, and for these the assumption that GNSS is the more complete
+channel goes untested, since nothing in the pipeline measures GNSS completeness to
+compare it against \impldetails{impl:altchannel}.
 
 \paragraph{Mixed altitude sources.}
 The mix is acceptable. The horizontal, two-dimensional transport analysis --- the main
@@ -1660,7 +1664,7 @@ and the ensemble handed to the transport analysis, in the order the pipeline app
 them. Each stage carries the level it acts at and its effect, and points back to the
 section where that choice is argued.
 
-\begin{flowblock}
+
 \begin{figure}[tbp]
   % A deferred float does not inherit the ambient colour of the flowblock it sits in;
   % re-assert it so the draft/final toggle behaves the same as for the running text.
@@ -1669,53 +1673,61 @@ section where that choice is argued.
   % Local to this float. \stghead: stage number, name, and the section that argues the
   % choice. The adopted values used to sit in each node, below the effect; they now live
   % in Table~\ref{tab:workingparams}, which faces this map.
-  \newcommand{\stghead}[3]{\textbf{#1\quad #2}\hfill{\scriptsize\S\ref{#3}}\\[0pt]}
+  \newcommand{\stghead}[3]{\textbf{#1\quad #2}\hfill{\scriptsize\S\ref{#3}}\\[3pt]}
+  % Spacing is deliberate, not default: node distance sets the arrow length (at the 1mm
+  % it used to be the arrows read as ticks, and the stages as one block), and the inner
+  % sep keeps the descriptions off the rules. The 110mm box plus badge and brace lanes
+  % comes to ~148mm against a 156mm text block.
+  % The stage boxes are ragged right (align=left), so nothing is gained by breaking a
+  % word across their two lines and the reader loses a little each time.
+  \hyphenpenalty=10000 \exhyphenpenalty=10000
   \begin{tikzpicture}[
-      >=Latex, node distance=1.0mm,
+      >=Latex, node distance=5.5mm,
       stage/.style={draw=black!60, thick, rounded corners=2pt, fill=black!4,
-                    text width=107mm, inner sep=3pt, align=left},
+                    text width=110mm, inner xsep=6pt, inner ysep=5pt, align=left},
       io/.style={draw=black!60, thick, rounded corners=7pt, fill=black!12,
-                 inner sep=3pt, align=center, text width=104mm},
+                 inner xsep=6pt, inner ysep=6pt, align=center, text width=108mm},
       badge/.style={font=\scriptsize\scshape, anchor=west, align=left,
-                    text width=19mm, inner sep=0pt},
+                    text width=24mm, inner sep=0pt},
       lane/.style={font=\scriptsize\itshape, text=black!60, align=center},
     ]
-    \node[io] (raw) {\textbf{Raw IGC archive}\\[1pt]
-      {\scriptsize one track per flight: times $t$, geodetic fixes
+    \node[io] (raw) {\textbf{Raw IGC archive}\\[3pt]
+      {\footnotesize one track per flight: times $t$, geodetic fixes
        $(\varphi,\lambda)$, barometric and GNSS altitudes}};
 
     \node[stage, below=of raw] (alt) {\stghead{1}{Choice of altitude channel}{sec:altchannel}
-      {\scriptsize adopts the barometric channel as $z$, falling back to GNSS when the
-       sensor is absent or stuck}%
+      {\footnotesize one channel per flight, end to end: barometric where the sensor is
+       present and alive, GNSS wherever either test fails}%
       };
     \node[stage, below=of alt] (fix) {\stghead{2}{Fix-level cleaning}{sec:fixlevel}
-      {\scriptsize deletes implausible fixes; a flight that cleaning had to rebuild
-       beyond the integrity gate is dropped whole}%
+      {\footnotesize deletes a fix no flown path could reach, marks a corrupt altitude
+       missing and keeps the fix; a flight repaired beyond the integrity gate is dropped
+       whole}%
       };
     \node[stage, below=of fix] (trim) {\stghead{3}{Trimming of ground phases}{sec:trimming}
-      {\scriptsize removes the ground records before take-off and after landing; an
-       interior landing is excised and the flight split}%
+      {\footnotesize cuts the ground records before take-off and after landing; an
+       interior landing is excised and the track split there}%
       };
     \node[stage, below=of trim] (filt) {\stghead{4}{Flight-level filtering}{sec:flightfilter}
-      {\scriptsize drops whole flights outside the cross-country envelope: too short,
+      {\footnotesize drops whole flights outside the cross-country envelope: too short,
        too localized, too long, or flat on the altitude channel}%
       };
     \node[stage, below=of filt] (enu) {\stghead{5}{Local Cartesian coordinates}{sec:enu}
-      {\scriptsize maps $(\varphi,\lambda,h)$ to ENU about the first fix of the trimmed track;
-       $z$ kept as measured}%
+      {\footnotesize maps $(\varphi,\lambda,h)$ to ENU about the first fix of the trimmed
+       track; $z$ is kept as measured}%
       };
     \node[stage, below=of enu] (uni) {\stghead{6}{Uniform sampling}{sec:uniform}
-      {\scriptsize fills the flight's native grid, bridging only short holes; splits
-       at long gaps into segments; drops segments too sparse or too short}%
+      {\footnotesize resamples onto the flight's own native grid: short holes bridged,
+       long gaps split into segments, segments too sparse or too short dropped}%
       };
     \node[stage, below=of uni] (sg) {\stghead{7}{Smoothing and differentiation}{sec:savgol}
-      {\scriptsize Savitzky--Golay fit per component ($E$, $N$, $z$): smoothed value,
+      {\footnotesize Savitzky--Golay fit per component ($E$, $N$, $z$): smoothed value,
        velocity and acceleration on the same grid}%
       };
 
-    \node[io, below=of sg] (out) {\textbf{Analysis ensemble}\\[1pt]
-      {\scriptsize one uniformly sampled segment per row, each carrying\\
-       $\mathbf{r}(t)$, $z(t)$, $\mathbf{v}(t)$, $\mathbf{a}(t)$ at every grid time}};
+    \node[io, below=of sg] (out) {\textbf{Analysis ensemble}\\[3pt]
+      {\footnotesize one row per grid point of every retained segment, carrying\\
+       $\mathbf{r}(t)$, $z(t)$, $\mathbf{v}(t)$, $\mathbf{a}(t)$ on the parent flight's clock}};
 
     \foreach \a/\b in {raw/alt, alt/fix, fix/trim, trim/filt, filt/enu, enu/uni,
                        uni/sg, sg/out}
@@ -1763,18 +1775,85 @@ Two decisions organise the chain.
         it before the cleaning stages would therefore buy nothing, and would cost
         rework whenever trimming moved the fix the frame is anchored to, or filtering
         dropped the record outright.
-  \item \textbf{The level.} Each stage acts per fix, per flight or per segment, and its
-        parameters are set from the record it is acting on: the smoothing window from
-        that flight's own $\Delta t$, the outlier scale from its own local MAD, the
-        resampling grid from its own cadence. No flight's cleaning therefore depends on
+  \item \textbf{The level.} Each stage acts per fix, per flight or per segment, and
+        every parameter it adapts is read off the record it is acting on rather than off
+        the archive around it. No flight's cleaning therefore depends on
         which other flights happen to be in the dataset. What is shared across flights
         is only the thresholds of Table~\ref{tab:workingparams}, fixed a priori.
 \end{itemize}
+\begin{flowblock}
+\begin{revblock}
+\paragraph{What the chain retains.}
+Run over the whole archive, the cascade retains
+\num{\StatPipeParaKept} of \num{\StatPipeParaAttempted} paraglider flights
+(\StatPipeParaKeptPct\,\%) and \num{\StatPipeHangKept} of \num{\StatPipeHangAttempted}
+hang-glider flights (\StatPipeHangKeptPct\,\%). Table~\ref{tab:pipecensus} says where the
+rest went. The numbers are a \emph{cascade}, not a set of marginal effects: a flight
+counted against one criterion was still standing when that criterion tested it, so the
+table reads in pipeline order and the counts do not add up to what each cut would remove
+on its own (those are the \texttt{\textbackslash StatScan*} numbers quoted in
+Secs.~\ref{sec:flightfilter} and~\ref{sec:uniform}, measured on the raw population).
+
+Inside the retained flights the cleaning is light, which is what the design asked for:
+it deletes \StatPipeParaRemovedPct\,\% of paraglider fixes and
+\StatPipeHangRemovedPct\,\% of hang-glider ones, and invalidates an altitude on a further
+\StatPipeParaAltInvalidPct\,\% and \StatPipeHangAltInvalidPct\,\%. \rev{The local outlier test
+flags far more than is deleted, and by design: it never gates, so
+\StatPipeParaFlaggedKeptPct\,\% and \StatPipeHangFlaggedKeptPct\,\% of fixes are flagged
+and \emph{kept}. The flag is a per-fix record and a per-flight anomaly count, and what
+condemns a fix is the impossibility gate (Sec.~\ref{sec:fixlevel}).}
+Resampling reconstructs \StatPipeParaInterpPct\,\% and \StatPipeHangInterpPct\,\% of grid
+points. A split is common but not the rule: \StatPipeParaSplitPct\,\% of retained
+paraglider flights and \StatPipeHangSplitPct\,\% of hang-glider ones carry at least one,
+the difference following the cadences of Fig.~\ref{fig:sampling} as
+Sec.~\ref{sec:uniform} anticipated.
+\end{revblock}
+
+\begin{table}[htbp]
+\centering\small
+\ifrevmode\color{revblue}\fi
+\renewcommand{\arraystretch}{1.15}
+\caption{\rev{The pre-processing cascade over the full archive, in the order the pipeline
+applies it. \emph{Standing} is how many flights had survived every earlier criterion when
+this one ran and \emph{share} is the removal as a fraction of those, not of the archive:
+a criterion late in the cascade tests a population the earlier ones have already thinned,
+so a percentage of the archive would understate it. Read this way one cut dominates, and
+it is not one the text argues a threshold for---%
+\StatDataParaWorstCutRemoved\ paraglider flights, \SI{\StatDataParaWorstCutPct}{\percent}
+of those still standing (\StatDataHangWorstCutRemoved\ hang-glider flights,
+\SI{\StatDataHangWorstCutPct}{\percent}), leave nothing behind after resampling. The marginal effect of
+each cut on the raw population is a different quantity and is what the
+\texttt{\textbackslash StatScan*} numbers of Secs.~\ref{sec:flightfilter}
+and~\ref{sec:uniform} report. Generated by \protect\path{generate_dataset_stats.py} from
+the \protect\path{flights_meta} table the pipeline itself writes.}}
+\label{tab:pipecensus}
+\begin{tabular}{@{}l r r r r@{}}
+\toprule
+& \multicolumn{4}{c@{}}{\textbf{paragliders}} \\
+\cmidrule(l){2-5}
+\textbf{Why the flight was dropped} & \textbf{standing} & \textbf{removed}
+  & \textbf{share (\%)} & \textbf{remaining} \\
+\midrule
+\DataCascadeParaRows
+\midrule
+\textbf{retained} & & & & \textbf{\StatDataParaRetained} \\
+\bottomrule
+\addlinespace[1.2ex]
+\toprule
+& \multicolumn{4}{c@{}}{\textbf{hang gliders}} \\
+\cmidrule(l){2-5}
+\textbf{Why the flight was dropped} & \textbf{standing} & \textbf{removed}
+  & \textbf{share (\%)} & \textbf{remaining} \\
+\midrule
+\DataCascadeHangRows
+\midrule
+\textbf{retained} & & & & \textbf{\StatDataHangRetained} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 Table~\ref{tab:workingparams} gathers the thresholds themselves, by stage and with the
-symbols the chapter uses. They are the adopted operating point of
-\path{configs/preprocessing.yaml}, typeset through macros regenerated from that same file,
-so the summary follows the configuration in force.
+symbols the chapter uses. 
 
 % Flush the pipeline map before the table opens: a longtable takes whole pages, and a
 % float deferred past it would land after the values it is supposed to introduce.
@@ -1908,76 +1987,6 @@ for every logger slower than \SI{1}{\hertz}: in seconds the window is
 $\max(\tau_c,\,\PreprocSavgolMinWindow\,\Delta t)$} \\
 \end{longtable}
 \endgroup
-
-\begin{revblock}
-\paragraph{What the chain retains.}
-Run over the whole archive, the cascade retains
-\num{\StatPipeParaKept} of \num{\StatPipeParaAttempted} paraglider flights
-(\StatPipeParaKeptPct\,\%) and \num{\StatPipeHangKept} of \num{\StatPipeHangAttempted}
-hang-glider flights (\StatPipeHangKeptPct\,\%). Table~\ref{tab:pipecensus} says where the
-rest went. The numbers are a \emph{cascade}, not a set of marginal effects: a flight
-counted against one criterion was still standing when that criterion tested it, so the
-table reads in pipeline order and the counts do not add up to what each cut would remove
-on its own (those are the \texttt{\textbackslash StatScan*} numbers quoted in
-Secs.~\ref{sec:flightfilter} and~\ref{sec:uniform}, measured on the raw population).
-
-Inside the retained flights the cleaning is light, which is what the design asked for:
-it deletes \StatPipeParaRemovedPct\,\% of paraglider fixes and
-\StatPipeHangRemovedPct\,\% of hang-glider ones, and invalidates an altitude on a further
-\StatPipeParaAltInvalidPct\,\% and \StatPipeHangAltInvalidPct\,\%. \rev{The local outlier test
-flags far more than is deleted, and by design: it never gates, so
-\StatPipeParaFlaggedKeptPct\,\% and \StatPipeHangFlaggedKeptPct\,\% of fixes are flagged
-and \emph{kept}. The flag is a per-fix record and a per-flight anomaly count, and what
-condemns a fix is the impossibility gate (Sec.~\ref{sec:fixlevel}).}
-Resampling reconstructs \StatPipeParaInterpPct\,\% and \StatPipeHangInterpPct\,\% of grid
-points. A split is common but not the rule: \StatPipeParaSplitPct\,\% of retained
-paraglider flights and \StatPipeHangSplitPct\,\% of hang-glider ones carry at least one,
-the difference following the cadences of Fig.~\ref{fig:sampling} as
-Sec.~\ref{sec:uniform} anticipated.
-\end{revblock}
-
-\begin{table}[htbp]
-\centering\small
-\ifrevmode\color{revblue}\fi
-\renewcommand{\arraystretch}{1.15}
-\caption{\rev{The pre-processing cascade over the full archive, in the order the pipeline
-applies it. \emph{Standing} is how many flights had survived every earlier criterion when
-this one ran and \emph{share} is the removal as a fraction of those, not of the archive:
-a criterion late in the cascade tests a population the earlier ones have already thinned,
-so a percentage of the archive would understate it. Read this way one cut dominates, and
-it is not one the text argues a threshold for---%
-\StatDataParaWorstCutRemoved\ paraglider flights, \SI{\StatDataParaWorstCutPct}{\percent}
-of those still standing (\StatDataHangWorstCutRemoved\ hang-glider flights,
-\SI{\StatDataHangWorstCutPct}{\percent}), leave nothing behind after resampling. The marginal effect of
-each cut on the raw population is a different quantity and is what the
-\texttt{\textbackslash StatScan*} numbers of Secs.~\ref{sec:flightfilter}
-and~\ref{sec:uniform} report. Generated by \protect\path{generate_dataset_stats.py} from
-the \protect\path{flights_meta} table the pipeline itself writes.}}
-\label{tab:pipecensus}
-\begin{tabular}{@{}l r r r r@{}}
-\toprule
-& \multicolumn{4}{c@{}}{\textbf{paragliders}} \\
-\cmidrule(l){2-5}
-\textbf{Why the flight was dropped} & \textbf{standing} & \textbf{removed}
-  & \textbf{share (\%)} & \textbf{remaining} \\
-\midrule
-\DataCascadeParaRows
-\midrule
-\textbf{retained} & & & & \textbf{\StatDataParaRetained} \\
-\bottomrule
-\addlinespace[1.2ex]
-\toprule
-& \multicolumn{4}{c@{}}{\textbf{hang gliders}} \\
-\cmidrule(l){2-5}
-\textbf{Why the flight was dropped} & \textbf{standing} & \textbf{removed}
-  & \textbf{share (\%)} & \textbf{remaining} \\
-\midrule
-\DataCascadeHangRows
-\midrule
-\textbf{retained} & & & & \textbf{\StatDataHangRetained} \\
-\bottomrule
-\end{tabular}
-\end{table}
 
 
 \end{flowblock}

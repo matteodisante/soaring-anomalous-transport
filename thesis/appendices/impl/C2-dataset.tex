@@ -577,6 +577,26 @@ worst partial coverage sat: the largest number of missing barometric fixes on a 
 still counted as barometric fell from \num{14878} to
 \num{\StatScanParaBaroMissMaxFixes} when the threshold moved, so most of what looked like
 a pathological tail was a classification artefact rather than a sensor one.}
+
+\rev{\paragraph{What the presence test does not check.} It decides \emph{that} a flight
+falls back to GNSS, not \emph{whether} GNSS is the better channel there --- an assumption
+the pipeline never tests, since no cache used by this scan records how complete the GNSS
+altitude is. It is safe wherever the channel is absent outright, \StatScanParaBaroZeroPct\,\%
+of the fallback population: a barometer that never recorded implies nothing about the GNSS
+solution, which is computed independently. It is untested on the rest,
+\StatScanParaBaroBorderlineCount\ paraglider flights (\SI{\StatScanParaBaroBorderlinePct}{\percent}
+of the archive) present on
+\SIrange{\PreprocBaroBorderlineLowPct}{\PreprocBaroPresentMinPct}{\percent} of their
+fixes, close enough to the cut that a real defect rather than a missing sensor could
+plausibly explain the shortfall; no hang-glider flight falls in that band.
+Confirming the fallback also holds there would need the same presence statistic computed
+on the GNSS channel, which this scan does not carry. Whatever that comparison would show,
+the population is too small to move an archive-wide result:
+\SI{\StatScanParaBaroBorderlinePct}{\percent} of the paraglider archive is
+\StatScanParaBaroBorderlineCount\ flights, and even a worst case where every one of them
+lands on a noisier GNSS record than the barometric channel it left is
+\StatScanParaBaroBorderlineCount\ flights out of \num{\StatScanParaTracks}\ carrying a degraded
+vertical channel --- not a share any statistic pooled over the archive would register.}
 \flow{The liveness threshold is \texttt{baro\_min\_range\_m} (key \texttt{alt\_channel};
 value in Table~\ref{tab:workingparams}); rule and rationale in Sec.~\ref{sec:altchannel}.}
 
