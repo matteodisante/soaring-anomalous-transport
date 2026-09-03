@@ -186,6 +186,9 @@
 % Dataset statistics (\StatDataParaWorstCutPct, \DataCascadeParaRows, ...): the discard
 % cascade with its running remainder, and the survivors per season.
 \IfFileExists{generated/dataset_stats.tex}{\input{generated/dataset_stats}}{}
+% Savitzky-Golay spectrum-figure sample sizes (\StatSavgolSpecParaHorizN, ...): how many
+% flights of the seeded sample gave a usable per-channel spectrum, by discipline.
+\IfFileExists{generated/savgol_spectrum_stats.tex}{\input{generated/savgol_spectrum_stats}}{}
 % Transport numbers (\StatVarParaAlphaOrderTwo, ...): the filtered-variation measurement
 % of Chapter 3, with the stratifications that test it.
 \IfFileExists{generated/transport.tex}{\input{generated/transport}}{}

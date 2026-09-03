@@ -365,9 +365,8 @@ and the GNSS channel is at least as complete as the barometric one in every one 
 \impldetails{impl:altchannel}.
 
 \paragraph{\rev{How far apart the two channels sit.}}
-\rev{The spectra above settle which channel is quieter. They say nothing about where the
-two sit relative to each other, and that is what a mixed ensemble has to answer for. A
-trajectory never mixes channels within itself, but the ensemble holds
+\rev{Noise is what decides the vertical dynamics, and it is not what a mixed ensemble has
+to answer for. A trajectory never mixes channels within itself, but the ensemble holds
 both kinds of flight, so if the two channels sat at systematically different heights the
 pooled altitude would separate by instrument rather than by atmosphere. Measured over an
 in-flight window on the \num{\StatAltOffParaFlights} paraglider and
@@ -383,8 +382,9 @@ disciplines are comparable only inside one altitude band, and inside
 Within a single flight the same difference barely moves, at an interquartile range of
 \SI{\StatAltOffParaWithinIqrM}{\metre} and \SI{\StatAltOffHangWithinIqrM}{\metre} over
 records of \SI{\StatAltOffParaDurationMin}{\minute} and
-\SI{\StatAltOffHangDurationMin}{\minute} at the median. So the gap between the channels is a per-flight constant: exactly what a difference
-removes and an absolute altitude keeps.}
+\SI{\StatAltOffHangDurationMin}{\minute} at the median. So the gap between the channels
+is a per-flight constant of order \SI{100}{\metre}: exactly what a difference removes and
+an absolute altitude keeps.}
 
 \paragraph{\rev{What the gap is made of.}}
 \rev{Regressing the difference on height within each flight splits it into a part
@@ -394,7 +394,8 @@ pressure to height through a fixed temperature profile, so in air warmer than th
 profile by $\Delta T$ it under-reads by $h\,\Delta T/\bar{T}$; the measured slopes,
 \SI{\StatAltOffParaSlopePct}{\percent} and \SI{\StatAltOffHangSlopePct}{\percent} of the
 height flown, invert to \SI{\StatAltOffParaDeltaTK}{\kelvin} and
-\SI{\StatAltOffHangDeltaTK}{\kelvin} above the standard profile, which is what a thermally active day looks like. At the median flight altitude that term alone accounts for
+\SI{\StatAltOffHangDeltaTK}{\kelvin} above the standard profile, which is what a
+thermally active day is. At the median flight altitude that term alone accounts for
 \SI{\StatAltOffParaHeightTermM}{\metre} and \SI{\StatAltOffHangHeightTermM}{\metre} of
 the gap. What remains once it is removed, \SI{\StatAltOffParaInterceptM}{\metre} and
 \SI{\StatAltOffHangInterceptM}{\metre} extrapolated to sea level, is the separation
@@ -423,8 +424,8 @@ reference surfaces and the terrain but not the weather, and there the offsets sc
 \SI{\StatAltOffParaSiteSigmaM}{\metre} and \SI{\StatAltOffHangSiteSigmaM}{\metre}, worth
 \SI{\StatAltOffParaSiteHpa}{\hecto\pascal} and \SI{\StatAltOffHangSiteHpa}{\hecto\pascal}
 of sea-level pressure. The wander of the barometric reference between flights is
-therefore the weather, at the size the hydrostatic estimate predicts, and it is roughly three times
-what the recorders themselves contribute.}
+therefore the weather, at the size the hydrostatic estimate predicts, and it is three
+times what the recorders themselves contribute.}
 
 \paragraph{\rev{One archive, two decades of instruments.}}
 \rev{That same-day agreement is also a bound on how far the recorders disagree with each
@@ -435,11 +436,13 @@ rated to \SI{\StatAltOffSensorHpa}{\hecto\pascal} of absolute accuracy, which is
 band~\cite{ms5611_datasheet}; the GNSS side is bounded by the vertical error the GPS
 performance standard commits to (Sec.~\ref{impl:altchannel}). Both are well inside the
 weather term, which is why neither decides anything here. What does change over an
-archive spanning more than two decades is the fleet. Barometers were carried by \SI{\StatAltOffParaEraEarlyBaroPct}{\percent} of paraglider
-flights over \StatAltOffParaEraEarlyLabel\ and by
-\SI{\StatAltOffHangEraEarlyBaroPct}{\percent} of hang-glider flights over
-\StatAltOffHangEraEarlyLabel, against \SI{\StatAltOffParaEraLateBaroPct}{\percent} and
-\SI{\StatAltOffHangEraLateBaroPct}{\percent} over the latest five seasons of each archive \impldetails{impl:altchannel}. The receivers improved on
+archive spanning more than two decades is the fleet. Barometers were carried by
+\SI{\StatAltOffParaEraEarlyBaroPct}{\percent} of paraglider flights over
+\StatAltOffParaEraEarlyLabel\ and \SI{\StatAltOffHangEraEarlyBaroPct}{\percent} of
+hang-glider flights over \StatAltOffHangEraEarlyLabel, against
+\SI{\StatAltOffParaEraLateBaroPct}{\percent} and
+\SI{\StatAltOffHangEraLateBaroPct}{\percent} over
+\StatAltOffParaEraLateLabel\ and \StatAltOffHangEraLateLabel. The receivers improved on
 the same span: the within-flight spread of the difference, which the noisier of the two
 channels sets, fell from \SI{\StatAltOffHangEraEarlyWithinIqrM}{\metre} to
 \SI{\StatAltOffHangEraLateWithinIqrM}{\metre} for hang gliders and from
@@ -460,14 +463,14 @@ every flight to avoid the mix would needlessly degrade the vertical signal of th
 barometric majority to match the worst loggers.
 
 \rev{The measurement above says why more precisely than that, and it also prices the
-alternative. Every observable in this work is a difference, and a per-flight constant does not
-survive one; what survives is its drift within the flight,
+alternative. Every observable in this work is a difference, and a per-flight constant of
+\SI{100}{\metre} does not survive one; what survives is its drift within the flight,
 which over a whole record stays between \SI{\StatAltOffParaDriftPFiveM}{\metre} and
 \SI{\StatAltOffParaDriftPNinetyFiveM}{\metre} for nine paraglider flights in ten
 (\SI{\StatAltOffHangDriftPFiveM}{\metre} to \SI{\StatAltOffHangDriftPNinetyFiveM}{\metre}
 hang), far below the climbs and glides the vertical velocity is read from. Absolute
-altitude is the one use where the mix does cost something, and the honest statement is that the two groups sit roughly a hundred metres apart
-there, one-signed, so pooling
+altitude is the one use where the mix does cost something, and the honest statement is
+that the two groups sit about \SI{100}{\metre} apart there, one-signed, so pooling
 absolute heights across channels would pool two displaced populations. The remedy is not
 the stricter rule the objection suggests. A barometric-only ensemble would inherit the
 same problem from the atmosphere alone: at one site its offset already scatters by
@@ -1464,58 +1467,189 @@ the ensemble is stratified by rate or restricted to the dominant one.
 
 \subsection{Smoothing and differentiation}
 \label{sec:savgol}
+
+The raw GNSS coordinate series is itself
+noisy, and since it feeds path length, displacement and the phase segmentation directly,
+the position needs denoising in its own right. Velocity and acceleration drive the
+kinematics and the segmentation too, but differencing the raw series to get them would amplify the same high-frequency noise. 
+A Savitzky--Golay
+filter~\cite{savitzky1964} meets both needs in one pass: fitting a low-order polynomial to
+a sliding window by least squares and reading off that polynomial, and its derivatives, at
+the window centre gives the smoothed position and its analytic velocity and acceleration
+from the same fit, one component at a time.\\\\
+
+In the window of $w$ samples centred on sample $i$, let
+$u=j-i$ be the integer offset of sample $j$ from the centre. The polynomial
+\begin{equation}
+  \label{eq:savgol-poly}
+  P(u) = \sum_{k=0}^{p} a_k\, u^k, \qquad u=-m,\ldots,m, \qquad w=2m+1,
+\end{equation}
+is fitted by minimizing the squared residual over the window,
+\begin{equation}
+  \label{eq:savgol-lsq}
+  \sum_{u=-m}^{m}\Big(x_{i+u} - P(u)\Big)^2 .
+\end{equation}
+$u$ counts samples, not seconds: whatever $a_1$ and $a_2$ turn out to be, they are
+derivatives with respect to the sample count, not yet with respect to time.
+
+
+\paragraph{A fixed kernel} Eq.~\eqref{eq:savgol-lsq} is linear in the
+coefficients $a_k$, so it has a closed-form solution,
+\begin{equation}
+  \label{eq:savgol-solution}
+  \mathbf a = \big(V^{\top}V\big)^{-1}V^{\top}\mathbf x, \qquad V_{u,k}=u^k,
+\end{equation}
+with $\mathbf x=(x_{i-m},\ldots,x_{i+m})^{\top}$. The fitted coefficients $\mathbf a$ still
+depend on the data in the window, through $\mathbf x$; what does not is $V$, built from
+the offsets $u$ alone, hence identical at every window position, and so is the weight
+matrix $(V^{\top}V)^{-1}V^{\top}$ it defines. Row $k$ of that matrix, $c_k(u)$, turns the
+data into $a_k$ by a fixed linear combination,
+\begin{equation}
+  \label{eq:savgol-convolution}
+  a_k(i) = \sum_{u=-m}^{m} c_k(u)\, x_{i+u},
+\end{equation}
+precomputed once for a given $(w,p)$ and applied unchanged as $i$ slides along the series:
+a convolution of the signal with a fixed kernel, never a fit repeated window by
+window~\cite{savitzky1964}. Each order $k$ has its \emph{own} kernel this way, a set of
+$w$ weights $\{c_k(u)\}_{u=-m}^{m}$, one number per offset, not a single number:
+\begin{itemize}
+  \item $c_0(u)$ reads off the \emph{smoothed value}, $a_0$;
+  \item $c_1(u)$ reads off the \emph{velocity}, $a_1$;
+  \item $2c_2(u)$ reads off the \emph{acceleration}, $2a_2$.
+\end{itemize}
+
+Table~\ref{tab:savgol-kernels} lists the three actual kernels the pipeline convolves
+with, at the working $(w,p)$; Fig.~\ref{fig:savgol}
+shows one such window's fit alongside the real filtered output, edge samples included.
+
+\begin{figure}[htbp]
+  \centering
+  \IfFileExists{generated/savgol_explainer.pdf}{%
+    \includegraphics[width=0.55\linewidth]{generated/savgol_explainer}%
+  }{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/ch2\_dataset/generate\_savgol\_figure.py}. Run it to render
+    this figure.}}%
+  }
+  \caption{The Savitzky--Golay filter as a local fit and as a fixed convolution, on
+  a synthetic series, $\sin(0.28\,j) + \varepsilon_j$ with i.i.d.\ Gaussian noise
+  $\varepsilon_j\sim\mathcal N(0,0.35^2)$ (dots). The highlighted window's own local
+  cubic fit (thick line), and the values it reads off at its centre, $a_0$ (ringed dot)
+  and the slope $a_1$ (dashed); the inset zooms on the centre, where the fit trades the
+  one raw sample $x_i$ (grey) for the smoothed $a_0$ (blue). Alongside it, the actual
+  filtered output run on the whole span exactly as the filter runs it on a flight
+  segment. The $m$ points nearest each edge (hollow squares) have no full window on one
+  side, so they are fitted on the nearest full window inside the span and evaluated
+  off-centre.}
+  \label{fig:savgol}
+\end{figure}
+
+
+Physical units follow by dividing by the flight's own
+$\Delta t$: $a_1/\Delta t$ is the velocity and $2a_2/\Delta t^2$ the acceleration.\\
+The window never crosses a
+segment boundary; near one it is fitted on the nearest full window inside the segment and
+evaluated off-centre, flagged the same way as an interpolated
+point \impldetails{impl:savgol}.
+
+\paragraph{Polynomial order.} $p=\PreprocSavgolOrder$ is the lowest order that works:
+\begin{itemize}
+  \item an acceleration needs curvature, so $p\geq2$;
+  \item one order more is needed for the velocity: on a symmetric window an even-order
+        term leaves the odd-order coefficients untouched, so the velocity of a $p=2$ fit
+        is identical to a straight-line fit's, and $p=3$ is the first order that
+        responds to the acceleration varying across the window.
+\end{itemize}
+
 \begin{revblock}
-Velocity and acceleration drive the kinematics and the segmentation, but differencing raw
-GPS coordinate series amplifies the high-frequency noise of Sec.~\ref{sec:altchannel}. A
-\textbf{Savitzky--Golay} filter~\cite{savitzky1964} solves both problems at once: it fits a
-low-order polynomial to a sliding window by least squares and reads off that polynomial, or
-its derivatives, at the window centre, returning a smoothed value, velocity and
-acceleration in one pass per component.\footnote{In the window of $w$ samples centred on
-$t_i$, the coefficients of $P(t)=\sum_{k=0}^{p}a_k\,(t-t_i)^k$ minimize
-$\sum_j\big(x_j-P(t_j)\big)^2$; the smoothed value is $a_0$, the velocity $a_1$, the
-acceleration $2a_2$, and since the grid is uniform the whole filter is a convolution with
-precomputed coefficients~\cite{savitzky1964}.} The fit is done in units of samples, so
-velocity and acceleration in physical units are $a_1/\Delta t$ and $2a_2/\Delta t^2$ with
-the flight's own $\Delta t$ --- the only place the cadence enters, and why flights of
-different cadences need no common grid. The window never crosses a segment boundary; near
-one it is fitted on the nearest full window inside the segment and evaluated off-centre,
-carrying higher variance, flagged the same way as an interpolated point
-\impldetails{impl:savgol}.
+\paragraph{The two hyperparameters.} Window length $w$ (odd, in samples) and polynomial
+order $p$ are fixed from the measured noise spectrum rather than by eye. From the
+ensemble Welch spectrum of the raw ENU components, the frequency $f_c$ of the knee
+where the dynamical signal meets the flat GPS noise floor gives a smoothing timescale,
+\begin{equation}
+  \label{eq:savgol-tauc}
+  \tau_c = 1/f_c,
+\end{equation}
+measured at $f_c\approx\SI{0.2}{\hertz}$ for every channel (Fig.~\ref{fig:savgol-spectrum}),
+hence $\tau_c=\SI{\PreprocSavgolTauCS}{\second}$. $w$ then follows two rules, whichever
+gives the larger window:
+\begin{equation}
+  \label{eq:savgol-window}
+  w = \max\Big(\big\lceil \tau_c/\Delta t\big\rceil_{\mathrm{odd}},\ \PreprocSavgolMinWindow\Big),
+\end{equation}
+the first rounding $\tau_c/\Delta t$ up to the nearest odd integer (odd, so the window
+has a centre sample), the second a floor at the smallest window a cubic fit
+meaningfully determines. At the dominant \SI{1}{\second} cadence the two terms agree
+($\tau_c/\Delta t=5$); at every slower cadence the floor wins and the window spans more
+than $\tau_c$. That
+costs little: a slower
+cadence samples closer to $f_c$ itself, so there is less noise band above it left to
+remove, and such flights are in any case excluded from $\Delta t$-sensitive observables
+by the rate stratification (Sec.~\ref{sec:uniform}).
 
-The two hyperparameters, window length $w$ (odd, in samples) and polynomial order $p$, are
-fixed from the measured noise spectrum rather than by eye. From the ensemble Welch spectrum
-of the raw ENU components, the frequency $f_c$ of the knee where the dynamical signal meets
-the flat GPS noise floor gives a smoothing timescale $\tau_c=1/f_c$; $w$ is $\tau_c/\Delta
-t$ rounded up to the nearest odd integer, floored at $w=5$ (the smallest window a cubic fit
-meaningfully determines). At the dominant \SI{1}{\second} cadence the two rules coincide;
-at every slower cadence the floor binds and the window spans more than $\tau_c$, a cost
-accepted since those cadences carry little noise to remove at the noise scale in the first
-place and are excluded from $\Delta t$-sensitive observables by the rate stratification
-(Sec.~\ref{sec:uniform}). The order $p=\PreprocSavgolOrder$ is the lowest that works: an
-acceleration needs curvature ($p\geq2$), and one order more is needed for the velocity,
-since on a symmetric window an even-order term leaves the odd-order coefficients untouched
---- the velocity of a $p=2$ fit is identical to a straight-line fit's, and $p=3$ is the
-first order that responds to the acceleration varying across the window
-\impldetails{impl:savgol}. The vertical is treated on the same footing as the horizontal:
-the three channels' knees coincide at $f_c\approx\SI{0.2}{\hertz}$
-($\tau_c=\SI{\PreprocSavgolTauCS}{\second}$), since the flat high-frequency floor of every
-channel comes from the IGC format's own rounding rather than from receiver noise, so what
-distinguishes the noisy GNSS minority is how high its floor sits, not where the knee is
-\impldetails{impl:savgol}.
 
-The choice is checked on a held-out sample against three criteria: the residual spectrum
-(raw minus smoothed) flat above $f_c$; the smoothed kinematics within the physical bounds
-of Table~\ref{tab:workingparams}; and stability when $w$ is changed by one step
+
+
+\paragraph{The vertical channel.} It is treated on the same footing as the horizontal.
+The three channels' knees coincide because the flat high-frequency floor of every
+channel comes from the IGC format's own rounding rather than from receiver noise:
+\SI{1}{\metre} for altitude, and for position the $1/1000$ arc-minute of the
+\texttt{DDMM.mmm} field, \SI{1.852}{\metre} north--south (one arc-minute of latitude is
+one nautical mile, by definition). What distinguishes the noisy GNSS minority is how
+high its floor sits, not where the knee is \impldetails{impl:savgol}.
+
+Fig.~\ref{fig:savgol-spectrum} makes this checkable rather than asserted, per
+discipline. Not the full archive, and only flights within \SI{0.25}{\second} of the
+dominant \SI{1}{\hertz} cadence, so every spectrum is on the same frequency grid: a
+seeded sample of those gave \StatSavgolSpecParaHorizN\ paraglider and
+\StatSavgolSpecHangHorizN\ hang-glider flights with a usable horizontal
+spectrum, \StatSavgolSpecParaBaroN\ and \StatSavgolSpecHangBaroN\ a barometric-vertical
+one, and \StatSavgolSpecParaGnssN\ and \StatSavgolSpecHangGnssN\ a GNSS-vertical one
+\impldetails{impl:savgol}. Within each discipline the three channels' knees collapse
+onto the same frequency, as just argued; across disciplines they land within a few
+hundredths of a hertz of each other despite paragliders and hang gliders flying at very
+different speeds and turn rates, which is what a floor set by the file format rather
+than by either discipline's own dynamics predicts.
+
+\begin{figure}[htbp]
+  \centering
+  \IfFileExists{generated/savgol_spectrum.pdf}{%
+    \includegraphics[width=\linewidth]{generated/savgol_spectrum}%
+  }{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/ch2\_dataset/generate\_savgol\_spectrum\_figure.py}. Run it
+    to render this figure.}}%
+  }
+  \caption{\rev{The ensemble Welch power spectral density of each channel, by
+  discipline: horizontal ($E$, $N$ pooled), barometric-vertical and GNSS-vertical.
+  Median over a seeded sample of up to \num{900} flights per discipline, restricted to
+  those within \SI{0.25}{\second} of the dominant \SI{1}{\hertz} cadence so every
+  spectrum shares one frequency grid; the usable count per channel is in its legend
+  entry. The dotted line is the knee frequency read
+  by eye off the curves, not fitted: \SI{0.20}{\hertz} for paragliders,
+  \SI{0.23}{\hertz} for hang gliders. Within a panel the three channels flatten into the
+  same floor at visibly the same frequency; paragliders and hang gliders fly at very
+  different speeds, yet the two panels' knees still land within a few hundredths of a
+  hertz of each other, the cross-check the main text draws on.}}
+  \label{fig:savgol-spectrum}
+\end{figure}
+
+\paragraph{Validation.} The choice is checked on a held-out sample against three
+criteria:
+\begin{itemize}
+  \item the residual spectrum (raw minus smoothed) is flat above $f_c$;
+  \item the smoothed kinematics stay within the physical bounds of
+        Table~\ref{tab:workingparams};
+  \item the result is stable when $w$ is changed by one step.
+\end{itemize}
 \impldetails{impl:savgol}.
 
 \paragraph{A fourth criterion, on the observable itself.}
 A fourth criterion is a property of what the filter is for: the smoothing must not remove
 the displacement the transport analysis is about to measure. The window is floored at
 \PreprocSavgolMinWindow\ samples, binding for every logger slower than \SI{1}{\hertz}, so
-in seconds the window is $\max(\tau_c,\,\PreprocSavgolMinWindow\,\Delta t)$: \SI{5}{\second}
-at a \SI{1}{\second} cadence, \SI{50}{\second} at \SI{10}{\second}, reaching the lower end
-of the range Chapter~\ref{ch:global} fits its exponent over. Measured on synthetic
-trajectories of known exponent ($\alpha=1.8$, the regime Chapter~\ref{ch:global} finds) and
+in seconds the window is $\max(\tau_c,\,\PreprocSavgolMinWindow\,\Delta t)$. Measured on synthetic
+trajectories of known exponent ($\alpha=1.8$) and
 no measurement noise, the filtered MSD sits within \SI{2.3}{\percent} of the true one at a
 lag of two samples and within \SI{1}{\percent} from three samples upward: a cubic filter
 reproduces any locally cubic trajectory exactly, and a strongly correlated trajectory is
@@ -1531,6 +1665,29 @@ there; a second, related effect is that a flight answers a lag with its own near
 so a logger slower than \SI{1}{\hertz} shows a short-lag staircase --- both effects die out
 well below the fit range.
 \end{revblock}
+
+\begin{table}[htbp]
+\centering\small
+\renewcommand{\arraystretch}{1.3}
+\caption{\rev{The three kernels of Eq.~\eqref{eq:savgol-convolution} at the working
+window and order, $w=\PreprocSavgolMinWindow$, $p=\PreprocSavgolOrder$: exact,
+closed-form weights, fixed by $(w,p)$ alone and never touching the data or $\Delta t$.}}
+\label{tab:savgol-kernels}
+\begin{tabular}{@{}l r r r r r@{}}
+\toprule
+& \multicolumn{5}{c@{}}{offset $u$} \\
+\cmidrule(l){2-6}
+kernel & $-2$ & $-1$ & $0$ & $1$ & $2$ \\
+\midrule
+$c_0(u)$ (value) & $-\tfrac{3}{35}$ & $\tfrac{12}{35}$ & $\tfrac{17}{35}$
+  & $\tfrac{12}{35}$ & $-\tfrac{3}{35}$ \\[5pt]
+$c_1(u)$ (velocity) & $\tfrac{1}{12}$ & $-\tfrac{8}{12}$ & $0$
+  & $\tfrac{8}{12}$ & $-\tfrac{1}{12}$ \\[5pt]
+$2c_2(u)$ (acceleration) & $\tfrac{2}{7}$ & $-\tfrac{1}{7}$ & $-\tfrac{2}{7}$
+  & $-\tfrac{1}{7}$ & $\tfrac{2}{7}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Notation}
 \label{sec:notation}
