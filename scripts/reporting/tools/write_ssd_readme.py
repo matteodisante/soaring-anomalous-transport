@@ -46,6 +46,8 @@ _TABLES = {
     "psi(tau) sensitivity check",
     "track_scan.parquet": "the raw-archive census: one scalar row per parsed flight, "
     "cached so a threshold can be re-queried without re-reading the archive",
+    "alt_offset_scan.parquet": "the barometric-against-GNSS offset, one row per flight "
+    "of a seeded sample, cached so the macros recompute without reparsing the archive",
 }
 
 

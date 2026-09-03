@@ -72,12 +72,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 OUT = ROOT / "thesis" / "generated" / "census.tex"
 
-# How far below BARO_PRESENT_MIN still counts as "just under the cut" for the
-# borderline-presence census (impl:altchannel): shared between _scan_macros, which
-# counts the flights, and _config_macros, which quotes the resulting lower bound, so
-# the two can never say different things about the same band.
-NEAR_CUT_MARGIN_PCT = 5.0
-
 _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
@@ -85,6 +79,19 @@ if _SRC not in sys.path:
 # The sys.path line above is what makes this resolvable when the script is run
 # directly, so the import cannot move to the top of the file.
 from soaring.reporting import DISCIPLINES, bare_cli, check_name  # noqa: E402
+
+
+# How far below BARO_PRESENT_MIN still counts as "just under the cut" for the
+# borderline-presence census (impl:altchannel), as percentage points. The band itself is
+# defined once, beside the threshold, in soaring.analysis.altitude_noise: _scan_macros
+# counts the flights in it, _config_macros quotes its lower bound, and
+# generate_alt_offset_stats.py measures the GNSS channel over the same flights, so none
+# of the three can describe a different band.
+def _near_cut_margin_pct() -> float:
+    """The borderline band's width in percentage points, from the analysis constant."""
+    from soaring.analysis.altitude_noise import BARO_BORDERLINE_MARGIN
+
+    return 100.0 * BARO_BORDERLINE_MARGIN
 
 def _fmt(value: float, decimals: int) -> str:
     """Format to ``decimals`` places, dropping a trailing all-zero fraction.
@@ -116,7 +123,7 @@ def _scan_macros(prefix: str, scan, sampling) -> dict[str, str]:
     # just under the cut, close enough that whether the GNSS fallback (sec:altchannel)
     # actually lands on the more complete channel is untested there -- this scan carries
     # no GNSS-completeness column to check against.
-    near_cut = (frac >= BARO_PRESENT_MIN - NEAR_CUT_MARGIN_PCT / 100.0) & absent
+    near_cut = (frac >= BARO_PRESENT_MIN - _near_cut_margin_pct() / 100.0) & absent
 
     dt = scan["dt_s"].to_numpy()
     dt = dt[np.isfinite(dt) & (dt > 0)]
@@ -245,7 +252,7 @@ def _config_macros(preproc) -> dict[str, str]:
         "PreprocIntegrityMaxPct": _fmt(100.0 * fix.integrity_max_fraction, 1),
         "PreprocBaroPresentMinPct": _fmt(100.0 * alt.baro_present_min, 0),
         "PreprocBaroBorderlineLowPct": _fmt(
-            100.0 * alt.baro_present_min - NEAR_CUT_MARGIN_PCT, 0
+            100.0 * alt.baro_present_min - _near_cut_margin_pct(), 0
         ),
         "PreprocBaroMinRangeM": _fmt(alt.baro_min_range_m, 1),
         "PreprocTakeoffSpeedMps": _fmt(preproc.trimming.takeoff_speed_mps, 1),

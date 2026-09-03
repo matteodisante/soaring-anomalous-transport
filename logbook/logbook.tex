@@ -996,6 +996,65 @@ marginal cannot stand in for the 2-D propagator; and the strata split by wing cl
 terrain. Verified: 383 tests, macro contract green, \texttt{regenerate.sh} end to end
 reproducing every quoted number, thesis compiling at 99 pages with no errors.
 
+\paragraph{2026-09 --- The altitude channels measured against each other, not just spectrally.}
+The July decision took the barometric channel on a \emph{noise} argument and let a
+non-negligible minority of flights fall back to GNSS, which leaves the archive with mixed
+altitude sources. The objection that was never answered: if the two channels sit at
+systematically different heights, an absolute altitude pooled over the ensemble separates
+by instrument rather than by atmosphere. Measured this month on a seeded sample
+(19,964 paraglider files, the whole 6,677-file hang-glider archive), over an
+in-flight window, on the flights carrying two genuinely independent channels.
+\begin{description}
+  \item[The gap] $h_{\mathrm{baro}}-h_{\mathrm{GNSS}}$ has a median of $-94$\,m
+        (paragliders) and $-104$\,m (hang gliders) and scatters across flights by
+        $\approx60$\,m, while barely moving \emph{within} a flight (interquartile range
+        14 and 24\,m over records of two hours). So it is a per-flight constant, which is
+        what differencing removes.
+  \item[What it is made of] Regressing the offset on height inside each flight splits it
+        into a constant and a slope. The slope is $-3$ to $-3.7$\,\% of the height flown,
+        which inverts through $h\,\Delta T/\bar{T}$ to air $8$--$10$\,K warmer than the
+        standard profile: the gap is mostly the atmosphere the altimeter assumes and does
+        not have. The remainder, $-46$ and $-32$\,m at sea level, is the two reference
+        surfaces plus the mean pressure departure of the sampled days, which nothing
+        internal to the archive can separate.
+  \item[Weather or instrument] Settled by two groupings rather than by argument. Same site
+        and same day, three or more recorders: offsets agree to 16 and 12\,m. Same site,
+        different days: they scatter by 42 and 39\,m, worth $\approx5$\,hPa of sea-level
+        pressure, which is what the hydrostatic estimate ($8.3$\,m/hPa) predicts for a
+        synoptic swing. The flight-to-flight wander of the barometric reference is the
+        weather, and it is roughly three times what the recorders contribute. Consistent
+        with the datasheets on both sides: $\pm1.5$\,hPa of absolute accuracy for the MEMS
+        barometer (12\,m), 13\,m of vertical GNSS error at 95\,\%.
+  \item[Two decades] The fleet is not constant over the archive. Barometers were on
+        44\,\% (para) and 58\,\% (hang) of flights in the earliest five measured seasons
+        against 75\,\% and 79\,\% in the latest five, and the within-flight scatter of the
+        offset fell from 60 to 22\,m for hang gliders. A flight without a barometer is
+        likelier to be an early one, which is a caveat for era comparisons and nothing
+        else.
+  \item[A gap closed] The presence test decided \emph{that} a flight falls back to GNSS
+        and never whether the channel it lands on is complete, because no cache carried
+        GNSS completeness. This scan does: the GNSS channel covers $\ge95$\,\% of the
+        fixes on 99.6\,\% (para) and 94.3\,\% (hang) of the barometerless flights. Where
+        the barometer is missing, the fallback is a good choice, and the appendix says so
+        with a number instead of an admission.
+  \item[Verdict] The mix stands, and for a sharper reason than before. Every observable
+        here is a difference, and the constant does not survive one; only its within-flight
+        drift does, $-27$ to $+34$\,m over a whole record. Absolute altitude is the one use
+        that pays, and refusing the 30\,\% (para) and 17\,\% (hang) of flights without a
+        barometer would not fix it, since a barometric-only ensemble carries the same
+        weather-driven offset and the same seasonal scale error. What that use needs is a
+        reference correction, which the per-flight \texttt{alt\_source} column keeps
+        available.
+\end{description}
+New: \texttt{soaring.analysis.alt\_offset} with 23 tests,
+\texttt{generate\_alt\_offset\_stats.py} writing 111 \texttt{\textbackslash StatAltOff*}
+macros (step 6 of \texttt{regenerate.sh}, cached at
+\texttt{derived/alt\_offset\_scan.parquet}), four new paragraphs in Sec.~2.6 and a method
+subsection in the implementation appendix. The borderline-band width now lives in one
+place, \texttt{BARO\_BORDERLINE\_MARGIN}, since three consumers quote it. Verified: 580
+tests, macro contract green, provenance check green, thesis compiling with no undefined
+references.
+
 \paragraph{2026-07 --- Seventh audit: global consistency sweep.}
 Closing pass over every document at once, hunting statements left behind by the day's
 changes rather than new design flaws. Thirteen stale spots found and fixed: ranges still

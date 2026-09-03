@@ -96,6 +96,10 @@ on the next build. To add a new module, a single `:::` line here is enough.
 
 ::: soaring.analysis.altitude_noise
 
+## `analysis.alt_offset` — how far apart the two altitude channels sit
+
+::: soaring.analysis.alt_offset
+
 ## `analysis.derived`
 
 ::: soaring.analysis.derived

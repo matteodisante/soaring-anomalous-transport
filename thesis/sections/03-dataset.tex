@@ -350,11 +350,104 @@ GNSS, unfiltered --- a non-negligible minority (Figure~\ref{fig:altnoise}d), mea
 \StatScanParaNoBaroPct\,\% of paraglider and \StatScanHangNoBaroPct\,\% of hang-glider
 flights scanned \impldetails{impl:altchannel}. That liveness test catches only a sensor
 dead for the whole recording, not one that freezes partway through, and nothing downstream
-closes that gap \impldetails{impl:altchannel}. Nor does the presence test check what it
-falls back to: \StatScanParaBaroBorderlineCount\ paraglider flights sit just under its
-cut rather than at zero, and for these the assumption that GNSS is the more complete
-channel goes untested, since nothing in the pipeline measures GNSS completeness to
-compare it against \impldetails{impl:altchannel}.
+closes that gap \impldetails{impl:altchannel}. \rev{The presence test also decides
+\emph{that} a flight falls back to GNSS without ever asking whether the channel it falls
+back to is itself complete, and that part is now measured rather than assumed: of the
+\num{\StatAltOffParaFallbackCount} paraglider and \num{\StatAltOffHangFallbackCount}
+hang-glider flights in the sampled archive whose barometric channel is absent, the GNSS
+channel covers at least \SI{\PreprocBaroPresentMinPct}{\percent} of the fixes on
+\StatAltOffParaFallbackGnssPct\,\% and \StatAltOffHangFallbackGnssPct\,\%
+respectively. Where the barometer is missing, the fallback lands on a complete channel.
+The one population where the comparison could still go the other way is the borderline
+band of Sec.~\ref{impl:altchannel}, present just under the cut rather than at zero; the
+sample holds \StatAltOffParaBorderlineCount\ such flights, too few to conclude from,
+and the GNSS channel is at least as complete as the barometric one in every one of them}
+\impldetails{impl:altchannel}.
+
+\paragraph{\rev{How far apart the two channels sit.}}
+\rev{The spectra above settle which channel is quieter. They say nothing about where the
+two sit relative to each other, and that is what a mixed ensemble has to answer for. A
+trajectory never mixes channels within itself, but the ensemble holds
+both kinds of flight, so if the two channels sat at systematically different heights the
+pooled altitude would separate by instrument rather than by atmosphere. Measured over an
+in-flight window on the \num{\StatAltOffParaFlights} paraglider and
+\num{\StatAltOffHangFlights} hang-glider flights of a seeded sample that carry both
+channels \impldetails{impl:altchannel}, the difference
+$h_{\mathrm{baro}}-h_{\mathrm{GNSS}}$ has a median of
+\SI{\StatAltOffParaMedianM}{\metre} and \SI{\StatAltOffHangMedianM}{\metre}
+respectively, and scatters across flights by \SI{\StatAltOffParaSigmaM}{\metre} and
+\SI{\StatAltOffHangSigmaM}{\metre}. The offset grows with the height flown, so the two
+disciplines are comparable only inside one altitude band, and inside
+\SIrange{\StatAltOffBandLoM}{\StatAltOffBandHiM}{\metre} their medians agree:
+\SI{\StatAltOffParaBandMedianM}{\metre} against \SI{\StatAltOffHangBandMedianM}{\metre}.
+Within a single flight the same difference barely moves, at an interquartile range of
+\SI{\StatAltOffParaWithinIqrM}{\metre} and \SI{\StatAltOffHangWithinIqrM}{\metre} over
+records of \SI{\StatAltOffParaDurationMin}{\minute} and
+\SI{\StatAltOffHangDurationMin}{\minute} at the median. So the gap between the channels is a per-flight constant: exactly what a difference
+removes and an absolute altitude keeps.}
+
+\paragraph{\rev{What the gap is made of.}}
+\rev{Regressing the difference on height within each flight splits it into a part
+independent of altitude and a part proportional to it, and the proportional part is the
+larger. It is also atmospheric rather than instrumental. A pressure altimeter converts
+pressure to height through a fixed temperature profile, so in air warmer than that
+profile by $\Delta T$ it under-reads by $h\,\Delta T/\bar{T}$; the measured slopes,
+\SI{\StatAltOffParaSlopePct}{\percent} and \SI{\StatAltOffHangSlopePct}{\percent} of the
+height flown, invert to \SI{\StatAltOffParaDeltaTK}{\kelvin} and
+\SI{\StatAltOffHangDeltaTK}{\kelvin} above the standard profile, which is what a thermally active day looks like. At the median flight altitude that term alone accounts for
+\SI{\StatAltOffParaHeightTermM}{\metre} and \SI{\StatAltOffHangHeightTermM}{\metre} of
+the gap. What remains once it is removed, \SI{\StatAltOffParaInterceptM}{\metre} and
+\SI{\StatAltOffHangInterceptM}{\metre} extrapolated to sea level, is the separation
+between the two reference surfaces, a pressure altitude against an ellipsoidal
+one~\cite{nga_wgs84}, together with the mean departure of the day's sea-level pressure
+from the \SI{1013.25}{\hecto\pascal} the logger assumes. This measurement does not
+separate those two, and does not need to, since both are constants of the flight.}
+
+\paragraph{\rev{Weather against instrument.}}
+\rev{The flight-to-flight scatter has a size worth predicting before measuring it. The
+hydrostatic relation gives $\mathrm{d}h=-H\,\mathrm{d}p/p$ with $H=R_{d}T/g$, about
+\SI{\StatAltOffScaleHeightKm}{\kilo\metre} at the standard sea-level temperature, so an
+altimeter referred to a fixed \SI{1013.25}{\hecto\pascal} moves
+\SI{\StatAltOffMetrePerHpa}{\metre} for every hectopascal the real sea-level pressure
+departs from it, and the \SI{10}{\hecto\pascal} that separate one synoptic situation from
+another are worth \SI{\StatAltOffTenHpaM}{\metre}. This archive is not one site flown
+repeatedly at one hour. It is different sites, days and seasons, so each flight reads its
+pressure through a different atmosphere, and the prediction is that the scatter measured
+above is that atmosphere. Two groupings settle it. Flights from the same site on the same
+day share an air mass and a pressure setting, and their offsets agree to
+\SI{\StatAltOffParaSameDaySigmaM}{\metre} over \num{\StatAltOffParaSameDayGroups} groups
+of paraglider flights and \SI{\StatAltOffHangSameDaySigmaM}{\metre} over
+\num{\StatAltOffHangSameDayGroups} groups of hang-glider ones, each group spanning at
+least three recorders. Flights from the same site on \emph{different} days share the
+reference surfaces and the terrain but not the weather, and there the offsets scatter by
+\SI{\StatAltOffParaSiteSigmaM}{\metre} and \SI{\StatAltOffHangSiteSigmaM}{\metre}, worth
+\SI{\StatAltOffParaSiteHpa}{\hecto\pascal} and \SI{\StatAltOffHangSiteHpa}{\hecto\pascal}
+of sea-level pressure. The wander of the barometric reference between flights is
+therefore the weather, at the size the hydrostatic estimate predicts, and it is roughly three times
+what the recorders themselves contribute.}
+
+\paragraph{\rev{One archive, two decades of instruments.}}
+\rev{That same-day agreement is also a bound on how far the recorders disagree with each
+other, and it lands where the specifications put it. A current MEMS barometric sensor is
+rated to \SI{\StatAltOffSensorHpa}{\hecto\pascal} of absolute accuracy, which is
+\SI{\StatAltOffSensorM}{\metre} at the conversion above, widening to
+\SI{\StatAltOffSensorWideHpa}{\hecto\pascal} over its full temperature
+band~\cite{ms5611_datasheet}; the GNSS side is bounded by the vertical error the GPS
+performance standard commits to (Sec.~\ref{impl:altchannel}). Both are well inside the
+weather term, which is why neither decides anything here. What does change over an
+archive spanning more than two decades is the fleet. Barometers were carried by \SI{\StatAltOffParaEraEarlyBaroPct}{\percent} of paraglider
+flights over \StatAltOffParaEraEarlyLabel\ and by
+\SI{\StatAltOffHangEraEarlyBaroPct}{\percent} of hang-glider flights over
+\StatAltOffHangEraEarlyLabel, against \SI{\StatAltOffParaEraLateBaroPct}{\percent} and
+\SI{\StatAltOffHangEraLateBaroPct}{\percent} over the latest five seasons of each archive \impldetails{impl:altchannel}. The receivers improved on
+the same span: the within-flight spread of the difference, which the noisier of the two
+channels sets, fell from \SI{\StatAltOffHangEraEarlyWithinIqrM}{\metre} to
+\SI{\StatAltOffHangEraLateWithinIqrM}{\metre} for hang gliders and from
+\SI{\StatAltOffParaEraEarlyWithinIqrM}{\metre} to
+\SI{\StatAltOffParaEraLateWithinIqrM}{\metre} for paragliders. The mixed-source
+population is thus not uniform in time: a flight without a barometer is likelier to be an
+early one, which is a caveat for any comparison drawn between eras and for nothing else
+in this work.}
 
 \paragraph{Mixed altitude sources.}
 The mix is acceptable. The horizontal, two-dimensional transport analysis --- the main
@@ -365,6 +458,29 @@ the per-flight record above and checked for compatibility on the fraction of air
 each phase accounts for, per discipline \impldetails{impl:altchannel}. Forcing GNSS on
 every flight to avoid the mix would needlessly degrade the vertical signal of the
 barometric majority to match the worst loggers.
+
+\rev{The measurement above says why more precisely than that, and it also prices the
+alternative. Every observable in this work is a difference, and a per-flight constant does not
+survive one; what survives is its drift within the flight,
+which over a whole record stays between \SI{\StatAltOffParaDriftPFiveM}{\metre} and
+\SI{\StatAltOffParaDriftPNinetyFiveM}{\metre} for nine paraglider flights in ten
+(\SI{\StatAltOffHangDriftPFiveM}{\metre} to \SI{\StatAltOffHangDriftPNinetyFiveM}{\metre}
+hang), far below the climbs and glides the vertical velocity is read from. Absolute
+altitude is the one use where the mix does cost something, and the honest statement is that the two groups sit roughly a hundred metres apart
+there, one-signed, so pooling
+absolute heights across channels would pool two displaced populations. The remedy is not
+the stricter rule the objection suggests. A barometric-only ensemble would inherit the
+same problem from the atmosphere alone: at one site its offset already scatters by
+\SI{\StatAltOffParaSiteSigmaM}{\metre} between days and carries a seasonal scale error of
+\SI{\StatAltOffParaSlopePct}{\percent} to \SI{\StatAltOffHangSlopePct}{\percent} of the
+height flown, so refusing the \SI{\StatAltOffParaFallbackPct}{\percent} of paraglider and
+\SI{\StatAltOffHangFallbackPct}{\percent} of hang-glider flights that have no barometer
+would buy an absolute altitude no more trustworthy than the one it discards. What an
+analysis needing absolute height requires instead is a reference correction, the
+geoid--ellipsoid separation on the GNSS side and the day's pressure and temperature on
+the barometric one, and the per-flight \path{alt_source} record is what leaves that
+correction available. Until then the vertical coordinate is used for differences, and the
+mix is sound for exactly that.}
 \end{revblock}
 
 \subsection{Fix-level cleaning}

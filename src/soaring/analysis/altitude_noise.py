@@ -76,6 +76,15 @@ DT_TOLERANCE_S = 0.25
 # with holes. Raising 0.5 -> 0.95 moves only the flights in between, which the same
 # census shows to be few (thesis, sec:altchannel / impl:altchannel).
 BARO_PRESENT_MIN = 0.95
+# How far below BARO_PRESENT_MIN still counts as "just under the cut": the band of
+# flights whose barometric channel is neither absent nor healthy, where the fallback to
+# GNSS is a decision about a defect rather than about a missing sensor (thesis,
+# impl:altchannel). Defined here beside the threshold it is measured from, because three
+# consumers quote it and a band described differently by any two of them would be worse
+# than no band at all: the borderline census (generate_census_stats.py), the lower bound
+# it prints into the thesis, and the GNSS-completeness comparison run over the same band
+# (soaring.analysis.alt_offset.borderline_gnss_advantage).
+BARO_BORDERLINE_MARGIN = 0.05
 
 
 def required_sample_size(

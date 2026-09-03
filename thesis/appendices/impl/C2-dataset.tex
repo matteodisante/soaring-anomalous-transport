@@ -589,8 +589,19 @@ of the archive) present on
 \SIrange{\PreprocBaroBorderlineLowPct}{\PreprocBaroPresentMinPct}{\percent} of their
 fixes, close enough to the cut that a real defect rather than a missing sensor could
 plausibly explain the shortfall; no hang-glider flight falls in that band.
-Confirming the fallback also holds there would need the same presence statistic computed
-on the GNSS channel, which this scan does not carry. Whatever that comparison would show,
+Confirming the fallback also holds there needs the same presence statistic computed
+on the GNSS channel, which this scan does not carry. \rev{A second scan does, the one this section closes with, and it settles the first part
+outright: across the sampled
+archive the GNSS channel is present on \StatAltOffParaFallbackGnssPct\,\% of the
+\num{\StatAltOffParaFallbackCount} paraglider and \StatAltOffHangFallbackGnssPct\,\% of
+the \num{\StatAltOffHangFallbackCount} hang-glider flights that fall back to it, so the
+channel a barometerless flight lands on is complete. The borderline band it does not
+settle, for want of population rather than for want of a column: a
+\num{\StatAltOffParaMeasured}-file sample contains \StatAltOffParaBorderlineCount\ such
+flights, and while the GNSS channel is at least as complete as the barometric one in
+every one of them, that is a statement about
+\StatAltOffParaBorderlineCount\ flights and is quoted as no more than one.} Whatever a
+fuller comparison would show,
 the population is too small to move an archive-wide result:
 \SI{\StatScanParaBaroBorderlinePct}{\percent} of the paraglider archive is
 \StatScanParaBaroBorderlineCount\ flights, and even a worst case where every one of them
@@ -625,6 +636,110 @@ or a longest-constant-run bound --- and that is a new threshold with its own fai
 against a wing genuinely holding altitude, so it is not adopted here on the strength of an
 argument alone. What the present rule guarantees is exactly this: a channel constant
 throughout is refused, one that dies partway is not.}
+
+\begin{revblock}
+\subsubsection{The offset between the channels, and how it was measured}
+\label{impl:altoffset}
+
+The noise diagnostic above compares the two channels' \emph{spectra}. This one compares
+their \emph{values}, and it is what Sec.~\ref{sec:altchannel} quotes when it argues that a
+mixed-source ensemble is sound. Everything here comes from one pass,
+\path{ch2_dataset/generate_alt_offset_stats.py} over
+\path{soaring.analysis.alt_offset}, cached per discipline at
+\path{<data_root>/derived/alt_offset_scan.parquet} so that a change of definition
+recomputes the macros without reparsing the archive.
+
+\paragraph{Sample.} \num{\StatAltOffParaMeasured} paraglider files, a seeded random
+subsample; \num{\StatAltOffHangMeasured} hang-glider files, which is the archive. The
+size is set by the finest cut rather than by the headline. Location and scale of the
+offset are stable on a few thousand flights, but the same-site-same-day grouping below
+needs three flights of one site and one day to land in the sample together, and a
+6000-file draw yields only a few dozen such groups against the
+\num{\StatAltOffParaSameDayGroups} at this size. The sampled barometric-absence rate,
+\SI{\StatAltOffParaFallbackPct}{\percent} and \SI{\StatAltOffHangFallbackPct}{\percent},
+reproduces the full census above to a few tenths of a point,
+which is the check that the draw is not skewed.
+
+\paragraph{Window and admission.} A flight enters with at least \num{\StatAltOffMinFix} fixes and both
+channels non-zero on at least \SI{\PreprocBaroPresentMinPct}{\percent} of them, the same
+presence cut the pipeline applies. The offset is read over the middle \SI{\StatAltOffWindowPct}{\percent}
+of the record: a logger switched on in a car park and off in a field brackets the flight
+with ground fixes, where the barometer is still settling and the GNSS solution still
+converging, and neither says anything about the two channels in the air. Two populations
+are then removed, for the same reason in both cases, that they are not two independent
+channels. Flights whose two altitude fields are byte-identical over the window are one
+sensor written into two columns: \SI{\StatAltOffParaDuplicatePct}{\percent} of the
+two-channel paraglider flights and \SI{\StatAltOffHangDuplicatePct}{\percent} of the
+hang-glider ones, a fleet fact worth knowing on its own, since for those flights the
+GNSS fallback would deliver no independent channel at all. Flights whose median offset
+exceeds \SI{\StatAltOffPlausibleMaxKm}{\kilo\metre} have a broken channel rather than an offset one, and are
+\SI{\StatAltOffParaBrokenPct}{\percent} and \SI{\StatAltOffHangBrokenPct}{\percent}.
+What remains is \num{\StatAltOffParaFlights} and \num{\StatAltOffHangFlights} flights.
+
+\paragraph{Per-flight statistics.} Median, interquartile range and end-to-end drift of
+$h_{\mathrm{baro}}-h_{\mathrm{GNSS}}$ over the window, the drift being the median of its
+last fifth minus the median of its first; the median flown altitude; and a least-squares
+slope of the offset against the GNSS altitude, computed only where the flight climbed
+at least \SI{\StatAltOffSlopeMinRangeM}{\metre}, since over a flat stretch that
+regression returns the noise
+instead of the lapse. Spreads across flights are reported as the scaled median absolute
+deviation~\cite{rousseeuw1993} rather than a standard deviation: a tail of partly broken
+channels that no presence test catches sets a standard deviation and does not set this.
+
+\paragraph{Reading the slope as a temperature.} A pressure altimeter converts pressure to
+height through a fixed temperature profile, so in air warmer than that profile by
+$\Delta T$ it under-reads by $h\,\Delta T/\bar{T}$, where $\bar{T}$ is the mean
+standard-atmosphere temperature of the layer flown. The offset against a GNSS altitude,
+which carries no atmospheric model, therefore acquires a slope of $-\Delta T/\bar{T}$
+against height, and inverting the measured slope gives the departure in kelvin with no
+meteorological input. The height-independent remainder is obtained by extrapolating each
+flight's fitted line to sea level, which is an extrapolation well outside the fitted
+range, typically \SIrange{1}{2.5}{\kilo\metre} of it: the median over thousands of
+flights is meaningful, a single flight's intercept is not, and nothing here uses one.
+
+\paragraph{The two groupings.} A group needs \num{\StatAltOffGroupMinFlights} flights.
+For the same-site-same-day grouping it also needs
+\num{\StatAltOffSameDayMinLoggers} distinct recorder declarations, since the claim being
+measured there is about instruments and a group drawn from one recorder cannot support
+it; this leaves \num{\StatAltOffParaSameDayGroups} groups covering
+\num{\StatAltOffParaSameDayFlights} paraglider flights and
+\num{\StatAltOffHangSameDayGroups} covering \num{\StatAltOffHangSameDayFlights}
+hang-glider ones. The same-site grouping across days keeps
+\num{\StatAltOffParaSiteGroups} and \num{\StatAltOffHangSiteGroups} sites. Both use the
+take-off site recorded in the acquisition catalogue, which is metadata and can be wrong;
+a mislabelled site weakens the contrast between the two groupings rather than
+manufacturing it, since it can only mix flights that do not belong together.
+
+\paragraph{Recorder makes.} Grouping instead by the manufacturer code of the IGC
+\texttt{A} record~\cite{fai_igc_spec}, and keeping the makes carried by at least \num{\StatAltOffMakeMinFlights}
+flights, the medians of \num{\StatAltOffParaLoggerFamilies} paraglider and
+\num{\StatAltOffHangLoggerFamilies} hang-glider makes scatter by
+\SI{\StatAltOffParaLoggerSigmaM}{\metre} and \SI{\StatAltOffHangLoggerSigmaM}{\metre},
+with extremes \SI{\StatAltOffParaLoggerSpanM}{\metre} and
+\SI{\StatAltOffHangLoggerSpanM}{\metre} apart. That is an upper bound on what the
+instrument family contributes and not a measurement of it: a make is also a period, a
+price and a set of sites, and this scan holds no way to fix those. The same-day figure of
+Sec.~\ref{sec:altchannel} is the cleaner instrument statement, because there the
+atmosphere is held fixed by construction.
+
+\paragraph{Eras.} The two-decade comparison pools the earliest and the latest
+\num{\StatAltOffEraSeasons} seasons carrying at least
+\num{\StatAltOffEraMinFlights} measured flights, rather than single seasons, which
+are thin at the start of the archive. The early block is
+\StatAltOffParaEraEarlyLabel\ for paragliders and \StatAltOffHangEraEarlyLabel\ for hang
+gliders, the late one \StatAltOffParaEraLateLabel\ and \StatAltOffHangEraLateLabel.
+Within-flight spread is used as the era statistic rather than the offset itself, because
+it is a property of the recorders alone; the offset would also be reading whichever
+seasons and sites the archive happened to hold at each end.
+
+\paragraph{What this measurement cannot say.} It is conditioned on flights that carry
+both channels, so it says nothing about the barometric offset of a flight with no
+barometer, which is unmeasurable by construction and is exactly the population that falls
+back. It uses the GNSS altitude as the reference and therefore measures a difference,
+never the error of either channel: a common bias would be invisible here. And the
+height-independent term mixes the reference surfaces with the mean pressure departure of
+the sampled days, which no comparison internal to the archive can separate.
+\end{revblock}
 
 \subsection{Fix-level cleaning}
 \label{impl:fixlevel}

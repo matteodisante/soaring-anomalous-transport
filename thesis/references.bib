@@ -290,3 +290,18 @@
   note         = {Defines the FAI hang-glider classes and their sub-class ceilings
                   (\S\S1.2, 1.4.1). \url{https://www.fai.org/civl-documents}}
 }
+
+% The absolute-accuracy figure quoted in Sec. 2.6 for the barometric side: this part is
+% behind a large share of free-flight variometers, and its specification table states
+% +/-1.5 mbar at 25 C and 750 mbar, an error band of +/-2.5 mbar over -20 to +85 C, a
+% full-accuracy range of 450 to 1100 mbar, and an altitude resolution of 10 cm -- two
+% orders below the metre to which the IGC format rounds. Read from the document itself
+% (20 pp); MEAS Switzerland was acquired by TE Connectivity in 2014, so later reissues
+% of the same datasheet carry the TE name. Checked 2026-09.
+@misc{ms5611_datasheet,
+  author       = {{Measurement Specialties (MEAS Switzerland)}},
+  title        = {{MS5611-01BA03} Barometric Pressure Sensor, with stainless steel cap},
+  howpublished = {Datasheet DA5611-01BA03\_011 (ECN 1742)},
+  year         = {2012},
+  note         = {Specification table, p.~2.}
+}

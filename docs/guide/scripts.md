@@ -223,6 +223,15 @@ when the cache is cold.
 ### `scripts/reporting/ch2_dataset/generate_altitude_noise_figure.py`
 → `altitude_noise.pdf`.
 
+### `scripts/reporting/ch2_dataset/generate_alt_offset_stats.py`
+→ `alt_offset.tex`. The other half of the altitude-channel argument: where the noise figure
+compares the two channels' spectra, this compares their values, flight by flight, and
+decomposes the difference into a reference-surface term and the day's departure from the
+standard temperature profile. Parses a seeded sample of the raw archive itself rather than
+reading the track scan, since no cache carries the GNSS altitude, and writes its own cache at
+`<data_root>/derived/alt_offset_scan.parquet`; `--rescan` reparses. Minutes cold, a second
+warm.
+
 ---
 
 ## Checks that run before the build

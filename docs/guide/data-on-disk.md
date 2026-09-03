@@ -62,6 +62,7 @@ directory is a place, a source is a label — and the mapping lives in
 │   └── failures.csv
 └── derived/                 everything the analysis produces
     ├── track_scan.parquet   the census scan cache (pre-cleaning diagnostics)
+    ├── alt_offset_scan.parquet  the baro-vs-GNSS offset sample (Sec. 2.6)
     ├── fixes.parquet        the processed trajectories
     ├── segments.parquet     one row per segment
     └── flights_meta.parquet one row per flight attempted
@@ -312,6 +313,42 @@ distributions and not enough for a join — a limitation, not a design. And it i
 **pre-cleaning**: it describes parsed tracks, not processed ones, which is exactly what a
 diagnostic that justifies a cut has to do (a cut is audited on the population it acts on).
 For post-pipeline numbers, use `flights_meta.parquet` below.
+
+## `derived/alt_offset_scan.parquet` — the altitude-offset sample
+
+One row per measurable flight of a seeded sample, produced by
+`soaring.analysis.alt_offset.scan_offsets` and driven by
+`generate_alt_offset_stats.py`. It exists for the same reason as the census cache above,
+and for one it does not share: no other cache carries the **GNSS** altitude, so the
+barometric-against-GNSS comparison of thesis Sec. 2.6 has to parse the raw archive itself.
+Rows for flights carrying only one channel are kept (`both = False`, the offset columns
+missing): they are the denominator of the availability fractions, and of the check that a
+flight falling back to GNSS lands on a complete channel.
+
+```
+6,677 rows, 0.4 MB on disk (hang gliders; 19,964 rows for the paraglider sample)
+
+dtypes:
+  flight_id    str        season       str        n_fix        int64
+  baro_frac    float64    gnss_frac    float64    both         bool
+  n_win        float64    dur_s        float64    med_offset   float64
+  iqr_offset   float64    drift        float64    slope        float64
+  frac_equal   float64    alt_med      float64    alt_range    float64
+  lat          float64    lon          float64    logger       str
+
+head(4), selected columns:
+ flight_id     season  n_fix  baro_frac  gnss_frac   both  med_offset     slope  logger
+       830  2002-2003    349        0.0        0.0  False         NaN       NaN
+       975  2002-2003   2099        1.0        1.0   True       -33.0  0.000654  ABRA00968
+      1032  2002-2003    730        0.0        0.0  False         NaN       NaN
+      1037  2002-2003   1802        1.0        1.0   True       -57.5 -0.049668  ABRA00145
+```
+
+`med_offset` is the median of `baro_alt - gnss_alt` over the in-flight window, `slope` its
+least-squares slope against height (the day's departure from the standard temperature
+profile, once inverted), `frac_equal` the share of the window where the two fields are
+byte-identical (a flight above 0.99 has one sensor written into two columns), and `logger`
+the recorder's `A` record, whose first four characters are the manufacturer code.
 
 ## `derived/fixes.parquet` — the trajectories
 
@@ -565,6 +602,7 @@ silently mixed with a newer one.
 |---|---|---|
 | `raw/`, `catalog/`, `logs/` | `soaring-para` / `soaring-delta` (acquisition CLI) | days, network-bound |
 | `derived/track_scan.parquet` | delete it; `generate_preproc_figure.py` rebuilds it | tens of minutes |
+| `derived/alt_offset_scan.parquet` | `generate_alt_offset_stats.py --rescan` | ~2 min for both archives, 8 workers |
 | `derived/{fixes,segments,flights_meta}.parquet` | `scripts/preprocess.py` | ~80 min for both archives, 8 workers |
 | the thesis figures and macros | `generate_*.py` in `scripts/reporting/` | seconds to ~20 min |
 
