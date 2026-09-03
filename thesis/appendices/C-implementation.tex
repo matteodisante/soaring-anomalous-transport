@@ -51,8 +51,9 @@ the text, via a cross-reference such as ``(implementation details: Sec.~I3.5.2)'
 \bigskip
 
 Table~\ref{tab:impl-repro} is a quick index of which script reproduces which
-auto-generated figure or table (all paths relative to \texttt{scripts/reporting/}); the
-chapters that follow go into the reasoning and numbers behind each one.
+auto-generated figure or table (paths relative to \texttt{scripts/reporting/}, in the
+chapter-named subdirectory shown); the chapters that follow go into the reasoning and
+numbers behind each one.
 
 \begin{table}[tbp]
 \centering\small
@@ -61,7 +62,7 @@ chapters that follow go into the reasoning and numbers behind each one.
 \textbf{Figure/Table} & \textbf{Script} & \textbf{Notes} \\
 \hline
 Stats macros; Tables~\ref{tab:seasons-para},~\ref{tab:seasons-hang} &
-  \path{generate_stats.py} &
+  \path{ch2_dataset/generate_stats.py} &
   Reads committed \path{data/*/seasons_index.csv}; instant; part of the pre-commit hook. \\
 \hline
 \rev{The three processed tables (Sec.~\ref{impl:onDisk})} & \rev{\path{../preprocess.py}} &
@@ -69,7 +70,7 @@ Stats macros; Tables~\ref{tab:seasons-para},~\ref{tab:seasons-hang} &
   disciplines on 8 workers. \path{../verify_dataset.py} checks the result against the
   invariants of Ch.~\ref{ch:dataset}.} \\
 \hline
-\rev{Figure~\ref{fig:msd}; \texttt{\textbackslash StatMsd*}} & \rev{\protect\path{measure_msd.py}, \protect\path{generate_msd_figure.py}} &
+\rev{Figure~\ref{fig:msd}; \texttt{\textbackslash StatMsd*}} & \rev{\protect\path{ch3_global_transport/measure_msd.py}, \protect\path{ch3_global_transport/generate_msd_figure.py}} &
   \rev{The former streams \path{fixes.parquet} once, through
   \path{soaring.analysis.derived.stream_flights}, and accumulates in that single pass
   both estimators, their east-only and north-only twins (Sec.~\ref{sec:transport-axisroutes})
@@ -84,16 +85,16 @@ Stats macros; Tables~\ref{tab:seasons-para},~\ref{tab:seasons-hang} &
   need not cost a re-fit.} \\
 \hline
 \rev{\texttt{\textbackslash StatPipe*}, the per-stage shares quoted around
-  Table~\ref{tab:pipecensus}} & \rev{\path{generate_pipeline_census.py}} &
+  Table~\ref{tab:pipecensus}} & \rev{\path{ch2_dataset/generate_pipeline_census.py}} &
   \rev{Queries \path{flights_meta.parquet}; instant.} \\
 \hline
 \rev{Table~\ref{tab:pipecensus} itself; \texttt{\textbackslash StatData*},
   \texttt{\textbackslash DataCascade*}} &
-  \rev{\path{generate_dataset_stats.py}} &
+  \rev{\path{ch2_dataset/generate_dataset_stats.py}} &
   \rev{Reads \path{flights_meta.parquet} and the catalogue; seconds.} \\
 \hline
 Census macros (\texttt{\textbackslash StatScan\dots}) &
-  \path{generate_census_stats.py} &
+  \path{ch2_dataset/generate_census_stats.py} &
   Reads the cached track scans on the SSD (never rescans); instant; best-effort in the
   pre-commit hook, so the committed macros refresh whenever the SSD is mounted.
   \rev{Also emits the flight-level filtering census
@@ -106,7 +107,7 @@ Census macros (\texttt{\textbackslash StatScan\dots}) &
 \hline
 \rev{--- (all of the above, in order)} & \rev{\path{../regenerate.sh}} &
   \rev{Runs every row of this table that depends on the processed dataset, in the one
-  order that is correct, and refuses to start while \path{preprocess.py} is still
+  order that is correct, and refuses to start while \path{../preprocess.py} is still
   writing. The ordering is a real constraint rather than a convenience: the driver
   rewrites \path{<data_root>/derived/} in place and completes \path{flights_meta} only
   after its last flight, so a generator run against a live archive reads a partial
@@ -127,7 +128,7 @@ Census macros (\texttt{\textbackslash StatScan\dots}) &
   identically, the largest departure being \SI{0.016}{\metre}---the \texttt{float32}
   quantum at a coordinate of \SI{100}{\kilo\metre}.} \\
 \hline
-\rev{--- (an analysis product)} & \rev{\protect\path{measure_msd.py}, \protect\path{measure_variations.py}, \protect\path{measure_shape.py}} &
+\rev{--- (an analysis product)} & \rev{\protect\path{ch3_global_transport/measure_msd.py}, \protect\path{ch3_global_transport/measure_variations.py}, \protect\path{ch3_global_transport/measure_shape.py}} &
   \rev{The first, second and third streaming passes. The first keeps the MSD curves and
   the per-flight/per-segment samples their bootstrap needs; the second a filtered
   variation per flight per filter order; the third what the moment spectrum needs, which
@@ -136,7 +137,7 @@ Census macros (\texttt{\textbackslash StatScan\dots}) &
   downstream of any of them costs seconds and not the pass again.} \\
 \hline
 \rev{Table~\ref{tab:orderscan}, Fig.~\ref{fig:transport}, \texttt{\textbackslash StatVar*}} &
-  \rev{\protect\path{generate_transport_figure.py}} &
+  \rev{\protect\path{ch3_global_transport/generate_transport_figure.py}} &
   \rev{The order scan, its uncertainty split into sampling and range, the four
   stratifications and the regime fit (Sec.~\ref{sec:transport-measure}). Reads the
   variation pass, so a stratification is a row selection. Also emits the order-1 and
@@ -145,16 +146,16 @@ Census macros (\texttt{\textbackslash StatScan\dots}) &
   Minutes.} \\
 \hline
 \rev{Fig.~\ref{fig:shape}, \texttt{\textbackslash StatShape*}} &
-  \rev{\protect\path{generate_shape_figure.py}} &
+  \rev{\protect\path{ch3_global_transport/generate_shape_figure.py}} &
   \rev{The moment spectrum and its tail control, and the velocity autocorrelation
   (Sec.~\ref{sec:transport-shape}). Minutes.} \\
 \hline
-\rev{--- (a disk artefact, not a thesis one)} & \rev{\protect\path{write_ssd_readme.py}} &
+\rev{--- (a disk artefact, not a thesis one)} & \rev{\protect\path{tools/write_ssd_readme.py}} &
   \rev{Writes a README at the root of the data disk, generated from the disk itself so it
   cannot describe a layout the disk no longer has. It has no caller in this table because
   its output does not live here; re-run it after a processing run.} \\
 \hline
-\rev{--- (a check, not a product)} & \rev{\protect\path{check_generated_macros.py}} &
+\rev{--- (a check, not a product)} & \rev{\protect\path{checks/check_generated_macros.py}} &
   \rev{Reads both sides of the contract this table describes---the macros
   \path{thesis/generated/} writes, and the macros the thesis quotes---and fails if the
   second is not contained in the first. Instant, needs no data. It exists because the
@@ -163,32 +164,32 @@ Census macros (\texttt{\textbackslash StatScan\dots}) &
   one way the thesis can quote something no script ever computed.} \\
 \hline
 Figure~\ref{fig:altnoise} &
-  \path{generate_altitude_noise_figure.py} &
+  \path{ch2_dataset/generate_altitude_noise_figure.py} &
   Needs the raw IGC archive (env.\ \path{SOARING_PARA_DATA_ROOT}/\path{SOARING_DELTA_DATA_ROOT}). \\
 \hline
 Figures~\ref{fig:fixlevel}, \ref{fig:preproc}, \ref{fig:gaps}, \ref{fig:sampling} &
-  \path{generate_preproc_figure.py} &
+  \path{ch2_dataset/generate_preproc_figure.py} &
   One run produces all four (a shared full-census scan feeds three; fix-level cleaning
   uses a separate sampled pass). Needs the raw IGC archive. \\
 \hline
 Savitzky--Golay $\tau_c$ (config values) &
-  \path{estimate_savgol_timescales.py} &
+  \path{tools/estimate_savgol_timescales.py} &
   Prints the measured spectral knees (Sec.~\ref{impl:savgol}); adopting them in the YAML
   is a deliberate edit. Needs the raw IGC archive. \\
 \hline
-\rev{--- (an analysis product)} & \rev{\protect\path{audit_msd.py}} &
+\rev{--- (an analysis product)} & \rev{\protect\path{ch3_global_transport/audit_msd.py}} &
   \rev{A second streaming pass over \path{fixes.parquet}, keeping each flight's position
   at every lag instead of only the average over flights (Sec.~\ref{impl:obs-global}).
   Writes to \path{--out}, outside the repository. Comparable in cost to the MSD pass.} \\
 \hline
-\rev{\texttt{\textbackslash StatAudit*}} & \rev{\protect\path{audit_msd_report.py}} &
+\rev{\texttt{\textbackslash StatAudit*}} & \rev{\protect\path{ch3_global_transport/audit_msd_report.py}} &
   \rev{Reduces the audit arrays, the curve CSV and the segment and flight tables into the
   audit macros: the residual each estimator leaves against its own fitted power law, the
   local slope recomputed on fixed-cadence and fixed-duration sub-ensembles, the
   common-heading share, the departure time from the launch area, and the pre-processing
   losses decomposed by rule. Seconds, given \path{--audit-dir}.} \\
 \hline
-\rev{--- (a committed input)} & \rev{\protect\path{build_basemap.py}} &
+\rev{--- (a committed input)} & \rev{\protect\path{tools/build_basemap.py}} &
   \rev{Fetches Natural Earth admin-0 countries once, crops them to the three map frames,
   decimates and writes \path{data/basemap.json} (\SI{0.76}{\mega\byte}, committed). Run
   only to change a panel's extent; everything downstream then draws offline with no
@@ -196,7 +197,7 @@ Savitzky--Golay $\tau_c$ (config values) &
 \hline
 \rev{Figures~\ref{fig:prelim-map}, \ref{fig:prelim-ensemble}, \ref{fig:prelim-isotropy},
   \ref{fig:strata-compat}, \texttt{\textbackslash StatPrelim*}} &
-  \rev{\protect\path{generate_prelim_figure.py}} &
+  \rev{\protect\path{ch2_dataset/generate_prelim_figure.py}} &
   \rev{Sec.~\ref{sec:prelim}: the retained-ensemble statistics, the three take-off maps and
   the isotropy check; and Sec.~\ref{sec:strata-compat} (Chapter~\ref{ch:global}): the
   ensemble MSD within wing class, orographic group and season. Reads the audit arrays
@@ -205,9 +206,9 @@ Savitzky--Golay $\tau_c$ (config values) &
 \hline
 \end{tabular}
 \caption{Script that regenerates each auto-generated thesis figure or table. Run as
-\texttt{uv run python scripts/reporting/<name>}; only \texttt{generate\_stats.py} is wired
-into \texttt{scripts/build\_docs.sh} (the others need the external SSD and are
-run manually).}
+\texttt{uv run python scripts/reporting/<subdir>/<name>}; only
+\texttt{ch2\_dataset/generate\_stats.py} is wired into \texttt{scripts/build\_docs.sh}
+(the others need the external SSD and are run manually).}
 \label{tab:impl-repro}
 \end{table}
 

@@ -23,7 +23,7 @@ Each row is one season, with its links (list + XML export) and counts (`n_flight
 
 They are the **reproducibility anchor for the thesis's dataset numbers**. The thesis
 quotes per-season and total flight counts (the `\Stat*` macros and the season tables),
-produced by `scripts/reporting/generate_stats.py`. The thesis must build **offline** — on
+produced by `scripts/reporting/ch2_dataset/generate_stats.py`. The thesis must build **offline** — on
 a fresh checkout, a co-author's machine, or CI, with no SSD mounted — so the few-KB
 summary each table depends on is committed, exactly as one commits the data behind a
 plotted figure. This is *not* "keeping the dataset locally": the heavy data stays on the
@@ -33,7 +33,7 @@ SSD; only this tiny derived summary is versioned.
 
 The **canonical** index is on the SSD, written next to the catalog by
 `soaring-<para|delta> build-catalog`. The copies here are a snapshot of it, and
-`scripts/reporting/refresh_seasons_index.py` re-copies each reachable SSD index into this
+`scripts/reporting/tools/refresh_seasons_index.py` re-copies each reachable SSD index into this
 folder so the snapshot cannot silently drift. It is best-effort — a discipline whose SSD
 copy is not mounted is skipped — and the pre-commit hook runs it automatically: on a
 machine with the SSD, every commit refreshes the snapshot; a checkout without the SSD
@@ -43,7 +43,7 @@ simply uses the committed copies.
 
 Natural Earth admin-0 country polygons (public domain), cropped to the three frames of
 `fig:prelim-map` — metropolitan France, La Réunion, and a world panel — decimated, and
-written by `scripts/reporting/build_basemap.py`.
+written by `scripts/reporting/tools/build_basemap.py`.
 
 It is committed for the same reason the season indexes are: the thesis figure that uses it
 must regenerate offline. The alternative was Cartopy, which fetches Natural Earth at draw

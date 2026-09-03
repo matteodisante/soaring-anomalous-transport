@@ -1,6 +1,6 @@
 """The audit's copy of the coverage rule must agree with the estimator's original.
 
-``scripts/reporting/audit_msd.py`` deliberately duplicates
+``scripts/reporting/ch3_global_transport/audit_msd.py`` deliberately duplicates
 :class:`soaring.analysis.transport.MSDAccumulator`'s coverage rule instead of importing
 it, so that a change to the estimator shows up as a disagreement between the figure and
 the audit rather than being tracked silently. A duplicate that nobody compares is just a
@@ -29,12 +29,12 @@ def _load(name: str, relative: str):
 
 @pytest.fixture(scope="module")
 def audit():
-    return _load("audit_msd", "scripts/reporting/audit_msd.py")
+    return _load("audit_msd", "scripts/reporting/ch3_global_transport/audit_msd.py")
 
 
 @pytest.fixture(scope="module")
 def report():
-    return _load("audit_msd_report", "scripts/reporting/audit_msd_report.py")
+    return _load("audit_msd_report", "scripts/reporting/ch3_global_transport/audit_msd_report.py")
 
 
 def _flight(step: float, n: int, seed: int):

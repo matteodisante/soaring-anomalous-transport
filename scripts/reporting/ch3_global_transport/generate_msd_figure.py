@@ -26,8 +26,8 @@ rather than over the population. Both ends are reported with the exponent.
 
 Run it after ``measure_msd.py``, with a shared ``--out`` / ``--audit-dir``::
 
-    uv run python scripts/reporting/measure_msd.py --out "$AUDIT_DIR"
-    uv run python scripts/reporting/generate_msd_figure.py --audit-dir "$AUDIT_DIR"
+    uv run python scripts/reporting/ch3_global_transport/measure_msd.py --out "$AUDIT_DIR"
+    uv run python scripts/reporting/ch3_global_transport/generate_msd_figure.py --audit-dir "$AUDIT_DIR"
 """
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 OUT_FIG = ROOT / "thesis" / "generated" / "msd.pdf"
 OUT_CSV = ROOT / "thesis" / "generated" / "msd_curve.csv"
 OUT_TEX = ROOT / "thesis" / "generated" / "msd.tex"
@@ -463,7 +463,7 @@ def main() -> int:
     # CSV -- which is what that mode is for.
     pd.concat(frames, ignore_index=True).to_csv(OUT_CSV, index=False)
     write_macros(
-        OUT_TEX, dict(macros), generator="scripts/reporting/generate_msd_figure.py"
+        OUT_TEX, dict(macros), generator="scripts/reporting/ch3_global_transport/generate_msd_figure.py"
     )
     print(f"Wrote {OUT_CSV.name} and {OUT_TEX.name}.")
     _draw(results, fits, ta_results, ta_fits)

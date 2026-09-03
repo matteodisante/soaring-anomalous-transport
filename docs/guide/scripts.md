@@ -17,6 +17,16 @@ over it costs minutes to hours depending on what it computes per flight.
 `.pdf` figures. Seconds to minutes. This is the split that lets a stratification be a row
 selection rather than another traversal.
 
+That three-way split is about run cost, not about location. Physically, `scripts/reporting/`
+splits instead by the thesis chapter each script feeds — `ch2_dataset/` for Chapter 2, "The
+dataset", and `ch3_global_transport/` for Chapter 3, "Global transport" — plus `checks/` and
+`tools/` for what is not chapter-specific. A pass and the reduction that reads what it wrote
+therefore sit side by side in the same chapter folder (`measure_msd.py` and
+`generate_msd_figure.py` are both under `ch3_global_transport/`), not in a `passes/` or
+`reductions/` folder of their own: that distinction lives on this page, in the section
+headings below, rather than in the filesystem. Chapter 4, "Flight phases", has no folder yet
+because it has no script yet — it is a plan, not a result.
+
 `scripts/regenerate.sh` runs all eighteen in the one order that is correct, and its header
 explains why the order is a constraint rather than a convenience. Every script that touches the
 archive needs both roots exported, whichever discipline it is asked for, because the generated
@@ -114,34 +124,34 @@ tables *this code* would write.
 
 Each streams `fixes.parquet` and writes an array to `--out`.
 
-### `scripts/reporting/measure_msd.py`
+### `scripts/reporting/ch3_global_transport/measure_msd.py`
 The ensemble and time-averaged MSD, their east-only and north-only twins
 (`sec:transport-axisroutes`), and the fixed-duration cohorts, all from one traversal — plus
 the per-flight (ensemble) or per-segment (time-averaged) samples each of those needs for
 its bootstrap, since a naive least-squares error understates the truth by about fivefold.
 `--discipline`, `--out`.
 
-### `scripts/reporting/audit_msd.py`
+### `scripts/reporting/ch3_global_transport/audit_msd.py`
 Keeps each flight's position at every lag, rather than the average over flights, so the audit
 can ask whether the averaged curve's shape survives a fixed cadence, a fixed duration and the
 removal of the common heading — questions the averaged curve cannot be asked afterwards.
 `--discipline`, `--out`.
 
-### `scripts/reporting/measure_variations.py`
+### `scripts/reporting/ch3_global_transport/measure_variations.py`
 One filtered-variation curve per flight per filter order, with the flight's cadence, wing
 class, season and declared task alongside. Every stratification in Chapter 3 is then a row
 selection on that table. `--discipline`, `--out`.
 
-### `scripts/reporting/measure_shape.py`
+### `scripts/reporting/ch3_global_transport/measure_shape.py`
 The observables that need the increments themselves: the moment spectrum and the velocity
 autocorrelation. `--discipline`, `--out`.
 
-### `scripts/reporting/measure_propagator.py`
+### `scripts/reporting/ch3_global_transport/measure_propagator.py`
 Histograms of `|Δx|` per lag, per component and per native cadence, plus the turning-angle,
 speed and vertical-velocity histograms. The cheap traversal: histograms only, with no
 per-segment decomposition. `--discipline`, `--out`, `--limit`.
 
-### `scripts/reporting/measure_circling.py`
+### `scripts/reporting/ch3_global_transport/measure_circling.py`
 Averages the velocity autocorrelation at **native cadence** over 1 Hz segments and writes
 `thesis/generated/circling.tex`. It exists because `measure_shape.py` evaluates every integer
 lag and then keeps only its geometric grid, whose floor is 60 s — and the circling period is
@@ -149,7 +159,7 @@ about 21 s, so the whole feature sits below the first lag that pass retains. Res
 1 Hz because a lag in samples is a lag in seconds only there. `--limit` (default 25000
 flights per discipline), and the sample size reaches the thesis as a macro.
 
-### `scripts/reporting/measure_edge_effect.py`
+### `scripts/reporting/ch3_global_transport/measure_edge_effect.py`
 Computes the ensemble MSD twice on the same flights, once over all samples and once over
 interior ones only, and writes `thesis/generated/edge_effect.tex`. A pass rather than a
 reduction, but it takes `--limit` and is run on a subsample, since the effect is a property
@@ -159,48 +169,49 @@ of the segment ends that every flight has.
 
 ## Reductions
 
-### `scripts/reporting/audit_msd_report.py`
+### `scripts/reporting/ch3_global_transport/audit_msd_report.py`
 `--audit-dir` → `audit.tex`, `msd_curve.csv`.
 
-### `scripts/reporting/generate_msd_figure.py`
+### `scripts/reporting/ch3_global_transport/generate_msd_figure.py`
 `--audit-dir`, `--allow-partial` → `msd.pdf`, `msd.tex`, `msd_curve.csv`. Reads what
 `measure_msd.py` wrote, so it is a reduction in cost like every other one here, not the
 pass its name might suggest. `--redraw` goes one step cheaper still, re-rendering the
 figure and the macros from the committed `msd_curve.csv` alone, without even reading
 `--audit-dir`: use it for a change that is about the drawing rather than the measurement.
 
-### `scripts/reporting/generate_transport_figure.py`
+### `scripts/reporting/ch3_global_transport/generate_transport_figure.py`
 `--audit-dir`, `--allow-partial` → `transport.pdf`, `transport.tex`.
 
-### `scripts/reporting/generate_shape_figure.py`
+### `scripts/reporting/ch3_global_transport/generate_shape_figure.py`
 `--audit-dir`, `--allow-partial` → `shape.pdf`, `shape.tex`. Reads the moment spectrum and
 the velocity autocorrelation that the shape pass wrote, fits the tail exponent of the
 autocorrelation, and builds the matched Gaussian null the non-Gaussianity is read against.
 
-### `scripts/reporting/generate_propagator_figure.py`
+### `scripts/reporting/ch3_global_transport/generate_propagator_figure.py`
 `--audit-dir`, `--allow-partial` → `propagator.pdf`, `propagator.tex`.
 
-### `scripts/reporting/generate_prelim_figure.py`
-`--audit-dir` → `prelim.tex`, `prelim_map.pdf`, `prelim_ensemble.pdf`, `prelim_strata.pdf`.
+### `scripts/reporting/ch2_dataset/generate_prelim_figure.py`
+`--audit-dir` → `prelim.tex`, `prelim_map.pdf`, `prelim_ensemble.pdf`, `prelim_isotropy.pdf`,
+`strata_compat.pdf`.
 Reads the audit arrays rather than the fix table, which is what makes a stratified MSD a row
 selection rather than another traversal.
 
-### `scripts/reporting/generate_dataset_stats.py`
+### `scripts/reporting/ch2_dataset/generate_dataset_stats.py`
 Reads `flights_meta.parquet` and the catalogue. → `dataset_stats.tex`,
 `dataset_seasons.pdf`.
 
-### `scripts/reporting/generate_pipeline_census.py`
+### `scripts/reporting/ch2_dataset/generate_pipeline_census.py`
 Reads `flights_meta.parquet`. → `pipeline_census.tex`.
 
-### `scripts/reporting/generate_census_stats.py`
+### `scripts/reporting/ch2_dataset/generate_census_stats.py`
 Reads the cached raw-archive scan, never rescans. → `census.tex`.
 
-### `scripts/reporting/generate_stats.py`
+### `scripts/reporting/ch2_dataset/generate_stats.py`
 Reads the committed `data/*/seasons_index.csv` snapshots. → `stats.tex`,
 `seasons_table_para.tex`, `seasons_table_hang.tex`. Run by the pre-commit hook, as is
 `generate_census_stats.py`.
 
-### `scripts/reporting/generate_preproc_figure.py`
+### `scripts/reporting/ch2_dataset/generate_preproc_figure.py`
 → `preproc_diagnostics.pdf`, `fixlevel_diagnostics.pdf`, `gap_diagnostics.pdf`,
 `sampling_intervals.pdf`. Filed here for its outputs, but it is not a reduction: it calls
 `load_or_scan_tracks`, which scans the raw archive and writes
@@ -209,21 +220,21 @@ only producer of that cache, and both `generate_census_stats.py` and
 `generate_altitude_noise_figure.py` read it, so it has to run before either of them. Minutes
 when the cache is cold.
 
-### `scripts/reporting/generate_altitude_noise_figure.py`
+### `scripts/reporting/ch2_dataset/generate_altitude_noise_figure.py`
 → `altitude_noise.pdf`.
 
 ---
 
 ## Checks that run before the build
 
-### `scripts/reporting/check_generated_macros.py`
+### `scripts/reporting/checks/check_generated_macros.py`
 Reads both sides of the macro contract and reports the difference in a second, with no build.
 `--quiet` prints only the verdict.
 A macro quoted and never written is a fatal LaTeX error inside `\SI{}`, diagnosed from a
 symptom that names the wrong line, so this runs before the build. It also reports macro names
 LaTeX cannot accept, and typed numbers in the body that a generated macro already carries.
 
-### `scripts/reporting/generate_provenance.py`
+### `scripts/reporting/checks/generate_provenance.py`
 Writes `docs/guide/provenance.md`: for every generated file and every macro family, the
 script that produced it, the step that runs that script, and the sections that use it.
 `--check` writes nothing and fails instead if a generated file carries no `% Generated by`
@@ -233,28 +244,28 @@ The neighbouring question — whether the thesis quotes a macro nothing defines 
 
 ## Tools that are not part of the regeneration
 
-### `scripts/reporting/show_dataset.py`
+### `scripts/reporting/tools/show_dataset.py`
 Prints the shape, the dtypes and the first rows of every artefact on the data disk.
 `docs/guide/data-on-disk.md` is written from its output; re-run it after a pipeline run and
 paste the blocks back. `--discipline`.
 
-### `scripts/reporting/write_ssd_readme.py`
+### `scripts/reporting/tools/write_ssd_readme.py`
 Writes a README at the root of the data disk describing what is on it, so the disk explains
 itself when it is not plugged into this repository. `--root`.
 
-### `scripts/reporting/build_basemap.py`
+### `scripts/reporting/tools/build_basemap.py`
 Builds the committed `data/basemap.json` the take-off maps are drawn on, from Natural Earth.
 Run once; the output is versioned so the figures need no network.
 
-### `scripts/reporting/estimate_savgol_timescales.py`
+### `scripts/reporting/tools/estimate_savgol_timescales.py`
 Estimates the Savitzky–Golay smoothing timescales from the ENU power spectra. The measurement
 behind the window choice in `configs/preprocessing.yaml`.
 
-### `scripts/reporting/refresh_seasons_index.py`
+### `scripts/reporting/tools/refresh_seasons_index.py`
 Re-copies the canonical `seasons_index.csv` from the SSD into `data/`. Run by the pre-commit
 hook.
 
-### `scripts/reporting/generate_timeline.py`
+### `scripts/reporting/tools/generate_timeline.py`
 Generates the git-history timeline for the private logbook. Run by the pre-commit hook.
 
 ### `scripts/build_docs.sh`

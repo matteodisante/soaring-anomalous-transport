@@ -196,7 +196,7 @@ filtering instead.
   \centering
   \IfFileExists{generated/msd.pdf}{\includegraphics[width=\linewidth]{generated/msd}}{%
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/generate\_msd\_figure.py}.}}}
+    \texttt{scripts/reporting/ch3\_global\_transport/generate\_msd\_figure.py}.}}}
   \caption{\rev{Mean-squared displacement of the retained ensemble, by two averages.
   (a)~Ensemble MSD against elapsed flight time, log--log, fitted line and range shaded,
   \SIrange{10}{90}{\percent} band across flights. (b)~Time-averaged MSD, cut at half a
@@ -378,7 +378,7 @@ the distribution of the increments rather than its second moment.
   \centering
   \IfFileExists{generated/transport.pdf}{\includegraphics[width=\linewidth]{generated/transport}}{%
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/generate\_transport\_figure.py}.}}}
+    \texttt{scripts/reporting/ch3\_global\_transport/generate\_transport\_figure.py}.}}}
   \caption{\rev{The filtered variation, on which the exponent is read. (a)~$V_2(\Delta)$
   against lag, log--log, fitted range shaded. (b)~Local
   $H=\tfrac12\,\mathrm{d}\log V_p/\mathrm{d}\log\Delta$ at the three filter orders: $p=1$
@@ -435,7 +435,7 @@ that are known to differ, not as a property of a homogeneous population.
     \includegraphics[width=\linewidth]{generated/strata_compat}%
   }{%
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/generate\_prelim\_figure.py} from the processed dataset on
+    \texttt{scripts/reporting/ch2\_dataset/generate\_prelim\_figure.py} from the processed dataset on
     the SSD (not versioned).}}%
   }
   \caption{\rev{Whether the retained ensemble may be pooled: the ensemble MSD computed
@@ -818,7 +818,7 @@ are kept apart here and in Sec.~\ref{sec:prelim}.
   \centering
   \IfFileExists{generated/propagator.pdf}{\includegraphics[width=\linewidth]{generated/propagator}}{%
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/generate\_propagator\_figure.py}.}}}
+    \texttt{scripts/reporting/ch3\_global\_transport/generate\_propagator\_figure.py}.}}}
   \caption{\rev{The exponent read from the distribution of the increments, not from a
   moment of it. All seven panels use each discipline's fastest native cadence,
   \SI{\StatPropParaDrawnDtS}{\second}, where the histograms hold the most increments.
@@ -995,7 +995,7 @@ which fixes how the increment distribution scales and says nothing about its sha
   \centering
   \IfFileExists{generated/shape.pdf}{\includegraphics[width=\linewidth]{generated/shape}}{%
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/generate\_shape\_figure.py}.}}}
+    \texttt{scripts/reporting/ch3\_global\_transport/generate\_shape\_figure.py}.}}}
   \caption{\rev{What the second moment cannot say. (a)~Moment spectrum $q\nu(q)$, straight
   line dashed: straight means one exponent for every moment. (b)~Share of each moment
   carried by the largest \SI{1}{\percent} of increments. (c)~Non-Gaussian parameter against

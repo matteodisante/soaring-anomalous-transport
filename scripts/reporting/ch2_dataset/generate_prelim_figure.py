@@ -42,7 +42,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.colors import LogNorm
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
@@ -224,7 +224,7 @@ def _strata(frame: pd.DataFrame, column: str) -> list[tuple[str, np.ndarray]]:
 def _basemap():
     """The committed coastline and border geometry, or ``None`` if it is missing."""
     if not BASEMAP.is_file():
-        print(f"warning: {BASEMAP} is absent; run scripts/reporting/build_basemap.py")
+        print(f"warning: {BASEMAP} is absent; run scripts/reporting/tools/build_basemap.py")
         return None
     return json.loads(BASEMAP.read_text())["panels"]
 
@@ -581,7 +581,7 @@ def main() -> int:
     draw_strata(loaded).savefig(OUT_STRATA, metadata=_PDF_METADATA)
     values = macros(loaded)
     write_macros(
-        OUT_TEX, values, generator="scripts/reporting/generate_prelim_figure.py"
+        OUT_TEX, values, generator="scripts/reporting/ch2_dataset/generate_prelim_figure.py"
     )
     print(f"wrote {OUT_MAP.name}, {OUT_ENSEMBLE.name}, {OUT_ISOTROPY.name}, "
           f"{OUT_STRATA.name}, {OUT_TEX.name} ({len(values)} macros)")

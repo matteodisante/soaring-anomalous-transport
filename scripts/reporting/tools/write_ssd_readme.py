@@ -21,7 +21,7 @@ environment variables that connect the two.
 Usage::
 
     SOARING_PARA_DATA_ROOT=... SOARING_DELTA_DATA_ROOT=... \\
-    uv run python scripts/reporting/write_ssd_readme.py [--root /Volumes/SSD_DISANTE]
+    uv run python scripts/reporting/tools/write_ssd_readme.py [--root /Volumes/SSD_DISANTE]
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from soaring.reporting import DISCIPLINES
 
@@ -168,7 +168,7 @@ def main(argv=None) -> int:
         "The data behind *Anomalous Transport in Soaring Flights* (MSc, Physics of "
         "Complex Systems, University of Pisa). This file is **generated** "
         "from the disk ",
-        "itself by `scripts/reporting/write_ssd_readme.py`; re-run it after a "
+        "itself by `scripts/reporting/tools/write_ssd_readme.py`; re-run it after a "
         "processing ",
         f"run rather than editing it. Last written {date.today().isoformat()}.",
         "",

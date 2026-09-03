@@ -314,7 +314,7 @@ study~\cite{vilpellet2026}, whose pipeline derives the vertical coordinate from 
     \includegraphics[width=\linewidth]{generated/altitude_noise}%
   }{%
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/generate\_altitude\_noise\_figure.py} from the raw IGC tracks on
+    \texttt{scripts/reporting/ch2\_dataset/generate\_altitude\_noise\_figure.py} from the raw IGC tracks on
     the SSD (not versioned). Run it to render this figure.}}%
   }
   \caption{Barometric vs GNSS altitude noise. \rev{(a)~One representative flight over a
@@ -680,7 +680,7 @@ few tens of metres negative (the offset scale is visible in Fig.~\ref{fig:altnoi
     \includegraphics[width=\linewidth]{generated/fixlevel_diagnostics}%
   }{%
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/generate\_preproc\_figure.py} from the raw IGC tracks on the
+    \texttt{scripts/reporting/ch2\_dataset/generate\_preproc\_figure.py} from the raw IGC tracks on the
     SSD (not versioned). Run it to render this figure.}}%
   }
   \caption{Fix-level cleaning: auditing the absolute bounds. Per-fix distributions of the
@@ -852,7 +852,7 @@ examined (Sec.~\ref{sec:uniform}) \impldetails{impl:flightfilter}.
     \includegraphics[width=\linewidth]{generated/preproc_diagnostics}%
   }{%
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/generate\_preproc\_figure.py} from the raw IGC tracks on the
+    \texttt{scripts/reporting/ch2\_dataset/generate\_preproc\_figure.py} from the raw IGC tracks on the
     SSD (not versioned). Run it to render this figure.}}%
   }
   \caption{Flight-level filtering diagnostics, per discipline. \rev{Top: distributions of
@@ -1301,7 +1301,7 @@ the ensemble is stratified by rate or restricted to the dominant one.
     \includegraphics[width=\linewidth]{generated/gap_diagnostics}%
   }{%
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/generate\_preproc\_figure.py} from the raw IGC tracks on the
+    \texttt{scripts/reporting/ch2\_dataset/generate\_preproc\_figure.py} from the raw IGC tracks on the
     SSD (not versioned). Run it to render this figure.}}%
   }
   \caption{\rev{The two sampling-regularity criteria and their retention curves, per
@@ -1331,7 +1331,7 @@ the ensemble is stratified by rate or restricted to the dominant one.
     \includegraphics[width=0.62\linewidth]{generated/sampling_intervals}%
   }{%
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/generate\_preproc\_figure.py} from the raw IGC tracks on the
+    \texttt{scripts/reporting/ch2\_dataset/generate\_preproc\_figure.py} from the raw IGC tracks on the
     SSD (not versioned). Run it to render this figure.}}%
   }
   \caption{Native sampling interval $\Delta t$ (median inter-fix time) per flight, on the
@@ -1491,7 +1491,7 @@ test, no retained flight is under either.
     \includegraphics[width=\linewidth]{generated/prelim_ensemble}%
   }{%
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/generate\_prelim\_figure.py} from the processed dataset on
+    \texttt{scripts/reporting/ch2\_dataset/generate\_prelim\_figure.py} from the processed dataset on
     the SSD (not versioned).}}%
   }
   \caption{The records the pipeline retains. (a)~Airborne duration, (b)~flown path
@@ -1538,7 +1538,7 @@ sparsity rule dominates the paraglider one.
     \includegraphics[width=\linewidth]{generated/dataset_seasons}%
   }{%
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/generate\_dataset\_stats.py}.}}%
+    \texttt{scripts/reporting/ch2\_dataset/generate\_dataset\_stats.py}.}}%
   }
   \caption{The archive season by season. (a)~Flights attempted and retained, on a
   logarithmic scale: the ladder grows by three orders of magnitude over its life.
@@ -1585,7 +1585,7 @@ on Fig.~\ref{fig:prelim-map}a and listed with their edges in the mirror of this 
     \includegraphics[width=\linewidth]{generated/prelim_map}%
   }{%
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/generate\_prelim\_figure.py} from the processed dataset on
+    \texttt{scripts/reporting/ch2\_dataset/generate\_prelim\_figure.py} from the processed dataset on
     the SSD (not versioned).}}%
   }
   \caption{Take-off sites of the retained ensemble, on three frames, pooling both
@@ -1636,7 +1636,7 @@ $|\mathbf{r}(t)|=\sqrt{E(t)^2+N(t)^2}$.
     \includegraphics[width=0.55\linewidth]{generated/prelim_isotropy}%
   }{%
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/generate\_prelim\_figure.py} from the processed dataset on
+    \texttt{scripts/reporting/ch2\_dataset/generate\_prelim\_figure.py} from the processed dataset on
     the SSD (not versioned).}}%
   }
   \caption{The per-component variance ratio $\langle E^2\rangle/\langle N^2\rangle$
@@ -1651,7 +1651,7 @@ $|\mathbf{r}(t)|=\sqrt{E(t)^2+N(t)^2}$.
 % ---------------------------------------------------------------------------
 % Pipeline summary (July 2026 pass): the whole processing chain in one map,
 % closing the chapter. Thresholds are quoted through the \Preproc* macros that
-% scripts/reporting/generate_census_stats.py regenerates from
+% scripts/reporting/ch2_dataset/generate_census_stats.py regenerates from
 % configs/preprocessing.yaml, so the summary cannot drift from the config.
 % ---------------------------------------------------------------------------
 

@@ -12,7 +12,7 @@ truncated with an ellipsis, and ``flights_meta`` is transposed: forty-odd column
 is unreadable, the same list read downward is one you can check off.
 
     SOARING_PARA_DATA_ROOT=... SOARING_DELTA_DATA_ROOT=... \
-    uv run python scripts/reporting/show_dataset.py --discipline "hang gliders"
+    uv run python scripts/reporting/tools/show_dataset.py --discipline "hang gliders"
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ import argparse
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)

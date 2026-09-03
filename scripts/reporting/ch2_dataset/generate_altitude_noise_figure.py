@@ -31,7 +31,7 @@ dependency group (``matplotlib`` + ``scipy``; on by default in ``uv run``, see
 ``pyproject.toml``); if either is missing it also exits without failing. Run it with,
 e.g.::
 
-    uv run python scripts/reporting/generate_altitude_noise_figure.py
+    uv run python scripts/reporting/ch2_dataset/generate_altitude_noise_figure.py
 """
 
 from __future__ import annotations
@@ -40,7 +40,7 @@ import os
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 OUT_PATH = ROOT / "thesis" / "generated" / "altitude_noise.pdf"
 
 # Flights sampled per discipline for the PSD / representative-flight panels. The PSD

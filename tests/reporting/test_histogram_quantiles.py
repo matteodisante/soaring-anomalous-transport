@@ -25,7 +25,7 @@ def _load():
     src = str(ROOT / "src")
     if src not in sys.path:
         sys.path.insert(0, src)
-    path = ROOT / "scripts" / "reporting" / "generate_propagator_figure.py"
+    path = ROOT / "scripts" / "reporting" / "ch3_global_transport" / "generate_propagator_figure.py"
     spec = importlib.util.spec_from_file_location("_propfig", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

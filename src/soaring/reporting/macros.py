@@ -10,7 +10,7 @@ A LaTeX control sequence is letters only, so
 parses as ``\StatMsdParaCohortAlpha`` followed by the characters ``1H``, and
 ``\newcommand`` reads that ``1`` as an argument count -- twelve errors and a build that
 stops, from a *definition* that nothing was even quoting. That was caught after the
-fact, by ``scripts/reporting/check_generated_macros.py``, once a generator had written
+fact, by ``scripts/reporting/checks/check_generated_macros.py``, once a generator had written
 the unusable file. :func:`write_macros` refuses to write it in the first place, so the
 error names the generator and the macro instead of a LaTeX line number.
 """

@@ -1,9 +1,11 @@
 r"""What the reporting scripts share: the disciplines, and the generated-macro contract.
 
-``scripts/reporting/`` holds twenty-six command-line entry points that measure the
-archive and write ``thesis/generated/``. They are deliberately separate programs -- a
-pass costs hours and a reduction costs seconds, and mixing them would mean paying for
-the pass to redraw a panel. What they are not is twenty-six answers to *where is the
+``scripts/reporting/`` holds twenty-seven command-line entry points that measure the
+archive and write ``thesis/generated/``, grouped into ``ch2_dataset/`` and
+``ch3_global_transport/`` by the thesis chapter they feed, plus ``checks/`` and
+``tools/`` for what is not chapter-specific. They are deliberately separate programs --
+a pass costs hours and a reduction costs seconds, and mixing them would mean paying for
+the pass to redraw a panel. What they are not is twenty-seven answers to *where is the
 data* and *how is a macro written*, which is what they had become: this package holds
 the one answer to each.
 

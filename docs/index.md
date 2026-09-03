@@ -107,8 +107,8 @@ things about it constrain the code and belong here.
 
 Every number the document quotes comes through a generated macro that a script in
 `scripts/reporting/` writes into `thesis/generated/`. Nothing is typed. A macro quoted and
-never written is a fatal LaTeX error, so `scripts/reporting/check_generated_macros.py` reads
-both sides of that contract in a second and with no build. `regenerate.sh` runs it as step 15,
+never written is a fatal LaTeX error, so `scripts/reporting/checks/check_generated_macros.py` reads
+both sides of that contract in a second and with no build. `regenerate.sh` runs it as step 17,
 before the rebuild; `build_docs.sh thesis`, which only recompiles, does not.
 
 `scripts/regenerate.sh` rebuilds everything that descends from the processed dataset, in the

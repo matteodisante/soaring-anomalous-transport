@@ -20,7 +20,7 @@ So this reads the table once and writes what every question needs:
     mean-velocity components, the largest step speed, and the coordinate extent.
 
 Both are analysis products, not thesis products: they carry no macros and nothing in the
-document depends on them. ``scripts/reporting/audit_msd_report.py`` reduces them.
+document depends on them. ``scripts/reporting/ch3_global_transport/audit_msd_report.py`` reduces them.
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)

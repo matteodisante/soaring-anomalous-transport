@@ -31,7 +31,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
@@ -315,7 +315,7 @@ def main() -> int:
         draw_seasons(seasons).savefig(OUT_FIG, metadata=_PDF_METADATA)
 
     write_macros(
-        OUT_TEX, values, generator="scripts/reporting/generate_dataset_stats.py"
+        OUT_TEX, values, generator="scripts/reporting/ch2_dataset/generate_dataset_stats.py"
     )
     print(f"wrote {OUT_TEX.name}, {OUT_FIG.name} ({len(values)} macros)")
     for k, v in values.items():

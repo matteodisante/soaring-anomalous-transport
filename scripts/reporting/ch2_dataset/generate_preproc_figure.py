@@ -40,7 +40,7 @@ already includes the ``analysis`` dependency group -- matplotlib/scipy/pyarrow -
 default, see ``pyproject.toml``)::
 
     SOARING_PARA_DATA_ROOT=/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc \
-    uv run python scripts/reporting/generate_preproc_figure.py
+    uv run python scripts/reporting/ch2_dataset/generate_preproc_figure.py
 """
 
 from __future__ import annotations
@@ -50,7 +50,7 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 OUT_DIAG = ROOT / "thesis" / "generated" / "preproc_diagnostics.pdf"
 OUT_GAPS = ROOT / "thesis" / "generated" / "gap_diagnostics.pdf"
 OUT_DT = ROOT / "thesis" / "generated" / "sampling_intervals.pdf"

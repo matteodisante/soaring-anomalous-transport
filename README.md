@@ -101,7 +101,7 @@ stands for. Four mechanisms keep that honest:
   discipline of two (the thesis then fails on the absent one's macros, or a figure quietly
   loses a curve), and a `--help` that a script without an argument parser would otherwise
   treat as an instruction to start a pass over the archive.
-- **`scripts/reporting/check_generated_macros.py`** reads both sides of the contract in a
+- **`scripts/reporting/checks/check_generated_macros.py`** reads both sides of the contract in a
   second and with no build: every macro the thesis quotes must exist, and a typed number
   that a generated macro already carries is reported as the same failure in the other
   direction.

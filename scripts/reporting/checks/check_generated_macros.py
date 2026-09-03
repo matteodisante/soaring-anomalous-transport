@@ -27,7 +27,7 @@ recompute them from the data. What is checked is that the two lists agree.
 
 Usage::
 
-    python scripts/reporting/check_generated_macros.py [--quiet]
+    python scripts/reporting/checks/check_generated_macros.py [--quiet]
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)

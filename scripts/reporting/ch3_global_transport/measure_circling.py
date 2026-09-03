@@ -28,7 +28,7 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
@@ -139,7 +139,7 @@ def main() -> int:
         print(refusal)
         return 1
     write_macros(
-        OUT_TEX, macros, generator="scripts/reporting/measure_circling.py", sort=True
+        OUT_TEX, macros, generator="scripts/reporting/ch3_global_transport/measure_circling.py", sort=True
     )
     print(f"wrote {OUT_TEX.name} ({len(macros)} macros)")
     return 0

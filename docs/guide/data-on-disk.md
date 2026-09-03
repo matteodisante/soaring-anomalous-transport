@@ -5,11 +5,11 @@ map: what each directory holds, what each file is, and — for every table — i
 dtypes and its first rows, as you would see them if you opened it yourself.
 
 Those views are not typed out here. They are the output of
-`scripts/reporting/show_dataset.py`, which reads the real files and prints them, so the
+`scripts/reporting/tools/show_dataset.py`, which reads the real files and prints them, so the
 page can be refreshed after any run and cannot drift from the disk:
 
 ```bash
-SOARING_DELTA_DATA_ROOT=... uv run python scripts/reporting/show_dataset.py \
+SOARING_DELTA_DATA_ROOT=... uv run python scripts/reporting/tools/show_dataset.py \
     --discipline "hang gliders"
 ```
 

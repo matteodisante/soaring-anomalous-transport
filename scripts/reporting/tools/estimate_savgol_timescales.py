@@ -28,7 +28,7 @@ the measured values; adopting them in the YAML is a deliberate, separate edit.
 Run::
 
     SOARING_PARA_DATA_ROOT=... SOARING_DELTA_DATA_ROOT=... \
-    uv run python scripts/reporting/estimate_savgol_timescales.py
+    uv run python scripts/reporting/tools/estimate_savgol_timescales.py
 """
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ import random
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)

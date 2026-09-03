@@ -33,7 +33,7 @@ from pathlib import Path
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
@@ -375,7 +375,7 @@ def main() -> int:
 
     draw(measured).savefig(OUT_FIG, metadata=_PDF_METADATA)
     write_macros(
-        OUT_TEX, macros, generator="scripts/reporting/generate_shape_figure.py"
+        OUT_TEX, macros, generator="scripts/reporting/ch3_global_transport/generate_shape_figure.py"
     )
     print(f"wrote {OUT_TEX.name}, {OUT_FIG.name} ({len(macros)} macros)")
     for k, v in macros.items():

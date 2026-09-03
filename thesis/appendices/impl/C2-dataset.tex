@@ -129,7 +129,7 @@ pipeline \emph{did}, and is what the \texttt{\textbackslash StatPipe*} macros qu
 
 \paragraph{The trajectory table.} \path{fixes.parquet} carries one row per grid point of
 every retained segment, keyed \path{(source, flight_id, segment_id)}. Printed as it is on
-disk (the hang-glider root; \path{scripts/reporting/show_dataset.py} produces this view):
+disk (the hang-glider root; \path{scripts/reporting/tools/show_dataset.py} produces this view):
 
 {\footnotesize
 \begin{verbatim}
@@ -414,7 +414,7 @@ to agree, and the difference is precisely what the pipeline did. The two familie
 never mixed in one statement.}
 \end{revblock}
 
-\path{generate_census_stats.py} recomputes the quoted macros from that cache against
+\path{ch2_dataset/generate_census_stats.py} recomputes the quoted macros from that cache against
 the thresholds currently in \path{configs/preprocessing.yaml}, so a threshold change
 propagates to every quoted count by re-running one script, with no rescan. \rev{The cache
 is refreshed when the archive changes---which for the FFVL collections means once a season
@@ -422,7 +422,7 @@ closes, and more substantially when a new source is added (the sailplanes of
 Sec.~\ref{sec:acquisition} above all); between refreshes the cached counts can trail the
 season tables' download counts, and the two are not expected to agree to the flight.} The same scan feeds
 Figures~\ref{fig:preproc}, \ref{fig:gaps} and~\ref{fig:sampling}, regenerated together
-by one run of \path{generate_preproc_figure.py} (Table~\ref{tab:impl-repro}); the
+by one run of \path{ch2_dataset/generate_preproc_figure.py} (Table~\ref{tab:impl-repro}); the
 fix-level diagnostics of Figure~\ref{fig:fixlevel} are the one exception, drawn from a
 separate sampled pass (Sec.~\ref{impl:fixsample}).
 
@@ -1128,7 +1128,7 @@ name in full, so that a count can be traced to the code that produced it:
   \item \path{fraction_retained} and \path{retention_curve} in the same module evaluate a
         single cut against a column of that table---the first at one threshold, the second
         along a grid of them, which is what the bottom row of Fig.~\ref{fig:preproc} plots;
-  \item \path{scripts/reporting/generate_census_stats.py} calls the same functions with
+  \item \path{scripts/reporting/ch2_dataset/generate_census_stats.py} calls the same functions with
         the thresholds read from \path{configs/preprocessing.yaml} and writes the
         \texttt{\textbackslash StatScan*} macros the text quotes.
 \end{itemize}
@@ -1283,7 +1283,7 @@ Table~\ref{tab:impl-status}):}
 \end{flowblock}
 
 \paragraph{The measured timescales.} The knees were measured with
-\path{estimate_savgol_timescales.py}, which applies the Welch procedure of
+\path{tools/estimate_savgol_timescales.py}, which applies the Welch procedure of
 Sec.~\ref{impl:altchannel} to $E$, $N$ (local equirectangular metres) and to the altitude
 channel each flight actually uses, on a seeded sample (908 horizontal flight-components,
 719 barometric and 189 GNSS-fallback flights at \SI{1}{\hertz}). The knee rule: the floor
@@ -1303,11 +1303,13 @@ already in place when it reads its window.
 \section{Preliminary characterization}
 \label{impl:prelim}
 \begin{revblock}
-\path{scripts/reporting/generate_prelim_figure.py} produces the figures of
+The reduction
+\path{scripts/reporting/ch2_dataset/generate_prelim_figure.py} produces the figures of
 Sec.~\ref{sec:prelim} and of Sec.~\ref{sec:strata-compat} (Chapter~\ref{ch:global}) and the
 \texttt{\textbackslash StatPrelim*} macros. It reads three
-things: the per-flight summary and the per-lag positions \path{audit_msd.py} wrote
-(Sec.~\ref{impl:obs-global}), \path{flights_meta.parquet} for the take-off coordinates,
+things: the per-flight summary and the per-lag positions written by
+\path{ch3_global_transport/audit_msd.py} (Sec.~\ref{impl:obs-global}),
+\path{flights_meta.parquet} for the take-off coordinates,
 and the season catalogue for \path{wing_class} and \path{season}. The join on
 \path{flight_id} resolves for \SI{99.99}{\percent} of retained flights.
 
@@ -1321,7 +1323,7 @@ paid, instead of one \SI{43}{\giga\byte} scan each.
 admin-0 country polygons (public domain), which give the coastline and the borders in one
 layer and carry the overseas departments inside the France feature---which is what puts
 La~R\'eunion on the map at all. The geometry is not fetched at draw time and Cartopy is
-not a dependency: \path{scripts/reporting/build_basemap.py} downloads it once, keeps the
+not a dependency: \path{scripts/reporting/tools/build_basemap.py} downloads it once, keeps the
 rings that intersect each panel, decimates them (\SI{0.01}{\degree} for France,
 \SI{0.001}{\degree} for La~R\'eunion, \SI{0.25}{\degree} for the world frame) and writes
 \path{data/basemap.json}, which is committed at \SI{0.76}{\mega\byte}. The figure then

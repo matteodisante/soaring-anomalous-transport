@@ -265,8 +265,8 @@ default, unless the run is genuinely a one-off:
 ```bash
 AUDIT_DIR=/Volumes/SSD_DISANTE/derived-audit
 
-uv run python scripts/reporting/measure_variations.py --out "$AUDIT_DIR"
-uv run python scripts/reporting/generate_transport_figure.py --audit-dir "$AUDIT_DIR"
+uv run python scripts/reporting/ch3_global_transport/measure_variations.py --out "$AUDIT_DIR"
+uv run python scripts/reporting/ch3_global_transport/generate_transport_figure.py --audit-dir "$AUDIT_DIR"
 ```
 
 `generate_msd_figure.py` (Sec. 3.1's opening measurement, and Sec. 3.5's ensemble/
@@ -275,8 +275,8 @@ remember: it is `measure_msd.py` that streams the archive, this script that redu
 it wrote.
 
 ```bash
-uv run python scripts/reporting/measure_msd.py --out "$AUDIT_DIR"
-uv run python scripts/reporting/generate_msd_figure.py --audit-dir "$AUDIT_DIR"
+uv run python scripts/reporting/ch3_global_transport/measure_msd.py --out "$AUDIT_DIR"
+uv run python scripts/reporting/ch3_global_transport/generate_msd_figure.py --audit-dir "$AUDIT_DIR"
 ```
 
 Every generator that reaches one discipline of two **refuses to write** rather than
@@ -294,7 +294,7 @@ a mounted disk until it is looked for.
 Finally, and before any build:
 
 ```bash
-uv run python scripts/reporting/check_generated_macros.py
+uv run python scripts/reporting/checks/check_generated_macros.py
 ```
 
 Every macro the thesis quotes must exist by then. An undefined one inside `\SI{}` is a

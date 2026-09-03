@@ -11,7 +11,7 @@ So the geometry is fetched once, here, cropped to the panels that actually use i
 decimated, and written to ``data/basemap.json`` -- which is committed. Drawing it needs
 nothing but Matplotlib. Re-run this only to change a panel's extent:
 
-    python scripts/reporting/build_basemap.py
+    python scripts/reporting/tools/build_basemap.py
 
 Source: Natural Earth admin-0 countries (public domain), via the nvkelso/natural-earth-
 vector mirror. Country polygons rather than the land layer, so that one pass gives both
@@ -27,7 +27,7 @@ import sys
 import urllib.request
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
@@ -141,7 +141,7 @@ def main() -> int:
         json.dumps(
             {
                 "source": "Natural Earth admin-0 countries (public domain)",
-                "built_by": "scripts/reporting/build_basemap.py",
+                "built_by": "scripts/reporting/tools/build_basemap.py",
                 "panels": {
                     name: {"bbox": list(PANELS[name]["bbox"]), "rings": rings}
                     for name, rings in panels.items()

@@ -111,54 +111,54 @@ step "1/18  invariants (verify_dataset.py)"
 "$PY" scripts/verify_dataset.py
 
 step "2/18  pipeline census -> StatPipe*, tab:pipecensus"
-"$PY" scripts/reporting/generate_pipeline_census.py
+"$PY" scripts/reporting/ch2_dataset/generate_pipeline_census.py
 
 step "3/18  MSD pass -> per-flight/segment curves and bootstrap samples   (the slow one)"
-"$PY" scripts/reporting/measure_msd.py --out "$AUDIT_DIR"
+"$PY" scripts/reporting/ch3_global_transport/measure_msd.py --out "$AUDIT_DIR"
 
 step "4/18  MSD -> fig:msd, msd_curve.csv, StatMsd*"
-"$PY" scripts/reporting/generate_msd_figure.py --audit-dir "$AUDIT_DIR"
+"$PY" scripts/reporting/ch3_global_transport/generate_msd_figure.py --audit-dir "$AUDIT_DIR"
 
 step "5/18  raw-archive census -> StatScan*, Preproc*"
-"$PY" scripts/reporting/generate_census_stats.py
+"$PY" scripts/reporting/ch2_dataset/generate_census_stats.py
 
 step "6/18  MSD audit pass -> per-flight positions at every lag"
-"$PY" scripts/reporting/audit_msd.py --out "$AUDIT_DIR"
+"$PY" scripts/reporting/ch3_global_transport/audit_msd.py --out "$AUDIT_DIR"
 
 step "7/18  audit report -> StatAudit*"
-"$PY" scripts/reporting/audit_msd_report.py --audit-dir "$AUDIT_DIR"
+"$PY" scripts/reporting/ch3_global_transport/audit_msd_report.py --audit-dir "$AUDIT_DIR"
 
 step "8/18  preliminary characterization -> fig:prelim-*, StatPrelim*"
-"$PY" scripts/reporting/generate_prelim_figure.py --audit-dir "$AUDIT_DIR"
+"$PY" scripts/reporting/ch2_dataset/generate_prelim_figure.py --audit-dir "$AUDIT_DIR"
 
 step "9/18  dataset statistics -> tab:cascade, fig:seasons, StatData*"
-"$PY" scripts/reporting/generate_dataset_stats.py
+"$PY" scripts/reporting/ch2_dataset/generate_dataset_stats.py
 
 step "10/18  filtered variations -> per-flight curves, one per filter order"
-"$PY" scripts/reporting/measure_variations.py --out "$AUDIT_DIR"
+"$PY" scripts/reporting/ch3_global_transport/measure_variations.py --out "$AUDIT_DIR"
 
 step "11/18  transport measurement -> tab:orderscan, fig:transport, StatVar*"
-"$PY" scripts/reporting/generate_transport_figure.py --audit-dir "$AUDIT_DIR"
+"$PY" scripts/reporting/ch3_global_transport/generate_transport_figure.py --audit-dir "$AUDIT_DIR"
 
 step "12/18  shape pass -> increments and velocity memory"
-"$PY" scripts/reporting/measure_shape.py --out "$AUDIT_DIR"
+"$PY" scripts/reporting/ch3_global_transport/measure_shape.py --out "$AUDIT_DIR"
 
 step "13/18  shape measurement -> tab:shape, fig:shape, StatShape*"
-"$PY" scripts/reporting/generate_shape_figure.py --audit-dir "$AUDIT_DIR"
+"$PY" scripts/reporting/ch3_global_transport/generate_shape_figure.py --audit-dir "$AUDIT_DIR"
 
 step "14/18  propagator -- the increments themselves, for the exponent read off the bulk"
-"$PY" scripts/reporting/measure_propagator.py --out "$AUDIT_DIR"
-"$PY" scripts/reporting/generate_propagator_figure.py --audit-dir "$AUDIT_DIR"
+"$PY" scripts/reporting/ch3_global_transport/measure_propagator.py --out "$AUDIT_DIR"
+"$PY" scripts/reporting/ch3_global_transport/generate_propagator_figure.py --audit-dir "$AUDIT_DIR"
 
 step "15/18  edge-sample effect -> StatEdge*, the size of what the MSD reads and the verifier does not"
-"$PY" scripts/reporting/measure_edge_effect.py
+"$PY" scripts/reporting/ch3_global_transport/measure_edge_effect.py
 
 step "16/18  circling -> StatCircling*, the VACF at native cadence, below the shape pass's grid"
-"$PY" scripts/reporting/measure_circling.py
+"$PY" scripts/reporting/ch3_global_transport/measure_circling.py
 
 step "17/18  macro contract: everything the thesis quotes must exist"
-"$PY" scripts/reporting/check_generated_macros.py
-"$PY" scripts/reporting/generate_provenance.py
+"$PY" scripts/reporting/checks/check_generated_macros.py
+"$PY" scripts/reporting/checks/generate_provenance.py
 
 if [[ "${1:-}" == "--no-build" ]]; then
     echo $'\nskipping the thesis build (--no-build).'

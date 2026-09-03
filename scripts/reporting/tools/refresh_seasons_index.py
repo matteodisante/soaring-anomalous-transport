@@ -15,7 +15,7 @@ the snapshot; elsewhere it is a no-op that leaves the committed copies untouched
 
 Run it directly after a catalog rebuild, or let the pre-commit hook run it::
 
-    uv run python scripts/reporting/refresh_seasons_index.py
+    uv run python scripts/reporting/tools/refresh_seasons_index.py
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ import shutil
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)

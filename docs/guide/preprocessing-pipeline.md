@@ -195,7 +195,7 @@ lightweight *preview* of `flights_meta`, not a substitute for it: same spirit (p
 summary, Parquet), far fewer columns, no `alt_source`/provenance/versioning.
 
 The census macros the thesis quotes come from this cache via
-`scripts/reporting/generate_census_stats.py`, which emits three families into
+`scripts/reporting/ch2_dataset/generate_census_stats.py`, which emits three families into
 `thesis/generated/census.tex`: the scan statistics (`StatScan*`, including the
 `BaroMiss` and `GapSplit` groups), the flight-level filtering census
 (`StatScan*{LongEnough,Overlong,ShortPath}*`), and — new in the July 2026 pass — the

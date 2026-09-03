@@ -20,8 +20,8 @@ export SOURCE_DATE_EPOCH="$(git -C "$ROOT" log -1 --format=%ct 2>/dev/null || da
 
 LATEXMK_OPTS=(-pdf -quiet -interaction=nonstopmode -halt-on-error)
 
-gen_stats()    { python3 scripts/reporting/generate_stats.py; }
-gen_timeline() { python3 scripts/reporting/generate_timeline.py; }
+gen_stats()    { python3 scripts/reporting/ch2_dataset/generate_stats.py; }
+gen_timeline() { python3 scripts/reporting/tools/generate_timeline.py; }
 
 build_thesis() {
     gen_stats
