@@ -5,10 +5,10 @@
 [![python](https://img.shields.io/badge/python-3.12%2B-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-Master's thesis on **anomalous transport in soaring flights**, and the code that produced
-every number in it. Both live here, in one repository, on purpose: no measurement in the
-document is typed by hand, so the text and the code that backs it cannot drift apart
-without the build failing.
+This is my master's thesis on anomalous transport in soaring flights, together with all
+the code that produced every number in it. They live in one repository on purpose: no
+measurement is ever typed into the thesis by hand. Every number is written by a script,
+and if a script and the thesis disagree, the build fails instead of quietly going stale.
 
 **Work in progress.** Three chapters are measured and written; the fourth is a plan.
 
@@ -19,46 +19,50 @@ without the build failing.
 | | Chapter | State |
 |---|---|---|
 | 1 | Introduction | written |
-| 2 | The dataset | **measured and written** — acquisition from the FFVL CFD, and the seven-stage pre-processing pipeline that turns roughly 190 000 raw `.igc` tracklogs into the analysis ensemble |
-| 3 | Global transport | **measured and written** — everything the un-segmented ensemble can be asked, and the class of transport it fixes |
-| 4 | Flight phases | **a plan, not a result** — segmentation into climb / glide / search, and the modelling it would enable. None of it is implemented |
+| 2 | The dataset | **measured and written.** Acquisition from the FFVL CFD, and the seven-stage pre-processing pipeline that turns roughly 190 000 raw `.igc` tracklogs into the analysis ensemble. |
+| 3 | Global transport | **measured and written.** Everything the un-segmented ensemble can be asked, and the class of transport it fixes. |
+| 4 | Flight phases | **a plan so far.** Segmentation into climb, glide and search, and the modelling it would enable; none of it is built yet. |
 
 Appendices 2.A–2.B (PSD, geodesy), 3.A (CTRW), and an implementation appendix per chapter.
 
 ## What the measurements say so far
 
-Over one window of about 1.5 decades, measured within a retained segment by an estimator
-that annihilates a polynomial trend rather than estimating one, cross-country soaring is:
+These hold over a window of about 1.5 decades in lag, measured within a retained flight
+segment by an estimator that filters out a polynomial trend rather than fitting one:
 
-- **super-diffusive**, at an exponent the two disciplines agree on within uncertainty —
-  which is not guaranteed, since paragliders and hang gliders differ in speed and glide ratio;
-- **monofractal** — the moment spectrum is straight, with no Lévy knee, so it is **not a
-  Lévy walk**;
-- **not Gaussian** either, but through a *between-flight amplitude spread* rather than a
-  heavy tail within any one record: against a matched Gaussian null both disciplines sit
-  below it;
-- **directionally persistent**, with a non-integrable velocity memory — which is what
-  reconciles a fast-decaying autocorrelation with correlated increments;
-- **never isotropic**, in amplitude and in exponent alike, so the two horizontal components
-  are analysed separately and never pooled.
+- Cross-country soaring is super-diffusive, at an exponent the two disciplines agree on
+  within uncertainty. That agreement isn't automatic: paragliders and hang gliders fly at
+  different speeds and glide ratios.
+- The moment spectrum is straight, with no Lévy knee: monofractal, not the scaling collapse
+  a Lévy walk would produce.
+- It isn't Gaussian either, but not because of heavy tails within a single flight. The
+  non-Gaussianity comes from how much the amplitude varies between flights: measured
+  against a matched Gaussian null, both disciplines sit below it.
+- The velocity memory decays too slowly to integrate, which is how a fast-decaying
+  autocorrelation can still coexist with correlated increments: the motion is
+  directionally persistent.
+- Amplitude and exponent are both anisotropic, so the two horizontal components are
+  always analysed separately and never pooled.
 
-Three cautions belong beside those, because the code makes them explicit and a figure does not:
+Three things to keep in mind, because the code accounts for them and a figure on its own
+would not:
 
-- **The ensemble MSD about take-off is a crossover, not a power law.** Its shape is set by
-  the geometry of the launch site — displacement from take-off bends where the population
-  leaves its launch area. The reported exponent comes from the within-segment filtered
-  variation instead; the ensemble curve is kept as the measurement of that contamination.
-- **Scaling inside the window is approximate.** The exponent moves when the fitted range is
-  halved by more than the sampling error, and the fit carries a budget for one exponent,
-  not for a count of regimes.
-- **Correlations between flight legs are untested, not established.** They cannot be tested
-  before the segmentation exists, and nothing here says that a glide points at the next
-  thermal.
+- Near take-off, the ensemble MSD is a crossover, not the transport exponent. Its shape
+  comes from the geometry of the launch site: displacement bends where the population
+  disperses away from it. The reported exponent instead comes from the within-segment
+  filtered variation; the ensemble curve is kept in the thesis as a measurement of that
+  crossover, not as the estimate.
+- The scaling law only holds approximately over the fitted window. The exponent shifts
+  when the fitted range is halved by more than the sampling error would predict, and the
+  fit is built to return one exponent, not to detect how many regimes are really there.
+- Whether flight legs are correlated with each other is still open. Testing that needs a
+  segmentation into legs, which doesn't exist yet. Nothing here shows, for instance, that
+  a glide tends to point at the next thermal.
 
 ## What is in the repository
 
 ```text
-thesis/       the LaTeX thesis, and thesis/generated/ — every measured number, as macros
+thesis/       the LaTeX source; thesis/generated/ holds every measured number, as macros
 src/soaring/  the installable package: acquisition, pre-processing, estimators
   acquisition/ffvl/     .igc download and cataloguing from the two CFD sites
   analysis/preproc/     the seven-stage cleaning pipeline, one module per stage
@@ -66,20 +70,22 @@ src/soaring/  the installable package: acquisition, pre-processing, estimators
   analysis/stats/       the clustered bootstrap
   reporting/            what the reporting scripts share: the disciplines, the macro contract
 scripts/      the command-line entry points that drive the package
-  reporting/            the passes (stream the archive) and the reductions (write .tex and .pdf)
+  reporting/            grouped by which thesis chapter each script feeds:
+                        ch2_dataset/, ch3_global_transport/, plus checks/ and tools/
 docs/         the published documentation (MkDocs + mkdocstrings)
-configs/      every threshold, external to the code: acquisition and pre-processing YAML
+configs/      every threshold, kept out of the code: acquisition and pre-processing YAML
 data/         the only versioned data: two per-season summary CSVs and a basemap
-tests/        512 tests, mirroring src/ module for module
+tests/        557 tests, mirroring src/ module for module
 logbook/      a working logbook: the chronology and the reasoning, with a generated timeline
 revisions/    the annotated PDFs and answers from the two review passes
 global_analysis_sketches/  the July 2026 specification the analysis was built from
 ```
 
-**The flight archive is not in the repository.** It lives on an external SSD, organised by
-maturity (`raw/`, `catalog/`, `derived/`), and comes to 1.36 × 10⁹ cleaned fixes and 43 GB
-of Parquet for paragliders alone. What is versioned here is the two small `seasons_index.csv`
-snapshots and the basemap, so the figures need neither the network nor the disk.
+**The flight archive itself is not in the repository.** It lives on an external SSD,
+organised by maturity (`raw/`, `catalog/`, `derived/`): 1.36 × 10⁹ cleaned fixes and 43 GB
+of Parquet for paragliders alone. What is versioned here is small on purpose: the two
+`seasons_index.csv` snapshots and the basemap, just enough that the figures don't need the
+network or the disk to rebuild.
 
 ## The contract between the code and the thesis
 
@@ -105,20 +111,21 @@ stands for. Four mechanisms keep that honest:
   second and with no build: every macro the thesis quotes must exist, and a typed number
   that a generated macro already carries is reported as the same failure in the other
   direction.
-- **A pre-commit hook** (`git config core.hooksPath .githooks`) keeps the cheap, deterministic
-  parts in sync on every commit — the season snapshots, the headline statistics, the logbook
-  timeline, and the two PDFs.
+- **A pre-commit hook** (`git config core.hooksPath .githooks`) keeps the cheap,
+  deterministic parts in sync on every commit: the season snapshots, the headline
+  statistics, the logbook timeline, and the two PDFs.
 
-The corollary for anyone editing: **change a threshold in `configs/`, not in the code, and
-re-run the generator that owns the number** — [Where each number comes from](https://matteodisante.github.io/soaring-anomalous-transport/guide/provenance/)
-maps every macro back to the script that wrote it, and is itself generated so it cannot go stale.
+So if you're changing something, change the threshold in `configs/`, not the code, and
+re-run the generator that owns the number. [Where each number comes from](https://matteodisante.github.io/soaring-anomalous-transport/guide/provenance/)
+maps every macro back to the script that wrote it. That page is itself generated, so it
+can't go stale either.
 
 ## Documentation
 
 Installing, acquiring the data, the pre-processing pipeline stage by stage, what is on the
 data disk column by column, the transport estimators, and the provenance of every number
-are all at **<https://matteodisante.github.io/soaring-anomalous-transport/>** — and are
-deliberately not repeated here.
+are all at [the documentation site](https://matteodisante.github.io/soaring-anomalous-transport/).
+On purpose, none of that is repeated here.
 
 Two pages are the entry points: [The pre-processing pipeline](https://matteodisante.github.io/soaring-anomalous-transport/guide/preprocessing-pipeline/)
 for Chapter 2, and [The global-transport measurement](https://matteodisante.github.io/soaring-anomalous-transport/guide/global-transport/)
