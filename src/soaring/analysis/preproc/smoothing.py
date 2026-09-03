@@ -1,15 +1,22 @@
 """Stage (vii): Savitzky-Golay smoothing and differentiation (thesis, sec:savgol).
 
-Velocity and acceleration drive the kinematics and the segmentation, but differencing
-raw GPS coordinate series amplifies the high-frequency noise. A Savitzky-Golay filter
-solves both problems at once: it fits a low-order polynomial to a sliding window by
-least squares and reads off that polynomial, or its derivatives, at the window centre,
-returning smoothed position, velocity and acceleration in one pass per component. In
-the window of ``w`` samples centred on ``t_i``, the coefficients of
-``P(t) = sum_k a_k (t - t_i)^k`` minimise the squared residuals; the smoothed value is
-``a_0``, the velocity ``a_1``, the acceleration ``2 a_2``. Because the grid is uniform,
-the ``a_k`` are fixed linear combinations of the window samples, so the whole filter
-is a convolution with precomputed coefficients.
+Two needs are met here, on the same footing. The raw GNSS coordinate series is itself
+noisy, and since it feeds path length, displacement and the phase segmentation directly,
+the position needs denoising in its own right. Velocity and acceleration drive the
+kinematics and the segmentation too, but differencing the raw series to get them only
+amplifies that same high-frequency noise. A Savitzky-Golay filter meets both needs in
+one pass: it fits a low-order polynomial to a sliding window by least squares and reads
+off that polynomial, or its derivatives, at the window centre, returning smoothed
+position, velocity and acceleration together, one component at a time. In
+the window of ``w`` samples centred on sample ``i``, the coefficients of
+``P(u) = sum_k a_k u^k`` (``u`` the integer offset of a sample from the centre) minimise
+the squared residuals; the smoothed value is ``a_0``, the velocity ``a_1``, the
+acceleration ``2 a_2``. The fit is linear in the ``a_k``, so it has a closed-form
+solution that is itself linear in the samples: each ``a_k`` comes from a fixed linear
+combination of the window's samples, with weights that depend only on ``w`` and the
+polynomial order, never on the data. Because the grid is uniform, the same weights apply
+at every window position, so the whole filter is a convolution with precomputed
+coefficients.
 
 The fit is done in units of samples, so the physical velocity and acceleration are
 ``a_1 / dt`` and ``2 a_2 / dt^2``, with the flight's own ``dt`` -- ``delta=dt`` in the
