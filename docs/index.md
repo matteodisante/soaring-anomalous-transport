@@ -38,7 +38,7 @@ regenerated from the catalogues into `thesis/generated/stats.tex` (`\StatPara*`,
 ## Quick start
 
 ```bash
-# 1. environment (see Guide → Installation)
+# 1. environment (see Guide → Setting up)
 uv sync
 
 # 2. set the destination in the config or via env var (see Guide → Downloading)
@@ -101,18 +101,39 @@ uv run soaring-para status
 
 ## Thesis document
 
-The repository also hosts `thesis/`, a LaTeX *state-of-the-work* document. It is not what
-this documentation is about --- these pages describe the code and the data disk --- but two
-things about it constrain the code and belong here.
+The repository also hosts `thesis/`, a LaTeX *state-of-the-work* document. These pages
+describe the code and the data disk, not the thesis text itself, but the rule that ties
+the two together belongs here, since it is the one thing to understand before changing
+anything in either.
 
-Every number the document quotes comes through a generated macro that a script in
-`scripts/reporting/` writes into `thesis/generated/`. Nothing is typed. A macro quoted and
-never written is a fatal LaTeX error, so `scripts/reporting/checks/check_generated_macros.py` reads
-both sides of that contract in a second and with no build. `regenerate.sh` runs it as step 17,
-before the rebuild; `build_docs.sh thesis`, which only recompiles, does not.
+No measured number is typed into the thesis. Every one is written by a script into
+`thesis/generated/` as a `\newcommand`, and the thesis quotes it by name: it says
+`\StatVarParaAlphaOrderTwo`, never the digits it stands for. Five things keep that true:
 
-`scripts/regenerate.sh` rebuilds everything that descends from the processed dataset, in the
-one order that is correct, and the compiled `thesis/main.pdf` is kept in the repository.
+- `scripts/regenerate.sh` re-measures everything in the one order that is correct (its
+  header explains why the order matters), and refuses to start while `preprocess.py` is
+  still writing, or if a previous run died halfway through and left the derived tables
+  describing two different runs.
+- `soaring.reporting.write_macros` refuses to write a macro name LaTeX can't parse: a
+  digit in the name would define a shorter macro that takes arguments, and fail the build
+  on a definition nothing even quotes.
+- `soaring.reporting.guards` refuses two silent half-results: a file written for one
+  discipline and not the other, and a `--help` flag that a script with no argument parser
+  would otherwise read as an instruction to start a real pass over the archive.
+- `scripts/reporting/checks/check_generated_macros.py` reads both sides of the contract
+  in a second, with no build: every macro the thesis quotes must exist, and a typed
+  number that a generated macro already carries is flagged as the same failure in
+  reverse. `regenerate.sh` runs it as step 17, before the rebuild; `build_docs.sh thesis`,
+  which only recompiles, does not.
+- A pre-commit hook (`git config core.hooksPath .githooks`) keeps the cheap,
+  deterministic parts in sync on every commit: the season snapshots, the headline
+  statistics, the logbook timeline, and the two PDFs.
+
+So the rule for changing a number is: change the threshold in `configs/`, not the code,
+and re-run the generator that owns it. [Where each number comes from](guide/provenance.md)
+maps every macro back to the script that wrote it, and that page is itself generated, so
+it can't go stale either. The compiled `thesis/main.pdf` is committed, so reading the
+thesis never requires running any of this.
 
 Continue with the **[Guide](guide/installation.md)**, the **[API Reference](reference.md)**,
 or **[The scripts](guide/scripts.md)** for what each entry point reads and writes.

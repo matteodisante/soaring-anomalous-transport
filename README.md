@@ -67,6 +67,7 @@ src/soaring/  the installable package: acquisition, pre-processing, estimators
   acquisition/ffvl/     .igc download and cataloguing from the two CFD sites
   analysis/preproc/     the seven-stage cleaning pipeline, one module per stage
   analysis/observables/ the transport estimators, and the synthetic nulls they are validated against
+  analysis/figures/     plotting code shared by more than one script, kept apart from the estimators
   analysis/stats/       the clustered bootstrap
   reporting/            what the reporting scripts share: the disciplines, the macro contract
 scripts/      the command-line entry points that drive the package
@@ -87,44 +88,12 @@ of Parquet for paragliders alone. What is versioned here is small on purpose: th
 `seasons_index.csv` snapshots and the basemap, just enough that the figures don't need the
 network or the disk to rebuild.
 
-## The contract between the code and the thesis
-
-This is the one thing to understand before changing anything, and the only part not
-documented better elsewhere.
-
-**No measured number is typed into the thesis.** Every one is a `\newcommand` written by a
-script into `thesis/generated/` and quoted by name: the thesis says `\StatVarParaAlphaOrderTwo`, never the digits it
-stands for. Four mechanisms keep that honest:
-
-- **`scripts/regenerate.sh`** re-measures everything in the one order that is correct, and
-  its header says why the order is a constraint rather than a convenience. It refuses to
-  start while `preprocess.py` is still writing, and refuses again if a previous run died
-  half-way and left the derived tables describing two different runs.
-- **`soaring.reporting.write_macros`** refuses to write a macro name LaTeX cannot parse. A
-  name with a digit in it defines a *shorter* macro taking arguments, which fails the build
-  from a definition nothing even quotes.
-- **`soaring.reporting.guards`** refuses two silent half-results: a file written for one
-  discipline of two (the thesis then fails on the absent one's macros, or a figure quietly
-  loses a curve), and a `--help` that a script without an argument parser would otherwise
-  treat as an instruction to start a pass over the archive.
-- **`scripts/reporting/checks/check_generated_macros.py`** reads both sides of the contract in a
-  second and with no build: every macro the thesis quotes must exist, and a typed number
-  that a generated macro already carries is reported as the same failure in the other
-  direction.
-- **A pre-commit hook** (`git config core.hooksPath .githooks`) keeps the cheap,
-  deterministic parts in sync on every commit: the season snapshots, the headline
-  statistics, the logbook timeline, and the two PDFs.
-
-So if you're changing something, change the threshold in `configs/`, not the code, and
-re-run the generator that owns the number. [Where each number comes from](https://matteodisante.github.io/soaring-anomalous-transport/guide/provenance/)
-maps every macro back to the script that wrote it. That page is itself generated, so it
-can't go stale either.
-
 ## Documentation
 
 Installing, acquiring the data, the pre-processing pipeline stage by stage, what is on the
-data disk column by column, the transport estimators, and the provenance of every number
-are all at [the documentation site](https://matteodisante.github.io/soaring-anomalous-transport/).
+data disk column by column, the transport estimators, how no number is ever typed by hand
+into the thesis, and the provenance of every one of them are all at
+[the documentation site](https://matteodisante.github.io/soaring-anomalous-transport/).
 On purpose, none of that is repeated here.
 
 Two pages are the entry points: [The pre-processing pipeline](https://matteodisante.github.io/soaring-anomalous-transport/guide/preprocessing-pipeline/)
