@@ -60,12 +60,16 @@ _KERNELS = {1: np.array([1.0, -1.0]), 2: np.array([1.0, -2.0, 1.0])}
 Q_GRID = (0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0)
 
 
-def _increments(positions: np.ndarray, lag: int, order: int = 1) -> np.ndarray:
-    """Magnitudes of the non-overlapping order-``p`` differences at ``lag`` samples."""
+def _increment_vectors(positions: np.ndarray, lag: int, order: int = 1) -> np.ndarray:
+    """Signed non-overlapping order-``p`` differences at ``lag`` samples, one row per window.
+
+    Shared core of :func:`_increments`, which discards the two columns into a modulus, and
+    of the per-component moments in ``measure_shape.py``, which need them signed and apart.
+    """
     kernel = _KERNELS[order]
     span = (len(kernel) - 1) * lag
     if lag < 1 or span >= len(positions):
-        return np.empty(0)
+        return np.empty((0, positions.shape[1]))
     width = len(positions) - span
     acc = np.zeros((width, positions.shape[1]))
     for j, weight in enumerate(kernel):
@@ -73,7 +77,15 @@ def _increments(positions: np.ndarray, lag: int, order: int = 1) -> np.ndarray:
         acc += weight * positions[start : start + width]
     # Stride by the span, so no sample enters two windows. This is what stops one
     # extreme event being counted repeatedly in the high moments.
-    return np.hypot(acc[::span, 0], acc[::span, 1])
+    return acc[::span]
+
+
+def _increments(positions: np.ndarray, lag: int, order: int = 1) -> np.ndarray:
+    """Magnitudes of the non-overlapping order-``p`` differences at ``lag`` samples."""
+    vectors = _increment_vectors(positions, lag, order)
+    if vectors.shape[0] == 0:
+        return np.empty(0)
+    return np.hypot(vectors[:, 0], vectors[:, 1])
 
 
 def moment_spectrum(

@@ -43,7 +43,7 @@ TAIL_SUBSAMPLE = 40
 
 def run(discipline: str, out_dir: Path) -> int:
     from soaring.analysis.derived import stream_flights
-    from soaring.analysis.observables.moments import Q_GRID, _increments
+    from soaring.analysis.observables.moments import Q_GRID, _increment_vectors
     from soaring.analysis.observables.persistence import velocity_autocorrelation
 
     derived = DISCIPLINES[discipline].derived_dir()
@@ -61,6 +61,24 @@ def run(discipline: str, out_dir: Path) -> int:
     vacf_count = 0
     tail_pool = {i: [] for i in range(n_lag)}
     rows: list[dict] = []
+
+    # Raw (uncentred) power sums of the two signed components, pooled the same way as the
+    # modulus moments above and over the same windows -- moment_count already counts them.
+    # Together they are exactly what sec:transport-gaussian needs and nothing more: the
+    # per-component excess kurtosis (east_m2/m4, north_m2/m4 alone) and Mardia's kurtosis of
+    # the joint (east, north) distribution, which also needs the cross moments
+    # <dx dy>, <dx^3 dy>, <dx^2 dy^2>, <dx dy^3>. Not centred on a per-flight mean: the same
+    # convention the modulus non-Gaussian parameter already uses, and defensible at the
+    # archive level since courses point every which way and average out pooled, unlike
+    # within one flight (Sec. transport-gaussian; matched_gaussian_null below).
+    east_m2_sum = np.zeros(n_lag)
+    east_m4_sum = np.zeros(n_lag)
+    north_m2_sum = np.zeros(n_lag)
+    north_m4_sum = np.zeros(n_lag)
+    cross_xy_sum = np.zeros(n_lag)
+    cross_x3y_sum = np.zeros(n_lag)
+    cross_x2y2_sum = np.zeros(n_lag)
+    cross_xy3_sum = np.zeros(n_lag)
 
     for count, flight in enumerate(
         stream_flights(derived / "fixes.parquet", ["segment_id", "t", "E", "N", "v_E", "v_N"]), 1
@@ -83,14 +101,25 @@ def run(discipline: str, out_dir: Path) -> int:
 
             for i, lag_s in enumerate(lags_s):
                 lag = int(round(lag_s / step))
-                magnitude = _increments(positions, lag, order=1)
-                if magnitude.size == 0:
+                vectors = _increment_vectors(positions, lag, order=1)
+                if vectors.shape[0] == 0:
                     continue
+                dx, dy = vectors[:, 0], vectors[:, 1]
+                magnitude = np.hypot(dx, dy)
                 moment_count[i] += magnitude.size
                 for j, q in enumerate(q_grid):
                     moment_sum[i, j] += float((magnitude**q).sum())
                 if keep_tail and magnitude.size:
                     tail_pool[i].append(magnitude.astype(np.float32))
+                dx2, dy2 = dx * dx, dy * dy
+                east_m2_sum[i] += float(dx2.sum())
+                east_m4_sum[i] += float((dx2 * dx2).sum())
+                north_m2_sum[i] += float(dy2.sum())
+                north_m4_sum[i] += float((dy2 * dy2).sum())
+                cross_xy_sum[i] += float((dx * dy).sum())
+                cross_x3y_sum[i] += float((dx2 * dx * dy).sum())
+                cross_x2y2_sum[i] += float((dx2 * dy2).sum())
+                cross_xy3_sum[i] += float((dx * dy2 * dy).sum())
 
             velocity = np.column_stack(
                 [segment["v_E"].to_numpy(dtype=float), segment["v_N"].to_numpy(dtype=float)]
@@ -133,6 +162,9 @@ def run(discipline: str, out_dir: Path) -> int:
     for i, row in tails.items():
         tail_share[i] = row
 
+    def _mean(total):
+        return np.where(moment_count > 0, total / np.maximum(moment_count, 1), np.nan)
+
     np.savez_compressed(
         out_dir / f"shape_{slug}.npz",
         lags_s=lags_s,
@@ -142,6 +174,16 @@ def run(discipline: str, out_dir: Path) -> int:
         tail_share=tail_share,
         vacf=np.where(vacf_n > 0, vacf_sum / np.maximum(vacf_n, 1), np.nan) if vacf_sum is not None else np.zeros(0),
         vacf_flights=np.array([vacf_count]),
+        # <dx^2>, <dx^4>, <dy^2>, <dy^4>, and the three cross moments Mardia's kurtosis of
+        # the joint (dx, dy) distribution needs beyond the per-component ones.
+        east_m2=_mean(east_m2_sum),
+        east_m4=_mean(east_m4_sum),
+        north_m2=_mean(north_m2_sum),
+        north_m4=_mean(north_m4_sum),
+        cross_xy=_mean(cross_xy_sum),
+        cross_x3y=_mean(cross_x3y_sum),
+        cross_x2y2=_mean(cross_x2y2_sum),
+        cross_xy3=_mean(cross_xy3_sum),
     )
     print(f"{discipline}: {len(rows)} flights, {n_lag} lags -> {out_dir}")
     return 0

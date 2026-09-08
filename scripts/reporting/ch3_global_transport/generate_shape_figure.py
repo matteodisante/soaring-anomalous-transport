@@ -60,30 +60,35 @@ def load(slug: str, audit_dir: Path):
 
 
 def matched_gaussian_null(slug: str, audit_dir: Path, data: dict, macros: dict) -> None:
-    """What a pooled non-Gaussian parameter reads when every flight is exactly Gaussian.
+    r"""What pooling reads when every flight is exactly Gaussian, for Mardia's kurtosis.
 
-    The pooled parameter is not a statement about the shape of an increment distribution
-    until it is compared with this. Writing ``S_f`` for a flight's own second moment and
-    ``a_f`` for its own non-Gaussian parameter, the pooled value obeys
+    The pooled statistic is not a statement about the shape of an increment distribution
+    until it is compared with this. Writing :math:`S_f` for a flight's own second moment
+    (its trace, :math:`\langle|\Delta\mathbf r|^2\rangle`) and :math:`\lambda_f\equiv
+    S_f/\mathbb E_n[S_f]` for its amplitude relative to the pooled population, a population
+    of flights that are each exactly bivariate Gaussian -- same shape, differing only in
+    overall amplitude -- pools to a Mardia excess of
 
-        1 + alpha_pooled = E_n[(1 + a_f) S_f^2] / E_n[S_f]^2,
+    .. math::
 
-    an identity rather than an approximation, with the expectations weighted by the number of
-    windows each flight supplies. Setting every ``a_f`` to zero leaves ``CV^2(S_f)``: the
-    excess a population of Gaussian flights of differing amplitude produces on its own. So a
-    measured value *below* this null is a population of flights whose individual propagators
-    are flatter than Gaussian, and one above it is a heavy tail.
+        8\,\mathrm{CV}^2(\lambda_f) = 8\,\mathrm{CV}^2(S_f),
 
-    ``S_f`` comes from the order-1 filtered variation, which is the same second moment on the
-    same increments, so the two are comparable lag by lag -- but only where the two passes put
-    a lag in the same place, and only where the reconstruction returns the pooled second
-    moment the shape pass measured. Both are checked here rather than assumed, and a lag that
-    fails either is dropped: the alternative is a comparison between two different quantities
-    that looks like a result.
+    a scale-mixture identity (App.~app:ctrw's own Mittag-Leffler route is the same kind of
+    argument for a different mixture) verified on synthetic anisotropic, correlated
+    Gaussian data before being trusted here: measured against a predicted
+    :math:`8\,\mathrm{CV}^2` this way, agreement was within Monte Carlo noise at
+    :math:`n=3\times10^6` \impldetails{impl:global}. Setting :math:`\mathrm{CV}(S_f)=0`
+    recovers 0, the population value for *any* single bivariate Gaussian regardless of its
+    covariance -- which is what makes Mardia's kurtosis the right statistic for an
+    anisotropic, correlated archive: it needs no isotropic assumption the null could be
+    wrong about. So a measured value *below* this null is a population of flights whose
+    individual propagators are flatter than Gaussian, and one above it is a heavy tail.
 
-    The null is built isotropic. The archive is mildly anisotropic, and anisotropy raises the
-    Gaussian value (19/18 at a two-to-one ratio of component variances), so an isotropic null
-    is the conservative one when the finding is that the null already exceeds the measurement.
+    :math:`S_f` comes from the order-1 filtered variation, the same second moment on the
+    same increments, so the two are comparable lag by lag -- but only where the two passes
+    put a lag in the same place, and only where the reconstruction returns the pooled second
+    moment the shape pass measured. Both are checked here rather than assumed, and a lag
+    that fails either is dropped.
     """
     import pandas as pd
 
@@ -99,11 +104,10 @@ def matched_gaussian_null(slug: str, audit_dir: Path, data: dict, macros: dict) 
         return
 
     lags = np.asarray(data["lags_s"], dtype=float)
-    moment = np.asarray(data["moment"], dtype=float)
-    q_grid = np.asarray(data["q_grid"], dtype=float)
-    two = int(np.argmin(np.abs(q_grid - 2.0)))
-    four = int(np.argmin(np.abs(q_grid - 4.0)))
-    measured = moment[:, four] / (2.0 * moment[:, two] ** 2) - 1.0
+    measured = mardia_kurtosis(data)
+    if measured is None:
+        return
+    trace = np.asarray(data["east_m2"], dtype=float) + np.asarray(data["north_m2"], dtype=float)
 
     rows = []
     for j, lag in enumerate(lags):
@@ -119,9 +123,10 @@ def matched_gaussian_null(slug: str, audit_dir: Path, data: dict, macros: dict) 
             continue
         weight, value = windows[good], second[good]
         pooled = float(np.sum(weight * value) / np.sum(weight))
-        if not np.isfinite(moment[j, two]) or abs(pooled / moment[j, two] - 1.0) > 0.03:
+        if not np.isfinite(trace[j]) or abs(pooled / trace[j] - 1.0) > 0.03:
             continue
-        null = float(np.sum(weight * value**2) / np.sum(weight) / pooled**2 - 1.0)
+        cv2 = float(np.sum(weight * value**2) / np.sum(weight) / pooled**2 - 1.0)
+        null = 8.0 * cv2
         rows.append((lag, measured[j], null))
 
     if len(rows) < 2:
@@ -130,10 +135,10 @@ def matched_gaussian_null(slug: str, audit_dir: Path, data: dict, macros: dict) 
     tag = DISCIPLINES[discipline_of(slug)].tag
     macros[f"StatShape{tag}NullLags"] = f"{len(rows)}"
     macros[f"StatShape{tag}NullAbove"] = f"{int((null_at > measured_at).sum())}"
-    macros[f"StatShape{tag}NullAtFloor"] = f"{null_at[0]:+.3f}"
+    macros[f"StatShape{tag}NullAtFloor"] = f"{null_at[0]:+.2f}"
     macros[f"StatShape{tag}NullFloorS"] = f"{lag_at[0]:.0f}"
-    macros[f"StatShape{tag}WithinFlight"] = f"{np.median(measured_at - null_at):+.3f}"
-    macros[f"StatShape{tag}AmplitudeCv"] = f"{np.sqrt(max(null_at[0], 0.0)):.2f}"
+    macros[f"StatShape{tag}WithinFlight"] = f"{np.median(measured_at - null_at):+.2f}"
+    macros[f"StatShape{tag}AmplitudeCv"] = f"{np.sqrt(max(null_at[0], 0.0) / 8.0):.2f}"
 
 
 def discipline_of(slug: str) -> str:
@@ -141,6 +146,64 @@ def discipline_of(slug: str) -> str:
         if glider.slug == slug:
             return name
     raise KeyError(slug)
+
+
+def mardia_kurtosis(data: dict) -> np.ndarray | None:
+    r"""Mardia's multivariate kurtosis excess of the joint (east, north) increment,
+    per lag: :math:`b_{2,2}=\mathbb E[Q^2]-8`, :math:`Q=\mathbf d^\top\hat\Sigma^{-1}
+    \mathbf d` the squared Mahalanobis distance under the pooled sample covariance
+    :math:`\hat\Sigma` \cite{mardia1970}.
+
+    Zero for *any* bivariate Gaussian, whatever its covariance -- anisotropic, correlated,
+    it does not matter -- which is the property the ratio this replaced did not have: that
+    one assumed an isotropic propagator to fix its normalisation, on an archive
+    Sec.~sec:prelim already measures as anisotropic. :math:`Q^2` is a quartic form in
+    :math:`\mathbf d`, so its expectation is a fixed contraction of the raw fourth-moment
+    tensor with :math:`\hat\Sigma^{-1}\otimes\hat\Sigma^{-1}` and needs no second pass over
+    the increments: only the five raw moments ``measure_shape.py`` already keeps
+    (``east_m2/m4``, ``north_m2/m4``, ``cross_x2y2``) plus the two odd cross moments
+    (``cross_xy``, ``cross_x3y``, ``cross_xy3``). Not centred on a per-flight mean -- see
+    ``measure_shape.py`` for why that is a good approximation pooled across the whole
+    archive. Verified against a closed-form scale-mixture null in
+    :func:`matched_gaussian_null` and against synthetic anisotropic, correlated Gaussian
+    data \impldetails{impl:global}.
+    """
+    needed = ("east_m2", "east_m4", "north_m2", "north_m4", "cross_xy", "cross_x3y",
+              "cross_x2y2", "cross_xy3")
+    if not all(key in data for key in needed):
+        return None
+    a = np.asarray(data["east_m2"], dtype=float)
+    b = np.asarray(data["north_m2"], dtype=float)
+    c = np.asarray(data["cross_xy"], dtype=float)
+    m40 = np.asarray(data["east_m4"], dtype=float)
+    m04 = np.asarray(data["north_m4"], dtype=float)
+    m31 = np.asarray(data["cross_x3y"], dtype=float)
+    m22 = np.asarray(data["cross_x2y2"], dtype=float)
+    m13 = np.asarray(data["cross_xy3"], dtype=float)
+    det = a * b - c**2
+    with np.errstate(invalid="ignore", divide="ignore"):
+        e_q2 = (
+            b**2 * m40 - 4 * b * c * m31 + (2 * a * b + 4 * c**2) * m22
+            - 4 * a * c * m13 + a**2 * m04
+        ) / det**2
+    return e_q2 - 8.0
+
+
+def component_kurtosis(data: dict) -> tuple[np.ndarray, np.ndarray] | tuple[None, None]:
+    """Classical (univariate) excess kurtosis of the east-only and north-only increment,
+    per lag: :math:`\\langle\\delta x^4\\rangle/\\langle\\delta x^2\\rangle^2-3`, zero for
+    a Gaussian, on the same raw, uncentred moments :func:`mardia_kurtosis` uses.
+    """
+    if not all(key in data for key in ("east_m2", "east_m4", "north_m2", "north_m4")):
+        return None, None
+    a = np.asarray(data["east_m2"], dtype=float)
+    b = np.asarray(data["north_m2"], dtype=float)
+    m40 = np.asarray(data["east_m4"], dtype=float)
+    m04 = np.asarray(data["north_m4"], dtype=float)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        kurt_east = m40 / a**2 - 3.0
+        kurt_north = m04 / b**2 - 3.0
+    return kurt_east, kurt_north
 
 
 def measure(discipline: str, data: dict, macros: dict) -> dict:
@@ -179,21 +242,20 @@ def measure(discipline: str, data: dict, macros: dict) -> dict:
     put("TailMaxPct", f"{100 * np.nanmax(tail[usable]):.0f}")
     put("TailAtQMaxPct", f"{100 * np.nanmedian(tail[usable, -1]):.0f}")
 
-    # The non-Gaussian parameter, which the second and fourth moments already carry:
-    # alpha_2 = <|dr|^4> / (2 <|dr|^2>^2) - 1, zero for a two-dimensional Gaussian. Read on
-    # the increment rather than on the position, which is the frame the rest of the chapter
-    # trusts; on the position it would measure the launch geometry again.
+    # The non-Gaussian parameter: Mardia's multivariate kurtosis excess of the joint
+    # (east, north) increment (mardia_kurtosis, eq:nongauss), zero for any bivariate
+    # Gaussian regardless of its covariance -- the property that matters on an archive
+    # Sec. prelim already measures as anisotropic. Read on the increment rather than on
+    # the position, which is the frame the rest of the chapter trusts; on the position it
+    # would measure the launch geometry again.
     #
     # It is quoted over TRANSPORT_RANGE_S and not over the whole grid. Above it the curve
     # climbs steeply, but that is where the declared task takes the trajectory over and
     # where a fourth moment is carried by the fewest flights, so a maximum read there would
     # be a statement about the scoring rule. The range is the one every exponent in the
     # chapter is fitted on, and the full curve is drawn so the climb is visible.
-    non_gaussian = None
-    two = int(np.argmin(np.abs(q_grid - 2.0)))
-    four = int(np.argmin(np.abs(q_grid - 4.0)))
-    if abs(q_grid[two] - 2.0) < 1e-9 and abs(q_grid[four] - 4.0) < 1e-9:
-        non_gaussian = moment[:, four] / (2.0 * moment[:, two] ** 2) - 1.0
+    non_gaussian = mardia_kurtosis(data)
+    if non_gaussian is not None:
         quoted = (
             usable
             & np.isfinite(non_gaussian)
@@ -205,23 +267,36 @@ def measure(discipline: str, data: dict, macros: dict) -> dict:
             peak = int(np.nanargmax(values))
             put("NonGaussMinS", f"{at[0]:.0f}")
             put("NonGaussMaxS", f"{at[-1]:.0f}")
-            put("NonGaussMin", f"{np.nanmin(values):+.3f}")
-            put("NonGaussMax", f"{np.nanmax(values):+.3f}")
-            put("NonGaussMedian", f"{np.nanmedian(values):+.3f}")
+            put("NonGaussMin", f"{np.nanmin(values):+.2f}")
+            put("NonGaussMax", f"{np.nanmax(values):+.2f}")
+            put("NonGaussMedian", f"{np.nanmedian(values):+.2f}")
             # The curve has an interior maximum, so where it is and how far it stands above
             # the ends is the measurement. The end-to-end difference this used to report is
             # the CHORD OF AN ARCH -- the error this project diagnoses in the ensemble MSD
             # and then committed here: it read +0.02 on a curve that rises sevenfold and
             # falls back.
-            put("NonGaussPeak", f"{values[peak]:+.3f}")
+            put("NonGaussPeak", f"{values[peak]:+.2f}")
             put("NonGaussPeakS", f"{at[peak]:.0f}")
-            put("NonGaussAtFloor", f"{values[0]:+.3f}")
-            put("NonGaussAtCeiling", f"{values[-1]:+.3f}")
+            put("NonGaussAtFloor", f"{values[0]:+.2f}")
+            put("NonGaussAtCeiling", f"{values[-1]:+.2f}")
             put("NonGaussPeakRatio", f"{values[peak] / max(values[0], 1e-9):.1f}")
             put("NonGaussInterior", "yes" if 0 < peak < len(values) - 1 else "no")
         beyond = usable & np.isfinite(non_gaussian) & (lags > TRANSPORT_RANGE_S[1])
         if beyond.any():
             put("NonGaussBeyond", f"{np.nanmax(non_gaussian[beyond]):+.2f}")
+
+    # The per-component (1D) excess kurtosis, the classical statistic rather than Mardia's
+    # multivariate one -- appropriate here precisely because a single component is a
+    # scalar, and reported the same way sec:transport-axisroutes reports every other
+    # estimator per component, since pooling presupposes an isotropy this archive lacks.
+    kurt_east, kurt_north = component_kurtosis(data)
+    if kurt_east is not None:
+        quoted = usable & (lags >= TRANSPORT_RANGE_S[0]) & (lags <= TRANSPORT_RANGE_S[1])
+        for name, values in (("KurtEast", kurt_east), ("KurtNorth", kurt_north)):
+            v = values[quoted & np.isfinite(values)]
+            if v.size:
+                put(f"{name}Median", f"{np.median(v):+.2f}")
+                put(f"{name}Max", f"{np.max(v):+.2f}")
 
 
     # The velocity memory.
@@ -276,6 +351,25 @@ def measure(discipline: str, data: dict, macros: dict) -> dict:
             "non_gaussian": non_gaussian}
 
 
+def gaussian_tail_reference(q_grid: np.ndarray, n: int = 4_000_000, seed: int = 0) -> np.ndarray:
+    """What panel (b)'s tail-share statistic reads on an isotropic 2D Gaussian.
+
+    The archive's own share is computed the same way in ``measure_shape.py``: the largest
+    one per cent of a lag's increments, by count, and what fraction of :math:`\\sum r^q`
+    they carry. Simulated here directly rather than assumed, on i.i.d. bivariate Gaussian
+    noise -- the modulus is then Rayleigh, and the statistic is scale-free, so one large
+    sample stands for every lag rather than one per lag.
+    """
+    rng = np.random.default_rng(seed)
+    r = np.hypot(rng.standard_normal(n), rng.standard_normal(n))
+    keep = max(1, int(round(0.01 * n)))
+    out = np.empty(len(q_grid))
+    for j, q in enumerate(q_grid):
+        w = r.astype(float) ** q
+        out[j] = np.sort(w)[-keep:].sum() / w.sum()
+    return out
+
+
 def draw(measured: dict):
     import matplotlib.pyplot as plt
 
@@ -305,27 +399,37 @@ def draw(measured: dict):
             gauss_ax.semilogx(m["lags"][keep], m["non_gaussian"][keep], "o-", color=colour,
                               ms=3, label=discipline)
 
+    reference = gaussian_tail_reference(next(iter(measured.values()))["q_grid"]) if measured else None
+    if reference is not None:
+        tail_ax.plot(next(iter(measured.values()))["q_grid"], reference, "--", color="0.4",
+                     lw=1.1, label="isotropic Gaussian")
+
     spec_ax.set_xlabel("$q$")
     spec_ax.set_ylabel(r"$q\,\nu(q)$")
     spec_ax.set_title("(a) moment spectrum: straight means monofractal", fontsize=10, loc="left")
     tail_ax.axhline(0.2, color="0.4", lw=0.8, ls="--")
     tail_ax.set_xlabel("$q$")
     tail_ax.set_ylabel("share of the moment in its largest 1\\%".replace("\\", ""))
-    tail_ax.set_title("(b) tail control", fontsize=10, loc="left")
+    tail_ax.set_title("(b) tail control, against an isotropic Gaussian", fontsize=10, loc="left")
     vacf_ax.set_xlabel(r"$\tau$ (s)")
     vacf_ax.set_ylabel(r"$C(\tau)$")
     vacf_ax.set_title("(d) velocity autocorrelation, and its tail", fontsize=10, loc="left")
-    # The Gaussian value is zero, and the two calibrations bracket what the archive shows.
+    # Zero is the Gaussian value for Mardia's kurtosis, whatever the covariance -- unlike
+    # the ratio this replaced, it needs no isotropic assumption. No Levy-walk reference
+    # line: on a synthetic Levy walk at this archive's own protocol the statistic is
+    # negative at short lag and swings by an order of magnitude between seeds at long lag
+    # (heavy-tailed, so a finite sample does not settle it), so it has no single value to
+    # mark -- the moment spectrum in (a) is where that question is actually decided.
     gauss_ax.axhline(0.0, color="0.4", lw=0.8, ls="--")
-    gauss_ax.axhline(0.56, color="0.6", lw=0.8, ls=":")
     gauss_ax.axvspan(*TRANSPORT_RANGE_S, color="0.85", alpha=0.5, zorder=0)
-    gauss_ax.text(0.02, 0.96, "Gaussian $=0$, Levy walk $\\simeq 0.56$;\nshaded: the quoted range",
+    gauss_ax.text(0.02, 0.96, "Gaussian $=0$;\nshaded: the window every exponent\nin this chapter is fitted on",
                   fontsize=7, transform=gauss_ax.transAxes, va="top")
     gauss_ax.set_xlabel(r"$\Delta$ (s)")
     # Superscripted to keep it apart from the filtered-variation exponent, which the
     # chapter also calls alpha_2 and which is a different quantity.
     gauss_ax.set_ylabel(r"$\alpha_2^{\mathrm{NG}}(\Delta)$")
-    gauss_ax.set_title("(c) non-Gaussian parameter", fontsize=10, loc="left")
+    gauss_ax.set_title("(c) non-Gaussian parameter (Mardia's kurtosis excess)", fontsize=10,
+                       loc="left")
     for ax in axes.ravel():
         ax.legend(frameon=False, fontsize=7)
     fig.tight_layout()
