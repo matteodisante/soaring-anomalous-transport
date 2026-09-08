@@ -48,6 +48,11 @@ analysis = [
     "scipy>=1.11",      # signal.welch per la PSD (analisi del rumore delle quote baro/GNSS)
     "pyarrow>=14.0",    # DataFrame.to_parquet/read_parquet per la cache dello scan tracce
 ]
+# `viewer` e' opt-in (non in default-groups): PyQt6 e' una dipendenza pesante che serve
+# solo per lanciare il trajectory viewer interattivo, non per generare figure o CI.
+viewer = [
+    "PyQt6>=6.6",
+]
 
 [tool.uv]
 default-groups = ["dev", "analysis"]
@@ -55,6 +60,7 @@ default-groups = ["dev", "analysis"]
 [project.scripts]
 soaring-para = "soaring.acquisition.ffvl.cli:main"
 soaring-delta = "soaring.acquisition.ffvl.cli:delta_main"
+soaring-viewer = "soaring.viewer.app:main"
 
 [project.urls]
 Repository = "https://github.com/matteodisante/soaring-anomalous-transport"

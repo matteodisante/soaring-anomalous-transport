@@ -1,0 +1,396 @@
+"""Picking a flight: browse the disk directly, or filter the FFVL catalog.
+
+Two independent ways in, one signal out: whichever path a flight is found through,
+:class:`FlightPicker` reduces it to the same ``(path, discipline, flight_id)`` triple
+the rest of the viewer needs.
+
+Every metadata filter is a searchable dropdown (:func:`_make_searchable_combo`),
+populated from :func:`soaring.viewer.catalog_index.distinct_values` for the currently
+selected discipline: the user picks (or types, with live filtering) a value the
+archive actually contains, rather than having to guess a department code or the exact
+spelling of a site name.
+"""
+
+from __future__ import annotations
+
+import calendar
+import itertools
+import os
+from pathlib import Path
+
+import pandas as pd
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QCompleter,
+    QFileDialog,
+    QFormLayout,
+    QGroupBox,
+    QHeaderView,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
+
+from ...acquisition.ffvl.naming import parse_igc_filename
+from ...reporting.disciplines import DISCIPLINES, Discipline
+from .. import catalog_index, data
+
+_RESULT_COLUMNS = [
+    "flight_id", "date", "dept", "takeoff", "flight_type", "wing_class", "kept",
+]
+_RESULT_HEADERS = [
+    "Flight ID", "Date", "Dept.", "Takeoff", "Type", "Wing class", "Kept",
+]
+_MAX_RESULT_ROWS = 500
+# A folder can hold the entire archive (186,052 .igc files for paragliders per
+# docs/guide/data-on-disk.md): walking all of it just to fill a picker list would
+# make "Browse folder..." itself the slow path. Capped at the walk, not after it.
+_MAX_FOLDER_SCAN = 2000
+
+# (catalog column, field label, distinct_values() populates it) -- season_year is
+# included here too even though its values are years, not text: the same searchable
+# widget and the same "type or pick" interaction work just as well for it.
+_FILTER_FIELDS = [
+    ("dept", "Department"),
+    ("season_year", "Season year"),
+    ("flight_type", "Flight type"),
+    ("wing_class", "Wing class"),
+    ("wing", "Wing model"),
+    ("takeoff", "Takeoff site"),
+    ("landing", "Landing site"),
+    ("club", "Club"),
+    ("pilot", "Pilot"),
+]
+
+
+def _make_searchable_combo() -> QComboBox:
+    """An editable combo box with type-ahead, substring-matching completion."""
+    combo = QComboBox()
+    combo.setEditable(True)
+    combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+    completer = combo.completer()
+    if completer is not None:
+        completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
+        completer.setFilterMode(Qt.MatchFlag.MatchContains)
+    combo.setCurrentText("")
+    return combo
+
+
+class FlightPicker(QWidget):
+    """Emits ``flight_chosen(path, discipline, flight_id)`` when a flight is picked.
+
+    Also emits ``folders_changed`` whenever a discipline's data root is repointed
+    (:meth:`_on_set_folder`) -- so a sibling widget with its own cache of the same
+    archive (:class:`~soaring.viewer.widgets.map_view.MapView`) knows to drop it too,
+    rather than keep showing whichever root was current when it last loaded.
+    """
+
+    flight_chosen = pyqtSignal(object, object, str)
+    folders_changed = pyqtSignal()
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        """Build the discipline/browse controls, the catalog filter form and results."""
+        super().__init__(parent)
+        self._rows = pd.DataFrame(columns=_RESULT_COLUMNS)
+        self._forced_discipline: Discipline | None = None
+
+        self._btn_set_folder: dict[str, QPushButton] = {}
+        folder_form = QFormLayout()
+        for disc in DISCIPLINES.values():
+            btn = QPushButton("Not set — click to choose…")
+            btn.clicked.connect(lambda _checked=False, d=disc: self._on_set_folder(d))
+            self._btn_set_folder[disc.name] = btn
+            folder_form.addRow(f"{disc.name.capitalize()} folder", btn)
+        folder_box = QGroupBox("Data folders (each archive's raw/catalog/derived root)")
+        folder_box.setLayout(folder_form)
+
+        self._discipline_combo = QComboBox()
+        for disc in DISCIPLINES.values():
+            self._discipline_combo.addItem(disc.name.capitalize(), disc)
+        self._discipline_label = QLabel()
+
+        self._btn_browse = QPushButton("Browse .igc file…")
+        self._btn_browse_folder = QPushButton("Browse folder of .igc files…")
+
+        self._filter_combos: dict[str, QComboBox] = {
+            column: _make_searchable_combo() for column, _label in _FILTER_FIELDS
+        }
+        self._month_combo = QComboBox()
+        self._month_combo.addItem("(any)", None)
+        for month in range(1, 13):
+            self._month_combo.addItem(calendar.month_name[month], month)
+        self._kept_only_check = QCheckBox("Kept by pipeline only")
+        self._btn_search = QPushButton("Search catalog")
+
+        filter_form = QFormLayout()
+        for column, label in _FILTER_FIELDS:
+            filter_form.addRow(label, self._filter_combos[column])
+            if column == "wing_class":
+                # Grouped with the other always-present, calendar-fixed field.
+                filter_form.addRow("Month", self._month_combo)
+        filter_form.addRow(self._kept_only_check)
+        filter_form.addRow(self._btn_search)
+        filter_box = QGroupBox("Filter the catalog (metadata: can be wrong)")
+        filter_box.setLayout(filter_form)
+        filter_scroll = QScrollArea()
+        filter_scroll.setWidget(filter_box)
+        filter_scroll.setWidgetResizable(True)
+        filter_scroll.setMaximumHeight(420)
+
+        self._results = QTableWidget(0, len(_RESULT_COLUMNS))
+        self._results.setHorizontalHeaderLabels(_RESULT_HEADERS)
+        header = self._results.horizontalHeader()
+        if header is not None:
+            header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self._results.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self._results.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self._results.itemDoubleClicked.connect(self._on_result_double_clicked)
+
+        self._status = QLabel("No flight loaded.")
+        self._status.setWordWrap(True)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(folder_box)
+        layout.addWidget(QLabel("Discipline"))
+        layout.addWidget(self._discipline_combo)
+        layout.addWidget(self._discipline_label)
+        layout.addWidget(self._btn_browse)
+        layout.addWidget(self._btn_browse_folder)
+        layout.addWidget(filter_scroll)
+        layout.addWidget(QLabel("Double-click a row to load it:"))
+        layout.addWidget(self._results, 1)
+        layout.addWidget(self._status)
+
+        self._btn_browse.clicked.connect(self._on_browse)
+        self._btn_browse_folder.clicked.connect(self._on_browse_folder)
+        self._btn_search.clicked.connect(self._on_search)
+        self._discipline_combo.currentIndexChanged.connect(self._repopulate_filter_combos)
+
+        self._update_discipline_selector()
+        self._update_folder_buttons()
+        # Deferred rather than called here directly: at construction time the window
+        # is not shown yet, so a "Loading metadata..." status would paint on nothing
+        # and the whole app would appear frozen for the ~2-3 s a first paraglider
+        # catalog read takes. Queuing it for the next spin of the event loop lets the
+        # window appear first.
+        QTimer.singleShot(0, self._repopulate_filter_combos)
+
+    def set_status(self, text: str) -> None:
+        """Show a message below the results table (which flight loaded, or why not)."""
+        self._status.setText(text)
+
+    def current_discipline(self) -> Discipline:
+        """The discipline every action (search, browse) currently applies to.
+
+        The forced discipline (see :meth:`_update_discipline_selector`) when there is
+        one; the combo box's selection otherwise. Never reads the combo directly
+        elsewhere in this class, since a *hidden* combo can still hold a stale
+        selection (e.g. "hang gliders" left over from before its folder stopped being
+        reachable) that must not leak back in.
+        """
+        if self._forced_discipline is not None:
+            return self._forced_discipline
+        return self._discipline_combo.currentData()
+
+    def _update_discipline_selector(self) -> None:
+        """Show the discipline combo only when picking one is a real choice.
+
+        With both archives reachable, both remain offered. With exactly one, there is
+        nothing to choose -- the combo is replaced by a plain label naming it. With
+        neither, a choice is still shown: an arbitrary browsed file still needs a
+        discipline for the pipeline's speed threshold, and nothing here can guess it.
+        """
+        reachable = data.reachable_disciplines()
+        if len(reachable) == 1:
+            self._forced_discipline = reachable[0]
+            self._discipline_combo.setVisible(False)
+            name = reachable[0].name.capitalize()
+            self._discipline_label.setText(f"Discipline: {name} (only folder set)")
+            self._discipline_label.setVisible(True)
+        else:
+            self._forced_discipline = None
+            self._discipline_combo.setVisible(True)
+            self._discipline_label.setVisible(False)
+
+    def _update_folder_buttons(self) -> None:
+        for disc in DISCIPLINES.values():
+            try:
+                root = disc.config().data_root
+                reachable = disc.config().igc_dir.is_dir()
+            except (FileNotFoundError, KeyError):
+                root, reachable = None, False
+            button = self._btn_set_folder[disc.name]
+            if reachable and root is not None:
+                button.setText(str(root))
+            else:
+                button.setText("Not set — click to choose…")
+
+    def _on_set_folder(self, discipline: Discipline) -> None:
+        dir_str = QFileDialog.getExistingDirectory(
+            self, f"Choose the {discipline.name} archive root"
+        )
+        if not dir_str:
+            return
+        # Discipline.config() reads this env var ahead of the checked-in YAML default
+        # (soaring.acquisition.ffvl.config.load_config), so setting it here is enough
+        # to repoint every *fresh* lookup this process makes. What it does not do is
+        # invalidate what has already been cached -- catalog_index's module-level
+        # cache (cleared below) and, unlike that, anything a sibling widget cached on
+        # its own (folders_changed, emitted below, is how MapView hears about it).
+        os.environ[discipline.env] = dir_str
+        catalog_index.clear_cache()
+        self._update_folder_buttons()
+        self._update_discipline_selector()
+        self._repopulate_filter_combos()
+        self.folders_changed.emit()
+
+    def _repopulate_filter_combos(self) -> None:
+        discipline = self.current_discipline()
+        self.set_status("Loading metadata…")
+        QApplication.processEvents()
+        try:
+            for column, combo in self._filter_combos.items():
+                values = catalog_index.distinct_values(discipline, column)
+                current = combo.currentText()
+                combo.blockSignals(True)
+                combo.clear()
+                combo.addItems(values)
+                combo.setCurrentText(current)
+                combo.blockSignals(False)
+        except FileNotFoundError as exc:
+            self.set_status(str(exc))
+            return
+        self.set_status("Ready — pick a filter or browse a file.")
+
+    def _on_browse(self) -> None:
+        path_str, _ = QFileDialog.getOpenFileName(
+            self, "Choose an .igc file", "", "IGC files (*.igc)"
+        )
+        if not path_str:
+            return
+        path = Path(path_str)
+        discipline = data.resolve_discipline(path)
+        if discipline is not None and self._forced_discipline is None:
+            index = self._discipline_combo.findData(discipline)
+            if index >= 0:
+                self._discipline_combo.setCurrentIndex(index)
+        if discipline is None:
+            discipline = self.current_discipline()
+        self.flight_chosen.emit(path, discipline, path.stem)
+
+    def _on_browse_folder(self) -> None:
+        dir_str = QFileDialog.getExistingDirectory(
+            self, "Choose a folder of .igc files"
+        )
+        if not dir_str:
+            return
+        root = Path(dir_str)
+        self.set_status("Scanning folder…")
+        QApplication.processEvents()
+        # islice on the walk itself, not on a fully materialised+sorted list: a
+        # season (or the whole archive) can hold tens of thousands of files, and this
+        # is the difference between the cap actually bounding the work and only
+        # bounding the display.
+        paths = sorted(itertools.islice(root.rglob("*.igc"), _MAX_FOLDER_SCAN))
+
+        if paths and self._forced_discipline is None:
+            discipline = data.resolve_discipline(paths[0])
+            if discipline is not None:
+                index = self._discipline_combo.findData(discipline)
+                if index >= 0:
+                    self._discipline_combo.setCurrentIndex(index)
+
+        records = []
+        for path in paths:
+            try:
+                date, flight_id = parse_igc_filename(path.name)
+            except ValueError:
+                date, flight_id = "—", path.stem
+            records.append(
+                {
+                    "flight_id": flight_id, "date": date, "dept": "—",
+                    "takeoff": "—", "flight_type": "—", "wing_class": "—",
+                    "kept": pd.NA, "path": path,
+                }
+            )
+        self._rows = pd.DataFrame(records, columns=[*_RESULT_COLUMNS, "path"])
+        self._results.setRowCount(len(records))
+        for i, record in enumerate(records):
+            for col, key in enumerate(_RESULT_COLUMNS):
+                self._results.setItem(i, col, QTableWidgetItem(str(record[key])))
+
+        truncated = len(paths) == _MAX_FOLDER_SCAN
+        suffix = (
+            f" (stopped at {_MAX_FOLDER_SCAN}; narrow the folder for more)"
+            if truncated else ""
+        )
+        self.set_status(f"{len(paths)} .igc file(s) found in {root.name}{suffix}.")
+
+    def _on_search(self) -> None:
+        discipline = self.current_discipline()
+        year_text = self._filter_combos["season_year"].currentText().strip()
+        text_values = {
+            column: (self._filter_combos[column].currentText().strip() or None)
+            for column, _label in _FILTER_FIELDS
+            if column != "season_year"
+        }
+        # The first search of a session reads catalog.csv in full (tens of MB,
+        # ~2-3 s for paragliders) before caching it; every later search is instant.
+        # Without repainting first, that one-time read looks like a frozen window.
+        self.set_status("Searching…")
+        self._btn_search.setEnabled(False)
+        QApplication.processEvents()
+        try:
+            rows = catalog_index.filter_flights(
+                discipline,
+                season_year=int(year_text) if year_text else None,
+                month=self._month_combo.currentData(),
+                kept_only=self._kept_only_check.isChecked(),
+                **text_values,
+            )
+        except FileNotFoundError as exc:
+            self._rows = pd.DataFrame(columns=_RESULT_COLUMNS)
+            self._results.setRowCount(0)
+            self.set_status(str(exc))
+            return
+        except ValueError:
+            self.set_status("Season year must be a whole number, e.g. 2022.")
+            return
+        finally:
+            self._btn_search.setEnabled(True)
+
+        self._rows = rows
+        shown = rows.head(_MAX_RESULT_ROWS)
+        self._results.setRowCount(len(shown))
+        for i, (_, row) in enumerate(shown.iterrows()):
+            for col, key in enumerate(_RESULT_COLUMNS):
+                value = row.get(key, "")
+                if key == "kept":
+                    text = "yes" if value is True else ("no" if value is False else "?")
+                else:
+                    text = str(value)
+                self._results.setItem(i, col, QTableWidgetItem(text))
+        truncated = len(rows) > _MAX_RESULT_ROWS
+        suffix = f" (showing the first {_MAX_RESULT_ROWS})" if truncated else ""
+        self.set_status(f"{len(rows)} flight(s) match{suffix}.")
+
+    def _on_result_double_clicked(self, item: QTableWidgetItem) -> None:
+        row = self._rows.iloc[item.row()]
+        discipline = self.current_discipline()
+        # A folder-scan row already carries its own path (found by rglob, not looked
+        # up); a catalog-search row does not and needs resolve_igc_path.
+        path = row["path"] if "path" in row.index and pd.notna(row["path"]) else None
+        if path is None:
+            path = catalog_index.resolve_igc_path(discipline, row)
+        if path is None:
+            self.set_status(f"Flight {row['flight_id']}: .igc file not found on disk.")
+            return
+        self.flight_chosen.emit(path, discipline, str(row["flight_id"]))
