@@ -2,8 +2,8 @@
 \label{ch:global}
 
 \begin{revblock}
-This chapter measures the transport of the retained ensemble without segmenting a single
-flight. What can be established that way is a \emph{class} of transport: how far a wing
+This chapter measures the transport of the retained ensemble without applying any segmentation. 
+What can be established that way is a \emph{class} of transport: how far a wing
 gets in a given time, how that growth is distributed, how long the motion remembers its
 direction, and how many distinct regimes the answer needs. What cannot be established is
 which flight behaviour produces it, and that is Chapter~\ref{ch:phases}.
@@ -11,14 +11,12 @@ which flight behaviour produces it, and that is Chapter~\ref{ch:phases}.
 The measurements are made on the analysis ensemble assembled in Chapter~\ref{ch:dataset}:
 \num{\StatMsdParaFlights} paraglider and \num{\StatMsdHangFlights} hang-glider flights,
 holding \num{\StatMsdParaSegments} and \num{\StatMsdHangSegments} retained segments. Every
-statistic below is computed within a retained segment and never across the gap that ends
-one (Sec.~\ref{sec:uniform}) \impldetails{impl:global}.
+statistic below is computed within a retained segment.
 
-One constraint from Sec.~\ref{sec:prelim} holds throughout: the horizontal components are
-anisotropic --- the ratio of their mean squares sits at \StatPrelimParaIsoRatioMedian\ for
-paragliders and \StatPrelimHangIsoRatioMedian\ for hang gliders, never touching unity ---
-so the two marginals are measured separately and a pooled one-dimensional marginal never
-substitutes for the two-dimensional propagator. The discipline is also heterogeneous
+One constraint from Sec.~\ref{sec:prelim} holds throughout. The horizontal components are
+anisotropic: the ratio of their mean squares sits at \StatPrelimParaIsoRatioMedian\ for
+paragliders and \StatPrelimHangIsoRatioMedian\ for hang gliders, so the two
+marginals are measured separately. The discipline is also heterogeneous
 (Sec.~\ref{sec:strata-compat}): read
 against the pooled ensemble MSD, the typical wing class departs by
 \SI{\StatPrelimParaClassTypicalDeparturePct}{\percent} and the typical orographic group by
@@ -27,17 +25,32 @@ against the pooled ensemble MSD, the typical wing class departs by
 terrain are relevant strata and season is not, so every exponent below is reported by
 stratum as well as pooled, and the two disciplines are never pooled into each other.
 
-Over \SIrange{\StatVarParaFitMinS}{\StatVarParaFitMaxS}{\second}, on an estimator that
-annihilates any polynomial trend in the trajectory, cross-country soaring gives
-$\alpha_2=\StatVarParaAlphaOrderTwo\pm\StatVarParaAlphaOrderTwoErr$ for paragliders and
-$\StatVarHangAlphaOrderTwo\pm\StatVarHangAlphaOrderTwoErr$ for hang gliders. It is not the
-Lévy walk this thesis was framed around: the spectrum of moments is straight, $\nu(q)$
+Over \SIrange{\StatVarParaFitMinS}{\StatVarParaFitMaxS}{\second}, measured within a segment
+and never about a common origin, the mean-squared increment of cross-country soaring grows
+as $\Delta^{\alpha_1}$ with
+\begin{equation}
+  \alpha_1 = 2H =
+  \begin{cases}
+    \StatVarParaAlphaOrderOne\pm\StatVarParaAlphaOrderOneErr
+      & \text{paragliders}\quad(H=\StatVarParaHurstOrderOne),\\[2pt]
+    \StatVarHangAlphaOrderOne\pm\StatVarHangAlphaOrderOneErr
+      & \text{hang gliders}\quad(H=\StatVarHangHurstOrderOne),
+  \end{cases}
+  \label{eq:headline-alpha}
+\end{equation}
+super-diffusive in both disciplines. The flown course is the pilot's own net heading, a
+constant-velocity component distinct from the wandering around it; filtering it out of the
+same trajectories moves the exponent to $\alpha_2=\StatVarParaAlphaOrderTwo$ and
+$\StatVarHangAlphaOrderTwo$, and the gap $\alpha_1-\alpha_2$ is how much of $\alpha_1$ was
+that heading rather than the wandering (Sec.~\ref{sec:variations}).
+
+It is not a
+L\'evy walk: the spectrum of moments is straight, $\nu(q)$
 moving by \StatShapeParaNuSpread\ and \StatShapeHangNuSpread\ across the range of $q$ read.
 It is not Gaussian either: the non-Gaussian parameter is
 $\StatShapeParaNonGaussMedian$ for paragliders and $\StatShapeHangNonGaussMedian$ for hang
 gliders in the median, rising to an interior maximum near
-\SI{\StatShapeParaNonGaussPeakS}{\second}, so one exponent governing every moment states
-how the increment distribution scales and nothing about its shape.
+\SI{\StatShapeParaNonGaussPeakS}{\second}.
 \end{revblock}
 
 \section{Displacement from take-off measures the launch geometry}
@@ -66,54 +79,46 @@ that common origin; the time average slides its window with no privileged origin
 feature the first shows and the second does not belongs to the origin rather than the
 motion.
 
-Both are computed on the analysis ensemble of Sec.~\ref{sec:prelim}
-(\num{\StatMsdParaFlights} paraglider, \num{\StatMsdHangFlights} hang-glider flights,
-\num{\StatMsdParaSegments} and \num{\StatMsdHangSegments} retained segments), within a
-retained segment and never across the gap that ends one (Sec.~\ref{sec:uniform}), with a
-flight answering a lag only when it holds a fix within half its own native interval of it
-\impldetails{impl:global}. Figure~\ref{fig:msd} shows both estimators.
+Both are computed on the same analysis ensemble, with a flight answering a lag only when
+it holds a fix within half its own native interval of it \impldetails{impl:global}.
+Figure~\ref{fig:msd} shows both estimators.
 
-\paragraph{The ensemble curve is not a power law.}
-Over the range each estimator is fitted on, the ensemble curve departs from its own fitted
-line by \SI{\StatAuditParaEaResidPct}{\percent} rms for paragliders and
-\SI{\StatAuditHangEaResidPct}{\percent} for hang gliders, against
-\SI{\StatAuditParaTaResidPct}{\percent} and \SI{\StatAuditHangTaResidPct}{\percent} for the
-time average. That residual exceeds the standard error on each point by
-\num{\StatAuditParaEaResidNoiseRatio} and \num{\StatAuditHangEaResidNoiseRatio} on the two
-ensemble curves, against \num{\StatAuditParaTaResidNoiseRatio} and
-\num{\StatAuditHangTaResidNoiseRatio} on the time averages: a departure exceeding the error
-on each point many times over is a shape, not scatter about a power law
-\impldetails{impl:global}.
+\begin{figure}[H]
+  \centering
+  \IfFileExists{generated/msd.pdf}{\includegraphics[width=\linewidth]{generated/msd}}{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/ch3\_global\_transport/generate\_msd\_figure.py}.}}}
+  \caption{\rev{Mean-squared displacement of the retained ensemble, by two averages, each
+  with its own fitted power law and fitted range, one dashed line and one shaded band per
+  discipline. (a)~Ensemble MSD against elapsed flight time, log--log,
+  \SIrange{10}{90}{\percent} band across flights. (b)~Time-averaged MSD, cut at half a
+  segment's length. (c)~Local logarithmic slope of both: a windowed Theil--Sen estimator,
+  the median of the pairwise log--log slopes between every pair of grid points within
+  $\pm\num{0.15}$ decades of a lag (five to six points on this grid), banded by the
+  interquartile range of those pairwise slopes over $1.349\sqrt{N}$
+  \impldetails{impl:global}; ballistic and diffusive values marked. (d)~Flights
+  contributing at each lag, which sets the upper end of each fit range.}}
+  \label{fig:msd}
+\end{figure}
 
-\paragraph{The shape is an arch above the ballistic value.}
-The ensemble local slope falls to a minimum of \StatAuditParaEaSlopeMin\ near
-\SI{\StatAuditParaEaSlopeMinAt}{\second}, rises to \StatAuditParaEaSlopeMax\ near
-\SI{\StatAuditParaEaSlopeMaxAt}{\second}, and settles back towards $2$; hang gliders do the
-same between \StatAuditHangEaSlopeMin\ and \StatAuditHangEaSlopeMax. The maximum lies
-\emph{above} the ballistic value, which no sum of power laws with positive coefficients and
-exponents at or below $2$ can produce: for $f=\sum_i a_i t^{\alpha_i}$ with $a_i>0$,
-\begin{equation}
-  \frac{\mathrm{d}\log f}{\mathrm{d}\log t}
-  =\frac{\sum_i a_i\alpha_i t^{\alpha_i}}{\sum_i a_i t^{\alpha_i}}
-  \label{eq:weighted-slope}
-\end{equation}
-is a weighted mean of the $\alpha_i$ and cannot exceed the largest of them, so a slope
-above $2$ requires the ballistic component to switch on at a finite time rather than to be
-present from $t=0$. The arch is larger than the estimator's own uncertainty
-\impldetails{impl:global}.
 
 \paragraph{Three controls rule out an artefact.}
 A changing population, survivorship, and a shared heading could each produce the same arch
-without it belonging to the motion. Splitting by native cadence removes any drift from a
-growing population: across the \StatAuditParaCadenceCohorts\ paraglider classes the local
-slope spreads by only \StatAuditParaCadenceSpread\ against a swing of
-\StatAuditParaEaSlopeSwing. Fixed-duration cohorts remove survivorship: the local slope
-spreads across cohorts by \StatAuditParaDurationSpread\ and \StatAuditHangDurationSpread,
-where a synthetic ensemble with only the \emph{speed} correlated to duration reproduces
-neither feature \impldetails{impl:global}. And a shared heading is bounded by the part of
-the mean square the mean vector carries, which never exceeds
-\SI{\StatAuditParaDriftPct}{\percent} for paragliders and \SI{\StatAuditHangDriftPct}{\percent}
-for hang gliders. The flights do not share a heading; they share a starting point.
+without it belonging to the motion.
+\begin{itemize}[itemsep=3pt, topsep=5pt]
+  \item \emph{A changing population.} Splitting by native cadence removes any drift from a
+        growing population: across the \StatAuditParaCadenceCohorts\ paraglider classes the
+        local slope spreads by only \StatAuditParaCadenceSpread\ against a swing of
+        \StatAuditParaEaSlopeSwing.
+  \item \emph{Survivorship.} Fixed-duration cohorts remove it: the local slope spreads
+        across cohorts by \StatAuditParaDurationSpread\ and \StatAuditHangDurationSpread,
+        where a synthetic ensemble with only the \emph{speed} correlated to duration
+        reproduces neither feature \impldetails{impl:global}.
+  \item \emph{A shared heading.} It is bounded by the part of the mean square the mean
+        vector carries, which never exceeds \SI{\StatAuditParaDriftPct}{\percent} for
+        paragliders and \SI{\StatAuditHangDriftPct}{\percent} for hang gliders.
+\end{itemize}
+The flights do not share a heading; they share a starting point.
 
 \paragraph{The origin of the crossover.}
 A wing does not leave its launch site immediately: it climbs out, often circling close to
@@ -121,34 +126,74 @@ it, and only then commits to a course. Until it does, its distance from take-off
 by the local soaring area however fast it is flying, which depresses the local slope at
 intermediate lags; once the population has committed, the distance grows with the flown
 speed, which returns the slope towards $2$. Because commitment happens at a spread of times
-rather than at $t=0$, the transition overshoots. Taking the first crossing of
-\SI{\StatAuditParaDepartureRadiusKm}{\kilo\metre} from take-off as the departure onto the
-cross-country leg --- well inside the median flown path of
-\SI{\StatPipeParaMedianPathKm}{\kilo\metre} --- \SI{\StatAuditParaDepartureLeavePct}{\percent}
-of paraglider flights depart, with a median departure time of
-\SI{\StatAuditParaDepartureMedianS}{\second}, against a slope peak at
-\SI{\StatAuditParaEaSlopeMaxAt}{\second}; for hang gliders
-\SI{\StatAuditHangDepartureLeavePct}{\percent} depart at a median of
-\SI{\StatAuditHangDepartureMedianS}{\second} against a peak at
-\SI{\StatAuditHangEaSlopeMaxAt}{\second}. The radius is chosen rather than fitted, so the
-agreement corroborates the account rather than measuring it. The ensemble MSD about
+rather than at $t=0$, the transition overshoots.
+
+Taking the first crossing of \SI{\StatAuditParaDepartureRadiusKm}{\kilo\metre} from take-off
+as the departure onto the cross-country leg --- well inside the median flown path of
+\SI{\StatPipeParaMedianPathKm}{\kilo\metre} --- the departure time and the slope peak land
+together in both disciplines (Table~\ref{tab:departure}). The radius is chosen rather than
+fitted, so the agreement corroborates the account rather than measuring it.
+
+\begin{table}[htbp]
+\centering\small
+\ifrevmode\color{revblue}\fi
+\renewcommand{\arraystretch}{1.2}
+\caption{\rev{When the population leaves its launch area, against where the ensemble MSD
+bends. The departure radius is declared, not fitted to the curve it is compared with.}}
+\label{tab:departure}
+\begin{tabular}{@{}l c c@{}}
+\toprule
+& \textbf{paragliders} & \textbf{hang gliders} \\
+\midrule
+flights departing & \SI{\StatAuditParaDepartureLeavePct}{\percent}
+  & \SI{\StatAuditHangDepartureLeavePct}{\percent} \\
+median departure time & \SI{\StatAuditParaDepartureMedianS}{\second}
+  & \SI{\StatAuditHangDepartureMedianS}{\second} \\
+local-slope peak & \SI{\StatAuditParaEaSlopeMaxAt}{\second}
+  & \SI{\StatAuditHangEaSlopeMaxAt}{\second} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ensemble MSD about
 take-off is therefore a statement about launch geometry over the decade where the overshoot
 sits, and an exponent fitted across that crossover --- $\alpha_{\mathrm{EA}}=\StatMsdParaAlpha$
 and \StatMsdHangAlpha\ over \SIrange{\StatMsdParaFitMinS}{\StatMsdParaFitMaxS}{\second} ---
 is a chord across a bend rather than a growth law the motion obeys.
 
-\paragraph{The time average shows no arch.}
+\paragraph{The time average does not share the ensemble's crossover.}
 Panel~(b) is Eq.~\eqref{eq:ta-msd} on the same ensemble. Over
 \SIrange{\StatMsdTaParaFitMinS}{\StatMsdTaParaFitMaxS}{\second} and
 \SIrange{\StatMsdTaHangFitMinS}{\StatMsdTaHangFitMaxS}{\second} it gives
 $\alpha_{\mathrm{TA}}=\StatMsdTaParaAlpha$ ($H=\StatMsdTaParaHurst$) for paragliders and
 $\StatMsdTaHangAlpha$ ($H=\StatMsdTaHangHurst$) for hang gliders, both above Brownian and
-below ballistic, with a smaller residual, and a local slope that reaches its minimum at
-\SI{\StatAuditParaTaSlopeMinAt}{\second} and \SI{\StatAuditHangTaSlopeMinAt}{\second} and
-rises from there, with no interior maximum at all. Since the two averages differ only in
-what they average over, the crossover is a property of the common origin, confirmed by its
-absence from panel~(b); both exponents are reported as \emph{effective} exponents over a
-stated range.
+below ballistic, with a residual well under half the ensemble's. 
+Its local slope is not flat --
+it dips to a broad interior minimum of \StatAuditParaTaSlopeMin\ near
+\SI{\StatAuditParaTaSlopeMinAt}{\second} for paragliders, and to \StatAuditHangTaSlopeMin\
+for hang gliders, a discipline where the short-lag estimate itself carries the widest
+error in the panel -- but its swing, \StatAuditParaTaSlopeSwing\ and
+\StatAuditHangTaSlopeSwing, is under half the ensemble's, \StatAuditParaEaSlopeSwing\ and
+\StatAuditHangEaSlopeSwing. Neither curve shows the ensemble's crossover at the ensemble's
+own timescale: what confirms that crossover is a property of the common origin is its
+absence from panel~(b) near \SI{\StatAuditParaEaSlopeMaxAt}{\second}, not a claim that
+panel~(b) is featureless everywhere.
+
+\paragraph{The time average has an upturn of its own, at the far edge of its range.}
+Past its interior minimum, panel~(b)'s slope climbs back above the ballistic value,
+to \StatAuditParaTaSlopeMax\ at \SI{\StatAuditParaTaSlopeMaxAt}{\second} for paragliders and
+\StatAuditHangTaSlopeMax\ at \SI{\StatAuditHangTaSlopeMaxAt}{\second} for hang gliders --
+stronger on the smaller archive.
+
+That is also where the segment population itself has
+thinned to a small fraction of what answers the shorter lags, the same kind of thinning
+noted below for the ensemble, so a rise there reads as a survivorship effect on the
+segments long enough to reach it -- plausible rather than demonstrated, since panel~(b)
+supplies no cadence or duration control of its own to test it against, the way the
+ensemble's own crossover is tested in the paragraphs above. It is reported rather than
+fitted around, because
+$\alpha_{\mathrm{TA}}$ is already a chord across this bend and not a claim that the bend
+is absent; both exponents are reported as \emph{effective} exponents over a stated range.
 
 \paragraph{The gap between the two averages is not evidence of ageing.}
 Fitted over their respective ranges the ensemble slope exceeds the time-averaged exponent by
@@ -159,8 +204,100 @@ whose local slope covers \StatAuditParaEaSlopeSwing, so changing the fitted rang
 more than the gap. What the measurement supports is weaker: displacement from take-off grows
 faster, over the upper part of its range, than displacement over a window of the same
 duration placed anywhere in the flight. Separating ageing from launch geometry needs the
-phase decomposition of Sec.~\ref{sec:segmentation} and the ergodicity-breaking parameter of
-Appendix~\ref{app:ctrw}, neither of which needs a curve to be a power law.
+phase decomposition of Sec.~\ref{sec:segmentation} and the ergodicity-breaking parameter
+below, neither of which needs a curve to be a power law.
+
+\paragraph{Two direct checks: a duration split, and the parameter itself.}
+Appendix~\ref{app:ctrw} derives why duration is the sharper question than the EA/TA gap:
+for a continuous-time random walk with power-law waiting times, the time-averaged MSD
+carries a prefactor that depends on the total duration $T$ of the record it is read from,
+$\mathrm{TAMSD}(t,T)\sim T^{\alpha-1}t$, present for a non-ergodic process and collapsing
+away for an ergodic one; and it defines the ergodicity-breaking parameter
+\begin{equation}
+  \mathrm{EB}(t) \equiv
+  \frac{\mathrm{Var}_f\!\big[\overline{\delta^2}_f(t)\big]}
+       {\mathbb{E}_f\!\big[\overline{\delta^2}_f(t)\big]^2} ,
+  \label{eq:eb-param}
+\end{equation}
+the scatter of the per-flight time average across flights, normalised by its square: a
+finite positive constant for a non-ergodic process and zero for an ergodic one, however
+long the flights run. Neither test needs a curve to be a power law, and both can be asked
+of this archive directly, whatever process it turns out to be.
+
+Figure~\ref{fig:msd-duration}a
+puts the pooled time-averaged MSD of Figure~\ref{fig:msd}b beside its own fixed-duration
+cohorts (\num{1}, \num{2} and \SI{4}{\hour} thresholds), each
+cut at half its own threshold. Read at \SI{\StatMsdTaParaCohortAmpRefS}{\second}, a lag
+common to all three, the paraglider cohorts sit at \StatMsdTaParaCohortAmpOneH,
+\StatMsdTaParaCohortAmpTwoH\ and \StatMsdTaParaCohortAmpFourH\ times the pooled curve;
+hang gliders move more, at \StatMsdTaHangCohortAmpOneH, \StatMsdTaHangCohortAmpTwoH\ and
+\StatMsdTaHangCohortAmpFourH. The curves do not collapse, but the eye cannot see that they
+do not: a \StatMsdTaParaCohortAmpFourH-fold separation is \num{0.13} decades, invisible on
+a panel spanning the eight the record itself covers. That is what panel~(b) is for.
+
+\begin{figure}[H]
+  \centering
+  \IfFileExists{generated/msd_duration.pdf}{%
+    \includegraphics[width=\linewidth]{generated/msd_duration}%
+  }{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/ch3\_global\_transport/generate\_msd\_duration\_figure.py}.}}}
+  \caption{\rev{Two readings of the same question. (a)~The time-averaged MSD of
+  Figure~\ref{fig:msd}b (\emph{all segments}) beside its own fixed-duration cohorts, each
+  cut at half its own threshold: coinciding curves would say the time average does not
+  depend on the duration of the record it is read from, and on this archive they separate
+  by tens of per cent, too little to see against eight decades of growth.
+  (b)~$\mathrm{EB}(T)$, App.~\ref{app:ctrw}'s ergodicity-breaking parameter, measured
+  directly from the scatter of each flight's own time average (Sec.~\ref{sec:variations}'s
+  $V_1$) rather than proxied by panel~(a)'s duration split, at one lag held fixed
+  (\SI{\StatErgoParaLagS}{\second}) and swept over the duration threshold $T$ -- the
+  dependence App.~\ref{app:ctrw} defines the parameter to test, not its dependence on the
+  lag: zero (dashed) is the ergodic limit, and a curve that falls with $T$ without reaching
+  it is a weakening rather than a vanishing of the aging signature read off the archive's
+  own flights.}}
+  \label{fig:msd-duration}
+\end{figure}
+
+\paragraph{The parameter itself does not go away.}
+App.~\ref{app:ctrw} defines $\mathrm{EB}(t,T)$ as a question about $T$, the duration of
+the record, at a lag $t$ held fixed --- not about the lag --- so that is what is measured:
+the lag is fixed at \SI{\StatErgoParaLagS}{\second}, well under a quarter of the shortest
+duration threshold, and every flight is required to supply at least
+\StatErgoParaMinWindows\ of its own windows at that lag before it answers for a given $T$
+(Sec.~\ref{sec:transport-gaussian} applies the same reach rule to its Gaussian null). Over
+\SIrange{\StatErgoParaRangeMinH}{\StatErgoParaRangeMaxH}{\hour} of required duration,
+$\mathrm{EB}(T)$ falls with $T$ in both disciplines --- from \StatErgoParaAtOneH\ on
+\num{\StatErgoParaAtOneHFlights}\ paraglider flights of at least one hour to
+\StatErgoParaAtFourH\ on \num{\StatErgoParaAtFourHFlights}\ of at least four; from
+\StatErgoHangAtOneH\ to \StatErgoHangAtFourH\ for hang gliders --- but it does not reach
+zero inside the range this archive can answer: the direct signature App.~\ref{app:ctrw}
+defines, not the duration-cohort proxy above, and it needs neither curve to be a power law
+nor the archive to be the sub-diffusive CTRW the appendix derives it for --- only that the
+per-flight time average keeps a genuine spread across flights rather than concentrating
+to zero as the record required to answer grows. A parameter that falls but does not
+vanish over the range measured is weaker evidence than one that sits flat, and this
+archive cannot rule out that it continues falling past four hours, where too few flights
+remain to answer; what it does rule out is the read the lag-swept panel gave in an earlier
+draft of this test, which fixed nothing and swept the wrong variable.
+
+That the duration cohorts \emph{rise} with $T$ is not the direction Appendix~\ref{app:ctrw}'s
+own toy derivation predicts: its $T^{\alpha-1}$ falls with $T$ for the sub-diffusive
+$\alpha<1$ the model assumes, and this archive's transport is super-diffusive throughout.
+Both that rise and $\mathrm{EB}(T)$'s own fall are compatible with a plainer account the
+chapter has used before: duration and performance are confounded on this archive, since a
+pilot who stays up longer is more likely flying a faster wing, better conditions, or both,
+so raising the duration threshold does not lengthen the same flights, it selects a
+different, more homogeneous population of them. That confound could by itself produce a
+falling $\mathrm{EB}(T)$ -- a narrower population is a lower-scatter population -- so the
+fall on its own is not evidence of ergodicity; what it does show is that the scatter across
+flights is not the flat, always-positive quantity the lag-swept version of this test
+reported, and it has not been shown to vanish either, which is the weaker and honest
+reading. Separating the selection effect from a genuine dependence of the motion on how
+long it has already run is the phase decomposition of
+Chapter~\ref{ch:phases}, on the EB parameter computed per phase rather than pooled; what
+this section establishes is prior to that and does not need it: the time average is not
+duration-independent, and its scatter across flights has not been shown to vanish, either
+of which neither the ensemble MSD nor the filtered variation was built to test.
 
 \paragraph{What the two estimators return.}
 The time average gives an effective exponent on a curve close to a single power law. The
@@ -182,29 +319,19 @@ survivorship-selected minority, holding only \num{\StatAuditParaFlightsWideLag} 
 \SI{\StatAuditParaFlightsWideLagS}{\second}. Nothing outside the fitted range in
 Figure~\ref{fig:msd} is read as motion.
 
-A displacement statistic on this archive is contaminated by the common origin just
-diagnosed; by each flight's own course, which does not simply inflate it, since
-\SI{\StatVarParaClosedPct}{\percent} of retained paraglider flights fly a closed triangle
-that saturates displacement at a scoring-rule timescale rather than a flying one; and by the
-heterogeneity of Sec.~\ref{sec:strata-compat}, which lets a superposition of ordinary processes
-with different persistence times imitate a single anomalous one. None of the three is
-repaired by subtracting an estimate of it; the next section meets the specification by
-filtering instead.
+A displacement statistic on this archive is contaminated three ways:
+\begin{itemize}[itemsep=3pt, topsep=5pt]
+  \item by the common origin just diagnosed;
+  \item by each flight's own course, which does not simply inflate it, since
+        \SI{\StatVarParaClosedPct}{\percent} of retained paraglider flights fly a closed
+        triangle that saturates displacement at a scoring-rule timescale rather than a
+        flying one;
+  \item by the heterogeneity of Sec.~\ref{sec:strata-compat}, which lets a superposition of
+        ordinary processes with different persistence times imitate a single anomalous one.
+\end{itemize}
+None of the three is repaired by subtracting an estimate of it; the next section meets the
+specification by filtering instead.
 \end{revblock}
-
-\begin{figure}[htbp]
-  \centering
-  \IfFileExists{generated/msd.pdf}{\includegraphics[width=\linewidth]{generated/msd}}{%
-    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/ch3\_global\_transport/generate\_msd\_figure.py}.}}}
-  \caption{\rev{Mean-squared displacement of the retained ensemble, by two averages.
-  (a)~Ensemble MSD against elapsed flight time, log--log, fitted line and range shaded,
-  \SIrange{10}{90}{\percent} band across flights. (b)~Time-averaged MSD, cut at half a
-  segment's length. (c)~Local logarithmic slope of both, ballistic and diffusive values
-  marked. (d)~Flights contributing at each lag, which sets the upper end of each fit
-  range.}}
-  \label{fig:msd}
-\end{figure}
 
 \section{The filtered variation}
 \label{sec:variations}
@@ -243,10 +370,14 @@ ensemble must not return a different exponent for having been measured with nort
 else. The propagator of Sec.~\ref{sec:transport-propagator} does the opposite and keeps the
 components apart, because the ensemble is anisotropic (Sec.~\ref{sec:prelim}) and a
 one-dimensional marginal is exactly what it reads; the two are different statistics of the
-same trajectories rather than one of them pooled. For a self-similar process with stationary increments $\alpha_p=2H$ at every
+same trajectories rather than one of them pooled.
+
+For a self-similar process with stationary increments $\alpha_p=2H$ at every
 order, with only the prefactor depending on $p$: $p=1$ is the plain increment and is blind
 to the origin, $p=2$ to a constant velocity, $p=3$ to a constant acceleration, so no drift
-is estimated at any order and none can be estimated badly. The three orders are not
+is estimated at any order and none can be estimated badly.
+
+The three orders are not
 successive refinements of one number, and are not expected to agree: $\alpha_1$ is the
 exponent of displacement with the flown course still inside it, $\alpha_2$ is what that
 displacement does once a mean velocity --- the course --- is set aside, and a course that is
@@ -260,9 +391,8 @@ of the apparent exponent that was the flown course, read off directly rather tha
 and the agreement between $\alpha_2$ and $\alpha_3$ is the statement that nothing
 polynomial is left for a higher difference to find. On synthetic data with a constant
 course imposed on a process of known exponent, order~1 returns a displaced value and
-orders~2 and~3 both recover the truth \impldetails{impl:global}. Everything below is
-computed inside a retained segment, never across the gap that ends one
-(Sec.~\ref{sec:uniform}), and never on displacement from take-off.
+orders~2 and~3 both recover the truth \impldetails{impl:global}. Everything below keeps to
+the same segment rule as before, and never uses displacement from take-off.
 
 \paragraph{The fitted range.}
 \SIrange{\StatVarParaFitMinS}{\StatVarParaFitMaxS}{\second}, \StatVarParaFitDecades\
@@ -322,6 +452,20 @@ three times smaller in $V_2$ and of the opposite sign: a dip rather than an arch
 what removing the common origin and the flown course was supposed to achieve
 (Figure~\ref{fig:transport}).
 
+\begin{figure}[H]
+  \centering
+  \IfFileExists{generated/transport.pdf}{\includegraphics[width=\linewidth]{generated/transport}}{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/ch3\_global\_transport/generate\_transport\_figure.py}.}}}
+  \caption{\rev{The filtered variation, on which the exponent is read. (a)~$V_2(\Delta)$
+  against lag, log--log, fitted range shaded. (b)~Local
+  $H=\tfrac12\,\mathrm{d}\log V_p/\mathrm{d}\log\Delta$ at the three filter orders: $p=1$
+  runs below $p=2,3$, the flown course read as a lower exponent. (c)~Local slope at $p=1$
+  split by declared task; closed and open courses part company past \SI{3000}{\second}.
+  (d)~Local slope of $V_2$, the quantity the fit averages.}}
+  \label{fig:transport}
+\end{figure}
+
 \paragraph{Removing the course raises the exponent.}
 $\alpha_1$ and $\alpha_2$ differ by $\StatVarParaDriftShare$ for paragliders and
 $\StatVarHangDriftShare$ for hang gliders, and the sign is the opposite of what a residual
@@ -329,7 +473,9 @@ drift would leave: a drift normally inflates a displacement statistic, but on th
 the declared course \emph{suppresses} it, since \SI{\StatVarParaClosedPct}{\percent} of
 retained paraglider flights and \SI{\StatVarHangClosedPct}{\percent} of hang-glider flights
 fly a triangle that returns towards its start, saturating the plain increment at a
-task-set lag which the second-order variation does not see at all. Fitting closed and open
+task-set lag which the second-order variation does not see at all.
+
+Fitting closed and open
 tasks separately confirms it directly: the gap between them (open minus closed) is
 $\StatVarParaTaskGapOrderOne$ at order~1 for paragliders and $\StatVarHangTaskGapOrderOne$
 for hang gliders --- closed tasks reading lower --- and it reverses to
@@ -348,49 +494,32 @@ Sec.~\ref{sec:obs-global} more closely than either moves when its own range is h
 $\StatVarParaAlphaOrderOne$ against $\StatMsdTaParaAlpha$ for paragliders and
 \StatVarHangAlphaOrderOne\ against \StatMsdTaHangAlpha\ for hang gliders.
 
-\paragraph{What an exponent near two does not mean.}
-$\alpha_2=\StatVarParaAlphaOrderTwo$ is $2H$ with $H=\StatVarParaHurstOrderTwo$, at the upper
-boundary of the self-similar family and marginally past it, and $\alpha_1$ and $\alpha_2$ do
-not share a ceiling: reading the second against the first's bound is the only way this looks
-like a violation. A plain increment cannot report above the ballistic value on any process
-with stationary increments: the displacement over $n$ steps is a sum of $n$ increments,
-Minkowski's inequality bounds its norm by the sum of theirs, and $V_1(n\Delta)\le n^2V_1(\Delta)$
-follows, so $\alpha_1\le2$ whatever the motion does --- a bound the archive respects with room
-to spare, at $\StatVarParaAlphaOrderOne$ and \StatVarHangAlphaOrderOne. The second-order
-variation answers to a different bound because it is a different quantity: on a
-differentiable trajectory $A_2\,\mathbf{r}\simeq\ddot{\mathbf{r}}\,\Delta^2$, so
-$V_2\sim\Delta^{4}$, and its ceiling is therefore $4$, twice the ballistic value, reached only
-by a trajectory smooth enough that its curvature does not wash out as $\Delta\to0$. A straight
-line sits at the opposite extreme, where the second difference vanishes identically, since it
-has no curvature to detect; a persistent random walk, calibrated the same way, returns a value
-between the two, closer to $4$ the longer it stays correlated. $\StatVarParaAlphaOrderTwo$ and
-$\StatVarHangAlphaOrderTwo$ sit just past $2H=2$, far below that ceiling of $4$: read against
-the calibration that actually bounds this estimator, not against the ballistic value, which
-bounds a different one, they say the trajectory stays correlated and rough --- persistent, not
-straight --- at every lag of the range, not that it moves faster than a bound it was never
-subject to. A Hurst exponent above unity has no meaning for an exactly self-similar process,
-so the figure is quoted as an effective exponent over a declared window; how far the
-archive is from exact self-similarity is measured in Sec.~\ref{sec:transport-propagator}, on
-the distribution of the increments rather than its second moment.
-\end{revblock}
+\paragraph{The two orders answer to different ceilings.}
+The reported exponent is bounded. A plain increment cannot report above the ballistic value
+on any process with stationary increments: the displacement over $n$ steps is a sum of $n$
+increments, and Minkowski's inequality bounds its norm by the sum of theirs,
+\begin{equation}
+  V_1(n\Delta)\le n^{2}\,V_1(\Delta),
+  \label{eq:v1-bound}
+\end{equation}
+so $\alpha_1\le2$ whatever the motion does --- a bound the archive respects with room
+to spare, at $\StatVarParaAlphaOrderOne$ and \StatVarHangAlphaOrderOne.
 
-\begin{figure}[htbp]
-  \centering
-  \IfFileExists{generated/transport.pdf}{\includegraphics[width=\linewidth]{generated/transport}}{%
-    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/ch3\_global\_transport/generate\_transport\_figure.py}.}}}
-  \caption{\rev{The filtered variation, on which the exponent is read. (a)~$V_2(\Delta)$
-  against lag, log--log, fitted range shaded. (b)~Local
-  $H=\tfrac12\,\mathrm{d}\log V_p/\mathrm{d}\log\Delta$ at the three filter orders: $p=1$
-  runs below $p=2,3$, the flown course read as a lower exponent. (c)~Local slope at $p=1$
-  split by declared task; closed and open courses part company past \SI{3000}{\second}.
-  (d)~Local slope of $V_2$, the quantity the fit averages.}}
-  \label{fig:transport}
-\end{figure}
+The control does not share that ceiling. On a differentiable trajectory
+$A_2\,\mathbf{r}\simeq\ddot{\mathbf{r}}\,\Delta^2$, so $V_2\sim\Delta^{4}$ and the
+second-order ceiling is $4$, twice the ballistic value; a straight line sits at the opposite
+extreme, where the second difference vanishes identically. So
+$\alpha_2=\StatVarParaAlphaOrderTwo$ and $\StatVarHangAlphaOrderTwo$ sitting just past $2$
+says that the trajectory stays correlated and rough across the range; reading $\alpha_2$
+against the bound that governs $\alpha_1$ is the only way it looks like a violation. How far the archive is from exact self-similarity is measured in
+Sec.~\ref{sec:transport-propagator}, on the distribution of the increments rather than on
+any second moment.
+\end{revblock}
 
 \section{Compatibility across strata}
 \label{sec:strata-compat}
 \begin{revblock}
+\paragraph{The test.}
 The dataset spans more than four decades, two glider types and a range of performance
 classes (Sec.~\ref{sec:glider}) whose kinematics differ substantially. Before treating the
 flights of one discipline as draws from a single statistical process, the subpopulations
@@ -402,34 +531,26 @@ noise risks dominating the curve. The class normalisation of Sec.~\ref{sec:glide
 first, since as long as one wing class appears under several spellings a stratum is not a
 well-defined set of flights.
 
-Figure~\ref{fig:strata-compat} gives three axes and two answers. Across the
-\num{\StatPrelimParaClassStrata} wing classes the curves separate: the typical stratum
-departs from the pooled curve by \SI{\StatPrelimParaClassTypicalDeparturePct}{\percent}
-and the extreme by \SI{\StatPrelimParaClassMaxDeparturePct}{\percent}, with the CIVL
-competition wings above the pooled curve throughout and the EN\,A wings well below it.
-Across the \num{\StatPrelimParaGroupStrata} orographic groups they separate further, by
-\SI{\StatPrelimParaGroupTypicalDeparturePct}{\percent} typically and
-\SI{\StatPrelimParaGroupMaxDeparturePct}{\percent} at the extreme, with the Massif Central
-at half the pooled curve over the intermediate lags and the Alps above it. Across the
-\num{\StatPrelimParaSeasonStrata} seasons they do not: the typical departure is
-\SI{\StatPrelimParaSeasonTypicalDeparturePct}{\percent} and the largest
-\SI{\StatPrelimParaSeasonMaxDeparturePct}{\percent}, and the latter belongs to the smallest
-season in the archive.
+\paragraph{Three axes, two answers.}
+Figure~\ref{fig:strata-compat} gives three axes and two answers.
+\begin{itemize}[itemsep=3pt, topsep=5pt]
+  \item \emph{Wing class.} Across the \num{\StatPrelimParaClassStrata} classes the curves
+        separate: the typical stratum departs from the pooled curve by
+        \SI{\StatPrelimParaClassTypicalDeparturePct}{\percent} and the extreme by
+        \SI{\StatPrelimParaClassMaxDeparturePct}{\percent}, with the CIVL competition wings
+        above the pooled curve throughout and the EN\,A wings well below it.
+  \item \emph{Orographic group.} Across the \num{\StatPrelimParaGroupStrata} groups they
+        separate further, by \SI{\StatPrelimParaGroupTypicalDeparturePct}{\percent}
+        typically and \SI{\StatPrelimParaGroupMaxDeparturePct}{\percent} at the extreme,
+        with the Massif Central at half the pooled curve over the intermediate lags and the
+        Alps above it.
+  \item \emph{Season.} Across the \num{\StatPrelimParaSeasonStrata} seasons they do not: the
+        typical departure is \SI{\StatPrelimParaSeasonTypicalDeparturePct}{\percent} and the
+        largest \SI{\StatPrelimParaSeasonMaxDeparturePct}{\percent}, and the latter belongs
+        to the smallest season in the archive.
+\end{itemize}
 
-So the ensemble may be pooled over time and may not be pooled over wing class or over
-terrain. Season is not a relevant stratum and the archive's two-decade span is not a
-confound. Class and geography are relevant strata, and the difference is itself a result
-rather than a nuisance: a competition wing covers ground faster than a recreational one,
-and thermals over a mountain range are anchored to slopes and organised along ridges
-whereas over flat terrain they drift with the wind, so the persistence of the glides and
-the spacing of the climbs need not be the same. The exponent below is therefore reported
-by wing class as well as pooled, alongside cuts by native cadence, season and declared
-task (Table~\ref{tab:strata-alpha}); the orographic cut is made here, on the ensemble MSD,
-which is the statistic it separates. A pooled exponent is read as an average over strata
-that are known to differ, not as a property of a homogeneous population.
-\end{revblock}
-
-\begin{figure}[htbp]
+\begin{figure}[H]
   \centering
   \IfFileExists{generated/strata_compat.pdf}{%
     \includegraphics[width=\linewidth]{generated/strata_compat}%
@@ -444,6 +565,20 @@ that are known to differ, not as a property of a homogeneous population.
   flights are not drawn. Class and terrain separate the curves, season does not.}}
   \label{fig:strata-compat}
 \end{figure}
+
+\paragraph{What may be pooled.}
+So the ensemble may be pooled over time and may not be pooled over wing class or over
+terrain. Season is not a relevant stratum and the archive's two-decade span is not a
+confound. Class and geography are relevant strata, and the difference is itself a result
+rather than a nuisance: a competition wing covers ground faster than a recreational one,
+and thermals over a mountain range are anchored to slopes and organised along ridges
+whereas over flat terrain they drift with the wind, so the persistence of the glides and
+the spacing of the climbs need not be the same. The exponent below is therefore reported
+by wing class as well as pooled, alongside cuts by native cadence, season and declared
+task (Table~\ref{tab:strata-alpha}); the orographic cut is made here, on the ensemble MSD,
+which is the statistic it separates. A pooled exponent is read as an average over strata
+that are known to differ, not as a property of a homogeneous population.
+\end{revblock}
 
 \section{The uncertainty on the exponent}
 \label{sec:transport-measure}
@@ -471,7 +606,9 @@ single measurement. The ladder (Table~\ref{tab:icc}) is zero at the flight by co
 and largest at the day and site in both disciplines --- the air over one site on one day
 being what two flights actually have in common --- so every bootstrap in this chapter
 resamples days and sites, of which the archive holds \num{\StatVarParaClusters} and
-\num{\StatVarHangClusters}. The correction this buys is small and in the expected
+\num{\StatVarHangClusters}.
+
+The correction this buys is small and in the expected
 direction: resampling flights returns \StatVarParaAlphaOrderOneErrNaive\ on the paraglider
 $\alpha_1$ against \StatVarParaAlphaOrderOneErrSampling\ from the clustered resample, both
 sitting below the last digit of the exponent they qualify.
@@ -524,7 +661,9 @@ logger's step. \SI{\StatVarParaFitMinS}{\second} therefore sits above it for
 \SI{\StatVarParaSmoothedBelowFitPct}{\percent} of retained paraglider flights and
 \SI{\StatVarHangSmoothedBelowFitPct}{\percent} of hang-glider ones; the slow remainder is
 smoothed over more than the shortest fitted lag, and enters the average with the few
-windows so sparse a record supplies. Above, the declared task governs: closed and open courses separate in
+windows so sparse a record supplies.
+
+Above, the declared task governs: closed and open courses separate in
 local slope by \num{\StatVarParaTaskSlopeGapLow} at
 \SI{\StatVarParaTaskSlopeGapLowS}{\second} and by \num{\StatVarParaTaskSlopeGapHigh} at
 \SI{\StatVarParaTaskSlopeGapHighS}{\second} for paragliders, from
@@ -532,6 +671,29 @@ local slope by \num{\StatVarParaTaskSlopeGapLow} at
 (Figure~\ref{fig:transport}), growing smoothly with no lag at which the measurement becomes
 clean; the ceiling \SI{\StatVarParaFitMaxS}{\second} is set where that separation is still a
 small fraction of what it reaches, leaving a window \StatVarParaFitDecades\ decades wide.
+
+\paragraph{That ceiling belongs to the task, not to the air.}
+Restricted to the open courses, where no course comes home by construction, the same
+order-1 fit runs to \SI{\StatVarParaOpenFitMaxS}{\second} without the curve bending under
+it. For paragliders $\alpha_1$ moves by \StatVarParaOpenAlphaOrderOneShift\ between the two
+windows, from \StatVarParaOpenAlphaOrderOneNarrow\ to \StatVarParaOpenAlphaOrderOneWide,
+and the rms departure from the fitted line grows only from
+\StatVarParaOpenResidOrderOneNarrow\ to \StatVarParaOpenResidOrderOneWide\ dex. The closed
+courses do the opposite over the same lags, moving
+\StatVarParaClosedAlphaOrderOneShift\ and degrading to
+\StatVarParaClosedResidOrderOneWide\ dex from \StatVarParaClosedResidOrderOneNarrow. Over
+the stretch the wider window adds, the open local slope stays between
+\StatVarParaOpenSlopeAddedMin\ and \StatVarParaOpenSlopeAddedMax, and
+\num{\StatVarParaOpenFlightsWideLag} open flights still answer
+\SI{\StatVarParaOpenWideLagS}{\second}, so the added decade is measured rather than
+extrapolated: for paragliders the window is \StatVarParaOpenFitDecades\ decades wide once
+the scoring rule is out of the sample, against \StatVarParaFitDecades\ pooled.
+
+Hang gliders do not earn it. The shift is of the same size,
+\StatVarHangOpenAlphaOrderOneShift, but the open local slope runs from
+\StatVarHangOpenSlopeAddedMin\ to \StatVarHangOpenSlopeAddedMax\ across the added stretch
+and only \num{\StatVarHangOpenFlightsWideLag} flights reach its far end, so the pooled
+ceiling stands for that discipline and the wider window is quoted for paragliders alone.
 
 \paragraph{Four cuts of the ensemble.}
 Table~\ref{tab:strata-alpha} asks whether $\alpha_2$ belongs to the motion or to who is in
@@ -570,17 +732,16 @@ declared task & closed, open & --- & $\StatVarParaTaskGapOrderTwo$ \\
 The cadence cut is a check on the pipeline: across \num{\StatVarParaCadenceStrata} classes
 spanning the whole range of smoothing scales in the archive, the exponent spreads by only
 \StatVarParaCadenceSpreadAlpha, so whatever the estimator is reading, it is not the filter.
-Wing class and season are the heterogeneity confound measured on the ensemble MSD in
-Sec.~\ref{sec:strata-compat} (departures of \SI{\StatPrelimParaClassTypicalDeparturePct}{\percent}
-and \SI{\StatPrelimParaGroupTypicalDeparturePct}{\percent}): here the exponent spreads by
-only \StatVarParaClassSpreadAlpha\ across \num{\StatVarParaClassStrata} wing classes and
-\StatVarParaSeasonSpreadAlpha\ across \num{\StatVarParaSeasonStrata} seasons, since a mixture
-of populations with different speeds and courses is a mixture of trends, and a trend is what
-the second difference removes. The heterogeneity that makes the ensemble estimator unusable
-does not reach this one. The declared task is the largest of the four, at
-$\StatVarParaTaskGapOrderTwo$ for paragliders and $\StatVarHangTaskGapOrderTwo$ for hang
-gliders --- the one cut that divides flights by something other than who was flying --- and
-no entry in the table exceeds the interval the exponent already carries.
+Wing class and season are the heterogeneity confound that separated the ensemble MSD in
+Sec.~\ref{sec:strata-compat} by \SI{\StatPrelimParaClassTypicalDeparturePct}{\percent} and
+\SI{\StatPrelimParaGroupTypicalDeparturePct}{\percent}; here the exponent spreads by only
+\StatVarParaClassSpreadAlpha\ across \num{\StatVarParaClassStrata} wing classes and
+\StatVarParaSeasonSpreadAlpha\ across \num{\StatVarParaSeasonStrata} seasons, because a
+mixture of populations with different speeds and courses is a mixture of trends, and a
+trend is what the second difference removes. The heterogeneity that makes the ensemble
+estimator unusable does not reach this one. The declared task is the largest of the four
+--- the one cut that divides flights by something other than who was flying --- and even
+it stays inside the interval the exponent already carries.
 
 \paragraph{The task stratum and the range term are one effect, not two.}
 The task gap at order two, $\StatVarParaTaskGapOrderTwo$, and the range dependence,
@@ -604,7 +765,9 @@ $\mathrm{RSS}_k$ the fit's residual sum of squares and $p_k$ the number of free 
 at $k$ breaks, but with $n_{\mathrm{eff}}=\StatVarParaDof$ the same effective degrees of
 freedom used throughout this chapter substituted for the \num{\StatVarParaFitLags} nominal
 lags, so a curve whose residuals are correlated cannot buy a break with points it does not
-independently have. This selects \StatVarParaBreaks\ break for paragliders at
+independently have.
+
+This selects \StatVarParaBreaks\ break for paragliders at
 \SI{\StatVarParaBreakOneS}{\second} ---
 separating \StatVarParaSlopeLow\ from \StatVarParaSlopeHigh, bracketing the single-exponent
 value by about the size of the range dependence --- and \StatVarHangBreaks\ for hang
@@ -624,17 +787,6 @@ already shown what a second moment can measure instead of the motion: averaged a
 common origin, it returned the geometry of the launch site. What is wanted is a route to
 the exponent that uses neither a moment nor a common origin.
 
-\paragraph{First-passage times, tried and withdrawn.}
-The first-passage time $T(L)$, the first time a flight is a distance $L$ from take-off,
-gives $\langle T(L)\rangle\sim L^{1/H}$ for a self-similar process~\cite{redner2001}, so its
-slope in the space domain was tried as a cross-check on $\alpha_2$. Read naively it exceeds
-the ballistic value because of right censoring (only the slow minority of flights survive to
-the largest radii); a Kaplan--Meier median removes the bias and lands inside the paraglider
-interval it was meant to test, but moves across sub-ranges of radius by several times that
-interval \impldetails{impl:global}. $T(L)$ is measured from take-off, so it carries the same
-launch-geometry origin into the space domain --- the crossover of Figure~\ref{fig:msd} read
-along the space axis instead of the time axis --- and the check is withdrawn as not
-independent of it.
 
 \paragraph{The propagator of the increments.}
 Write $\Delta\mathbf{r}(t_0,\Delta)=\mathbf{r}(t_0+\Delta)-\mathbf{r}(t_0)$ for the
@@ -649,7 +801,9 @@ for a self-similar process with stationary increments it takes the scaling form
 with $F$ a fixed density independent of the lag. Every quantile of $r$ then grows as
 $\Delta^{H}$: writing $q_p(\Delta)$ for the $p$th quantile, $\log q_p$ against
 $\log\Delta$ is a straight line of slope $H$ at every $p$, fixed by the middle of the
-distribution where every flight contributes and a heavy tail moves it not at all. Neither
+distribution where every flight contributes and a heavy tail moves it not at all.
+
+Neither
 of the two defects of the earlier estimates enters here: no moment for a few large
 increments to set, and no absolute position for the launch site to bias. The four levels
 read are the lower quartile, the median, the upper quartile and the ninetieth percentile,
@@ -734,52 +888,78 @@ paragliders, and from \StatPropHangHurstBulk\ to \StatPropHangHurstFlank\ for ha
 in the same direction in both disciplines, on the modulus and on both components alike,
 and at every native cadence measured (Figure~\ref{fig:propagator}b draws the three
 variables at \SI{\StatPropParaDrawnDtS}{\second}).
+
 Table~\ref{tab:quantileH} gives the four fits one at a time, on the modulus at the fastest
 cadence, each with an error that resamples whole day-and-site clusters rather than trusting
-the lags of the fit to be independent points. That error is small ---
+the lags of the fit to be independent points. That error is small,
 \StatPropParaHurstQuantileErrMax\ at worst for paragliders and
-\StatPropHangHurstQuantileErrMax\ for hang gliders --- and it is small for a reason that
-is not a courtesy of the estimator: \num{\StatPropParaDrawnBlocks} blocks of day-and-site
-clusters over an archive this size leave almost nothing for the sampling to move. The
-comparison that matters is therefore between that error and the spread down the column,
-which is \num{145} and \num{24} times it. The quantiles disagreeing is not sampling
+\StatPropHangHurstQuantileErrMax\ for hang gliders, because \num{\StatPropParaDrawnBlocks}
+blocks of day-and-site clusters over an archive this size leave almost nothing for the
+sampling to move, not because the estimator is forgiving. Against it the spread down the
+column is \num{145} and \num{24} times larger: the quantiles disagreeing is not sampling
 noise, and no error bar of this kind will make it one.
 
-It is worth saying which way that cuts, because the naive alternative points the other
-way. The least-squares error of the same fit is \StatPropParaDrawnHurstErrOls\ and
-\StatPropHangDrawnHurstErrOls, \emph{larger} than the resampled one by up to a factor of
-twenty. That is not the resampling being optimistic: an ordinary least-squares error on a
-log--log fit measures how far the points sit off a straight line, and here they sit off it
-because the relation is genuinely a little curved --- which is the finding of this section,
-not an uncertainty about it. It also treats lags built from the same flights as independent
-observations, which they are not. So neither number is a reason to write the exponent to
-three figures: what limits it is not how well the archive is sampled --- the archive is
-large enough that the sampling error is negligible --- but the systematic spread, across
-the quantiles here, across native cadences (\StatPropParaHurstMin\ to
-\StatPropParaHurstMax\ for paragliders), and with the fitted range in
-Sec.~\ref{sec:transport-measure}. The spread
-across the four quantiles is \StatPropParaQuantileSpread\ and \StatPropHangQuantileSpread,
-against \StatPropCalibSpread\ on an exactly self-similar process fitted the same way with
-less data \impldetails{impl:global}. It is wider on the modulus than on either component
----\StatPropParaQuantileSpreadEast\ east and \StatPropParaQuantileSpreadNorth\ north for
-paragliders, \StatPropHangQuantileSpreadEast\ and \StatPropHangQuantileSpreadNorth\ for
-hang gliders (Figure~\ref{fig:propagator}b)--- and that ordering is the expected one rather
-than a surprise: a small $|\Delta x|$ is not a small displacement, since the wing may be
-going due north, so a component's lower quantiles mix barely moving with moving across the
-axis being read, and flatten the drift by averaging the two. The modulus separates them,
-and reports more of it.
+\begin{figure}[H]
+  \centering
+  \IfFileExists{generated/propagator.pdf}{\includegraphics[width=\linewidth]{generated/propagator}}{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/ch3\_global\_transport/generate\_propagator\_figure.py}.}}}
+  \caption{The exponent read from the distribution of the increments. All seven panels use each discipline's fastest native cadence,
+  \SI{\StatPropParaDrawnDtS}{\second}, where the histograms hold the most increments.
+  \textbf{(a)}~The 25th, 50th, 75th and 90th percentiles against lag, log--log, over the
+  fit window \SIrange{\StatPropParaFitMinS}{\StatPropParaFitMaxS}{\second}, one column for
+  the modulus $|\Delta\mathbf{r}|$ and one for each horizontal component. Four parallel
+  lines would mean one exponent describes every part of that column's distribution.
+  \textbf{(b)}~The slope of each of those four lines, fitted separately, with the modulus
+  and the two components overlaid in one panel. A flat line would
+  mean the same thing as in (a). All three fall from the 25th percentile to the 90th, so
+  the disagreement is not a property of one direction.
+  \textbf{(c)}~The histograms behind each column of (a), rescaled by $\Delta^{H}$, one
+  curve per lag inside the fit window and every third lag drawn. $H=\alpha_2/2$ is not a
+  new fit of these histograms: it is the second-order filtered-variation exponent of
+  Table~\ref{tab:axisroutes}, reused here rather than re-measured so that a collapsed panel
+  and a quoted exponent never disagree about what $H$ is. For paragliders that is
+  \StatVarParaHurstOrderTwo\ (modulus), \StatVarParaHurstOrderTwoEast\ (east),
+  \StatVarParaHurstOrderTwoNorth\ (north), and correspondingly \StatVarHangHurstOrderTwo,
+  \StatVarHangHurstOrderTwoEast, \StatVarHangHurstOrderTwoNorth\ for hang gliders.}
+  \label{fig:propagator}
+\end{figure}
 
-Rescaling the histograms by $\Delta^{H}$ leaves
-\StatPropParaCollapseDex\ and \StatPropHangCollapseDex\ dex of scatter through the bulk ---
-a factor of \StatPropParaCollapseFactor\ and \StatPropHangCollapseFactor\ in the rescaled
-density, close enough that the curves read as one by eye --- with visible separation only
-at the flanks (Figure~\ref{fig:propagator}c). The scaling form is therefore only approximate: the centre
-of the increment distribution spreads faster than its flanks, a distribution changing shape
-with scale rather than a single self-similar one. That qualifies the exponent rather than
-refuting it --- the distance from bulk to flank is small beside the distance of either from
-the Brownian value, and no reading of these curves puts the transport near it --- but it is
-a second reason, independent of the range dependence of $\alpha_2$, why a single exponent
-quoted to three figures would claim more than this archive supports.
+The naive alternative reads the other way. The least-squares error of the same fit is
+\StatPropParaDrawnHurstErrOls\ and \StatPropHangDrawnHurstErrOls, larger than the resampled
+one by up to a factor of twenty, but that is not the resampling being optimistic: an
+ordinary least-squares error on a log--log fit measures how far the points sit off a
+straight line, and here they sit off it because the relation is genuinely a little
+curved --- the finding of this section, not an uncertainty about it --- and because it also
+treats lags built from the same flights as independent observations, which they are not.
+So neither number licenses three figures on the exponent.
+
+What limits it is not the
+sampling, negligible on an archive this size, but the systematic spread: across the
+quantiles here, across native cadences (\StatPropParaHurstMin\ to \StatPropParaHurstMax\
+for paragliders), and with the fitted range of Sec.~\ref{sec:transport-measure}. The
+spread across the four quantiles is \StatPropParaQuantileSpread\ and
+\StatPropHangQuantileSpread, against \StatPropCalibSpread\ on an exactly self-similar
+process fitted the same way with less data \impldetails{impl:global}, and it is wider on
+the modulus than on either component (\StatPropParaQuantileSpreadEast\ east and
+\StatPropParaQuantileSpreadNorth\ north for paragliders, \StatPropHangQuantileSpreadEast\
+and \StatPropHangQuantileSpreadNorth\ for hang gliders, Figure~\ref{fig:propagator}b) ---
+expected rather than a surprise, since a small $|\Delta x|$ is not a small displacement
+when the wing may be going due north: a component's lower quantiles mix barely moving with
+moving across the axis being read and flatten the drift by averaging the two, while the
+modulus keeps them apart.
+
+Rescaling the histograms by $\Delta^{H}$ leaves \StatPropParaCollapseDex\ and
+\StatPropHangCollapseDex\ dex of scatter through the bulk, a factor of
+\StatPropParaCollapseFactor\ and \StatPropHangCollapseFactor\ in the rescaled density, close
+enough that the curves read as one by eye, with visible separation only at the flanks
+(Figure~\ref{fig:propagator}c). The scaling form is therefore only approximate: the centre
+of the increment distribution spreads faster than its flanks, a shape that changes with
+scale rather than staying self-similar. That qualifies the exponent rather than refuting
+it --- bulk and flank sit closer to each other than either does to the Brownian value, and
+no reading of these curves puts the transport near it --- but it is a second reason,
+independent of the range dependence of $\alpha_2$, why a single exponent to three figures
+would claim more than this archive supports.
 
 \begin{table}[htbp]
 \centering\small
@@ -814,34 +994,6 @@ separation of the two. Pooling the components would average that away, which is 
 are kept apart here and in Sec.~\ref{sec:prelim}.
 \end{revblock}
 
-\begin{figure}[htbp]
-  \centering
-  \IfFileExists{generated/propagator.pdf}{\includegraphics[width=\linewidth]{generated/propagator}}{%
-    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/ch3\_global\_transport/generate\_propagator\_figure.py}.}}}
-  \caption{\rev{The exponent read from the distribution of the increments, not from a
-  moment of it. All seven panels use each discipline's fastest native cadence,
-  \SI{\StatPropParaDrawnDtS}{\second}, where the histograms hold the most increments.
-  \textbf{(a)}~The 25th, 50th, 75th and 90th percentiles against lag, log--log, over the
-  fit window \SIrange{\StatPropParaFitMinS}{\StatPropParaFitMaxS}{\second}, one column for
-  the modulus $|\Delta\mathbf{r}|$ and one for each horizontal component. Four parallel
-  lines would mean one exponent describes every part of that column's distribution.
-  \textbf{(b)}~The slope of each of those four lines, fitted separately, with the modulus
-  and the two components overlaid in one panel rather than split into columns --- it is
-  already the comparison across variables that (a) and (c) split apart. A flat line would
-  mean the same thing as in (a). All three fall from the 25th percentile to the 90th, so
-  the disagreement is not a property of one direction.
-  \textbf{(c)}~The histograms behind each column of (a), rescaled by $\Delta^{H}$, one
-  curve per lag inside the fit window and every third lag drawn. $H$ is that column's own
-  value: \StatPropParaDrawnHurst\ (modulus), \StatPropParaDrawnHurstEast\ (east),
-  \StatPropParaDrawnHurstNorth\ (north) for paragliders, and correspondingly
-  \StatPropHangDrawnHurst, \StatPropHangDrawnHurstEast, \StatPropHangDrawnHurstNorth\ for
-  hang gliders --- not a value shared across columns, since $H$ differs by component. If
-  the scaling form held exactly the curves of one column would lie on top of one another;
-  they do through the bulk and separate at the flanks, in every column.}}
-  \label{fig:propagator}
-\end{figure}
-
 \section{The exponent, split by component}
 \label{sec:transport-axisroutes}
 \begin{revblock}
@@ -874,12 +1026,14 @@ to be averaged into the bracket of Sec.~\ref{sec:transport-propagator}.
 \ifrevmode\color{revblue}\fi
 \renewcommand{\arraystretch}{1.2}
 \caption{\rev{$H$ by component, on every route besides the quantiles that reads one axis
-at a time. The time average and the two filtered-variation orders are fitted over
+at a time. The two filtered-variation orders are fitted over
 \SIrange{\StatVarParaFitMinS}{\StatVarParaFitMaxS}{\second}, the window
-Table~\ref{tab:threeroutes} uses; the ensemble row is fitted on its own, coverage-limited
+Table~\ref{tab:threeroutes} uses. The time average is fitted on its own fixed range,
+\SIrange{\StatMsdTaParaFitMinS}{\StatMsdTaParaFitMaxS}{\second} for both disciplines
+(Sec.~\ref{sec:obs-global}). The ensemble row is fitted on its own, coverage-limited
 range instead --- \SIrange{\StatMsdParaFitMinS}{\StatMsdParaFitMaxS}{\second} for
 paragliders, \SIrange{\StatMsdHangFitMinS}{\StatMsdHangFitMaxS}{\second} for hang gliders
-(Sec.~\ref{sec:obs-global}) --- and is not on the same footing as the three below it.}}
+--- and is not on the same footing as the three below it.}}
 \label{tab:axisroutes}
 \begin{tabular}{@{}l l c c@{}}
 \toprule
@@ -959,7 +1113,9 @@ Write
 and read $q\nu(q)$ as a function of $q$. A self-similar monofractal process gives a straight
 line through the origin with $\nu(q)$ constant; a L\'evy walk --- flight durations drawn
 from a power-law tail, each traversed at finite speed --- gives a bilinear one, with a knee
-at its tail index and a ballistic right-hand branch of slope one. Over
+at its tail index and a ballistic right-hand branch of slope one.
+
+Over
 \SIrange{\StatShapeParaFitMinS}{\StatShapeParaFitMaxS}{\second}, on \num{\StatShapeParaLags}
 lags and $q$ from \StatShapeParaQMin\ to \StatShapeParaQMax, the spectrum is straight
 (Figure~\ref{fig:shape}a): $\nu(q)$ varies by \StatShapeParaNuSpread\ for paragliders and
@@ -967,14 +1123,38 @@ lags and $q$ from \StatShapeParaQMin\ to \StatShapeParaQMax, the spectrum is str
 and $\StatShapeHangLinearSlope$, and the rms departure of $q\nu(q)$ from a line through the
 origin, \StatShapeParaLinearDeparture\ and \StatShapeHangLinearDeparture, sits an order of
 magnitude below what a L\'evy walk's knee leaves on this grid and range of $q$
-\impldetails{impl:global}. The moments are estimable rather than merely computed: the share
+\impldetails{impl:global}.
+
+The moments are estimable rather than merely computed: the share
 of each moment carried by the largest hundredth of its increments reaches
 \SI{\StatShapeParaTailMaxPct}{\percent} at worst for paragliders and
 \SI{\StatShapeHangTailMaxPct}{\percent} for hang gliders (Figure~\ref{fig:shape}b), well
 short of the half that would make a moment a statement about a few flights rather than an
-estimate. On the whole trajectory, unsegmented, the archive does not support the L\'evy walk
+estimate.
+
+On the whole trajectory, unsegmented, the archive does not support the L\'evy walk
 this thesis was framed around, and what the spectrum leaves standing is a monofractal
 process: a single exponent governing every moment over the range read.
+
+\begin{figure}[H]
+  \centering
+  \IfFileExists{generated/shape.pdf}{\includegraphics[width=\linewidth]{generated/shape}}{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/ch3\_global\_transport/generate\_shape\_figure.py}.}}}
+  \caption{\rev{What the second moment cannot say. (a)~Moment spectrum $q\nu(q)$, straight
+  line dashed: straight means one exponent for every moment. (b)~Share of each moment
+  carried by the largest \SI{1}{\percent} of increments, against the same share on a
+  simulated isotropic Gaussian (dashed): the archives track it closely at low $q$ and sit
+  slightly below it at $q=4$, the moment the pooled fourth-moment ratio is built from.
+  (c)~Non-Gaussian parameter (Mardia's kurtosis excess, Eq.~\eqref{eq:nongauss}) against
+  lag, zero marked for a Gaussian propagator; the shaded band is
+  \SIrange{\StatShapeParaNonGaussMinS}{\StatShapeParaNonGaussMaxS}{\second}, the window
+  every exponent in this chapter is fitted on, and the only one the value is quoted over ---
+  the climb beyond it is drawn but not read, since there the declared task governs the
+  trajectory and the fourth moment is carried by the fewest flights. (d)~Velocity
+  autocorrelation, log--log, fitted tail dashed.}}
+  \label{fig:shape}
+\end{figure}
 
 The previous section's quantile fit found that $H$ falls from bulk to flank rather than
 holding a single slope, which looks in tension with a straight spectrum. The two are
@@ -987,86 +1167,100 @@ two figures against the spread of $\nu(q)$ (\StatShapeParaNuSpread, \StatShapeHa
 though only the ordering is established, not a derived bound; the refusal of the L\'evy walk
 is untouched either way, since the departure a knee would leave exceeds both.
 
-What survives is a monofractal process, one exponent for every moment over the range read,
-which fixes how the increment distribution scales and says nothing about its shape.
+\paragraph{The drift runs the wrong way for a L\'evy walk.}
+Its \emph{direction} points the same way as the spectrum. A L\'evy walk carries a ballistic
+front, so its largest displacements grow with the lag faster than its bulk does and the
+flank exponent would sit above the bulk one. The measured ordering is the reverse, $H$
+falling from \StatPropParaHurstBulk\ at bulk to \StatPropParaHurstFlank\ at flank for
+paragliders and from \StatPropHangHurstBulk\ to \StatPropHangHurstFlank\ for hang gliders.
+The ninetieth percentile is not the front, whose weight decays with the lag, so this
+corroborates the moment spectrum rather than testing the walk a second time.
 \end{revblock}
-
-\begin{figure}[htbp]
-  \centering
-  \IfFileExists{generated/shape.pdf}{\includegraphics[width=\linewidth]{generated/shape}}{%
-    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/ch3\_global\_transport/generate\_shape\_figure.py}.}}}
-  \caption{\rev{What the second moment cannot say. (a)~Moment spectrum $q\nu(q)$, straight
-  line dashed: straight means one exponent for every moment. (b)~Share of each moment
-  carried by the largest \SI{1}{\percent} of increments. (c)~Non-Gaussian parameter against
-  lag, Gaussian and L\'evy-walk values marked. (d)~Velocity autocorrelation, log--log, fitted
-  tail dashed.}}
-  \label{fig:shape}
-\end{figure}
 
 \section{The propagator is not Gaussian}
 \label{sec:transport-gaussian}
 \begin{revblock}
+\paragraph{The estimator: excess kurtosis, not an ad hoc ratio.}
 A straight moment spectrum says that one exponent governs every moment of the increment
 distribution. It fixes how that distribution \emph{scales} and says nothing about its
 \emph{shape}, so calling the process a correlated Gaussian motion does not follow from it.
-The fourth and second moments already accumulated settle the shape directly, through the
-non-Gaussian parameter
+Gaussianity is a question about kurtosis, and the increment here is a two-dimensional
+vector rather than a scalar, so the estimator is Mardia's multivariate kurtosis excess of
+the joint $(\Delta x,\Delta y)$ distribution~\cite{mardia1970},
 \begin{equation}
-  \alpha_2^{\mathrm{NG}}(\Delta)=
-  \frac{\big\langle|\Delta\mathbf{r}(\Delta)|^{4}\big\rangle}
-       {2\,\big\langle|\Delta\mathbf{r}(\Delta)|^{2}\big\rangle^{2}}-1 ,
+  \alpha_2^{\mathrm{NG}}(\Delta) = \mathbb{E}\!\big[Q(\Delta)^2\big] - d(d+2),
+  \qquad Q=\Delta\mathbf{r}^{\!\top}\hat\Sigma^{-1}\Delta\mathbf{r},\quad d=2,
   \label{eq:nongauss}
 \end{equation}
-evaluated on the increment over a lag $\Delta$ rather than the displacement from take-off,
-normalised so it vanishes for a Gaussian propagator and is positive for heavier-than-Gaussian
-tails. The superscript distinguishes it from the filtered-variation exponent $\alpha_2$, an
-unrelated quantity that happens to share the symbol at filter order $p=2$.
+$Q$ the squared Mahalanobis distance under the pooled sample covariance $\hat\Sigma$ of the
+increment. Every bivariate Gaussian gives $\alpha_2^{\mathrm{NG}}=0$, whatever its
+covariance --- unlike a plain ratio of moments, which is only zero for an \emph{isotropic}
+Gaussian and would need correcting on an archive Sec.~\ref{sec:prelim} already measures as
+anisotropic. The superscript keeps it apart from the filtered-variation exponent $\alpha_2$,
+an unrelated quantity that happens to share the symbol at filter order $p=2$.
 
+\paragraph{An interior maximum, and the one scale in the chapter.}
 Over \SIrange{\StatShapeParaNonGaussMinS}{\StatShapeParaNonGaussMaxS}{\second} the median
 value is \StatShapeParaNonGaussMedian\ for paragliders and \StatShapeHangNonGaussMedian\ for
 hang gliders. Neither is flat: both rise to an interior maximum and fall back ---
 \StatShapeParaNonGaussPeak\ at \SI{\StatShapeParaNonGaussPeakS}{\second} for paragliders and
 \StatShapeHangNonGaussPeak\ at \SI{\StatShapeHangNonGaussPeakS}{\second} for hang gliders,
-monotone over seven or more consecutive lags on each side, a shape and not scatter. A maximum
-at two to four hundred seconds is a scale the chapter has otherwise found none of: it is the
-lag where the \emph{shape} of the increment distribution departs furthest from Gaussian,
-smaller below it (increments are averages over a smoothing window and a few heading changes)
-and above it (a central-limit Gaussianisation begins to act). Reported against processes of
-known shape, both archives are non-Gaussian and neither is close to a L\'evy walk: on an
-exact fractional Brownian motion the same estimator returns a small positive value at a
-matched sample size, collapsing towards zero as the sample grows, while on a L\'evy walk it
-returns a figure far above either archive's and does not move with the sample
-\impldetails{impl:global}. The two archives do not overlap at any lag in the window, a
-separation larger than the movement either curve shows across it, acting more strongly on
-the smaller, faster discipline by the ratio of the two median ground speeds
-(Sec.~\ref{sec:transport-kinematics}).
+monotone over seven or more consecutive lags on each side, a shape and not scatter. A
+maximum at two to four hundred seconds is a scale the chapter has otherwise found none of:
+smaller below it (increments are averages over a smoothing window and a few heading
+changes) and above it (a central-limit Gaussianisation begins to act). The two archives do
+not overlap at any lag in the window, acting more strongly on the smaller, faster
+discipline by the ratio of the two median ground speeds (Sec.~\ref{sec:transport-kinematics}).
+
+\paragraph{The two components, read separately.}
+A single component is a scalar, so the classical univariate excess kurtosis applies to it
+directly: $\langle\Delta x^4\rangle/\langle\Delta x^2\rangle^2-3$, the same construction as
+Eq.~\eqref{eq:nongauss} at $d=1$, reported per component the way
+Sec.~\ref{sec:transport-axisroutes} reports every other estimator, since pooling
+presupposes an isotropy this archive lacks. For paragliders the median is
+\StatShapeParaKurtEastMedian\ east and \StatShapeParaKurtNorthMedian\ north: the north
+component alone is \emph{sub}-Gaussian while the joint distribution is not, since a
+component's kurtosis and the joint Mardia excess are different statistics of the same
+increments and need not agree in sign. Hang gliders move the same way but do not cross
+zero: \StatShapeHangKurtEastMedian\ east and \StatShapeHangKurtNorthMedian\ north. The
+anisotropy Sec.~\ref{sec:prelim} measures in amplitude and Sec.~\ref{sec:transport-propagator}
+measures in exponent reaches the shape of the propagator as well.
 
 \paragraph{The pooled parameter is a width mixture, not a tail.}
 The value is pooled by construction: the moments are accumulated over every flight before
 any ratio is taken, so it is a property of the whole population of increments and not of
-any flight's own propagator. Writing $S_f$ for a flight's own second moment and $a_f$ for
-its own non-Gaussian parameter,
+any flight's own propagator. Writing $S_f$ for a flight's own second moment (its trace,
+$\langle|\Delta\mathbf{r}|^2\rangle$) and $a_f$ for its own Mardia excess, pooling a
+population of flights that are each exactly Gaussian but differ in amplitude gives
 \begin{equation}
-  1 + \alpha^{\mathrm{NG}}_{\text{pooled}}
-    = \frac{\mathbb{E}_n\!\left[(1 + a_f)\,S_f^{2}\right]}{\mathbb{E}_n[S_f]^{2}} .
+  d(d+2) + \alpha^{\mathrm{NG}}_{\text{pooled}}
+    = d(d+2)\,\frac{\mathbb{E}_n\!\left[(1 + a_f/d(d+2))\,S_f^{2}\right]}{\mathbb{E}_n[S_f]^{2}} ,
   \label{eq:pooled-nongauss}
 \end{equation}
-Setting every $a_f$ to zero --- every flight exactly Gaussian --- leaves
-$\mathrm{CV}^{2}(S_f)$, the excess a population of Gaussian flights of differing amplitude
-produces on its own; that null is \emph{above} the measurement at every one of
-\num{\StatShapeParaNullLags} lags for paragliders and \num{\StatShapeHangNullLags} for hang
-gliders. Subtracting it, the within-flight excess is \emph{negative} ---
-\StatShapeParaWithinFlight\ and \StatShapeHangWithinFlight\ in the median --- so a flight's
-own increment distribution is flatter than Gaussian, not heavy-tailed, which is what a wing
-holding a characteristic airspeed should give. This changes what the number means rather
+an identity rather than an approximation, with the expectations weighted by the number of
+windows each flight supplies. Every flight is exactly Gaussian when $a_f=0$: setting it so
+leaves $d(d+2)\big(1+\mathrm{CV}^2(S_f)\big)$, the excess a population of Gaussian flights
+of differing amplitude produces on its own, a scale-mixture null verified against synthetic
+anisotropic, correlated Gaussian data before being trusted here \impldetails{impl:global}.
+At $d=2$ that null is $8\,\mathrm{CV}^2(S_f)$, and it is \emph{above} the measurement at
+every one of \num{\StatShapeParaNullLags} lags for paragliders and
+\num{\StatShapeHangNullLags} for hang gliders. Subtracting it, the within-flight excess is
+\emph{negative}: \StatShapeParaWithinFlight\ and \StatShapeHangWithinFlight\ in the median,
+so a flight's own increment distribution is flatter than Gaussian, not heavy-tailed, which
+is what a wing holding a characteristic airspeed should give.
+
+This changes what the number means rather
 than what it is: the pooled propagator genuinely is not Gaussian, because a mixture of
 Gaussians of differing width is not one, but the excess is the width mixture and not a tail,
 and what has to be reproduced is the between-flight amplitude spread,
 $\mathrm{CV}(S_f)=\StatShapeParaAmplitudeCv$ against $\StatShapeHangAmplitudeCv$ at
 \SI{\StatShapeParaNullFloorS}{\second}. The refusal of the L\'evy walk is untouched, resting
-on the moment spectrum, measured per lag and not pooled across flights of different
-amplitude.
+on the moment spectrum (Fig.~\ref{fig:shape}a), measured per lag and not pooled across
+flights of different amplitude; a Mardia excess has no single value on a synthetic L\'evy
+walk to compare against either, since it turns negative at short lag and swings by an order
+of magnitude between seeds at long lag on the same protocol \impldetails{impl:global} ---
+a heavy-tailed process the fourth moment itself struggles to certify, which is exactly why
+that question is decided by the spectrum and not asked twice of this panel.
 
 Beyond the fitted range $\alpha_2^{\mathrm{NG}}$ climbs, to \StatShapeParaNonGaussBeyond\ and
 \StatShapeHangNonGaussBeyond\ at the longest lags of panel~(c): reported and not quoted,
@@ -1079,6 +1273,7 @@ heavy as it is measured to be.
 \section{The memory of the heading}
 \label{sec:transport-memory}
 \begin{revblock}
+\paragraph{The estimator.}
 Writing $\delta\mathbf{v}$ for the horizontal velocity fluctuation about a record's own
 mean, the velocity autocorrelation is
 \begin{equation}
@@ -1087,10 +1282,9 @@ mean, the velocity autocorrelation is
   \label{eq:vacf}
 \end{equation}
 normalised so that $C(0)=1$, with the flown course, which would otherwise hold every lag
-up, removed before the average is taken. It is computed within a retained segment and never
-across the gap that ends one (Sec.~\ref{sec:uniform}), by the Fourier identity rather than
-by a double loop, and averaged across records at each lag of the grid the moments use
-\impldetails{impl:global}.
+up, removed before the average is taken. It keeps to the same segment rule as before, is
+computed by the Fourier identity rather than by a double loop, and is averaged across
+records at each lag of the grid the moments use \impldetails{impl:global}.
 
 \paragraph{Positive at every lag, and small at the first.}
 $C$ is positive throughout Figure~\ref{fig:shape} and changes sign nowhere on the grid:
@@ -1098,7 +1292,9 @@ $C=\StatShapeParaVacfAtFloor$ for paragliders at the floor and $\StatShapeHangVa
 for hang gliders, decaying from there without a zero crossing. A single circling wing would
 produce a sign change, its velocity pointing the other way half a turn later, but an ensemble
 of them does not: radius and phase disperse across flights, so the average of many circles
-cannot go negative even when every record in it turns. What survives an average is the
+cannot go negative even when every record in it turns.
+
+What survives an average is the
 shape, not the sign --- a minimum at half a period and a maximum at the period --- and both
 are there, below the first lag Figure~\ref{fig:shape} plots. Measured at native cadence on the
 \SI{1}{\hertz} segments, $C$ falls to \StatCirclingParaTrough\ at
@@ -1110,6 +1306,7 @@ sitting at half the maximum's lag in both disciplines --- the circle, not a coin
 estimator, and nowhere near zero. So the unsegmented ensemble already carries the circling,
 with a period of \SIrange{\StatCirclingHangCrestS}{\StatCirclingParaCrestS}{\second}, which a
 phase decomposition in Chapter~\ref{ch:phases} can be held to rather than asked to invent.
+
 And $C$ is already small at the bottom of the fitted grid, falling below $1/e$ by
 \SI{\StatShapeParaVacfDecayS}{\second} for paragliders and
 \SI{\StatShapeHangVacfDecayS}{\second} for hang gliders, within its first lags --- a property
@@ -1130,7 +1327,9 @@ $C(\tau)\sim\tau^{-\gamma}$ with $\gamma<1$ has no finite integral and gives
 $\langle|\Delta\mathbf{r}|^{2}\rangle\sim\Delta^{\,2-\gamma}$ across the window however small
 $C$ has already become, while $\gamma>1$ gives diffusive motion beyond the correlation time
 whatever $C$ is worth at the floor; multiplying $C$ by a constant moves every value on it and
-leaves $\gamma$ where it was. A single power law fitted to
+leaves $\gamma$ where it was.
+
+A single power law fitted to
 \SIrange{\StatShapeParaVacfTailMinS}{\StatShapeParaVacfTailMaxS}{\second} gives
 $\gamma=\StatShapeParaVacfTailGamma$ for paragliders and \StatShapeHangVacfTailGamma\ for
 hang gliders, but that fit is itself an arch, the local slope running from
@@ -1138,7 +1337,9 @@ hang gliders, but that fit is itself an arch, the local slope running from
 What the argument needs is not the fitted value: \emph{every} local slope is below unity, in
 both disciplines and at all \num{\StatShapeParaVacfTailLags} lags, so non-integrability holds
 pointwise rather than on a fitted average --- the stronger statement, and one that does not
-depend on the tail being a power law at all \impldetails{impl:global}. Two features of the
+depend on the tail being a power law at all \impldetails{impl:global}.
+
+Two features of the
 estimate push $\gamma$ up rather than down (a mean velocity estimated from the same record
 pulls the tail towards zero, and the first decade of the integral in
 Eq.~\eqref{eq:green-kubo} lies below the grid), so the exponent $2-\gamma$ implied for the
@@ -1159,7 +1360,9 @@ falling within $\pi/6$ of the previous heading; restricted to matched \SI{1}{\he
 the medians are \SI{\StatKinParaAngleMedianOneHzDeg}{\degree} and
 \SI{\StatKinHangAngleMedianOneHzDeg}{\degree}, so the gap between disciplines survives
 matching, losing about a quarter of its size. Memoryless reorientation, a right-angle median,
-is nowhere near. A wing that changes heading by \SI{\StatKinParaAngleMedianDeg}{\degree} at a
+is nowhere near.
+
+A wing that changes heading by \SI{\StatKinParaAngleMedianDeg}{\degree} at a
 time is a correlated walk, and a positive $C(\tau)$, a non-integrable tail, and increments
 still correlated at \SI{\StatVarParaFitMaxS}{\second} are the ensemble consequences of the
 same forward peak --- the warrant for the persistent random walk of Sec.~\ref{sec:modelling}.
@@ -1175,6 +1378,7 @@ conditioned on phase are where this result has to reappear.
 \section{Speed and vertical velocity}
 \label{sec:transport-kinematics}
 \begin{revblock}
+\paragraph{The two marginals.}
 The horizontal speed and the vertical velocity are marginals of the smoothed kinematics of
 Sec.~\ref{sec:savgol}, taken over every retained in-segment fix, accumulated in the same
 streaming pass that builds the increment histograms of Sec.~\ref{sec:transport-propagator}
@@ -1215,7 +1419,9 @@ climbing fraction & \SI{\StatKinParaClimbingPct}{\percent} & \SI{\StatKinHangCli
 The disciplines separate at every speed percentile, the hang-glider median lying above the
 paraglider ninetieth percentile, and both ninety-ninth percentiles sit well inside their
 fix-level bound. The vertical velocity is centred just below zero and stays inside its
-bound at both ends. \flow{Writing $f_\uparrow$ for the climbing
+bound at both ends.
+
+\flow{Writing $f_\uparrow$ for the climbing
 fraction of a flight and $\langle\dot z\rangle_\uparrow$, $\langle\dot z\rangle_\downarrow$
 for the mean climb and sink rates, a flight that ends near the altitude it began at has
 $\int\dot z\,\mathrm{d}t\approx0$, i.e.
@@ -1227,7 +1433,9 @@ $\int\dot z\,\mathrm{d}t\approx0$, i.e.
   \frac{|\langle\dot z\rangle_\downarrow|}{\langle\dot z\rangle_\uparrow},
   \label{eq:climb-balance}
 \end{equation}
-the climbing share required near a half whenever the two rates are comparable.} Over the
+the climbing share required near a half whenever the two rates are comparable.}
+
+Over the
 median flight of \SI{\StatPrelimParaMedianDurH}{\hour} and \SI{\StatPrelimHangMedianDurH}{\hour}
 (Sec.~\ref{sec:prelim}) both measured shares fall just short of a half --- the same fact as
 the negative median, since the wing spends more of its time sinking and its mean rate of
@@ -1248,35 +1456,37 @@ the launch geometry into the space domain.
 \section{What this establishes, and what the segmentation receives}
 \label{sec:transport-verdict}
 \begin{revblock}
-Over \SIrange{\StatVarParaFitMinS}{\StatVarParaFitMaxS}{\second}, measured within a retained
-segment by an estimator that annihilates a polynomial trend rather than estimating one,
-cross-country soaring gives
-$\alpha_2=\StatVarParaAlphaOrderTwo\pm\StatVarParaAlphaOrderTwoErr$ for paragliders and
-$\StatVarHangAlphaOrderTwo\pm\StatVarHangAlphaOrderTwoErr$ for hang gliders, on
-\num{\StatMsdParaFlights} and \num{\StatMsdHangFlights} flights. The wing classes that
-depart from the pooled ensemble MSD by
-\SI{\StatPrelimParaClassTypicalDeparturePct}{\percent} (Sec.~\ref{sec:strata-compat}) move this
-exponent by \StatVarParaClassSpreadAlpha; native cadence, across a factor of ten in the
-scale below which the trajectory has been smoothed, moves it by
-\StatVarParaCadenceSpreadAlpha, season by \StatVarParaSeasonSpreadAlpha, and the declared
-task by $\StatVarParaTaskGapOrderTwo$, the largest of the four. The two disciplines agree
-within their uncertainties, which is not guaranteed: they differ in speed and in glide
-ratio.
+Over \SIrange{\StatVarParaFitMinS}{\StatVarParaFitMaxS}{\second}, measured within a segment, cross-country soaring gives
+$\alpha_1=\StatVarParaAlphaOrderOne\pm\StatVarParaAlphaOrderOneErr$
+($H=\StatVarParaHurstOrderOne$) for paragliders and
+$\StatVarHangAlphaOrderOne\pm\StatVarHangAlphaOrderOneErr$
+($H=\StatVarHangHurstOrderOne$) for hang gliders, on
+\num{\StatMsdParaFlights} and \num{\StatMsdHangFlights} flights; on the open courses alone
+the same fit holds out to \SI{\StatVarParaOpenFitMaxS}{\second},
+\StatVarParaOpenFitDecades\ decades (Sec.~\ref{sec:transport-measure}). Filtering the
+course out of the same trajectories moves it to
+$\alpha_2=\StatVarParaAlphaOrderTwo\pm\StatVarParaAlphaOrderTwoErr$ and
+$\StatVarHangAlphaOrderTwo\pm\StatVarHangAlphaOrderTwoErr$, which measures the size of the
+course contribution rather than redetermining the transport. Of the four cuts in
+Table~\ref{tab:strata-alpha}, the declared task moves it most, by
+$\StatVarParaTaskGapOrderTwo$; wing class, native cadence and season move it least. The two
+disciplines agree within their uncertainties, which is not guaranteed: they differ in
+speed and in glide ratio.
 
 \paragraph{The class of process.}
 Table~\ref{tab:fingerprint} collects every global number this chapter measures on the
 unsegmented trajectory. Read together they fix a class rather than a list: over this window
-the archive is a monofractal (one exponent for every moment, no Lévy knee), non-Gaussian
+the archive is a monofractal (one exponent for every moment, no L\'evy knee), non-Gaussian
 propagator (a between-flight width mixture, not a heavy tail within one record),
 directionally persistent motion (a non-integrable velocity memory, forward-peaked turning)
 that is never isotropic enough to summarise with one component instead of two --- neither
-the Lévy walk this thesis was framed around nor a Gaussian one.
+the L\'evy walk this thesis was framed around nor a Gaussian one.
 
 \begin{table}[htbp]
 \centering\small
 \ifrevmode\color{revblue}\fi
 \renewcommand{\arraystretch}{1.25}
-\caption{\rev{The process, in eight numbers: every global quantity this chapter measures on
+\caption{\rev{The process, in nine numbers: every global quantity this chapter measures on
 the unsegmented trajectory, over \SIrange{\StatVarParaFitMinS}{\StatVarParaFitMaxS}{\second}.
 Together they fix what the transport class is and rule out what it is not; each is measured
 and qualified in the section of the same name earlier in this chapter.}}
@@ -1285,10 +1495,13 @@ and qualified in the section of the same name earlier in this chapter.}}
 \toprule
 \textbf{Property} & \textbf{paragliders} & \textbf{hang gliders} & \textbf{reads as} \\
 \midrule
-transport exponent $\alpha_2=2H$
-  & \StatVarParaAlphaOrderTwo\,$\pm$\,\StatVarParaAlphaOrderTwoErr
-  & \StatVarHangAlphaOrderTwo\,$\pm$\,\StatVarHangAlphaOrderTwoErr
+transport exponent $\alpha_1=2H$
+  & \StatVarParaAlphaOrderOne\,$\pm$\,\StatVarParaAlphaOrderOneErr
+  & \StatVarHangAlphaOrderOne\,$\pm$\,\StatVarHangAlphaOrderOneErr
   & super-diffusive \\
+course contribution $\alpha_1-\alpha_2$
+  & \StatVarParaDriftShare & \StatVarHangDriftShare
+  & course suppresses $\alpha_1$ \\
 $H$ bracket, 3 routes
   & \StatVarParaHurstOrderOne--\StatVarParaHurstOrderTwo
   & \StatVarHangHurstOrderOne--\StatVarHangHurstOrderTwo
@@ -1319,44 +1532,35 @@ anisotropy, exponent
 
 \paragraph{The limits.}
 The window is \StatVarParaFitDecades\ decades wide, and neither end is set by the size of
-the archive. Below it the trajectory has been smoothed over a window whose floor is
-\PreprocSavgolMinWindow\ samples and which therefore scales with the logger's cadence
-(Sec.~\ref{sec:savgol}); nothing below that scale is read as motion. Above it the declared
-task governs the displacement, the separation between closed and open courses in the local
-slope growing from \num{\StatVarParaTaskSlopeGapLow} at
-\SI{\StatVarParaTaskSlopeGapLowS}{\second} to \num{\StatVarParaTaskSlopeGapHigh} at
-\SI{\StatVarParaTaskSlopeGapHighS}{\second}. Inside the window the scaling form is only
-approximate: $H$ falls from \StatPropParaHurstBulk\ at the bulk of the increment
-distribution to \StatPropParaHurstFlank\ at its flank, a spread across the quantiles of
-\StatPropParaQuantileSpread\ and \StatPropHangQuantileSpread\ against \StatPropCalibSpread\
-on an exactly self-similar process measured the same way. The exponent itself moves by
-\StatVarParaAlphaOrderTwoErrRange\ when the fitted range is halved, against
-\StatVarParaAlphaOrderTwoErrSampling\ from resampling at the day and site, and the
-\num{\StatVarParaFitLags} lags of the fit carry no more than \StatVarParaDof\ effective
-degrees of freedom, a budget for one exponent and not for a count of regimes. That the
-transport is characterised by $\alpha=\StatVarParaAlphaOrderTwo$ is therefore a different,
-stronger statement than the effective exponent quoted above, and the range dependence and
-the quantile spread are each enough to withhold it. The window will not widen with more
-data: a soaring day ends, so the upper cutoff follows from the system rather than the
-method.
+the archive: below it the smoothing floor of Sec.~\ref{sec:savgol} governs, above it the
+declared task (Sec.~\ref{sec:transport-measure}). Inside the window the scaling form is
+only approximate (Sec.~\ref{sec:transport-propagator}), and the fitted exponent moves with
+the range by more than it moves under resampling (Sec.~\ref{sec:transport-measure}): each
+of the two is on its own enough to withhold three-figure precision, so that transport is
+characterised by $\alpha=\StatVarParaAlphaOrderTwo$ is a different, stronger statement than
+the effective exponent quoted above. The window will not widen with more data: a soaring
+day ends, so the upper cutoff follows from the system rather than the method.
 
 \paragraph{What was withdrawn.}
-Four measurements are withdrawn. The ensemble MSD about take-off yields a timescale instead
-of an exponent: displacement from the launch site crosses over where the population leaves
-its launch area, at a median of \SI{\StatAuditParaDepartureMedianS}{\second} for paragliders
-and \SI{\StatAuditHangDepartureMedianS}{\second} for hang gliders on the first crossing of
-\SI{\StatAuditParaDepartureRadiusKm}{\kilo\metre}. The first-passage time was brought in as a
-route to $H$ in the space domain and withdrawn when its exponent moved across sub-ranges of
-radius by more than the uncertainty it was meant to check; what it bought is the sharpest
-evidence that the ensemble curve's failure belongs to the common origin rather than the time
-axis, since exchanging the time axis for a radius reproduces it \impldetails{impl:global}.
-The sign-run count on the MSD residuals is kept as a description of how those residuals are
-arranged and withdrawn as a test, every lag of that curve being an average over the same
-flights; what carries the claim instead is the size of the residual against the standard
-error on each lag. And the reading of a straight moment spectrum as a Gaussian propagator is
-withdrawn, one exponent for every moment being a statement about how the distribution scales
-and none about its shape; what it bought is the non-Gaussian parameter, computed from
-moments the spectrum had already accumulated.
+Four measurements are withdrawn, each kept as a diagnostic rather than a result.
+\begin{enumerate}[label=(\arabic*), itemsep=3pt, topsep=5pt]
+  \item \emph{The ensemble MSD about take-off} yields a timescale instead of an exponent:
+        displacement from the launch site crosses over where the population leaves its
+        launch area (Sec.~\ref{sec:obs-global}).
+  \item \emph{The first-passage time}, brought in as a route to $H$ in the space domain,
+        was withdrawn when its exponent moved across sub-ranges of radius by more than the
+        uncertainty it was meant to check, but it did show that the ensemble curve's failure
+        travels with the common origin rather than the time axis, since exchanging time for
+        radius reproduces it (Sec.~\ref{sec:transport-propagator}) \impldetails{impl:global}.
+  \item \emph{The sign-run count on the MSD residuals} is kept as a description of how those
+        residuals are arranged and withdrawn as a test, every lag of that curve being an
+        average over the same flights; the size of the residual against the standard error
+        on each lag carries the claim instead.
+  \item \emph{A straight moment spectrum} is not read as a Gaussian propagator: it states
+        how the distribution scales and nothing about its shape, which the non-Gaussian
+        parameter measures instead, from moments the spectrum had already accumulated
+        (Sec.~\ref{sec:transport-gaussian}).
+\end{enumerate}
 
 \paragraph{The hand-over.}
 Chapter~\ref{ch:phases} inherits a class of transport and five constraints on how it may be
@@ -1375,30 +1579,34 @@ decomposed.
         transport, asserting no decomposition of an exponent into phase exponents, only that
         the arithmetic closes; a recombination that misses the pooled value is evidence
         about the segmentation and is to be read that way before it is read as physics.
-  \item The two horizontal components are analysed separately and never pooled. They are
-        incompatible in amplitude (Sec.~\ref{sec:prelim}) and differ in exponent:
-        $H=\StatPropParaHurstEast$ east against \StatPropParaHurstNorth\ north for
-        paragliders, and \StatPropHangHurstEast\ against \StatPropHangHurstNorth\ for hang
-        gliders. Pooling presupposes an isotropy this ensemble does not have.
-        Sec.~\ref{sec:transport-axisroutes} puts the same split through the time average
-        and both filtered-variation orders and finds the same ordering; the pooled
-        quantile route is not the only estimator that sees it.
-  \item The pooled non-Gaussian parameter is $\StatShapeParaNonGaussMedian$ for paragliders
-        and $\StatShapeHangNonGaussMedian$ for hang gliders, and against a matched Gaussian
-        null both sit \emph{below} it, by $\StatShapeParaWithinFlight$ and
-        $\StatShapeHangWithinFlight$. What is handed on is therefore a between-flight
-        amplitude spread and not an increment tail: $\mathrm{CV}(S_f) =
-        \StatShapeParaAmplitudeCv$ against $\StatShapeHangAmplitudeCv$ at
-        \SI{\StatShapeParaNullFloorS}{\second}. A phase decomposition has to produce that
+  \item The two horizontal components are analysed separately and never pooled: they are
+        incompatible in amplitude (Sec.~\ref{sec:prelim}) and differ in exponent
+        (Table~\ref{tab:fingerprint}), and pooling presupposes an isotropy this ensemble
+        does not have. Sec.~\ref{sec:transport-axisroutes} puts the same split through the
+        time average and both filtered-variation orders and finds the same ordering; the
+        pooled quantile route is not the only estimator that sees it.
+  \item The pooled non-Gaussian parameter (Table~\ref{tab:fingerprint}) sits, against a
+        matched Gaussian null, \emph{below} it rather than above. What is handed on is
+        therefore a between-flight amplitude spread and not an increment tail
+        (Sec.~\ref{sec:transport-gaussian}): a phase decomposition has to reproduce that
         spread across records, and must not produce a heavy tail within one.
-  \item The ergodicity question is handed on in two forms that need no power law: the drift
-        of the exponent with the time already flown, obtained by running the same
-        within-segment estimator on successive stretches of a record
+  \item The ergodicity question is handed on already measured, in two forms that needed no
+        power law: the drift of the exponent with the time already flown, obtained by
+        running the same within-segment estimator on successive stretches of a record
         (Sec.~\ref{sec:segmentation}); and the ergodicity-breaking parameter of
-        Appendix~\ref{app:ctrw}, which compares the distribution of the per-flight time
-        average across flights rather than two fitted slopes. The usual comparison of
-        $\alpha_{\mathrm{EA}}$ with $\alpha_{\mathrm{TA}}$ requires both curves to be power
-        laws, and this archive supplies one of the two.
+        Appendix~\ref{app:ctrw}, measured at a lag held fixed
+        (\SI{\StatErgoParaLagS}{\second}) and swept over the duration required of a flight,
+        $\mathrm{EB}(T)$ falling from \StatErgoParaAtOneH\ to \StatErgoParaAtFourH\ for
+        paragliders and from \StatErgoHangAtOneH\ to \StatErgoHangAtFourH\ for hang
+        gliders as $T$ runs
+        \SIrange{\StatErgoParaRangeMinH}{\StatErgoParaRangeMaxH}{\hour}
+        (Sec.~\ref{sec:obs-global}), falling but not reaching zero over the range this
+        archive can answer: pooled, the archive is not shown to be ergodic. What is handed
+        on is not that finding but a narrower one, whether the scatter belongs to one phase
+        or is spread across all of them, on the same parameter computed per phase rather
+        than pooled. The usual
+        comparison of $\alpha_{\mathrm{EA}}$ with $\alpha_{\mathrm{TA}}$ requires both
+        curves to be power laws, and this archive supplies one of the two.
 \end{enumerate}
 
 The class of transport is fixed over one window; which flight behaviour produces it is not.
