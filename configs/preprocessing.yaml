@@ -7,7 +7,9 @@
 #
 #  Grouped by the pipeline level at which each acts (see the thesis chapter
 #  "The dataset", sec:preproc, and docs/guide/preprocessing-pipeline.md). All speeds in
-#  m/s, distances in km unless the name says otherwise; altitudes are barometric.
+#  m/s, distances in km unless the name says otherwise; altitudes are the adopted GNSS
+#  channel (sec:altchannel), except where a key names the barometer, which survives only
+#  as the frozen-lock witness.
 # =============================================================================
 
 # --- fix level: applied PER FIX, on the raw geographic coordinates -----------
@@ -32,13 +34,40 @@ fix_level:
   max_horizontal_speed_mps:        # v_xy above this between two fixes => GPS position jump
     paragliders: 45.0
     "hang gliders": 55.0
-  max_vertical_speed_mps: 13.0     # |v_z| (barometric) beyond the soaring climb/sink range --
-                                   #   shared: the two disciplines' vz distributions are close
-                                   #   enough that splitting it, unlike horizontal speed, buys
-                                   #   nothing (thesis fig:fixlevel)
-  min_altitude_m: -100.0           # plausible barometric-altitude range: lower bound
-                                   #   (not per-discipline: bounds the barometric sensor's
-                                   #   own reading range, not glider performance -- see thesis)
+  # The vertical bound is on a LOCAL vertical speed, not a per-fix one: the median of
+  # |v_z| over the steps within vz_window_s of each step (cleaning.local_vz). A fix is
+  # censored when the step into it and the step out of it are both in such a
+  # neighbourhood. The per-step form this replaces condemned two things it should not
+  # have: a wind gust, which carries one step past the bound without carrying its
+  # neighbours there, and -- once the adopted channel became GNSS -- the vertical noise
+  # floor itself, which at sigma = 4 m and 1 Hz puts the largest per-step |v_z| at
+  # 14.1 m/s on a perfectly clean flight. On the same synthetic tracks the window median
+  # reads 5.6. Shared across disciplines: the two vz distributions are close enough that
+  # splitting it, unlike horizontal speed, buys nothing (thesis fig:fixlevel).
+  #
+  # PROVISIONAL: 13.0 is the value the OLD per-step rule used, read off the per-step |v_z|
+  # distribution of the BAROMETRIC channel. Both of those premises are gone, so it must be
+  # re-read from the new statistic on the GNSS channel before the production run -- the
+  # same procedure that placed the horizontal bounds above (generate_preproc_figure.py).
+  # Expect it to move UP: a genuine spiral dive holds 15-20 m/s of sustained sink and
+  # reads 15.0 on this statistic, so 13.0 would censor real flying.
+  max_vertical_speed_mps: 13.0     # median |v_z| over the window, beyond the climb/sink range
+  vz_window_s: 5.0                 # half-width of the centred window. A TIME window, like every
+                                   #   other window here, because the archive's cadences run 1 to
+                                   #   10 s and a fixed step count would ask a slow logger to
+                                   #   sustain the excess for two minutes and a 1 Hz one for ten
+                                   #   seconds. At the modal 1 Hz cadence this is +-5 fixes.
+  vz_min_window_fixes: 5           # below this the median is not estimable and the per-step value
+                                   #   stands in -- safe precisely because it is the sparse case:
+                                   #   at 1 Hz the bound is tens of metres per step, within reach
+                                   #   of gust plus noise, at 10 s it is hundreds, which no gust
+                                   #   produces. Reuses the Hampel rule's population floor.
+  min_altitude_m: -100.0           # plausible altitude range on the adopted channel: lower bound.
+                                   #   Negative because the GNSS altitude is an ELLIPSOIDAL height,
+                                   #   and the geoid runs tens of metres below the WGS84 ellipsoid
+                                   #   over western Europe, so a genuine sea-level fix reads
+                                   #   negative. (Not per-discipline: it bounds the receiver's
+                                   #   reading range, not glider performance -- see thesis.)
   max_altitude_m: 6000.0           # ... upper bound
   # Robust local-outlier test (Hampel identifier) and structural rules: working values,
   # fixed a priori and checked a posteriori on the per-rule removal fractions (threshold
@@ -49,26 +78,39 @@ fix_level:
   hampel_eps_min_m: 15.0           # absolute residual floor, a few x horizontal GPS noise
   hampel_min_window_fixes: 5       # sparser neighbourhoods fall back to the absolute bounds
   frozen_eps_m: 15.0               # frozen-lock run-extent tolerance (<< 2R of a climb)
-  frozen_delta_z_m: 5.0            # barometric-flatness witness (median-based Delta z)
+  frozen_delta_z_m: 5.0            # barometric-flatness witness (median-based Delta z), on the
+                                   #   RAW baro channel: the adopted altitude comes from the very
+                                   #   receiver whose lock is in doubt and cannot witness against
+                                   #   itself (sec:altchannel)
   frozen_tau_s: 60.0               # minimum span of a cut run, two thermalling periods
   integrity_max_fraction: 0.10     # flight-level integrity gate f, over the airborne window
 
-# --- altitude channel: chosen per flight, before any cleaning ------------------
+# --- altitude channel: gated per flight, before any cleaning -------------------
+# The analysis reads the GNSS altitude for EVERY flight (thesis sec:altchannel). There is
+# no per-flight choice left; what these keys do is decide (a) whether a flight has a usable
+# vertical coordinate at all, and (b) whether its barometer is good enough to witness a
+# frozen GNSS lock. Same two tests -- present, and alive -- asked of two channels for two
+# different consequences, which is why they are two pairs of keys and not one shared pair.
 alt_channel:
-  baro_present_min: 0.95           # a flight "has" a barometric channel when at least this
-                                   #   share of its fixes carry a non-zero pressure altitude.
-                                   #   Presence is bimodal -- a logger either has the sensor,
-                                   #   so the channel is full, or has none, so it is all zero
-                                   #   -- so the threshold sits high rather than mid-scale:
-                                   #   a flight missing more than a twentieth of its pressure
-                                   #   altitudes is not a healthy barometric flight, and
-                                   #   admitting it hands the segmentation a channel with
-                                   #   holes (thesis sec:altchannel). It decides alt_source
-                                   #   for every flight, which is why it belongs here and not
-                                   #   in a Python module.
-  baro_min_range_m: 30.0           # a "present" barometric channel whose total range over
-                                   #   the flight stays under this is a stuck sensor, not a
-                                   #   measurement: fall back to GNSS (thesis sec:altchannel)
+  gnss_present_min: 0.95           # a flight has a GNSS altitude when at least this share of
+                                   #   its fixes carry a non-zero one. Presence is bimodal -- a
+                                   #   logger either writes the channel or leaves it all zero --
+                                   #   so the threshold sits high rather than mid-scale: a
+                                   #   partially filled channel is worse than a missing one,
+                                   #   since its v_z would rest on holes interpolated over
+                                   #   stretches long enough to erase transitions. Below this
+                                   #   the flight is DROPPED: there is no second channel to move
+                                   #   it to any more.
+  gnss_min_range_m: 30.0           # a "present" GNSS channel whose total range over the flight
+                                   #   stays under this is a stuck sensor, not a measurement,
+                                   #   and would feed the segmentation a vertical velocity of
+                                   #   identically zero. Also a drop.
+  baro_witness_present_min: 0.95   # the same presence test on the RAW barometric channel. It
+                                   #   selects a TEST, never a measured quantity: a flight that
+                                   #   passes gets the flat-barometer frozen-lock witness, one
+                                   #   that fails keeps the weaker test on the recorder's own
+                                   #   A/V declarations (thesis sec:fixlevel).
+  baro_witness_min_range_m: 30.0   # ... and the same liveness test, for the same purpose
 
 # --- trimming: strip ground phases (take-off / landing), on v_xy alone --------
 trimming:
@@ -78,7 +120,11 @@ trimming:
                                    #   flat baro at least this long => a mid-flight landing:
                                    #   excise and split (thesis sec:trimming); shorter stints
                                    #   only set the suspect-wait flag
-  ground_flatness_m: 5.0           # the "flat baro" tolerance of the interior-ground guard
+  ground_flatness_m: 5.0           # the "flat baro" tolerance of the interior-ground guard, on
+                                   #   the RAW baro channel where the flight has one. GNSS
+                                   #   vertical noise is metres, so the adopted channel could not
+                                   #   clear a 5 m tolerance and the guard would never fire; a
+                                   #   flight with no barometer falls back to the speed condition
 
 # --- flight level: applied PER FLIGHT (drops whole flights), from the track --
 flight_level:
@@ -143,11 +189,12 @@ sampling:
 
 # --- Savitzky-Golay smoothing + differentiation (per ENU component) ----------
 # window is set PER FLIGHT from the noise timescale: window = max(odd(tau_c / dt), 5).
-# The vertical timescale is conditioned on the flight's alt_source (thesis, sec:savgol).
-# The a-priori expectation (smoother baro -> shorter window; noisier GNSS vertical ->
-# longer) was DISCONFIRMED by measurement: all three knees land at ~0.2 Hz because the
-# common floor is the IGC quantization, so the adopted values below are equal. The two
-# vertical keys are kept for the noisy-GNSS-minority refinement.
+# ONE vertical timescale. There used to be two, conditioned on whether the flight's
+# altitude came from the barometer or from GNSS, on the a-priori expectation that the
+# noisier channel would need the longer window. Measurement DISCONFIRMED it: all three
+# knees land at ~0.2 Hz because the common floor is the IGC quantization, not receiver
+# noise. With a single adopted channel (sec:altchannel) the distinction has no subject
+# left either way.
 savgol:
   polyorder: 3                     # lowest order that works: >=2 for an acceleration, =3
                                    #   so the velocity responds to curvature (parity of
@@ -155,8 +202,7 @@ savgol:
   # Measured 2026-07 by estimate_savgol_timescales.py (seeded 1 Hz sample, 908/719/189
   # flight-channels; median Welch knee against the quantization floor, factor 3). The
   # three knees nearly coincide at ~0.2 Hz: every channel's typical floor is the
-  # metre/arc-minute quantization of the IGC format, not receiver noise. Per-channel
-  # keys kept for the noisy-minority refinement; validated per thesis sec:savgol.
+  # metre/arc-minute quantization of the IGC format, not receiver noise. Validated per
+  # thesis sec:savgol.
   tau_c_horizontal_s: 5.0
-  tau_c_vertical_baro_s: 5.0
-  tau_c_vertical_gnss_s: 5.0
+  tau_c_vertical_s: 5.0

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+
 # Mean Earth radius (metres), the usual choice for a haversine great-circle distance.
 
 # The authoritative threshold file (repo ``configs/preprocessing.yaml``).
@@ -31,10 +32,18 @@ DEFAULT_PREPROC_CONFIG_PATH = (
 class FixLevelThresholds:
     """Physical bounds for fix-level cleaning (loaded from the config).
 
-    The speeds are great-circle (haversine) speeds between consecutive fixes, on the raw
-    geographic coordinates (no conversion yet). The vertical-speed and altitude bounds
-    apply to the adopted barometric channel. Inter-fix gaps are not bounded here: they
-    are handled once, at the flight level, by :class:`SamplingThresholds`.
+    The horizontal speeds are great-circle (haversine) speeds between consecutive
+    fixes, on the raw geographic coordinates (no conversion yet). The vertical-speed and
+    altitude bounds apply to the adopted GNSS channel. Inter-fix gaps are not bounded
+    here: they are handled once, at the flight level, by :class:`SamplingThresholds`.
+
+    ``max_vertical_speed_mps`` bounds a *local* vertical speed, not a per-step one: the
+    median of ``|v_z|`` over the steps within ``vz_window_s`` of each step
+    (``soaring.analysis.preproc.cleaning.local_vz``). A gust carries one step past any
+    reasonable bound without carrying its neighbourhood there, and on the GNSS channel
+    so does the noise floor, so the per-step form condemned physics and noise alike.
+    ``vz_min_window_fixes`` is the population below which that median is not estimable
+    and the per-step value stands in.
 
     ``max_horizontal_speed_mps`` is keyed by discipline (``"paragliders"``,
     ``"hang gliders"``, later ``"sailplanes"``): the two types have markedly different
@@ -42,12 +51,14 @@ class FixLevelThresholds:
     loose for the slower type or clips real dynamics of the faster one.
     ``max_vertical_speed_mps`` and the altitude bounds are *not* split by discipline:
     the two disciplines' vertical-speed distributions are close enough that splitting
-    it buys nothing, and the altitude bounds are about the barometric sensor's
-    plausible reading range, not a discipline-specific performance limit.
+    it buys nothing, and the altitude bounds are about the receiver's plausible reading
+    range, not a discipline-specific performance limit.
     """
 
     max_horizontal_speed_mps: dict[str, float]
     max_vertical_speed_mps: float
+    vz_window_s: float
+    vz_min_window_fixes: int
     min_altitude_m: float
     max_altitude_m: float
     # Robust local-outlier test (Hampel identifier) and structural rules: working
@@ -66,17 +77,26 @@ class FixLevelThresholds:
 class AltChannelThresholds:
     """Altitude-channel presence and liveness bounds (loaded from the config).
 
-    Two conditions decide whether a flight uses its barometric channel. It must be
-    *present*: at least ``baro_present_min`` of the fixes carry a non-zero pressure
-    altitude. And it must be *alive*: a barometric channel can be present yet dead, a
-    stuck sensor writing a constant value that passes the presence check and would feed
-    the segmentation a vertical velocity of identically zero, so below
-    ``baro_min_range_m`` of range over the flight the channel is treated as absent too.
-    Failing either, the flight falls back to GNSS.
+    The same pair of conditions is asked of two channels, for two different purposes
+    (thesis, sec:altchannel). A channel is *present* when enough of the fixes carry a
+    non-zero value, and *alive* when its total range over the flight clears a floor -- a
+    channel can be present yet dead, a stuck sensor writing a constant that passes the
+    presence check and would feed the segmentation a vertical velocity of identically
+    zero.
+
+    On the **GNSS** channel, the one the analysis reads, failing either test means the
+    flight has no vertical coordinate and is dropped. On the **barometric** channel it
+    decides only whether the flight has a usable frozen-lock witness (sec:fixlevel); a
+    flight without one keeps the weaker test on the recorder's own declarations. The two
+    pairs are separate keys rather than one shared pair because they answer to different
+    consequences, and a value that is right for admitting a flight need not be right for
+    trusting an instrument.
     """
 
-    baro_present_min: float
-    baro_min_range_m: float
+    gnss_present_min: float
+    gnss_min_range_m: float
+    baro_witness_present_min: float
+    baro_witness_min_range_m: float
 
 
 @dataclass(frozen=True)
@@ -126,16 +146,17 @@ class SamplingThresholds:
 class SavgolParams:
     """Savitzky-Golay parameters (loaded from the config; window is set per flight).
 
-    Two vertical timescales, not one: the vertical smoothing window is conditioned on
-    the flight's ``alt_source`` (thesis, sec:savgol) -- the barometric channel is
-    smoother than the horizontal and takes a shorter window, the GNSS vertical is
-    noisier and takes a longer one.
+    One vertical timescale. The pipeline once carried two, conditioned on whether the
+    flight's altitude came from the barometer or from GNSS, on the expectation that the
+    noisier channel would need the longer window. Measurement disconfirmed it: all three
+    knees land near 0.2 Hz because the common floor is the IGC metre quantization rather
+    than receiver noise (thesis, sec:savgol). With a single adopted channel
+    (sec:altchannel) the distinction has no subject left either way.
     """
 
     polyorder: int
     tau_c_horizontal_s: float
-    tau_c_vertical_baro_s: float
-    tau_c_vertical_gnss_s: float
+    tau_c_vertical_s: float
 
 
 @dataclass(frozen=True)

@@ -111,11 +111,11 @@ def main() -> int:
         PARA_CONFIG_PATH,
     )
     from soaring.analysis.altitude_noise import sample_igc_paths
-    from soaring.analysis.config import load_preproc_config
     from soaring.analysis.census import (
         fix_level_distributions,
         load_or_scan_tracks,
     )
+    from soaring.analysis.config import load_preproc_config
     from soaring.analysis.figures.preproc import (
         make_fixlevel_diagnostics_figure,
         make_flightlevel_diagnostics_figure,
@@ -175,7 +175,9 @@ def main() -> int:
     for disc, cfg_disc in configs.items():
         t0 = time.perf_counter()
         paths = sample_igc_paths(cfg_disc.igc_dir, FIXLEVEL_SAMPLE_PER_DISCIPLINE)
-        distributions[disc] = fix_level_distributions(paths, n_jobs=N_JOBS)
+        distributions[disc] = fix_level_distributions(
+            paths, n_jobs=N_JOBS, vz_window_s=cfg.fix.vz_window_s
+        )
         elapsed = time.perf_counter() - t0
         n_fix = int(distributions[disc]["v_xy"].size)
         print(

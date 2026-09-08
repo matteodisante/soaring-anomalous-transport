@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from soaring.analysis.config import load_preproc_config
 from soaring.analysis.census import (
     _fix_level_arrays,
     fix_level_distributions,
@@ -15,6 +14,7 @@ from soaring.analysis.census import (
     retention_curve,
     track_stats,
 )
+from soaring.analysis.config import load_preproc_config
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "sample_flight.igc"
 
@@ -27,12 +27,17 @@ def test_load_preproc_config_from_yaml():
         "hang gliders": 55.0,
     }
     assert cfg.fix.max_vertical_speed_mps == 13.0
+    assert cfg.fix.vz_window_s == 5.0
+    assert cfg.fix.vz_min_window_fixes == 5
     assert cfg.fix.hampel_window_s == 20.0
     assert cfg.fix.hampel_k == 5.0
     assert cfg.fix.hampel_eps_min_m == 15.0
     assert cfg.fix.frozen_tau_s == 60.0
     assert cfg.fix.integrity_max_fraction == pytest.approx(0.10)
-    assert cfg.alt_channel.baro_min_range_m == 30.0
+    assert cfg.alt_channel.gnss_present_min == 0.95
+    assert cfg.alt_channel.gnss_min_range_m == 30.0
+    assert cfg.alt_channel.baro_witness_present_min == 0.95
+    assert cfg.alt_channel.baro_witness_min_range_m == 30.0
     assert cfg.trimming.takeoff_speed_mps == 5.0
     assert cfg.trimming.sustained_s == 30.0
     assert cfg.trimming.interior_ground_s == 600.0
@@ -185,41 +190,47 @@ def test_load_or_scan_tracks_caches(tmp_path):
     pd.testing.assert_frame_equal(first, second)
 
 
-def test_fix_level_arrays_baro_present():
-    # Per-FIX quantities (not per-flight): n-1 speeds, n altitudes, on a baro flight.
+def test_fix_level_arrays_gnss_present():
+    # Per-FIX quantities (not per-flight): n-1 speeds, n altitudes, on a GNSS flight.
+    # The vertical ones read the adopted (GNSS) channel, not the barometric witness
+    # beside it -- the two are given different values here precisely to catch a
+    # regression that reads the wrong one.
     fixes = pd.DataFrame(
         {
             "t": [0.0, 10.0, 20.0, 30.0],
             "lat": [0.0, 0.0, 0.0, 0.0],
             "lon": [0.0, 0.003, 0.006, 0.010],
             "valid": [True, True, True, True],
-            "baro_alt": [100.0, 120.0, 110.0, 130.0],
-            "gnss_alt": [105.0, 115.0, 125.0, 135.0],
+            "baro_alt": [999.0, 999.0, 999.0, 999.0],  # deliberately flat and distinct
+            "gnss_alt": [100.0, 120.0, 110.0, 130.0],
         }
     )
     a = _fix_level_arrays(fixes)
     assert a["v_xy"].shape == (3,)
     assert a["altitude"].tolist() == [100.0, 120.0, 110.0, 130.0]
-    # |delta baro| / dt: |120-100|/10, |110-120|/10, |130-110|/10.
+    # |delta gnss| / dt: |120-100|/10, |110-120|/10, |130-110|/10.
     assert a["v_z"] == pytest.approx([2.0, 1.0, 2.0])
+    assert a["v_z_local"].shape == (3,)
 
 
-def test_fix_level_arrays_gnss_only_excludes_vertical():
-    # A logger with no pressure sensor writes baro as zero: vertical speed and altitude
-    # are not measurements there, so they must be excluded; horizontal speed is kept.
+def test_fix_level_arrays_no_usable_gnss_excludes_vertical():
+    # A flight whose adopted channel is absent (sec:altchannel): vertical speed and
+    # altitude are not measurements there, so they must be excluded; horizontal speed,
+    # which needs neither channel, is kept regardless.
     fixes = pd.DataFrame(
         {
             "t": [0.0, 10.0, 20.0],
             "lat": [0.0, 0.0, 0.0],
             "lon": [0.0, 0.003, 0.006],
             "valid": [True, True, True],
-            "baro_alt": [0.0, 0.0, 0.0],
-            "gnss_alt": [105.0, 115.0, 125.0],
+            "baro_alt": [105.0, 115.0, 125.0],
+            "gnss_alt": [0.0, 0.0, 0.0],
         }
     )
     a = _fix_level_arrays(fixes)
     assert a["v_xy"].shape == (2,)
     assert a["v_z"].size == 0
+    assert a["v_z_local"].size == 0
     assert a["altitude"].size == 0
 
 
@@ -242,7 +253,11 @@ def test_fix_level_arrays_drops_nonpositive_dt():
 
 def test_fix_level_distributions_pools_fixture():
     d = fix_level_distributions([FIXTURE])
-    # the fixture has four fixes and a present barometric channel.
+    # The fixture has four fixes, but its GNSS channel drops to zero at one of them
+    # (75 % present) -- below the channel gate, so the vertical quantities are excluded
+    # exactly as a flight with no usable GNSS altitude would be at the real gate
+    # (sec:altchannel). Horizontal speed needs neither channel and is unaffected.
     assert d["v_xy"].shape == (3,)
-    assert d["v_z"].shape == (3,)
-    assert d["altitude"].shape == (4,)
+    assert d["v_z"].size == 0
+    assert d["v_z_local"].size == 0
+    assert d["altitude"].size == 0

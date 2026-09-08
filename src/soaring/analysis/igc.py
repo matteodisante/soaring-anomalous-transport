@@ -16,8 +16,8 @@ so the fields read here are: UTC time ``[1:7]``, latitude ``[7:15]`` and longitu
 then **GNSS** ``[30:35]``. A missing channel is written as zero by the standard.
 
 The parser deliberately does *not* choose an altitude channel: it returns both, so the
-pre-processing can adopt the barometric one (the thesis choice) while keeping the GNSS
-one available as a per-flight fallback and for the noise diagnostics.
+pre-processing can adopt the GNSS one (the thesis choice) while keeping the barometric
+one available as the frozen-lock witness and for the noise diagnostics.
 """
 
 from __future__ import annotations
@@ -232,16 +232,39 @@ def parse_igc(path: str | Path) -> pd.DataFrame:
     )
 
 
+def _present_fraction(fixes: pd.DataFrame, column: str) -> float:
+    """Fraction of fixes carrying a usable value on one altitude channel.
+
+    The IGC format writes an absent altitude channel as zero, so a zero is read as "no
+    value here" rather than as a measurement, and a blank or unusable field decodes to
+    ``nan`` (see :func:`_altitude`). Both count as absent.
+
+    The ``nan`` half of that is not hypothetical. ``nan != 0.0`` is ``True``, so a
+    logger writing blanks used to be reported as carrying a channel at full presence --
+    the opposite of the truth, and enough to have the pipeline adopt an altitude that is
+    not there.
+
+    Args:
+        fixes: Table returned by :func:`parse_igc`.
+        column: ``"baro_alt"`` or ``"gnss_alt"``.
+
+    Returns:
+        The fraction in ``[0, 1]`` (``0.0`` for an empty table).
+    """
+    if len(fixes) == 0:
+        return 0.0
+    alt = fixes[column].to_numpy(dtype=float)
+    return float((np.isfinite(alt) & (alt != 0.0)).mean())
+
+
 def baro_present_fraction(fixes: pd.DataFrame) -> float:
     """Fraction of fixes carrying a non-zero barometric altitude.
 
     A value near ``0`` means the logger has no pressure sensor (the whole ``baro_alt``
-    channel is written as zero), so the flight must fall back to the GNSS altitude.
-
-    A blank or unusable field is ``nan`` (see :func:`_altitude`), and ``nan != 0.0`` is
-    ``True``, so a logger writing blanks used to be reported as carrying a channel at full
-    presence -- the opposite of the truth, and enough to have the pipeline adopt an altitude
-    that is not there. Missing counts as absent.
+    channel is written as zero). The analysis reads the GNSS altitude
+    (thesis, sec:altchannel), so what this measures is the *witness* channel: the
+    independent instrument that tells a frozen GNSS lock from a genuine slow climb, and
+    the quantity the archive census reports.
 
     Args:
         fixes: Table returned by :func:`parse_igc`.
@@ -249,10 +272,25 @@ def baro_present_fraction(fixes: pd.DataFrame) -> float:
     Returns:
         The fraction in ``[0, 1]`` (``0.0`` for an empty table).
     """
-    if len(fixes) == 0:
-        return 0.0
-    baro = fixes["baro_alt"].to_numpy(dtype=float)
-    return float((np.isfinite(baro) & (baro != 0.0)).mean())
+    return _present_fraction(fixes, "baro_alt")
+
+
+def gnss_present_fraction(fixes: pd.DataFrame) -> float:
+    """Fraction of fixes carrying a non-zero GNSS altitude.
+
+    The presence test on the *adopted* channel (thesis, sec:altchannel), so unlike its
+    barometric counterpart it decides whether the flight has a vertical coordinate at
+    all: below the configured threshold the flight is dropped, there being no other
+    channel to move it to. Some loggers write a pressure altitude and leave the GNSS
+    field at ``00000``, and that is exactly the population this sizes.
+
+    Args:
+        fixes: Table returned by :func:`parse_igc`.
+
+    Returns:
+        The fraction in ``[0, 1]`` (``0.0`` for an empty table).
+    """
+    return _present_fraction(fixes, "gnss_alt")
 
 
 def median_sampling_period(fixes: pd.DataFrame) -> float:

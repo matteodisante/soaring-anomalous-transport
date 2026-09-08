@@ -41,13 +41,13 @@ The two hyperparameters come from the measured noise spectrum, not from taste:
   first whose velocity responds to the acceleration *varying* across the window. Going
   higher only lets the fit follow more noise.
 
-The vertical is treated separately from the horizontal and conditioned on the flight's
-``alt_source``. The a-priori expectation was asymmetric -- a shorter window for the
-smooth barometric channel, a longer one for the noisy GNSS vertical -- and the
-measurement disconfirmed it: the three knees coincide at ``f_c ~ 0.2 Hz`` because
-every channel's floor is the IGC format's own rounding, not receiver noise. The
-per-channel machinery stays, for the noisy GNSS minority, but the adopted windows are
-equal today.
+The vertical is treated separately from the horizontal, on its own timescale. It was
+once split further, into a barometric and a GNSS timescale conditioned on the channel
+the flight had adopted, on the a-priori expectation that the noisier channel would need
+the longer window; the measurement disconfirmed it, the three knees coinciding at
+``f_c ~ 0.2 Hz`` because every channel's floor is the IGC format's own rounding rather
+than receiver noise. With one adopted channel for the whole archive (sec:altchannel)
+that split has no subject left, and the machinery is gone with it.
 
 **The window never crosses a segment boundary**: the filter runs per segment, with
 ``mode='interp'``, so the terminal half-windows are fitted on the edge window and
@@ -105,10 +105,10 @@ class SavgolWindows:
 
     Attributes:
         horizontal: Window in samples for ``E`` and ``N``.
-        vertical: Window in samples for ``z``, conditioned on the flight's
-            ``alt_source``. Equal to ``horizontal`` under the adopted timescales, which
-            the measurement found to coincide; the two are kept apart because the
-            machinery, not the current value, is what the noisy GNSS minority needs.
+        vertical: Window in samples for ``z``. Equal to ``horizontal`` under the
+            adopted timescales, which the measurement found to coincide; the two stay
+            separate keys because they answer to different noise floors in principle,
+            and only happen to agree in this archive.
         polyorder: The polynomial order, ``p = 3``.
     """
 
@@ -165,33 +165,19 @@ def savgol_window(tau_c_s: float, dt_s: float, polyorder: int) -> int:
     return max(window, floor)
 
 
-def savgol_windows(
-    savgol: SavgolParams, dt_s: float, *, alt_source: str = "baro"
-) -> SavgolWindows:
+def savgol_windows(savgol: SavgolParams, dt_s: float) -> SavgolWindows:
     """The per-flight filter configuration (thesis, sec:savgol item (iii)).
 
     Args:
-        savgol: The adopted order and the three smoothing timescales.
+        savgol: The adopted order and the two smoothing timescales.
         dt_s: The flight's native sampling interval, in seconds.
-        alt_source: ``"baro"`` or ``"gnss"``, the channel stage (i) adopted for this
-            flight; it selects which vertical timescale applies.
 
     Returns:
         The :class:`SavgolWindows` for this flight.
-
-    Raises:
-        ValueError: If ``alt_source`` is neither ``"baro"`` nor ``"gnss"``.
     """
-    if alt_source not in {"baro", "gnss"}:
-        raise ValueError(f"alt_source must be 'baro' or 'gnss', not {alt_source!r}")
-    tau_vertical = (
-        savgol.tau_c_vertical_baro_s
-        if alt_source == "baro"
-        else savgol.tau_c_vertical_gnss_s
-    )
     return SavgolWindows(
         horizontal=savgol_window(savgol.tau_c_horizontal_s, dt_s, savgol.polyorder),
-        vertical=savgol_window(tau_vertical, dt_s, savgol.polyorder),
+        vertical=savgol_window(savgol.tau_c_vertical_s, dt_s, savgol.polyorder),
         polyorder=savgol.polyorder,
     )
 
@@ -253,16 +239,13 @@ def smooth_segment(
     return out
 
 
-def smooth_flight(
-    resampled: Resampled, savgol: SavgolParams, *, alt_source: str = "baro"
-) -> Smoothed:
+def smooth_flight(resampled: Resampled, savgol: SavgolParams) -> Smoothed:
     """Run stage (vii) over one resampled flight, segment by segment.
 
     Args:
         resampled: The output of stage (vi). Its ``dt_s`` is the grid step, and its
             ``segments`` table is carried forward and updated.
         savgol: The adopted order and smoothing timescales.
-        alt_source: The flight's adopted altitude channel, ``"baro"`` or ``"gnss"``.
 
     Returns:
         The :class:`Smoothed` record. A segment the window does not fit into is dropped
@@ -277,7 +260,7 @@ def smooth_flight(
             windows=None,
             drop_reason=resampled.drop_reason,
         )
-    windows = savgol_windows(savgol, resampled.dt_s, alt_source=alt_source)
+    windows = savgol_windows(savgol, resampled.dt_s)
     segments = resampled.segments.copy()
     widest = max(windows.horizontal, windows.vertical)
 

@@ -282,6 +282,7 @@ dtypes:
   max_gap_ratio         float64
   missing_fraction      float64
   baro_present_frac     float64
+  gnss_present_frac     float64
   max_vxy_mps           float64
   max_vz_mps            float64
   baro_alt_min_m        float64
@@ -524,14 +525,16 @@ flight beside one the flight filter rejected:
                      a retained flight           a dropped one
 source                      hangglider              hangglider
 flight_id                          975                     830
-pipeline_version                 1.3.0                   1.3.0
+pipeline_version                 2.0.0                   2.0.0
 drop_stage                         NaN           flight_filter
 drop_reason                        NaN  duration_below_minimum
 error_detail                      None                    None
-alt_source                        baro                    gnss
+gnss_present_frac                  1.0                     1.0
+gnss_range_m                    1981.0                   612.0
+baro_witness                      True                   False
 baro_present_frac                  1.0                     0.0
 baro_range_m                    1977.0                     0.0
-n_alt_missing_raw                    0                     349
+n_alt_missing_raw                    0                       0
 n_fix_raw                         2099                     349
 n_fix_clean                       2069                     348
 n_merged_duplicates                  0                       0
@@ -539,6 +542,7 @@ n_removed_backward                   0                       0
 n_removed_spike                      0                       1
 n_removed_frozen                    30                       0
 n_alt_out_of_band                    0                       0
+n_alt_vz_sustained                   0                       0
 n_alt_vz_spike                       0                       0
 n_flagged_kept                      40                       8
 n_vz_runs                            0                       0
@@ -580,8 +584,8 @@ even though none of its fixes reached the trajectory table.
 |---|---|
 | identity | `source`, `flight_id`, `pipeline_version` |
 | verdict | `drop_stage`, `drop_reason` (both null when the flight is retained), `error_detail` (set only when `drop_reason` is `pipeline_raised`: the exception text, so the offending file can be found — the reason itself is a fixed string the census can count) |
-| (i) altitude channel | `alt_source`, `baro_present_frac`, `baro_range_m`, `n_alt_missing_raw` |
-| (ii) cleaning | `n_fix_raw`, `n_fix_clean`, `n_merged_duplicates`, `n_removed_backward`, `n_removed_spike`, `n_removed_frozen`, `n_alt_out_of_band`, `n_alt_vz_spike`, `n_flagged_kept`, `n_vz_runs`, `n_alt_level_shift` (unreturned vertical steps: neither spike nor run, so censored by nothing — counted so they are auditable, see `sec:fixlevel`), `n_boundaried`, `split_jump_max_m` (the largest displacement across a boundary this stage declared: excising a frozen run leaves both sides genuine, splitting at a re-acquisition offset does not, so everything after it carries an unknown constant that enters the *ensemble* MSD and not the time-averaged one — reported so the effect can be bounded and excluded on, never acted upon), `integrity_fraction` |
+| (i) altitude channel | `gnss_present_frac`, `gnss_range_m` (the adopted channel, gated: a flight failing either is dropped, since there is no second channel to fall back to), `baro_witness`, `baro_present_frac`, `baro_range_m` (the barometer, kept as the frozen-lock witness and nothing else — it enters no observable, see `sec:altchannel`), `n_alt_missing_raw` |
+| (ii) cleaning | `n_fix_raw`, `n_fix_clean`, `n_merged_duplicates`, `n_removed_backward`, `n_removed_spike`, `n_removed_frozen`, `n_alt_out_of_band`, `n_alt_vz_sustained` (fixes censored by the windowed vertical-speed rule: the median of `|v_z|` over the window is past the bound on both adjacent steps), `n_alt_vz_spike` (fixes censored by the isolated out-and-back rule, which the windowed one is blind to by construction), `n_flagged_kept`, `n_vz_runs` (how many *distinct* stretches the windowed rule censored, so a reader can tell one long event from a scatter of short ones), `n_alt_level_shift` (unreturned vertical steps: neither sustained nor out-and-back, so censored by nothing — counted so they are auditable, see `sec:fixlevel`), `n_boundaried`, `split_jump_max_m` (the largest displacement across a boundary this stage declared: excising a frozen run leaves both sides genuine, splitting at a re-acquisition offset does not, so everything after it carries an unknown constant that enters the *ensemble* MSD and not the time-averaged one — reported so the effect can be bounded and excluded on, never acted upon), `integrity_fraction` |
 | (iii) trimming | `ground_phase_start_s`, `ground_phase_end_s`, `trimmed_fraction`, `n_interior_excised`, `n_suspect_stints` |
 | (iv) flight filter | `duration_flight_s`, `path_km`, `alt_range_m`, `extent_km` |
 | (v) local frame | `lat0`, `lon0`, `alt0` |

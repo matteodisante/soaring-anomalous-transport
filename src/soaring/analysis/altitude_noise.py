@@ -1,8 +1,8 @@
 """Noise diagnostics for the two IGC altitude channels (barometric vs GNSS).
 
-The thesis adopts the **barometric** altitude for the vertical dynamics; this module
-produces the empirical evidence behind that choice, on raw IGC tracks from both
-disciplines (paragliders and hang gliders).
+The thesis adopts the **GNSS** altitude for the vertical dynamics, for every flight;
+this module produces the empirical evidence behind that choice, on raw IGC tracks from
+both disciplines (paragliders and hang gliders).
 
 The central tool is the **power spectral density (PSD)**, estimated with Welch's method
 (:func:`scipy.signal.welch`): it shows *at which frequencies* a channel carries power.
@@ -10,10 +10,14 @@ What the figure shows is that the two channels are comparable for the *typical* 
 (both quantization-limited at high frequency by the metre-resolution logging), but the
 GNSS channel carries large excess high-frequency noise in a substantial minority of
 flights -- the fanned-out upper tail of its per-flight spectra -- exactly the band that
-differencing amplifies into the vertical velocity and the segmentation. The barometric
-channel is instead uniformly clean, which is why it is preferred. A second diagnostic
-reports the fraction of flights whose barometric channel is absent (no pressure sensor,
-so the whole channel is zero), which sizes the population that must fall back to GNSS.
+differencing amplifies into the vertical velocity. Equal medians do not, by themselves,
+say how big that minority is: a median is unmoved by anything up to half the population,
+so :func:`_Accumulator.hf_floor` measures the per-flight high-frequency floor directly
+rather than leaving its size to be inferred from where the median sits. The barometric
+channel is kept regardless, not for the vertical dynamics but as the frozen-lock witness
+(thesis, sec:altchannel): a second diagnostic reports the fraction of flights whose
+barometric channel is absent (no pressure sensor, so the whole channel is zero), which
+sizes the population with no witness to fall back on.
 
 Two different precision needs drive two different sampling policies, both made explicit
 here rather than left implicit:
@@ -60,6 +64,14 @@ from .igc import baro_present_fraction, median_sampling_period, parse_igc
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
+
+# The band where the metre-quantization floor sits, read off fig:altnoise panel (c) --
+# both channels flatten here regardless of receiver noise. Deliberately not imported
+# from ``scripts/reporting/tools/estimate_savgol_timescales.py``, which defines the
+# same band for the same reason: ``scripts/`` depends on ``src/``, never the other, so
+# a shared constant lives on this side, kept in sync with that one by comment, not
+# import.
+FLOOR_BAND_HZ = (0.35, 0.5)
 
 # Welch segment length (fixed so every flight yields the same frequency grid).
 NPERSEG = 256
@@ -346,6 +358,68 @@ class _Accumulator:
             return None
         plo, pmed, phi = np.percentile(np.vstack(curves), [lo, 50.0, hi], axis=0)
         return self._psd_f, plo, pmed, phi
+
+    def hf_floor(
+        self, channel: str, band_hz: tuple[float, float] = FLOOR_BAND_HZ
+    ) -> np.ndarray:
+        """The per-flight high-frequency PSD floor, pooled over every discipline.
+
+        One number per flight: its own median PSD over ``band_hz``, for the named
+        channel. This is what turns "the GNSS band fans out at high frequency" from a
+        picture into a measured fraction. :meth:`band_psd` and :meth:`pooled_band_psd`
+        describe the *ensemble* -- a 10th-90th percentile band across flights, at each
+        frequency -- which is the right thing to plot but the wrong thing to quote a
+        minority size from: two ensembles can share a median while one has a heavy tail
+        and the other does not, and nothing about the band alone bounds how many flights
+        sit in that tail. A per-flight scalar can be thresholded and counted directly.
+
+        Args:
+            channel: ``"baro"`` or ``"gnss"``.
+            band_hz: The frequency band to average PSD over; defaults to the
+                metre-quantization floor band shared with the Savitzky-Golay timescale
+                estimator (fig:altnoise panel (c)).
+
+        Returns:
+            One value per flight that contributed a spectrum on this channel, in the
+            same (arbitrary but consistent) PSD units as :meth:`median_psd`. Empty if no
+            flight qualified.
+        """
+        curves = [c for (_, ch), lst in self._psd.items() if ch == channel for c in lst]
+        if self._psd_f is None or not curves:
+            return np.empty(0)
+        in_band = (self._psd_f >= band_hz[0]) & (self._psd_f <= band_hz[1])
+        if not in_band.any():
+            return np.empty(0)
+        return np.median(np.vstack(curves)[:, in_band], axis=1)
+
+
+def hf_floor_excess_fraction(
+    gnss_floor: np.ndarray, baro_floor: np.ndarray, factor: float
+) -> float:
+    """Share of flights whose GNSS floor exceeds a multiple of the barometric one.
+
+    Each flight counts against ``factor`` times the *typical* (median) barometric
+    floor, not the ensemble's -- the measured version of "the noisy minority is small":
+    a fraction the thesis can quote with a number attached, in place of an inference
+    from where two medians happen to sit (see :meth:`_Accumulator.hf_floor`).
+
+    Args:
+        gnss_floor: Per-flight GNSS high-frequency floors, from ``hf_floor("gnss")``.
+        baro_floor: Per-flight barometric high-frequency floors, from
+            ``hf_floor("baro")``, on the *same* flights -- both channels are only
+            measured together where a flight carries a barometer (:func:`collect`).
+        factor: The multiple of the barometric median to test against (e.g. ``3`` or
+            ``10``).
+
+    Returns:
+        The fraction in ``[0, 1]``, or ``nan`` if either array is empty.
+    """
+    if gnss_floor.size == 0 or baro_floor.size == 0:
+        return float("nan")
+    reference = float(np.median(baro_floor))
+    if not np.isfinite(reference) or reference <= 0:
+        return float("nan")
+    return float(np.mean(gnss_floor > factor * reference))
 
 
 def collect(

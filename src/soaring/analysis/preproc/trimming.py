@@ -29,12 +29,21 @@ near-zero-speed stint and read downstream as a false long wait in the tail of
 corroborated
 evidence, because its dangerous error is the opposite one -- the soaring-into-wind
 failure mode. A stint is excised only when **both** hold: ``v_xy < v0`` continuously for
-at least ``T_ground``, far beyond any search phase; **and** the adopted altitude flat
-over the whole stint once its slow drift has been removed. The detrending is not a
-detail -- the barometric reference itself wanders by tens of metres over an hour, which
-over ``T_ground`` is already of the order of the tolerance, so testing the raw range
-would let a perfectly stationary pilot fail the flatness condition on a pressure change
-alone.
+at least ``T_ground``, far beyond any search phase; **and** the *barometer* flat over
+the whole stint once its slow drift has been removed. The detrending is not a detail --
+the barometric reference itself wanders by tens of metres over an hour, which over
+``T_ground`` is already of the order of the tolerance, so testing the raw range would
+let a perfectly stationary pilot fail the flatness condition on a pressure change alone.
+
+The witness is the raw barometric channel and not the adopted altitude, for the same
+reason the frozen-lock rule reads it (sec:altchannel): the analysis altitude is GNSS,
+and GNSS vertical noise is metres, so the central spread of a long stint's residual is
+already of the order of the tolerance and the condition could never be met. A flight
+with no usable barometer therefore has no witness, and the guard **abstains** rather
+than falling back to the speed condition alone -- speed alone is exactly the
+soaring-into-wind failure mode the second condition exists to prevent. This makes
+explicit what was already true in practice: on a GNSS-derived altitude the flatness test
+never passed.
 
 A cut stint is excised and the flight is split at the excision, exactly as at a long
 gap.
@@ -172,7 +181,9 @@ def _is_flat(
     """
     finite = np.isfinite(alt)
     if finite.sum() < 3:
-        return False  # in doubt, the stint is kept
+        # No witness to test with -- an absent barometer arrives here as an all-``nan``
+        # column -- so the guard abstains and the stint is kept.
+        return False
     slope, intercept = np.polyfit(t[finite], alt[finite], 1)
     residual = alt[finite] - (slope * t[finite] + intercept)
     spread = float(np.percentile(residual, 95) - np.percentile(residual, 5))
@@ -185,18 +196,23 @@ def trim_flight(
     *,
     suspect_min_span_s: float,
     max_drift_mps: float,
+    baro_witness: bool = False,
 ) -> Trimmed:
     """Run stage (iii) over one cleaned flight.
 
     Args:
         fixes: The flight after stage (ii): ``t``, ``lat``, ``lon``, ``alt``, plus the
-            per-fix cleaning columns. ``t`` must be strictly increasing.
+            raw ``baro_alt`` channel and the per-fix cleaning columns. ``t`` must be
+            strictly increasing.
         trimming: The adopted thresholds.
         suspect_min_span_s: Shortest slow-and-flat stint worth reporting as suspect;
             the driver passes ``fix_level.frozen_tau_s`` (see the module note).
         max_drift_mps: Largest fitted altitude slope a stint may show and still count as
             flat; the driver passes ``frozen_delta_z_m / frozen_tau_s`` (see
             :func:`_is_flat`).
+        baro_witness: Whether this flight's raw barometric channel is usable as the
+            flatness witness (stage (i) decides). Without one the interior-ground guard
+            abstains; see the module note.
 
     Returns:
         The :class:`Trimmed` record. When no airborne window exists the fixes come back
@@ -235,7 +251,7 @@ def trim_flight(
         t,
         out["lat"].to_numpy(dtype=float),
         out["lon"].to_numpy(dtype=float),
-        out["alt"].to_numpy(dtype=float),
+        _witness_altitude(out, baro_witness),
         trimming,
         suspect_min_span_s,
         max_drift_mps,
@@ -272,11 +288,25 @@ def trim_flight(
     )
 
 
+def _witness_altitude(fixes: pd.DataFrame, baro_witness: bool) -> np.ndarray:
+    """The raw barometric channel as a flatness witness, all-``nan`` if there is none.
+
+    The IGC zero means "absent" (see altchannel), so it must not read as a measurement
+    of sea level; a flight whose barometer stage (i) judged unusable gets no witness at
+    all, which :func:`_is_flat` turns into an abstention.
+    """
+    n = len(fixes)
+    if not baro_witness or "baro_alt" not in fixes.columns:
+        return np.full(n, np.nan)
+    baro = fixes["baro_alt"].to_numpy(dtype=float)
+    return np.where(baro == 0.0, np.nan, baro)
+
+
 def _interior_ground(
     t: np.ndarray,
     lat: np.ndarray,
     lon: np.ndarray,
-    alt: np.ndarray,
+    witness: np.ndarray,
     trimming: TrimmingThresholds,
     suspect_min_span_s: float,
     max_drift_mps: float,
@@ -302,7 +332,7 @@ def _interior_ground(
             continue
         if not _is_flat(
             t[start:stop],
-            alt[start:stop],
+            witness[start:stop],
             trimming.ground_flatness_m,
             max_drift_mps,
         ):

@@ -34,16 +34,20 @@ only meaningful once the time base is monotone and free of duplicates:
 2. **position outliers** -- the Hampel identifier *flags*, and an absolute ``v_xy``
    bound must corroborate before anything is deleted;
 3. **frozen-lock runs** -- cut only on three agreeing signatures, and marked as a gap;
-4. **altitude** -- absolute bounds only, no local test.
+4. **altitude** -- an absolute band, a *local* vertical-speed test on the median of
+   ``|v_z|`` over a window, and an isolated out-and-back rule beside it.
 
-Why no Hampel test on the altitude, when there is one on the position (sec:fixlevel):
-an absolute bound is *sufficient* on ``z`` and insufficient on ``xy`` -- the vertical
-envelope is narrow and known, while a 50 m horizontal spike is impossible at a 1 s
-cadence and unremarkable at 10 s; a local test on ``z`` would flag the physics, since
-the
-residual from a local median is largest exactly at the thermal entries the segmentation
-is built on; and the costs differ, because an interpolation laid across a thermal entry
-erases the transition rather than restoring it.
+The altitude's local test is a median of speeds and not a Hampel test on ``z`` itself,
+and the difference matters (sec:fixlevel). A Hampel residual on ``z`` would flag the
+physics: the departure from a local median is largest exactly at the thermal entries the
+segmentation is built on, and the vertical channel has no corroborating witness of the
+kind the speed bound gives the horizontal one. A median of ``|v_z|`` over the same
+window flags none of that -- a thermal entry is a *change* of vertical speed, not a
+sustained impossible one -- while still refusing to condemn a fix on the strength of a
+single step, which is what the earlier per-step form did. The costs set the posture: an
+interpolation laid across a thermal entry erases the transition rather than restoring
+it, so the rule fires only where the excess is carried by the neighbourhood rather than
+by one sample.
 
 The **integrity gate** is not applied here. It counts over the *airborne* window --
 defects in a ground phase that trimming removes anyway must not condemn a flight -- and
@@ -102,6 +106,7 @@ class CleaningReport:
     n_removed_spike: int
     n_removed_frozen: int
     n_alt_out_of_band: int
+    n_alt_vz_sustained: int
     n_alt_vz_spike: int
     n_flagged_kept: int
     n_splits: int
@@ -414,9 +419,10 @@ def _frozen_runs(
     lat: np.ndarray,
     lon: np.ndarray,
     alt: np.ndarray,
+    baro: np.ndarray,
     valid: np.ndarray,
     fix_level: FixLevelThresholds,
-    alt_source: str,
+    baro_witness: bool,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Frozen-lock runs: the three-signature rule of Eq. eq:frozenlock.
 
@@ -434,14 +440,16 @@ def _frozen_runs(
     below
         ``delta_xy``. A circling wing traces a disc of 30-100 m, above ``delta_xy`` by a
         factor of at least two, and clears the test on the diameter alone;
-    (ii) *witnessed* -- on a barometric flight by a flat barometer, since a lock loss
-        freezes the GNSS position while the pressure sensor, a separate instrument,
-        keeps
-        recording a real climb; on a GNSS-fallback flight by the recorder's own
-        declarations, which is all that is left, because the GNSS altitude comes from
-        the
-        very receiver whose lock is in doubt. A byte-identical repeat of the coordinates
-        overrules either: no moving receiver rewrites the same bits;
+    (ii) *witnessed* -- where the flight carries a usable barometer, by that barometer
+        reading flat, since a lock loss freezes the GNSS position while the pressure
+        sensor, a separate instrument, keeps recording a real climb. This is the one
+        place the barometric channel still earns its keep once the analysis reads GNSS
+        throughout (sec:altchannel): it enters no observable, it is used here as an
+        instrument, and the independence is the whole point -- the adopted altitude
+        comes from the very receiver whose lock is in doubt, so it cannot witness
+        against itself. Where there is no barometer, the recorder's own declarations are
+        all that is left. A byte-identical repeat of the coordinates overrules either:
+        no moving receiver rewrites the same bits;
     (iii) *long enough* -- at least ``tau_freeze``, about two thermalling periods, so a
         run long enough to be cut spans at least two full circles of any genuine climb,
         whose diameter test (i) then sees in full.
@@ -479,9 +487,10 @@ def _frozen_runs(
             lat[i : j + 1],
             lon[i : j + 1],
             alt[i : j + 1],
+            baro[i : j + 1],
             valid[i : j + 1],
             fix_level,
-            alt_source,
+            baro_witness,
         ):
             delete[i : j + 1] = True
     # One split per deleted block, at the first fix that survives it.
@@ -577,25 +586,38 @@ def _is_witnessed(
     lat: np.ndarray,
     lon: np.ndarray,
     alt: np.ndarray,
+    baro: np.ndarray,
     valid: np.ndarray,
     fix_level: FixLevelThresholds,
-    alt_source: str,
+    baro_witness: bool,
 ) -> bool:
-    """The witness ``W`` of Eq. eq:frozenlock, for one candidate run."""
+    """The witness ``W`` of Eq. eq:frozenlock, for one candidate run.
+
+    Args:
+        lat: Latitudes over the run.
+        lon: Longitudes over the run.
+        alt: The *adopted* (GNSS) altitude over the run, for the declaration test.
+        baro: The *raw* barometric channel over the run, ``nan`` where absent. This is
+            the independent instrument, read here and nowhere else in the analysis.
+        valid: The recorder's per-fix ``A``/``V`` flag.
+        fix_level: The adopted thresholds.
+        baro_witness: Whether this flight's barometric channel is present and alive
+            enough to witness with.
+    """
     byte_identical = bool(np.all(lat == lat[0]) and np.all(lon == lon[0]))
     if byte_identical:
         # Exact equality and no tolerance: a tolerance would turn the one conclusive
         # signature into the jittering-freeze case it exists to exclude.
         return True
-    if alt_source == "baro":
+    if baro_witness:
         # Between medians of the run's ends, so an altitude spike inside the run -- not
         # yet cleaned, the altitude pass runs last -- cannot fake a climb.
-        end = max(1, alt.size // 4)
-        if not (np.isfinite(alt[:end]).any() and np.isfinite(alt[-end:]).any()):
+        end = max(1, baro.size // 4)
+        if not (np.isfinite(baro[:end]).any() and np.isfinite(baro[-end:]).any()):
             return False  # no barometer to witness with: in doubt, the run is kept
-        head, tail = np.nanmedian(alt[:end]), np.nanmedian(alt[-end:])
+        head, tail = np.nanmedian(baro[:end]), np.nanmedian(baro[-end:])
         return abs(tail - head) < fix_level.frozen_delta_z_m
-    # GNSS fallback: the recorder's own declarations are the only witness left, and they
+    # No barometer: the recorder's own declarations are the only witness left, and they
     # must speak for the run rather than for a stray fix in it.
     declared = ~valid.astype(bool) | ~np.isfinite(alt)
     return bool(declared.mean() > 0.5)
@@ -642,23 +664,107 @@ def _largest_boundary_jump(fixes: pd.DataFrame) -> float:
     return float(great_circle_m(lat[at - 1], lon[at - 1], lat[at], lon[at]).max())
 
 
+def step_vz(t: np.ndarray, alt: np.ndarray) -> np.ndarray:
+    """Vertical speed between consecutive fixes, in m/s (``0`` on a zero time step).
+
+    Public: :func:`soaring.analysis.census` reuses it (with :func:`local_vz`) to
+    measure the same windowed statistic on the raw archive, off the pipeline, when
+    re-deriving ``max_vertical_speed_mps`` from data (thesis, sec:fixlevel "Validating
+    the cleaning").
+    """
+    dt = np.diff(t)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return np.where(dt > 0, np.diff(alt) / dt, 0.0)
+
+
+def local_vz(
+    t: np.ndarray, v_z: np.ndarray, window_s: float
+) -> tuple[np.ndarray, np.ndarray]:
+    """The local vertical speed: a rolling median of ``|v_z|`` over the steps.
+
+    ``v_z`` lives on the *steps* between fixes rather than on the fixes, so the window
+    is centred on a step's own midpoint ``(t_j + t_{j+1})/2`` and holds every step
+    whose midpoint falls within ``+/- window_s`` of it.
+
+    The median, rather than a mean or an endpoint-to-endpoint slope, is what makes the
+    test a statement about the neighbourhood instead of about one step. A gust pushes a
+    single step past the bound and leaves the median exactly where it was; so does an
+    isolated sensor spike, which is two large steps of opposite sign out of ten. Only an
+    excess carried by more than half the window moves it, and that is what "sustained"
+    means. Measured on synthetic tracks at 1 Hz against a 3 m/s climb: a two-sample gust
+    of +16 and +14 m/s reads 3.0, a 200 m spike reads 3.0, GNSS vertical noise of
+    sigma = 4 m reads 5.6 -- while a genuine 18 m/s sink held for 15 s reads 15.0. The
+    mean and the chord slope fail the spike case, at 42.4 and 23.0 respectively.
+
+    That noise figure is the reason the rule is windowed at all. The same sigma = 4 m of
+    GNSS vertical noise puts the largest *per-step* ``|v_z|`` at 14.1 m/s, past the
+    bound, on a flight that is perfectly clean: once the adopted channel is GNSS
+    (sec:altchannel) a per-step test fires on the noise floor itself.
+     A *time* window and not a fixed number of steps, for the reason every other window
+    in this module is one: the archive's cadences run from 1 to 10 s, and a fixed count
+    would ask a 10 s logger to sustain the excess for two minutes and a 1 Hz logger for
+    ten
+    seconds.
+
+    Args:
+        t: Fix times in seconds, strictly increasing.
+        v_z: Vertical speed per step, ``t.size - 1`` values.
+        window_s: Half-width of the centred window, in seconds.
+
+    Returns:
+        ``(median, populated)``: the rolling median of ``|v_z|`` at each step, and how
+        many steps its window actually held. A step with a missing altitude at either
+        end is ``nan``, which both the median and the count skip, so a hole in the
+        channel neither biases the estimate nor counts towards the population that
+        licenses it.
+    """
+    if v_z.size == 0:
+        return np.empty(0), np.empty(0)
+    midpoint = 0.5 * (t[:-1] + t[1:])
+    roll = {
+        "window": pd.Timedelta(seconds=2.0 * window_s),
+        "center": True,
+        "closed": "both",
+        "min_periods": 1,
+    }
+    series = pd.Series(np.abs(v_z), index=pd.to_timedelta(midpoint, unit="s"))
+    return (
+        series.rolling(**roll).median().to_numpy(),
+        series.rolling(**roll).count().to_numpy(),
+    )
+
+
 def _clean_altitude(
     t: np.ndarray, alt: np.ndarray, fix_level: FixLevelThresholds
-) -> tuple[np.ndarray, np.ndarray, int, int]:
-    """Absolute bounds on the adopted altitude channel (thesis, tab:cleaning).
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, int, int]:
+    """Bounds on the adopted altitude channel (thesis, tab:cleaning).
 
-    Two rules, both marking the altitude missing and neither touching the fix:
+    Three rules, all marking the altitude missing and none touching the fix:
 
-    * *out of band* -- outside the sensor-plausibility window. The lower bound is
-      negative, not zero: the barometric altitude is referenced to the ICAO standard
-      atmosphere rather than to the day's sea-level pressure, so on a high-pressure day
-      a sea-level take-off reads a few tens of metres negative;
+    * *out of band* -- outside the sensor-plausibility window;
+    * *sustained excess* -- the local vertical speed of :func:`local_vz` is past the
+      climb/sink envelope. A fix is censored when the step *into* it and the step *out
+      of* it are both in such a neighbourhood, so a defect is condemned from both sides
+      and never by a single step. A sustained run is therefore censored through its
+      interior, with the two fixes at its ends left standing as the boundary between the
+      good data and the bad;
     * *isolated vertical spike* -- an altitude the record jumps away from and back to
-      within one step each way, both steps past the climb/sink envelope. Requiring the
-      *out-and-back* is what implements the isolation check of impl:fixlevel: a
-      run-shaped excess of the same size is a sustained manoeuvre -- a spiral dive holds
-      15-20 m/s of real sink -- and calls for a raised bound or an exemption, not for
-      censoring. Such runs are counted and left alone.
+      within one step each way, both steps past the envelope. The windowed rule cannot
+      see this shape, by construction: two opposite-signed steps out of ten do not move
+      a median. That is not a gap but the division of labour -- one rule for the excess
+      that is typical of its neighbourhood, one for the excursion that is not.
+
+    No corroboration clause ties the sustained rule back to the fix's own step, and its
+    absence is deliberate. Inside a long run one fix may happen to sit on a small step,
+    and requiring the step to be excessive too would punch holes through an otherwise
+    uniformly censored stretch.
+
+    Where the window holds fewer than ``vz_min_window_fixes`` steps the median is not
+    estimable and the per-step value stands in for it. That fallback is safe precisely
+    because it is the sparse case: at 1 Hz the bound is a few tens of metres per step,
+    within reach of a gust plus noise, while at a 10 s cadence it is a few hundred,
+    which no gust produces. The problem the window exists to solve is a fast-cadence
+    problem.
 
     A third shape exists and is neither of these: a *level shift*, one single super-
     threshold step that is never undone: a barometric re-reference, or a one-record
@@ -673,32 +779,40 @@ def _clean_altitude(
     thesis argues, and none is implied by the specification (sec:fixlevel).
 
     Returns:
-        ``(out_of_band, vz_spike, n_runs, n_level_shifts)``: two boolean arrays over
-        the fixes, the number of coherent super-threshold runs left in place as a
-        diagnostic, and the number of unreturned single steps.
+        ``(out_of_band, vz_sustained, vz_spike, n_runs, n_level_shifts)``: three boolean
+        arrays over the fixes, the number of distinct sustained runs the second one
+        censored, and the number of unreturned single steps.
     """
     out_of_band = (alt < fix_level.min_altitude_m) | (alt > fix_level.max_altitude_m)
-    dt = np.diff(t)
-    with np.errstate(invalid="ignore"):
-        v_z = np.where(dt > 0, np.diff(alt) / dt, 0.0)
+    v_z = step_vz(t, alt)
     excess = np.abs(v_z) > fix_level.max_vertical_speed_mps
     excess = np.nan_to_num(excess, nan=False).astype(bool)
+
+    # The sustained rule, on the local median; the per-step value stands in wherever the
+    # window is too thin to estimate one.
+    median_vz, populated = local_vz(t, v_z, fix_level.vz_window_s)
+    thin = populated < fix_level.vz_min_window_fixes
+    local = np.where(thin, np.abs(v_z), median_vz)
+    with np.errstate(invalid="ignore"):
+        bad_step = local > fix_level.max_vertical_speed_mps
+    bad_step = np.nan_to_num(bad_step, nan=False).astype(bool)
+    sustained = np.zeros(alt.size, dtype=bool)
+    if bad_step.size >= 2:
+        sustained[1:-1] = bad_step[:-1] & bad_step[1:]
+    # How many distinct stretches that censored, not how many fixes: the fix count is
+    # already in the report, and what a reader needs beside it is whether the removals
+    # are one long event or a scatter of short ones.
+    edges = np.flatnonzero(np.diff(np.concatenate([[False], sustained, [False]])))
+    n_runs = int(edges.size // 2)
 
     spike = np.zeros(alt.size, dtype=bool)
     if excess.size >= 2:
         both = excess[:-1] & excess[1:]
         opposite = np.sign(v_z[:-1]) * np.sign(v_z[1:]) < 0
         spike[1:-1] = both & opposite
-    # A coherent run is two or more consecutive excessive steps that are not an
-    # out-and-back pair -- the signature of a genuine manoeuvre, not of a sensor error.
-    runs = np.flatnonzero(np.diff(np.concatenate([[False], excess, [False]])))
-    n_runs = int(
-        sum(
-            1
-            for start, stop in zip(runs[::2], runs[1::2], strict=True)
-            if stop - start >= 2 and not spike[start + 1 : stop].any()
-        )
-    )
+    # The two rules can agree on a fix -- a spike sitting inside a sustained stretch --
+    # and the sustained verdict wins, so the audit never counts one censoring twice.
+    spike &= ~sustained
     # A level shift: an isolated excessive step that the record does not come back from
     # within a few samples. "Comes back" is measured against the step itself rather than
     # against an absolute tolerance, so the test scales with the size of the jump.
@@ -713,7 +827,7 @@ def _clean_altitude(
         window = window[np.isfinite(window)]
         if not window.size or np.min(np.abs(window - alt[i])) > 0.3 * jump:
             n_level_shifts += 1
-    return out_of_band & np.isfinite(alt), spike, n_runs, n_level_shifts
+    return out_of_band & np.isfinite(alt), sustained, spike, n_runs, n_level_shifts
 
 
 def clean_flight(
@@ -721,7 +835,7 @@ def clean_flight(
     fix_level: FixLevelThresholds,
     *,
     discipline: str,
-    alt_source: str = "baro",
+    baro_witness: bool = False,
 ) -> Cleaned:
     """Run stage (ii) over one flight, in the fixed detector order.
 
@@ -734,8 +848,9 @@ def clean_flight(
         discipline: Key into ``max_horizontal_speed_mps`` (``"paragliders"``,
             ``"hang gliders"``): the two types have markedly different speed envelopes,
             so one shared bound is either too loose for the slower or clips the faster.
-        alt_source: The channel stage (i) adopted, which decides the frozen-lock
-            witness.
+        baro_witness: Whether this flight's raw barometric channel is usable as the
+            frozen-lock witness (stage (i) decides). Defaults to ``False``, the
+            conservative reading: with no witness the rule abstains and keeps the run.
 
     Returns:
         The :class:`Cleaned` record.
@@ -775,6 +890,14 @@ def clean_flight(
     lat = work["lat"].to_numpy(dtype=float)
     lon = work["lon"].to_numpy(dtype=float)
     alt = work["alt"].to_numpy(dtype=float)
+    # The raw barometric channel, for the frozen-lock witness alone. The IGC zero means
+    # "absent" (see altchannel), so it must not read as a measurement of sea level.
+    baro = (
+        work["baro_alt"].to_numpy(dtype=float)
+        if "baro_alt" in work.columns
+        else np.full(alt.size, np.nan)
+    )
+    baro = np.where(baro == 0.0, np.nan, baro)
     valid = work["valid"].to_numpy(dtype=bool)
     if t.size < 2:
         return _empty_result(work, n_raw, n_merged, removed_t, removed_reason)
@@ -786,19 +909,23 @@ def clean_flight(
     )
 
     # (3) Frozen-lock runs, on the fixes the spike pass leaves standing.
-    frozen, frozen_split = _frozen_runs(t, lat, lon, alt, valid, fix_level, alt_source)
+    frozen, frozen_split = _frozen_runs(
+        t, lat, lon, alt, baro, valid, fix_level, baro_witness
+    )
     frozen &= ~spike
     split |= frozen_split
 
-    # (4) Altitude: absolute bounds alone, marking missing and never deleting.
-    out_of_band, vz_spike, n_vz_runs, n_level_shifts = _clean_altitude(
+    # (4) Altitude: the absolute band and the local vertical-speed test, marking
+    #     missing and never deleting.
+    out_of_band, vz_sustained, vz_spike, n_vz_runs, n_level_shifts = _clean_altitude(
         t, alt, fix_level
     )
-    invalidated = out_of_band | vz_spike
-    if alt_source == "gnss":
-        # A V flag certifies a degraded GNSS altitude, so on a fallback flight it is the
-        # corrupt-altitude case; on a barometric flight the fix is untouched by it.
-        invalidated |= ~valid
+    invalidated = out_of_band | vz_sustained | vz_spike
+    # A V flag is the recorder certifying that its own GNSS altitude is degraded. The
+    # adopted channel is the GNSS one for every flight now (sec:altchannel), so this is
+    # the corrupt-altitude case everywhere -- where it used to reach only the minority
+    # that had fallen back to GNSS.
+    invalidated |= ~valid
 
     deleted = spike | frozen
     # The postcondition, applied where it can hold: after *every* pass that deletes.
@@ -826,6 +953,7 @@ def clean_flight(
         n_removed_spike=int(spike.sum()),
         n_removed_frozen=int(frozen.sum()),
         n_alt_out_of_band=int((out_of_band & ~deleted).sum()),
+        n_alt_vz_sustained=int((vz_sustained & ~deleted).sum()),
         n_alt_vz_spike=int((vz_spike & ~deleted).sum()),
         n_flagged_kept=int((flagged & ~deleted).sum()),
         n_splits=int(split[~deleted].sum()),
@@ -902,6 +1030,7 @@ def _empty_result(
             n_removed_spike=0,
             n_removed_frozen=0,
             n_alt_out_of_band=0,
+            n_alt_vz_sustained=0,
             n_alt_vz_spike=0,
             n_flagged_kept=0,
             n_splits=0,

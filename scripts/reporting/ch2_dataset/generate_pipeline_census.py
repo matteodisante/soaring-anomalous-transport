@@ -52,6 +52,7 @@ from soaring.reporting import (  # noqa: E402
 DROP_LABELS = [
     ("pipeline_raised", "the pipeline raised on this file"),
     ("fewer_than_two_fixes", "unreadable track"),
+    ("no_usable_altitude_channel", "no usable GNSS altitude"),
     ("no_sustained_flight", "never airborne"),
     ("cleaning_rebuilt_too_much", "integrity gate"),
     ("duration_below_minimum", "shorter than the duration cut"),
@@ -136,7 +137,12 @@ def _macros(tag: str, meta) -> dict[str, str]:
         f"StatPipe{tag}Attempted": f"{total}",
         f"StatPipe{tag}Kept": f"{len(kept)}",
         f"StatPipe{tag}KeptPct": f"{100.0 * len(kept) / max(total, 1):.1f}",
-        f"StatPipe{tag}BaroPct": f"{100.0 * (meta['alt_source'] == 'baro').mean():.1f}",
+        # The witness fraction, not a channel choice: every kept flight reads GNSS
+        # (sec:altchannel), and this is the share that additionally carries a usable
+        # barometer to witness a frozen lock with.
+        f"StatPipe{tag}BaroWitnessPct": (
+            f"{100.0 * (kept['baro_witness'] == True).mean():.1f}"  # noqa: E712
+        ),
     }
     if not len(kept):
         return out
@@ -149,7 +155,9 @@ def _macros(tag: str, meta) -> dict[str, str]:
 
     raw_fixes = kept["n_fix_raw"].sum()
     deleted = 1.0 - kept["n_fix_clean"].sum() / raw_fixes
-    invalidated = (kept["n_alt_out_of_band"] + kept["n_alt_vz_spike"]).sum() / raw_fixes
+    invalidated = (
+        kept["n_alt_out_of_band"] + kept["n_alt_vz_sustained"] + kept["n_alt_vz_spike"]
+    ).sum() / raw_fixes
     flagged_kept = kept["n_flagged_kept"].sum() / raw_fixes
     return out | {
         f"StatPipe{tag}MedianDurationMin": (

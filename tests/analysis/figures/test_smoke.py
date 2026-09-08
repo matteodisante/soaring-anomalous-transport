@@ -20,13 +20,13 @@ import pytest
 matplotlib.use("Agg")
 
 from soaring.analysis.config import load_preproc_config
+from soaring.analysis.figures.msd import make_msd_figure
 from soaring.analysis.figures.preproc import (
     make_fixlevel_diagnostics_figure,
     make_flightlevel_diagnostics_figure,
     make_gap_diagnostics_figure,
     make_sampling_figure,
 )
-from soaring.analysis.figures.msd import make_msd_figure
 from soaring.analysis.observables.transport import MSDResult
 
 
@@ -45,6 +45,9 @@ def _scan(n=4000, seed=0):
             "baro_alt_min_m": rng.uniform(0, 500, n),
             "baro_alt_max_m": rng.uniform(600, 4000, n),
             "baro_present_frac": rng.choice([0.0, 1.0], n, p=[0.3, 0.7]),
+            "gnss_alt_min_m": rng.uniform(0, 500, n),
+            "gnss_alt_max_m": rng.uniform(600, 4000, n),
+            "gnss_present_frac": rng.choice([0.0, 1.0], n, p=[0.02, 0.98]),
             "max_gap_ratio": rng.uniform(1, 40, n),
             "dt_s": rng.choice([1.0, 2.0, 5.0, 10.0], n),
             "missing_fraction": rng.uniform(0, 0.3, n),
@@ -63,11 +66,14 @@ def _distributions(nan_every=0):
     out = {}
     for disc in ("paragliders", "hang gliders"):
         v_z = rng.normal(0, 2, 5000).round()
+        v_z_local = np.abs(rng.normal(0, 1, 5000))  # rolling median: tighter, unsigned
         if nan_every:
             v_z[::nan_every] = np.nan
+            v_z_local[::nan_every] = np.nan
         out[disc] = {
             "v_xy": rng.normal(12, 4, 5000),
             "v_z": v_z,
+            "v_z_local": v_z_local,
             "altitude": rng.normal(1500, 500, 5000),
         }
     return out

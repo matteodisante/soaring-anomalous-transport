@@ -42,21 +42,29 @@ def make_flightlevel_diagnostics_figure(
 
     Six panels, each overlaying every discipline. Top row, the distribution of the
     quantity each of the three track criteria cuts on: (a) recorded flight duration,
-    (b) total flown path length, (c) whole-flight barometric altitude range, with the
-    adopted cut marked. Bottom row, (d)/(e)/(f) the fraction of flights retained versus
-    that cut, computed for **that cut alone** (marginal, not cascaded), so each curve
-    isolates the effect of one criterion.
+    (b) total flown path length, (c) whole-flight altitude range on the adopted
+    channel, with the adopted cut marked. Bottom row, (d)/(e)/(f) the fraction of
+    flights retained versus that cut, computed for **that cut alone** (marginal, not
+    cascaded), so each curve isolates the effect of one criterion.
 
     The altitude-range panels need no extra scan: the range is
-    ``baro_alt_max_m - baro_alt_min_m``, both already columns of the cached census.
+    ``gnss_alt_max_m - gnss_alt_min_m``, both already columns of the cached census.
+
+    They describe the **whole population**, which they could not do before. The panels
+    used to be restricted to flights carrying a barometer, because the scan stored only
+    the barometric extremes and a GNSS-derived flight therefore read a range of zero
+    whatever its real altitude activity -- putting some 30 % of paragliders at the
+    bottom of the distribution for a reason that had nothing to do with how they flew.
+    The scan now carries both channels, so the panel describes the cut on the channel
+    the cut actually acts on, over every flight (thesis, sec:flightfilter).
 
     Args:
         scans: Mapping ``discipline -> per-flight table`` (``duration_s``, ``path_km``,
-            ``baro_alt_min_m``, ``baro_alt_max_m``), each a full census
+            ``gnss_alt_min_m``, ``gnss_alt_max_m``), each a full census
             (:func:`scan_tracks` over every track).
         flight_level: The adopted thresholds to mark.
-        alt_channel: The altitude-channel thresholds, for the presence cut that decides
-            which flights the barometric panels are entitled to describe.
+        alt_channel: The altitude-channel thresholds, for the presence gate that decides
+            which flights have an adopted channel to describe at all.
 
     Returns:
         The Matplotlib figure (not saved).
@@ -76,19 +84,16 @@ def make_flightlevel_diagnostics_figure(
         dur_h = dur_h[dur_h > 0]
         path = pd.to_numeric(s["path_km"], errors="coerce")
         path = path[path > 0]
-        # Restricted to flights that actually adopt the barometric channel. The scan
-        # stores only the barometric extremes, so a GNSS-fallback flight reads a
-        # range of zero here whatever its real altitude activity: pooling the two
-        # would put ~30 % of paragliders at the bottom of the distribution for a
-        # reason that has nothing to do with how they flew. Auditing the cut on the
-        # fallback minority needs the GNSS extremes in the scan, i.e. a full rescan
-        # (thesis, sec:flightfilter).
-        present = pd.to_numeric(s["baro_present_frac"], errors="coerce")
-        has_baro = present >= alt_channel.baro_present_min
-        alt_range = pd.to_numeric(s["baro_alt_max_m"], errors="coerce") - pd.to_numeric(
-            s["baro_alt_min_m"], errors="coerce"
+        # On the adopted channel, over every flight that has one. A flight whose GNSS
+        # altitude is absent is dropped by the channel gate before this cut is ever
+        # reached (sec:altchannel), so it does not belong in the distribution the cut is
+        # read off either.
+        present = pd.to_numeric(s["gnss_present_frac"], errors="coerce")
+        has_alt = present >= alt_channel.gnss_present_min
+        alt_range = pd.to_numeric(s["gnss_alt_max_m"], errors="coerce") - pd.to_numeric(
+            s["gnss_alt_min_m"], errors="coerce"
         )
-        alt_range = alt_range[has_baro & (alt_range > 0)]
+        alt_range = alt_range[has_alt & (alt_range > 0)]
 
         axes[0, 0].hist(
             dur_h[dur_h <= 12],
@@ -415,11 +420,14 @@ def make_fixlevel_diagnostics_figure(
     """Fix-level cleaning diagnostics: the per-fix distributions the bounds act on.
 
     Three panels, each overlaying every discipline, for the quantities the fix-level
-    cuts test between/at consecutive fixes: (a) horizontal speed ``v_xy``, (b)
-    barometric vertical speed ``|v_z|``, (c) barometric altitude. Unlike the
-    flight-level figure these are distributions over individual *fixes*, not per-flight
-    summaries: a bound removes only the few offending fixes of an otherwise good
-    flight, so what justifies it is that it sits in the physically-implausible tail
+    cuts test at consecutive fixes or over a neighbourhood of them: (a) horizontal speed
+    ``v_xy``, (b) the *windowed* GNSS vertical speed ``v_z_local`` -- the median of
+    ``|v_z|`` over a centred window
+    (:func:`soaring.analysis.preproc.cleaning.local_vz`), which is what
+    ``max_vertical_speed_mps`` actually bounds -- (c) GNSS altitude. Unlike the
+    flight-level figure these are distributions over individual *fixes*, not
+    per-flight summaries: a bound removes only the few offending fixes of an otherwise
+    good flight, so what justifies it is that it sits in the physically-implausible tail
     (a GPS error, not signal) and removes a negligible fraction of fixes, annotated on
     each panel. The y-axis is logarithmic so that tail, where the cuts act, is visible.
     Panel (a) marks one cut *per discipline*, colour-matched to that discipline's
@@ -575,18 +583,20 @@ def make_fixlevel_diagnostics_figure(
     axes[0].legend(fontsize=8)
     _shared_cut_panel(
         axes[1],
-        "v_z",
+        "v_z_local",
         (fix_level.max_vertical_speed_mps,),
-        r"barometric $|v_z|$ [m/s]",
-        "(b) Vertical speed",
+        r"windowed GNSS $\mathrm{med}|v_z|$ [m/s]",
+        "(b) Vertical speed (windowed)",
         wide_tail=True,
-        integer_aligned=True,
+        # Not integer-aligned: unlike the raw per-step value, a rolling median is not
+        # itself a metre-quantized quantity, even though every sample feeding it is.
+        integer_aligned=False,
     )
     _shared_cut_panel(
         axes[2],
         "altitude",
         (fix_level.min_altitude_m, fix_level.max_altitude_m),
-        "barometric altitude [m]",
+        "GNSS altitude [m]",
         "(c) Altitude",
         wide_tail=False,
     )

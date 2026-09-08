@@ -2,6 +2,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from soaring.analysis.config import (
+    SamplingThresholds,
+    SavgolParams,
+    load_preproc_config,
+)
 from soaring.analysis.preproc.resample import resample_flight
 from soaring.analysis.preproc.smoothing import (
     DROP_WINDOW_TOO_WIDE,
@@ -13,11 +18,6 @@ from soaring.analysis.preproc.smoothing import (
     smooth_flight,
     smooth_segment,
 )
-from soaring.analysis.config import (
-    SamplingThresholds,
-    SavgolParams,
-    load_preproc_config,
-)
 
 SAMPLING = SamplingThresholds(
     max_gap_factor=10.0,
@@ -25,14 +25,13 @@ SAMPLING = SamplingThresholds(
     max_missing_fraction=0.10,
     min_segment_duration_s=90.0,
 )
-# The adopted parameters: p = 3, and the three timescales the July 2026 measurement
-# found to coincide at 5 s (test_adopted_config_gives_one_window_for_every_channel pins
-# them to configs/preprocessing.yaml).
+# The adopted parameters: p = 3, and the two timescales the July 2026 measurement found
+# to coincide at 5 s (test_adopted_config_gives_one_window_per_axis pins them to
+# configs/preprocessing.yaml).
 SAVGOL = SavgolParams(
     polyorder=3,
     tau_c_horizontal_s=5.0,
-    tau_c_vertical_baro_s=5.0,
-    tau_c_vertical_gnss_s=5.0,
+    tau_c_vertical_s=5.0,
 )
 
 
@@ -67,10 +66,10 @@ def _cubic_truth(t):
     }
 
 
-def _run(flight, savgol=SAVGOL, *, alt_source="baro"):
+def _run(flight, savgol=SAVGOL):
     """Stage (vi) then stage (vii), the way the pipeline chains them."""
     resampled = resample_flight(flight, SAMPLING)
-    return smooth_flight(resampled, savgol, alt_source=alt_source)
+    return smooth_flight(resampled, savgol)
 
 
 # --------------------------------------------------------------------------------
@@ -110,31 +109,28 @@ def test_the_floor_follows_the_order_if_the_order_ever_changes():
     assert savgol_window(5.0, 10.0, 5) == 7
 
 
-def test_the_vertical_window_is_conditioned_on_the_altitude_source():
-    # The per-channel machinery of sec:savgol item (iii), exercised with the asymmetry
-    # that was expected a priori but not measured: a noisier GNSS vertical would take a
-    # longer window than the barometric one.
+def test_the_vertical_window_has_a_timescale_of_its_own():
+    # sec:savgol item (iii): the vertical axis is smoothed on its own timescale, so a
+    # vertical channel with a different noise floor takes a different window. The
+    # asymmetry below is not the archive's -- it is what the machinery must be able to
+    # express.
     savgol = SavgolParams(
         polyorder=3,
         tau_c_horizontal_s=5.0,
-        tau_c_vertical_baro_s=3.0,
-        tau_c_vertical_gnss_s=12.0,
+        tau_c_vertical_s=12.0,
     )
-    assert savgol_windows(savgol, 1.0, alt_source="baro") == SavgolWindows(5, 5, 3)
-    assert savgol_windows(savgol, 1.0, alt_source="gnss") == SavgolWindows(5, 13, 3)
-    with pytest.raises(ValueError, match="alt_source"):
-        savgol_windows(savgol, 1.0, alt_source="baro_or_gnss")
+    assert savgol_windows(savgol, 1.0) == SavgolWindows(5, 13, 3)
 
 
-def test_adopted_config_gives_one_window_for_every_channel():
-    # The measured result, not an assumption: the three knees coincide at ~0.2 Hz
-    # because every channel's floor is the IGC quantization, so the adopted windows are
-    # equal even though the machinery keeps them apart.
+def test_adopted_config_gives_one_window_per_axis():
+    # The measured result, not an assumption: the knees coincide at ~0.2 Hz because
+    # every channel's floor is the IGC quantization, so the adopted windows are equal
+    # even though the two timescales stay separate keys.
     savgol = load_preproc_config().savgol
     assert savgol.polyorder == 3
-    for alt_source in ("baro", "gnss"):
-        windows = savgol_windows(savgol, 1.0, alt_source=alt_source)
-        assert windows == SavgolWindows(horizontal=5, vertical=5, polyorder=3)
+    assert savgol_windows(savgol, 1.0) == SavgolWindows(
+        horizontal=5, vertical=5, polyorder=3
+    )
 
 
 # --------------------------------------------------------------------------------

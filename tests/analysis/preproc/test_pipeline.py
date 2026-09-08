@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from soaring.analysis.config import load_preproc_config
 from soaring.analysis.preproc.flightfilter import DROP_TOO_SHORT
 from soaring.analysis.preproc.pipeline import (
     FIX_TABLE_COLUMNS,
@@ -11,7 +12,6 @@ from soaring.analysis.preproc.pipeline import (
     run_flight,
 )
 from soaring.analysis.preproc.trimming import DROP_NO_FLIGHT
-from soaring.analysis.config import load_preproc_config
 
 CFG = load_preproc_config()
 LAT0, LON0 = 45.0, 7.0
@@ -42,8 +42,10 @@ def _xc_track(duration_s=3000.0, ground_s=120.0, baro=True):
             "lat": LAT0 + north / _M_PER_DEG_LAT,
             "lon": LON0 + east / _M_PER_DEG_LON,
             "valid": np.full(t.size, True),
-            "baro_alt": alt if baro else np.zeros(t.size),
-            "gnss_alt": alt + 50.0,
+            # `gnss_alt` is the adopted channel; `baro_alt` is the witness beside it,
+            # absent (all-zero, as the IGC format writes it) when `baro` is False.
+            "baro_alt": alt - 50.0 if baro else np.zeros(t.size),
+            "gnss_alt": alt,
         }
     )
 
@@ -64,7 +66,8 @@ def test_a_plausible_flight_comes_out_the_far_end():
     assert (out.fixes["source"] == "paraglider").all()
     assert (out.fixes["flight_id"] == "42").all()
     # Every stage left its mark on the flights_meta row.
-    assert out.meta.alt_source == "baro"
+    assert out.meta.gnss_present_frac == 1.0
+    assert out.meta.baro_witness is True
     assert out.meta.n_fix_raw == 3240
     assert out.meta.dt_native_s == pytest.approx(1.0)
     assert out.meta.savgol_window_horiz == 5
@@ -103,12 +106,31 @@ def test_the_kinematics_are_physical():
     assert np.isfinite(out.fixes[["E", "N", "z", "v_E", "a_E"]].to_numpy()).all()
 
 
-def test_a_gnss_fallback_flight_runs_the_same_chain():
+def test_a_flight_without_a_barometer_runs_the_same_chain():
+    # The point of one adopted channel: a logger with no pressure sensor is measured
+    # exactly like every other flight. All it loses is the frozen-lock witness.
     out = _run(_xc_track(baro=False))
     assert out.kept
-    assert out.meta.alt_source == "gnss"
+    assert out.meta.baro_witness is False
     assert out.meta.baro_present_frac == 0.0
     assert out.meta.savgol_window_vert == 5
+
+
+def test_a_flight_with_no_gnss_altitude_stops_at_the_channel_gate():
+    # There is no second channel to fall back to: the flight has no vertical coordinate
+    # at all, and stops before the cleaning ever sees it (sec:altchannel).
+    from soaring.analysis.preproc.altchannel import DROP_NO_ALTITUDE
+
+    track = _xc_track()
+    track["gnss_alt"] = 0.0
+    out = _run(track)
+
+    assert not out.kept
+    assert out.meta.drop_stage == "alt_channel"
+    assert out.meta.drop_reason == DROP_NO_ALTITUDE
+    # Dropped even though the barometer is healthy, and the row still says so.
+    assert out.meta.baro_witness is True
+    assert out.fixes.empty
 
 
 def test_a_flight_that_never_took_off_stops_at_trimming():
@@ -122,7 +144,7 @@ def test_a_flight_that_never_took_off_stops_at_trimming():
     assert out.fixes.empty
     # The row still exists: the census of removals is a result too.
     assert out.meta.n_fix_raw == 3240
-    assert out.meta.alt_source == "baro"
+    assert out.meta.baro_witness is True
 
 
 def test_a_sled_run_stops_at_the_flight_filter():

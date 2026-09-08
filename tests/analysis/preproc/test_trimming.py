@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from soaring.analysis.config import load_preproc_config
 from soaring.analysis.preproc.flightfilter import (
     DROP_FLAT,
     DROP_SHORT_PATH,
@@ -15,7 +16,6 @@ from soaring.analysis.preproc.trimming import (
     airborne_window,
     trim_flight,
 )
-from soaring.analysis.config import load_preproc_config
 
 CFG = load_preproc_config()
 TRIM, FLIGHT = CFG.trimming, CFG.flight
@@ -28,20 +28,35 @@ _M_PER_DEG_LON = _M_PER_DEG_LAT * np.cos(np.radians(LAT0))
 
 
 def _from_speed(speed_mps, alt_mps=None, dt=1.0):
-    """A flight built from a per-second ground speed and climb rate, flying due east."""
+    """A flight built from a per-second ground speed and climb rate, flying due east.
+
+    ``alt`` is the adopted (GNSS) channel; ``baro_alt`` is the raw barometer beside it,
+    which is what the interior-ground flatness guard reads (sec:altchannel). A healthy
+    sensor tracks the adopted channel at a constant offset, which is what this builds.
+    """
     speed = np.asarray(speed_mps, dtype=float)
     n = speed.size
     east = np.concatenate([[0.0], np.cumsum(speed[:-1] * dt)])
     climb = np.zeros(n) if alt_mps is None else np.asarray(alt_mps, dtype=float)
+    alt = 1000.0 + np.concatenate([[0.0], np.cumsum(climb[:-1] * dt)])
     return pd.DataFrame(
         {
             "t": np.arange(n) * dt,
             "lat": np.full(n, LAT0),
             "lon": LON0 + east / _M_PER_DEG_LON,
-            "alt": 1000.0 + np.concatenate([[0.0], np.cumsum(climb[:-1] * dt)]),
+            "alt": alt,
+            "baro_alt": alt - 50.0,
             "split_before": np.zeros(n, dtype=bool),
         }
     )
+
+
+def _trim(flight, **kwargs):
+    """Stage (iii) at the adopted thresholds, with a healthy barometer to witness."""
+    kwargs.setdefault("suspect_min_span_s", SUSPECT_MIN_S)
+    kwargs.setdefault("max_drift_mps", MAX_DRIFT_MPS)
+    kwargs.setdefault("baro_witness", True)
+    return trim_flight(flight, TRIM, **kwargs)
 
 
 # --------------------------------------------------------------------------------
@@ -53,9 +68,7 @@ def test_take_off_and_landing_are_the_sustained_speed_rule():
     # 100 s on the ground, 400 s of flight, 100 s on the ground again.
     speed = np.concatenate([np.zeros(100), np.full(400, 12.0), np.zeros(100)])
     flight = _from_speed(speed)
-    out = trim_flight(
-        flight, TRIM, suspect_min_span_s=SUSPECT_MIN_S, max_drift_mps=MAX_DRIFT_MPS
-    )
+    out = _trim(flight)
 
     assert out.drop_reason is None
     # Take-off is the first fix of the sustained-fast run, landing the last fix it
@@ -75,12 +88,7 @@ def test_a_brief_gust_on_the_ground_is_not_a_take_off():
     speed = np.zeros(600)
     speed[50:55] = 20.0  # a 5 s gust, far short of T0 = 30 s
     speed[200:500] = 12.0
-    out = trim_flight(
-        _from_speed(speed),
-        TRIM,
-        suspect_min_span_s=SUSPECT_MIN_S,
-        max_drift_mps=MAX_DRIFT_MPS,
-    )
+    out = _trim(_from_speed(speed))
 
     assert out.t_on == pytest.approx(200.0)
 
@@ -97,12 +105,7 @@ def test_soaring_into_wind_does_not_end_the_flight():
             np.zeros(60),
         ]
     )
-    out = trim_flight(
-        _from_speed(speed),
-        TRIM,
-        suspect_min_span_s=SUSPECT_MIN_S,
-        max_drift_mps=MAX_DRIFT_MPS,
-    )
+    out = _trim(_from_speed(speed))
 
     assert out.t_on == pytest.approx(60.0)
     assert out.t_off == pytest.approx(760.0)
@@ -110,12 +113,7 @@ def test_soaring_into_wind_does_not_end_the_flight():
 
 
 def test_a_flight_that_never_flew_is_dropped_with_a_reason():
-    out = trim_flight(
-        _from_speed(np.zeros(600)),
-        TRIM,
-        suspect_min_span_s=SUSPECT_MIN_S,
-        max_drift_mps=MAX_DRIFT_MPS,
-    )
+    out = _trim(_from_speed(np.zeros(600)))
     assert out.drop_reason == DROP_NO_FLIGHT
     assert out.fixes.empty
     assert out.trimmed_fraction == 1.0
@@ -150,12 +148,7 @@ def _with_interior_stint(stint_s, climb_during=0.0):
 
 def test_a_long_flat_interior_stint_is_excised_and_split():
     # A top-landing: 12 minutes at zero ground speed with a flat barometer.
-    out = trim_flight(
-        _with_interior_stint(720),
-        TRIM,
-        suspect_min_span_s=SUSPECT_MIN_S,
-        max_drift_mps=MAX_DRIFT_MPS,
-    )
+    out = _trim(_with_interior_stint(720))
 
     assert out.n_interior_excised == 1
     assert len(out.fixes) == 1200  # the stint's fixes are gone
@@ -171,12 +164,7 @@ def test_a_stint_where_the_wing_is_still_climbing_is_kept():
     # The independent-sensor argument again: a wing at zero ground speed in real air
     # still moves vertically, so the flatness condition is what separates a landing from
     # a wing parked in lift.
-    out = trim_flight(
-        _with_interior_stint(720, climb_during=1.0),
-        TRIM,
-        suspect_min_span_s=SUSPECT_MIN_S,
-        max_drift_mps=MAX_DRIFT_MPS,
-    )
+    out = _trim(_with_interior_stint(720, climb_during=1.0))
     assert out.n_interior_excised == 0
     assert len(out.fixes) == 1921
 
@@ -186,19 +174,12 @@ def test_the_flatness_test_is_run_on_the_detrended_altitude():
     # T_ground is already of the order of the tolerance. Testing the raw range would let
     # a perfectly stationary pilot fail on a pressure change alone.
     drifting = _with_interior_stint(720, climb_during=0.02)  # 14 m of drift over 720 s
-    out = trim_flight(
-        drifting, TRIM, suspect_min_span_s=SUSPECT_MIN_S, max_drift_mps=MAX_DRIFT_MPS
-    )
+    out = _trim(drifting)
     assert out.n_interior_excised == 1
 
 
 def test_a_short_flat_stint_is_flagged_and_not_cut():
-    out = trim_flight(
-        _with_interior_stint(300),
-        TRIM,
-        suspect_min_span_s=SUSPECT_MIN_S,
-        max_drift_mps=MAX_DRIFT_MPS,
-    )
+    out = _trim(_with_interior_stint(300))
 
     assert out.n_interior_excised == 0
     assert len(out.suspect_intervals) == 1
@@ -210,12 +191,7 @@ def test_a_short_flat_stint_is_flagged_and_not_cut():
 def test_stints_below_the_reporting_floor_are_not_even_flagged():
     # Every thermalling flight holds brief slow moments; a list that reported them all
     # would bury the mid-flight landings it exists to surface.
-    out = trim_flight(
-        _with_interior_stint(20),
-        TRIM,
-        suspect_min_span_s=SUSPECT_MIN_S,
-        max_drift_mps=MAX_DRIFT_MPS,
-    )
+    out = _trim(_with_interior_stint(20))
     assert out.suspect_intervals.empty
 
 
@@ -401,8 +377,8 @@ def test_the_two_duration_bounds_read_different_quantities():
     was calibrated on -- the census's 16-to-166 hour "flights" with paths up to 10^4
     km, which would land in the long-lag MSD.
     """
-    from soaring.analysis.preproc.flightfilter import DROP_TOO_LONG
     from soaring.analysis.config import load_preproc_config
+    from soaring.analysis.preproc.flightfilter import DROP_TOO_LONG
 
     sampling = load_preproc_config().sampling
     # One hour of flight, twenty hours of nothing, one more hour of flight.

@@ -3,7 +3,7 @@
 This is the only place the pipeline order of sec:preproc is written down as code, and it
 is not an implementation choice -- it is argued in the thesis and is fixed::
 
-    (i)   altitude channel      -> alt_source, and the adopted `alt`
+    (i)   altitude channel      -> the adopted `alt`, and the barometric witness
     (ii)  fix-level cleaning    -> deletions, invalidations, split markers
     (iii) ground trimming       -> the airborne window, and the clock zero
           integrity gate        -> counted over that window, hence here and not in (ii)
@@ -75,7 +75,31 @@ if TYPE_CHECKING:
 #          "-123456N" decoded to a plausible latitude instead of being rejected. No stored
 #          table changes: a scan of 3000 files across both archives, 21 million B records,
 #          found no such token, and the rule can only reject what was accepted before.
-PIPELINE_VERSION = "1.3.1"
+# 2.0.0 -- one altitude channel for the whole archive, and a local test to go with it.
+#          Stage (i) no longer chooses between the barometric and GNSS altitudes per
+#          flight: it adopts GNSS everywhere and *gates* on it, dropping a flight whose
+#          GNSS channel is absent or stuck, where such a flight used to fall back
+#          (sec:altchannel). A mixed population makes the vertical coordinate a
+#          different physical quantity from flight to flight, and any correlation
+#          between which sensor a logger carried and how it flew then enters the
+#          statistics as a selection effect. The barometer survives as an *instrument*:
+#          the flat-baro witness of the frozen-lock rule and of the interior-ground
+#          guard now read the RAW baro channel, since the adopted altitude comes from
+#          the very receiver whose lock is in doubt and cannot witness against itself; a
+#          flight with no usable barometer keeps the weaker declaration test, and the
+#          ground guard abstains outright rather than falling back to speed alone. In
+#          the same pass, forced by the same change: the |v_z| bound moved from the step
+#          between two fixes to the MEDIAN of |v_z| over the steps within `vz_window_s`,
+#          with a fix censored when the step into it and the step out of it are both in
+#          such a neighbourhood. The per-step form condemned a wind gust, which carries
+#          one step past the bound without carrying its neighbours there, and -- on the
+#          GNSS channel -- the vertical noise floor itself: sigma = 4 m at 1 Hz puts the
+#          largest per-step |v_z| at 14.1 m/s on a clean flight, against a window median
+#          of 5.6. New counter `n_alt_vz_sustained`; `n_vz_runs` changes meaning, from
+#          coherent runs left in place to distinct runs censored. The V flag now
+#          invalidates the altitude on every flight, not only the fallback minority.
+#          Major bump: no stored table from 1.x is comparable.
+PIPELINE_VERSION = "2.0.0"
 
 # The reason a flight carries when the driver could not run the pipeline over it at all
 # -- an unreadable file, a parser failure, a bug. It lives here, with the other stage
@@ -108,7 +132,10 @@ FIX_TABLE_COLUMNS = [
 
 # Columns the raw parse carries that no later stage needs: the channel not adopted, and
 # the validity flag whose only consumers are the frozen-lock witness and the altitude
-# rule, both of which have already run by the time the local frame is built.
+# rule, both of which have already run by the time the local frame is built. `baro_alt`
+# is in that list for the same reason and not by inertia: it is the frozen-lock and
+# ground-flatness witness (sec:altchannel), read by stages (ii) and (iii) and needed by
+# nothing after them.
 _CONSUMED_BY_CLEANING = ["baro_alt", "gnss_alt", "valid"]
 
 
@@ -123,7 +150,9 @@ class FlightRecord:
     drop_reason: str | None = None
     error_detail: str | None = None
     # Stage (i)
-    alt_source: str | None = None
+    gnss_present_frac: float | None = None
+    gnss_range_m: float | None = None
+    baro_witness: bool | None = None
     baro_present_frac: float | None = None
     baro_range_m: float | None = None
     n_alt_missing_raw: int | None = None
@@ -135,6 +164,7 @@ class FlightRecord:
     n_removed_spike: int | None = None
     n_removed_frozen: int | None = None
     n_alt_out_of_band: int | None = None
+    n_alt_vz_sustained: int | None = None
     n_alt_vz_spike: int | None = None
     n_flagged_kept: int | None = None
     n_vz_runs: int | None = None
@@ -216,16 +246,24 @@ def run_flight(
         meta.drop_stage, meta.drop_reason = "parse", "fewer_than_two_fixes"
         return FlightResult(meta=meta)
 
-    # (i) which altitude channel this flight is going to use.
+    # (i) gate the adopted (GNSS) channel, and rate the barometric witness beside it.
     with_alt, channel = adopt_alt_channel(fixes, cfg.alt_channel)
-    meta.alt_source = channel.alt_source
+    meta.gnss_present_frac = channel.gnss_present_frac
+    meta.gnss_range_m = channel.gnss_range_m
+    meta.baro_witness = channel.baro_witness
     meta.baro_present_frac = channel.baro_present_frac
     meta.baro_range_m = channel.baro_range_m
     meta.n_alt_missing_raw = channel.n_missing
+    if channel.drop_reason is not None:
+        # No vertical coordinate at all: with one adopted channel there is nothing to
+        # fall back to, so the flight stops here rather than entering the analysis with
+        # an altitude that is not there (sec:altchannel).
+        meta.drop_stage, meta.drop_reason = "alt_channel", channel.drop_reason
+        return FlightResult(meta=meta)
 
     # (ii) fix-level cleaning.
     cleaned = clean_flight(
-        with_alt, cfg.fix, discipline=discipline, alt_source=channel.alt_source
+        with_alt, cfg.fix, discipline=discipline, baro_witness=channel.baro_witness
     )
     report = asdict(cleaned.report)
     for key in (
@@ -235,6 +273,7 @@ def run_flight(
         "n_removed_spike",
         "n_removed_frozen",
         "n_alt_out_of_band",
+        "n_alt_vz_sustained",
         "n_alt_vz_spike",
         "n_flagged_kept",
         "n_vz_runs",
@@ -250,6 +289,7 @@ def run_flight(
         cfg.trimming,
         suspect_min_span_s=cfg.fix.frozen_tau_s,
         max_drift_mps=cfg.fix.frozen_delta_z_m / cfg.fix.frozen_tau_s,
+        baro_witness=channel.baro_witness,
     )
     meta.ground_phase_start_s = trimmed.t_on
     meta.ground_phase_end_s = trimmed.t_off
@@ -304,7 +344,7 @@ def run_flight(
     meta.n_segments = len(resampled.segments)
 
     # (vii) smoothing and differentiation.
-    smoothed = smooth_flight(resampled, cfg.savgol, alt_source=channel.alt_source)
+    smoothed = smooth_flight(resampled, cfg.savgol)
     if smoothed.windows is not None:
         meta.savgol_order = smoothed.windows.polyorder
         meta.savgol_window_horiz = smoothed.windows.horizontal

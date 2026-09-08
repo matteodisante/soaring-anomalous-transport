@@ -21,13 +21,18 @@ import numpy as np
 import pandas as pd
 
 from .altitude_noise import BARO_PRESENT_MIN
-from .igc import baro_present_fraction, median_sampling_period, parse_igc
+from .igc import (
+    baro_present_fraction,
+    gnss_present_fraction,
+    median_sampling_period,
+    parse_igc,
+)
 
 # Mean Earth radius (IUGG), the sphere the great-circle distance is measured on.
 _EARTH_RADIUS_M = 6371008.8
 
 # The per-fix quantities the fix-level bounds act on, in the order the panels use.
-_FIXLEVEL_QUANTITIES = ("v_xy", "v_z", "altitude")
+_FIXLEVEL_QUANTITIES = ("v_xy", "v_z", "v_z_local", "altitude")
 
 
 def great_circle_m(
@@ -58,22 +63,27 @@ def track_stats(fixes: pd.DataFrame) -> dict | None:
     count, the total flown path length (sum of great-circle steps), the extent (farthest
     fix from the first), the native sampling interval, the largest single gap and the
     missing fraction (the two quantities the intra-flight sampling-regularity cut acts
-    on, thesis sec:uniform), the barometric-presence fraction, the largest
-    horizontal/vertical speed between consecutive fixes, and the barometric-altitude
-    range -- these last four are not yet used by any thesis figure, but are cheap
-    byproducts of this same scan and directly support future work: validating the
-    fix-level speed/altitude bounds of tab:cleaning against real data, and (for
-    ``baro_present_frac``) the barometric-presence figure of sec:altchannel, which today
-    runs its own separate scan.
+    on, thesis sec:uniform), the presence fraction of *each* altitude channel, the
+    largest horizontal speed between consecutive fixes, and the largest vertical speed
+    and altitude range on each channel.
+
+    Both channels are measured, not just the adopted one. The GNSS numbers are what the
+    channel gate of sec:altchannel acts on -- a flight whose GNSS altitude is absent has
+    no vertical coordinate and is dropped -- while the barometric ones size the
+    *witness* channel, the independent instrument the frozen-lock rule needs
+    (sec:fixlevel). The per-channel speeds and ranges also let the fix-level bounds of
+    tab:cleaning be
+    validated against real data on the channel they actually bound.
 
     Args:
         fixes: Table returned by :func:`soaring.analysis.igc.parse_igc`.
 
     Returns:
         A mapping with ``duration_s``, ``n_fix``, ``path_km``, ``extent_km``, ``dt_s``,
-        ``max_gap_ratio``, ``missing_fraction``, ``baro_present_frac``, ``max_vxy_mps``,
-        ``max_vz_mps``, ``baro_alt_min_m`` and ``baro_alt_max_m``, or ``None`` if the
-        track has fewer than two fixes.
+        ``max_gap_ratio``, ``missing_fraction``, ``baro_present_frac``,
+        ``gnss_present_frac``, ``max_vxy_mps``, ``max_vz_mps``, ``max_vz_gnss_mps``,
+        ``baro_alt_min_m``, ``baro_alt_max_m``, ``gnss_alt_min_m`` and
+        ``gnss_alt_max_m``, or ``None`` if the track has fewer than two fixes.
     """
     n = len(fixes)
     if n < 2:
@@ -82,6 +92,7 @@ def track_stats(fixes: pd.DataFrame) -> dict | None:
     lat = fixes["lat"].to_numpy()
     lon = fixes["lon"].to_numpy()
     baro = fixes["baro_alt"].to_numpy()
+    gnss = fixes["gnss_alt"].to_numpy()
     steps = great_circle_m(lat[:-1], lon[:-1], lat[1:], lon[1:])
     disp = great_circle_m(lat[0], lon[0], lat, lon)
     duration_s = float(t[-1] - t[0])
@@ -107,6 +118,11 @@ def track_stats(fixes: pd.DataFrame) -> dict | None:
         if nonzero.any()
         else float("nan")
     )
+    max_vz_gnss_mps = (
+        float(np.max(np.abs(np.diff(gnss))[nonzero] / diffs[nonzero]))
+        if nonzero.any()
+        else float("nan")
+    )
     return {
         "duration_s": duration_s,
         "n_fix": int(n),
@@ -116,10 +132,14 @@ def track_stats(fixes: pd.DataFrame) -> dict | None:
         "max_gap_ratio": max_gap_ratio,
         "missing_fraction": missing_fraction,
         "baro_present_frac": baro_present_fraction(fixes),
+        "gnss_present_frac": gnss_present_fraction(fixes),
         "max_vxy_mps": max_vxy_mps,
         "max_vz_mps": max_vz_mps,
+        "max_vz_gnss_mps": max_vz_gnss_mps,
         "baro_alt_min_m": float(np.nanmin(baro)),
         "baro_alt_max_m": float(np.nanmax(baro)),
+        "gnss_alt_min_m": float(np.nanmin(gnss)),
+        "gnss_alt_max_m": float(np.nanmax(gnss)),
     }
 
 
@@ -132,10 +152,14 @@ _SCAN_COLUMNS = [
     "max_gap_ratio",
     "missing_fraction",
     "baro_present_frac",
+    "gnss_present_frac",
     "max_vxy_mps",
     "max_vz_mps",
+    "max_vz_gnss_mps",
     "baro_alt_min_m",
     "baro_alt_max_m",
+    "gnss_alt_min_m",
+    "gnss_alt_max_m",
 ]
 
 
@@ -244,15 +268,29 @@ def retention_curve(
     return thr, frac
 
 
-def _fix_level_arrays(fixes: pd.DataFrame) -> dict[str, np.ndarray]:
+# The window half-width :func:`fix_level_distributions` measures ``v_z_local`` at when
+# the caller does not name one -- the config value at the time this was written
+# (``configs/preprocessing.yaml``, ``vz_window_s``). Callers validating a *candidate*
+# window pass their own; this default only matters to a caller that does not care.
+DEFAULT_VZ_WINDOW_S = 5.0
+
+
+def _fix_level_arrays(
+    fixes: pd.DataFrame, *, vz_window_s: float = DEFAULT_VZ_WINDOW_S
+) -> dict[str, np.ndarray]:
     """The per-fix quantities the fix-level bounds act on, from one parsed track.
 
     Returns per-*fix* arrays (not per-flight summaries): the great-circle horizontal
-    speed between consecutive fixes, the barometric vertical speed between consecutive
-    fixes, and the barometric altitude at each fix. Vertical speed and altitude are only
-    physical when the flight carries a barometric channel, so they are empty for a
-    GNSS-only flight. Consecutive pairs with a non-positive time step (duplicate
-    timestamps) are dropped.
+    speed between consecutive fixes, the GNSS vertical speed between consecutive fixes
+    (both the raw per-step value and the windowed statistic the cleaning actually
+    bounds, :func:`soaring.analysis.preproc.cleaning.local_vz`), and the GNSS altitude
+    at each fix -- the adopted channel (thesis, sec:altchannel). Vertical speed and
+    altitude are only physical when the flight carries a usable GNSS channel, so they
+    are empty for a flight that would be dropped at the channel gate. Consecutive pairs
+    with a non-positive time step (duplicate timestamps) are dropped from ``v_xy`` and
+    ``v_z``; ``v_z_local`` is windowed in true time first and filtered to match
+    afterwards, since a window computed on already-filtered steps would misplace itself
+    in time.
     """
     empty = {q: np.empty(0) for q in _FIXLEVEL_QUANTITIES}
     n = len(fixes)
@@ -266,41 +304,62 @@ def _fix_level_arrays(fixes: pd.DataFrame) -> dict[str, np.ndarray]:
     lat = fixes["lat"].to_numpy()
     lon = fixes["lon"].to_numpy()
     step = great_circle_m(lat[:-1], lon[:-1], lat[1:], lon[1:])
-    out = {"v_xy": step[ok] / dt[ok], "v_z": np.empty(0), "altitude": np.empty(0)}
-    if baro_present_fraction(fixes) >= BARO_PRESENT_MIN:
-        baro = fixes["baro_alt"].to_numpy()
-        out["v_z"] = np.abs(np.diff(baro))[ok] / dt[ok]
-        out["altitude"] = baro
+    out = {
+        "v_xy": step[ok] / dt[ok],
+        "v_z": np.empty(0),
+        "v_z_local": np.empty(0),
+        "altitude": np.empty(0),
+    }
+    if gnss_present_fraction(fixes) >= BARO_PRESENT_MIN:
+        from .preproc.cleaning import local_vz, step_vz
+
+        gnss = fixes["gnss_alt"].to_numpy()
+        v_z_signed = step_vz(t, gnss)
+        median_vz, _ = local_vz(t, v_z_signed, vz_window_s)
+        out["v_z"] = np.abs(v_z_signed)[ok]
+        out["v_z_local"] = median_vz[ok]
+        out["altitude"] = gnss
     return out
 
 
-def _fix_level_one(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Worker: the three per-fix arrays for one file (picklable for the pool)."""
-    a = _fix_level_arrays(parse_igc(path))
-    return a["v_xy"], a["v_z"], a["altitude"]
+def _fix_level_one(
+    path: Path, *, vz_window_s: float = DEFAULT_VZ_WINDOW_S
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Worker: the four per-fix arrays for one file (picklable for the pool)."""
+    a = _fix_level_arrays(parse_igc(path), vz_window_s=vz_window_s)
+    return a["v_xy"], a["v_z"], a["v_z_local"], a["altitude"]
 
 
 def fix_level_distributions(
-    paths: list[Path], *, n_jobs: int = 1
+    paths: list[Path], *, n_jobs: int = 1, vz_window_s: float = DEFAULT_VZ_WINDOW_S
 ) -> dict[str, np.ndarray]:
     """Pool the per-fix fix-level quantities over a sample of flights.
 
-    Returns concatenated arrays keyed ``v_xy``, ``v_z`` and ``altitude`` -- one value
-    per fix, across every sampled flight -- the material for
-    :func:`make_fixlevel_diagnostics_figure`. A sample (rather than the full census) is
-    the right tool here, exactly as for the altitude PSD: even a few hundred flights is
-    millions of fixes, enough for a sharp distribution and a precise cut fraction, at a
-    fraction of the cost.
+    Returns concatenated arrays keyed ``v_xy``, ``v_z``, ``v_z_local`` and ``altitude``
+    -- one value per fix (or per step, for the two vertical ones), across every sampled
+    flight -- the material for :func:`make_fixlevel_diagnostics_figure` and for
+    re-deriving ``max_vertical_speed_mps`` itself: place the bound where ``v_z_local``'s
+    fine-histogram bin-to-bin ratio settles near 1, exactly as the horizontal bounds
+    were placed (thesis, sec:fixlevel "Validating the cleaning"). A sample (rather than
+    the full census) is the right tool here, exactly as for the altitude PSD: even a few
+    hundred flights is millions of fixes, enough for a sharp distribution and a precise
+    cut fraction, at a fraction of the cost.
 
     Args:
         paths: IGC file paths (typically a seeded sample; see ``sample_igc_paths``).
         n_jobs: Worker processes; ``1`` runs serially in-process.
+        vz_window_s: Half-width of the window ``v_z_local`` is measured over. Sweep this
+            (e.g. against ``{3, 5, 10, 20}``) when re-deriving the window width itself,
+            rather than assuming the adopted value.
     """
+    from functools import partial
+
+    worker = partial(_fix_level_one, vz_window_s=vz_window_s)
     if n_jobs > 1 and len(paths) > 1:
         with ProcessPoolExecutor(max_workers=n_jobs) as ex:
-            results = list(ex.map(_fix_level_one, paths, chunksize=50))
+            results = list(ex.map(worker, paths, chunksize=50))
     else:
-        results = [_fix_level_one(p) for p in paths]
+        results = [worker(p) for p in paths]
     return {
         key: (np.concatenate([r[i] for r in results]) if results else np.empty(0))
         for i, key in enumerate(_FIXLEVEL_QUANTITIES)

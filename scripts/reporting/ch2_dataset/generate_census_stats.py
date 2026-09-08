@@ -9,15 +9,20 @@ quotes from the **full-census track scan** (the cached
 drifting when the archive grows and the scan is refreshed: the ``.tex`` never hard-codes
 a census number.
 
-The macros cover, per discipline: the number of scanned tracks; the barometric-absence
-fraction and its all-or-nothing structure (channel exactly zero when absent, complete
-when present); the count and share of flights that break that pattern, present just
-under the cut rather than at zero (``StatScan*BaroBorderline{Count,Pct}``, quoted by
-``impl:altchannel``); the prevalence of *individually* missing barometric values among the
-flights that adopt the channel (``StatScan*BaroMiss{FlightsPct,MedianFixes,MaxFixes}``,
-quoted by the "Missing fixes" paragraph of thesis ``sec:altchannel``: share of
-barometric flights missing at least one value, and the median/maximum number of
-missing fixes among them); the median recorded duration and flown path length; the
+The macros cover, per discipline: the number of scanned tracks; the presence census of
+**both** altitude channels, and each one's all-or-nothing structure (channel exactly
+zero when absent, complete when present). The GNSS numbers (``StatScan*NoGnssPct`` etc.)
+describe the channel gate of ``sec:altchannel``: a flight below the cut has no vertical
+coordinate and is dropped, there being no other channel to move it to. The barometric
+numbers (``StatScan*NoBaroPct`` etc.) describe the *witness* population instead -- a
+flight below the cut keeps the weaker declared-only frozen-lock test. Both channels get
+the same borderline census, the count and share of flights present just under the cut
+rather than at zero (``StatScan*{Gnss,Baro}Borderline{Count,Pct}``, quoted by
+``impl:altchannel``), and the prevalence of *individually* missing values among the
+flights that carry the channel (``StatScan*{Gnss,Baro}Miss{FlightsPct,MedianFixes,
+MaxFixes}``, quoted by the "Missing fixes" paragraph of thesis ``sec:altchannel``: share
+missing at least one value, and the median/maximum number of missing fixes among them);
+the median recorded duration and flown path length; the
 native-rate discreteness (fraction at an exact whole second, and the per-rate
 breakdown quoted in the text); the fraction of largest-gap ratios that are exact
 integer multiples of the native interval; and the share of flights whose largest gap
@@ -48,11 +53,12 @@ cache or data root is missing, the committed file is simply left as is): prose m
 still spell a value out where it argues for it, but a summary table always goes
 through the macro.
 
-Definitions mirror the analysis code, not ad-hoc re-derivations: barometric absence is
-``baro_present_frac < BARO_PRESENT_MIN`` (imported from ``soaring.analysis
-.altitude_noise``, the same threshold the fallback-rate figure uses), and the rate/gap
-fractions are computed over the same finite-positive filters as the sampling and gap
-figures.
+Definitions mirror the analysis code, not ad-hoc re-derivations: absence on either
+channel is ``*_present_frac < BARO_PRESENT_MIN`` (imported from ``soaring.analysis
+.altitude_noise``, the same threshold the channel gate and the witness test both use --
+the config carries the two as separate keys, but the one number the archive was
+calibrated against is this one), and the rate/gap fractions are computed over the same
+finite-positive filters as the sampling and gap figures.
 
 Best-effort, like every reporting script: it only ever *reads* the caches (a full
 rescan is ``generate_preproc_figure.py``'s job), and if the SSD, a cache, or the
@@ -82,11 +88,10 @@ from soaring.reporting import DISCIPLINES, bare_cli, check_name  # noqa: E402
 
 
 # How far below BARO_PRESENT_MIN still counts as "just under the cut" for the
-# borderline-presence census (impl:altchannel), as percentage points. The band itself is
-# defined once, beside the threshold, in soaring.analysis.altitude_noise: _scan_macros
-# counts the flights in it, _config_macros quotes its lower bound, and
-# generate_alt_offset_stats.py measures the GNSS channel over the same flights, so none
-# of the three can describe a different band.
+# borderline-presence census (impl:altchannel), as percentage points, on EITHER channel.
+# The band itself is defined once, beside the threshold, in soaring.analysis
+# .altitude_noise: _scan_macros counts the flights in it, _config_macros quotes its
+# lower bound, so the two cannot describe a different band.
 def _near_cut_margin_pct() -> float:
     """The borderline band's width in percentage points, from the analysis constant."""
     from soaring.analysis.altitude_noise import BARO_BORDERLINE_MARGIN
@@ -110,20 +115,65 @@ def _pct(mask) -> float:
     return 100.0 * float(m.mean()) if m.size else 0.0
 
 
-def _scan_macros(prefix: str, scan, sampling) -> dict[str, str]:
-    """The census macros for one discipline's scan table (see module docstring)."""
+def _channel_macros(prefix: str, tag: str, scan, column: str) -> dict[str, str]:
+    """The presence/borderline/missing census for one altitude channel, one discipline.
+
+    Shared by the GNSS gate and the barometric witness (see module docstring): the same
+    three questions -- how many lack the channel outright, how many sit just under the
+    cut, how many that have it are missing a handful of individual values -- asked of
+    whichever ``column`` the caller names.
+
+    Args:
+        prefix: Macro prefix for the discipline (``"Para"`` / ``"Hang"``).
+        tag: Macro infix for the channel (``"Gnss"`` / ``"Baro"``).
+        scan: The discipline's cached scan table.
+        column: ``"gnss_present_frac"`` or ``"baro_present_frac"``.
+    """
     import numpy as np
 
     from soaring.analysis.altitude_noise import BARO_PRESENT_MIN
 
-    frac = scan["baro_present_frac"].to_numpy()
+    frac = scan[column].to_numpy()
     absent = frac < BARO_PRESENT_MIN
-
-    # Bimodality holds almost everywhere but not quite: a thin band of flights present
-    # just under the cut, close enough that whether the GNSS fallback (sec:altchannel)
-    # actually lands on the more complete channel is untested there -- this scan carries
-    # no GNSS-completeness column to check against.
     near_cut = (frac >= BARO_PRESENT_MIN - _near_cut_margin_pct() / 100.0) & absent
+
+    n_fix = scan["n_fix"].to_numpy()
+    miss = np.rint((1.0 - frac[~absent]) * n_fix[~absent]).astype(int)
+    have_miss = miss > 0
+
+    return {
+        f"StatScan{prefix}No{tag}Pct": _fmt(_pct(absent), 1),
+        f"StatScan{prefix}{tag}ZeroPct": _fmt(_pct(frac[absent] == 0.0), 1),
+        f"StatScan{prefix}{tag}FullPct": _fmt(_pct(frac[~absent] == 1.0), 0),
+        f"StatScan{prefix}{tag}BorderlineCount": str(int(near_cut.sum())),
+        f"StatScan{prefix}{tag}BorderlinePct": _fmt(_pct(near_cut), 2),
+        f"StatScan{prefix}{tag}MissFlightsPct": _fmt(_pct(have_miss), 1),
+        f"StatScan{prefix}{tag}MissMedianFixes": str(
+            int(np.median(miss[have_miss])) if have_miss.any() else 0
+        ),
+        f"StatScan{prefix}{tag}MissMaxFixes": str(
+            int(miss.max()) if have_miss.any() else 0
+        ),
+    }
+
+
+def _scan_macros(prefix: str, scan, sampling) -> dict[str, str]:
+    """The census macros for one discipline's scan table (see module docstring)."""
+    import numpy as np
+
+    channel_macros = _channel_macros(
+        prefix, "Gnss", scan, "gnss_present_frac"
+    ) | _channel_macros(prefix, "Baro", scan, "baro_present_frac")
+
+    # Neither channel usable: the population the channel gate actually drops
+    # (sec:altchannel) -- there is no fallback left to catch it.
+    from soaring.analysis.altitude_noise import BARO_PRESENT_MIN
+
+    no_gnss = scan["gnss_present_frac"].to_numpy() < BARO_PRESENT_MIN
+    no_baro = scan["baro_present_frac"].to_numpy() < BARO_PRESENT_MIN
+    channel_macros[f"StatScan{prefix}NoAltitudePct"] = _fmt(
+        _pct(no_gnss & no_baro), 2
+    )
 
     dt = scan["dt_s"].to_numpy()
     dt = dt[np.isfinite(dt) & (dt > 0)]
@@ -144,27 +194,9 @@ def _scan_macros(prefix: str, scan, sampling) -> dict[str, str]:
     g_rel = sampling.max_gap_factor * dt_p
     g_comb = np.minimum(g_rel, np.maximum(sampling.max_gap_seconds, 2.0 * dt_p))
 
-    # Among flights that *adopt* the barometric channel, the per-flight number of fixes
-    # whose barometric value is missing (thesis sec:altchannel, "Availability"):
-    # dropped, not back-filled, so their prevalence is quoted in the text.
-    n_fix = scan["n_fix"].to_numpy()
-    miss = np.rint((1.0 - frac[~absent]) * n_fix[~absent]).astype(int)
-    have_miss = miss > 0
-
     return {
         f"StatScan{prefix}Tracks": str(len(scan)),
-        f"StatScan{prefix}NoBaroPct": _fmt(_pct(absent), 1),
-        f"StatScan{prefix}BaroZeroPct": _fmt(_pct(frac[absent] == 0.0), 1),
-        f"StatScan{prefix}BaroFullPct": _fmt(_pct(frac[~absent] == 1.0), 0),
-        f"StatScan{prefix}BaroBorderlineCount": str(int(near_cut.sum())),
-        f"StatScan{prefix}BaroBorderlinePct": _fmt(_pct(near_cut), 2),
-        f"StatScan{prefix}BaroMissFlightsPct": _fmt(_pct(have_miss), 1),
-        f"StatScan{prefix}BaroMissMedianFixes": str(
-            int(np.median(miss[have_miss])) if have_miss.any() else 0
-        ),
-        f"StatScan{prefix}BaroMissMaxFixes": str(
-            int(miss.max()) if have_miss.any() else 0
-        ),
+        **channel_macros,
         f"StatScan{prefix}MedianDurH": _fmt(
             float(np.nanmedian(scan["duration_s"])) / 3600.0, 1
         ),
@@ -250,11 +282,19 @@ def _config_macros(preproc) -> dict[str, str]:
         "PreprocFrozenDeltaZM": _fmt(fix.frozen_delta_z_m, 1),
         "PreprocFrozenTauS": _fmt(fix.frozen_tau_s, 1),
         "PreprocIntegrityMaxPct": _fmt(100.0 * fix.integrity_max_fraction, 1),
-        "PreprocBaroPresentMinPct": _fmt(100.0 * alt.baro_present_min, 0),
-        "PreprocBaroBorderlineLowPct": _fmt(
-            100.0 * alt.baro_present_min - _near_cut_margin_pct(), 0
+        # The channel gate, on the analysis (GNSS) altitude: below this a flight has no
+        # vertical coordinate at all and is dropped (sec:altchannel).
+        "PreprocGnssPresentMinPct": _fmt(100.0 * alt.gnss_present_min, 0),
+        "PreprocGnssBorderlineLowPct": _fmt(
+            100.0 * alt.gnss_present_min - _near_cut_margin_pct(), 0
         ),
-        "PreprocBaroMinRangeM": _fmt(alt.baro_min_range_m, 1),
+        "PreprocGnssMinRangeM": _fmt(alt.gnss_min_range_m, 1),
+        # The witness test, on the raw barometer: below this the frozen-lock rule falls
+        # back to the recorder's own declarations.
+        "PreprocBaroWitnessPresentMinPct": _fmt(
+            100.0 * alt.baro_witness_present_min, 0
+        ),
+        "PreprocBaroWitnessMinRangeM": _fmt(alt.baro_witness_min_range_m, 1),
         "PreprocTakeoffSpeedMps": _fmt(preproc.trimming.takeoff_speed_mps, 1),
         "PreprocSustainedS": _fmt(preproc.trimming.sustained_s, 1),
         "PreprocInteriorGroundMin": _fmt(preproc.trimming.interior_ground_s / 60.0, 1),
@@ -277,8 +317,9 @@ def _config_macros(preproc) -> dict[str, str]:
             | 1  # up to the nearest odd: a centred fit needs a middle sample
         ),
         "PreprocSavgolTauCS": _fmt(preproc.savgol.tau_c_horizontal_s, 1),
-        "PreprocSavgolTauCVertBaroS": _fmt(preproc.savgol.tau_c_vertical_baro_s, 1),
-        "PreprocSavgolTauCVertGnssS": _fmt(preproc.savgol.tau_c_vertical_gnss_s, 1),
+        "PreprocSavgolTauCVertS": _fmt(preproc.savgol.tau_c_vertical_s, 1),
+        "PreprocVzWindowS": _fmt(fix.vz_window_s, 1),
+        "PreprocVzMinWindowFixes": str(fix.vz_min_window_fixes),
     }
 
 

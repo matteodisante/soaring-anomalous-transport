@@ -2,7 +2,15 @@
 r"""Regenerate the barometric-vs-GNSS altitude noise figure for the thesis.
 
 Computes the altitude noise diagnostics (Welch PSD + barometric availability) from raw
-IGC tracks on the external SSD and writes ``thesis/generated/altitude_noise.pdf``.
+IGC tracks on the external SSD, and writes ``thesis/generated/altitude_noise.pdf`` and
+``thesis/generated/altitude_noise.tex`` (the ``\StatAltNoise*`` macros).
+
+The macros exist because "the medians coincide, so the noisy minority is small" is not
+an inference the median actually licenses -- a median is unmoved by anything up to half
+the population. :func:`soaring.analysis.altitude_noise.hf_floor_excess_fraction` sizes
+the minority directly, per flight, against the barometric channel's own typical floor
+(``soaring.analysis.altitude_noise.FLOOR_BAND_HZ``), on the same PSD sample panel (c)
+already draws from.
 
 The three panels have different precision needs, so they use different data volumes (see
 ``soaring.analysis.altitude_noise`` for the full rationale):
@@ -207,7 +215,53 @@ def main() -> int:
     fig.savefig(OUT_PATH, metadata=_PDF_METADATA, bbox_inches="tight")
     counts = ", ".join(f"{d}={len(p)}" for d, p in samples.items())
     print(f"Wrote {OUT_PATH} from PSD sample ({counts}).")
+
+    _write_hf_floor_macros(acc)
     return 0
+
+
+def _write_hf_floor_macros(acc) -> None:
+    r"""Write ``\StatAltNoise*``: the measured size of the noisy-GNSS minority.
+
+    Pooled over every discipline the PSD sample reached, matching the pooling
+    :func:`~soaring.analysis.altitude_noise._Accumulator.pooled_band_psd` already does
+    for panel (c) -- one number, not a per-discipline family, since the claim is about
+    the channel and the receiver, not the glider (thesis, sec:altchannel).
+    """
+    from soaring.analysis.altitude_noise import hf_floor_excess_fraction
+    from soaring.reporting.macros import MacroWriter, write_macros
+
+    gnss_floor = acc.hf_floor("gnss")
+    baro_floor = acc.hf_floor("baro")
+    if gnss_floor.size == 0 or baro_floor.size == 0:
+        print("No paired baro/GNSS spectra in the sample; skipping altitude_noise.tex.")
+        return
+
+    import numpy as np
+
+    w = MacroWriter("StatAltNoise")
+    w.put("PsdSampleFlights", int(gnss_floor.size))
+    factor_names = {3: "ThreeX", 10: "TenX"}  # spelled out: \newcommand reads a
+    # leading digit in the trailing text as an argument count (see check_name).
+    for factor, name in factor_names.items():
+        pct = 100.0 * hf_floor_excess_fraction(gnss_floor, baro_floor, float(factor))
+        w.put(f"GnssExcess{name}Pct", f"{pct:.1f}")
+    for label, arr in (("Baro", baro_floor), ("Gnss", gnss_floor)):
+        for q, name in ((50, "Median"), (90, "PNinety"), (99, "PNinetyNine")):
+            w.put(f"{label}Floor{name}", f"{np.percentile(arr, q):.2e}")
+
+    out = OUT_PATH.parent / "altitude_noise.tex"
+    n = write_macros(
+        out,
+        w,
+        generator="scripts/reporting/ch2_dataset/generate_altitude_noise_figure.py",
+        extra_header=[
+            "The GNSS high-frequency-floor excess: how many flights carry a floor a",
+            "given multiple of the barometric channel's typical (median) one, measured",
+            "per flight rather than inferred from where the two ensemble medians sit.",
+        ],
+    )
+    print(f"Wrote {out} ({n} macros).")
 
 
 if __name__ == "__main__":

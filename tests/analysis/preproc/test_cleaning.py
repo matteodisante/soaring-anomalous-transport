@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from soaring.analysis.census import great_circle_m
+from soaring.analysis.config import load_preproc_config
 from soaring.analysis.preproc.cleaning import (
     DROP_INTEGRITY,
     REMOVED_BACKWARD_TIME,
@@ -12,8 +14,6 @@ from soaring.analysis.preproc.cleaning import (
     integrity_gate,
     longest_non_decreasing,
 )
-from soaring.analysis.config import load_preproc_config
-from soaring.analysis.census import great_circle_m
 
 FIX = load_preproc_config().fix
 LAT0, LON0 = 45.0, 7.0
@@ -21,17 +21,30 @@ _M_PER_DEG_LAT = 111_320.0
 _M_PER_DEG_LON = _M_PER_DEG_LAT * np.cos(np.radians(LAT0))
 
 
-def _flight(east_m, north_m, alt_m, dt=1.0, valid=None):
-    """A synthetic flight from local metric offsets, back on geographic coordinates."""
+def _flight(east_m, north_m, alt_m, dt=1.0, valid=None, baro_m=None):
+    """A synthetic flight from local metric offsets, back on geographic coordinates.
+
+    The frame is the one stage (i) hands to the cleaning: ``alt`` is the adopted (GNSS)
+    channel, and ``baro_alt`` is the raw barometer beside it -- the frozen-lock witness,
+    which by default simply tracks the adopted channel at a constant offset, the way a
+    healthy pressure sensor does.
+    """
     east_m = np.asarray(east_m, dtype=float)
     north_m = np.asarray(north_m, dtype=float)
     n = east_m.size
+    alt = np.broadcast_to(np.asarray(alt_m, dtype=float), (n,)).copy()
+    baro = (
+        alt - 50.0
+        if baro_m is None
+        else np.broadcast_to(np.asarray(baro_m, dtype=float), (n,)).copy()
+    )
     return pd.DataFrame(
         {
             "t": np.arange(n) * dt,
             "lat": LAT0 + north_m / _M_PER_DEG_LAT,
             "lon": LON0 + east_m / _M_PER_DEG_LON,
-            "alt": np.broadcast_to(np.asarray(alt_m, dtype=float), (n,)).copy(),
+            "alt": alt,
+            "baro_alt": baro,
             "valid": np.full(n, True)
             if valid is None
             else np.asarray(valid, dtype=bool),
@@ -45,8 +58,10 @@ def _glide(n=300, speed=10.0, dt=1.0, climb=-1.0, alt0=2000.0):
     return _flight(speed * t, np.zeros(n), alt0 + climb * t, dt=dt)
 
 
-def _clean(flight, alt_source="baro"):
-    return clean_flight(flight, FIX, discipline="paragliders", alt_source=alt_source)
+def _clean(flight, baro_witness=True):
+    return clean_flight(
+        flight, FIX, discipline="paragliders", baro_witness=baro_witness
+    )
 
 
 # --------------------------------------------------------------------------------
@@ -293,10 +308,10 @@ def test_byte_identical_coordinates_overrule_a_climbing_barometer():
     assert out.report.n_removed_frozen == 90
 
 
-def test_on_a_gnss_flight_the_recorder_declarations_are_the_witness():
+def test_without_a_barometer_the_recorder_declarations_are_the_witness():
     flight = _with_frozen_run(alt_climb=1.0, jitter=1.5)
     flight.loc[100:189, "valid"] = False
-    out = _clean(flight, alt_source="gnss")
+    out = _clean(flight, baro_witness=False)
     # 90 frozen fixes, plus at most the first fix after them: the wing has not yet moved
     # delta_xy away, so a greedy collapsed run reaches it. A bounded over-cut, and the
     # only place the byte-identical family of candidates is not the one that fires.
@@ -304,15 +319,35 @@ def test_on_a_gnss_flight_the_recorder_declarations_are_the_witness():
     assert not set(np.arange(100.0, 190.0)) & set(out.fixes["t"].tolist())
 
 
-def test_an_undeclared_jittering_freeze_on_a_gnss_flight_is_kept():
+def test_an_undeclared_jittering_freeze_without_a_barometer_is_kept():
     # The residual "wrongly kept" case sec:fixlevel names: neither byte-identical nor
-    # declared, so nothing witnesses it and the default to keep wins.
-    out = _clean(_with_frozen_run(jitter=1.5), alt_source="gnss")
+    # declared, so nothing witnesses it and the default to keep wins. This is the price
+    # of a flight with no pressure sensor, and the reason the barometer is kept as an
+    # instrument even though the analysis reads GNSS (sec:altchannel).
+    out = _clean(_with_frozen_run(jitter=1.5), baro_witness=False)
     assert out.report.n_removed_frozen == 0
 
 
+def test_the_witness_is_the_raw_barometer_and_not_the_adopted_altitude():
+    """The independence that makes the witness worth anything (sec:altchannel).
+
+    The adopted altitude comes from the very receiver whose lock is in doubt, so it
+    cannot witness against itself: on a frozen run it would sit as flat as the frozen
+    position and confirm every candidate. Here the adopted channel is flat over the run
+    while the barometer climbs through it, and the barometer is what decides.
+    """
+    flight = _with_frozen_run(jitter=1.5)  # adopted `alt` flat across the run
+    baro = flight["alt"].to_numpy(copy=True)
+    baro[100:190] = baro[99] + 1.0 * np.arange(1, 91)  # a real 1 m/s climb underneath
+    baro[190:] = baro[189]
+    flight["baro_alt"] = baro
+    assert _clean(flight, baro_witness=True).report.n_removed_frozen == 0
+    # Strike the witness out and nothing is left to defend the run but the declarations.
+    assert _clean(flight, baro_witness=False).report.n_removed_frozen == 0
+
+
 # --------------------------------------------------------------------------------
-# (4) Altitude: absolute bounds only
+# (4) Altitude: the band, the local vertical-speed test, and the out-and-back rule
 # --------------------------------------------------------------------------------
 
 
@@ -338,31 +373,119 @@ def test_an_isolated_vertical_spike_is_invalidated():
     assert len(out.fixes) == 300
 
 
-def test_a_sustained_dive_is_not_censored_but_counted():
-    # impl:fixlevel check (5): a run-shaped excess is a genuine manoeuvre -- a spiral
-    # dive holds 15-20 m/s of real sink -- and calls for a raised bound, not censoring.
+def _with_sink(rate_mps, seconds=30, start=120):
+    """A glide with a constant sink of ``rate_mps`` for ``seconds``, then resuming."""
     flight = _glide()
     alt = flight["alt"].to_numpy(copy=True)
-    alt[120:150] = alt[119] - 18.0 * np.arange(1, 31)
-    alt[150:] = alt[149] - 1.0 * np.arange(1, len(alt) - 149)
+    stop = start + seconds
+    alt[start:stop] = alt[start - 1] - rate_mps * np.arange(1, seconds + 1)
+    alt[stop:] = alt[stop - 1] - 1.0 * np.arange(1, len(alt) - stop + 1)
     flight["alt"] = alt
-    out = _clean(flight)
+    flight["baro_alt"] = alt - 50.0
+    return flight
 
+
+def test_a_sink_inside_the_envelope_is_left_alone():
+    # A dive is a manoeuvre, not a defect, and the rule must not reach it. 11 m/s of
+    # sustained sink sits under the bound and nothing fires.
+    out = _clean(_with_sink(11.0))
+    assert out.report.n_alt_vz_sustained == 0
     assert out.report.n_alt_vz_spike == 0
-    assert out.report.n_vz_runs == 1
     assert np.isfinite(out.fixes["alt"].to_numpy()).all()
 
 
-def test_the_v_flag_invalidates_only_on_a_gnss_flight():
+def test_a_sustained_excess_is_censored_through_its_interior():
+    # Past the bound and carried by the whole neighbourhood: not a gust, not a spike.
+    # The interior of the run is censored; the fixes at its ends stay, as the boundary
+    # between the good data and the bad.
+    out = _clean(_with_sink(18.0))
+
+    assert out.report.n_alt_vz_sustained == 29
+    assert out.report.n_vz_runs == 1  # one stretch, not a scatter of short ones
+    assert len(out.fixes) == 300  # the invariant: no altitude rule deletes a fix
+    censored = np.flatnonzero(~np.isfinite(out.fixes["alt"].to_numpy()))
+    assert censored.min() >= 120 and censored.max() <= 150
+
+
+def test_a_gust_past_the_bound_censors_nothing():
+    """The reason the rule is windowed at all (sec:fixlevel).
+
+    A gust carries one step past the climb/sink envelope without carrying its
+    neighbourhood there. The per-step form this replaces condemned it; a median over the
+    window does not move, so nothing is censored.
+    """
+    flight = _glide()
+    alt = flight["alt"].to_numpy(copy=True)
+    alt[100] += 16.0  # one step of +17 m/s, one of -15 m/s: over the bound both ways
+    alt[101] += 30.0
+    flight["alt"] = alt
+    flight["baro_alt"] = alt - 50.0
+    out = _clean(flight)
+
+    assert out.report.n_alt_vz_sustained == 0
+    assert not out.fixes["alt_invalidated"].any()
+
+
+def test_the_windowed_rule_is_blind_to_an_isolated_spike_and_the_other_rule_is_not():
+    # The division of labour, stated as a test: two opposite-signed steps out of ten
+    # do not move a median, so the sustained rule cannot see a spike -- exactly the
+    # property that makes it blind to gusts. The out-and-back rule is what catches it.
+    flight = _glide()
+    flight.loc[100, "alt"] += 40.0
+    out = _clean(flight)
+
+    assert out.report.n_alt_vz_sustained == 0
+    assert out.report.n_alt_vz_spike == 1
+
+
+def test_gnss_vertical_noise_alone_does_not_trip_the_windowed_rule():
+    """What the per-step form could not do, and why the change was forced.
+
+    On the adopted GNSS channel a clean flight carries metres of vertical noise. At
+    sigma = 4 m and 1 Hz that puts the largest *per-step* ``|v_z|`` past the bound on a
+    flight with no defect in it at all; the window median reads well under.
+    """
+    flight = _glide()
+    noise = np.random.default_rng(0).normal(0.0, 4.0, len(flight))
+    flight["alt"] = flight["alt"].to_numpy() + noise
+    flight["baro_alt"] = flight["alt"].to_numpy() - 50.0
+    t = flight["t"].to_numpy()
+    alt = flight["alt"].to_numpy()
+    per_step = np.abs(np.diff(alt) / np.diff(t))
+    assert per_step.max() > FIX.max_vertical_speed_mps  # the per-step rule would fire
+
+    out = _clean(flight)
+    assert out.report.n_alt_vz_sustained == 0
+
+
+def test_a_thin_window_falls_back_to_the_per_step_bound():
+    """At a slow cadence the median is not estimable, and the per-step value stands in.
+
+    Safe precisely because it is the sparse case: at this cadence the bound is hundreds
+    of metres per step, which no gust produces.
+    """
+    n = 40
+    alt = 2000.0 - 10.0 * np.arange(float(n))
+    alt[20] -= 300.0
+    alt[21:] -= 600.0  # two consecutive 30 m/s steps at a 10 s cadence
+    flight = _flight(10.0 * np.arange(n) * 10.0, np.zeros(n), alt, dt=10.0)
+    out = _clean(flight)
+
+    assert out.report.n_alt_vz_sustained == 1
+    assert len(out.fixes) == n
+
+
+def test_the_v_flag_invalidates_on_every_flight():
+    # The adopted channel is GNSS throughout (sec:altchannel), and a V flag is the
+    # recorder certifying that its own GNSS altitude is degraded. It used to reach only
+    # the minority that had fallen back to GNSS; there is no such minority now.
     flight = _glide()
     flight.loc[100:104, "valid"] = False
 
-    on_baro = _clean(flight, alt_source="baro")
-    assert on_baro.report.n_alt_out_of_band == 0
-    assert not on_baro.fixes["alt_invalidated"].any()  # a V certifies the GNSS altitude
-
-    on_gnss = _clean(flight, alt_source="gnss")
-    assert int(on_gnss.fixes["alt_invalidated"].sum()) == 5
+    for baro_witness in (True, False):
+        out = _clean(flight, baro_witness=baro_witness)
+        assert out.report.n_alt_out_of_band == 0
+        assert int(out.fixes["alt_invalidated"].sum()) == 5
 
 
 def test_no_altitude_rule_ever_deletes_a_fix():
@@ -529,7 +652,7 @@ def test_a_track_crossing_the_antimeridian_is_not_read_as_motionless():
     )
     assert (np.abs(np.diff(lon)) > 1.0).any()  # the raw column really does jump
 
-    out = clean_flight(flight, FIX, discipline="paragliders", alt_source="baro")
+    out = clean_flight(flight, FIX, discipline="paragliders", baro_witness=True)
     assert out.report.n_removed_frozen == 0
     assert out.report.n_removed_spike == 0
     assert len(out.fixes) == n
@@ -549,7 +672,7 @@ def test_the_duplicate_centroid_survives_the_antimeridian():
             "valid": [True] * 4,
         }
     )
-    out = clean_flight(flight, FIX, discipline="paragliders", alt_source="baro")
+    out = clean_flight(flight, FIX, discipline="paragliders", baro_witness=True)
     merged = out.fixes.loc[out.fixes["t"] == 1.0, "lon"].item()
     assert abs(abs(merged) - 180.0) < 0.001  # on the meridian, not at zero
 
