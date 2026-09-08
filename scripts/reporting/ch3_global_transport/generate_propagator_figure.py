@@ -186,7 +186,6 @@ def measure(discipline: str, cadences, macros: dict) -> dict:
         d = drawn["R"]
         put("DrawnDtS", f"{fastest:g}")
         put("DrawnLags", f"{d['fitted']['lags_used']}")
-        put("DrawnHurst", f"{d['fitted']['hurst']:.3f}")
         put("DrawnBlocks", f"{d['row']['n_blocks']}")
         if np.isfinite(d["row"]["hurst_err"]):
             put("DrawnHurstErr", f"{d['row']['hurst_err']:.4f}")
@@ -213,13 +212,6 @@ def measure(discipline: str, cadences, macros: dict) -> dict:
         worst = np.nanmax(d["row"]["per_quantile_err"])
         if np.isfinite(worst):
             put("HurstQuantileErrMax", f"{worst:.4f}")
-
-    # The east/north twins of DrawnHurst, for panel (c)'s per-component collapse: each
-    # column rescales by its own row's H, not the modulus's, since H differs by component
-    # and a shared scale would misdraw the collapse for the two that do not own it.
-    for variable, name in (("E", "East"), ("N", "North")):
-        if variable in drawn:
-            put(f"DrawnHurst{name}", f"{drawn[variable]['fitted']['hurst']:.3f}")
 
     return {"rows": rows, "drawn": drawn, "fastest": fastest}
 
@@ -301,6 +293,44 @@ def kinematics(discipline: str, path: Path, macros: dict) -> dict:
     }
 
 
+def rescale_hurst(discipline: str, audit_dir: Path) -> dict[str, float]:
+    """The exponent panel (c) rescales by: :math:`\\alpha_2/2` from the second-order
+    filtered variation (Sec. 3.3-3.4), not a new fit of these histograms.
+
+    Panel (c) collapses the same increment histograms panel (a) draws, and it has to pick
+    one number per variable to do it with. Fitting yet another exponent to these quantiles
+    for that alone would be a fourth, unexplained H next to the three the chapter already
+    reports (order-1 variation, this section's own quantile route, order-2 variation), and
+    the reader has no way to tell which is which. Reusing :math:`\\alpha_2/2` instead means
+    the number drawing the collapse is the same one Table tab:axisroutes already prints and
+    Sec. transport-verdict adopts as the chapter's transport exponent, so "where does this H
+    come from" has one answer everywhere it appears.
+
+    Reads ``variations_<slug>.npz`` (already written by ``measure_variations.py`` for
+    Sec. 3.3) rather than the propagator's own histograms, and fits the pooled order-2
+    curve -- modulus, east-only, north-only -- over the identical window,
+    :data:`FIT_RANGE_S`, that Sec. 3.3 fits and this script already fits its own quantiles
+    on. Returns ``{}`` if that pass is not reachable, in which case the caller falls back
+    to this script's own quantile exponent rather than fail the whole figure over a panel.
+    """
+    from soaring.analysis.observables.variations import hurst_from_variations
+
+    npz = audit_dir / f"variations_{DISCIPLINES[discipline].slug}.npz"
+    if not npz.is_file():
+        return {}
+    data = np.load(npz)
+    lags = data["lags_s"]
+    out = {}
+    for variable, key in (("R", "order2"), ("E", "order2_east"), ("N", "order2_north")):
+        if key not in data:
+            continue
+        mean_curve = np.nanmean(data[key], axis=0)
+        hurst, _ = hurst_from_variations(lags, mean_curve, fit_range=FIT_RANGE_S)
+        if np.isfinite(hurst):
+            out[variable] = hurst
+    return out
+
+
 def calibration(macros: dict) -> None:
     """What an exactly self-similar process gives on the same window, measured not assumed.
 
@@ -340,9 +370,13 @@ _VARIABLE_STYLE = (("R", "|Δr|", "o-"), ("E", "|Δx| east", "s--"), ("N", "|Δy
 _VARIABLE_LABEL = {variable: label for variable, label, _ in _VARIABLE_STYLE}
 
 
-def draw(measured: dict):
+def draw(measured: dict, alpha2_hurst: dict[str, dict[str, float]]):
     """Panels (a) and (c), one sub-panel per variable; panel (b) unchanged, all three at
-    the fastest native cadence of each discipline."""
+    the fastest native cadence of each discipline.
+
+    ``alpha2_hurst`` is ``{discipline: {"R"/"E"/"N": H}}`` from :func:`rescale_hurst`; panel
+    (c) rescales by it rather than by this script's own quantile fit -- see that function.
+    """
     import matplotlib.pyplot as plt
     from matplotlib.lines import Line2D
 
@@ -380,9 +414,11 @@ def draw(measured: dict):
             )
 
         # (c) the collapse, one sub-panel per variable, each at that row's own exponent
-        # -- H differs by component, so E and N do not share R's scale.
+        # -- H differs by component, so E and N do not share R's scale. The scale is
+        # alpha_2/2 (rescale_hurst), not this fit's own "hurst": see draw()'s docstring.
+        hurst_for = alpha2_hurst.get(discipline, {})
         for variable, ax in collapse_axes.items():
-            if variable not in drawn:
+            if variable not in drawn or variable not in hurst_for:
                 continue
             d = drawn[variable]
             lags, counts, edges, fitted = d["lags"], d["counts"], d["edges"], d["fitted"]
@@ -392,7 +428,7 @@ def draw(measured: dict):
             for i in np.flatnonzero(window)[::3]:
                 if counts[i].sum() <= 0:
                     continue
-                scale = lags[i] ** fitted["hurst"]
+                scale = lags[i] ** hurst_for[variable]
                 density = counts[i] / counts[i].sum() / widths
                 keep = density > 0
                 ax.loglog(
@@ -492,8 +528,9 @@ def main() -> int:
         print("no propagator pass reachable; propagator.tex not written")
         return 1
 
+    alpha2_hurst = {d: rescale_hurst(d, args.audit_dir) for d in measured}
     calibration(macros)
-    draw(measured).savefig(OUT_FIG, metadata=_PDF_METADATA)
+    draw(measured, alpha2_hurst).savefig(OUT_FIG, metadata=_PDF_METADATA)
     write_macros(
         OUT_TEX,
         macros,
