@@ -227,17 +227,14 @@ A few limitations are already known and will shape the analysis:
   \item \textbf{Glider metadata.} Flights are paragliders or hang gliders, tagged by source
         (Section~\ref{sec:glider}); the class field \texttt{aile\_class} must be normalised
         before it is used to stratify.
-  \item \textbf{Incomplete dates.} \rev{Some historical entries carry the placeholder date
+  \item \textbf{Incomplete dates.} Some historical entries carry the placeholder date
         \texttt{0000-00-00}, written as a sentinel at acquisition; such flights are
-        discarded, since a date-less flight cannot be assigned to a season and no
-        downstream step needs it. The cut is negligible and checked per season, not only
-        archive-wide, since a small total share could still empty the smallest early
-        seasons: \num{\StatCatParaPlaceholderDateCount} of
+        discarded. The cut is negligible: \num{\StatCatParaPlaceholderDateCount} of
         \num{\StatCatParaFlights} paraglider entries carry the sentinel
         (\StatCatParaPlaceholderDatePct\,\%), \num{\StatCatHangPlaceholderDateCount} of
         \num{\StatCatHangFlights} hang-glider ones, and the worst-affected season loses
         only \StatCatParaPlaceholderWorstPct\,\% of its entries
-        (\StatCatParaPlaceholderWorstSeason).}
+        (\StatCatParaPlaceholderWorstSeason).
 \end{itemize}
 These caveats motivate the pre-processing described in the remainder of this chapter.
 
