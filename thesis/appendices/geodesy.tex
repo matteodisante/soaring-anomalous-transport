@@ -177,3 +177,76 @@ its working altitude from the plane geometry: the vertical coordinate is the ado
 altitude channel itself (Sec.~\ref{sec:enu}, Sec.~\ref{sec:altchannel}), and the $U$
 component serves only the geometric construction.
 \end{revblock}
+
+\begin{revblock}
+% New in this pass: derives the $\lesssim0.3\%$ bound on the spherical approximation
+% quoted in Sec.~\ref{sec:fixlevel} for the haversine distance, Eq.~\eqref{eq:haversine}.
+\section{Size of the spherical-approximation error}
+\label{app:geodesy-flatscale}
+
+Sec.~\ref{sec:fixlevel} computes inter-fix distances by the haversine formula,
+Eq.~\eqref{eq:haversine}, which treats the Earth as a sphere of fixed radius
+$R_\oplus=\SI{6371}{\kilo\metre}$ regardless of latitude or heading. This section bounds
+what that costs against the WGS84 ellipsoid.
+
+\paragraph{Local radius of curvature.}
+For a short step of angular length $d\sigma$ at geodetic latitude $\varphi$ and azimuth
+$\alpha$ (measured from north), the ellipsoidal arc length is $ds=R(\varphi,\alpha)\,d\sigma$
+to leading order, with $R(\varphi,\alpha)$ the local (Euler) radius of curvature,
+\begin{equation}
+\label{eq:geo-euler}
+\frac{1}{R(\varphi,\alpha)}=\frac{\cos^2\alpha}{M(\varphi)}+\frac{\sin^2\alpha}{N(\varphi)},
+\end{equation}
+interpolating between the meridian value $M(\varphi)$ ($\alpha=0$, north--south) and the
+prime-vertical value $N(\varphi)$ of Eq.~\eqref{eq:geo-ps} ($\alpha=90^\circ$,
+east--west)~\cite{nga_wgs84}. $N(\varphi)$ is already in hand; $M(\varphi)$ follows the
+same route, differentiating the surface point $(p_s(\varphi),Z_s(\varphi))$ of
+Eqs.~\eqref{eq:geo-ps}--\eqref{eq:geo-zs} with respect to $\varphi$ and using
+$ds=M\,d\varphi$ along the meridian:
+\begin{equation}
+\frac{dp_s}{d\varphi}=-\frac{N(\varphi)(1-e^2)\sin\varphi}{1-e^2\sin^2\varphi},\qquad
+\frac{dZ_s}{d\varphi}=\frac{N(\varphi)(1-e^2)\cos\varphi}{1-e^2\sin^2\varphi},
+\end{equation}
+so that $M(\varphi)^2=(dp_s/d\varphi)^2+(dZ_s/d\varphi)^2$ collapses, via
+$\sin^2\varphi+\cos^2\varphi=1$, to
+\begin{equation}
+\label{eq:geo-M}
+M(\varphi)=\frac{N(\varphi)(1-e^2)}{1-e^2\sin^2\varphi}=\frac{a(1-e^2)}{(1-e^2\sin^2\varphi)^{3/2}}.
+\end{equation}
+
+\paragraph{Comparison to the sphere.}
+The reference radius used in Eq.~\eqref{eq:haversine}, $R_\oplus=\SI{6371}{\kilo\metre}$,
+agrees with the ellipsoid's mean radius $R_m=(2a+b)/3=a(1-f/3)=\SI{6371.009}{\kilo\metre}$
+to within \SI{10}{\metre}, so the fractional error of a step in direction $\alpha$,
+$[R(\varphi,\alpha)-R_m]/R_m$, is bounded between the values it takes at $\alpha=0$ and
+$\alpha=90^\circ$. Expanding Eqs.~\eqref{eq:geo-ps} and~\eqref{eq:geo-M} to first order in
+the flattening $f$ (using $e^2\simeq2f$),
+\begin{equation}
+\label{eq:geo-flatscale}
+\frac{N(\varphi)}{R_m}-1\simeq f\Big(\sin^2\varphi+\frac13\Big),\qquad
+\frac{M(\varphi)}{R_m}-1\simeq f\Big(3\sin^2\varphi-\frac53\Big),
+\end{equation}
+both of order the flattening $f=1/298.257223563\approx\SI{0.335}{\percent}$ at every
+latitude: from $-5f/3\approx\SI{-0.56}{\percent}$ at the equator ($\varphi=0$, meridian
+direction) to $+4f/3\approx\SI{0.45}{\percent}$ at the poles ($\varphi=90^\circ$, where
+$M=N$ by symmetry) --- which is why Sec.~\ref{sec:fixlevel} calls $\lesssim0.3\%$ ``the
+flattening scale'' rather than a fixed number.
+
+\paragraph{At the latitudes flown.}
+Most of the archive launches from the Alps box $\varphi\in[43.8^\circ,46.6^\circ]$N used
+to classify take-off sites (Sec.~\ref{sec:prelim}, Fig.~\ref{fig:prelim-map}). Evaluating
+Eq.~\eqref{eq:geo-flatscale} across that range moves the bound by under $0.02$ percentage
+points, so its midpoint $\varphi=45^\circ$ is representative:
+\begin{equation}
+\frac{N(45^\circ)}{R_m}-1\simeq\frac{5f}{6}\approx\SI{0.28}{\percent},\qquad
+\frac{M(45^\circ)}{R_m}-1\simeq-\frac{f}{6}\approx\SI{-0.06}{\percent}
+\end{equation}
+(exactly, $N(45^\circ)=\SI{6388.83}{\kilo\metre}$ and $M(45^\circ)=\SI{6367.38}{\kilo\metre}$
+against $R_m=\SI{6371.01}{\kilo\metre}$): a step is stretched by at most
+$\approx\SI{0.28}{\percent}$ running east--west and shortened by at most
+$\approx\SI{0.06}{\percent}$ running north--south, the $\lesssim\SI{0.3}{\percent}$ bound
+quoted in Sec.~\ref{sec:fixlevel}, about \SI{3}{\centi\metre} on a \SI{10}{\metre} step. The
+bound only opens up toward the $0.45$--\SI{0.56}{\percent} extremes for the small remainder
+of flights nearer the equator or at higher latitude (Sec.~\ref{sec:prelim}, ``elsewhere''),
+still two orders of magnitude below the metre-scale GPS noise on the same step.
+\end{revblock}
