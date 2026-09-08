@@ -1,0 +1,175 @@
+"""Smoke tests for soaring.viewer.plotting (matplotlib only, no display needed)."""
+
+from __future__ import annotations
+
+import matplotlib
+import numpy as np
+import pandas as pd
+import pytest
+
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
+
+from soaring.viewer.plotting import center_message, make_axes, plot_trajectory, save_pdf
+
+
+def _raw_geo(n=50):
+    return pd.DataFrame(
+        {
+            "lat": 45.0 + np.linspace(0, 0.01, n),
+            "lon": 7.0 + np.linspace(0, 0.02, n),
+            "alt": np.linspace(1000, 1500, n),
+        }
+    )
+
+
+def _cleaned_geo(n=40, n_segments=3):
+    seg = np.repeat(np.arange(n_segments), n // n_segments + 1)[:n]
+    return pd.DataFrame(
+        {
+            "lat": 45.0 + np.linspace(0, 0.01, n),
+            "lon": 7.0 + np.linspace(0, 0.02, n),
+            "alt": np.linspace(1000, 1500, n),
+            "segment_id": seg,
+        }
+    )
+
+
+def test_2d_geographic_plot_with_raw_and_cleaned_renders():
+    fig = plt.figure()
+    ax = make_axes(fig, is_3d=False)
+    plot_trajectory(ax, raw=_raw_geo(), cleaned=_cleaned_geo(), x="lon", y="lat")
+    assert ax.lines
+    plt.close(fig)
+
+
+def test_3d_plot_renders():
+    fig = plt.figure()
+    ax = make_axes(fig, is_3d=True)
+    plot_trajectory(
+        ax, raw=_raw_geo(), cleaned=_cleaned_geo(), x="lon", y="lat", z="alt"
+    )
+    assert ax.lines
+    plt.close(fig)
+
+
+def test_cleaned_segments_are_drawn_as_separate_lines_not_bridged():
+    fig = plt.figure()
+    ax = make_axes(fig, is_3d=False)
+    cleaned = _cleaned_geo(n=40, n_segments=3)
+    plot_trajectory(ax, cleaned=cleaned, x="lon", y="lat")
+    assert len(ax.lines) == cleaned["segment_id"].nunique()
+    plt.close(fig)
+
+
+def test_only_the_first_segment_gets_a_legend_label():
+    fig = plt.figure()
+    ax = make_axes(fig, is_3d=False)
+    plot_trajectory(ax, cleaned=_cleaned_geo(n_segments=3), x="lon", y="lat")
+    labels = [line.get_label() for line in ax.lines]
+    assert labels.count("cleaned") == 1
+    assert labels.count("_nolegend_") == 2
+    plt.close(fig)
+
+
+def test_color_by_none_draws_cleaned_as_a_single_line():
+    fig = plt.figure()
+    ax = make_axes(fig, is_3d=False)
+    plot_trajectory(
+        ax, cleaned=_cleaned_geo(n_segments=3), x="lon", y="lat", color_by=None
+    )
+    assert len(ax.lines) == 1
+    plt.close(fig)
+
+
+def test_dms_ticks_only_apply_to_lat_lon_axes():
+    fig = plt.figure()
+    ax = make_axes(fig, is_3d=False)
+    plot_trajectory(ax, raw=_raw_geo(), x="lon", y="lat", dms=True)
+    formatter = ax.xaxis.get_major_formatter()
+    assert "°" in formatter(7.001, 0)
+    plt.close(fig)
+
+
+def test_enu_axes_ignore_the_dms_toggle():
+    raw = pd.DataFrame({"E": np.linspace(0, 100, 20), "N": np.linspace(0, 50, 20)})
+    fig = plt.figure()
+    ax = make_axes(fig, is_3d=False)
+    plot_trajectory(ax, raw=raw, x="E", y="N", dms=True)
+    assert ax.get_xlabel() == "East [m]"
+    plt.close(fig)
+
+
+def test_raw_endpoints_are_marked_at_the_true_first_and_last_rows():
+    fig = plt.figure()
+    ax = make_axes(fig, is_3d=False)
+    raw = _raw_geo(n=50)
+    plot_trajectory(ax, raw=raw, x="lon", y="lat")
+    labels = {c.get_label() for c in ax.collections}
+    assert {"raw start", "raw end"} <= labels
+    for collection in ax.collections:
+        (point,) = collection.get_offsets()
+        if collection.get_label() == "raw start":
+            assert point[0] == pytest.approx(raw["lon"].iloc[0])
+            assert point[1] == pytest.approx(raw["lat"].iloc[0])
+        elif collection.get_label() == "raw end":
+            assert point[0] == pytest.approx(raw["lon"].iloc[-1])
+            assert point[1] == pytest.approx(raw["lat"].iloc[-1])
+    plt.close(fig)
+
+
+def test_raw_endpoints_can_be_turned_off():
+    fig = plt.figure()
+    ax = make_axes(fig, is_3d=False)
+    plot_trajectory(ax, raw=_raw_geo(), x="lon", y="lat", mark_raw_endpoints=False)
+    assert not ax.collections
+    plt.close(fig)
+
+
+def test_raw_endpoints_are_marked_in_3d_too():
+    fig = plt.figure()
+    ax = make_axes(fig, is_3d=True)
+    plot_trajectory(ax, raw=_raw_geo(), x="lon", y="lat", z="alt")
+    labels = {c.get_label() for c in ax.collections}
+    assert {"raw start", "raw end"} <= labels
+    plt.close(fig)
+
+
+def test_no_endpoint_markers_when_raw_is_not_drawn():
+    fig = plt.figure()
+    ax = make_axes(fig, is_3d=False)
+    plot_trajectory(ax, cleaned=_cleaned_geo(), x="lon", y="lat")
+    assert not ax.collections
+    plt.close(fig)
+
+
+def test_center_message_on_a_2d_axes():
+    fig = plt.figure()
+    ax = make_axes(fig, is_3d=False)
+    center_message(ax, "Pick a flight to plot.", is_3d=False)
+    assert ax.texts
+    plt.close(fig)
+
+
+def test_center_message_on_a_3d_axes_does_not_raise():
+    # Regression: Axes3D.text() takes (x, y, z, s), not (x, y, s) -- calling it the
+    # 2D way silently reinterprets the message string as a z-coordinate and then
+    # raises on the missing `s`. This is exactly the "3D checked, no flight loaded
+    # yet" state the app starts in if a user toggles 3D before picking a flight.
+    fig = plt.figure()
+    ax = make_axes(fig, is_3d=True)
+    center_message(ax, "Pick a flight to plot.", is_3d=True)
+    assert ax.texts
+    plt.close(fig)
+
+
+def test_save_pdf_writes_a_vector_pdf(tmp_path):
+    fig = plt.figure()
+    ax = make_axes(fig, is_3d=False)
+    plot_trajectory(ax, raw=_raw_geo(), x="lon", y="lat")
+    out = tmp_path / "traj.pdf"
+    save_pdf(fig, out)
+    assert out.is_file()
+    assert out.stat().st_size > 0
+    plt.close(fig)
