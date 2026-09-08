@@ -27,10 +27,12 @@ flight-recorder identifier, \texttt{H} header fields (date, pilot, glider, datum
 the body of the file. A \texttt{B} record decodes to a UTC time, latitude and longitude on
 the WGS84 datum, a fix-validity flag, and \emph{two} altitudes in metres --- barometric
 (pressure) then GNSS. The flag concerns the \emph{GNSS} solution only: \texttt{V} marks a
-GNSS altitude drop-out and leaves the latitude, longitude and, on a logger with a working
-pressure sensor, the barometric altitude usable --- the channel this analysis adopts
-(Sec.~\ref{sec:altchannel}), a choice that matters because the vertical velocity derived
-from it feeds the phase segmentation.
+GNSS altitude drop-out, and since the analysis reads the GNSS altitude throughout
+(Sec.~\ref{sec:altchannel}) it certifies the adopted channel itself as degraded at that
+fix, a choice that matters because the vertical velocity derived from it feeds the phase
+segmentation. The latitude and longitude are unaffected either way, and the barometric
+altitude, where the logger carries a working pressure sensor, keeps a narrower job as an
+independent witness (Sec.~\ref{sec:fixlevel}).
 
 Decoding can succeed numerically on a corrupted byte that is not a legal encoding, so the
 parser also checks format validity at decode time (a valid time, valid coordinate fields, a
@@ -278,35 +280,30 @@ removes (Table~\ref{tab:pipecensus}).
 
 \subsection{Choice of altitude channel}
 \label{sec:altchannel}
-\begin{revblock}
-The analysis adopts the \emph{barometric} altitude over the GNSS altitude for the vertical
-dynamics: both are written to \SI{1}{\metre} resolution by the IGC format itself, but the
-barometric channel carries far less high-frequency noise. Its errors are slow --- a
-constant offset from the ICAO reference (tens of metres, Fig.~\ref{fig:altnoise}a) and a
-drift already reaching tens of metres within the half-hour window of
-Fig.~\ref{fig:altnoise}b --- both traceable to the gap between the day's actual sea-level
-pressure and the ICAO reference of \SI{1013.25}{\hecto\pascal} \impldetails{impl:altchannel},
-and annihilated by the differencing every dynamical quantity involves (a vertical velocity,
-a displacement increment, an autocorrelation). The GNSS altitude is referenced to the
-WGS84 ellipsoid, so it carries no atmospheric offset, but the vertical coordinate is the
-worst-determined one geometrically, and multipath biases the range on timescales of
-minutes~\cite{garciacrespillo2024} \impldetails{impl:altchannel}. This is why free-flight
-variometers derive the climb rate from the pressure sensor rather than from GNSS.
 
-\paragraph{Empirical confirmation.}
-Figure~\ref{fig:altnoise} compares the two channels on \num{3000} flights per discipline
-(Appendix~\ref{app:psd}) \impldetails{impl:altchannel}. At low frequency the two agree,
-tracking the real climbs and glides; at high frequency the \emph{typical} flight is
-comparable in both, the median spectra nearly coinciding at the plateau set by the metre
-rounding common to both channels (panel~c). What separates the channels is the
-\emph{spread} across flights: the barometric band stays tight, while the GNSS band fans out
-by one to two orders of magnitude towards the Nyquist frequency, from receiver tracking
-noise amplified by poor vertical dilution of precision on a substantial minority of
-flights. Since the vertical velocity is a finite difference that amplifies exactly that
-band, and which flights have poor GNSS reception cannot be known in advance, the uniformly
-clean barometric channel is the safe choice --- a deliberate departure from the reference
-study~\cite{vilpellet2026}, whose pipeline derives the vertical coordinate from GNSS.
-\end{revblock}
+The analysis reads the \emph{GNSS} altitude for the vertical dynamics, for every flight,
+end to end. IGC loggers write two altitudes at every fix (Sec.~\ref{sec:igcformat}): a
+barometric one, referenced to the ICAO standard atmosphere, and a GNSS one, an
+ellipsoidal height on WGS84. A pipeline could pick between them per flight, adopting
+whichever is healthier; earlier drafts of this pipeline did exactly that. The choice made
+here is not to: one channel, for the whole population, so the vertical coordinate is the
+same physical quantity in every record. A per-flight choice leaves the population mixed,
+and any correlation between which sensor a flight carried and how it flew -- logger
+model, era, discipline, club -- would then enter the statistics as a selection effect
+that no downstream analysis could undo.
+
+\paragraph{The two channels agree at the median.}
+Figure~\ref{fig:altnoise} compares them on \num{3000} flights per discipline. Panel~(a)
+shows one representative flight over a \SI{30}{\minute} window: the two raw channels
+track each other, offset by the gap between their reference surfaces. Panel~(b) is their
+difference, mean removed -- the offset is not constant but drifts by tens of metres
+already within this window, the barometric side of it traceable to the gap between the
+day's actual sea-level pressure and the ICAO reference of \SI{1013.25}{\hecto\pascal}.
+Panel~(c) is the per-frequency \emph{median} Welch spectrum of each channel
+(Appendix~\ref{app:psd}), pooled over both disciplines with the \numrange{10}{90}
+percentile band across flights: at high frequency the two medians nearly coincide, both
+flattened by the same metre-resolution rounding the IGC format imposes on both channels.
+A typical flight loses nothing moving from barometric to GNSS.
 
 \begin{figure}[htbp]
   \centering
@@ -317,178 +314,67 @@ study~\cite{vilpellet2026}, whose pipeline derives the vertical coordinate from 
     \texttt{scripts/reporting/ch2\_dataset/generate\_altitude\_noise\_figure.py} from the raw IGC tracks on
     the SSD (not versioned). Run it to render this figure.}}%
   }
-  \caption{Barometric vs GNSS altitude noise. \rev{(a)~One representative flight over a
+  \caption{Barometric vs GNSS altitude noise. (a)~One representative flight over a
   \SI{30}{\minute} window, the two raw channels on a shared axis. The vertical gap between
   the curves is the offset between their reference surfaces (pressure vs.\ ellipsoidal).
   (b)~Their difference, mean removed: the offset is not constant but drifts by tens of
-  metres already within this \SI{30}{\minute} window.} (c)~Per-frequency \emph{median} Welch spectrum of each
-  channel (Appendix~\ref{app:psd}), pooled over the two disciplines, with the
-  \numrange{10}{90} percentile band across flights; the medians nearly coincide, while
-  the GNSS band fans out towards the Nyquist frequency $f_{\mathrm{Nyq}}=1/(2\Delta t)$
-  (dotted). The median is used because the per-flight spectra are heavy-tailed
-  (Sec.~\ref{impl:altchannel}). (d)~Fraction of flights whose barometric channel is
-  absent, per discipline. \impldetails{impl:altchannel}}
+  metres already within this \SI{30}{\minute} window. (c)~Per-frequency \emph{median} Welch
+  spectrum of each channel (Appendix~\ref{app:psd}), pooled over the two disciplines, with
+  the \numrange{10}{90} percentile band across flights: the medians nearly coincide, robust
+  to the minority of flights whose raw channel carries an uncleaned spike, while the GNSS
+  band fans out towards the Nyquist frequency $f_{\mathrm{Nyq}}=1/(2\Delta t)$ (dotted).
+  (d)~Fraction of flights whose barometric channel is absent, per discipline.
+  \impldetails{impl:altchannel}}
   \label{fig:altnoise}
 \end{figure}
 
-\begin{revblock}
-Four practical points follow. A trajectory uses a single channel end-to-end, never spliced
-within a flight, since a mid-flight switch offset by tens of metres would inject a spurious
-jump; which channel it uses is recorded as a per-flight attribute, so the two source groups
-stay separable downstream \impldetails{impl:altchannel}. A flight is used with its
-barometric channel when it has one; the few individual fixes with a missing value are
-dropped rather than back-filled from GNSS --- \StatScanParaBaroMissFlightsPct\,\% of
-barometric paraglider flights (\StatScanHangBaroMissFlightsPct\,\% hang) miss any value at
-all, with a median of \StatScanParaBaroMissMedianFixes\ missing fixes among them against
-$\sim\!10^4$ in a typical track \impldetails{impl:altchannel}, the hole handled downstream
-like any other gap (Sec.~\ref{sec:uniform}). A logger with no pressure sensor writes the
-whole channel as zero, or a stuck sensor writes a constant non-zero value: a flight counts
-as barometric only when the channel covers at least
-\SI{\PreprocBaroPresentMinPct}{\percent} of its fixes
-\emph{and} its total range exceeds \SI{\PreprocBaroMinRangeM}{\metre}, else it falls back to
-GNSS, unfiltered --- a non-negligible minority (Figure~\ref{fig:altnoise}d), measured at
-\StatScanParaNoBaroPct\,\% of paraglider and \StatScanHangNoBaroPct\,\% of hang-glider
-flights scanned \impldetails{impl:altchannel}. That liveness test catches only a sensor
-dead for the whole recording, not one that freezes partway through, and nothing downstream
-closes that gap \impldetails{impl:altchannel}. \rev{The presence test also decides
-\emph{that} a flight falls back to GNSS without ever asking whether the channel it falls
-back to is itself complete, and that part is now measured rather than assumed: of the
-\num{\StatAltOffParaFallbackCount} paraglider and \num{\StatAltOffHangFallbackCount}
-hang-glider flights in the sampled archive whose barometric channel is absent, the GNSS
-channel covers at least \SI{\PreprocBaroPresentMinPct}{\percent} of the fixes on
-\StatAltOffParaFallbackGnssPct\,\% and \StatAltOffHangFallbackGnssPct\,\%
-respectively. Where the barometer is missing, the fallback lands on a complete channel.
-The one population where the comparison could still go the other way is the borderline
-band of Sec.~\ref{impl:altchannel}, present just under the cut rather than at zero; the
-sample holds \StatAltOffParaBorderlineCount\ such flights, too few to conclude from,
-and the GNSS channel is at least as complete as the barometric one in every one of them}
-\impldetails{impl:altchannel}.
+\paragraph{The spread is where they differ, and it is measured, not inferred.}
+An equal median does not bound the size of the GNSS band's high-frequency tail: a median
+is unmoved by anything short of half the population, so two channels can share one and
+still differ enormously in how many flights sit off it. Sizing the tail therefore reads
+each flight's own high-frequency floor directly, rather than eyeballing where the band in
+panel~(c) fans out. Of the \num{\StatAltNoisePsdSampleFlights} paired flights the panel
+is drawn from, \StatAltNoiseGnssExcessThreeXPct\,\% carry a GNSS floor above three times
+the barometric channel's typical one, and \StatAltNoiseGnssExcessTenXPct\,\% above ten
+times it -- a substantial minority, from receiver multipath on timescales of
+minutes~\cite{garciacrespillo2024}, but a minority all the same, and one now stated as a
+number rather than read off a picture.
 
-\paragraph{\rev{How far apart the two channels sit.}}
-\rev{Noise is what decides the vertical dynamics, and it is not what a mixed ensemble has
-to answer for. A trajectory never mixes channels within itself, but the ensemble holds
-both kinds of flight, so if the two channels sat at systematically different heights the
-pooled altitude would separate by instrument rather than by atmosphere. Measured over an
-in-flight window on the \num{\StatAltOffParaFlights} paraglider and
-\num{\StatAltOffHangFlights} hang-glider flights of a seeded sample that carry both
-channels \impldetails{impl:altchannel}, the difference
-$h_{\mathrm{baro}}-h_{\mathrm{GNSS}}$ has a median of
-\SI{\StatAltOffParaMedianM}{\metre} and \SI{\StatAltOffHangMedianM}{\metre}
-respectively, and scatters across flights by \SI{\StatAltOffParaSigmaM}{\metre} and
-\SI{\StatAltOffHangSigmaM}{\metre}. The offset grows with the height flown, so the two
-disciplines are comparable only inside one altitude band, and inside
-\SIrange{\StatAltOffBandLoM}{\StatAltOffBandHiM}{\metre} their medians agree:
-\SI{\StatAltOffParaBandMedianM}{\metre} against \SI{\StatAltOffHangBandMedianM}{\metre}.
-Within a single flight the same difference barely moves, at an interquartile range of
-\SI{\StatAltOffParaWithinIqrM}{\metre} and \SI{\StatAltOffHangWithinIqrM}{\metre} over
-records of \SI{\StatAltOffParaDurationMin}{\minute} and
-\SI{\StatAltOffHangDurationMin}{\minute} at the median. So the gap between the channels
-is a per-flight constant of order \SI{100}{\metre}: exactly what a difference removes and
-an absolute altitude keeps.}
+\paragraph{Availability.}
+A flight is admitted only when its GNSS channel is both present -- covering at least
+\SI{\PreprocGnssPresentMinPct}{\percent} of its fixes -- and alive -- spanning at least
+\SI{\PreprocGnssMinRangeM}{\metre} -- since a dead sensor writes the whole channel as
+zero and a stuck one a constant (Sec.~\ref{sec:preproc}). Below either bound the flight
+has no vertical coordinate at all and is dropped: there is no second channel left to move
+it to. That happens to \StatScanParaNoGnssPct\,\% of paraglider and
+\StatScanHangNoGnssPct\,\% of hang-glider flights; only
+\StatScanParaNoAltitudePct\,\% and \StatScanHangNoAltitudePct\,\% lack \emph{both}
+channels outright. The few individual fixes with a missing value are dropped rather than
+back-filled from the barometer (\StatScanParaGnssMissFlightsPct\,\% of admitted
+paraglider flights, \StatScanHangGnssMissFlightsPct\,\% hang, miss any value at all, with
+a median of \StatScanParaGnssMissMedianFixes\ missing fixes among them against
+$\sim\!10^4$ in a typical track), the hole handled downstream like any other gap
+(Sec.~\ref{sec:uniform}).
 
-\paragraph{\rev{What the gap is made of.}}
-\rev{Regressing the difference on height within each flight splits it into a part
-independent of altitude and a part proportional to it, and the proportional part is the
-larger. It is also atmospheric rather than instrumental. A pressure altimeter converts
-pressure to height through a fixed temperature profile, so in air warmer than that
-profile by $\Delta T$ it under-reads by $h\,\Delta T/\bar{T}$; the measured slopes,
-\SI{\StatAltOffParaSlopePct}{\percent} and \SI{\StatAltOffHangSlopePct}{\percent} of the
-height flown, invert to \SI{\StatAltOffParaDeltaTK}{\kelvin} and
-\SI{\StatAltOffHangDeltaTK}{\kelvin} above the standard profile, which is what a
-thermally active day is. At the median flight altitude that term alone accounts for
-\SI{\StatAltOffParaHeightTermM}{\metre} and \SI{\StatAltOffHangHeightTermM}{\metre} of
-the gap. What remains once it is removed, \SI{\StatAltOffParaInterceptM}{\metre} and
-\SI{\StatAltOffHangInterceptM}{\metre} extrapolated to sea level, is the separation
-between the two reference surfaces, a pressure altitude against an ellipsoidal
-one~\cite{nga_wgs84}, together with the mean departure of the day's sea-level pressure
-from the \SI{1013.25}{\hecto\pascal} the logger assumes. This measurement does not
-separate those two, and does not need to, since both are constants of the flight.}
+\paragraph{The barometer keeps a job.}
+Demoted from the analysis channel, the barometer is not discarded: a usable pressure
+sensor still witnesses the frozen-lock rule of Sec.~\ref{sec:fixlevel}, the one place a
+second, independent instrument is indispensable. A lost GNSS lock freezes the reported
+position while the pressure sensor, on a different physical principle, keeps recording a
+real climb -- and the adopted altitude cannot make that argument about itself, coming as
+it does from the very receiver whose lock is in doubt. Read there and nowhere else, the
+barometer enters no observable, so keeping it is not a return to a mixed vertical
+coordinate: \StatPipeParaBaroWitnessPct\,\% of kept paraglider flights and
+\StatPipeHangBaroWitnessPct\,\% of hang-glider ones carry this witness; the rest fall
+back to the recorder's own declarations, the weaker signature of Eq.~\eqref{eq:frozenlock}.
+It also matters little to the main subject of this thesis: the horizontal transport
+analysis uses no altitude at all, and every admitted flight is usable regardless of which
+channel, or how many, it carries.
 
-\paragraph{\rev{Weather against instrument.}}
-\rev{The flight-to-flight scatter has a size worth predicting before measuring it. The
-hydrostatic relation gives $\mathrm{d}h=-H\,\mathrm{d}p/p$ with $H=R_{d}T/g$, about
-\SI{\StatAltOffScaleHeightKm}{\kilo\metre} at the standard sea-level temperature, so an
-altimeter referred to a fixed \SI{1013.25}{\hecto\pascal} moves
-\SI{\StatAltOffMetrePerHpa}{\metre} for every hectopascal the real sea-level pressure
-departs from it, and the \SI{10}{\hecto\pascal} that separate one synoptic situation from
-another are worth \SI{\StatAltOffTenHpaM}{\metre}. This archive is not one site flown
-repeatedly at one hour. It is different sites, days and seasons, so each flight reads its
-pressure through a different atmosphere, and the prediction is that the scatter measured
-above is that atmosphere. Two groupings settle it. Flights from the same site on the same
-day share an air mass and a pressure setting, and their offsets agree to
-\SI{\StatAltOffParaSameDaySigmaM}{\metre} over \num{\StatAltOffParaSameDayGroups} groups
-of paraglider flights and \SI{\StatAltOffHangSameDaySigmaM}{\metre} over
-\num{\StatAltOffHangSameDayGroups} groups of hang-glider ones, each group spanning at
-least three recorders. Flights from the same site on \emph{different} days share the
-reference surfaces and the terrain but not the weather, and there the offsets scatter by
-\SI{\StatAltOffParaSiteSigmaM}{\metre} and \SI{\StatAltOffHangSiteSigmaM}{\metre}, worth
-\SI{\StatAltOffParaSiteHpa}{\hecto\pascal} and \SI{\StatAltOffHangSiteHpa}{\hecto\pascal}
-of sea-level pressure. The wander of the barometric reference between flights is
-therefore the weather, at the size the hydrostatic estimate predicts, and it is three
-times what the recorders themselves contribute.}
-
-\paragraph{\rev{One archive, two decades of instruments.}}
-\rev{That same-day agreement is also a bound on how far the recorders disagree with each
-other, and it lands where the specifications put it. A current MEMS barometric sensor is
-rated to \SI{\StatAltOffSensorHpa}{\hecto\pascal} of absolute accuracy, which is
-\SI{\StatAltOffSensorM}{\metre} at the conversion above, widening to
-\SI{\StatAltOffSensorWideHpa}{\hecto\pascal} over its full temperature
-band~\cite{ms5611_datasheet}; the GNSS side is bounded by the vertical error the GPS
-performance standard commits to (Sec.~\ref{impl:altchannel}). Both are well inside the
-weather term, which is why neither decides anything here. What does change over an
-archive spanning more than two decades is the fleet. Barometers were carried by
-\SI{\StatAltOffParaEraEarlyBaroPct}{\percent} of paraglider flights over
-\StatAltOffParaEraEarlyLabel\ and \SI{\StatAltOffHangEraEarlyBaroPct}{\percent} of
-hang-glider flights over \StatAltOffHangEraEarlyLabel, against
-\SI{\StatAltOffParaEraLateBaroPct}{\percent} and
-\SI{\StatAltOffHangEraLateBaroPct}{\percent} over
-\StatAltOffParaEraLateLabel\ and \StatAltOffHangEraLateLabel. The receivers improved on
-the same span: the within-flight spread of the difference, which the noisier of the two
-channels sets, fell from \SI{\StatAltOffHangEraEarlyWithinIqrM}{\metre} to
-\SI{\StatAltOffHangEraLateWithinIqrM}{\metre} for hang gliders and from
-\SI{\StatAltOffParaEraEarlyWithinIqrM}{\metre} to
-\SI{\StatAltOffParaEraLateWithinIqrM}{\metre} for paragliders. The mixed-source
-population is thus not uniform in time: a flight without a barometer is likelier to be an
-early one, which is a caveat for any comparison drawn between eras and for nothing else
-in this work.}
-
-\paragraph{Mixed altitude sources.}
-The mix is acceptable. The horizontal, two-dimensional transport analysis --- the main
-subject of this work --- does not use the altitude at all, so every flight is usable there
-regardless of channel. Altitude enters only the vertical velocity, hence the segmentation
-and the phase-resolved observables, where the two source groups are kept distinct through
-the per-flight record above and checked for compatibility on the fraction of airborne time
-each phase accounts for, per discipline \impldetails{impl:altchannel}. Forcing GNSS on
-every flight to avoid the mix would needlessly degrade the vertical signal of the
-barometric majority to match the worst loggers.
-
-\rev{The measurement above says why more precisely than that, and it also prices the
-alternative. Every observable in this work is a difference, and a per-flight constant of
-\SI{100}{\metre} does not survive one; what survives is its drift within the flight,
-which over a whole record stays between \SI{\StatAltOffParaDriftPFiveM}{\metre} and
-\SI{\StatAltOffParaDriftPNinetyFiveM}{\metre} for nine paraglider flights in ten
-(\SI{\StatAltOffHangDriftPFiveM}{\metre} to \SI{\StatAltOffHangDriftPNinetyFiveM}{\metre}
-hang), far below the climbs and glides the vertical velocity is read from. Absolute
-altitude is the one use where the mix does cost something, and the honest statement is
-that the two groups sit about \SI{100}{\metre} apart there, one-signed, so pooling
-absolute heights across channels would pool two displaced populations. The remedy is not
-the stricter rule the objection suggests. A barometric-only ensemble would inherit the
-same problem from the atmosphere alone: at one site its offset already scatters by
-\SI{\StatAltOffParaSiteSigmaM}{\metre} between days and carries a seasonal scale error of
-\SI{\StatAltOffParaSlopePct}{\percent} to \SI{\StatAltOffHangSlopePct}{\percent} of the
-height flown, so refusing the \SI{\StatAltOffParaFallbackPct}{\percent} of paraglider and
-\SI{\StatAltOffHangFallbackPct}{\percent} of hang-glider flights that have no barometer
-would buy an absolute altitude no more trustworthy than the one it discards. What an
-analysis needing absolute height requires instead is a reference correction, the
-geoid--ellipsoid separation on the GNSS side and the day's pressure and temperature on
-the barometric one, and the per-flight \path{alt_source} record is what leaves that
-correction available. Until then the vertical coordinate is used for differences, and the
-mix is sound for exactly that.}
-\end{revblock}
 
 \subsection{Fix-level cleaning}
 \label{sec:fixlevel}
-\begin{revblock}
+
 \paragraph{Geometry on the raw coordinates.}
 The cleaning runs on the raw geodetic coordinates $(\varphi_i,\lambda_i)$, before the
 Cartesian conversion (Sec.~\ref{sec:enu}), so distances between fixes are great-circle
@@ -499,31 +385,61 @@ $R_\oplus=\SI{6371}{\kilo\metre}$:
 \Delta s_i = 2R_\oplus\arcsin\sqrt{\sin^2\!\frac{\varphi_{i+1}-\varphi_i}{2}
   + \cos\varphi_i\cos\varphi_{i+1}\,\sin^2\!\frac{\lambda_{i+1}-\lambda_i}{2}}\,,
 \end{equation}
-giving the horizontal speed $v_{xy,i}=\Delta s_i/(t_{i+1}-t_i)$ and, from the barometric
-altitude, the vertical velocity $v_{z,i}=(h_{i+1}-h_i)/(t_{i+1}-t_i)$; the same distance also
+giving the horizontal speed $v_{xy,i}=\Delta s_i/(t_{i+1}-t_i)$ and, from the adopted
+altitude channel, the vertical velocity $v_{z,i}=(h_{i+1}-h_i)/(t_{i+1}-t_i)$; the same
+distance also
 yields the whole-flight \emph{path length} $L=\sum_i\Delta s_i$ and \emph{extent}
 $D=\max_i\Delta s(\mathrm{fix}_0,\mathrm{fix}_i)$. The spherical approximation is ample:
 replacing the WGS84 ellipsoid by a sphere perturbs an inter-fix distance by at most
-$\lesssim\SI{0.3}{\percent}$ (the flattening scale) \impldetails{impl:fixlevel}, about
+$\lesssim\SI{0.3}{\percent}$ (the flattening scale)\footnote{\rev{The ellipsoid's local
+radius of curvature runs from the meridian value $M(\varphi)$ to the prime-vertical value
+$N(\varphi)$ (Eq.~\eqref{eq:geo-ps}), which the haversine formula replaces by the single
+radius $R_\oplus$. At $\varphi\approx45^\circ$, the latitude of the Alps sites that launch
+most of this archive (Sec.~\ref{sec:prelim}), $N(45^\circ)=\SI{6388.83}{\kilo\metre}$ and
+$M(45^\circ)=\SI{6367.38}{\kilo\metre}$ against $R_\oplus=\SI{6371}{\kilo\metre}$: a step is
+stretched by at most $\approx\SI{0.28}{\percent}$ running east--west and shortened by at
+most $\approx\SI{0.06}{\percent}$ running north--south, together the $\lesssim0.3\%$ above.
+More generally the deviation is of order the flattening $f=1/298.257\approx\SI{0.34}{\percent}$
+at any latitude, from $\SI{-0.56}{\percent}$ at the equator to $\SI{+0.45}{\percent}$ at the
+poles. Derived in Appendix~\ref{app:geodesy}.}}, about
 \SI{3}{\centi\metre} on a \SI{10}{\metre} step, far below the metre-scale noise of
 consumer GNSS receivers.
+
 
 \paragraph{Design principle.}
 Corrupt or physically impossible fixes must be removed without discarding the flight
 around them; an over-aggressive cleaning biases the result as much as dirty data would. A
-spurious fix that survives lies at worst tens of metres from the true track, a
+spurious fix that survives does so precisely because it did not disagree with its
+neighbours by more than the test's own threshold, so it carries at most that residual, a
 displacement the smoothing absorbs, whereas a genuine fix removed from a slow, localized
 phase (a search, a climb) erases a real trapping event that nothing downstream can
 restore. The cleaning therefore defaults to keeping the data: a fix is removed only on
 positive evidence of a defect, and no detector deletes a fix that still carries a usable
-horizontal position --- a corrupt altitude is marked missing and restored at resampling
+horizontal position: a corrupt altitude is marked missing and restored at resampling
 (Sec.~\ref{sec:uniform}), a corrupt horizontal position is deleted outright.
+
 
 \paragraph{Three classes of defect.}
 Past the format-validity check made at decode time (Sec.~\ref{sec:igcformat}), a surviving
-fix can still be wrong in one of three ways, summarized in Table~\ref{tab:cleaning}. A fix
-\emph{off the trend} --- a position spike, or a jump out and back within one step --- is
-found by a robust local-outlier test, the \emph{Hampel identifier}~\cite{hampel1974,daviesgather1993}.
+fix can still be wrong in one of three ways, summarized in Table~\ref{tab:cleaning}:
+\begin{itemize}
+  \item \emph{Off the trend}: a position spike, or a jump out and back within one step.
+        The fix disagrees with its neighbours, so a robust local-outlier test, the
+        \emph{Hampel identifier}~\cite{hampel1974,daviesgather1993}, finds it.
+  \item \emph{On the trend}: a duplicated or backward timestamp, or a run of frozen
+        positions from a lost GNSS lock. The fix agrees with its neighbours, so its
+        residual is near zero and it escapes the outlier test; a structural rule catches
+        it instead.
+  \item \emph{Out of range}: an impossible altitude, or a climb/sink rate the
+        neighbourhood as a whole cannot support. The altitude gets an absolute band; the
+        vertical speed gets a \emph{local} test of its own, the median of $|v_z|$ over a
+        window (Eq.~\eqref{eq:vzlocal} below) -- not the Hampel identifier of $xy$, but
+        a local test all the same, and for the same reason: a single step is not enough
+        evidence, on either channel.
+\end{itemize}
+
+\begin{revblock}
+\paragraph{The Hampel identifier.}
 Let the window of fix $k$ be the fixes within $\pm w$ of $t_k$, and
 $\tilde\varphi_k,\tilde\lambda_k$ the component-wise window medians. The residual is the
 great-circle distance from that median point,
@@ -543,62 +459,116 @@ standard deviations \emph{and} an absolute floor $\varepsilon_{\min}$ of a few t
 GPS noise. The working values are $k=\PreprocHampelK$, a half-window
 $w=\SI{\PreprocHampelWindowS}{\second}$ and
 $\varepsilon_{\min}=\SI{\PreprocHampelEpsM}{\metre}$, with the test evaluated only where
-the window holds at least \PreprocHampelMinFixes\ fixes (rationale in
-Sec.~\ref{impl:fixlevel}). A flag does not delete: what deletes is the absolute $v_{xy}$
-bound, a fix removed when unreachable from the last accepted fix at that bound \emph{and}
-the removal of its block lets the track rejoin within it. The identifier flags and
-attributes, and supplies the per-flight anomaly count, but is not required for deletion
-\impldetails{impl:fixlevel} --- a genuine tight thermalling circle produces the same
+the window holds at least \PreprocHampelMinFixes\ fixes. A flag does not delete: what deletes is the absolute $v_{xy}$
+bound, which removes a fix when
+\begin{itemize}
+  \item it is unreachable from the last accepted fix at that bound, \emph{and}
+  \item the removal of its block lets the track rejoin within it.
+\end{itemize}
+The identifier flags and
+attributes, and supplies the per-flight anomaly count, but is not required for deletion: a genuine tight thermalling circle produces the same
 local-median departure as a spike, at a fraction of the speed a spike would imply, so the
 protection lies in the speed bound that does the deleting rather than in the flag.
 \end{revblock}
 
-A fix \emph{on the trend} agrees with its neighbours yet is still wrong as a record -- a
-duplicated or backward timestamp, or a run of frozen positions from a lost GNSS lock; its
-residual is near zero, so it escapes the outlier test and needs a structural rule instead.
+\begin{revblock}
+\paragraph{A local test on the vertical speed, not a Hampel test on $z$.}
+The vertical rule does not test the altitude's own local median: it tests the median of
+$|v_z|$, the speed \emph{between} fixes, over a centred window,
+\begin{equation}
+\label{eq:vzlocal}
+  \tilde v_j = \operatorname{med}\{\,|v_{z,i}| : |m_i - m_j| \le w_v\,\},
+  \qquad m_i = \tfrac{1}{2}(t_i+t_{i+1}),
+\end{equation}
+$m_i$ the midpoint of step $i$ and $w_v$ the window half-width. Fix $k$ is censored --
+its altitude set missing, never the fix itself -- when both the step into it and the
+step out of it are excessive, $\tilde v_{k-1}, \tilde v_k > |v_z|^{\max}$. Testing the
+\emph{median} rather than the step itself is what makes the rule immune to two failure
+modes at once: a wind gust that carries one step past the bound leaves the median where
+it was, since one large value out of a window does not move it, and so does an isolated
+sensor spike, two large steps of opposite sign. Only an excess carried by more than half
+the window moves the median, which is what makes it a statement about a \emph{sustained}
+climb or sink rather than about one sample.
 
-A value \emph{out of range} concerns the vertical channel: an impossible altitude or
-climb rate is caught by an absolute bound that needs no context.
+That last point is not a nicety on this dataset: it is what makes reading $z$ from GNSS
+possible at all. A per-step test on the raw difference would fire on ordinary GNSS
+vertical noise -- a few metres of scatter at a 1~Hz cadence already produces occasional
+per-step $|v_z|$ past any climb/sink bound worth setting -- while the window median of
+the same noise sits far below it. The Hampel identifier of the horizontal channel is not
+reused here for the reason it was built: it flags a departure from a local \emph{median
+position}, and the departure is largest exactly at thermal entries and exits, the
+transitions the phase segmentation of Chapter~\ref{ch:phases} is built on. A median of
+speeds sees no such thing -- a thermal entry is one step of large $v_z$ inside a window
+of ordinary ones, not a window that is itself excessive throughout.
+
+A second rule sits beside the windowed one and the two are not redundant: an
+\emph{out-and-back} spike, an altitude the record jumps away from and back to within one
+step each way, both steps past the bound. Two opposite-signed steps out of a window
+cannot move that window's median, so the windowed rule is blind to this shape by
+construction; the out-and-back rule exists exactly to catch it. A sustained excess --
+where the whole neighbourhood, not one pair of steps, exceeds the bound -- is a genuine
+manoeuvre and is kept: a spiral dive holds real sink for many seconds running, and
+neither rule may censor it.
+
+\paragraph{An unreturned vertical step.}
+A third shape is neither of these: a single super-threshold step that is never undone (a
+barometric re-reference, or one corrupt record) matches neither the windowed rule, since
+one step does not move a window median, nor the out-and-back rule, since the record never
+comes back. It is detected and counted per flight, as \path{n_alt_level_shift}, so it is
+visible rather than silently present \impldetails{impl:fixlevel}; what to \emph{do} about
+it is left open, since the vertical channel feeds the phase segmentation of
+Chapter~\ref{ch:phases} rather than the horizontal transport measurement of
+Sec.~\ref{sec:obs-global}, so the choice belongs with that analysis. Its prevalence is
+re-measured with the rest of this pipeline stage after the change of channel and rule
+recorded here, rather than carried over from a count made under the old, barometric,
+per-step regime.
+
+The absolute altitude band and the windowed vertical-speed bound are placed on data,
+where the per-fix distributions of Fig.~\ref{fig:fixlevel} stop decaying; the Hampel and
+frozen-lock parameters are working values fixed a priori (Table~\ref{tab:workingparams}),
+checked a posteriori on the fraction of fixes each rule removes (\emph{Completeness, the
+integrity gate, and validation} below).
+\end{revblock}
+
+\begin{figure}[htbp]
+  \centering
+  \IfFileExists{generated/fixlevel_diagnostics.pdf}{%
+    \includegraphics[width=\linewidth]{generated/fixlevel_diagnostics}%
+  }{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/ch2\_dataset/generate\_preproc\_figure.py} from the raw IGC tracks on the
+    SSD (not versioned). Run it to render this figure.}}%
+  }
+  \caption{Fix-level cleaning: auditing the absolute bounds. Per-fix distributions of the
+  quantities the absolute bounds test---bounds that serve both the out-of-range rule
+  and, through the $v_{xy}$ bound, the impossibility gate that deletes an off-the-trend
+  fix (Sec.~\ref{sec:fixlevel}) --
+  (a)~horizontal speed $v_{xy}$,
+  (b)~the windowed GNSS $\operatorname{med}|v_z|$ of Eq.~\eqref{eq:vzlocal}, the quantity
+  the bound of Table~\ref{tab:cleaning} actually acts on, (c)~GNSS altitude -- pooled over
+  a large paraglider subsample and the complete hang-glider population, with the adopted
+  bounds dashed
+  (Table~\ref{tab:cleaning}); the $y$-axis is logarithmic so the sparse tail the bounds
+  act on is visible. \rev{In panel~(a) each discipline shows the flat plateau of
+  sustained speeds with no credible flight explanation that places its own bound:
+  \SIrange{45}{55}{\metre\per\second} for paragliders,
+  \SIrange{55}{70}{\metre\per\second} for hang gliders.}
+  Binning choices and sample sizes:
+  \rev{paragraph \emph{Diagnostic sample} of Sec.~\ref{impl:fixlevel}
+  (p.~\pageref{impl:fixsample}). This figure audits the \emph{absolute} bounds only; the
+  Hampel and frozen-lock detectors have no per-fix distribution to read a threshold off,
+  and are validated instead by the removal-fraction sweep described below.}}
+  \label{fig:fixlevel}
+\end{figure}
 
 \begin{revblock}
-\paragraph{An unreturned vertical step.}
-The $|v_z|$ rule recognises two shapes: an \emph{out-and-back} spike is censored, a
-coherent \emph{run} is a sustained manoeuvre and is kept. A single super-threshold step
-that is never undone --- a barometric re-reference, or one corrupt record --- is neither,
-and could carry a written vertical velocity of up to \SI{5117}{\metre\per\second} before
-being caught, on \SI{8.3}{\percent} of paraglider and \SI{6.2}{\percent} of hang-glider
-flights. The shape is detected and counted per flight, as \path{n_alt_level_shift}, so it
-is visible rather than silently present \impldetails{impl:fixlevel}; what to \emph{do}
-about it is left open, since the vertical channel feeds the phase segmentation of
-Chapter~\ref{ch:phases} rather than the horizontal transport measurement of
-Sec.~\ref{sec:obs-global}, so the choice belongs with that analysis.
-
-\paragraph{Why the vertical channel is treated differently.}
-The obvious symmetric design --- a Hampel test on $z$ too, corroborated by the climb-rate
-bound --- is wrong here, for three reasons \impldetails{impl:fixlevel}. An absolute bound
-is sufficient on $z$ and insufficient on $xy$: the vertical envelope is narrow and known,
-while the same horizontal spike passes or fails the speed bound depending on the logger's
-cadence, so only the horizontal case needs a local, scale-free test. A Hampel test on $z$
-would flag the physics: the residual from a local median is largest exactly at thermal
-entries and exits, the transitions the phase segmentation is built on, and the vertical
-channel lacks the corroborating witness (speed) that lets a horizontal circle be told from
-a spike. And the costs are asymmetric: a false vertical flag is cheap to fix by
-interpolation except across a thermal entry, where interpolation erases the very
-transition it should preserve --- so keeping the vertical rule to a bound that only fires
-on the physically impossible avoids that failure mode altogether.
-
-The absolute bounds are placed on data, where the per-fix distributions of
-Fig.~\ref{fig:fixlevel} stop decaying; the Hampel and frozen-lock parameters are working
-values fixed a priori (Table~\ref{tab:workingparams}), checked a posteriori on the fraction
-of fixes each rule removes (\emph{Completeness, the integrity gate, and validation} below).
-
 \paragraph{Removal policy.}
 A speed bound alone cannot attribute a defect, since the speed belongs to the segment
 \emph{between} two fixes: attribution comes from the bounded-removal test, the block whose
 removal restores the trend being the corrupt one, so an isolated spike is removed without
 touching its neighbours. What happens next depends on \emph{which} value is corrupt, by a
-single criterion --- keep every genuine horizontal sample, never hide a hole in the
-horizontal record --- and in either case the corrupt value is simply discarded, with
+single criterion: keep every genuine horizontal sample, never hide a hole in the
+horizontal record. In either case the corrupt value is simply discarded, with
 reconstruction deferred to the single resampling step (Sec.~\ref{sec:uniform}). A corrupt
 \emph{altitude} leaves the fix kept and only that channel marked missing, since the
 horizontal position and timestamp are intact and still sample the path; a corrupt
@@ -607,14 +577,14 @@ position marked missing would hide the hole from the gap rule that decides wheth
 bridge or split (Sec.~\ref{sec:uniform}), and an invented straight line could then be laid
 across a full thermalling circle \impldetails{impl:fixlevel}. The IGC validity flag needs
 no rule of its own: a \texttt{V} flag certifies a degraded GNSS altitude
-(Sec.~\ref{sec:igcformat}), so on a barometric flight the fix is untouched, and on a
-GNSS-fallback flight it reduces to the corrupt-altitude case.
+(Sec.~\ref{sec:igcformat}), and since the adopted channel is GNSS on every flight
+(Sec.~\ref{sec:altchannel}) it always reduces to the corrupt-altitude case.
 
 \paragraph{An impossible step is a boundary, never flown path.}
 What must hold whatever the scan resolves is the invariant the rest of the pipeline leans
 on: \emph{no step between two surviving fixes may break the $v_{xy}$ bound}. Where a block
 is kept because nothing could rejoin it, the step by which the track returns from it is
-itself impossible and, left alone, enters a segment as flown motion --- a jump of tens of
+itself impossible and, left alone, enters a segment as flown motion: a jump of tens of
 kilometres inside one second, in the archive. Such a step is a transition whose course is
 unknown, so it is made a segment boundary on the same footing as a long gap
 (Sec.~\ref{sec:uniform}), counted per flight as \path{n_boundaried}
@@ -624,7 +594,7 @@ unknown, so it is made a segment boundary on the same footing as a long gap
 \rev{A corrupt first fix is a blind spot no bounded-removal test can close: the scan
 carries the last accepted fix as an anchor and never questions its own first one, and that
 fix becomes the origin of the local frame (Sec.~\ref{sec:enu}), so the error does not
-average out with record length --- five paraglider flights left the first full-archive run
+average out with record length: five paraglider flights left the first full-archive run
 some \SI{4500}{\kilo\metre} from their own origin, enough to raise the ensemble MSD by
 seven orders of magnitude at the shortest lags. Two attribution rules were tried and both
 failed, in opposite directions \impldetails{impl:fixlevel}, so the discontinuity is left as
@@ -643,20 +613,24 @@ real trapping events (tight thermalling climbs, also slow and horizontally local
 the same tail \impldetails{impl:fixlevel}. A run is therefore cut only when three
 independent signatures agree:
 \begin{enumerate}[label=(\roman*)]
-  \item \emph{Spatial diameter.} The run's bounding diameter --- the largest great-circle
-        distance between any two of its fixes --- stays below $\delta_{xy}$
+  \item \emph{Spatial diameter.} The run's bounding diameter, the largest great-circle
+        distance between any two of its fixes, stays below $\delta_{xy}$
         \impldetails{impl:fixlevel}; a circling climb instead traces a disc of diameter
         $2R\approx\SIrange{30}{100}{\metre}$, at least twice $\delta_{xy}$, and clears the
         test on geometry alone.
-  \item \emph{An independent witness --- the barometric altitude.} A GNSS lock-loss
-        freezes only the GNSS position; a horizontally motionless run whose barometric
-        altitude keeps changing at a plausible rate is a tight climb, and is kept. Only a
-        byte-identical coordinate repeat may overrule this witness.
+  \item \emph{An independent witness: the barometric altitude, where the flight
+        carries one.} A GNSS lock-loss freezes only the GNSS position; a horizontally
+        motionless run whose barometric altitude keeps changing at a plausible rate is a
+        tight climb, and is kept. This is the one place the barometer, demoted from the
+        analysis channel (Sec.~\ref{sec:altchannel}), is indispensable: the adopted GNSS
+        altitude comes from the very receiver whose lock is in doubt and cannot witness
+        against itself. Only a byte-identical coordinate repeat may overrule this
+        witness.
   \item \emph{Recorder declarations.} A byte-identical repeat of the coordinate fields is
-        conclusive on its own --- no moving receiver rewrites the same bits. The
+        conclusive on its own: no moving receiver rewrites the same bits. The
         \texttt{V} flag and a zeroed GNSS altitude are weaker, certifying a degraded GNSS
-        altitude rather than a frozen fix, and decide only on a GNSS-fallback flight,
-        where no barometric witness exists.
+        altitude rather than a frozen fix, and decide only where no barometric witness
+        exists.
 \end{enumerate}
 A run is classified as a loss of signal only when spatially collapsed, witnessed, and
 sufficiently long,
@@ -672,9 +646,9 @@ sufficiently long,
   W=
   \begin{cases}
     |\Delta z_{\mathrm{baro}}|<\delta_z \,\vee\, \text{byte-identical} &
-      \text{barometric flight,}\\[2pt]
+      \text{usable barometric witness,}\\[2pt]
     \texttt{V}/\text{zero-alt} \,\vee\, \text{byte-identical} &
-      \text{GNSS-fallback flight.}
+      \text{no such witness.}
   \end{cases}
 \end{gathered}
 \end{equation}
@@ -690,33 +664,41 @@ $2R\approx\SI{30}{\metre}$ for the tightest paraglider circles and
 $2R\gtrsim\SI{50}{\metre}$ for hang gliders, missing the diameter test~(i) by a factor of
 at least $2$--$3$; and a climb of order \SI{1}{\metre\per\second} sustained over
 $\tau_{\mathrm{freeze}}$ moves the barometer well past the
-flatness tolerance $\delta_z$. The duration threshold is set on the motion's own timescale
---- about two thermalling periods --- so a run long enough to be cut spans at least two
-full circles of any genuine climb: on a barometric flight the rule is therefore
-conservative by construction, both margins having to fail at once, well outside their
+flatness tolerance $\delta_z$. The duration threshold is set on the motion's own timescale,
+about two thermalling periods, so a run long enough to be cut spans at least two
+full circles of any genuine climb: where a barometric witness exists the rule is
+therefore conservative by construction, both margins having to fail at once, well outside their
 designed range \impldetails{impl:fixlevel}. Below $\tau_{\mathrm{freeze}}$ the rule
-deliberately abstains --- a collapsed run and a genuine slow, localized stretch are not
-distinguishable by these signatures at durations of a few tens of seconds --- at a bounded
-cost, since a kept short freeze lengthens one waiting time by at most $\tau_{\mathrm{freeze}}$,
-swept in the $\psi(\tau)$ sensitivity checks (Sec.~\ref{sec:trimming}).
+deliberately abstains: a collapsed run and a genuine slow, localized stretch are not
+distinguishable by these signatures at durations of a few tens of seconds. The cost is
+bounded, since a kept short freeze lengthens one waiting time by at most
+$\tau_{\mathrm{freeze}}$, swept in the $\psi(\tau)$ sensitivity checks (Sec.~\ref{sec:trimming}).
 \end{revblock}
 
 \paragraph{Residual corner cases.}
-\rev{The frozen-lock rule weakens where the barometric channel is absent, since the GNSS
-altitude cannot witness a suspected GNSS lock loss --- it comes from the very receiver
-whose lock is in doubt. On GNSS-fallback flights the witness slot of
-Eq.~\eqref{eq:frozenlock} is therefore filled by the recorder's declarations alone, the
-diameter and duration conditions unchanged \impldetails{impl:fixlevel}. Three error cases
-follow: a tight climb within $\delta_{xy}$ whose fixes carry a \texttt{V} flag is
-\emph{wrongly cut} on GNSS-fallback flights, with no barometer to defend it; an undeclared
-\emph{jittering} freeze --- re-estimated each second rather than repeated byte-for-byte
---- is \emph{wrongly kept}, also GNSS-fallback only; and a jittered freeze under a
-climbing barometer is \emph{kept at bounded cost} on barometric flights, since motion
-during the run goes unrecorded (the path length under-counted, a spurious wait inserted)
-while the displacement across the run stays correct, the first position after
-re-acquisition being exact again. The first two are expected to be rare and cannot be
-counted directly, since a rule that fails does so silently; what measures the error rate
-instead is the injected-defect calibration below.}
+\begin{revblock}
+The frozen-lock rule weakens where the flight carries no usable barometric witness,
+since the adopted GNSS altitude cannot witness a suspected GNSS lock loss: it comes from
+the very receiver whose lock is in doubt. There the witness slot of Eq.~\eqref{eq:frozenlock}
+is filled by the recorder's declarations alone, the diameter and duration conditions
+unchanged \impldetails{impl:fixlevel}. Three error cases follow:
+\begin{itemize}
+  \item \emph{Wrongly cut}, with no barometric witness: a tight climb within
+        $\delta_{xy}$ whose fixes carry a \texttt{V} flag, with no barometer to defend
+        it.
+  \item \emph{Wrongly kept}, also with no barometric witness: an undeclared
+        \emph{jittering} freeze, re-estimated each second rather than repeated
+        byte-for-byte.
+  \item \emph{Kept at bounded cost}, where a barometric witness exists: a jittered
+        freeze under a climbing barometer. Motion during the run goes unrecorded (the
+        path length under-counted, a spurious wait inserted), while the displacement
+        across the run stays correct, the first position after re-acquisition being
+        exact again.
+\end{itemize}
+The first two are expected to be rare and cannot be counted directly, since a rule that
+fails does so silently; what measures the error rate instead is the injected-defect
+calibration below.
+\end{revblock}
 
 \begin{table}[htbp]
 \centering
@@ -758,16 +740,17 @@ Duplicate timestamp & two or more fixes in one UTC second & merge to one (centro
 Backward timestamp & time decreases (not a midnight roll-over) & delete the fix \\
 \hline
 Frozen-lock run & $\operatorname{diam}<\delta_{xy}$ for $\ge\tau_{\mathrm{freeze}}$, witnessed
-  (Eq.~\ref{eq:frozenlock}): baro.\ flat or byte-identical; \texttt{V}/zero-alt on
-  GNSS-fallback & mark as gap, \emph{split} there \\
+  (Eq.~\ref{eq:frozenlock}): baro.\ flat (where present) or byte-identical; \texttt{V}/zero-alt
+  where no barometer witnesses & mark as gap, \emph{split} there \\
 \hline
 \multicolumn{3}{|l|}{\textbf{Out of range} --- \emph{\rev{horizontal position intact, only
   the altitude value is impossible}}}\\
 \hline
-Missing / out-of-band altitude, or $|v_z|$ spike
+Missing / out-of-band altitude, sustained $|v_z|$ excess, or $|v_z|$ spike
   & \rev{altitude} channel absent, outside
-  $[\PreprocMinAltM,\PreprocMaxAltM]\,\si{\metre}$, or baro.\
-  $|v_z|>\SI{\PreprocMaxVSpeedMps}{\metre\per\second}$
+  $[\PreprocMinAltM,\PreprocMaxAltM]\,\si{\metre}$, windowed
+  $\operatorname{med}|v_z|>\SI{\PreprocMaxVSpeedMps}{\metre\per\second}$ on both bounding
+  steps (Eq.~\ref{eq:vzlocal}), or an out-and-back pair past it
   & drop the altitude only; the fix stays \\
 \hline
 \multicolumn{3}{|p{12.4cm}|}{\footnotesize\textbf{Invariant:} a usable horizontal
@@ -778,54 +761,25 @@ Missing / out-of-band altitude, or $|v_z|$ spike
 \hline
 \end{tabular}
 \caption{Fix-level cleaning, grouped by how each defect presents; in the order of the
-table, the three groups map onto a robust local test, a structural rule, and an absolute
-bound. The speed and altitude bounds are audited on the per-fix distributions of
+table, the three groups map onto a robust local test, a structural rule, and a local or
+absolute bound. The speed and altitude bounds are audited on the per-fix distributions of
 Fig.~\ref{fig:fixlevel}; the robust-test and frozen-lock parameters ($k$, $w$,
 $\varepsilon_{\min}$, $\delta_{xy}$, $\delta_z$, $\tau_{\mathrm{freeze}}$) are working
 values, stated with the rules that use them and argued in Sec.~\ref{impl:fixlevel};
 Table~\ref{tab:workingparams} gathers them with the rest. The $v_{xy}$ bound is per-discipline because the
 speed envelopes differ (a \texttt{sailplanes} entry follows once that source is in). The
-altitude lower bound is $\SI{\PreprocMinAltM}{\metre}$, not $0$: the barometric altitude is
-referenced to the ICAO standard atmosphere rather than to the day's sea-level pressure,
-so on a high-pressure day a sea-level take-off can read a
-few tens of metres negative (the offset scale is visible in Fig.~\ref{fig:altnoise}a).
+altitude lower bound is $\SI{\PreprocMinAltM}{\metre}$, not $0$: the adopted altitude is
+GNSS, an ellipsoidal height, and the geoid runs tens of metres below the WGS84 ellipsoid
+over western Europe, so a genuine sea-level take-off can read a
+few tens of metres negative (Sec.~\ref{sec:altchannel}).
 \impldetails{impl:fixlevel}}
 \label{tab:cleaning}
 \end{table}
 
-\begin{figure}[htbp]
-  \centering
-  \IfFileExists{generated/fixlevel_diagnostics.pdf}{%
-    \includegraphics[width=\linewidth]{generated/fixlevel_diagnostics}%
-  }{%
-    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/ch2\_dataset/generate\_preproc\_figure.py} from the raw IGC tracks on the
-    SSD (not versioned). Run it to render this figure.}}%
-  }
-  \caption{Fix-level cleaning: auditing the absolute bounds. Per-fix distributions of the
-  quantities the absolute bounds test---bounds that serve both the out-of-range rule
-  and, through the $v_{xy}$ bound, the impossibility gate that deletes an off-the-trend
-  fix (Sec.~\ref{sec:fixlevel}) --
-  (a)~horizontal speed $v_{xy}$,
-  (b)~barometric $|v_z|$, (c)~barometric altitude -- pooled over a large paraglider
-  subsample and the complete hang-glider population, with the adopted bounds dashed
-  (Table~\ref{tab:cleaning}); the $y$-axis is logarithmic so the sparse tail the bounds
-  act on is visible. \rev{In panel~(a) each discipline shows the flat plateau of
-  sustained speeds with no credible flight explanation that places its own bound:
-  \SIrange{45}{55}{\metre\per\second} for paragliders,
-  \SIrange{55}{70}{\metre\per\second} for hang gliders.}
-  Binning choices and sample sizes:
-  \rev{paragraph \emph{Diagnostic sample} of Sec.~\ref{impl:fixlevel}
-  (p.~\pageref{impl:fixsample}). This figure audits the \emph{absolute} bounds only; the
-  Hampel and frozen-lock detectors have no per-fix distribution to read a threshold off,
-  and are validated instead by the removal-fraction sweep described below.}}
-  \label{fig:fixlevel}
-\end{figure}
-
 \begin{revblock}
 \paragraph{Completeness, the integrity gate, and validation.}
 The segmentation (Ch.~\ref{ch:phases}) needs a defined position and altitude at every time
-within a \emph{segment} --- a maximal stretch between two splits --- not everywhere;
+within a \emph{segment}, a maximal stretch between two splits, not everywhere;
 cleaning does not guarantee this fix by fix, and the guarantee is established one step
 later, at resampling (Sec.~\ref{sec:uniform}) \impldetails{impl:fixlevel}. Cleaning also
 counts how much it had to do over the airborne window (defects in a ground phase that
@@ -860,45 +814,58 @@ airborne segment is $[t_{\mathrm{on}},t_{\mathrm{off}}]$ with
   t_{\mathrm{off}}=\max\bigl\{t:\ v_{xy}>v_0\ \text{on}\ [t-T_0,\,t]\bigr\},
 \end{equation}
 the same sustained-speed rule read forward and time-reversed, so a wing soaring into wind
-at near-zero ground speed is not mistaken for having landed. $T_0$ is set between two
-scales: from below it must outlast a ground gust or GPS glitch (a few seconds), from above
-it costs little when wrong, misfiring by at most $T_0$ at each end against the
-\SI{\PreprocMinDurationMin}{\minute} minimum duration a retained flight must reach
-\impldetails{impl:trimming}. A flight with no sustained stretch at all is discarded. The
-one structural caveat is a slow phase sitting right at the start or end of the flight (a
-launch straight into ridge lift) being clipped along with the ground phase; the trimmed
-fraction is recorded per flight so the exposure can be bounded and the tail inspected
-directly \impldetails{impl:trimming}.
+at near-zero ground speed is not mistaken for having landed. A flight with no sustained
+stretch at all is discarded.
+
+$T_0$ is set between two scales:
+\begin{itemize}
+  \item \emph{From below}, it must outlast a ground gust or GPS glitch: a few seconds.
+  \item \emph{From above}, it costs little when wrong: misfiring by at most $T_0$ at each
+        end against the \SI{\PreprocMinDurationMin}{\minute} minimum duration a retained
+        flight must reach \impldetails{impl:trimming}.
+\end{itemize}
+The one structural caveat is a slow phase sitting right at the start or end of the flight
+(a launch straight into ridge lift) being clipped along with the ground phase; the
+trimmed fraction is recorded per flight so the exposure can be bounded and the tail
+inspected directly \impldetails{impl:trimming}.
 
 \paragraph{Interior ground stints (mid-flight landings).}
 A mid-flight landing and relaunch recorded in one log would otherwise survive as an
 interior near-zero-speed stint and read downstream as a false long wait in the tail of
 $\psi(\tau)$. An interior-ground detector, built like the frozen-lock rule, cuts a stint
-only when \emph{both} $v_{xy}<v_0$ continuously for at least
-$T_{\mathrm{ground}}=\SI{\PreprocInteriorGroundMin}{\minute}$ --- far beyond any search
-phase --- \emph{and} the adopted altitude channel is flat over the whole stint, its
-detrended central span staying within
-$\delta_z^{\mathrm{gr}}=\SI{\PreprocGroundFlatnessM}{\metre}$, the same independent-sensor
-argument as Eq.~\eqref{eq:frozenlock}. The span is \emph{central}, not a full range,
-because a full range grows without bound with the stint length on noise alone and would
-fail a motionless pilot on a long stint while passing the same pilot on a short one
-\impldetails{impl:trimming}; and on a GNSS-fallback flight, where the tolerance for the
-noisier channel has not yet been calibrated, the guard abstains conservatively rather than
-risk excising a genuine climb, at the cost of never flagging a mid-flight landing on those
-flights \impldetails{impl:trimming}.
+only when two independent signatures agree:
+\begin{itemize}
+  \item \emph{Sustained stillness.} $v_{xy}<v_0$ continuously for at least
+        $T_{\mathrm{ground}}=\SI{\PreprocInteriorGroundMin}{\minute}$, far beyond any
+        search phase.
+  \item \emph{A flat barometer.} Where the flight carries a usable barometric witness
+        (Sec.~\ref{sec:altchannel}), its detrended central span stays within
+        $\delta_z^{\mathrm{gr}}=\SI{\PreprocGroundFlatnessM}{\metre}$ over the whole
+        stint, the same independent-sensor argument as Eq.~\eqref{eq:frozenlock}: the
+        adopted GNSS altitude cannot itself supply this witness, its vertical noise
+        already of the order of $\delta_z^{\mathrm{gr}}$. The span is \emph{central}, not
+        a full range, because a full range grows without bound with the stint length on
+        noise alone and would fail a motionless pilot on a long stint while passing the
+        same pilot on a short one \impldetails{impl:trimming}.
+\end{itemize}
+Where no barometric witness exists, the guard \emph{abstains} outright rather than fall
+back to sustained stillness alone -- which is exactly the soaring-into-wind failure mode
+the second signature exists to prevent -- at the cost of never flagging a mid-flight
+landing on those flights \impldetails{impl:trimming}.
 
 A cut stint is excised and the flight split there, exactly as at a long gap
-(Sec.~\ref{sec:uniform}); the flight-level cuts of Sec.~\ref{sec:flightfilter} are not
-re-applied to the individual segments, but to the \emph{parent} flight --- its airborne
-duration and path length summed over its segments --- since a segment is short because a
+(Sec.~\ref{sec:uniform}). The flight-level cuts of Sec.~\ref{sec:flightfilter} are not
+re-applied to the individual segments, but to the \emph{parent} flight, its airborne
+duration and path length summed over its segments, since a segment is short because a
 gap happened to fall there, which says nothing about whether the flight is genuinely
 cross-country \impldetails{impl:uniform}. Trimming therefore runs before the flight-level
 cuts in the pipeline order (step~(iii) before step~(iv)), so a duration or path length is
-only meaningful once the ground phases are gone. Stints shorter than $T_{\mathrm{ground}}$
-are not cut but \emph{flagged}: a wait with sustained $v_{xy}<v_0$ and a flat barometric
-trace is marked suspect whatever its length, and the $\psi(\tau)$ fits are re-run with and
-without the suspect waits as a sensitivity check, reported per discipline alongside the
-fits.
+only meaningful once the ground phases are gone.
+
+Stints shorter than $T_{\mathrm{ground}}$ are not cut but \emph{flagged}: a wait with
+sustained $v_{xy}<v_0$ and a flat barometric trace is marked suspect whatever its length,
+and the $\psi(\tau)$ fits are re-run with and without the suspect waits as a sensitivity
+check, reported per discipline alongside the fits.
 \end{revblock}
 
 \subsection{Flight-level filtering}
@@ -934,10 +901,9 @@ flight is measured over the intervals it will actually be analysed over
         \SI{\PreprocMinDurationMin}{\minute} lives by climbing, so a record spanning less
         was not soaring. The cut is cheap: moving it from \SI{75}{\metre} to
         \SI{\PreprocMinAltRangeM}{\metre} changes the retained share by under two points
-        \impldetails{impl:flightfilter}. The cached census holds only the barometric
-        extremes, so on a GNSS-fallback flight this cut, and its diagnostic in
-        Fig.~\ref{fig:preproc}c,f, is read on barometric flights alone
-        \impldetails{impl:flightfilter}.
+        \impldetails{impl:flightfilter}. The cut, and its diagnostic in
+        Fig.~\ref{fig:preproc}c,f, act on the adopted GNSS channel over the whole
+        population (Sec.~\ref{sec:altchannel}) \impldetails{impl:flightfilter}.
   \item \emph{Plausibility.} The mean ground speed of the retained track, $L/T$, must not
         exceed the discipline's own fix-level bound $v_{xy}^{\max}$ --- the weakest
         statement that catches a log corrupt beyond fix-level repair. On the present
@@ -981,9 +947,10 @@ examined (Sec.~\ref{sec:uniform}) \impldetails{impl:flightfilter}.
   not cascaded). Dashed lines mark the adopted cuts
   ($T\geq\SI{\PreprocMinDurationMin}{\minute}$, $L\geq\SI{\PreprocMinPathKm}{\kilo\metre}$,
   range $\geq\SI{\PreprocMinAltRangeM}{\metre}$). The duration and path cuts sit far out in
-  the tail. Panels (c) and (f) are drawn over the \emph{barometric} flights only: the
-  cached scan stores no GNSS altitude extremes, so a fallback flight would enter them at a
-  range of zero for a reason unrelated to how it flew (Sec.~\ref{sec:flightfilter}).}
+  the tail. Panels (c) and (f) are drawn on the adopted GNSS channel, over the whole
+  population: the cached scan carries both channels' extremes, so no flight need be
+  excluded from the diagnostic for a reason unrelated to how it flew
+  (Sec.~\ref{sec:flightfilter}).}
   \impldetails{impl:flightfilter}}
   \label{fig:preproc}
 \end{figure}
@@ -1398,7 +1365,7 @@ differentiated once more before it is read, so an interpolation artefact in $z$ 
 into a phase assignment where the same artefact in $E$ or $N$ is absorbed by the smoothing
 \impldetails{impl:uniform}. The linear error over a hole of width $g$ is bounded by
 $\max|\ddot z|\,g^2/8$ \impldetails{impl:uniform}; holes are bridged inside a phase far
-more often than across a transition, where the barometric signal has a nearly constant
+more often than across a transition, where the adopted altitude has a nearly constant
 slope, so the error stays at the metre scale even at the \SI{\PreprocMaxGapS}{\second} cap.
 
 The result is the completeness invariant promised at cleaning: within a retained segment,
@@ -1969,8 +1936,9 @@ section where that choice is argued.
        $(\varphi,\lambda)$, barometric and GNSS altitudes}};
 
     \node[stage, below=of raw] (alt) {\stghead{1}{Choice of altitude channel}{sec:altchannel}
-      {\footnotesize one channel per flight, end to end: barometric where the sensor is
-       present and alive, GNSS wherever either test fails}%
+      {\footnotesize GNSS for every flight, end to end; a flight failing the presence or
+       liveness test has no vertical coordinate and is dropped. The barometer, where
+       present and alive, survives only as the frozen-lock witness}%
       };
     \node[stage, below=of alt] (fix) {\stghead{2}{Fix-level cleaning}{sec:fixlevel}
       {\footnotesize deletes a fix no flown path could reach, marks a corrupt altitude
@@ -2176,7 +2144,14 @@ $v_{xy}^{\max}$ & \SI{\PreprocMaxHSpeedParaMps}{\metre\per\second} (para),
 \SI{\PreprocMaxHSpeedHangMps}{\metre\per\second} (hang) & absolute inter-fix speed bound;
 \rev{the impossibility gate, on its own (Sec.~\ref{sec:fixlevel})} \\
 \hline
-$|v_z|^{\max}$ & \SI{\PreprocMaxVSpeedMps}{\metre\per\second} & absolute climb/sink bound \\
+$|v_z|^{\max}$ & \SI{\PreprocMaxVSpeedMps}{\metre\per\second} & climb/sink bound on the
+\emph{windowed} $\operatorname{med}|v_z|$ of Eq.~\eqref{eq:vzlocal}, not the raw per-step
+value \\
+\hline
+$w_v$ & \SI{\PreprocVzWindowS}{\second} & half-width of that window \\
+\hline
+--- & \PreprocVzMinWindowFixes\ fixes & smallest window population for which the median is
+estimable; below it the per-step value stands in \\
 \hline
 $[h_{\min},h_{\max}]$ & $[\PreprocMinAltM,\PreprocMaxAltM]\,\si{\metre}$ &
 sensor-plausibility window on the altitude \\
@@ -2189,12 +2164,18 @@ $\delta_z$ & \SI{\PreprocFrozenDeltaZM}{\metre} & altitude flatness tolerance of
 $\tau_{\mathrm{freeze}}$ & \SI{\PreprocFrozenTauS}{\second} & minimum duration of a run
 before it counts as frozen \\
 \hline
---- & \rev{\SI{\PreprocBaroPresentMinPct}{\percent}} & \rev{smallest share of a flight's
-fixes carrying a non-zero pressure altitude for the barometric channel to count as
-present (Sec.~\ref{sec:altchannel}); below it the flight falls back to GNSS} \\
+--- & \SI{\PreprocGnssPresentMinPct}{\percent} & smallest share of a flight's fixes
+carrying a non-zero GNSS altitude for the channel to be admitted (Sec.~\ref{sec:altchannel});
+below it the flight has no vertical coordinate and is dropped \\
 \hline
---- & \SI{\PreprocBaroMinRangeM}{\metre} & smallest whole-flight barometric range below
-which the channel is treated as absent (Sec.~\ref{sec:altchannel}) \\
+--- & \SI{\PreprocGnssMinRangeM}{\metre} & smallest whole-flight GNSS range below which the
+channel is treated as dead (Sec.~\ref{sec:altchannel}) \\
+\hline
+--- & \SI{\PreprocBaroWitnessPresentMinPct}{\percent} & the same presence test, on the raw
+barometer, deciding only whether it can witness a frozen-lock run \\
+\hline
+--- & \SI{\PreprocBaroWitnessMinRangeM}{\metre} & the same liveness test, for the same
+witness \\
 \hline
 --- & \SI{\PreprocIntegrityMaxPct}{\percent} & share of fixes above which the cleaning is
 declared to have failed and the flight is dropped \\
@@ -2249,10 +2230,12 @@ filter and its derivatives} \\
 \hline
 $p$ & \PreprocSavgolOrder & polynomial order of the filter \\
 \hline
-$\tau_c$ & \SI{\PreprocSavgolTauCS}{\second} & correlation time setting the window, on all
-three channels. \rev{Per-channel keys exist---$E$/$N$, and the altitude split by
-\path{alt_source}---for the noisy GNSS minority, and all currently hold this same value,
-because the spectral knees of the three coincide (Sec.~\ref{sec:savgol})} \\
+$\tau_c$ & \SI{\PreprocSavgolTauCS}{\second} (horizontal),
+\SI{\PreprocSavgolTauCVertS}{\second} (vertical) & correlation time setting the window,
+separately for the horizontal and vertical axes. The two hold the same value because the
+spectral knees of $E$, $N$ and $z$ coincide (Sec.~\ref{sec:savgol}); the vertical key
+stays separate from the horizontal one on principle, not because the archive needs it to
+be \\
 \hline
 --- & \rev{\PreprocSavgolMinWindow\ samples} & \rev{floor on the window, one sample more
 than a cubic determines. It is this floor and not $\tau_c$ that fixes the smoothing scale

@@ -172,6 +172,10 @@
 % Barometric-vs-GNSS offset (\StatAltOffParaMedianM, ...) generated from a seeded IGC
 % sample by scripts/reporting/ch2_dataset/generate_alt_offset_stats.py.
 \IfFileExists{generated/alt_offset.tex}{\input{generated/alt_offset}}{}
+% GNSS high-frequency-floor excess (\StatAltNoiseGnssExcessThreeXPct, ...): how many
+% flights the PSD sample of fig:altnoise carries with a floor a stated multiple of the
+% barometric channel's typical one, measured per flight rather than read off the medians.
+\IfFileExists{generated/altitude_noise.tex}{\input{generated/altitude_noise}}{}
 % Pipeline census (\StatPipeParaKept, ..., \PipeCensusTable) generated from the
 % flights_meta table the pipeline itself writes: what the cascade removed, and why.
 \IfFileExists{generated/pipeline_census.tex}{\input{generated/pipeline_census}}{}
