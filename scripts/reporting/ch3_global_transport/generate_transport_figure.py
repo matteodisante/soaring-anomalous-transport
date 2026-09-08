@@ -71,6 +71,14 @@ _CLOSED = "triangle"
 # with the range it was fitted over, and with how much it moves when the range changes.
 FIT_RANGE_S = (60.0, 2000.0)
 
+# The window the same fit reaches once the closed tasks are out of the sample. The ceiling
+# of FIT_RANGE_S is imposed by the declared task, not by the air: a triangle comes home at a
+# time the scoring rule sets, which is what bends the pooled curve. Restricted to open
+# courses that saturation is absent by construction, so the fit can run to a lag the median
+# flight still supplies, and the pair is reported together -- the exponent's movement
+# between the two windows is the measurement, not either number alone.
+OPEN_FIT_RANGE_S = (60.0, 10_000.0)
+
 _PDF_METADATA = {"Creator": "soaring.analysis", "Producer": "soaring.analysis", "CreationDate": None}
 
 
@@ -148,6 +156,57 @@ def task_systematic(lags, curves, closed, fit_range):
         local_slope(lags, mean_closed, 0.25),
     )
 
+
+
+def open_course_window(lags, curves, closed):
+    r"""What the fitted window costs the exponent, with and without the closed tasks.
+
+    The same order-1 curve is fitted over :data:`FIT_RANGE_S` and over
+    :data:`OPEN_FIT_RANGE_S`, once on the open courses and once on the closed ones. A
+    subset whose exponent barely moves between the two windows, and whose residual does not
+    grow, is one whose ceiling was set by the task rather than by the motion; a subset that
+    moves and whose fit degrades is one where the extra decade is measuring the scoring
+    rule. Reporting both is what lets the chapter widen the window on evidence instead of
+    on preference.
+
+    The residual is the rms departure from the fitted line, in dex, which is the quantity
+    that says whether the extra lags lie on the same power law or bend away from it. It is
+    not an uncertainty on the exponent: the lags are not independent, and the interval
+    quoted anywhere else comes from the clustered bootstrap and the range half.
+
+    Returns:
+        ``{"open"/"closed": {"narrow"/"wide": (alpha, residual_dex)}, "slope": ...,
+        "coverage": ...}``, the slope entry the local slope of the open curve over the
+        stretch the wider window adds and the coverage entry how many flights of each
+        subset still answer the widest lag fitted.
+    """
+    from soaring.analysis.observables.regimes import local_slope
+    from soaring.analysis.observables.variations import hurst_from_variations
+
+    out = {}
+    for name, sel in (("open", ~closed), ("closed", closed)):
+        mean = _nanmean(curves[sel])
+        fits = {}
+        for label, window in (("narrow", FIT_RANGE_S), ("wide", OPEN_FIT_RANGE_S)):
+            hurst, residual = hurst_from_variations(lags, mean, fit_range=window)
+            fits[label] = (2.0 * hurst, residual)
+        out[name] = fits
+
+    slope_open = local_slope(lags, _nanmean(curves[~closed]), 0.25)
+    added = (lags >= FIT_RANGE_S[1]) & (lags <= OPEN_FIT_RANGE_S[1]) & np.isfinite(slope_open)
+    out["slope"] = (
+        (float(np.nanmin(slope_open[added])), float(np.nanmax(slope_open[added])))
+        if added.any()
+        else (float("nan"), float("nan"))
+    )
+
+    widest = int(np.argmin(np.abs(lags - OPEN_FIT_RANGE_S[1])))
+    out["coverage"] = {
+        "lag_s": float(lags[widest]),
+        "open": int(np.isfinite(curves[~closed][:, widest]).sum()),
+        "closed": int(np.isfinite(curves[closed][:, widest]).sum()),
+    }
+    return out
 
 
 def stratified_exponents(lags, curves, frame, column, fit_range, *, minimum=2000):
@@ -253,6 +312,28 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
         if np.isfinite(separation[i]):
             put(f"TaskSlopeGap{label}", f"{separation[i]:.2f}")
             put(f"TaskSlopeGap{label}S", f"{lags[i]:.0f}")
+
+    # ---- how far the window reaches once the closed tasks are out --------------------
+    # The ceiling above is the task's, not the air's, so the same order-1 fit is run on
+    # each task population over both windows. What the chapter quotes is the movement
+    # between them: a subset that barely moves earned the extra decade.
+    window = open_course_window(lags, loaded["orders"][1], closed)
+    put("OpenFitMaxS", f"{OPEN_FIT_RANGE_S[1]:.0f}")
+    put("OpenFitDecades", f"{np.log10(OPEN_FIT_RANGE_S[1] / OPEN_FIT_RANGE_S[0]):.1f}")
+    for subset in ("Open", "Closed"):
+        fits = window[subset.lower()]
+        for label in ("Narrow", "Wide"):
+            alpha, residual = fits[label.lower()]
+            put(f"{subset}AlphaOrderOne{label}", f"{alpha:.2f}")
+            put(f"{subset}ResidOrderOne{label}", f"{residual:.3f}")
+        put(
+            f"{subset}AlphaOrderOneShift",
+            f"{abs(fits['wide'][0] - fits['narrow'][0]):.2f}",
+        )
+    put("OpenSlopeAddedMin", f"{window['slope'][0]:.2f}")
+    put("OpenSlopeAddedMax", f"{window['slope'][1]:.2f}")
+    put("OpenWideLagS", f"{window['coverage']['lag_s']:.0f}")
+    put("OpenFlightsWideLag", f"{window['coverage']['open']}")
 
     # ---- how much clustering there is, at each level --------------------------------
     # One lag has to stand for the per-flight input the fits average over, and it is taken
