@@ -692,14 +692,18 @@ def local_vz(
     isolated sensor spike, which is two large steps of opposite sign out of ten. Only an
     excess carried by more than half the window moves it, and that is what "sustained"
     means. Measured on synthetic tracks at 1 Hz against a 3 m/s climb: a two-sample gust
-    of +16 and +14 m/s reads 3.0, a 200 m spike reads 3.0, GNSS vertical noise of
-    sigma = 4 m reads 5.6 -- while a genuine 18 m/s sink held for 15 s reads 15.0. The
-    mean and the chord slope fail the spike case, at 42.4 and 23.0 respectively.
+    of +16 and +14 m/s reads 3.0, a 200 m spike reads 3.0, while a genuine 18 m/s sink
+    held for 15 s reads 15.0. The mean and the chord slope fail the spike case, at 42.4
+    and 23.0 respectively.
 
-    That noise figure is the reason the rule is windowed at all. The same sigma = 4 m of
-    GNSS vertical noise puts the largest *per-step* ``|v_z|`` at 14.1 m/s, past the
-    bound, on a flight that is perfectly clean: once the adopted channel is GNSS
-    (sec:altchannel) a per-step test fires on the noise floor itself.
+    Noise is the reason the rule is windowed at all, and not a nicety: on the same
+    synthetic climb, GNSS vertical noise of sigma = 12 m -- plausible for the
+    noisy-GNSS minority this archive measures directly, rather than infers
+    (:func:`soaring.analysis.altitude_noise.hf_floor_excess_fraction`) -- puts the
+    largest *per-step* ``|v_z|`` at 36.3 m/s, past ``max_vertical_speed_mps``, on a
+    flight that is perfectly clean; the window median stays at 15.8, comfortably under
+    it. Once the adopted channel is GNSS (sec:altchannel) a per-step test fires on the
+    noise floor itself.
      A *time* window and not a fixed number of steps, for the reason every other window
     in this module is one: the archive's cadences run from 1 to 10 s, and a fixed count
     would ask a 10 s logger to sustain the excess for two minutes and a 1 Hz logger for

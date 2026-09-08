@@ -26,7 +26,7 @@ def test_load_preproc_config_from_yaml():
         "paragliders": 45.0,
         "hang gliders": 55.0,
     }
-    assert cfg.fix.max_vertical_speed_mps == 13.0
+    assert cfg.fix.max_vertical_speed_mps == 30.0
     assert cfg.fix.vz_window_s == 5.0
     assert cfg.fix.vz_min_window_fixes == 5
     assert cfg.fix.hampel_window_s == 20.0

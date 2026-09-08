@@ -294,6 +294,9 @@ def _config_macros(preproc) -> dict[str, str]:
         "PreprocBaroWitnessPresentMinPct": _fmt(
             100.0 * alt.baro_witness_present_min, 0
         ),
+        "PreprocBaroWitnessBorderlineLowPct": _fmt(
+            100.0 * alt.baro_witness_present_min - _near_cut_margin_pct(), 0
+        ),
         "PreprocBaroWitnessMinRangeM": _fmt(alt.baro_witness_min_range_m, 1),
         "PreprocTakeoffSpeedMps": _fmt(preproc.trimming.takeoff_speed_mps, 1),
         "PreprocSustainedS": _fmt(preproc.trimming.sustained_s, 1),

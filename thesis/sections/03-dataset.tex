@@ -520,11 +520,21 @@ re-measured with the rest of this pipeline stage after the change of channel and
 recorded here, rather than carried over from a count made under the old, barometric,
 per-step regime.
 
-The absolute altitude band and the windowed vertical-speed bound are placed on data,
-where the per-fix distributions of Fig.~\ref{fig:fixlevel} stop decaying; the Hampel and
-frozen-lock parameters are working values fixed a priori (Table~\ref{tab:workingparams}),
-checked a posteriori on the fraction of fixes each rule removes (\emph{Completeness, the
-integrity gate, and validation} below).
+The absolute altitude band is placed on data, where its per-fix distribution of
+Fig.~\ref{fig:fixlevel} stops decaying, the same test the horizontal bound is placed
+by. The windowed vertical-speed bound is not: pooled over the archive, panel~(b)'s
+distribution decays smoothly from a few metres per second out past fifty with no
+plateau to read a cut off, because the window median is already robust to a single
+corrupt fix by construction and so has already suppressed the artifact population the
+horizontal method exists to separate. What remains is dominated by genuine dynamics --
+strong thermals, spiral dives, acro and SIV manoeuvres -- decaying into a tail that
+does not stop being physically explicable until it reaches values no manoeuvre
+produces. The bound is set on physical grounds instead: above the extreme-but-real
+envelope and orders of magnitude below where the tail becomes inexplicable
+\impldetails{impl:fixlevel}. The Hampel and frozen-lock parameters are working values
+fixed a priori (Table~\ref{tab:workingparams}), checked a posteriori on the fraction of
+fixes each rule removes (\emph{Completeness, the integrity gate, and validation}
+below).
 \end{revblock}
 
 \begin{figure}[htbp]

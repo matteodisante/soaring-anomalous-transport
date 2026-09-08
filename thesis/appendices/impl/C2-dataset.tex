@@ -586,7 +586,7 @@ of the fallback population: a barometer that never recorded implies nothing abou
 solution, which is computed independently. It is untested on the rest,
 \StatScanParaBaroBorderlineCount\ paraglider flights (\SI{\StatScanParaBaroBorderlinePct}{\percent}
 of the archive) present on
-\SIrange{\PreprocBaroBorderlineLowPct}{\PreprocBaroPresentMinPct}{\percent} of their
+\SIrange{\PreprocBaroWitnessBorderlineLowPct}{\PreprocBaroWitnessPresentMinPct}{\percent} of their
 fixes, close enough to the cut that a real defect rather than a missing sensor could
 plausibly explain the shortfall; no hang-glider flight falls in that band.
 Confirming the fallback also holds there needs the same presence statistic computed
@@ -661,7 +661,7 @@ reproduces the full census above to a few tenths of a point,
 which is the check that the draw is not skewed.
 
 \paragraph{Window and admission.} A flight enters with at least \num{\StatAltOffMinFix} fixes and both
-channels non-zero on at least \SI{\PreprocBaroPresentMinPct}{\percent} of them, the same
+channels non-zero on at least \SI{\PreprocBaroWitnessPresentMinPct}{\percent} of them, the same
 presence cut the pipeline applies. The offset is read over the middle \SI{\StatAltOffWindowPct}{\percent}
 of the record: a logger switched on in a car park and off in a field brackets the flight
 with ground fixes, where the barometer is still settling and the GNSS solution still

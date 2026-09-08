@@ -93,9 +93,15 @@ if TYPE_CHECKING:
 #          with a fix censored when the step into it and the step out of it are both in
 #          such a neighbourhood. The per-step form condemned a wind gust, which carries
 #          one step past the bound without carrying its neighbours there, and -- on the
-#          GNSS channel -- the vertical noise floor itself: sigma = 4 m at 1 Hz puts the
-#          largest per-step |v_z| at 14.1 m/s on a clean flight, against a window median
-#          of 5.6. New counter `n_alt_vz_sustained`; `n_vz_runs` changes meaning, from
+#          GNSS channel -- the vertical noise floor itself: sigma = 12 m at 1 Hz,
+#          plausible for the noisy-GNSS minority this archive measures directly, puts
+#          the largest per-step |v_z| at 36.3 m/s on a clean flight, against a window
+#          median of 15.8. The bound itself is re-measured from the GNSS channel rather
+#          than carried over from the barometric per-step regime: 13.0 -> 30.0, since
+#          the bin-to-bin-ratio method that placed the horizontal bounds does not
+#          transfer to a statistic the windowing has already made robust to single-fix
+#          artifacts (configs/preprocessing.yaml has the full reasoning). New counter
+#          `n_alt_vz_sustained`; `n_vz_runs` changes meaning, from
 #          coherent runs left in place to distinct runs censored. The V flag now
 #          invalidates the altitude on every flight, not only the fallback minority.
 #          Major bump: no stored table from 1.x is comparable.

@@ -40,23 +40,49 @@ fix_level:
   # neighbourhood. The per-step form this replaces condemned two things it should not
   # have: a wind gust, which carries one step past the bound without carrying its
   # neighbours there, and -- once the adopted channel became GNSS -- the vertical noise
-  # floor itself, which at sigma = 4 m and 1 Hz puts the largest per-step |v_z| at
-  # 14.1 m/s on a perfectly clean flight. On the same synthetic tracks the window median
-  # reads 5.6. Shared across disciplines: the two vz distributions are close enough that
-  # splitting it, unlike horizontal speed, buys nothing (thesis fig:fixlevel).
+  # floor itself: at sigma = 12 m and 1 Hz, plausible for the noisy-GNSS minority this
+  # archive measures directly (altitude_noise.hf_floor_excess_fraction), the largest
+  # per-step |v_z| reaches 36.3 m/s on a perfectly clean flight, past this bound; the
+  # window median stays at 15.8. Shared across disciplines: the two vz distributions are
+  # close enough that splitting it, unlike horizontal speed, buys nothing (thesis
+  # fig:fixlevel).
   #
-  # PROVISIONAL: 13.0 is the value the OLD per-step rule used, read off the per-step |v_z|
-  # distribution of the BAROMETRIC channel. Both of those premises are gone, so it must be
-  # re-read from the new statistic on the GNSS channel before the production run -- the
-  # same procedure that placed the horizontal bounds above (generate_preproc_figure.py).
-  # Expect it to move UP: a genuine spiral dive holds 15-20 m/s of sustained sink and
-  # reads 15.0 on this statistic, so 13.0 would censor real flying.
-  max_vertical_speed_mps: 13.0     # median |v_z| over the window, beyond the climb/sink range
+  # Re-measured on the GNSS channel (2026-09-08, generate_preproc_figure.py /
+  # measure_vz_threshold.py, 15000 paraglider + 6716 hang-glider flights, pooled). The
+  # horizontal bounds above are placed where a fine histogram's bin-to-bin ratio settles
+  # near 1 -- a genuinely flat tail with no credible speed explanation. That method does
+  # NOT transfer here: pooled from 8 to ~50 m/s the histogram decays smoothly and
+  # continuously (bin-to-bin ratio holding at roughly 0.75-0.95 throughout, never
+  # settling), with no plateau to read a cut off. This is the windowing working as
+  # intended, not a failure of the method: local_vz's median is already robust to a
+  # single corrupt fix by construction, so the artifact population the horizontal bound
+  # exists to separate has already been suppressed before this histogram is even drawn.
+  # What is left in the tail is overwhelmingly genuine dynamics -- strong thermals,
+  # aggressive spiral dives, acro/SIV manoeuvres, all of which this archive contains and
+  # none of which a vertical-speed rule should censor.
+  #
+  # The bound is therefore set on physical grounds instead: above the extreme-but-real
+  # envelope (a spiral dive sustaining 15-20 m/s reads ~15 on this exact statistic per
+  # cleaning.local_vz's own docstring measurement; acro/SIV can sustain a comparable
+  # descent rate for a full window), with a wide margin below where the tail stops being
+  # explicable by any manoeuvre at all -- the pooled sample's most extreme values run into
+  # the thousands of m/s, three orders of magnitude past any candidate cut in this range.
+  # 30.0 sits comfortably above the former and two orders of magnitude below the latter;
+  # at this window width it censors 0.014% of window-samples archive-wide, essentially
+  # all of it in that unreachable tail. Shared across disciplines, as below: p50/p99/p99.9
+  # coincide between paragliders and hang gliders at every window width tried.
+  max_vertical_speed_mps: 30.0     # median |v_z| over the window, beyond the climb/sink range
   vz_window_s: 5.0                 # half-width of the centred window. A TIME window, like every
                                    #   other window here, because the archive's cadences run 1 to
                                    #   10 s and a fixed step count would ask a slow logger to
                                    #   sustain the excess for two minutes and a 1 Hz one for ten
-                                   #   seconds. At the modal 1 Hz cadence this is +-5 fixes.
+                                   #   seconds. At the modal 1 Hz cadence this is +-5 fixes. Swept
+                                   #   against {5, 10, 20} s on the same 2026-09-08 measurement: a
+                                   #   wider window only ever suppresses the tail further (fewer
+                                   #   exceedances at every candidate cut), so nothing in the data
+                                   #   argues for widening it, and 5 s stays the shortest window
+                                   #   that still lets a Hampel-scale local test react to a defect
+                                   #   spanning a few seconds rather than tens of them.
   vz_min_window_fixes: 5           # below this the median is not estimable and the per-step value
                                    #   stands in -- safe precisely because it is the sparse case:
                                    #   at 1 Hz the bound is tens of metres per step, within reach

@@ -354,12 +354,19 @@ def fix_level_distributions(
     Returns concatenated arrays keyed ``v_xy``, ``v_z``, ``v_z_local`` and ``altitude``
     -- one value per fix (or per step, for the two vertical ones), across every sampled
     flight -- the material for :func:`make_fixlevel_diagnostics_figure` and for
-    re-deriving ``max_vertical_speed_mps`` itself: place the bound where ``v_z_local``'s
-    fine-histogram bin-to-bin ratio settles near 1, exactly as the horizontal bounds
-    were placed (thesis, sec:fixlevel "Validating the cleaning"). A sample (rather than
-    the full census) is the right tool here, exactly as for the altitude PSD: even a few
-    hundred flights is millions of fixes, enough for a sharp distribution and a precise
-    cut fraction, at a fraction of the cost.
+    re-deriving ``max_vertical_speed_mps``. The horizontal bounds are placed where a
+    fine histogram's bin-to-bin ratio settles near 1 (thesis, sec:fixlevel "Validating
+    the cleaning"), but that method does not transfer to ``v_z_local``: the window
+    median is already robust to a single corrupt fix by construction, so the very
+    artifact population the horizontal method separates has been suppressed before this
+    histogram is even drawn, and what is left decays smoothly with no plateau across the
+    whole range a defect and a genuine manoeuvre (a spiral dive, an acro/SIV descent)
+    could both plausibly produce. The vertical bound is instead set on physical
+    grounds -- see the reasoning recorded beside the adopted value in
+    ``configs/preprocessing.yaml``. A sample (rather than the full census) is the right
+    tool here, exactly as for the altitude PSD: even a few hundred flights is millions
+    of fixes, enough for a sharp distribution and a precise cut fraction, at a fraction
+    of the cost.
 
     Args:
         paths: IGC file paths (typically a seeded sample; see ``sample_igc_paths``).

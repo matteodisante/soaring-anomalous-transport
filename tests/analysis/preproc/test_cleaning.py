@@ -386,9 +386,11 @@ def _with_sink(rate_mps, seconds=30, start=120):
 
 
 def test_a_sink_inside_the_envelope_is_left_alone():
-    # A dive is a manoeuvre, not a defect, and the rule must not reach it. 11 m/s of
-    # sustained sink sits under the bound and nothing fires.
-    out = _clean(_with_sink(11.0))
+    # A dive is a manoeuvre, not a defect, and the rule must not reach it. 25 m/s of
+    # sustained sink -- the far end of what an aggressive spiral or acro descent can
+    # hold (a plain spiral dive alone is 15-20 m/s) -- still sits under the bound and
+    # nothing fires.
+    out = _clean(_with_sink(25.0))
     assert out.report.n_alt_vz_sustained == 0
     assert out.report.n_alt_vz_spike == 0
     assert np.isfinite(out.fixes["alt"].to_numpy()).all()
@@ -396,9 +398,12 @@ def test_a_sink_inside_the_envelope_is_left_alone():
 
 def test_a_sustained_excess_is_censored_through_its_interior():
     # Past the bound and carried by the whole neighbourhood: not a gust, not a spike.
-    # The interior of the run is censored; the fixes at its ends stay, as the boundary
-    # between the good data and the bad.
-    out = _clean(_with_sink(18.0))
+    # 35 m/s is well beyond even an aggressive spiral dive or acro descent (the bound
+    # sits above that envelope on purpose, test_a_sink_inside_the_envelope_is_left_alone
+    # pins the envelope side), so this is squarely in the region the rule exists to
+    # catch. The interior of the run is censored; the fixes at its ends stay, as the
+    # boundary between the good data and the bad.
+    out = _clean(_with_sink(35.0))
 
     assert out.report.n_alt_vz_sustained == 29
     assert out.report.n_vz_runs == 1  # one stretch, not a scatter of short ones
@@ -442,11 +447,13 @@ def test_gnss_vertical_noise_alone_does_not_trip_the_windowed_rule():
     """What the per-step form could not do, and why the change was forced.
 
     On the adopted GNSS channel a clean flight carries metres of vertical noise. At
-    sigma = 4 m and 1 Hz that puts the largest *per-step* ``|v_z|`` past the bound on a
-    flight with no defect in it at all; the window median reads well under.
+    sigma = 12 m and 1 Hz -- plausible for the noisy-GNSS minority this archive
+    measures directly (altitude_noise.hf_floor_excess_fraction) -- that puts the
+    largest *per-step* ``|v_z|`` past the bound on a flight with no defect in it at
+    all; the window median reads well under.
     """
     flight = _glide()
-    noise = np.random.default_rng(0).normal(0.0, 4.0, len(flight))
+    noise = np.random.default_rng(0).normal(0.0, 12.0, len(flight))
     flight["alt"] = flight["alt"].to_numpy() + noise
     flight["baro_alt"] = flight["alt"].to_numpy() - 50.0
     t = flight["t"].to_numpy()
