@@ -3,12 +3,10 @@
 #
 #  - refresh the committed seasons_index snapshots from the SSD when it is mounted
 #  - regenerate the dataset statistics from those snapshots (text, instant)
-#  - regenerate the logbook git timeline (text, instant)
 #  - if the commit touches the thesis, rebuild thesis/main.pdf and stage it
-#  - if the commit touches the logbook, rebuild logbook/logbook.pdf and stage it
 #
 # Best-effort: a missing tool or a LaTeX failure WARNS but never blocks the commit.
-# The narrative prose (logbook notes, thesis text, README/docs) is updated on demand,
+# The narrative prose (thesis text, README/docs) is updated on demand,
 # not here. Enable with:  git config core.hooksPath .githooks
 set -uo pipefail
 
@@ -21,9 +19,8 @@ command -v python3 >/dev/null 2>&1 || { echo "pre-commit: python3 not found; ski
 #    (best-effort; a fresh checkout / CI has no SSD and keeps the committed copies).
 python3 scripts/reporting/tools/refresh_seasons_index.py >/dev/null 2>&1 || true
 
-# 1) Stats + timeline sources (cheap, deterministic).
+# 1) Stats sources (cheap, deterministic).
 python3 scripts/reporting/ch2_dataset/generate_stats.py    >/dev/null || echo "pre-commit: stats generation failed" >&2
-python3 scripts/reporting/tools/generate_timeline.py >/dev/null || echo "pre-commit: timeline generation failed" >&2
 # Census macros: reads the cached track scans on the SSD (instant, never rescans);
 # a missing SSD/cache/dependency keeps the committed census.tex (best-effort, like
 # the seasons_index refresh above).
@@ -31,7 +28,6 @@ python3 scripts/reporting/ch2_dataset/generate_census_stats.py >/dev/null 2>&1 |
 git add thesis/generated/stats.tex thesis/generated/census.tex \
     thesis/generated/seasons_table_para.tex thesis/generated/seasons_table_hang.tex \
     data/paragliders/seasons_index.csv data/hang_gliders/seasons_index.csv 2>/dev/null || true
-git add logbook/generated/timeline.tex 2>/dev/null || true
 
 # What is being committed (stats files are already staged above).
 staged="$(git diff --cached --name-only)"
@@ -48,54 +44,6 @@ if grep -qE '^thesis/' <<<"$staged"; then
     else
         echo "pre-commit: latexmk not found; skipping thesis PDF rebuild" >&2
     fi
-fi
-
-# 3) Public logbook PDF: rebuild only when the logbook changed.
-if grep -qE '^logbook/' <<<"$staged"; then
-    if command -v latexmk >/dev/null 2>&1; then
-        if bash scripts/build_docs.sh logbook >/dev/null 2>&1; then
-            git add logbook/logbook.pdf 2>/dev/null || true
-        else
-            echo "pre-commit: logbook PDF build failed; committing sources without a fresh PDF" >&2
-        fi
-    else
-        echo "pre-commit: latexmk not found; skipping logbook PDF rebuild" >&2
-    fi
-fi
-
-# 4) Drift check: the plan lives in both the thesis and the logbook and must stay in
-# sync. Warn (never block) when it changed in one document but not the other. We compare
-# the logbook's "Next steps" SECTION -- so editing the narrative notes alone does not
-# raise a false alarm -- against the thesis chapters that hold the plan.
-#
-# The thesis side is a LIST, and the list is the point: it was one file until the
-# planning chapter was split into "Global transport" (measured) and "Flight phases"
-# (still a plan), and a hook that names a file which no longer exists reports "unchanged"
-# for ever and silently stops checking. Add a file here whenever a chapter joins the plan.
-thesis_ns_files="thesis/sections/04-global-transport.tex thesis/sections/05-flight-phases.tex"
-logbook_file="logbook/logbook.tex"
-extract_ns() { awk '/\\section\{Next steps\}/{f=1} f{print}'; }
-
-for f in $thesis_ns_files; do
-    if [ ! -e "$f" ]; then
-        echo "pre-commit: WARNING -- the drift check names $f, which does not exist." >&2
-        echo "  Update thesis_ns_files in .githooks/pre-commit, or the check is dead." >&2
-    fi
-done
-
-thesis_ns=0
-git diff --cached --quiet -- $thesis_ns_files || thesis_ns=1
-
-logbook_ns=0
-staged_ns="$(git show ":$logbook_file" 2>/dev/null | extract_ns)"
-head_ns="$(git show "HEAD:$logbook_file" 2>/dev/null | extract_ns)"
-[ "$staged_ns" != "$head_ns" ] && logbook_ns=1
-
-if [ "$thesis_ns" != "$logbook_ns" ]; then
-    echo "pre-commit: WARNING -- the 'Next steps' plan changed in one document but not the other:" >&2
-    echo "    thesis plan chapters:        $([ "$thesis_ns" = 1 ] && echo changed || echo unchanged)" >&2
-    echo "    logbook 'Next steps' section:                $([ "$logbook_ns" = 1 ] && echo changed || echo unchanged)" >&2
-    echo "  Keep the two in sync. This is only a warning; the commit proceeds." >&2
 fi
 
 exit 0

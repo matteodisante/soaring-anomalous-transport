@@ -2,10 +2,7 @@
 # Build the project documents.
 #
 #   scripts/build_docs.sh stats      # regenerate thesis/generated/*.tex from the data
-#   scripts/build_docs.sh timeline   # regenerate logbook/generated/timeline.tex from git
-#   scripts/build_docs.sh thesis     # stats + compile thesis/main.pdf  (public)
-#   scripts/build_docs.sh logbook    # timeline + compile logbook/logbook.pdf
-#   scripts/build_docs.sh all        # thesis + logbook  (default)
+#   scripts/build_docs.sh thesis     # stats + compile thesis/main.pdf  (public, default)
 #   scripts/build_docs.sh clean      # remove LaTeX aux files
 #
 # PDFs are built reproducibly (stable bytes when content is unchanged), so the
@@ -20,8 +17,7 @@ export SOURCE_DATE_EPOCH="$(git -C "$ROOT" log -1 --format=%ct 2>/dev/null || da
 
 LATEXMK_OPTS=(-pdf -quiet -interaction=nonstopmode -halt-on-error)
 
-gen_stats()    { python3 scripts/reporting/ch2_dataset/generate_stats.py; }
-gen_timeline() { python3 scripts/reporting/tools/generate_timeline.py; }
+gen_stats() { python3 scripts/reporting/ch2_dataset/generate_stats.py; }
 
 build_thesis() {
     gen_stats
@@ -29,21 +25,11 @@ build_thesis() {
     echo "Built thesis/main.pdf"
 }
 
-build_logbook() {
-    gen_timeline
-    ( cd logbook && latexmk "${LATEXMK_OPTS[@]}" logbook.tex )
-    echo "Built logbook/logbook.pdf"
-}
-
-case "${1:-all}" in
+case "${1:-thesis}" in
     stats)    gen_stats ;;
-    timeline) gen_timeline ;;
     thesis)   build_thesis ;;
-    logbook)  build_logbook ;;
-    all)      build_thesis; build_logbook ;;
     clean)
         ( cd thesis  && latexmk -C main.tex    >/dev/null 2>&1 || true )
-        ( cd logbook && latexmk -C logbook.tex >/dev/null 2>&1 || true )
         echo "Cleaned LaTeX aux files." ;;
-    *) echo "usage: $0 {stats|timeline|thesis|logbook|all|clean}" >&2; exit 2 ;;
+    *) echo "usage: $0 {stats|thesis|clean}" >&2; exit 2 ;;
 esac

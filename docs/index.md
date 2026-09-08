@@ -127,7 +127,7 @@ No measured number is typed into the thesis. Every one is written by a script in
   which only recompiles, does not.
 - A pre-commit hook (`git config core.hooksPath .githooks`) keeps the cheap,
   deterministic parts in sync on every commit: the season snapshots, the headline
-  statistics, the logbook timeline, and the two PDFs.
+  statistics, and the thesis PDF.
 
 So the rule for changing a number is: change the threshold in `configs/`, not the code,
 and re-run the generator that owns it. [Where each number comes from](guide/provenance.md)

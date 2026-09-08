@@ -77,7 +77,6 @@ docs/         the published documentation (MkDocs + mkdocstrings)
 configs/      every threshold, kept out of the code: acquisition and pre-processing YAML
 data/         the only versioned data: two per-season summary CSVs and a basemap
 tests/        557 tests, mirroring src/ module for module
-logbook/      a working logbook: the chronology and the reasoning, with a generated timeline
 revisions/    the annotated PDFs and answers from the two review passes
 global_analysis_sketches/  the July 2026 specification the analysis was built from
 ```

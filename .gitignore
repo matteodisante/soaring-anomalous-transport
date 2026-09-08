@@ -65,22 +65,6 @@ thesis/references/
 # \IfFileExists, quindi compila comunque anche quando la figura non c'e'.
 thesis/generated/*.pdf
 
-# Logbook (documento PUBBLICO, come la tesi): teniamo i .tex, la timeline generata
-# e logbook.pdf; ignoriamo solo gli ausiliari di LaTeX.
-logbook/*.aux
-logbook/*.bbl
-logbook/*.bcf
-logbook/*.blg
-logbook/*.fdb_latexmk
-logbook/*.fls
-logbook/*.log
-logbook/*.out
-logbook/*.run.xml
-logbook/*.synctex.gz
-logbook/*.toc
-logbook/*.lof
-logbook/*.lot
-
 # Copie in stile Finder ("nome 2.py"): compaiono da sole su questo filesystem e, se sono
 # test, vengono raccolte ed eseguite due volte -- 101 test fantasma in un'occasione.
 # Lo spazio prima della cifra distingue una copia da un nome che finisce legittimamente
@@ -88,7 +72,7 @@ logbook/*.lot
 * [0-9].*
 * [0-9][0-9].*
 
-# LaTeX run from the repository root instead of thesis/ or logbook/. It happens when a
+# LaTeX run from the repository root instead of thesis/. It happens when a
 # shell keeps its working directory across commands, and the artefacts land beside the
 # source tree where nothing else ignores them.
 /main.aux

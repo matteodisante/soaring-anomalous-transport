@@ -274,10 +274,7 @@ behind the window choice in `configs/preprocessing.yaml`.
 Re-copies the canonical `seasons_index.csv` from the SSD into `data/`. Run by the pre-commit
 hook.
 
-### `scripts/reporting/tools/generate_timeline.py`
-Generates the git-history timeline for the private logbook. Run by the pre-commit hook.
-
 ### `scripts/build_docs.sh`
-`stats`, `timeline`, `thesis`, `logbook`, `all`, `clean`. Uses
+`stats`, `thesis`, `clean`. Uses
 `latexmk -halt-on-error`, so a LaTeX error fails the build rather than producing a PDF with a
 hole in it.
