@@ -27,12 +27,14 @@ def make_msd_figure(
     """The two MSD estimators side by side, with the ensemble behind each.
 
     Four panels. (a) The **ensemble** MSD: the mean over flights at a fixed elapsed
-    time, with the 10-90 band across flights and the median, and the fitted power law
-    over its range. (b) The **time-averaged** MSD: the same displacement statistic
-    averaged over starting times *within* each segment, so a lag is seen wherever it
-    occurs rather than only at a fixed time since take-off. (c) The local logarithmic
-    slope of both, which is what shows whether one exponent describes a curve. (d) How
-    many flights, or segments, contribute at each lag.
+    time, with the 10-90 band across flights, the median, and the fitted power law over
+    its range (one line, one shaded band, per discipline). (b) The **time-averaged**
+    MSD: the same displacement statistic averaged over starting times *within* each
+    segment, so a lag is seen wherever it occurs rather than only at a fixed time since
+    take-off, with its own fit and range drawn the same way. (c) The local logarithmic
+    slope of both, by :func:`~soaring.analysis.observables.transport.local_slope`, which
+    is what shows whether one exponent describes a curve. (d) How many flights, or
+    segments, contribute at each lag.
 
     Reading (a) against (b) is the point of the figure rather than a bonus. The
     ensemble is synchronised at take-off -- every flight starts there -- so a feature it
@@ -86,24 +88,8 @@ def make_msd_figure(
             ax.plot(span, fit.prefactor * span**fit.alpha, color="0.2", ls="--", lw=1.1)
             ax.axvspan(fit.t_min, fit.t_max, color=color, alpha=0.05, lw=0)
 
-    # The lags over which the ensemble is still *growing*: a flight answers a lag only
-    # at or above its own native interval, so each cadence class joins the average there
-    # and brings its own displacement distribution. Over the paraglider archive the
-    # population more than doubles between 2 s and 120 s, and the bumps a reader sees at
-    # the short-lag end sit at the common cadences rather than in the motion -- an
-    # ensemble restricted to 1 Hz loggers grows by 0.6 % over the same span and is
-    # smooth. It is shaded rather than hidden, and no fit begins inside it.
-    def joining_region(curve):
-        n = curve.n_flights
-        rising = np.flatnonzero(n[1:] > n[:-1] * 1.001)
-        return (curve.t[0], float(curve.t[rising.max() + 1])) if rising.size else None
-
     for discipline, result in results.items():
         color = colors.get(discipline, "gray")
-        span = joining_region(result)
-        if span is not None:
-            for axis in (flat[0], flat[2]):
-                axis.axvspan(*span, color="0.85", zorder=0, lw=0)
         draw(flat[0], result, fits.get(discipline), color, discipline)
         curve_slope, curve_error = local_slope(result)
         shown = np.isfinite(curve_slope)
@@ -140,8 +126,7 @@ def make_msd_figure(
     def annotate(ax, fitted):
         """The fitted exponents, one line per discipline."""
         note = "\n".join(
-            rf"{d}: $\alpha$ = {f.alpha:.3f} $\pm$ {f.alpha_err:.3f}"
-            for d, f in fitted.items()
+            rf"{d}: $\alpha$ = {f.alpha:.3f}" for d, f in fitted.items()
         )
         if note:
             ax.text(0.03, 0.97, note, transform=ax.transAxes, fontsize=8, va="top")

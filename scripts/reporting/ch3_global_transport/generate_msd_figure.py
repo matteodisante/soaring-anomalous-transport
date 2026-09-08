@@ -54,6 +54,16 @@ from soaring.reporting import DISCIPLINES, write_macros  # noqa: E402
 # what it measures is transport rather than the circling superimposed on it.
 FIT_MIN_S = 120.0
 
+# The time-averaged MSD's own fit range: a segment supplies its own local starting
+# point at every lag, so it is not synchronised to take-off the way the ensemble is, and
+# reading it from 10 s (rather than the ensemble's 120 s floor) is a deliberate choice
+# to show the panel across the thermalling scale as well as above it. The upper end is
+# fixed rather than coverage-derived: 10^4 s still holds several hundred to several
+# thousand contributing segments in both disciplines, comfortably above the min_flights
+# floor `fit_msd_exponent` applies on its own.
+TA_FIT_MIN_S = 10.0
+TA_FIT_MAX_S = 10_000.0
+
 # Matches measure_msd.py's own COHORTS_S -- kept apart rather than imported, the same way
 # ORDERS/AXIS_ORDERS are duplicated between measure_variations.py and
 # generate_transport_figure.py: the two scripts do not import from each other.
@@ -185,8 +195,7 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
     boot = bootstrap_alpha_error(samples, lags, t_min_s=fit.t_min, t_max_s=fit.t_max)
 
     ta_result, ta_samples = loaded["ta_result"], loaded["ta_samples"]
-    ta_min, ta_max = coverage_limited_range(ta_result, t_min_s=FIT_MIN_S)
-    ta_fit = fit_msd_exponent(ta_result, t_min_s=ta_min, t_max_s=ta_max)
+    ta_fit = fit_msd_exponent(ta_result, t_min_s=TA_FIT_MIN_S, t_max_s=TA_FIT_MAX_S)
     ta_boot = bootstrap_alpha_error(
         ta_samples, lags, t_min_s=ta_fit.t_min, t_max_s=ta_fit.t_max
     )
@@ -201,14 +210,19 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
         f"on [{ta_fit.t_min:.0f}, {ta_fit.t_max:.0f}] s ({ta_fit.n_points} lags)"
     )
 
-    # East/north, fitted exactly like the pooled curve above -- same coverage-limited
-    # range logic, same bootstrap. Coverage depends only on t/dt_s/length, never on the
-    # position values, so this is not assumed to land on the pooled fit range; it is
-    # verified to (sec:transport-axisroutes quotes the pooled StatMsd*FitMinS/FitMaxS
-    # for the axis rows on the strength of that).
+    # East/north, fitted exactly like the pooled curve of the same kind above: the
+    # ensemble twins get the ensemble's coverage-limited range (coverage depends only on
+    # t/dt_s/length, never on the position values, so this is not assumed to land on the
+    # pooled fit range; it is verified to -- sec:transport-axisroutes quotes the pooled
+    # StatMsdParaFitMinS/FitMaxS for that row on the strength of it), and the
+    # time-averaged twins get the same fixed TA_FIT_MIN_S/TA_FIT_MAX_S as the pooled TA
+    # fit above, for the same reason.
     axis_fits = {}
     for name, (axis_result, axis_samples) in loaded["axis_results"].items():
-        a_min, a_max = coverage_limited_range(axis_result, t_min_s=FIT_MIN_S)
+        if name.startswith("ta_"):
+            a_min, a_max = TA_FIT_MIN_S, TA_FIT_MAX_S
+        else:
+            a_min, a_max = coverage_limited_range(axis_result, t_min_s=FIT_MIN_S)
         axis_fit = fit_msd_exponent(axis_result, t_min_s=a_min, t_max_s=a_max)
         axis_boot = bootstrap_alpha_error(
             axis_samples, lags, t_min_s=axis_fit.t_min, t_max_s=axis_fit.t_max
@@ -387,7 +401,10 @@ def redraw() -> int:
                 p90=rows["p90_m2"].to_numpy(),
             )
             into[discipline] = curve
-            lo, hi = coverage_limited_range(curve, t_min_s=FIT_MIN_S)
+            if estimator == "time_averaged":
+                lo, hi = TA_FIT_MIN_S, TA_FIT_MAX_S
+            else:
+                lo, hi = coverage_limited_range(curve, t_min_s=FIT_MIN_S)
             fit_into[discipline] = fit_msd_exponent(curve, t_min_s=lo, t_max_s=hi)
     if not results:
         print("no curves in the CSV.")

@@ -46,6 +46,13 @@ CURVE_CSV = ROOT / "thesis" / "generated" / "msd_curve.csv"
 # the lags the quoted exponent was fitted on and not over a range chosen to flatter it.
 FIT_MIN_S = 120.0
 
+# generate_msd_figure.py's own TA_FIT_MIN_S/TA_FIT_MAX_S, duplicated rather than
+# imported for the same reason FIT_MIN_S is: the two scripts do not import from each
+# other. Kept literal rather than "rediscovered" via coverage_limited_range, because the
+# TA fit no longer uses that rule -- see that script for why.
+TA_FIT_MIN_S = 10.0
+TA_FIT_MAX_S = 10_000.0
+
 # The radius that counts as having left the launch area. Five kilometres is well beyond
 # any thermalling excursion and well inside the median flown path, so the crossing time
 # it defines is the departure onto the cross-country leg rather than a local excursion.
@@ -251,11 +258,7 @@ def audit(discipline: str, audit_dir: Path) -> dict[str, str]:
                   p10=None, p50=None, p90=None),
         t_min_s=FIT_MIN_S,
     )
-    ta_range = coverage_limited_range(
-        MSDResult(t=ta_t, msd=ta_msd, n_flights=ta_n.astype(int), sem=None,
-                  p10=None, p50=None, p90=None),
-        t_min_s=FIT_MIN_S,
-    )
+    ta_range = (TA_FIT_MIN_S, TA_FIT_MAX_S)
 
     # ---- B4: does a power law describe either curve? ------------------------------
     for label, (t, y, rng, lo, hi, cnt) in {
