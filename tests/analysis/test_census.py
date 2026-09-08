@@ -213,6 +213,27 @@ def test_fix_level_arrays_gnss_present():
     assert a["v_z_local"].shape == (3,)
 
 
+def test_fix_level_arrays_repairs_a_backward_timestamp_before_windowing():
+    # This reads a RAW parsed track, unlike clean_flight's own call site, where stage
+    # (ii) has already repaired the time base by the time local_vz runs. A backward
+    # step or a duplicate second here used to reach pandas' rolling() directly and
+    # raise "index values must be monotonic" -- found running this diagnostic against
+    # the real archive, where such defects are exactly what stage (ii) exists for.
+    fixes = pd.DataFrame(
+        {
+            "t": [0.0, 10.0, 3.0, 20.0, 20.0, 30.0],  # backward step, then a duplicate
+            "lat": [0.0] * 6,
+            "lon": [0.0, 0.003, 0.0009, 0.006, 0.006, 0.009],
+            "valid": [True] * 6,
+            "baro_alt": [950.0, 970.0, 953.0, 990.0, 990.0, 1010.0],
+            "gnss_alt": [1000.0, 1020.0, 1003.0, 1040.0, 1040.0, 1060.0],
+        }
+    )
+    a = _fix_level_arrays(fixes)  # must not raise
+    assert a["v_z_local"].size > 0
+    assert np.all(np.isfinite(a["v_z_local"]))
+
+
 def test_fix_level_arrays_no_usable_gnss_excludes_vertical():
     # A flight whose adopted channel is absent (sec:altchannel): vertical speed and
     # altitude are not measurements there, so they must be excluded; horizontal speed,

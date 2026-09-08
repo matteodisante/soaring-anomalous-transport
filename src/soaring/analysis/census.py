@@ -291,12 +291,28 @@ def _fix_level_arrays(
     ``v_z``; ``v_z_local`` is windowed in true time first and filtered to match
     afterwards, since a window computed on already-filtered steps would misplace itself
     in time.
+
+    This reads a *raw* parsed track, not a cleaned one, so the time base can still hold
+    backward steps -- exactly the defect stage (ii)'s
+    :func:`~soaring.analysis.preproc.cleaning.longest_non_decreasing` exists to repair,
+    and repaired here the same way, since :func:`local_vz`'s rolling window needs a
+    monotonic clock to be indexed by. Applied before anything else, so every other
+    quantity in this function already sees the repaired sequence.
     """
+    from .preproc.cleaning import longest_non_decreasing
+
     empty = {q: np.empty(0) for q in _FIXLEVEL_QUANTITIES}
     n = len(fixes)
     if n < 2:
         return empty
     t = fixes["t"].to_numpy()
+    if not np.all(np.diff(t) >= 0):
+        keep = longest_non_decreasing(t)
+        fixes = fixes.iloc[keep]
+        t = fixes["t"].to_numpy()
+        n = len(fixes)
+        if n < 2:
+            return empty
     dt = np.diff(t)
     ok = dt > 0
     if not ok.any():
