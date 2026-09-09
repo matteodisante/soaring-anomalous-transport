@@ -1461,11 +1461,40 @@ rather than polygons traced from the map: a box that is written down can be chec
 against a gazetteer, and the test the strata support is whether the curves separate, not
 where exactly the Alps end. Alps $\lambda\in[5.4,10.0]$, $\varphi\in[43.8,46.6]$; Pyrenees
 $\lambda\in[-1.9,3.3]$, $\varphi\in[42.0,43.5]$; Massif Central $\lambda\in[1.8,4.6]$,
-$\varphi\in[43.6,46.2]$; anything else inside $\lambda\in[-6,10]$,
-$\varphi\in[41,52]$ is \enquote{lowland} and anything outside it is \enquote{abroad}. The
-boxes are coarse and overlap along their edges, with the first match winning in the order
-listed; they are a stratification, not a geography, and the test they support is whether
-the curves separate rather than where exactly the Alps end.}
+$\varphi\in[43.6,46.2]$; Channel Coast $\lambda\in[-1.8,2.0]$, $\varphi\in[48.3,51.2]$, the
+one box drawn around a region rather than around its absence, over the chalk coast of
+Normandy, Picardy and the Nord: its take-off altitude has a median of
+\SI{\StatPrelimParaGroupChannelCoastAltMedianM}{\metre} and a 90th percentile of
+\SI{\StatPrelimParaGroupChannelCoastAltNinetyPctM}{\metre}, against medians of
+\SI{\StatPrelimParaGroupAlpsAltMedianM}{\metre} (Alps),
+\SI{\StatPrelimParaGroupPyreneesAltMedianM}{\metre} (Pyrenees) and
+\SI{\StatPrelimParaGroupMassifCentralAltMedianM}{\metre} (Massif Central) for the three
+massifs above. Anything else inside $\lambda\in[-6,10]$,
+$\varphi\in[41,52]$ is \enquote{outside massifs} and anything outside it is
+\enquote{abroad}. The boxes are coarse and overlap along their edges, with the first match
+winning in the order listed; they are a stratification, not a geography, and the test they
+support is whether the curves separate rather than where exactly the Alps end.}
+
+\paragraph{\rev{The terrain figure.}} \rev{Fig.~\ref{fig:terrain-map} is a second,
+independent cut of the same launch sites, by raw ground elevation rather than by named
+massif. \enquote{Ground elevation} there, $z^{\mathrm{gnd}}$, is the first valid \texttt{B}
+record of the flight's raw IGC file (GNSS altitude, falling back to barometric where GNSS
+is absent or zero -- the same channel order the pipeline itself adopts,
+\texttt{soaring.analysis.igc}), read by \texttt{soaring.analysis.igc.first\_fix} before
+the pipeline's own cleaning trims the ground phase (\enquote{Where the flights are}
+above): never the pipeline-cleaned \texttt{alt0}. A first fix is kept only inside the same
+receiver-plausibility band fix-level cleaning already uses ($\SI{-100}{\metre}$ to
+$\SI{6000}{\metre}$, \texttt{configs/preprocessing.yaml}) -- not a cleaning pass, only the
+same minimal not-a-corrupt-GPS-read gate, applied to a fix cleaning never otherwise sees.
+The four bands and their thresholds (\SI{300}{\metre}, \SI{800}{\metre},
+\SI{1500}{\metre}) are Kapos et al.'s~\cite{kapos2000}, as adopted for the same France
+domain by Hern\'{a}ndez-Aguayo, Cristelli \& Benzaquen~\cite{hernandezaguayo2026}; unlike
+their $z^{\mathrm{gnd}}$ (ERA5 surface geopotential on a \SI{0.25}{\degree} grid, a
+dataset this project does not otherwise use), the one here is a per-flight altitude
+reading rather than a terrain grid, so a \SI{\StatTerrainCellDeg}{\degree} rendering cell
+is coloured by the majority class of the flights launching inside it, rather than
+inheriting a single class by construction. The ten busiest cells of each class (crosses)
+follow the same highest-activity-per-terrain criterion as their Fig.~2.}
 
 \paragraph{\rev{The stratum floor.}} \rev{A stratum below \num{2000} flights is pooled
 into the residual group rather than drawn. Below that the curve's own sampling error at

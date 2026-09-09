@@ -232,6 +232,75 @@ def parse_igc(path: str | Path) -> pd.DataFrame:
     )
 
 
+# How much of a raw file to read looking for the first valid B record, before falling
+# back to the whole file. Comfortably covers the header plus many B records even at a
+# fast logging cadence, so the fallback path is rare in practice.
+_FIRST_FIX_CHUNK_BYTES = 65536
+
+
+def _first_valid_fix(lines: list[str]) -> dict[str, float] | None:
+    """The first line in ``lines`` that decodes as a valid ``B`` record, or ``None``.
+
+    Same per-line validity rules as :func:`parse_igc` (time-of-day, lat/lon range and
+    hemisphere), kept in one place there and reused here rather than duplicated, since a
+    fix this function accepts and ``parse_igc`` would reject (or vice versa) is exactly
+    the kind of drift that makes "first raw fix" quietly stop meaning what
+    :func:`parse_igc` means by a fix.
+    """
+    for line in lines:
+        if not line.startswith("B") or len(line) < 35:
+            continue
+        try:
+            hh, mm, ss = int(line[1:3]), int(line[3:5]), int(line[5:7])
+            if not _valid_time_of_day(hh, mm, ss):
+                continue
+            lat = _lat(line[7:15])
+            lon = _lon(line[15:24])
+        except ValueError:
+            continue
+        return {
+            "lat": lat,
+            "lon": lon,
+            "baro_alt": _altitude(line[25:30]),
+            "gnss_alt": _altitude(line[30:35]),
+        }
+    return None
+
+
+def first_fix(path: str | Path) -> dict[str, float] | None:
+    """The earliest valid ``B`` record of a raw IGC file, decoded but not cleaned.
+
+    Unlike :func:`parse_igc`, this does not parse the whole flight: it reads one chunk
+    from the front of the file (header plus a handful of fixes, almost always enough)
+    and only falls back to the complete file for the rare log whose leading records are
+    all corrupt. Scanning the raw archive for "the altitude a pilot launched at" this way
+    costs a few kilobytes per flight rather than the whole track.
+
+    Args:
+        path: Path to the ``.igc`` file.
+
+    Returns:
+        A dict with ``lat``, ``lon``, ``baro_alt``, ``gnss_alt`` (same decoding as
+        :func:`parse_igc`, ``nan`` for an absent altitude channel), or ``None`` if the
+        file has no valid ``B`` record at all.
+    """
+    path = Path(path)
+    with path.open("rb") as fh:
+        chunk = fh.read(_FIRST_FIX_CHUNK_BYTES)
+        chunk_is_whole_file = len(chunk) < _FIRST_FIX_CHUNK_BYTES
+        text = chunk.decode("latin-1", errors="replace")
+        lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+        # The last line may be cut mid-record at the chunk boundary; drop it unless the
+        # chunk was short enough that it is the whole file and thus already complete.
+        found = _first_valid_fix(lines if chunk_is_whole_file else lines[:-1])
+        if found is not None or chunk_is_whole_file:
+            return found
+        rest = fh.read()
+    text = (chunk + rest).decode("latin-1", errors="replace")
+    lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    return _first_valid_fix(lines)
+
+
 def _present_fraction(fixes: pd.DataFrame, column: str) -> float:
     """Fraction of fixes carrying a usable value on one altitude channel.
 

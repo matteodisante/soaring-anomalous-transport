@@ -115,12 +115,23 @@ OROGRAPHY = {
     "Pyrenees": {"lon": (-1.9, 3.3), "lat": (42.0, 43.5)},
     "Massif Central": {"lon": (1.8, 4.6), "lat": (43.6, 46.2)},
 }
+# A control box over genuinely low-relief terrain -- the Channel chalk coast (Normandy,
+# Picardy, the coastal Nord) -- rather than another box defined by what it excludes. Its
+# take-off altitude sits at a median of 220 m against 930-1400 m for the three massifs
+# above (retained paraglider ensemble); see impl:prelim for the check.
+FLAT_CONTROL = {
+    "Channel Coast": {"lon": (-1.8, 2.0), "lat": (48.3, 51.2)},
+}
+# Every box that ``orographic_group`` and the map panel draw from, massifs and the flat
+# control alike.
+REGIONS = {**OROGRAPHY, **FLAT_CONTROL}
 # Where each box's label sits, and how it is anchored. The boxes overlap along their
 # edges, so a label placed at a fixed corner of each collides with its neighbour.
 _LABEL_ANCHOR = {
     "Alps": (9.85, 46.35, "right"),
     "Pyrenees": (-1.75, 42.15, "left"),
     "Massif Central": (1.95, 45.9, "left"),
+    "Channel Coast": (-1.7, 50.6, "left"),
 }
 
 _PDF_METADATA = {
@@ -139,10 +150,15 @@ def _within(lat, lon, extent):
 
 
 def orographic_group(lat: pd.Series, lon: pd.Series) -> np.ndarray:
-    """Label each take-off by the orographic box it falls in."""
+    """Label each take-off by the box it falls in, massif or flat control.
+
+    The default label is "outside massifs": a residual defined by exclusion (whatever is
+    not in a named box), not a terrain claim -- unlike "Channel Coast", which names an
+    actual low-relief region.
+    """
     inside = lat.between(*FRANCE["lat"]) & lon.between(*FRANCE["lon"])
-    labels = np.full(len(lat), "lowland", dtype=object)
-    for name, box in OROGRAPHY.items():
+    labels = np.full(len(lat), "outside massifs", dtype=object)
+    for name, box in REGIONS.items():
         hit = lon.between(*box["lon"]) & lat.between(*box["lat"])
         labels[hit.to_numpy()] = name
     labels[~inside.to_numpy()] = "abroad"
@@ -295,7 +311,7 @@ def draw_maps(loaded: dict) -> object:
     mesh = _density(france_ax, lon[inside], lat[inside], extent, CELL_DEG)
     if mesh is not None:
         fig.colorbar(mesh, ax=france_ax, label="flights per cell", shrink=0.75)
-    for name, box in OROGRAPHY.items():
+    for name, box in REGIONS.items():
         france_ax.add_patch(
             plt.Rectangle(
                 (box["lon"][0], box["lat"][0]),
@@ -503,9 +519,23 @@ def macros(loaded: dict) -> dict[str, str]:
         put("ElsewherePct", f"{100 * (~metropolitan & ~island).mean():.1f}")
         groups = frame.group.value_counts(normalize=True)
         for name, key in (("Alps", "Alps"), ("Pyrenees", "Pyrenees"),
-                          ("MassifCentral", "Massif Central"), ("Lowland", "lowland")):
+                          ("MassifCentral", "Massif Central"),
+                          ("ChannelCoast", "Channel Coast"),
+                          ("OutsideMassifs", "outside massifs")):
             put(f"Group{name}Pct", f"{100 * groups.get(key, 0.0):.1f}")
         put("Sites", f"{frame.groupby([frame.lat0.round(2), frame.lon0.round(2)]).ngroups}")
+
+        # Take-off altitude of the named boxes (not the two exclusion-defined labels),
+        # backing the impl:prelim claim that Channel Coast is genuinely low-relief and not
+        # merely lower than the three massifs by construction.
+        for name, key in (("Alps", "Alps"), ("Pyrenees", "Pyrenees"),
+                          ("MassifCentral", "Massif Central"),
+                          ("ChannelCoast", "Channel Coast")):
+            alt = frame.loc[frame.group == key, "alt0"]
+            if alt.empty:
+                continue
+            put(f"Group{name}AltMedianM", f"{alt.median():.0f}")
+            put(f"Group{name}AltNinetyPctM", f"{alt.quantile(0.9):.0f}")
 
         # Isotropy, over the lags the transport analysis reads.
         with np.errstate(invalid="ignore"):

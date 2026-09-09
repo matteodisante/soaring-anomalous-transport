@@ -1893,9 +1893,14 @@ launches:
   \item \textbf{Alps.} \SI{\StatPrelimParaGroupAlpsPct}{\percent}.
   \item \textbf{Pyrenees.} \SI{\StatPrelimParaGroupPyreneesPct}{\percent}.
   \item \textbf{Massif Central.} \SI{\StatPrelimParaGroupMassifCentralPct}{\percent}.
-  \item \textbf{Elsewhere in France.} \SI{\StatPrelimParaGroupLowlandPct}{\percent}.
+  \item \textbf{Channel Coast.} \SI{\StatPrelimParaGroupChannelCoastPct}{\percent}: a box
+        over genuinely low-relief terrain (Normandy, Picardy, the coastal Nord), not one
+        carved out by excluding the other three.
+  \item \textbf{Outside the massifs.} \SI{\StatPrelimParaGroupOutsideMassifsPct}{\percent}:
+        everywhere else in metropolitan France, a residual defined by exclusion and not a
+        terrain claim.
 \end{itemize}
-The orographic groups are longitude and latitude boxes, drawn
+These groups are longitude and latitude boxes, drawn
 on Fig.~\ref{fig:prelim-map}a and listed with their edges in the mirror of this section
 \impldetails{impl:prelim}.
 
@@ -1915,6 +1920,39 @@ on Fig.~\ref{fig:prelim-map}a and listed with their edges in the mirror of this 
   overseas department with a substantial share. (c)~Everything else, one marker per
   \SI{0.5}{\degree} cell with the area set by its count.}
   \label{fig:prelim-map}
+\end{figure}
+
+\paragraph{Terrain at launch}
+A second, independent cut of the same sites: each retained launch is placed by its raw
+ground elevation into the four bands Hern\'{a}ndez-Aguayo, Cristelli \& Benzaquen
+\cite{hernandezaguayo2026} draw from Kapos et al.'s global mountain
+classification~\cite{kapos2000}: Plains ($z^{\mathrm{gnd}}<\SI{300}{\metre}$), Hills
+(\SIrange{300}{800}{\metre}), Low mountains (\SIrange{800}{1500}{\metre}), High mountains
+($z^{\mathrm{gnd}}\geq\SI{1500}{\metre}$), Fig.~\ref{fig:terrain-map}. Unlike their
+reanalysis-grid $z^{\mathrm{gnd}}$, this one is the raw IGC file's first fix, read before
+the pipeline's own cleaning trims the ground phase \impldetails{impl:prelim};
+\SI{\StatTerrainParaClassifiedPct}{\percent} of the retained paraglider ensemble
+classifies this way. By share of the classified flights: \SI{\StatTerrainParaPlainsPct}
+{\percent} Plains, \SI{\StatTerrainParaHillsPct}{\percent} Hills,
+\SI{\StatTerrainParaLowmountainsPct}{\percent} Low mountains and
+\SI{\StatTerrainParaHighmountainsPct}{\percent} High mountains.
+
+\begin{figure}[htbp]
+  \centering
+  \IfFileExists{generated/terrain_map.pdf}{%
+    \includegraphics[width=0.68\linewidth]{generated/terrain_map}%
+  }{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/ch2\_dataset/generate\_terrain\_figure.py} from the raw archive on
+    the SSD (not versioned).}}%
+  }
+  \caption{Take-off sites of the retained ensemble (both disciplines pooled), by raw
+  ground elevation at the first fix, on the elevation bands of
+  \cite{hernandezaguayo2026,kapos2000}. One marker per occupied
+  \SI{\StatTerrainCellDeg}{\degree} cell, coloured by its majority class and sized by the
+  logarithm of its flight count; crosses mark the \StatTerrainTopN\ busiest cells of each
+  class.}
+  \label{fig:terrain-map}
 \end{figure}
 
 \paragraph{Isotropy}

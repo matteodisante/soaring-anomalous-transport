@@ -195,6 +195,50 @@ def test_a_lost_clock_is_not_mistaken_for_a_midnight_rollover(tmp_path):
     assert parsed["t"].iloc[-1] == pytest.approx(19.0)
 
 
+def test_first_fix_matches_parse_igc_first_row(fixes):
+    found = igc.first_fix(FIXTURE)
+    assert found == {
+        "lat": pytest.approx(fixes["lat"].iloc[0]),
+        "lon": pytest.approx(fixes["lon"].iloc[0]),
+        "baro_alt": pytest.approx(fixes["baro_alt"].iloc[0]),
+        "gnss_alt": pytest.approx(fixes["gnss_alt"].iloc[0]),
+    }
+
+
+def test_first_fix_skips_a_leading_corrupt_record(tmp_path):
+    lines = [
+        "AXXX",
+        "Bshort",  # too short: skipped
+        "B1143394432469N00542796EA014700155600",  # first valid one
+        "B1143424432500N00542800EA014750156000",
+    ]
+    p = tmp_path / "leading_bad.igc"
+    p.write_bytes(("\r\n".join(lines) + "\r\n").encode("latin-1"))
+    found = igc.first_fix(p)
+    assert found["lat"] == pytest.approx(44 + 32.469 / 60.0, abs=1e-6)
+    assert found["gnss_alt"] == pytest.approx(1556.0)
+
+
+def test_first_fix_none_for_a_file_with_no_valid_b_record(tmp_path):
+    p = tmp_path / "empty.igc"
+    p.write_bytes(b"AXXX\r\nHFDTE110910\r\nGABC\r\n")
+    assert igc.first_fix(p) is None
+
+
+def test_first_fix_falls_back_past_a_chunk_of_leading_junk(tmp_path, monkeypatch):
+    # Shrink the chunk so a handful of junk lines already exceeds it, forcing the
+    # whole-file fallback path without writing a 64 KB fixture.
+    monkeypatch.setattr(igc, "_FIRST_FIX_CHUNK_BYTES", 64)
+    lines = ["AXXX"] + ["Bshort"] * 5 + [
+        "B1143394432469N00542796EA014700155600",
+    ]
+    p = tmp_path / "past_chunk.igc"
+    p.write_bytes(("\r\n".join(lines) + "\r\n").encode("latin-1"))
+    found = igc.first_fix(p)
+    assert found is not None
+    assert found["gnss_alt"] == pytest.approx(1556.0)
+
+
 def test_an_unusable_altitude_field_costs_the_altitude_and_not_the_fix(tmp_path):
     # The asymmetry the whole of stage (ii) is built on: a bad altitude costs the
     # altitude, never the position. The parser broke it by decoding both altitudes

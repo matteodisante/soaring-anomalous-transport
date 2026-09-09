@@ -309,6 +309,35 @@
 % orders below the metre to which the IGC format rounds. Read from the document itself
 % (20 pp); MEAS Switzerland was acquired by TE Connectivity in 2014, so later reissues
 % of the same datasheet carry the TE name. Checked 2026-09.
+% The source of the Plains/Hills/Low-mountains/High-mountains elevation bands used by
+% the terrain figure in Sec. 2.8 (fig:terrain-map): thresholds and z^gnd definition
+% (Eq. 1) fetched and verified directly against the arXiv HTML source on 2026-09-09.
+% Their z^gnd is ERA5 surface geopotential, not raw flight-log altitude -- this thesis
+% keeps their four labels and thresholds but reads altitude from the raw IGC first fix
+% instead (impl:prelim), so the figure is comparable to theirs panel-for-panel but not a
+% reproduction of their pipeline.
+@misc{hernandezaguayo2026,
+  author       = {Hern\'{a}ndez-Aguayo, C\'{e}sar and Cristelli, Matthieu and Benzaquen, Michael},
+  title        = {From Flight Logs to Atmospheric Science: Paragliders as Convection Sensors for Identifying Thermal Predictors},
+  howpublished = {arXiv:2608.00241},
+  year         = {2026},
+  note         = {Eq.~1 and Fig.~2 (terrain classification and map); v2, 7 Sep 2026.}
+}
+
+% The origin of the elevation thresholds hernandezaguayo2026 (Eq. 1) cites: their
+% footnote names this as the source and is not itself online-accessible from the
+% archive here, so the citation is traced to their attribution rather than the chapter
+% text.
+@incollection{kapos2000,
+  author    = {Kapos, V. and Rhind, J. and Edwards, M. and Price, M. F. and Ravilious, C.},
+  title     = {Developing a map of the world's mountain forests},
+  booktitle = {Forests in Sustainable Mountain Development: A State of Knowledge Report for 2000},
+  editor    = {Price, Martin F. and Butt, Nathalie},
+  publisher = {CABI Publishing},
+  year      = {2000},
+  pages     = {4--9}
+}
+
 @misc{ms5611_datasheet,
   author       = {{Measurement Specialties (MEAS Switzerland)}},
   title        = {{MS5611-01BA03} Barometric Pressure Sensor, with stainless steel cap},
