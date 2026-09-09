@@ -1,0 +1,30 @@
+# Three-state continuous-emission HMM for the flight-phase analysis.  Times are
+# physical times rather than sample counts: the source archive has several native
+# logging cadences, whereas one transition matrix must describe one common interval.
+decision_step_s: 10.0
+feature_window_s: 30.0
+max_native_dt_s: 10.0
+min_horizontal_speed_mps: 1.0
+
+states: [transition, search, climb]
+covariance_type: full
+random_seed: 20260909
+n_restarts: 10
+n_iter: 200
+tol: 0.001
+min_covar: 0.001
+
+# Assigned at the flight level, never at the fix level.  A manual test annotation
+# consequently never shares a trajectory with the unsupervised fitting population.
+split:
+  train: 0.70
+  validation: 0.15
+  test: 0.15
+
+# hmmlearn keeps its fitting matrix in memory.  Selection is deterministic and made
+# from whole, contiguous feature sequences, so these caps bound RAM without creating
+# artificial transitions between unrelated flights.
+max_fit_flights: 10000
+max_fit_observations: 5000000
+max_sequence_observations: 720
+bootstrap_replicates: 1000

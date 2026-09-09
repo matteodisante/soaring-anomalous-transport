@@ -5,7 +5,8 @@ thresholds (:mod:`soaring.analysis.census`), the seven-stage pipeline that appli
 (:mod:`soaring.analysis.preproc`), the streaming reader over the written tables
 (:mod:`soaring.analysis.derived`), the transport estimators
 (:mod:`soaring.analysis.observables`) and the clustered bootstrap
-(:mod:`soaring.analysis.stats`). Segmentation into flight phases is the work that follows.
+(:mod:`soaring.analysis.stats`) and the continuous phase-segmentation workflow
+(:mod:`soaring.analysis.segmentation`).
 
 The numeric helpers depend only on the core dependencies (``pandas``/``numpy``);
 figure generation additionally needs ``matplotlib``/``scipy``/``pyarrow``, installed via

@@ -47,6 +47,7 @@ analysis = [
     "matplotlib>=3.7",  # figure di diagnostica (pre-processing); numpy/pandas sono gia' core
     "scipy>=1.11",      # signal.welch per la PSD (analisi del rumore delle quote baro/GNSS)
     "pyarrow>=14.0",    # DataFrame.to_parquet/read_parquet per la cache dello scan tracce
+    "hmmlearn>=0.3.3",  # Gaussian HMM per la segmentazione delle fasi di volo
 ]
 # `viewer` e' opt-in (non in default-groups): PyQt6 e' una dipendenza pesante che serve
 # solo per lanciare il trajectory viewer interattivo, non per generare figure o CI.
