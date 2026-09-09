@@ -9,7 +9,80 @@ analysis consumes (Sec.~\ref{sec:preproc})\flow{, closed by a first characteriza
 the cleaned dataset (Sec.~\ref{sec:prelim}) and a one-map summary of the pipeline
 (Sec.~\ref{sec:pipelinemap})}.
 
-\input{sections/02-data-acquisition}
+\section{Data acquisition}
+\label{sec:acquisition}
+
+\subsection{Source: the FFVL Coupe F\'ed\'erale de Distance}
+
+The data come from the \emph{Coupe F\'ed\'erale de Distance} (CFD), the cross-country
+competition run by the French free-flight federation (FFVL). The federation operates two
+parallel competitions on separate sites: one for paragliders
+(\texttt{parapente.ffvl.fr}) and one for hang gliders (\texttt{delta.ffvl.fr}). Pilots
+upload their flights; each entry carries metadata---among them pilot, date, take-off
+and landing sites, scored distance, duration, and glider, with the full set of fields
+listed in Sec.~\ref{sec:catalog}---and, in most cases, the raw GPS tracklog in IGC format
+(the standard flight-recorder format, Sec.~\ref{sec:igcformat}).
+A ``season'' is identified by its starting year,
+e.g.\ the year~1999 denotes the 1999--2000 season; the paraglider archive starts in
+1999--2000 and the hang-glider archive in 2001--2002.
+
+\subsection{Collected data}
+
+For every season the pipeline retrieves two things:
+\begin{itemize}
+  \item the \textbf{season XML export}, archived verbatim as provenance
+        (\texttt{raw\_xml/<year>.xml}); it is the authoritative list of flights and links;
+  \item the \textbf{IGC tracklog files} referenced by the XML, one file per flight that
+        has a track.
+\end{itemize}
+From these, a derived \textbf{catalog} is built (\texttt{catalog.csv}, one row per flight,
+its columns detailed in Sec.~\ref{sec:catalog}) together with a per-season index
+(\texttt{seasons\_index.csv}). The raw data (tens of gigabytes) live on an external disk
+and are never committed to the repository. The catalog is itself rebuildable from
+the archived XMLs and likewise uncommitted (Sec.~\ref{sec:catalog}).
+
+\subsection{Pipeline and tooling}
+
+Acquisition is performed by a dedicated, installable Python package, exposed through two
+command-line tools, one per discipline, sharing the same subcommands for fetching,
+downloading, cataloguing, and verifying. The design favours robustness for a
+long-running, large job: downloads are resumable and safe to interrupt, a response is
+accepted only once validated as real IGC content, and download requests are rate-limited
+so as not to load the server \impldetails{impl:acqpipeline}.
+
+\subsection{Reproducibility}
+
+The destination directory is not hard-coded: it is set per machine through an environment
+variable or a configuration file, of which the repository ships only a placeholder, so no
+machine-specific path is committed. Archiving the season
+XMLs verbatim keeps the full provenance \impldetails{impl:acqrepro}.
+
+\subsection{Integrity}
+
+Because the data sit on an external drive, integrity is re-checked independently after
+download, rather than trusted at download time \impldetails{impl:acqintegrity}. Both
+FFVL collections have been verified in full: all \num{\StatParaDownloaded} paraglider and
+\num{\StatHangDownloaded} hang-glider downloaded tracklogs pass the same content check
+applied at download --- a readable file whose first record is an \texttt{A} header and which
+carries at least one \texttt{B} fix record (Sec.~\ref{sec:igcformat}). These are the tracklogs actually fetched; they
+cover a subset of the flights that carry a track at all (Sec.~\ref{sec:coverage}).
+
+\subsection{Further data sources}
+The FFVL CFD is the primary source of the present study, but the dataset is not assumed to
+be final. The paraglider data are the main analysis target; the hang-glider data are
+collected in parallel and enable the cross-type comparison of Sec.~\ref{sec:glider}
+(the counts for both are given in Sec.~\ref{sec:coverage}). Additional
+public soaring repositories are
+being pursued to enlarge and diversify the sample and, above all, to add the third glider
+category, \emph{sailplanes} (Sec.~\ref{sec:glider}). A large sailplane source with a
+machine-readable interface is \emph{WeGlide}, which exposes flight metadata and IGC tracks
+through an API. The
+default access is rate-limited (of order sixty requests per day), which rules out a bulk
+export of the archive; a request for research access with a higher quota has been sent
+and is pending. Paraglider and hang-glider coverage may likewise be broadened through
+further portals such as XContest. A comparable research-access request has been sent
+to XContest; as of 20 July 2026 neither WeGlide nor XContest has replied. All of these can
+be acquired with the same approach, each producing a catalog in the same format.
 
 \section{The IGC tracklog format}
 \label{sec:igcformat}
