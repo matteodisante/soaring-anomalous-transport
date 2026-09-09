@@ -34,13 +34,29 @@ staged="$(git diff --cached --name-only)"
 
 # 2) Public thesis PDF: rebuild only when the thesis changed (a data change flows through
 #    the regenerated, staged thesis/generated/stats.tex, so it is covered by ^thesis/).
+#
+#    Built from a clean checkout of the INDEX, not from the working tree. Building
+#    in-place would read whatever else happens to sit unstaged in thesis/ alongside
+#    what is actually being committed -- harmless for an ordinary commit (staged and
+#    working tree agree), but wrong the moment several commits are carved by hand out
+#    of one larger set of changes (e.g. splitting a bulk `regenerate.sh` output): the
+#    FIRST such commit would already get a PDF built from everything, while its own
+#    .tex sources still show only what it committed -- a tree that is not
+#    self-consistent, discovered once after exactly that happened (2026-09).
+#    `git checkout-index` sidesteps it entirely, at the cost of losing this one
+#    rebuild's SOURCE_DATE_EPOCH pin (no `.git` in the checkout, so build_docs.sh's own
+#    fallback to wall-clock time applies) -- a metadata-only trade, not a content one.
 if grep -qE '^thesis/' <<<"$staged"; then
     if command -v latexmk >/dev/null 2>&1; then
-        if bash scripts/build_docs.sh thesis >/dev/null 2>&1; then
+        build_dir="$(mktemp -d)"
+        if git checkout-index --prefix="$build_dir/" -a \
+            && ( cd "$build_dir" && bash scripts/build_docs.sh thesis >/dev/null 2>&1 ) \
+            && cp "$build_dir/thesis/main.pdf" thesis/main.pdf; then
             git add thesis/main.pdf 2>/dev/null || true
         else
             echo "pre-commit: thesis PDF build failed; committing sources without a fresh PDF" >&2
         fi
+        rm -rf "$build_dir"
     else
         echo "pre-commit: latexmk not found; skipping thesis PDF rebuild" >&2
     fi
