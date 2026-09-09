@@ -48,7 +48,20 @@ _TABLES = {
     "cached so a threshold can be re-queried without re-reading the archive",
     "alt_offset_scan.parquet": "the barometric-against-GNSS offset, one row per flight "
     "of a seeded sample, cached so the macros recompute without reparsing the archive",
+    "fixlevel_scan.parquet": "the fix-level diagnostic figure's pooled sample -- "
+    "horizontal speed, vertical speed and altitude, one row per pooled value, cached "
+    "so the figure redraws without reparsing the archive",
+    "psd_sample.npz": "the altitude-noise figure's PSD ensemble (one row per sampled "
+    "flight, shared frequency grid) and its one representative flight, cached so the "
+    "figure redraws without reparsing the archive",
+    "savgol_psd_sample.npz": "the Savitzky-Golay spectrum figure's PSD ensemble "
+    "(horizontal, barometric-vertical, GNSS-vertical), cached so the figure redraws "
+    "without reparsing the archive",
 }
+
+# Tables listed above that are .npz, not Parquet, so their row count has to be read
+# differently (see _describe: the sum of their 2-D arrays' row counts).
+_NPZ_TABLES = {"psd_sample.npz", "savgol_psd_sample.npz"}
 
 
 def _human(size: float) -> str:
@@ -121,11 +134,18 @@ def _describe(discipline: str) -> list[str]:
         path = derived / name
         if not path.is_file():
             continue
-        rows = ""
         try:
-            import pyarrow.parquet as pq
+            if name in _NPZ_TABLES:
+                # Not a flat table: sum the rows of whichever 2-D arrays it holds (the
+                # 1-D freqs/target_dt/representative-flight arrays are not "rows").
+                import numpy as np
 
-            rows = f"{pq.ParquetFile(path).metadata.num_rows:,}"
+                with np.load(path) as data:
+                    rows = f"{sum(a.shape[0] for a in data.values() if a.ndim == 2):,}"
+            else:
+                import pyarrow.parquet as pq
+
+                rows = f"{pq.ParquetFile(path).metadata.num_rows:,}"
         except Exception:  # a table we cannot read is still worth listing
             rows = "?"
         lines.append(f"| `{name}` | {rows} | {_human(path.stat().st_size)} | {what} |")

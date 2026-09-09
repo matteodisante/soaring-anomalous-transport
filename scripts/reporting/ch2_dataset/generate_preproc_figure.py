@@ -28,7 +28,13 @@ repo): a second run reuses it instead of re-parsing; delete the file (or edit
 ``FORCE_RESCAN`` below) to force a fresh scan, e.g. after changing
 ``soaring.analysis.census.track_stats``. The same cache also carries the
 barometric-presence fraction, so the altitude-noise figure's fallback-rate panel can
-read an exact census from it instead of running its own separate scan.
+read an exact census from it instead of running its own separate scan. The fix-level
+sample is cached the same way, at ``<data_root>/derived/fixlevel_scan.parquet``
+(:func:`soaring.analysis.census.load_or_scan_fixlevel`): sampling and parsing tens of
+thousands of files off the external disk, not the plotting, is what makes a cold run of
+this script slow, so a change to ``fixlevel_diagnostics.pdf``'s styling alone -- unlike
+a change to ``FIXLEVEL_SAMPLE_PER_DISCIPLINE`` or ``vz_window_s``, which needs a fresh
+sample -- costs the same fraction of a second the cached scan already does.
 
 The raw data lives on an external disk and may be absent (a fresh checkout, or CI); the
 data roots come from ``SOARING_PARA_DATA_ROOT`` / ``SOARING_DELTA_DATA_ROOT`` or config
@@ -56,13 +62,14 @@ OUT_GAPS = ROOT / "thesis" / "generated" / "gap_diagnostics.pdf"
 OUT_DT = ROOT / "thesis" / "generated" / "sampling_intervals.pdf"
 OUT_FIX = ROOT / "thesis" / "generated" / "fixlevel_diagnostics.pdf"
 N_JOBS = min(8, os.cpu_count() or 1)
-FORCE_RESCAN = False  # set True (or delete <data_root>/derived/track_scan.parquet)
+FORCE_RESCAN = False  # set True to force both caches below to redo their pass -- edit
+# <data_root>/derived/{track_scan,fixlevel_scan}.parquet directly to redo just one.
 # Flights sampled per discipline for the fix-level distributions: a seeded random
 # subsample, the same tool the altitude PSD uses. Deliberately large (tens of millions
 # of fixes): resolving the sparse tail well enough to tell real dynamics from a rare
-# logger/GPS artifact needs it, and it is cheap (well under two minutes total; each
-# discipline is capped at its own population, so this already IS the full census for
-# any discipline smaller than this number, e.g. today's hang gliders).
+# logger/GPS artifact needs it. That many individually-opened files on the external
+# disk is not cheap (tens of minutes, not the "well under two" once assumed here) --
+# which is exactly why the sample is cached rather than merely fast.
 FIXLEVEL_SAMPLE_PER_DISCIPLINE = 15_000
 
 _SRC = str(ROOT / "src")
@@ -110,9 +117,8 @@ def main() -> int:
         DELTA_CONFIG_PATH,
         PARA_CONFIG_PATH,
     )
-    from soaring.analysis.altitude_noise import sample_igc_paths
     from soaring.analysis.census import (
-        fix_level_distributions,
+        load_or_scan_fixlevel,
         load_or_scan_tracks,
     )
     from soaring.analysis.config import load_preproc_config
@@ -170,20 +176,24 @@ def main() -> int:
         OUT_DT, metadata=_PDF_METADATA, bbox_inches="tight"
     )
 
-    # Fix-level per-fix distributions, pooled over a seeded sample per discipline.
+    # Fix-level per-fix distributions, pooled over a seeded sample per discipline and
+    # cached at <data_root>/derived/fixlevel_scan.parquet (delete it, or edit
+    # FORCE_RESCAN below, to force a fresh sample -- see load_or_scan_fixlevel).
     distributions = {}
     for disc, cfg_disc in configs.items():
         t0 = time.perf_counter()
-        paths = sample_igc_paths(cfg_disc.igc_dir, FIXLEVEL_SAMPLE_PER_DISCIPLINE)
-        distributions[disc] = fix_level_distributions(
-            paths, n_jobs=N_JOBS, vz_window_s=cfg.fix.vz_window_s
+        cache_path = cfg_disc.derived_dir / "fixlevel_scan.parquet"
+        distributions[disc] = load_or_scan_fixlevel(
+            cfg_disc.igc_dir,
+            cache_path,
+            n=FIXLEVEL_SAMPLE_PER_DISCIPLINE,
+            vz_window_s=cfg.fix.vz_window_s,
+            n_jobs=N_JOBS,
+            force=FORCE_RESCAN,
         )
         elapsed = time.perf_counter() - t0
         n_fix = int(distributions[disc]["v_xy"].size)
-        print(
-            f"[{disc}] fix-level sample: {len(paths)} flights, {n_fix} fix pairs, "
-            f"{elapsed:.0f} s."
-        )
+        print(f"[{disc}] fix-level sample: {n_fix} fix pairs, {elapsed:.0f} s.")
     make_fixlevel_diagnostics_figure(distributions, cfg.fix).savefig(
         OUT_FIX, metadata=_PDF_METADATA, bbox_inches="tight"
     )

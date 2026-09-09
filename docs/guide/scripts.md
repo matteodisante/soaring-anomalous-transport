@@ -217,11 +217,18 @@ Reads the committed `data/*/seasons_index.csv` snapshots. → `stats.tex`,
 `load_or_scan_tracks`, which scans the raw archive and writes
 `<data_root>/derived/track_scan.parquet` (8.5 MB paragliders, 0.4 MB hang gliders). It is the
 only producer of that cache, and both `generate_census_stats.py` and
-`generate_altitude_noise_figure.py` read it, so it has to run before either of them. Minutes
-when the cache is cold.
+`generate_altitude_noise_figure.py` read it, so it has to run before either of them. It also
+calls `load_or_scan_fixlevel` for `fixlevel_diagnostics.pdf`'s pooled sample, cached
+separately at `<data_root>/derived/fixlevel_scan.parquet` (~870 MB paragliders, ~275 MB hang
+gliders — hundreds of millions of pooled fix-level values, see
+`docs/guide/data-on-disk.md`). Tens of minutes when either cache is cold (mostly the
+fix-level one: it opens and parses far more files than the flight-level scan needs to);
+under a minute warm, both caches present.
 
 ### `scripts/reporting/ch2_dataset/generate_altitude_noise_figure.py`
-→ `altitude_noise.pdf`.
+→ `altitude_noise.pdf`. Panels (a)-(c)'s PSD ensemble is cached at
+`<data_root>/derived/psd_sample.npz` (`load_or_collect_psd`); `--rescan` forces a fresh
+sample. A few minutes cold, seconds warm.
 
 ### `scripts/reporting/ch2_dataset/generate_alt_offset_stats.py`
 → `alt_offset.tex`. The other half of the altitude-channel argument: where the noise figure

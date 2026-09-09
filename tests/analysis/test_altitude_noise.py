@@ -10,8 +10,11 @@ from soaring.analysis.altitude_noise import (
     _Accumulator,
     _uniform_resample,
     baro_presence_from_scan,
+    load_or_collect_psd,
+    load_psd_cache,
     proportion_ci,
     required_sample_size,
+    save_psd_cache,
 )
 
 # norm.ppf(0.975): the two-sided 95% standard-normal quantile, computed
@@ -192,3 +195,102 @@ def test_accumulator_empty_reductions_are_none():
     assert acc.mean_psd("para", "baro") is None
     assert acc.band_psd("para", "baro") is None
     assert acc.pooled_band_psd("baro") is None
+
+
+# --------------------------------------------------------------------------- #
+# PSD cache: save_psd_cache / load_psd_cache / load_or_collect_psd
+# --------------------------------------------------------------------------- #
+def test_save_and_load_psd_cache_round_trips(tmp_path):
+    acc = _Accumulator()
+    f = _fill(acc, "para", "baro", [[1, 2, 3], [4, 5, 6]])
+    _fill(acc, "para", "gnss", [[7, 8, 9], [10, 11, 12]], f=f)
+    acc.target_dt = 1.0
+    t = np.array([0.0, 1.0, 2.0, 3.0])
+    acc.representative = ("para", t, t * 10.0, t * 20.0)
+
+    cache_path = tmp_path / "psd_sample.npz"
+    save_psd_cache(acc, "para", cache_path)
+    assert cache_path.is_file()
+
+    loaded = load_psd_cache("para", cache_path)
+    assert loaded.target_dt == pytest.approx(1.0)
+    _, med_baro = loaded.median_psd("para", "baro")
+    assert np.allclose(med_baro, [2.5, 3.5, 4.5])  # median of [1,2,3] and [4,5,6]
+    assert loaded.n_psd("para", "gnss") == 2
+    disc, rt, rb, rg = loaded.representative
+    assert disc == "para"
+    np.testing.assert_allclose(rt, t)
+    np.testing.assert_allclose(rb, t * 10.0)
+    np.testing.assert_allclose(rg, t * 20.0)
+
+
+def test_save_psd_cache_without_representative_leaves_it_empty(tmp_path):
+    # A discipline that contributed PSDs but not the (single, cross-discipline)
+    # representative flight must not fabricate one on load.
+    acc = _Accumulator()
+    f = _fill(acc, "delta", "baro", [[1, 1]], f=np.array([0.0, 1.0]))
+    _fill(acc, "delta", "gnss", [[2, 2]], f=f)
+    acc.representative = ("para", np.array([0.0, 1.0]), np.array([1.0, 2.0]), np.array([1.0, 2.0]))
+
+    cache_path = tmp_path / "psd_sample.npz"
+    save_psd_cache(acc, "delta", cache_path)
+    loaded = load_psd_cache("delta", cache_path)
+    assert loaded.representative is None
+
+
+def test_load_psd_cache_missing_file_returns_none(tmp_path):
+    assert load_psd_cache("para", tmp_path / "nope.npz") is None
+
+
+def test_load_or_collect_psd_uses_cache_without_touching_samples(tmp_path):
+    # Build two independent per-discipline caches directly (as save_psd_cache would
+    # from a real _collect_psd pass), matching target_dt across both, then confirm
+    # load_or_collect_psd merges them from disk alone -- passing empty path lists as
+    # `samples` proves it never falls back to a fresh (real-IGC) pass when the caches
+    # already cover every requested discipline.
+    para_acc = _Accumulator()
+    f = _fill(para_acc, "para", "baro", [[1, 1]], f=np.array([0.0, 1.0]))
+    _fill(para_acc, "para", "gnss", [[2, 2]], f=f)
+    para_acc.target_dt = 1.0
+    t = np.arange(5.0)
+    para_acc.representative = ("para", t, t, t)
+    para_path = tmp_path / "para_psd.npz"
+    save_psd_cache(para_acc, "para", para_path)
+
+    delta_acc = _Accumulator()
+    f = _fill(delta_acc, "delta", "baro", [[3, 3]], f=np.array([0.0, 1.0]))
+    _fill(delta_acc, "delta", "gnss", [[4, 4]], f=f)
+    delta_acc.target_dt = 1.0
+    t_long = np.arange(10.0)  # longer than para's -> wins the merge
+    delta_acc.representative = ("delta", t_long, t_long, t_long)
+    delta_path = tmp_path / "delta_psd.npz"
+    save_psd_cache(delta_acc, "delta", delta_path)
+
+    merged = load_or_collect_psd(
+        samples={"para": [], "delta": []},
+        cache_paths={"para": para_path, "delta": delta_path},
+    )
+    assert merged.target_dt == pytest.approx(1.0)
+    assert merged.n_psd("para", "baro") == 1
+    assert merged.n_psd("delta", "gnss") == 1
+    assert merged.representative[0] == "delta"  # the longer of the two
+
+
+def test_load_or_collect_psd_falls_back_when_a_cache_is_missing(tmp_path):
+    # Only "para" has a cache; "delta" is requested too, so this must NOT trust the
+    # partial cache and must fall through to _collect_psd -- which, given an empty
+    # path list for both, yields an accumulator with nothing in it rather than
+    # silently reusing the stale/partial para-only cache.
+    para_acc = _Accumulator()
+    f = _fill(para_acc, "para", "baro", [[1, 1]], f=np.array([0.0, 1.0]))
+    para_acc.target_dt = 1.0
+    save_psd_cache(para_acc, "para", tmp_path / "para_psd.npz")
+
+    merged = load_or_collect_psd(
+        samples={"para": [], "delta": []},
+        cache_paths={
+            "para": tmp_path / "para_psd.npz",
+            "delta": tmp_path / "delta_psd.npz",  # does not exist
+        },
+    )
+    assert merged.n_psd("para", "baro") == 0  # cache was NOT trusted

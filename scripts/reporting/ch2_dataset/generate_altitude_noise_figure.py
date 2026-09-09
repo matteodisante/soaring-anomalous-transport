@@ -26,8 +26,13 @@ The three panels have different precision needs, so they use different data volu
   95%-confidence margin of error (``TARGET_MARGIN_OF_ERROR``).
 * Panels (a)/(b), the PSD and the representative flight, use a smaller, fixed-size
   random subsample (``PSD_SAMPLE_PER_DISCIPLINE``): an ensemble-average spectral shape,
-  not a headline statistic, so a moderate sample is the standard and adequate tool. This
-  always needs an actual scan (the cache only carries summary stats, not full spectra).
+  not a headline statistic, so a moderate sample is the standard and adequate tool. The
+  ensemble itself -- not just a summary of it -- is now **cached** too, at each
+  discipline's ``<data_root>/derived/psd_sample.npz``
+  (:func:`soaring.analysis.altitude_noise.load_or_collect_psd`): sampling and parsing
+  it off the external disk is what made a cold run of this script slow, and nothing
+  about panels (a)-(c) changes when only their styling does. ``--rescan`` forces a
+  fresh sample, e.g. after changing ``PSD_SAMPLE_PER_DISCIPLINE``.
 
 Like ``generate_preproc_figure.py``, the raw data lives on an external disk and may be
 absent (a fresh checkout, or CI). The data roots come from the same environment
@@ -39,7 +44,7 @@ dependency group (``matplotlib`` + ``scipy``; on by default in ``uv run``, see
 ``pyproject.toml``); if either is missing it also exits without failing. Run it with,
 e.g.::
 
-    uv run python scripts/reporting/ch2_dataset/generate_altitude_noise_figure.py
+    uv run python scripts/reporting/ch2_dataset/generate_altitude_noise_figure.py [--rescan]
 """
 
 from __future__ import annotations
@@ -100,8 +105,10 @@ def _resolve_config(default_config: str, env: str):
     return cfg if cfg.igc_dir.is_dir() else None
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     """Regenerate the figure when the raw data and the analysis group are available."""
+    argv = sys.argv[1:] if argv is None else argv
+    rescan = "--rescan" in argv
     try:
         import matplotlib
     except ImportError:
@@ -190,11 +197,16 @@ def main() -> int:
         print("No IGC data reachable on the SSD; keeping the committed figure.")
         return 0
 
+    psd_cache_paths = {
+        disc: configs[disc].derived_dir / "psd_sample.npz" for disc in samples
+    }
     acc = collect(
         samples,
         stat_samples=stat_samples or None,
         stat_n_jobs=STAT_N_JOBS,
         precomputed_baro_stats=precomputed_baro_stats,
+        psd_cache_paths=psd_cache_paths,
+        force_psd_rescan=rescan,
     )
     for disc in disciplines:
         p_hat, half_width = proportion_ci(acc.baro_absent[disc], acc.n_flights[disc])
@@ -265,6 +277,6 @@ def _write_hf_floor_macros(acc) -> None:
 
 
 if __name__ == "__main__":
-    bare_cli(__doc__, known=["--allow-partial"])
+    bare_cli(__doc__, known=["--allow-partial", "--rescan"])
 
     raise SystemExit(main())

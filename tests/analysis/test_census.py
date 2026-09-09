@@ -10,6 +10,7 @@ from soaring.analysis.census import (
     fix_level_distributions,
     fraction_retained,
     great_circle_m,
+    load_or_scan_fixlevel,
     load_or_scan_tracks,
     retention_curve,
     track_stats,
@@ -282,3 +283,34 @@ def test_fix_level_distributions_pools_fixture():
     assert d["v_z"].size == 0
     assert d["v_z_local"].size == 0
     assert d["altitude"].size == 0
+
+
+def test_load_or_scan_fixlevel_caches(tmp_path):
+    igc_dir = tmp_path / "igc"
+    igc_dir.mkdir()
+    shutil.copy(FIXTURE, igc_dir / "sample_flight.igc")
+    cache_path = tmp_path / "fixlevel_scan.parquet"
+
+    assert not cache_path.exists()
+    first = load_or_scan_fixlevel(igc_dir, cache_path, n=1)
+    assert cache_path.is_file()
+    # Matches fix_level_distributions([FIXTURE]) directly (same fixture, same sample):
+    # the horizontal speed is populated, the GNSS-gated quantities are empty (see
+    # test_fix_level_distributions_pools_fixture) -- the cache must round-trip the
+    # empty arrays too, not just the populated one.
+    assert first["v_xy"].shape == (3,)
+    assert first["v_z"].size == 0
+    assert first["v_z_local"].size == 0
+    assert first["altitude"].size == 0
+
+    # Second call must read the cache, not resample: delete the source and confirm it
+    # still returns the cached values instead of silently finding zero flights.
+    (igc_dir / "sample_flight.igc").unlink()
+    second = load_or_scan_fixlevel(igc_dir, cache_path, n=1)
+    for key in first:
+        np.testing.assert_allclose(second[key], first[key], rtol=1e-5)
+
+    # force=True must resample even though the cache exists -- with the source gone,
+    # that means an empty sample (sample_igc_paths finds nothing under an empty dir).
+    third = load_or_scan_fixlevel(igc_dir, cache_path, n=1, force=True)
+    assert all(v.size == 0 for v in third.values())

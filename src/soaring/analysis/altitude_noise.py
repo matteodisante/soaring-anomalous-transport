@@ -422,44 +422,24 @@ def hf_floor_excess_fraction(
     return float(np.mean(gnss_floor > factor * reference))
 
 
-def collect(
-    samples: dict[str, list[Path]],
-    *,
-    stat_samples: dict[str, list[Path]] | None = None,
-    stat_n_jobs: int = 1,
-    precomputed_baro_stats: dict[str, tuple[int, int]] | None = None,
-) -> _Accumulator:
-    """Parse the sampled flights and accumulate the noise diagnostics.
+def _collect_psd(samples: dict[str, list[Path]]) -> _Accumulator:
+    """The parse-heavy half of :func:`collect`: the PSD ensemble and representative flight.
+
+    Kept separate from the barometric-presence half (which :func:`collect` computes on
+    its own, and which already has its own reuse path -- the full-census cache from
+    ``soaring.analysis.census``) so that *this* half, the one that always has to open
+    and parse every sampled file, can be cached independently by
+    :func:`load_or_collect_psd`.
 
     Args:
-        samples: Mapping ``discipline -> list of .igc paths``, used for the PSD and the
-            representative-flight panel.
-        stat_samples: Optional, typically much larger (up to full-population) mapping
-            used only for the barometric-presence fraction (see
-            :func:`baro_presence_stats`); defaults to ``samples``.
-        stat_n_jobs: Worker processes for the barometric-presence census.
-        precomputed_baro_stats: Optional mapping ``discipline -> (baro_absent,
-            n_flights)`` to use instead of scanning -- e.g. from
-            :func:`baro_presence_from_scan` on an already-cached full census
-            (:mod:`soaring.analysis.census`). Disciplines not present here still
-            fall back to :func:`baro_presence_stats`.
+        samples: Mapping ``discipline -> list of .igc paths``.
 
     Returns:
-        The populated :class:`_Accumulator`.
+        An :class:`_Accumulator` with ``target_dt``, the PSD stacks and
+        ``representative`` populated; ``baro_absent``/``n_flights`` left empty (that is
+        :func:`collect`'s job).
     """
     acc = _Accumulator()
-    precomputed_baro_stats = precomputed_baro_stats or {}
-    base = stat_samples or samples
-    to_scan = {d: paths for d, paths in base.items() if d not in precomputed_baro_stats}
-    scanned_absent, scanned_n = (
-        baro_presence_stats(to_scan, n_jobs=stat_n_jobs) if to_scan else ({}, {})
-    )
-    for disc in base:
-        if disc in precomputed_baro_stats:
-            acc.baro_absent[disc], acc.n_flights[disc] = precomputed_baro_stats[disc]
-        else:
-            acc.baro_absent[disc] = scanned_absent[disc]
-            acc.n_flights[disc] = scanned_n[disc]
 
     # First pass over all disciplines: find the modal sampling period, so the pooled
     # PSD uses one sampling frequency. A single unreadable file (e.g. a transient
@@ -516,6 +496,186 @@ def collect(
                     fixes["baro_alt"].to_numpy(),
                     fixes["gnss_alt"].to_numpy(),
                 )
+
+    return acc
+
+
+def save_psd_cache(acc: _Accumulator, disc: str, cache_path: Path) -> None:
+    """Cache one discipline's slice of a :func:`_collect_psd` result.
+
+    A single ``.npz`` per discipline, on the same footing as the Chapter 3 position
+    stacks in ``derived-audit/audit_positions_*.npz`` (:mod:`scripts.reporting
+    .ch3_global_transport.audit_msd`): the PSD ensemble is fixed-width (every flight's
+    Welch spectrum shares the same frequency grid), so a 2-D array is the natural
+    format, unlike the ragged fix-level sample (:func:`soaring.analysis.census
+    .load_or_scan_fixlevel`), which cannot use one. Holds ``freqs`` (shared grid),
+    ``baro``/``gnss`` (one row per qualifying flight), ``target_dt``, and -- kept in the
+    same file since a discipline has at most one -- the representative flight's raw
+    ``t``/``baro_alt``/``gnss_alt`` (ragged, empty if this discipline is not the one
+    holding the representative flight of the pair).
+    """
+    if acc._psd_f is None:
+        return  # nothing this discipline contributed (e.g. unreachable archive)
+    n_freq = len(acc._psd_f)
+    baro = acc._psd.get((disc, "baro"), [])
+    gnss = acc._psd.get((disc, "gnss"), [])
+    rep = acc.representative
+    is_rep = rep is not None and rep[0] == disc
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(
+        cache_path,
+        freqs=acc._psd_f,
+        baro=np.vstack(baro) if baro else np.empty((0, n_freq)),
+        gnss=np.vstack(gnss) if gnss else np.empty((0, n_freq)),
+        target_dt=np.float64(acc.target_dt),
+        repr_t=rep[1] if is_rep else np.empty(0),
+        repr_baro_alt=rep[2] if is_rep else np.empty(0),
+        repr_gnss_alt=rep[3] if is_rep else np.empty(0),
+    )
+
+
+def load_psd_cache(disc: str, cache_path: Path) -> _Accumulator | None:
+    """Reconstruct one discipline's :func:`_collect_psd` slice from :func:`save_psd_cache`.
+
+    Returns ``None`` if ``cache_path`` does not exist -- the caller's cue to fall back
+    to a fresh pass, exactly like :func:`soaring.analysis.census.load_or_scan_tracks`.
+    """
+    if not cache_path.is_file():
+        return None
+    data = np.load(cache_path)
+    acc = _Accumulator()
+    acc.target_dt = float(data["target_dt"])
+    freqs = data["freqs"]
+    for channel in ("baro", "gnss"):
+        for row in data[channel]:
+            acc.add_psd(disc, channel, freqs, row)
+    if data["repr_t"].size:
+        acc.representative = (
+            disc,
+            data["repr_t"],
+            data["repr_baro_alt"],
+            data["repr_gnss_alt"],
+        )
+    return acc
+
+
+def load_or_collect_psd(
+    samples: dict[str, list[Path]],
+    cache_paths: dict[str, Path],
+    *,
+    force: bool = False,
+) -> _Accumulator:
+    """Load a cached PSD ensemble, or run :func:`_collect_psd` and cache the result.
+
+    Sampling and parsing ``PSD_SAMPLE_PER_DISCIPLINE`` files per discipline off the
+    external disk is what makes a cold run of ``generate_altitude_noise_figure.py``
+    slow, and nothing about it changes when only panels (a)-(c)'s styling does. One
+    cache file per discipline (:func:`save_psd_cache`); if *any* discipline in
+    ``samples`` is missing its cache, or ``force`` is set, every discipline is
+    recomputed together, not just the missing one. That is not laziness: ``target_dt``,
+    the modal sampling period the whole PSD ensemble is measured at, is chosen jointly
+    across every discipline's sample in one call to :func:`_collect_psd`, so a cache
+    rebuilt for only one discipline could silently disagree with the other's about
+    which frequency grid the pooled spectrum lives on.
+
+    Args:
+        samples: Mapping ``discipline -> list of .igc paths`` (see :func:`_collect_psd`).
+        cache_paths: Mapping ``discipline -> cache file`` (e.g.
+            ``data_root/derived/psd_sample.npz``).
+        force: Recompute even if every discipline's cache already exists.
+
+    Returns:
+        An :class:`_Accumulator` with ``target_dt``, the PSD stacks and
+        ``representative`` populated (``baro_absent``/``n_flights`` still empty, as in
+        :func:`_collect_psd`).
+    """
+    have_all = not force and all(
+        disc in cache_paths and cache_paths[disc].is_file() for disc in samples
+    )
+    if have_all:
+        merged = _Accumulator()
+        target_dts: set[float] = set()
+        for disc in samples:
+            partial = load_psd_cache(disc, cache_paths[disc])
+            if partial is None:
+                continue
+            target_dts.add(round(partial.target_dt, 6))
+            merged._psd.update(partial._psd)
+            if merged._psd_f is None:
+                merged._psd_f = partial._psd_f
+            if partial.representative is not None and (
+                merged.representative is None
+                or len(partial.representative[1]) > len(merged.representative[1])
+            ):
+                merged.representative = partial.representative
+        if len(target_dts) <= 1:
+            merged.target_dt = target_dts.pop() if target_dts else 1.0
+            print(
+                f"Using cached PSD sample for {list(samples)} (delete "
+                "derived/psd_sample.npz per discipline to resample)."
+            )
+            return merged
+        print(
+            f"Cached PSD samples disagree on target_dt ({target_dts}); recomputing."
+        )
+
+    acc = _collect_psd(samples)
+    for disc in samples:
+        if disc in cache_paths:
+            save_psd_cache(acc, disc, cache_paths[disc])
+    return acc
+
+
+def collect(
+    samples: dict[str, list[Path]],
+    *,
+    stat_samples: dict[str, list[Path]] | None = None,
+    stat_n_jobs: int = 1,
+    precomputed_baro_stats: dict[str, tuple[int, int]] | None = None,
+    psd_cache_paths: dict[str, Path] | None = None,
+    force_psd_rescan: bool = False,
+) -> _Accumulator:
+    """Parse the sampled flights and accumulate the noise diagnostics.
+
+    Args:
+        samples: Mapping ``discipline -> list of .igc paths``, used for the PSD and the
+            representative-flight panel.
+        stat_samples: Optional, typically much larger (up to full-population) mapping
+            used only for the barometric-presence fraction (see
+            :func:`baro_presence_stats`); defaults to ``samples``.
+        stat_n_jobs: Worker processes for the barometric-presence census.
+        precomputed_baro_stats: Optional mapping ``discipline -> (baro_absent,
+            n_flights)`` to use instead of scanning -- e.g. from
+            :func:`baro_presence_from_scan` on an already-cached full census
+            (:mod:`soaring.analysis.census`). Disciplines not present here still
+            fall back to :func:`baro_presence_stats`.
+        psd_cache_paths: Optional mapping ``discipline -> cache file`` to read/write
+            the PSD ensemble through (see :func:`load_or_collect_psd`). Omitted
+            (``None``) runs :func:`_collect_psd` uncached, as this function always did
+            before the cache existed.
+        force_psd_rescan: Forces a fresh PSD pass even if ``psd_cache_paths`` are all
+            present; ignored when ``psd_cache_paths`` is ``None``.
+
+    Returns:
+        The populated :class:`_Accumulator`.
+    """
+    if psd_cache_paths is not None:
+        acc = load_or_collect_psd(samples, psd_cache_paths, force=force_psd_rescan)
+    else:
+        acc = _collect_psd(samples)
+
+    precomputed_baro_stats = precomputed_baro_stats or {}
+    base = stat_samples or samples
+    to_scan = {d: paths for d, paths in base.items() if d not in precomputed_baro_stats}
+    scanned_absent, scanned_n = (
+        baro_presence_stats(to_scan, n_jobs=stat_n_jobs) if to_scan else ({}, {})
+    )
+    for disc in base:
+        if disc in precomputed_baro_stats:
+            acc.baro_absent[disc], acc.n_flights[disc] = precomputed_baro_stats[disc]
+        else:
+            acc.baro_absent[disc] = scanned_absent[disc]
+            acc.n_flights[disc] = scanned_n[disc]
 
     return acc
 

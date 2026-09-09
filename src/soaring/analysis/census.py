@@ -387,3 +387,85 @@ def fix_level_distributions(
         key: (np.concatenate([r[i] for r in results]) if results else np.empty(0))
         for i, key in enumerate(_FIXLEVEL_QUANTITIES)
     }
+
+
+def load_or_scan_fixlevel(
+    igc_dir: Path,
+    cache_path: Path,
+    *,
+    n: int,
+    seed: int = 0,
+    vz_window_s: float = DEFAULT_VZ_WINDOW_S,
+    n_jobs: int = 1,
+    force: bool = False,
+) -> dict[str, np.ndarray]:
+    """Load a cached fix-level sample, or run :func:`fix_level_distributions` and cache it.
+
+    Mirrors :func:`load_or_scan_tracks`: sampling and parsing ``n`` files from the raw
+    archive is the expensive part of :func:`make_fixlevel_diagnostics_figure`
+    (thousands of files individually opened and parsed on the external disk), and
+    nothing about it changes when only the figure's styling does. The cache is a single
+    flat Parquet file in **long** form -- one row per pooled value, with a ``quantity``
+    column selecting among ``v_xy``/``v_z``/``v_z_local``/``altitude`` by *position* in
+    :data:`_FIXLEVEL_QUANTITIES` (an ``int8`` code, not the name itself) -- since the
+    four arrays :func:`fix_level_distributions` returns are not the same length (one is
+    per-fix, the others per consecutive-step) and so cannot share columns of one wide
+    table. The code is not cosmetic: at this row count (hundreds of millions -- the
+    sample is deliberately large, see :data:`FIXLEVEL_SAMPLE_PER_DISCIPLINE` in
+    ``generate_preproc_figure.py``) a string column round-trips through
+    ``pandas``/``pyarrow`` as one Python ``str`` object per row, which is both far
+    larger in memory than the data it names and far slower to filter than a plain
+    integer comparison; a run that measured this cost directly saw it dominate the
+    whole warm path (~9 GB and ~80 s to split one discipline's rows by quantity,
+    against ~1 s for the same split on the equivalent ``int8`` column). No invalidation
+    logic beyond presence: delete ``cache_path`` (or pass ``force=True``) to force a
+    fresh sample, e.g. after changing ``n``, ``seed``, ``vz_window_s`` or
+    :func:`_fix_level_arrays` itself.
+
+    Args:
+        igc_dir: The discipline's ``igc/`` root (sampled via :func:`sample_igc_paths`).
+        cache_path: Where to read/write the cached sample (e.g.
+            ``data/paragliders/fixlevel_scan.parquet``).
+        n: Sample size (see :func:`sample_igc_paths`).
+        seed: RNG seed for the sample, must match across runs to reuse the cache.
+        vz_window_s: Half-width of the ``v_z_local`` window (see
+            :func:`fix_level_distributions`).
+        n_jobs: Worker processes for a fresh sample.
+        force: Resample even if ``cache_path`` already exists.
+
+    Returns:
+        ``{quantity: pooled values}``, exactly :func:`fix_level_distributions`'s shape.
+    """
+    from .altitude_noise import sample_igc_paths
+
+    if cache_path.is_file() and not force:
+        print(f"Using cached fix-level sample at {cache_path} (delete to resample).")
+        frame = pd.read_parquet(cache_path)
+        codes = frame["quantity"].to_numpy()
+        values = frame["value"].to_numpy(dtype=np.float64)
+        return {
+            q: values[codes == i] for i, q in enumerate(_FIXLEVEL_QUANTITIES)
+        }
+    paths = sample_igc_paths(igc_dir, n, seed=seed)
+    print(
+        f"No cache at {cache_path}; sampling {len(paths)} tracks, {n_jobs} workers..."
+    )
+    distributions = fix_level_distributions(paths, n_jobs=n_jobs, vz_window_s=vz_window_s)
+    frame = pd.concat(
+        [
+            pd.DataFrame(
+                {
+                    "quantity": np.full(
+                        v.shape, _FIXLEVEL_QUANTITIES.index(q), dtype=np.int8
+                    ),
+                    "value": v.astype(np.float32),
+                }
+            )
+            for q, v in distributions.items()
+        ],
+        ignore_index=True,
+    )
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    frame.to_parquet(cache_path, index=False)
+    print(f"Cached fix-level sample to {cache_path} ({len(frame)} rows).")
+    return distributions

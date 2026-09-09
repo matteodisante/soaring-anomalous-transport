@@ -21,6 +21,12 @@ how many flights of the seeded sample were actually usable (\StatSavgolSpecParaH
 \dots) -- the sample is not the full archive, so the count the thesis quotes has to come
 from this run, not be typed in by hand.
 
+The PSD sample is **cached** at each discipline's
+``<data_root>/derived/savgol_psd_sample.npz`` (:func:`_load_or_collect`): parsing
+``N_SAMPLE`` files off the external disk is what makes a cold run slow, and nothing
+about it changes when only the figure's styling or the marked knee does. ``--rescan``
+forces a fresh sample, e.g. after changing ``N_SAMPLE`` or ``SEED``.
+
 Needs the SSD (real IGC tracks); best-effort like every reporting script -- a
 discipline whose archive is not reachable is skipped, and the run refuses to write a
 partial figure unless ``--allow-partial`` is given. Run with (``uv run`` already
@@ -28,7 +34,7 @@ includes the ``analysis`` dependency group by default)::
 
     SOARING_PARA_DATA_ROOT=/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc \
     SOARING_DELTA_DATA_ROOT=/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc \
-    uv run python scripts/reporting/ch2_dataset/generate_savgol_spectrum_figure.py
+    uv run python scripts/reporting/ch2_dataset/generate_savgol_spectrum_figure.py [--rescan]
 """
 
 from __future__ import annotations
@@ -171,6 +177,48 @@ def _collect(igc_dir):
     return freqs, stacks, counts
 
 
+def _load_or_collect(igc_dir: Path, cache_path: Path, *, rescan: bool = False):
+    """Load a cached PSD sample, or run :func:`_collect` and cache the result.
+
+    Mirrors the caches ``generate_preproc_figure.py`` and
+    ``generate_altitude_noise_figure.py`` keep on the SSD: one ``.npz`` per discipline,
+    fixed-width per channel (every flight's Welch spectrum shares the frequency grid
+    ``_psd_1hz`` always returns) -- ``freqs`` plus one 2-D array per entry of
+    ``_CHANNELS`` (``horizontal`` has two rows per flight, E and N; the two vertical
+    channels have at most one, since a flight contributes to whichever channel its
+    barometric presence selects, never both). No invalidation beyond presence: delete
+    ``cache_path`` (or pass ``rescan=True``) to force a fresh sample, e.g. after
+    changing ``N_SAMPLE`` or ``SEED``.
+    """
+    import numpy as np
+
+    if cache_path.is_file() and not rescan:
+        data = np.load(cache_path)
+        freqs = data["freqs"]
+        stacks = {ch: list(data[ch]) for ch in _CHANNELS}
+        counts = {
+            "horizontal": len(stacks["horizontal"]) // 2,
+            "vertical_baro": len(stacks["vertical_baro"]),
+            "vertical_gnss": len(stacks["vertical_gnss"]),
+        }
+        print(f"Using cached PSD sample at {cache_path} (delete to resample).")
+        return freqs, stacks, counts
+
+    freqs, stacks, counts = _collect(igc_dir)
+    if freqs is not None:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        np.savez_compressed(
+            cache_path,
+            freqs=freqs,
+            **{
+                ch: (np.vstack(stacks[ch]) if stacks[ch] else np.empty((0, len(freqs))))
+                for ch in _CHANNELS
+            },
+        )
+        print(f"Cached PSD sample to {cache_path}.")
+    return freqs, stacks, counts
+
+
 def _make_figure(per_discipline):
     """Draw one panel per discipline from a ``{name: (freqs, channels)}`` mapping."""
     import matplotlib.pyplot as plt
@@ -202,8 +250,10 @@ def _make_figure(per_discipline):
     return fig
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     """Regenerate the figure and macros, best-effort across the two disciplines."""
+    argv = sys.argv[1:] if argv is None else argv
+    rescan = "--rescan" in argv
     try:
         import matplotlib
         import numpy as np
@@ -237,7 +287,8 @@ def main() -> int:
     per_discipline: dict[str, tuple] = {}
     values: dict[str, str] = {}
     for name, (disc, cfg) in reachable.items():
-        freqs, stacks, counts = _collect(cfg.igc_dir)
+        cache_path = cfg.derived_dir / "savgol_psd_sample.npz"
+        freqs, stacks, counts = _load_or_collect(cfg.igc_dir, cache_path, rescan=rescan)
         if freqs is None:
             print(f"[{name}] no usable 1 Hz flights in the sample; skipping.")
             continue
@@ -269,6 +320,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    bare_cli(__doc__, known=["--allow-partial"])
+    bare_cli(__doc__, known=["--allow-partial", "--rescan"])
 
     raise SystemExit(main())

@@ -63,6 +63,9 @@ directory is a place, a source is a label — and the mapping lives in
 └── derived/                 everything the analysis produces
     ├── track_scan.parquet   the census scan cache (pre-cleaning diagnostics)
     ├── alt_offset_scan.parquet  the baro-vs-GNSS offset sample (Sec. 2.6)
+    ├── fixlevel_scan.parquet    the fix-level diagnostic sample (fig:fixlevel)
+    ├── psd_sample.npz           the altitude-noise PSD ensemble (fig:altnoise)
+    ├── savgol_psd_sample.npz    the Savitzky-Golay spectrum sample (fig:savgol-spectrum)
     ├── fixes.parquet        the processed trajectories
     ├── segments.parquet     one row per segment
     └── flights_meta.parquet one row per flight attempted
@@ -358,6 +361,107 @@ profile, once inverted), `frac_equal` the share of the window where the two fiel
 byte-identical (a flight above 0.99 has one sensor written into two columns), and `logger`
 the recorder's `A` record, whose first four characters are the manufacturer code.
 
+## `derived/fixlevel_scan.parquet` — the fix-level diagnostic sample
+
+Every value the three panels of `fig:fixlevel` histogram, pooled over a seeded sample of
+flights (`FIXLEVEL_SAMPLE_PER_DISCIPLINE`, 15,000 -- already the full raw population for
+the smaller hang-glider archive), produced by
+`soaring.analysis.census.load_or_scan_fixlevel`. It exists for the same reason as the
+census cache above: sampling and parsing that many files off the external disk is what
+made a cold run of `generate_preproc_figure.py` slow, not drawing the histograms.
+
+**Long form, not one column per quantity.** `v_xy`, `v_z`, `v_z_local` and `altitude`
+are not the same length -- one is per-fix, the others per consecutive-step, and a flight
+with no usable GNSS channel contributes to `v_xy` but not the other three (thesis,
+sec:altchannel) -- so they cannot share the columns of one wide table. Every pooled value
+from every quantity is instead one row, tagged by a `quantity` column that is an `int8`
+**code**, not the name itself: 0/1/2/3 for `v_xy`/`v_z`/`v_z_local`/`altitude` in that
+order (`soaring.analysis.census._FIXLEVEL_QUANTITIES`). That is not cosmetic -- an
+earlier version of this cache spelled the name out as a string, and at this row count
+(hundreds of millions) `pandas`/`pyarrow` materialize a string column as one Python `str`
+object per row: ~9 GB in memory and ~80 s to split one discipline's rows back out by
+quantity, against ~1 s and a few hundred MB for the equivalent `int8` column.
+
+```
+508,170,274 rows, 871.8 MB on disk (paragliders; 150,920,967 rows, 274.8 MB for hang
+gliders)
+
+derived/fixlevel_scan.parquet   shape = 508,170,274 rows x 2 columns
+
+dtypes:
+  quantity   int8
+  value      float32
+
+per-quantity row counts (paragliders):
+  v_xy         126,724,738
+  v_z          126,494,460
+  v_z_local    126,494,460
+  altitude     128,456,616
+```
+
+To read one quantity back out: `values[codes == i]` for `i` its position in
+`_FIXLEVEL_QUANTITIES` -- exactly what `load_or_scan_fixlevel` does, and what a reader
+reconstructing this by hand should do too, rather than filtering on a re-spelled string.
+
+## `derived/psd_sample.npz` — the altitude-noise PSD ensemble
+
+Panels (a)-(c) of `fig:altnoise`: every sampled flight's Welch PSD, on the two channels
+the noise comparison needs (`baro`, `gnss`), plus the one representative flight the
+figure draws a window of -- produced by
+`soaring.analysis.altitude_noise.load_or_collect_psd`. Unlike the fix-level sample
+above, every flight's spectrum shares one frequency grid (`NPERSEG = 256` -> 129 bins),
+so this is fixed-width and a plain 2-D array per channel is the natural format, the same
+choice Chapter 3 makes for its own per-flight stacks
+(`derived-audit/audit_positions_*.npz`) -- not a Parquet table at all.
+
+```
+psd_sample.npz (paragliders):
+  freqs           shape=(129,)          the shared Welch frequency grid
+  baro            shape=(1638, 129)     one row per qualifying flight
+  gnss            shape=(1638, 129)     the same flights, GNSS channel
+  target_dt       shape=()              the modal sampling period the PSD is measured at
+  repr_t          shape=(36871,)        representative flight: recorded-clock time
+  repr_baro_alt   shape=(36871,)        representative flight: barometric altitude
+  repr_gnss_alt   shape=(36871,)        representative flight: GNSS altitude
+
+psd_sample.npz (hang gliders):
+  baro/gnss shape=(727, 129); repr_* all shape=(0,) -- this pair's one representative
+  flight (the qualifying flight with the most fixes, across BOTH disciplines together)
+  came from the paraglider sample, so the hang-glider file carries none of its own.
+```
+
+A discipline's cache holds `repr_*` only when *it* is the one holding the pair's
+representative flight -- `len(t)` is compared across every qualifying flight of every
+discipline, exactly as `soaring.analysis.altitude_noise._collect_psd` does it, so caching
+per discipline cannot change which flight wins. `load_or_collect_psd` refuses a partial
+cache: if either discipline's file is missing, both are recomputed together, since
+`target_dt` is chosen jointly across the combined sample and a cache rebuilt for only one
+discipline could disagree with the other about which frequency grid the ensemble lives
+on.
+
+## `derived/savgol_psd_sample.npz` — the Savitzky-Golay spectrum sample
+
+The three-channel ensemble PSD `fig:savgol-spectrum` draws (horizontal E/N pooled,
+barometric-vertical, GNSS-vertical), produced by `_load_or_collect` in
+`generate_savgol_spectrum_figure.py`. Same fixed-width reasoning as the cache above, and
+a separate sample and cache from it: this figure pools **whichever** vertical channel a
+flight's barometric presence selects (never both), on a smaller sample
+(`N_SAMPLE = 900`) chosen for a different purpose -- checking the three channels' noise
+knees coincide, not sizing a noisy minority.
+
+```
+savgol_psd_sample.npz (paragliders):
+  freqs            shape=(129,)
+  horizontal       shape=(1270, 129)   two rows (E, N) per flight -> 635 flights
+  vertical_baro    shape=(500, 129)
+  vertical_gnss    shape=(135, 129)
+
+savgol_psd_sample.npz (hang gliders):
+  horizontal       shape=(546, 129)    273 flights
+  vertical_baro    shape=(219, 129)
+  vertical_gnss    shape=(54, 129)
+```
+
 ## `derived/fixes.parquet` — the trajectories
 
 The output of the pipeline, and the largest artefact by three orders of magnitude:
@@ -620,8 +724,11 @@ silently mixed with a newer one.
 | `raw/`, `catalog/`, `logs/` | `soaring-para` / `soaring-delta` (acquisition CLI) | days, network-bound |
 | `derived/track_scan.parquet` | delete it; `generate_preproc_figure.py` rebuilds it | tens of minutes |
 | `derived/alt_offset_scan.parquet` | `generate_alt_offset_stats.py --rescan` | ~2 min for both archives, 8 workers |
+| `derived/fixlevel_scan.parquet` | delete it; `generate_preproc_figure.py` rebuilds it | ~10 min for both archives, 8 workers |
+| `derived/psd_sample.npz` | `generate_altitude_noise_figure.py --rescan` | ~3 min for both archives |
+| `derived/savgol_psd_sample.npz` | `generate_savgol_spectrum_figure.py --rescan` | ~1 min for both archives |
 | `derived/{fixes,segments,flights_meta}.parquet` | `scripts/preprocess.py` | ~110 min for both archives, 8 workers |
-| the thesis figures and macros | `generate_*.py` in `scripts/reporting/` | seconds to ~20 min |
+| the thesis figures and macros | `generate_*.py` in `scripts/reporting/` | a couple seconds to ~10 min, warm; up to ~30 min cold (first run after a cache is deleted) |
 
 `scripts/verify_dataset.py` checks the processed tables against the invariants Chapter 2
 claims for them, and exits non-zero if one fails.

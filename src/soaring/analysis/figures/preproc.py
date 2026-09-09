@@ -429,7 +429,9 @@ def make_fixlevel_diagnostics_figure(
     per-flight summaries: a bound removes only the few offending fixes of an otherwise
     good flight, so what justifies it is that it sits in the physically-implausible tail
     (a GPS error, not signal) and removes a negligible fraction of fixes, annotated on
-    each panel. The y-axis is logarithmic so that tail, where the cuts act, is visible.
+    each panel. The y-axis is logarithmic so that tail, where the cuts act, is visible;
+    panel (b)'s x-axis is logarithmic too, since ``v_z_local`` spans several decades
+    from level flight up to the cut.
     Panel (a) marks one cut *per discipline*, colour-matched to that discipline's
     histogram (horizontal-speed envelopes differ too much between paragliders and hang
     gliders for one shared bound); panels (b)/(c) mark one shared cut/band instead,
@@ -450,7 +452,16 @@ def make_fixlevel_diagnostics_figure(
     fig, axes = plt.subplots(1, 3, figsize=(11.0, 3.7))
 
     def _hist_panel(
-        ax, key, xlabel, title, *, all_cut_values, wide_tail, integer_aligned=False
+        ax,
+        key,
+        xlabel,
+        title,
+        *,
+        all_cut_values,
+        wide_tail,
+        integer_aligned=False,
+        xscale="linear",
+        min_hi=None,
     ):
         # x-range fitted to the data and extended to keep every cut in view. Two
         # regimes: the per-discipline speed panels default to a WIDE tail (see
@@ -482,7 +493,19 @@ def make_fixlevel_diagnostics_figure(
             )
         span = (hi - lo) or 1.0
         lo, hi = lo - 0.02 * span, hi + 0.02 * span
-        if integer_aligned:
+        if min_hi is not None:
+            hi = max(hi, min_hi)
+        if xscale == "log":
+            # A log axis cannot show a value <= 0, and the 0.1th-percentile floor
+            # above can land at or below zero for a quantity with a spike at exactly
+            # zero (a windowed median that falls in an all-zero window). Clip to the
+            # smallest positive sample instead, and space the bins geometrically so
+            # they read as equal-width on the log axis (linear bins would bunch up
+            # against the left edge).
+            positive = pooled[pooled > 0]
+            lo = max(lo, float(np.min(positive)) if positive.size else 1e-3)
+            bins = np.geomspace(lo, hi, 60)
+        elif integer_aligned:
             # The underlying quantity is itself quantised to whole units (barometric
             # vertical speed, from an integer-metre altitude log): a fine, arbitrarily
             # placed grid of bins picks up an inconsistent share of each integer's
@@ -505,7 +528,12 @@ def make_fixlevel_diagnostics_figure(
                     label=disc,
                 )
         ax.set(
-            xlabel=xlabel, ylabel="density", title=title, yscale="log", xlim=(lo, hi)
+            xlabel=xlabel,
+            ylabel="density",
+            title=title,
+            yscale="log",
+            xscale=xscale,
+            xlim=(lo, hi),
         )
         return pooled
 
@@ -539,7 +567,16 @@ def make_fixlevel_diagnostics_figure(
             )
 
     def _shared_cut_panel(
-        ax, key, cuts, xlabel, title, *, wide_tail, integer_aligned=False
+        ax,
+        key,
+        cuts,
+        xlabel,
+        title,
+        *,
+        wide_tail,
+        integer_aligned=False,
+        xscale="linear",
+        min_hi=None,
     ):
         """One shared cut/band, the same for every discipline.
 
@@ -553,6 +590,8 @@ def make_fixlevel_diagnostics_figure(
             all_cut_values=cuts,
             wide_tail=wide_tail,
             integer_aligned=integer_aligned,
+            xscale=xscale,
+            min_hi=min_hi,
         )
         for c in cuts:
             ax.axvline(c, **shared_line_kw)
@@ -591,6 +630,7 @@ def make_fixlevel_diagnostics_figure(
         # Not integer-aligned: unlike the raw per-step value, a rolling median is not
         # itself a metre-quantized quantity, even though every sample feeding it is.
         integer_aligned=False,
+        xscale="log",
     )
     _shared_cut_panel(
         axes[2],
@@ -599,6 +639,12 @@ def make_fixlevel_diagnostics_figure(
         "GNSS altitude [m]",
         "(c) Altitude",
         wide_tail=False,
+        # The data and the cut alone would stop well short of this: forced out to
+        # 10 km regardless, so the panel reads against the whole plausible envelope
+        # (close to the highest altitude a paraglider or hang glider could ever
+        # reach), not just the narrow band the adopted bound and the sample happen
+        # to populate.
+        min_hi=10_000.0,
     )
     fig.tight_layout()
     return fig
