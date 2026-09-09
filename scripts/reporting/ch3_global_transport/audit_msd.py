@@ -13,8 +13,12 @@ So this reads the table once and writes what every question needs:
 ``audit_positions_<discipline>.npz``
     ``E`` and ``N``: one row per flight, one column per lag of the shared grid, in
     metres, ``NaN`` where the flight does not cover that lag under the estimator's own
-    coverage rule. ``r0_e``/``r0_n``: each flight's position at its first retained fix,
-    which the current estimator assumes is the origin and which is not exactly zero.
+    coverage rule. ``VE``/``VN`` and ``AE``/``AN``: the same flight, same lags, same
+    coverage mask, but the smoothed velocity (m/s) and acceleration (m/s^2) stage (vii)
+    (sec:savgol) wrote into the fix table, sampled at the nearest covered fix exactly as
+    ``E``/``N`` are -- so a lag ``NaN`` in position is ``NaN`` in kinematics too.
+    ``r0_e``/``r0_n``: each flight's position at its first retained fix, which the
+    current estimator assumes is the origin and which is not exactly zero.
 ``audit_flights_<discipline>.parquet``
     One row per flight: duration, path length, fix and segment counts, native step, the
     mean-velocity components, the largest step speed, and the coordinate extent.
@@ -49,8 +53,8 @@ LAG_MIN_S, LAG_MAX_S, N_LAGS = 1.0, 43_200.0, 90
 MIN_TOLERANCE_S = 0.5
 
 
-def _sample_flight(times, east, north, lags):
-    """The flight's ``E`` and ``N`` at each lag, ``NaN`` where it does not cover it.
+def _sample_pair(times, a, b, lags):
+    """Nearest-fix sampling of two channels at ``lags``, under a shared coverage mask.
 
     The coverage rule is :class:`~soaring.analysis.transport.MSDAccumulator`'s, copied
     rather than imported so that a change to the estimator shows up here as a
@@ -67,9 +71,14 @@ def _sample_flight(times, east, north, lags):
     nearest = np.where(take_left, left, right)
     covered = (np.abs(times[nearest] - lags) <= tolerance) & (lags >= native_dt)
 
-    e = np.where(covered, east[nearest], np.nan)
-    n = np.where(covered, north[nearest], np.nan)
-    return e.astype(np.float32), n.astype(np.float32), native_dt
+    sampled_a = np.where(covered, a[nearest], np.nan).astype(np.float32)
+    sampled_b = np.where(covered, b[nearest], np.nan).astype(np.float32)
+    return sampled_a, sampled_b, native_dt
+
+
+def _sample_flight(times, east, north, lags):
+    """The flight's ``E`` and ``N`` at each lag, ``NaN`` where it does not cover it."""
+    return _sample_pair(times, east, north, lags)
 
 
 def run(discipline: str, out_dir: Path) -> int:
@@ -87,10 +96,15 @@ def run(discipline: str, out_dir: Path) -> int:
     rows: list[dict] = []
     e_rows: list[np.ndarray] = []
     n_rows: list[np.ndarray] = []
+    ve_rows: list[np.ndarray] = []
+    vn_rows: list[np.ndarray] = []
+    ae_rows: list[np.ndarray] = []
+    an_rows: list[np.ndarray] = []
     r0: list[tuple[float, float]] = []
 
+    columns = ["segment_id", "t", "E", "N", "v_E", "v_N", "a_E", "a_N"]
     for count, flight in enumerate(
-        stream_flights(derived / "fixes.parquet", ["segment_id", "t", "E", "N"]), 1
+        stream_flights(derived / "fixes.parquet", columns), 1
     ):
         ordered = flight.sort_values(["t"], kind="stable")
         times = ordered["t"].to_numpy(dtype=float)
@@ -100,8 +114,18 @@ def run(discipline: str, out_dir: Path) -> int:
             continue
 
         e, n, native_dt = _sample_flight(times, east, north, lags)
+        ve, vn, _ = _sample_pair(
+            times, ordered["v_E"].to_numpy(dtype=float), ordered["v_N"].to_numpy(dtype=float), lags
+        )
+        ae, an, _ = _sample_pair(
+            times, ordered["a_E"].to_numpy(dtype=float), ordered["a_N"].to_numpy(dtype=float), lags
+        )
         e_rows.append(e)
         n_rows.append(n)
+        ve_rows.append(ve)
+        vn_rows.append(vn)
+        ae_rows.append(ae)
+        an_rows.append(an)
         r0.append((float(east[0]), float(north[0])))
 
         # Path length and the largest step speed are computed *within* a segment: the
@@ -150,6 +174,10 @@ def run(discipline: str, out_dir: Path) -> int:
         lags=lags,
         E=np.vstack(e_rows),
         N=np.vstack(n_rows),
+        VE=np.vstack(ve_rows),
+        VN=np.vstack(vn_rows),
+        AE=np.vstack(ae_rows),
+        AN=np.vstack(an_rows),
         r0=np.asarray(r0, dtype=np.float32),
     )
     pd.DataFrame(rows).to_parquet(out_dir / f"audit_flights_{slug}.parquet")

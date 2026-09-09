@@ -198,12 +198,21 @@ def load(discipline: str, audit_dir: Path):
 
     frame["group"] = orographic_group(frame.lat0, frame.lon0)
     assert len(frame) == data["E"].shape[0], "audit rows and flight rows disagree"
-    return {
+    out = {
         "lags": data["lags"],
         "east": data["E"],
         "north": data["N"],
         "flights": frame,
     }
+    # Velocity and acceleration components, same lags and coverage mask as position --
+    # added by the audit_msd.py kinematics pass. Absent from an older npz, in which case
+    # the isotropy-in-kinematics figures skip this discipline rather than fail outright.
+    if "VE" in data.files:
+        out["veast"] = data["VE"]
+        out["vnorth"] = data["VN"]
+        out["aeast"] = data["AE"]
+        out["anorth"] = data["AN"]
+    return out
 
 
 def stratified_msd(east, north, lags, mask):
