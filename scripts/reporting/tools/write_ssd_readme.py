@@ -207,6 +207,20 @@ def main(argv=None) -> int:
         lines += _describe(discipline)
 
     lines += [
+        "## `derived-audit/`, alongside the two roots above",
+        "",
+        "Not written by this pipeline, but worth naming: it holds the intermediate "
+        "`.npz`/`.parquet` arrays the Chapter 3 estimator scripts cache between the "
+        "expensive pass over `fixes.parquet` and the reduction that turns it into a "
+        "figure or macro (`AUDIT_DIR` in `docs/guide/scripts.md` and "
+        "`docs/guide/global-transport.md`). It is not itself an input to anything: "
+        "every file in it is reproducible from `derived/fixes.parquet` and the "
+        "repository's code, on the same rebuildable footing as `derived/` above, and a "
+        "researcher who only wants the dataset does not need it.",
+        "",
+    ]
+
+    lines += [
         "## Reading `fixes.parquet`",
         "",
         "It is tens of gigabytes and must be streamed. Do **not** iterate Parquet row "

@@ -64,7 +64,7 @@ coordinates (great-circle speeds); (v) converts to the metric ENU frame; (vi)–
 |---|---|---|---|---|---|
 | 0 | Ingest catalogs, add `source`, coarse pre-filter (no track ⇒ skip) | catalog | candidate flight list | `acquisition.ffvl.catalog` | `sec:catalog` |
 | 1 | Parse IGC `B`/`H` records | `.igc` | fixes `[t,lat,lon,valid,baro_alt,gnss_alt]` | `analysis.igc.parse_igc` | `sec:igcformat` |
-| i | Choose altitude channel per flight | fixes | `alt_source ∈ {baro,gnss}` + chosen `alt` | `analysis.preproc.altchannel.adopt_alt_channel` | `sec:altchannel` |
+| i | Gate the GNSS altitude channel; rate the barometer as witness | fixes | `alt` (GNSS) + `AltChannel` verdict (`gnss_present_frac`, `gnss_range_m`, `baro_witness`, `baro_present_frac`, `baro_range_m`) | `analysis.preproc.altchannel.adopt_alt_channel` | `sec:altchannel` |
 | ii | Fix-level cleaning: absolute bounds + robust local test + structural rules | raw geo | cleaned fixes | `analysis.preproc.cleaning.clean_flight` | `sec:fixlevel` |
 | iii | Trim outer ground phases (`v_xy` sustained) + interior-ground guard | raw geo | airborne segment | `analysis.preproc.trimming.trim_flight` | `sec:trimming` |
 | iv | Flight-level filtering (duration + path + altitude activity) | trimmed track | keep/drop + reason | `analysis.preproc.flightfilter.filter_flight` | `sec:flightfilter` |
@@ -75,66 +75,91 @@ coordinates (great-circle speeds); (v) converts to the metric ENU frame; (vi)–
 
 Mechanics worth knowing before reading the stage modules:
 
-- **Altitude channel (i).** The parser returns *both* channels; the pipeline picks one per
-  flight (`alt_source`), never splices. Barometric where present **and alive**
-  (`alt_channel.baro_min_range_m`: a stuck sensor writing a constant value falls back);
-  whole-channel-absent flights fall back to unfiltered GNSS. The `A`/`V` flag is subsumed by the
-  missing-altitude check on the chosen channel. Individually missing barometric values on
-  baro-adopted flights are quantified by the `StatScan*BaroMiss*` census macros
-  (`generate_census_stats.py`, July 2026): share of flights affected plus median/max
-  missing-fix counts. (Thesis `sec:altchannel`.)
+- **Altitude channel (i).** The parser returns *both* channels; the analysis reads the
+  GNSS one, for every flight, end to end — there is no more per-flight choice between
+  the two. A flight is admitted when its GNSS channel is both **present**
+  (`alt_channel.gnss_present_min`, share of fixes with a non-zero value: presence is
+  essentially all-or-nothing, so the threshold sits high) and **alive**
+  (`alt_channel.gnss_min_range_m`: a stuck sensor writes a constant value and would feed
+  the segmentation a vertical velocity of identically zero); failing either drops the
+  flight (`DROP_NO_ALTITUDE = "no_usable_altitude_channel"`), since there is no second
+  channel left to fall back to. The barometer is not discarded, but it is demoted to an
+  *instrument*: a flight whose raw baro channel clears the same present-and-alive pair
+  (`alt_channel.baro_witness_present_min`, `alt_channel.baro_witness_min_range_m`) keeps
+  it as the witness of the frozen-lock rule below (`baro_witness = True`) and nowhere
+  else — it enters no observable. (Thesis `sec:altchannel`.)
 - **ENU (v).** Origin at the **first fix of the trimmed track** (the start of free
   flight — close to, but not, the take-off point on the ground); `E,N` zeroed there. The
   working **vertical is not the rotation's `U`**: the pipeline keeps the adopted altitude
   channel at its measured value, `z(t) = alt(t)`, never re-zeroed (increments are
   offset-invariant; the absolute height stays available). (Thesis `sec:enu`, Notation —
   July 2026 review pass.)
-- **Fix-level cleaning (ii).** Three detectors, by how much context each needs (thesis
-  `tab:cleaning`). *Absolute bounds* on per-fix `v_xy`, `|v_z|`, barometric altitude
-  (`FixLevelThresholds` ←
-  YAML): the context-free floor, each placed in the implausible tail of its **per-fix**
-  distribution (audited by `make_fixlevel_diagnostics_figure` on a seeded sample,
-  `fix_level_distributions`; what matters is the fraction of *fixes* removed, not of flights
-  touched). *Robust local-outlier test* (Hampel identifier: median/MAD over a ±`w`-second
-  window; flag when residual > max(`k`·σ, `ε_min`), thesis `eq:hampel`): detection and
-  **attribution** only — a flag alone never deletes. A horizontal fix is deleted only when
-  flagged **and** its implied in-and-out speed breaks the absolute `v_xy` bound
-  (impossibility gate); a flagged-but-possible fix is kept, its flag recorded per flight; a
-  flagged step that no bounded removal rejoins (position discontinuity, e.g. re-acquisition
-  offset) ⇒ **split** at the step, like a long gap.
-  Runs per channel, so a vertical spike drops the altitude only (invalidated on the flag
-  alone: a dropped altitude is a deferral, restored at (vi), not a deletion). *Structural
-  rules*: duplicate timestamp → merge to that second's centroid; non-wrap backward time →
-  delete by minimal removal (complement of the longest increasing subsequence, so a
-  forward-jumped clock removes itself, not every fix after it; the parser stops clamping
-  backward jitter — `parse_igc` keeps only the midnight-rollover unwrap — so the cleaning
-  pass sees the defect); frozen-lock run, cut
-  only per thesis `eq:frozenlock`: bounding diameter < `ε` **and** witness **and** span ≥
-  `τ_freeze`, the witness ranked per altitude source — barometric flight: baro flat **or**
-  byte-identical repeats (`V`/zero GNSS alt never overrule a climbing barometer; recorded as
-  diagnostics); GNSS-fallback flight: `V` flag / zero GNSS alt **or** byte-identical →
-  mark as gap, split at step (vi). **Removal
-  semantics:** position/time defect → delete node (gap bridged at vi); altitude defect →
-  invalidate the altitude channel only (horizontal position kept). A **flight-level integrity
-  gate** drops any flight that cleaning had to rebuild past a small fraction `f`. The keys
-  (`w, k, ε_min, ε, δ_z, τ_freeze, f`) live under `fix_level` in the YAML as working
-  values, fixed a priori and still awaiting the a-posteriori sweep. No inter-fix
-  time-gap bound here — gaps handled once at (vi). (Thesis `sec:fixlevel`.)
+- **Fix-level cleaning (ii).** By how much context each detector needs (thesis
+  `tab:cleaning`). *Absolute bound* on per-fix `v_xy` and on altitude (`min_altitude_m`,
+  `max_altitude_m`, on the adopted **GNSS** channel; `FixLevelThresholds` ← YAML): the
+  context-free floor, each placed in the implausible tail of its **per-fix** distribution
+  (audited by `make_fixlevel_diagnostics_figure` on a seeded sample,
+  `fix_level_distributions`; what matters is the fraction of *fixes* removed, not of
+  flights touched). *Robust local-outlier test* (Hampel identifier: median/MAD over a
+  ±`w`-second window; flag when residual > max(`k`·σ, `ε_min`), thesis `eq:hampel`):
+  detection and **attribution** only — a flag alone never deletes. A horizontal fix is
+  deleted only when flagged **and** its implied in-and-out speed breaks the absolute
+  `v_xy` bound (impossibility gate); a flagged-but-possible fix is kept, its flag
+  recorded per flight; a flagged step that no bounded removal rejoins (position
+  discontinuity, e.g. re-acquisition offset) ⇒ **split** at the step, like a long gap.
+  *Structural rules*: duplicate timestamp → merge to that second's centroid; non-wrap
+  backward time → delete by minimal removal (complement of the longest increasing
+  subsequence, so a forward-jumped clock removes itself, not every fix after it; the
+  parser stops clamping backward jitter — `parse_igc` keeps only the midnight-rollover
+  unwrap — so the cleaning pass sees the defect); frozen-lock run, cut only per thesis
+  `eq:frozenlock`: bounding diameter < `ε` **and** witness **and** span ≥ `τ_freeze`. The
+  witness is the raw barometer where `baro_witness` holds (`alt_channel.baro_witness_*`,
+  stage (i)): flat within `δ_z` between the medians of the run's two ends, or
+  byte-identical position throughout (a jittering-freeze case the flat test alone could
+  miss). Without a usable barometer the only witness left is the recorder's own
+  declarations — the run counts as witnessed when more than half its fixes carry the `V`
+  flag or a missing GNSS altitude. Either way a witnessed run is marked as a gap and
+  split at step (vi).
+
+  The vertical speed rule is **not** a third absolute per-fix bound any more — a
+  single-step form trips on GNSS noise itself (below). It runs as two separate
+  detectors on the local vertical speed (`cleaning.local_vz`, `max_vertical_speed_mps`
+  in the YAML): a *sustained excess* — the rolling median of `|v_z|` over the steps
+  within `vz_window_s` of each step's own midpoint is past the bound on both the step
+  into a fix and the step out of it, so a defect is condemned from both sides and a
+  single gust (one step past the bound, the neighbourhood's median unmoved) censors
+  nothing; the interior of a longer excess is censored throughout, its two end fixes
+  left standing as the boundary — and an *isolated vertical spike* — an altitude the
+  record jumps away from and back to within one step each way, both steps past the
+  (per-step) bound, which the windowed rule cannot see by construction (two
+  opposite-signed steps out of a window rarely move its median). Both mark the altitude
+  missing only, never delete the fix. Where a window holds fewer than
+  `vz_min_window_fixes` steps the median is not estimable and the per-step value stands
+  in — safe because that is the sparse-cadence case, where a gust plus noise cannot
+  reach the bound in one step the way it can at 1 Hz.
+
+  **Removal semantics:** position/time defect → delete node (gap bridged at vi);
+  altitude defect → invalidate the altitude channel only (horizontal position kept). A
+  **flight-level integrity gate** drops any flight that cleaning had to rebuild past a
+  small fraction `f`. The keys (`w, k, ε_min, ε, δ_z, τ_freeze, f`, plus `vz_window_s`
+  and `vz_min_window_fixes`) live under `fix_level` in the YAML as working values, fixed
+  a priori and still awaiting the a-posteriori sweep. No inter-fix time-gap bound here —
+  gaps handled once at (vi). (Thesis `sec:fixlevel`.)
 - **Flight-level cuts (iv).** Duration window 40 min ≤ T ≤ 16 h (the upper bound removes
   loggers left running: 15 census "flights" of 16–166 h); **path length** ≥ 20 km (set in
   the July 2026 review pass; on the census, above 40 min it catches 236 of 184,583
   paraglider and 7 of 6,638 hang-glider flights — `StatScan*{LongEnough,Overlong,ShortPath}*`
   macros from `generate_census_stats.py`,
   thesis `sec:flightfilter`; an earlier 30 km draft removed 5,229 genuine localized
-  flights); **altitude activity** ≥ 600 m on the adopted channel (raised from 75 m on
-  2026-08-02: 75 m only excluded a dead sensor, 600 m asks for the altitude budget a
-  ≥40 min cross-country actually spends. Cheap either way — retained share of barometric
-  flights 69.8 % → 68.1 % para, 83.0 % → 81.1 % hang, so both sit on the same plateau.
-  The cut is auditable on both channels: `flights_meta.alt_range_m` is the range of the
-  *adopted* channel, stored beside `alt_source`, non-null for 184,188 paraglider and 6,568
-  hang-glider flights — the ones that reach stage (iv) — of which 129,555 and 5,542 are
-  barometric. Its bite is on disk as `altitude_range_below_minimum`: 4,960 paraglider
-  flights, 2.67 %, and 153 hang-glider ones, 2.28 %). Path length = sum of great-circle steps (not extent/displacement).
+  flights); **altitude activity** ≥ 600 m on the adopted (GNSS) channel — raised from 75 m
+  on 2026-08-02, back when the channel was still the per-flight baro/GNSS choice: 75 m
+  only excluded a dead sensor, 600 m asks for the altitude budget a ≥40 min cross-country
+  actually spends, and the census at the time showed the two nearly equivalent in
+  practice (retained share 69.8 % → 68.1 % para, 83.0 % → 81.1 % hang), i.e. the cut sits
+  on a plateau. `flights_meta.alt_range_m` is the range of the adopted channel, non-null
+  for the flights that reach stage (iv) (185,158 paraglider, 6,580 hang-glider). Its bite
+  is on disk as `altitude_range_below_minimum`: 4,900 paraglider flights (2.63 % of all
+  attempted) and 155 hang-glider ones (2.31 %). Path length = sum of great-circle steps (not extent/displacement).
   A minimum-fix-count cut is dropped as redundant with the duration cut.
 - **Uniform Δt (vi).** Native `Δt` per flight (no common cadence). Uniform ⇒ use as is;
   mildly irregular ⇒ resample onto the native grid across small gaps (each filled point
@@ -168,10 +193,14 @@ Mechanics worth knowing before reading the stage modules:
 - **Savitzky–Golay (vii).** Two hyperparameters: `window_length` (odd) and `polyorder`.
   Set by the noise-matched procedure of thesis `sec:savgol` (PSD knee `f_c` → smoothing scale
   `τ_c` → `window = max(odd(τ_c/Δt), 5)` per flight; runs **per segment**, never across a
-  boundary, with `mode='interp'`; `polyorder` fixed at 3; horizontal and
-  vertical treated separately, the vertical conditioned on `alt_source` via the two config
-  keys `tau_c_vertical_baro_s`/`tau_c_vertical_gnss_s`). `deriv=0,1,2` and `delta=Δt` are
-  not tuning knobs.
+  boundary, with `mode='interp'`; `polyorder` fixed at 3; horizontal and vertical treated
+  separately, each with its own `tau_c_{horizontal,vertical}_s` config key. There used to
+  be two vertical keys, conditioned on `alt_source`, on the a-priori expectation that the
+  noisier channel would need the longer window; measurement disconfirmed it — the
+  barometric and GNSS knees nearly coincide, both flattened by the IGC format's own
+  quantization rather than by receiver noise — and with a single adopted channel
+  (`sec:altchannel`) the distinction has no subject left either way, so it collapsed to
+  one `tau_c_vertical_s`. `deriv=0,1,2` and `delta=Δt` are not tuning knobs.
   Two consequences of the window, made explicit when the stage was built: the first and
   last `w // 2` samples of every segment are evaluated off-centre and are flagged `edge`
   (the per-sample flag `sec:savgol` asks for, so an edge-sensitive observable can be
@@ -179,7 +208,7 @@ Mechanics worth knowing before reading the stage modules:
   be smoothed at all, so it is dropped with reason `shorter_than_smoothing_window`. The
   90 s segment gate of (vi) guarantees the window fits **up to Δt = 22.5 s** — beyond
   that, in the thin slow-logger tail, this drop is what covers the difference. Measured on
-  the archive: 89 of 281,777 paraglider segments (0.032 %) and none of the 13,222
+  the archive: 89 of 282,086 paraglider segments (0.032 %) and none of the 12,892
   hang-glider ones; exactly one paraglider flight was lost entirely to it.
 
 ## Reporting-stage scan cache (not the production `fixes`/`flights_meta` tables)
@@ -192,7 +221,7 @@ Parquet on the SSD, `<data_root>/derived/track_scan.parquet` (`Config.derived_di
 never in the repo; `load_or_scan_tracks` reads it if present, else scans and writes it —
 no invalidation beyond presence, delete the file to force a refresh). This is a
 lightweight *preview* of `flights_meta`, not a substitute for it: same spirit (per-flight
-summary, Parquet), far fewer columns, no `alt_source`/provenance/versioning.
+summary, Parquet), far fewer columns, no `baro_witness`/provenance/versioning.
 
 The census macros the thesis quotes come from this cache via
 `scripts/reporting/ch2_dataset/generate_census_stats.py`, which emits three families into
@@ -206,18 +235,19 @@ the operating point exclusively through `\Preproc*`, so a threshold change re-ru
 script and propagates everywhere without a rescan.
 
 `track_stats` also computes a few per-flight QC fields, free byproducts of the same scan:
-`baro_present_frac`, `max_vxy_mps`, `max_vz_mps`, `baro_alt_min_m`, `baro_alt_max_m`.
-A flight counts as **barometric** when `baro_present_frac` ≥ `baro_present_min` = **0.95** (raised from 0.5 on 2026-08-02). It is written twice: as
-`alt_channel.baro_present_min` in `configs/preprocessing.yaml`, which the pipeline reads
-(`preproc/altchannel.py:121`), and as `BARO_PRESENT_MIN` in `soaring.analysis.altitude_noise`,
-which the census and the PSD read. They cannot drift because
-`test_the_presence_threshold_lives_in_the_config_and_nowhere_else` asserts they are equal. The change reclassified 241 paraglider flights and no hang-glider ones
-(0.13 % of the archive) — the direct measurement of how bimodal presence is.
-`baro_present_frac` is consumed by the altitude-noise figure's fallback-rate panel (thesis
-`sec:altchannel`), which prefers this cache (`altitude_noise.baro_presence_from_scan`) over its own
-separate scan when it exists, turning a sampled estimate into an exact census at no extra
-parsing cost. The speed/altitude fields are per-flight *maxima*, so they only say which
-*flights* a fix-level bound would touch; the fix-level figure (step ii) instead uses genuine
+`baro_present_frac`, `gnss_present_frac`, `max_vxy_mps`, `max_vz_mps`, `max_vz_gnss_mps`,
+`baro_alt_{min,max}_m`, `gnss_alt_{min,max}_m`. A channel counts as present on a flight
+at the same threshold the pipeline gates on, **0.95** — `alt_channel.gnss_present_min`
+gates the adopted channel and `alt_channel.baro_witness_present_min` the witness, both
+0.95 today, and `BARO_PRESENT_MIN` in `soaring.analysis.altitude_noise` (which the
+census and the PSD read from the cache rather than the config) is pinned to the same
+value by `test_the_presence_threshold_lives_in_the_config_and_nowhere_else`, so the two
+cannot drift apart. `baro_present_frac`/`gnss_present_frac` feed the altitude-noise
+figure's fallback-rate panel (thesis `sec:altchannel`), which prefers this cache
+(`altitude_noise.baro_presence_from_scan`) over its own separate scan when it exists,
+turning a sampled estimate into an exact census at no extra parsing cost. The
+speed/altitude fields are per-flight *maxima*, so they only say which *flights* a
+fix-level bound would touch; the fix-level figure (step ii) instead uses genuine
 **per-fix** distributions (`fix_level_distributions`, a seeded sample), because what
 justifies a fix-level cut is the fraction of *fixes* it removes, not of flights it touches.
 
@@ -271,18 +301,21 @@ Two implementation choices, made when stage (vi) was built:
 
 ### `flights_meta` (one row per flight)
 
-Single Parquet, 47 columns, one row per flight **attempted** — the dropped ones are kept,
+Single Parquet, 50 columns, one row per flight **attempted** — the dropped ones are kept,
 because the census of what was removed is as much a result as what was kept. Checked against
 `pipeline.FlightRecord`:
 
 - **identity** — `source`, `flight_id`, `pipeline_version`;
 - **fate** — `drop_stage`, `drop_reason`, `error_detail`. Null on a retained flight; the
   removal cascade of the thesis is read off them;
-- **altitude channel** — `alt_source`, `baro_present_frac`, `baro_range_m`,
-  `n_alt_missing_raw`;
+- **altitude channel** — `gnss_present_frac`, `gnss_range_m` (the adopted channel, gated:
+  a flight failing either is dropped, there being no second channel to fall back to),
+  `baro_witness`, `baro_present_frac`, `baro_range_m` (the barometer, kept as the
+  frozen-lock witness and nothing else), `n_alt_missing_raw`;
 - **cleaning counters** — `n_fix_raw`, `n_fix_clean`, `n_merged_duplicates`,
   `n_removed_backward`, `n_removed_spike`, `n_removed_frozen`, `n_alt_out_of_band`,
-  `n_alt_vz_spike`, `n_flagged_kept`, `n_vz_runs`, `n_alt_level_shift`, `split_jump_max_m`,
+  `n_alt_vz_sustained` (the windowed rule), `n_alt_vz_spike` (the isolated out-and-back
+  rule), `n_flagged_kept`, `n_vz_runs`, `n_alt_level_shift`, `split_jump_max_m`,
   `n_boundaried`, `integrity_fraction`;
 - **trimming** — `ground_phase_start_s`, `ground_phase_end_s`, `trimmed_fraction`,
   `n_interior_excised`, `n_suspect_stints`;
@@ -422,14 +455,15 @@ below is the one the code makes, and each is mirrored in the thesis appendix
   over 3000 — so against a 5 m tolerance the same motionless pilot passed on a short stint
   and failed on a long one, and since an interior stint must last minutes to be considered
   at all, **the guard could not fire on anything**. The p5–p95 span sits at 3.3σ whatever
-  the length. Consequence stated openly: on a GNSS-fallback flight the guard *abstains*,
-  because the widened tolerance the thesis promises needs a measured channel-noise ratio
-  that a first measurement did not reproduce. Abstaining is the safe direction.
+  the length. Consequence stated openly: a flight with no usable barometer
+  (`baro_witness = False`) has no witness for this test either, so the guard
+  *abstains* and falls back to the speed condition alone. Abstaining is the safe
+  direction.
 - **An unreturned vertical step is counted (`n_alt_level_shift`) but not yet treated.** The
   `|v_z|` rule knew an out-and-back spike and a coherent run; a single step never undone —
   a barometric re-reference — is neither, so it was censored by nothing *and counted by
-  nothing*, and the smoothing differentiated it into up to 5117 m/s in the table. 8.3 % of
-  paraglider and 6.2 % of hang-glider flights carry one. Detection is not a judgement, so
+  nothing*, and the smoothing differentiated it into up to 5117 m/s in the table. 8.1 % of
+  paraglider and 5.3 % of hang-glider flights carry one. Detection is not a judgement, so
   it is done; the treatment (split / re-reference / invalidate) each changes a rule the
   thesis argues, so it is left open for the segmentation work that consumes `v_z`.
 - **`suspect_intervals.parquet` is written.** The driver returned only three tables, so the
@@ -467,22 +501,28 @@ below is the one the code makes, and each is mirrored in the thesis appendix
   plausibility bound, and it catches what that one cannot: a flight whose first fix is
   corrupt has no impossible step left to inflate the path, so it passes every other cut and
   simply sits thousands of kilometres from its own origin. Five paraglider flights in run 4
-  sat 4500 km out; because the ensemble MSD averages `|r|²`, five records in 156 017 moved
-  it by seven orders of magnitude. On the full run it costs 228 paraglider flights (0.12 %)
-  and 7 hang-glider ones (0.10 %), recorded as `extent_out_of_reach_of_the_first_fix`, and
-  reuses the existing number. Re-checked on the written tables by
+  sat 4500 km out; because the ensemble MSD averages `|r|²`, five records in that run's
+  retained set moved it by seven orders of magnitude. On the current archive it costs 217
+  paraglider flights (0.12 %) and 5 hang-glider ones (0.07 %), recorded as
+  `extent_out_of_reach_of_the_first_fix`, and reuses the existing number. Re-checked on the written tables by
   `verify_dataset.py` as `|r(t)| ≤ v_xy_max · t` — the one invariant stated in terms of the
   frame and the bound alone, so it holds whatever the pipeline did.
 - **No Hampel test on `z`.** `sec:fixlevel` argues it (three reasons); `impl:fixlevel`
   still said the identical test ran on the altitude channel. The body wins, the appendix
   was corrected, and the vertical is cleaned by its absolute bounds alone.
-- **Both altitude bounds act on the *adopted* channel**, GNSS included. With no local
-  test on `z`, the alternative would leave a GNSS-fallback flight with no vertical cleaner
-  at all. The `|v_z|` bound was calibrated on barometric data but expresses an aircraft
-  envelope, not an instrument one; its firing rate is recorded per `alt_source`.
-- **The `|v_z|` bound marks *isolated* spikes only** — both adjoining steps over the
-  bound, opposite signs. A same-sign run is a sustained manoeuvre (a spiral dive), counted
-  and left alone: this is `impl:fixlevel` check (5) made operational.
+- **Both altitude bounds act on the adopted GNSS channel**, for every flight — there is
+  no other channel left to fall back to. `max_vertical_speed_mps` was originally
+  calibrated on barometric per-step data; it was re-derived (2026-09-08) once the
+  adopted channel became GNSS and the statistic became the windowed median, because a
+  per-step bound trips on GNSS's own vertical noise floor (see (ii) above and
+  `cleaning.local_vz`). It still expresses an aircraft envelope, not an instrument one.
+- **The `|v_z|` bound distinguishes a sustained excess from an isolated spike, and
+  treats them differently.** Both adjoining steps over the bound with opposite signs is
+  a spike — an excursion the windowed median cannot see by construction, so it is
+  caught by a separate rule (`impl:fixlevel` check (5) made operational). Both adjoining
+  *windows* over the bound is a sustained excess, censored through its interior. A
+  same-sign run of ordinary steps that never trips the windowed median (a spiral dive
+  inside the envelope) is a manoeuvre, counted and left alone.
 - **The first fix is tested forward.** An anchor-carrying scan never questions its first
   anchor, and that fix becomes the ENU origin — a spike there displaces the whole flight.
   It is deleted on the same two conditions as any other: flagged, and an impossible step

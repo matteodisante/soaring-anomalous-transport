@@ -26,7 +26,7 @@ Slow-and-flat stints too short to excise, one row per stint: `source`, `flight_i
 `t_start`, `t_end` in the re-zeroed clock. Stage (iii) produces them so the ψ(τ) fits can
 be re-run with and without them as a sensitivity check. Written even when empty.
 
-> **The views below are from pipeline 1.3.0.** The nine blocks that `show_dataset.py`
+> **The views below are from pipeline 2.0.0.** The nine blocks that `show_dataset.py`
 > produces reproduce byte for byte against the archive as it stands, checked rather than
 > assumed; the others — the directory tree, the `.igc` and XML excerpts, a log extract —
 > are quoted from their own sources. Re-run `show_dataset.py` after the next full pass and
@@ -263,7 +263,7 @@ head(2):
 
 ## `derived/track_scan.parquet` — the census cache
 
-One row per *readable* parsed flight, twelve scalar columns, produced by
+One row per *readable* parsed flight, sixteen scalar columns, produced by
 `track_stats`/`load_or_scan_tracks`. It exists to decouple the cost of reading the
 archive (hours, once) from the cost of asking it a question (instant), and every
 `\StatScan*` macro in the thesis is a query against it.
@@ -271,7 +271,7 @@ archive (hours, once) from the cost of asking it a question (instant), and every
 ```
 6,716 rows in 1 row groups, 0.4 MB on disk, SNAPPY
 
-derived/track_scan.parquet   shape = 6,716 rows x 12 columns
+derived/track_scan.parquet   shape = 6,716 rows x 16 columns
 
 dtypes:
   duration_s            float64
@@ -285,8 +285,11 @@ dtypes:
   gnss_present_frac     float64
   max_vxy_mps           float64
   max_vz_mps            float64
+  max_vz_gnss_mps       float64
   baro_alt_min_m        float64
   baro_alt_max_m        float64
+  gnss_alt_min_m        float64
+  gnss_alt_max_m        float64
 
 head(4), columns 1-7:
  duration_s  n_fix    path_km  extent_km  dt_s  max_gap_ratio  missing_fraction
@@ -295,18 +298,22 @@ head(4), columns 1-7:
     15066.0    730 145.955185  36.239109  21.0       5.142857          0.000000
     18102.0   1802 237.710438  74.587096  10.0       5.000000          0.005080
 
-head(4), columns 8-12:
- baro_present_frac  max_vxy_mps  max_vz_mps  baro_alt_min_m  baro_alt_max_m
-               0.0    56.496301         0.0             0.0             0.0
-               1.0    28.861290         5.9          1059.0          3036.0
-               0.0    22.413217         0.0             0.0             0.0
-               1.0    28.669268         5.0          1458.0          3782.0
+head(4), columns 8-16:
+ baro_present_frac  gnss_present_frac  max_vxy_mps  max_vz_mps  max_vz_gnss_mps  baro_alt_min_m  baro_alt_max_m  gnss_alt_min_m  gnss_alt_max_m
+               0.0                0.0    56.496301         0.0              0.0             0.0             0.0             0.0             0.0
+               1.0                1.0    28.861290         5.9              8.3          1059.0          3036.0          1141.0          3037.0
+               0.0                0.0    22.413217         0.0              0.0             0.0             0.0             0.0             0.0
+               1.0                1.0    28.669268         5.0              6.9          1458.0          3782.0          1421.0          3855.0
 ```
 
-Row 1 of that head is a GNSS-only flight (`baro_present_frac = 0`, so the three
-barometric columns are all zero and mean nothing); row 3 is a 21 s logger whose largest
-gap is five times its own cadence. Both are exactly the populations the pre-processing
-cuts have to be audited against.
+Row 1 of that head is a flight with neither channel usable (`baro_present_frac =
+gnss_present_frac = 0`, so every altitude column is zero and means nothing); row 3 is a
+21 s logger whose largest gap is five times its own cadence. Both are exactly the
+populations the pre-processing cuts have to be audited against. `max_vz_gnss_mps` is the
+GNSS-channel counterpart of `max_vz_mps` (barometric): the same per-step
+`|Δaltitude|/Δt` maximum over the raw track, computed on `gnss_alt` instead of
+`baro_alt`, for the same audit whichever channel a flight ends up analysed on
+(`sec:altchannel`).
 
 Two things to know before using it. It carries **no `flight_id`**: rows are in
 `sorted(rglob("*.igc"))` order and are identified positionally, which is enough for
@@ -354,14 +361,14 @@ the recorder's `A` record, whose first four characters are the manufacturer code
 ## `derived/fixes.parquet` — the trajectories
 
 The output of the pipeline, and the largest artefact by three orders of magnitude:
-**43 GB and 1.36 × 10⁹ rows** for paragliders, 1.2 GB and 3.4 × 10⁷ for hang gliders.
+**43.7 GB and 1.37 × 10⁹ rows** for paragliders, 1.2 GB and 3.5 × 10⁷ for hang gliders.
 One row per **grid point** of every retained segment, keyed `(source, flight_id,
 segment_id)`:
 
 ```
-34,525,108 rows in 43 row groups, 1,161.6 MB on disk, ZSTD
+34,590,779 rows in 43 row groups, 1,158.5 MB on disk, ZSTD
 
-derived/fixes.parquet   shape = 34,525,108 rows x 18 columns
+derived/fixes.parquet   shape = 34,590,779 rows x 18 columns
 
 dtypes:
   source                str
@@ -385,17 +392,17 @@ dtypes:
 
 head(4), columns 1-9:
     source flight_id  segment_id    t          E           N           z       v_E       v_N
-hangglider       975           0  0.0  -2.644085   -4.948205 1458.585693 13.275144  1.215108
-hangglider       975           0 10.0 111.172691  -33.921207 1460.657104  9.778760 -5.975531
-hangglider       975           0 20.0 198.742096 -103.775276 1468.514282  8.025670 -6.961107
-hangglider       975           0 30.0 279.220947 -138.911942 1463.914307  7.008325 -2.623670
+hangglider       975           0  0.0  -2.644101   -4.948254 1526.071411 13.275309  1.215101
+hangglider       975           0 10.0 111.173767  -33.921551 1522.714233  9.778828 -5.975578
+hangglider       975           0 20.0 198.743713 -103.776161 1522.428589  8.025725 -6.961162
+hangglider       975           0 30.0 279.223663 -138.913269 1523.742798  7.008469 -2.623722
 
 head(4), columns 10-18:
       v_z       a_E       a_N       a_z  interpolated  z_reconstructed  edge  hampel_flagged  alt_invalidated
--0.532143 -0.436803 -1.029317  0.192857         False            False  True           False            False
- 0.721429 -0.262474 -0.408811  0.057857         False            False  True           False            False
- 0.625000 -0.088144  0.211696 -0.077143         False            False False           False            False
--1.466667  0.072790  0.463077 -0.047143         False            False False            True            False
+-0.539286 -0.436817 -1.029323  0.045714         False            False  True           False            False
+-0.157143 -0.262479 -0.408813  0.030714         False            False  True           False            False
+ 0.075000 -0.088141  0.211696  0.015714         False            False False           False            False
+ 0.191667  0.072793  0.463081 -0.001429         False            False False            True            False
 ```
 
 Zstd, ~33 bytes per row, written in batches of 400 flights, streamed by analyses rather
@@ -442,7 +449,7 @@ has to infer it.
 segments of retained flights — a dropped segment has no rows here, and the retention
 decisions are recorded in `segments.parquet` and `flights_meta.parquet`, not re-applied at
 read time. So "the analysis ensemble" is exactly "the flights that appear in
-`fixes.parquet`", 155,788 paragliders and 6,132 hang gliders.
+`fixes.parquet`", 156,449 paragliders and 6,102 hang gliders.
 
 **Which columns.** `t`, `E`, `N` for both estimators, plus `segment_id` to know where a
 segment ends. Nothing else: `z`, the velocities and the accelerations belong to the
@@ -467,11 +474,14 @@ deliberate:
   that ends it, since the trajectory across that gap is unknown.
 
 **Consequences to keep in mind.** A flight whose first segment did not survive resampling
-starts its record at `t > 0` (1.4 % of paragliders, 11.7 % of hang gliders); its positions
+starts its record at `t > 0` (1.4 % of paragliders, 11.6 % of hang gliders); its positions
 are still measured from its own take-off, it simply does not answer the earlier lags. And
 a boundary at a *re-acquisition offset* rather than at a gap puts an unknown constant into
 the absolute position, which enters the ensemble MSD and cancels out of the time-averaged
-one — bounded by `verify_dataset.py` at 0.029 % of paraglider flights.
+one — bounded by `verify_dataset.py` at 0.026 % of paraglider flights (41 of 156,449) and
+0.38 % of hang-glider ones (23 of 6,102); the higher hang-glider share tracks their
+slower, gappier cadence, the same population `\StatScan*GapSplit*` already shows splitting
+more often.
 
 ## `derived/segments.parquet` — one row per segment
 
@@ -479,9 +489,9 @@ Every segment the splitting produced, **retained or not**, with the reason for e
 drop:
 
 ```
-13,222 rows in 1 row groups, 0.2 MB on disk, ZSTD
+12,892 rows in 1 row groups, 0.2 MB on disk, ZSTD
 
-derived/segments.parquet   shape = 13,222 rows x 13 columns
+derived/segments.parquet   shape = 12,892 rows x 13 columns
 
 dtypes:
   source                str
@@ -499,11 +509,11 @@ dtypes:
   drop_reason           string
 
 head(4):
-    source flight_id  segment_id  t_start   t_end  n_fix  n_fix_raw  frac_interpolated  frac_z_reconstructed  censored_start  censored_end  kept                 drop_reason
-hangglider       975           0      0.0 20640.0   2065       2064           0.001453              0.001453           False         False  True                        <NA>
-hangglider      1032           0      0.0 14175.0      0        691           0.001479              1.000000           False         False False channel_not_reconstructable
-hangglider      1037           0      0.0 17660.0   1767       1766           0.000000              0.000000           False         False  True                        <NA>
-hangglider      1049           0      0.0 19698.0      0        960           0.000000              1.000000           False         False False channel_not_reconstructable
+    source flight_id  segment_id  t_start   t_end  n_fix  n_fix_raw  frac_interpolated  frac_z_reconstructed  censored_start  censored_end  kept                       drop_reason
+hangglider       975           0      0.0 20640.0   2065       2064           0.001453              0.013075           False         False  True                              <NA>
+hangglider      1037           0      0.0 17660.0   1767       1766           0.000000              0.002264           False         False  True                              <NA>
+hangglider      1121           0      0.0  7566.0   2523       2522           0.001585              0.003567           False         False  True                              <NA>
+hangglider      1158           0      0.0     0.0      0          1                NaN                   NaN           False          True False shorter_than_min_segment_duration
 ```
 
 `n_fix` counts the rows the segment contributed to `fixes` (zero when dropped) against
@@ -516,69 +526,72 @@ itself the record of a drop.
 ## `derived/flights_meta.parquet` — one row per flight *attempted*
 
 Including the ones the pipeline dropped: the census of what was removed is as much a
-result as what was kept. 47 columns, which read down rather than across — one retained
-flight beside one the flight filter rejected:
+result as what was kept. 50 columns, which read down rather than across — one retained
+flight beside one the altitude-channel gate rejected:
 
 ```
-6,716 rows x 47 columns (6,132 retained, 584 dropped)
+6,716 rows x 50 columns (6,102 retained, 614 dropped)
 
-                     a retained flight           a dropped one
-source                      hangglider              hangglider
-flight_id                          975                     830
-pipeline_version                 2.0.0                   2.0.0
-drop_stage                         NaN           flight_filter
-drop_reason                        NaN  duration_below_minimum
-error_detail                      None                    None
-gnss_present_frac                  1.0                     1.0
-gnss_range_m                    1981.0                   612.0
-baro_witness                      True                   False
-baro_present_frac                  1.0                     0.0
-baro_range_m                    1977.0                     0.0
-n_alt_missing_raw                    0                       0
-n_fix_raw                         2099                     349
-n_fix_clean                       2069                     348
-n_merged_duplicates                  0                       0
-n_removed_backward                   0                       0
-n_removed_spike                      0                       1
-n_removed_frozen                    30                       0
-n_alt_out_of_band                    0                       0
-n_alt_vz_sustained                   0                       0
-n_alt_vz_spike                       0                       0
-n_flagged_kept                      40                       8
-n_vz_runs                            0                       0
-n_alt_level_shift                    0                       0
-split_jump_max_m                   0.0                     0.0
-n_boundaried                         0                       0
-integrity_fraction                 0.0                0.004587
-ground_phase_start_s             300.0                   485.0
-ground_phase_end_s             20945.0                  1570.0
-trimmed_fraction              0.002464                0.376437
-n_interior_excised                   0                       0
-n_suspect_stints                     0                       0
-duration_flight_s              20645.0                  1085.0
-path_km                     283.408578                6.044969
-alt_range_m                     1977.0                     NaN
-extent_km                    62.132928                1.892541
-lat0                         43.812717                     NaN
-lon0                          6.809883                     NaN
-alt0                            1459.0                     NaN
-dt_native_s                       10.0                     NaN
-g_max_s                           20.0                     NaN
-n_segments                         1.0                     NaN
-n_segments_kept                    1.0                     NaN
-frac_interpolated             0.001453                     NaN
-frac_z_reconstructed          0.001453                     NaN
-z_gap_max_s                       10.0                     NaN
-was_resampled                     True                    None
-savgol_order                       3.0                     NaN
-savgol_window_horiz                5.0                     NaN
-savgol_window_vert                 5.0                     NaN
+                     a retained flight               a dropped one
+source                      hangglider                  hangglider
+flight_id                          975                         830
+pipeline_version                 2.0.0                       2.0.0
+drop_stage                         NaN                 alt_channel
+drop_reason                        NaN  no_usable_altitude_channel
+error_detail                      None                        None
+gnss_present_frac                  1.0                         0.0
+gnss_range_m                    1896.0                         0.0
+baro_witness                      True                       False
+baro_present_frac                  1.0                         0.0
+baro_range_m                    1977.0                         0.0
+n_alt_missing_raw                    0                         349
+n_fix_raw                         2099                         349
+n_fix_clean                     2069.0                         NaN
+n_merged_duplicates                0.0                         NaN
+n_removed_backward                 0.0                         NaN
+n_removed_spike                    0.0                         NaN
+n_removed_frozen                  30.0                         NaN
+n_alt_out_of_band                  0.0                         NaN
+n_alt_vz_sustained                 0.0                         NaN
+n_alt_vz_spike                     0.0                         NaN
+n_flagged_kept                    40.0                         NaN
+n_vz_runs                          0.0                         NaN
+n_alt_level_shift                  0.0                         NaN
+split_jump_max_m                   0.0                         NaN
+n_boundaried                       0.0                         NaN
+integrity_fraction            0.013081                         NaN
+ground_phase_start_s             300.0                         NaN
+ground_phase_end_s             20945.0                         NaN
+trimmed_fraction              0.002464                         NaN
+n_interior_excised                 0.0                         NaN
+n_suspect_stints                   0.0                         NaN
+duration_flight_s              20645.0                         NaN
+path_km                     283.408578                         NaN
+alt_range_m                     1895.0                         NaN
+extent_km                    62.132928                         NaN
+lat0                         43.812717                         NaN
+lon0                          6.809883                         NaN
+alt0                            1526.0                         NaN
+dt_native_s                       10.0                         NaN
+g_max_s                           20.0                         NaN
+n_segments                         1.0                         NaN
+n_segments_kept                    1.0                         NaN
+frac_interpolated             0.001453                         NaN
+frac_z_reconstructed          0.013075                         NaN
+z_gap_max_s                       30.0                         NaN
+was_resampled                     True                        None
+savgol_order                       3.0                         NaN
+savgol_window_horiz                5.0                         NaN
+savgol_window_vert                 5.0                         NaN
 ```
 
 Every column is filled by the stage named in the left margin below, and a dropped flight
-keeps everything the stages *before* the verdict had already measured — flight 830 above
-was judged on a duration of 1085 s, and its cleaning counters are there to be audited
-even though none of its fixes reached the trajectory table.
+keeps everything the stages *before* the verdict had already measured, nothing more.
+Flight 830 above is the earliest a flight can be lost: no GNSS altitude
+(`gnss_present_frac = 0`) and no barometer either (`baro_present_frac = 0`), so
+`n_alt_missing_raw` is its full fix count and it is dropped at the gate in stage (i),
+before cleaning, trimming or the flight filter ever run — which is why every later
+column reads `NaN` for it rather than a measured zero, duration included.
 
 | group | columns |
 |---|---|
@@ -607,7 +620,7 @@ silently mixed with a newer one.
 | `raw/`, `catalog/`, `logs/` | `soaring-para` / `soaring-delta` (acquisition CLI) | days, network-bound |
 | `derived/track_scan.parquet` | delete it; `generate_preproc_figure.py` rebuilds it | tens of minutes |
 | `derived/alt_offset_scan.parquet` | `generate_alt_offset_stats.py --rescan` | ~2 min for both archives, 8 workers |
-| `derived/{fixes,segments,flights_meta}.parquet` | `scripts/preprocess.py` | ~80 min for both archives, 8 workers |
+| `derived/{fixes,segments,flights_meta}.parquet` | `scripts/preprocess.py` | ~110 min for both archives, 8 workers |
 | the thesis figures and macros | `generate_*.py` in `scripts/reporting/` | seconds to ~20 min |
 
 `scripts/verify_dataset.py` checks the processed tables against the invariants Chapter 2
