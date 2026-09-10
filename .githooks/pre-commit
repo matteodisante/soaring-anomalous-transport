@@ -49,7 +49,15 @@ staged="$(git diff --cached --name-only)"
 if grep -qE '^thesis/' <<<"$staged"; then
     if command -v latexmk >/dev/null 2>&1; then
         build_dir="$(mktemp -d)"
+        # The figures are gitignored build artefacts (.gitignore: thesis/generated/*.pdf),
+        # so the index checkout contains none of them and every \IfFileExists in the
+        # document falls back to its "generated locally" placeholder box -- which is how
+        # the committed PDF lost all 18 of its figures once the build moved to the index.
+        # Copy the figure PDFs across from the working tree, and ONLY those: the generated
+        # *.tex macros must keep coming from the index, since a commit's numbers have to
+        # match the sources that commit actually carries.
         if git checkout-index --prefix="$build_dir/" -a \
+            && { cp thesis/generated/*.pdf "$build_dir/thesis/generated/" 2>/dev/null || true; } \
             && ( cd "$build_dir" && bash scripts/build_docs.sh thesis >/dev/null 2>&1 ) \
             && cp "$build_dir/thesis/main.pdf" thesis/main.pdf; then
             git add thesis/main.pdf 2>/dev/null || true
