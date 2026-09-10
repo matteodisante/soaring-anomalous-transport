@@ -206,6 +206,10 @@
 % Shape numbers (\StatShapeParaNuSpread, ...): the moment spectrum, the velocity
 % memory and the persistence runs -- what the second moment cannot say.
 \IfFileExists{generated/shape.tex}{\input{generated/shape}}{}
+% Kinematic-isotropy numbers (\StatKinParaVelocityMedian, ...): the per-component variance
+% ratio read off velocity and acceleration as well as displacement, by discipline, terrain
+% and pilot level (Sec. 3.2.5).
+\IfFileExists{generated/kinematic_isotropy.tex}{\input{generated/kinematic_isotropy}}{}
 \IfFileExists{generated/propagator.tex}{\input{generated/propagator}}{}
 \IfFileExists{generated/edge_effect.tex}{\input{generated/edge_effect}}{}
 \IfFileExists{generated/circling.tex}{\input{generated/circling}}{}
