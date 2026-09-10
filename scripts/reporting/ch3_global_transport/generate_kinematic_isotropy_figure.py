@@ -11,7 +11,8 @@ the fix table separates the two: velocity and acceleration are local in time, so
 anisotropy cannot be inherited from where a flight happened to start or how long ago that
 was, only from the process generating the motion at that instant.
 
-Four exploratory figures, not wired into the thesis document:
+The first two figures are read by Sec.~\ref{sec:transport-anisotropy}; the last three are
+the cuts that section reports without drawing, kept here so the claim can be checked.
 
 ``kinematic_isotropy_discipline.pdf``
     Same reduction as fig:prelim-isotropy -- paragliders against hang gliders -- but one
@@ -38,8 +39,7 @@ Four exploratory figures, not wired into the thesis document:
 
 Reads ``audit_positions_<discipline>.npz`` via ``generate_prelim_figure.load()``, which
 needs the ``VE``/``VN``/``AE``/``AN`` arrays ``audit_msd.py`` writes alongside ``E``/``N``
-(re-run it if an older npz predates them). Writes no macros: this is a diagnostic, run by
-hand, not a numbered thesis figure.
+(re-run it if an older npz predates them). Writes ``thesis/generated/kinematic_isotropy.tex``.
 """
 
 from __future__ import annotations
@@ -54,21 +54,34 @@ ROOT = Path(__file__).resolve().parents[3]
 _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
-_THIS_DIR = str(Path(__file__).resolve().parent)
-if _THIS_DIR not in sys.path:
-    sys.path.insert(0, _THIS_DIR)
+# generate_prelim_figure.py is a script in the Chapter 2 reporting directory, not a
+# package: it is imported by putting that directory on sys.path, the same trick this
+# repo's scripts already use for `soaring`. The audit npz loader, the orographic boxes
+# and the bootstrap band all live there, and are shared rather than reimplemented so
+# that a stratum here is the same set of flights it is in Chapter 2.
+_CH2_DIR = str(ROOT / "scripts" / "reporting" / "ch2_dataset")
+if _CH2_DIR not in sys.path:
+    sys.path.insert(0, _CH2_DIR)
 
-# generate_prelim_figure.py is a sibling script, not a package -- imported by adding its
-# directory to sys.path, the same trick this repo's scripts already use for `soaring`.
 import generate_prelim_figure as prelim  # noqa: E402
 
-from soaring.reporting import DISCIPLINES  # noqa: E402
+from soaring.reporting import DISCIPLINES, write_macros  # noqa: E402
 
 OUT_DISCIPLINE = ROOT / "thesis" / "generated" / "kinematic_isotropy_discipline.pdf"
 OUT_TERRAIN = ROOT / "thesis" / "generated" / "kinematic_isotropy_terrain.pdf"
 OUT_LEVEL = ROOT / "thesis" / "generated" / "kinematic_isotropy_level.pdf"
 OUT_TERRAIN_LEVEL = ROOT / "thesis" / "generated" / "kinematic_isotropy_terrain_level.pdf"
 OUT_FLAT_LEVEL = ROOT / "thesis" / "generated" / "kinematic_isotropy_flat_level.pdf"
+OUT_TEX = ROOT / "thesis" / "generated" / "kinematic_isotropy.tex"
+
+# The panels stop where the measurement stops. Past FIT_MAX_S fewer than one flight in
+# seven answers a lag (2% by 3e4 s), and a ratio of two near-zero component means is what
+# sent the long-lag end of an earlier version of this figure to excursions large enough to
+# flatten everything else against the axis. Drawing that range and then pasting a zoom
+# inset over the panel to recover the signal put the inset on top of the curves; cutting
+# the range instead leaves the whole curve legible at one scale.
+PLOT_MIN_S = 1.0
+FIT_MIN_S, FIT_MAX_S = prelim.FIT_MIN_S, prelim.FIT_MAX_S
 
 # The three quantities read off the same audit npz, in the order the panels are drawn.
 QUANTITIES = [
@@ -159,59 +172,42 @@ def pilot_level(wing_class) -> np.ndarray:
     return labels
 
 
-def _clip_to_medians(ax, medians: list[np.ndarray]) -> None:
-    """Scale the main panel to the median curves, not the bootstrap band's tail.
+def _plot_band(ax, lags, east, north, frame, color, label) -> np.ndarray | None:
+    """Draw one group's iso-ratio median and 10-90% band over the plotted window.
 
-    At the longest lags a handful of flights carry a cluster, and a resample that lands
-    on a near-zero denominator sends that one replicate -- and so the 90% band, though not
-    the median -- to an outlier ratio. Autoscaling to the band lets that single point set
-    the axis and flattens everything else to a line; the medians, which are what the
-    comparison is actually about, stay well-behaved throughout.
-    """
-    finite = np.concatenate([m[np.isfinite(m)] for m in medians]) if medians else np.array([])
-    if finite.size == 0:
-        return
-    low, high = min(0.0, float(finite.min())), float(finite.max())
-    pad = 0.15 * (high - low if high > low else max(abs(high), 1.0))
-    ax.set_ylim(low - pad, high + pad)
-
-
-def _plot_band(ax, inset_ax, lags, east, north, frame, color, label) -> np.ndarray | None:
-    """Draw one group's iso-ratio band and median onto the main and inset axes.
-
-    Returns the drawn median (for ``_clip_to_medians``), or ``None`` if nothing was
-    finite to draw -- the caller then knows not to count this group as drawn.
+    Returns the drawn band, stacked as ``(lo, med, hi)``, for the caller to scale the
+    panel by, or ``None`` if nothing inside the window was finite to draw.
     """
     lo, med, hi = prelim.iso_ratio_band(east, north, frame)
-    drawable = np.isfinite(med) & (lags >= 1.0)
+    drawable = (
+        np.isfinite(med) & (lags >= PLOT_MIN_S) & (lags <= FIT_MAX_S)
+    )
     if not drawable.any():
         return None
     ax.fill_between(lags[drawable], lo[drawable], hi[drawable], color=color, alpha=0.25, lw=0)
     ax.semilogx(lags[drawable], med[drawable], color=color, label=label)
-    zoom = drawable & (lags <= 1e4)
-    inset_ax.fill_between(lags[zoom], lo[zoom], hi[zoom], color=color, alpha=0.25, lw=0)
-    inset_ax.semilogx(lags[zoom], med[zoom], color=color)
-    return med[drawable]
+    return np.stack([lo[drawable], med[drawable], hi[drawable]])
 
 
-def _finish_panel(ax, inset_ax, title, ylabel, letter, medians: list[np.ndarray]) -> None:
-    """Axis labels, legend and inset framing shared by every panel of every figure."""
+def _finish_panel(ax, title, ylabel, letter, drawn: list[np.ndarray]) -> None:
+    """Axis labels, fitted-window shading and legend, shared by every panel."""
     ax.axhline(1.0, color="0.3", lw=0.8, ls="--")
     ax.set_xlabel("elapsed time $t$ (s)")
     ax.set_ylabel(ylabel)
     ax.set_title(f"({letter}) {title}", fontsize=10, loc="left")
-    if medians:
-        ax.legend(frameon=True, framealpha=0.85, edgecolor="none", fontsize=8, loc="upper left")
-        _clip_to_medians(ax, medians)
-        inset_ax.axhline(1.0, color="0.3", lw=0.8, ls="--")
-        inset_ax.set_xlim(1.0, 1e4)
-        inset_ax.set_xticks([1e0, 1e2, 1e4])
-        inset_ax.tick_params(labelsize=6)
-        ax.indicate_inset_zoom(inset_ax, edgecolor="0.4")
-    else:
+    ax.set_xlim(PLOT_MIN_S, FIT_MAX_S)
+    if not drawn:
         ax.text(0.5, 0.5, "no kinematics in audit npz\n(re-run audit_msd.py)",
                 transform=ax.transAxes, ha="center", va="center", fontsize=8, color="0.4")
-        inset_ax.remove()
+        return
+    # The lags the transport analysis actually fits over; outside it the ratio is drawn
+    # but nothing in the chapter is read from it.
+    ax.axvspan(FIT_MIN_S, FIT_MAX_S, color="0.85", alpha=0.35, lw=0, zorder=0)
+    values = np.concatenate([band[np.isfinite(band)] for band in drawn])
+    low, high = float(values.min()), float(values.max())
+    pad = 0.08 * (high - low if high > low else 1.0)
+    ax.set_ylim(low - pad, high + pad)
+    ax.legend(frameon=True, framealpha=0.85, edgecolor="none", fontsize=8, loc="best")
 
 
 def draw_by_discipline(loaded: dict) -> object:
@@ -221,16 +217,15 @@ def draw_by_discipline(loaded: dict) -> object:
     fig, axes = plt.subplots(1, 3, figsize=(13.5, 4.2))
 
     for index, (ax, (title, ekey, nkey, ylabel)) in enumerate(zip(axes, QUANTITIES)):
-        inset_ax = ax.inset_axes([0.42, 0.55, 0.53, 0.4])
-        medians = []
+        drawn = []
         for discipline, data in loaded.items():
             if ekey not in data:
                 continue
-            med = _plot_band(ax, inset_ax, data["lags"], data[ekey], data[nkey], data["flights"],
+            band = _plot_band(ax, data["lags"], data[ekey], data[nkey], data["flights"],
                               DISCIPLINES[discipline].color, discipline)
-            if med is not None:
-                medians.append(med)
-        _finish_panel(ax, inset_ax, title, ylabel, chr(97 + index), medians)
+            if band is not None:
+                drawn.append(band)
+        _finish_panel(ax, title, ylabel, chr(97 + index), drawn)
 
     fig.tight_layout()
     return fig
@@ -244,19 +239,18 @@ def draw_by_terrain(loaded: dict) -> object:
 
     data = loaded.get("paragliders")
     for index, (ax, (title, ekey, nkey, ylabel)) in enumerate(zip(axes, QUANTITIES)):
-        inset_ax = ax.inset_axes([0.42, 0.55, 0.53, 0.4])
-        medians = []
+        drawn = []
         if data is not None and ekey in data:
             lags, frame = data["lags"], data["flights"]
             for name, color in TERRAIN_GROUPS:
                 mask = (frame["group"] == name).to_numpy()
                 if mask.sum() < prelim.MIN_STRATUM:
                     continue
-                med = _plot_band(ax, inset_ax, lags, data[ekey][mask], data[nkey][mask],
+                band = _plot_band(ax, lags, data[ekey][mask], data[nkey][mask],
                                   frame[mask], color, f"{TERRAIN_LABELS[name]} ({mask.sum():,})")
-                if med is not None:
-                    medians.append(med)
-        _finish_panel(ax, inset_ax, title, ylabel, chr(97 + index), medians)
+                if band is not None:
+                    drawn.append(band)
+        _finish_panel(ax, title, ylabel, chr(97 + index), drawn)
 
     fig.suptitle("Paragliders only, grouped by take-off terrain", fontsize=9, y=1.02)
     fig.tight_layout()
@@ -271,19 +265,18 @@ def draw_by_level(loaded: dict) -> object:
 
     data = loaded.get("paragliders")
     for index, (ax, (title, ekey, nkey, ylabel)) in enumerate(zip(axes, QUANTITIES)):
-        inset_ax = ax.inset_axes([0.42, 0.55, 0.53, 0.4])
-        medians = []
+        drawn = []
         if data is not None and ekey in data:
             lags, frame = data["lags"], data["flights"]
             for name, color in LEVEL_GROUPS:
                 mask = (frame["level"] == name).to_numpy()
                 if mask.sum() < prelim.MIN_STRATUM:
                     continue
-                med = _plot_band(ax, inset_ax, lags, data[ekey][mask], data[nkey][mask],
+                band = _plot_band(ax, lags, data[ekey][mask], data[nkey][mask],
                                   frame[mask], color, f"{name} ({mask.sum():,})")
-                if med is not None:
-                    medians.append(med)
-        _finish_panel(ax, inset_ax, title, ylabel, chr(97 + index), medians)
+                if band is not None:
+                    drawn.append(band)
+        _finish_panel(ax, title, ylabel, chr(97 + index), drawn)
 
     fig.suptitle("Paragliders only, grouped by pilot level", fontsize=9, y=1.02)
     fig.tight_layout()
@@ -301,8 +294,7 @@ def draw_by_terrain_level(loaded: dict) -> object:
     data = loaded.get("paragliders")
     for row, zone in enumerate(zones):
         for index, (ax, (title, ekey, nkey, ylabel)) in enumerate(zip(grid[row], QUANTITIES)):
-            inset_ax = ax.inset_axes([0.42, 0.55, 0.53, 0.4])
-            medians = []
+            drawn = []
             if data is not None and ekey in data:
                 lags, frame = data["lags"], data["flights"]
                 in_zone = (frame["group"] == zone).to_numpy()
@@ -310,12 +302,12 @@ def draw_by_terrain_level(loaded: dict) -> object:
                     mask = in_zone & (frame["level"] == name).to_numpy()
                     if mask.sum() < prelim.MIN_STRATUM:
                         continue
-                    med = _plot_band(ax, inset_ax, lags, data[ekey][mask], data[nkey][mask],
+                    band = _plot_band(ax, lags, data[ekey][mask], data[nkey][mask],
                                       frame[mask], color, f"{name} ({mask.sum():,})")
-                    if med is not None:
-                        medians.append(med)
-            _finish_panel(ax, inset_ax, f"{TERRAIN_LABELS[zone]}: {title}", ylabel,
-                          chr(97 + index), medians)
+                    if band is not None:
+                        drawn.append(band)
+            _finish_panel(ax, f"{TERRAIN_LABELS[zone]}: {title}", ylabel,
+                          chr(97 + index), drawn)
 
     fig.suptitle("Paragliders only, expert vs. beginner within each terrain zone",
                  fontsize=9, y=1.0)
@@ -335,8 +327,7 @@ def draw_by_flat_level(loaded: dict) -> object:
     data = loaded.get("paragliders")
     for row, zone in enumerate(zones):
         for index, (ax, (title, ekey, nkey, ylabel)) in enumerate(zip(grid[row], QUANTITIES)):
-            inset_ax = ax.inset_axes([0.42, 0.55, 0.53, 0.4])
-            medians = []
+            drawn = []
             if data is not None and ekey in data:
                 lags, frame = data["lags"], data["flights"]
                 in_zone = (frame["flat_group"] == zone).to_numpy()
@@ -344,16 +335,84 @@ def draw_by_flat_level(loaded: dict) -> object:
                     mask = in_zone & (frame["level"] == name).to_numpy()
                     if mask.sum() < FLAT_MIN_STRATUM:
                         continue
-                    med = _plot_band(ax, inset_ax, lags, data[ekey][mask], data[nkey][mask],
+                    band = _plot_band(ax, lags, data[ekey][mask], data[nkey][mask],
                                       frame[mask], color, f"{name} ({mask.sum():,})")
-                    if med is not None:
-                        medians.append(med)
-            _finish_panel(ax, inset_ax, f"{zone}: {title}", ylabel, chr(97 + index), medians)
+                    if band is not None:
+                        drawn.append(band)
+            _finish_panel(ax, f"{zone}: {title}", ylabel, chr(97 + index), drawn)
 
     fig.suptitle("Paragliders only, expert vs. beginner within each of three flat regions",
                  fontsize=9, y=1.0)
     fig.tight_layout()
     return fig
+
+
+def _ratio(data: dict, ekey: str, nkey: str) -> np.ndarray:
+    """``<E^2>/<N^2>`` at every lag, pooled over the flights given.
+
+    The plain ensemble ratio, which is what ``generate_prelim_figure.macros`` quotes for
+    ``\\StatPrelimParaIsoRatio*``; the figures draw the cluster-bootstrap median of the
+    same quantity, so a macro and its panel agree to the width of that band and not
+    exactly.
+    """
+    with np.errstate(invalid="ignore"):
+        return np.nanmean(data[ekey] ** 2, axis=0) / np.nanmean(data[nkey] ** 2, axis=0)
+
+
+def _window_stats(ratio: np.ndarray, lags: np.ndarray) -> tuple[float, float, float] | None:
+    """Median, min and max of ``ratio`` over the fitted window, or ``None`` if empty."""
+    sel = (lags >= FIT_MIN_S) & (lags <= FIT_MAX_S) & np.isfinite(ratio)
+    if not sel.any():
+        return None
+    return float(np.median(ratio[sel])), float(ratio[sel].min()), float(ratio[sel].max())
+
+
+def macros(loaded: dict) -> dict[str, str]:
+    """The ``\\StatKin*`` family: the ratio each panel shows, over the fitted window.
+
+    One triple (median, min, max) per quantity, for the two disciplines and, for
+    paragliders, for each terrain group and pilot level -- the numbers
+    Sec.~\\ref{sec:transport-anisotropy} quotes.
+    """
+    out: dict[str, str] = {}
+
+    def put(name: str, value: tuple[float, float, float]) -> None:
+        median, low, high = value
+        out[f"StatKin{name}Median"] = f"{median:.2f}"
+        out[f"StatKin{name}Min"] = f"{low:.2f}"
+        out[f"StatKin{name}Max"] = f"{high:.2f}"
+
+    for discipline, data in loaded.items():
+        tag = DISCIPLINES[discipline].tag
+        for title, ekey, nkey, _ in QUANTITIES:
+            if ekey not in data:
+                continue
+            stats = _window_stats(_ratio(data, ekey, nkey), data["lags"])
+            if stats is not None:
+                put(f"{tag}{title.capitalize()}", stats)
+
+    data = loaded.get("paragliders")
+    if data is not None:
+        frame = data["flights"]
+        cuts = [(f"Terrain{name.replace(' ', '')}", (frame["group"] == name).to_numpy())
+                for name, _ in TERRAIN_GROUPS]
+        cuts += [(f"Level{name.capitalize()}", (frame["level"] == name).to_numpy())
+                 for name, _ in LEVEL_GROUPS]
+        for label, mask in cuts:
+            if mask.sum() < prelim.MIN_STRATUM:
+                continue
+            out[f"StatKin{label}Flights"] = f"{int(mask.sum())}"
+            for title, ekey, nkey, _ in QUANTITIES:
+                if ekey not in data:
+                    continue
+                subset = {ekey: data[ekey][mask], nkey: data[nkey][mask]}
+                stats = _window_stats(_ratio(subset, ekey, nkey), data["lags"])
+                if stats is not None:
+                    put(f"{label}{title.capitalize()}", stats)
+
+    out["StatKinFitMinS"] = f"{FIT_MIN_S:.0f}"
+    out["StatKinFitMaxS"] = f"{FIT_MAX_S:.0f}"
+    return out
 
 
 def main() -> int:
@@ -387,8 +446,16 @@ def main() -> int:
     draw_by_level(loaded).savefig(OUT_LEVEL, metadata=_PDF_METADATA, bbox_inches="tight")
     draw_by_terrain_level(loaded).savefig(OUT_TERRAIN_LEVEL, metadata=_PDF_METADATA, bbox_inches="tight")
     draw_by_flat_level(loaded).savefig(OUT_FLAT_LEVEL, metadata=_PDF_METADATA, bbox_inches="tight")
+    values = macros(loaded)
+    write_macros(
+        OUT_TEX, values,
+        generator="scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py",
+    )
     print(f"wrote {OUT_DISCIPLINE.name}, {OUT_TERRAIN.name}, {OUT_LEVEL.name}, "
-          f"{OUT_TERRAIN_LEVEL.name}, {OUT_FLAT_LEVEL.name}")
+          f"{OUT_TERRAIN_LEVEL.name}, {OUT_FLAT_LEVEL.name}, {OUT_TEX.name} "
+          f"({len(values)} macros)")
+    for key, value in values.items():
+        print(f"  {key:44s} {value}")
     return 0
 
 
