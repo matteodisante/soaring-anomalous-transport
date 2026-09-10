@@ -66,31 +66,38 @@ def native_cadence_s(segment: pd.DataFrame) -> float:
     return cadence
 
 
-def _integration_window(
-    t: np.ndarray, values: np.ndarray, left: float, right: float
-) -> tuple[np.ndarray, np.ndarray]:
-    """Return values over a closed physical-time window, including its endpoints."""
-    inside = (t > left) & (t < right)
-    times = np.concatenate(([left], t[inside], [right]))
-    samples = np.interp(times, t, values)
-    return times, samples
+def _cumulative_trapezoid(t: np.ndarray, values: np.ndarray) -> np.ndarray:
+    """Integrate a piecewise-linear signal once for all subsequent windows."""
+    cumulative = np.zeros(len(t), dtype=float)
+    cumulative[1:] = np.cumsum(
+        0.5 * (values[:-1] + values[1:]) * np.diff(t), dtype=float
+    )
+    return cumulative
 
 
-def _time_mean(t: np.ndarray, values: np.ndarray, left: float, right: float) -> float:
-    """Integrate a linearly interpolated signal and divide by the window duration."""
-    times, samples = _integration_window(t, values, left, right)
-    return float(np.trapezoid(samples, times) / (right - left))
+def _integral_at(
+    t: np.ndarray,
+    values: np.ndarray,
+    cumulative: np.ndarray,
+    query: np.ndarray,
+) -> np.ndarray:
+    """Evaluate the exact piecewise-linear trapezoidal integral at many times."""
+    indexes = np.searchsorted(t, query, side="right") - 1
+    indexes = np.clip(indexes, 0, len(t) - 2)
+    elapsed = query - t[indexes]
+    slopes = (values[indexes + 1] - values[indexes]) / (t[indexes + 1] - t[indexes])
+    at_query = values[indexes] + slopes * elapsed
+    return cumulative[indexes] + 0.5 * (values[indexes] + at_query) * elapsed
 
 
-def _turn_coherence(
-    t: np.ndarray, turn_rate: np.ndarray, left: float, right: float
-) -> float:
-    """Measure whether turning keeps one sign over a physical-time window."""
-    times, samples = _integration_window(t, turn_rate, left, right)
-    denominator = float(np.trapezoid(np.abs(samples), times))
-    if denominator <= np.finfo(float).eps:
-        return 0.0
-    return float(abs(np.trapezoid(samples, times)) / denominator)
+def _window_integrals(
+    t: np.ndarray, values: np.ndarray, left: np.ndarray, right: np.ndarray
+) -> np.ndarray:
+    """Return exact piecewise-linear integrals for equally indexed windows."""
+    cumulative = _cumulative_trapezoid(t, values)
+    return _integral_at(t, values, cumulative, right) - _integral_at(
+        t, values, cumulative, left
+    )
 
 
 def _identity(segment: pd.DataFrame, column: str) -> object:
@@ -190,21 +197,38 @@ def build_feature_frame(
     ) / v_h_squared[moving]
 
     features = np.full((decision_t.size, len(FEATURE_COLUMNS)), np.nan)
-    for index in np.flatnonzero(~feature_edge):
-        center = decision_t[index]
-        left, right = center - half_window, center + half_window
-        # The endpoint values are linearly interpolated, so their bracketing raw fixes
-        # contribute even when they lie just outside the integration interval.
-        first_support = max(0, int(np.searchsorted(t, left, side="right")) - 1)
-        last_support = min(len(t) - 1, int(np.searchsorted(t, right, side="left")))
-        if unsafe_input[first_support : last_support + 1].any():
-            quality_masked[index] = True
-            continue
-        features[index] = (
-            _time_mean(t, v_z, left, right),
-            _time_mean(t, v_h, left, right),
-            _time_mean(t, np.abs(turn_rate), left, right),
-            _turn_coherence(t, turn_rate, left, right),
+    interior = np.flatnonzero(~feature_edge)
+    left = decision_t[interior] - half_window
+    right = decision_t[interior] + half_window
+    # Endpoint values are linearly interpolated, so both bracketing raw fixes are part
+    # of the support even when one lies just outside the integration interval.
+    first_support = np.maximum(0, np.searchsorted(t, left, side="right") - 1)
+    last_support = np.minimum(len(t) - 1, np.searchsorted(t, right, side="left"))
+    unsafe_prefix = np.concatenate(([0], np.cumsum(unsafe_input, dtype=np.int64)))
+    unsafe_windows = (
+        unsafe_prefix[last_support + 1] - unsafe_prefix[first_support]
+    ) > 0
+    quality_masked[interior[unsafe_windows]] = True
+    safe = ~unsafe_windows
+    safe_indexes = interior[safe]
+    safe_left, safe_right = left[safe], right[safe]
+    duration = config.feature_window_s
+    if safe_indexes.size:
+        signed_turn = _window_integrals(t, turn_rate, safe_left, safe_right)
+        absolute_turn = _window_integrals(t, np.abs(turn_rate), safe_left, safe_right)
+        coherence = np.divide(
+            np.abs(signed_turn),
+            absolute_turn,
+            out=np.zeros_like(absolute_turn),
+            where=absolute_turn > np.finfo(float).eps,
+        )
+        features[safe_indexes] = np.column_stack(
+            [
+                _window_integrals(t, v_z, safe_left, safe_right) / duration,
+                _window_integrals(t, v_h, safe_left, safe_right) / duration,
+                absolute_turn / duration,
+                coherence,
+            ]
         )
 
     frame = pd.DataFrame(

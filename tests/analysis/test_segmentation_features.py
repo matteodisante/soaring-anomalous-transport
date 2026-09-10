@@ -83,6 +83,24 @@ def test_circle_keeps_turn_direction_coherence(config: SegmentationConfig) -> No
     np.testing.assert_allclose(valid["turn_coherence"], 1.0, atol=1e-12)
 
 
+def test_reversing_search_turn_has_low_direction_coherence(
+    config: SegmentationConfig,
+) -> None:
+    segment = _segment(turn_rate=0.2)
+    t = segment["t"].to_numpy(dtype=float)
+    rate = np.where(t < 50.0, 0.2, -0.2)
+    angle = np.where(t < 50.0, 0.2 * t, 10.0 - 0.2 * (t - 50.0))
+    segment["v_E"] = 10.0 * np.cos(angle)
+    segment["v_N"] = 10.0 * np.sin(angle)
+    segment["a_E"] = -10.0 * rate * np.sin(angle)
+    segment["a_N"] = 10.0 * rate * np.cos(angle)
+    points = build_feature_frame(segment, config)
+    reversal = points.loc[points["t"] == 50.0].iloc[0]
+
+    assert reversal["mean_abs_turn_rate"] == pytest.approx(0.2)
+    assert reversal["turn_coherence"] < 0.1
+
+
 def test_features_are_cadence_invariant_after_time_integration(
     config: SegmentationConfig,
 ) -> None:

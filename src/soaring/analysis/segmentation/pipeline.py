@@ -5,6 +5,8 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Iterator
+from concurrent.futures import ProcessPoolExecutor
+from itertools import islice
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +24,7 @@ from .features import (
     valid_feature_mask,
 )
 from .labels import (
+    STATES,
     ClassificationMetrics,
     bootstrap_macro_f1,
     classification_metrics,
@@ -29,7 +32,13 @@ from .labels import (
     semantic_mapping,
     validate_annotations,
 )
-from .model import HMMArtifact, decode, fit_gaussian_hmm, semantic_states
+from .model import (
+    HMMArtifact,
+    decode,
+    fit_gaussian_hmm,
+    heuristic_state_mapping,
+    semantic_states,
+)
 
 MANIFEST_COLUMNS = ["source", "flight_id", "split", "priority"]
 FIT_SAMPLE_COLUMNS = [
@@ -129,6 +138,32 @@ def build_split_manifest(
     fixes_path: str | Path, config: SegmentationConfig
 ) -> pd.DataFrame:
     """Create a flight-level split manifest without reading the full archive at once."""
+    fixes = Path(fixes_path)
+    flights_meta = fixes.with_name("flights_meta.parquet")
+    if flights_meta.is_file():
+        metadata = pd.read_parquet(
+            flights_meta,
+            columns=["source", "flight_id", "drop_stage", "n_segments_kept"],
+        )
+        retained = metadata.loc[
+            metadata["drop_stage"].isna() & (metadata["n_segments_kept"].fillna(0) > 0),
+            ["source", "flight_id"],
+        ]
+        if retained["flight_id"].duplicated().any():
+            raise ValueError(
+                "flights_meta contains duplicate retained flight identifiers"
+            )
+        metadata_rows = [
+            {
+                "source": row.source,
+                "flight_id": row.flight_id,
+                "split": split_for_flight(row.source, row.flight_id, config),
+                "priority": _priority(row.source, row.flight_id, config.random_seed),
+            }
+            for row in retained.itertuples(index=False)
+        ]
+        return pd.DataFrame(metadata_rows, columns=MANIFEST_COLUMNS)
+
     rows: list[dict[str, object]] = []
     for flight in stream_flights(fixes_path, ["source"]):
         source = flight["source"].iloc[0]
@@ -142,6 +177,72 @@ def build_split_manifest(
             }
         )
     return pd.DataFrame(rows, columns=MANIFEST_COLUMNS)
+
+
+def collect_fit_sample(
+    fixes_path: str | Path, manifest: pd.DataFrame, config: SegmentationConfig
+) -> tuple[pd.DataFrame, list[np.ndarray]]:
+    """Select and materialize the deterministic fitting sample in one archive pass.
+
+    The earlier two-pass implementation first inventoried every eligible block and then
+    rescanned the multi-billion-row archive to recover the chosen arrays.  Keeping the
+    bounded candidate arrays from the first pass avoids that redundant read.  The final
+    sort and whole-sequence observation cap are identical to
+    :func:`build_fit_sample_manifest`, so the persisted provenance remains independent
+    of Parquet row-group order.
+    """
+    selected = _selected_train_flights(manifest, config)
+    priorities = {
+        _key(row.source, row.flight_id): int(row.priority)
+        for row in manifest.loc[manifest["split"] == "train"].itertuples(index=False)
+        if _key(row.source, row.flight_id) in selected
+    }
+    candidates: list[tuple[dict[str, Any], np.ndarray]] = []
+    for frame in iter_feature_frames(fixes_path, config, allowed_flights=selected):
+        source, flight_id = frame["source"].iloc[0], frame["flight_id"].iloc[0]
+        key = _key(source, flight_id)
+        for sequence_id, values in _bounded_feature_blocks(frame, config):
+            candidates.append(
+                (
+                    {
+                        "source": source,
+                        "flight_id": flight_id,
+                        "segment_id": int(frame["segment_id"].iloc[0]),
+                        "sequence_id": sequence_id,
+                        "priority": priorities[key],
+                        "n_observations": len(values),
+                    },
+                    values,
+                )
+            )
+    candidates.sort(
+        key=lambda item: (
+            int(item[0]["priority"]),
+            str(item[0]["source"]),
+            str(item[0]["flight_id"]),
+            int(item[0]["segment_id"]),
+            int(item[0]["sequence_id"]),
+        )
+    )
+    chosen_rows: list[dict[str, Any]] = []
+    chosen_sequences: list[np.ndarray] = []
+    used = 0
+    for row, values in candidates:
+        count = int(row["n_observations"])
+        if used + count > config.max_fit_observations:
+            continue
+        row["sample_order"] = len(chosen_rows)
+        chosen_rows.append(row)
+        chosen_sequences.append(values)
+        used += count
+    if not chosen_rows:
+        raise ValueError(
+            "the fitting cap cannot accommodate any valid feature sequence"
+        )
+    return (
+        pd.DataFrame(chosen_rows, columns=FIT_SAMPLE_COLUMNS),
+        chosen_sequences,
+    )
 
 
 def _selected_train_flights(
@@ -214,13 +315,17 @@ def iter_feature_frames(
 def _bounded_feature_blocks(
     frame: pd.DataFrame, config: SegmentationConfig
 ) -> Iterator[tuple[int, np.ndarray]]:
-    """Yield deterministic, bounded valid blocks from one preprocessing segment."""
-    sequence_id = 0
+    """Yield whole valid blocks that fit the configured fitting limits.
+
+    A long block is deliberately omitted from this bounded sample rather than cut into
+    artificial HMM sequences: cutting would assert a reset of the state process at an
+    arbitrary clock time. Its absence remains reproducible through the stored fitting
+    sample manifest.
+    """
     maximum = min(config.max_sequence_observations, config.max_fit_observations)
-    for block in valid_feature_blocks(frame):
-        for start in range(0, len(block), maximum):
-            yield sequence_id, block[start : start + maximum]
-            sequence_id += 1
+    for sequence_id, block in enumerate(valid_feature_blocks(frame)):
+        if len(block) <= maximum:
+            yield sequence_id, block
 
 
 def build_fit_sample_manifest(
@@ -370,22 +475,32 @@ def train_discipline(
     fixes_path: str | Path,
     model_dir: str | Path,
     config: SegmentationConfig,
-    annotations: pd.DataFrame,
+    annotations: pd.DataFrame | None = None,
 ) -> HMMArtifact:
-    """Fit an unsupervised HMM and name its states from train-only annotations.
+    """Fit an unsupervised HMM and assign its component names.
 
-    ``annotations`` never enter :func:`fit_gaussian_hmm`; they resolve the arbitrary
-    order of the three fitted components only after model fitting is complete.
+    Manual ``annotations`` never enter :func:`fit_gaussian_hmm`; when supplied they
+    resolve the arbitrary component order after fitting.  Without them, a documented
+    mechanics-based mapping permits provisional decoding and annotation preparation,
+    but the saved artifact records that it has not yet been manually calibrated.
     """
     manifest = build_split_manifest(fixes_path, config)
-    checked = validate_annotation_splits(annotations, manifest)
-    sample_manifest = build_fit_sample_manifest(fixes_path, manifest, config)
-    sequences = _fit_sequences(fixes_path, sample_manifest, config)
-    artifact = fit_gaussian_hmm(sequences, config)
-    raw, labels = _raw_labelled_predictions(
-        fixes_path, artifact, checked, split="train"
+    checked = (
+        validate_annotation_splits(annotations, manifest)
+        if annotations is not None
+        else None
     )
-    artifact.state_mapping = semantic_mapping(raw, labels)
+    sample_manifest, sequences = collect_fit_sample(fixes_path, manifest, config)
+    artifact = fit_gaussian_hmm(sequences, config)
+    if checked is None:
+        artifact.state_mapping = heuristic_state_mapping(artifact)
+        artifact.mapping_method = "provisional-emission-signatures"
+    else:
+        raw, labels = _raw_labelled_predictions(
+            fixes_path, artifact, checked, split="train"
+        )
+        artifact.state_mapping = semantic_mapping(raw, labels)
+        artifact.mapping_method = "manual-train-hungarian"
     destination = Path(model_dir)
     destination.mkdir(parents=True, exist_ok=True)
     manifest.to_parquet(destination / "split_manifest.parquet", index=False)
@@ -412,6 +527,38 @@ def _phase_points(frame: pd.DataFrame, artifact: HMMArtifact) -> pd.DataFrame:
         for component, state in artifact.state_mapping.items():
             out.loc[valid_index, f"p_{state}"] = probabilities[valid, component]
     return out[PHASE_POINT_COLUMNS]
+
+
+def segment_flight(fixes: pd.DataFrame, artifact: HMMArtifact) -> pd.DataFrame:
+    """Decode one already-preprocessed flight without consulting the full archive.
+
+    This is the interactive counterpart of :func:`apply_discipline`: it applies the
+    same feature construction, quality masks, independent preprocessing-segment
+    boundaries and Viterbi decoder to the flight currently held in memory.  It is
+    useful to the trajectory viewer, where scanning a multi-gigabyte point table for
+    every click would be wasteful.
+
+    Args:
+        fixes: The retained ``FlightResult.fixes`` rows for exactly one flight.
+        artifact: The fitted discipline-specific model.
+
+    Returns:
+        The standard :data:`PHASE_POINT_COLUMNS` table on the decision grid.  An
+        ineligible flight returns the typed empty point table.
+    """
+    if fixes.empty:
+        return _empty_phase_points()
+    identities = fixes[["source", "flight_id"]].drop_duplicates()
+    if len(identities) != 1:
+        raise ValueError("interactive segmentation requires exactly one flight")
+    decoded: list[pd.DataFrame] = []
+    for _, segment in fixes.groupby("segment_id", sort=False):
+        frame = build_feature_frame(segment, artifact.config)
+        if not frame.empty:
+            decoded.append(_phase_points(frame, artifact))
+    if not decoded:
+        return _empty_phase_points()
+    return pd.concat(decoded, ignore_index=True)[PHASE_POINT_COLUMNS]
 
 
 def _phase_runs(points: pd.DataFrame, config: SegmentationConfig) -> pd.DataFrame:
@@ -529,11 +676,76 @@ def _empty_phase_coverage() -> pd.DataFrame:
     )
 
 
+def _decode_flight(
+    flight: pd.DataFrame, artifact: HMMArtifact
+) -> list[tuple[pd.DataFrame, pd.DataFrame | None, pd.DataFrame | None]]:
+    """Build coverage, points, and runs for one thread-independent flight."""
+    decoded = []
+    for _, segment in flight.groupby("segment_id", sort=False):
+        frame = build_feature_frame(segment, artifact.config)
+        cadence = native_cadence_s(segment)
+        n_classifiable = int(valid_feature_mask(frame).sum()) if not frame.empty else 0
+        coverage = pd.DataFrame(
+            [
+                {
+                    "source": segment["source"].iloc[0],
+                    "flight_id": segment["flight_id"].iloc[0],
+                    "segment_id": int(segment["segment_id"].iloc[0]),
+                    "t_start": float(segment["t"].min()),
+                    "t_end": float(segment["t"].max()),
+                    "n_native_fixes": len(segment),
+                    "native_cadence_s": cadence,
+                    "n_decision_points": len(frame),
+                    "n_classifiable_points": n_classifiable,
+                    "status": (
+                        "skipped_native_cadence"
+                        if frame.empty
+                        else ("decoded" if n_classifiable else "unclassifiable_window")
+                    ),
+                }
+            ],
+            columns=PHASE_COVERAGE_COLUMNS,
+        )
+        if frame.empty:
+            decoded.append((coverage, None, None))
+            continue
+        points = _phase_points(frame, artifact)
+        runs = _phase_runs(points, artifact.config)
+        decoded.append((coverage, points, None if runs.empty else runs))
+    return decoded
+
+
+def _flight_batches(
+    flights: Iterator[pd.DataFrame], size: int
+) -> Iterator[list[pd.DataFrame]]:
+    """Yield bounded batches without submitting an entire archive to an executor."""
+    while batch := list(islice(flights, size)):
+        yield batch
+
+
+def _decoded_flights(
+    flights: Iterator[pd.DataFrame], artifact: HMMArtifact, workers: int
+) -> Iterator[list[tuple[pd.DataFrame, pd.DataFrame | None, pd.DataFrame | None]]]:
+    """Decode flights serially or in bounded process batches, preserving order."""
+    if workers == 1:
+        for flight in flights:
+            yield _decode_flight(flight, artifact)
+        return
+    with ProcessPoolExecutor(max_workers=workers) as executor:
+        for batch in _flight_batches(flights, 4 * workers):
+            yield from executor.map(
+                _decode_flight, batch, [artifact] * len(batch), chunksize=1
+            )
+
+
 def apply_discipline(
     fixes_path: str | Path, model_dir: str | Path, output_dir: str | Path
 ) -> tuple[Path, Path]:
     """Decode all eligible segments and write separate point and run Parquet tables."""
     artifact = HMMArtifact.load(model_dir)
+    # One artifact is shared read-only by the flight workers.  Log-space inference is
+    # robust to extreme held-out emissions and avoids per-call implementation toggles.
+    artifact.model.implementation = "log"
     destination = Path(output_dir)
     destination.mkdir(parents=True, exist_ok=True)
     points_path = destination / "phase_points.parquet"
@@ -550,39 +762,10 @@ def apply_discipline(
     coverage_buffer: list[pd.DataFrame] = []
     point_rows = run_rows = 0
     coverage_rows = 0
-    for flight in stream_flights(fixes_path, _FEATURE_INPUT_COLUMNS):
-        for _, segment in flight.groupby("segment_id", sort=False):
-            frame = build_feature_frame(segment, artifact.config)
-            cadence = native_cadence_s(segment)
-            coverage = pd.DataFrame(
-                [
-                    {
-                        "source": segment["source"].iloc[0],
-                        "flight_id": segment["flight_id"].iloc[0],
-                        "segment_id": int(segment["segment_id"].iloc[0]),
-                        "t_start": float(segment["t"].min()),
-                        "t_end": float(segment["t"].max()),
-                        "n_native_fixes": len(segment),
-                        "native_cadence_s": cadence,
-                        "n_decision_points": len(frame),
-                        "n_classifiable_points": (
-                            int(valid_feature_mask(frame).sum())
-                            if not frame.empty
-                            else 0
-                        ),
-                        "status": (
-                            "skipped_native_cadence"
-                            if frame.empty
-                            else (
-                                "decoded"
-                                if valid_feature_mask(frame).any()
-                                else "unclassifiable_window"
-                            )
-                        ),
-                    }
-                ],
-                columns=PHASE_COVERAGE_COLUMNS,
-            )
+    flights = stream_flights(fixes_path, _FEATURE_INPUT_COLUMNS)
+    workers = max(1, min(artifact.config.n_jobs, 8))
+    for flight_result in _decoded_flights(flights, artifact, workers):
+        for coverage, points, runs in flight_result:
             coverage_buffer.append(coverage)
             coverage_rows += 1
             if coverage_rows >= _PARQUET_BATCH_ROWS:
@@ -594,10 +777,8 @@ def apply_discipline(
                 )
                 coverage_buffer = []
                 coverage_rows = 0
-            if frame.empty:
+            if points is None:
                 continue
-            points = _phase_points(frame, artifact)
-            runs = _phase_runs(points, artifact.config)
             point_buffer.append(points)
             point_rows += len(points)
             if point_rows >= _PARQUET_BATCH_ROWS:
@@ -609,7 +790,7 @@ def apply_discipline(
                 )
                 point_buffer = []
                 point_rows = 0
-            if not runs.empty:
+            if runs is not None:
                 run_buffer.append(runs)
                 run_rows += len(runs)
                 if run_rows >= _PARQUET_BATCH_ROWS:
@@ -655,6 +836,136 @@ def apply_discipline(
     else:
         coverage_writer.close()
     return points_path, runs_path
+
+
+def _mapping_from_decoded_points(
+    points_path: Path,
+    annotations: pd.DataFrame,
+    manifest: pd.DataFrame,
+) -> dict[int, str]:
+    """Resolve component names from train labels without rereading raw trajectories."""
+    checked = validate_annotation_splits(annotations, manifest)
+    train = checked.loc[checked["split"] == "train"]
+    if train.empty:
+        raise ValueError("manual calibration requires train annotations")
+    flight_ids = train["flight_id"].astype(str).unique().tolist()
+    points = pd.read_parquet(
+        points_path,
+        columns=["source", "flight_id", "segment_id", "t", "phase_raw"],
+        filters=[("flight_id", "in", flight_ids)],
+    )
+    labels = labels_for_points(points, checked, split="train")
+    usable = labels.notna() & points["phase_raw"].notna()
+    if not usable.any():
+        raise ValueError("no classifiable train labels overlap decoded phase points")
+    return semantic_mapping(
+        points.loc[usable, "phase_raw"].to_numpy(dtype=int),
+        labels.loc[usable].to_numpy(dtype=str),
+    )
+
+
+def _remap_points(
+    points: pd.DataFrame,
+    old_mapping: dict[int, str],
+    new_mapping: dict[int, str],
+) -> pd.DataFrame:
+    """Apply a new component permutation without recomputing HMM inference."""
+    out = points.copy()
+    old_probabilities = {
+        component: out[f"p_{state}"].to_numpy(copy=True)
+        for component, state in old_mapping.items()
+    }
+    inverse_new = {state: component for component, state in new_mapping.items()}
+    for state in STATES:
+        out[f"p_{state}"] = old_probabilities[inverse_new[state]]
+    classified = out["phase_raw"].notna()
+    out.loc[~classified, "phase"] = "unclassified"
+    out.loc[classified, "phase"] = [
+        new_mapping[int(component)]
+        for component in out.loc[classified, "phase_raw"].to_numpy(dtype=int)
+    ]
+    return out[PHASE_POINT_COLUMNS]
+
+
+def calibrate_discipline(
+    output_dir: str | Path, annotations: pd.DataFrame
+) -> HMMArtifact:
+    """Apply manual state names and atomically relabel existing decoded artifacts."""
+    root = Path(output_dir)
+    model_dir = root / "model"
+    points_path = root / "phase_points.parquet"
+    runs_path = root / "phase_segments.parquet"
+    artifact = HMMArtifact.load(model_dir)
+    manifest = pd.read_parquet(model_dir / "split_manifest.parquet")
+    new_mapping = _mapping_from_decoded_points(points_path, annotations, manifest)
+    old_mapping = artifact.state_mapping.copy()
+
+    temporary_points = root / ".phase_points.calibrating.parquet"
+    temporary_runs = root / ".phase_segments.calibrating.parquet"
+    temporary_points.unlink(missing_ok=True)
+    temporary_runs.unlink(missing_ok=True)
+    point_writer: Any | None = None
+    run_writer: Any | None = None
+    point_schema: Any | None = None
+    run_schema: Any | None = None
+    point_buffer: list[pd.DataFrame] = []
+    run_buffer: list[pd.DataFrame] = []
+    point_rows = run_rows = 0
+    try:
+        for flight in stream_flights(points_path):
+            remapped = _remap_points(flight, old_mapping, new_mapping)
+            point_buffer.append(remapped)
+            point_rows += len(remapped)
+            for _, segment in remapped.groupby("segment_id", sort=False):
+                runs = _phase_runs(segment, artifact.config)
+                if not runs.empty:
+                    run_buffer.append(runs)
+                    run_rows += len(runs)
+            if point_rows >= _PARQUET_BATCH_ROWS:
+                point_writer, point_schema = _append_parquet(
+                    point_writer,
+                    temporary_points,
+                    pd.concat(point_buffer, ignore_index=True),
+                    point_schema,
+                )
+                point_buffer = []
+                point_rows = 0
+            if run_rows >= _PARQUET_BATCH_ROWS:
+                run_writer, run_schema = _append_parquet(
+                    run_writer,
+                    temporary_runs,
+                    pd.concat(run_buffer, ignore_index=True),
+                    run_schema,
+                )
+                run_buffer = []
+                run_rows = 0
+        if point_buffer:
+            point_writer, point_schema = _append_parquet(
+                point_writer,
+                temporary_points,
+                pd.concat(point_buffer, ignore_index=True),
+                point_schema,
+            )
+        if run_buffer:
+            run_writer, run_schema = _append_parquet(
+                run_writer,
+                temporary_runs,
+                pd.concat(run_buffer, ignore_index=True),
+                run_schema,
+            )
+    finally:
+        if point_writer is not None:
+            point_writer.close()
+        if run_writer is not None:
+            run_writer.close()
+    if point_writer is None or run_writer is None:
+        raise ValueError("calibration produced an empty phase artifact")
+    temporary_points.replace(points_path)
+    temporary_runs.replace(runs_path)
+    artifact.state_mapping = new_mapping
+    artifact.mapping_method = "manual-train-hungarian"
+    artifact.save(model_dir)
+    return artifact
 
 
 def evaluate_discipline(

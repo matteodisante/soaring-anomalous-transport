@@ -15,7 +15,10 @@ from soaring.analysis.segmentation.pipeline import (
     apply_discipline,
     build_fit_sample_manifest,
     build_split_manifest,
+    calibrate_discipline,
+    collect_fit_sample,
     evaluate_discipline,
+    segment_flight,
     split_for_flight,
     validate_annotation_splits,
 )
@@ -189,6 +192,29 @@ def test_fit_sample_uses_complete_sequences_within_memory_cap(tmp_path) -> None:
     assert sample["n_observations"].tolist() == [7]
     assert [len(sequence) for sequence in sequences] == [7]
 
+    one_pass_sample, one_pass_sequences = collect_fit_sample(fixes, manifest, config)
+    pd.testing.assert_frame_equal(one_pass_sample, sample)
+    assert [len(sequence) for sequence in one_pass_sequences] == [7]
+
+
+def test_split_manifest_uses_retained_flight_metadata_when_available(tmp_path) -> None:
+    fixes = tmp_path / "fixes.parquet"
+    pd.DataFrame(
+        {"source": ["paraglider"], "flight_id": ["kept"], "t": [0.0]}
+    ).to_parquet(fixes, index=False)
+    pd.DataFrame(
+        {
+            "source": ["paraglider", "paraglider"],
+            "flight_id": ["kept", "dropped"],
+            "drop_stage": [pd.NA, "duration"],
+            "n_segments_kept": [1.0, 0.0],
+        }
+    ).to_parquet(tmp_path / "flights_meta.parquet", index=False)
+
+    manifest = build_split_manifest(fixes, _config())
+
+    assert manifest["flight_id"].tolist() == ["kept"]
+
 
 def test_manifest_validation_scopes_a_combined_annotation_file() -> None:
     manifest = pd.DataFrame(
@@ -257,6 +283,7 @@ def test_apply_and_evaluate_round_trip_with_parquet_artifacts(tmp_path) -> None:
 
     points_path, runs_path = apply_discipline(fixes, model_dir, root)
     points = pd.read_parquet(points_path)
+    interactive = segment_flight(pd.read_parquet(fixes), artifact)
     annotations = pd.DataFrame(
         {
             "source": "paraglider",
@@ -274,10 +301,81 @@ def test_apply_and_evaluate_round_trip_with_parquet_artifacts(tmp_path) -> None:
     )
 
     assert runs_path.is_file()
+    pd.testing.assert_frame_equal(interactive, points, check_dtype=False)
     assert {"quality_masked", "p_transition", "p_search", "p_climb"}.issubset(
         points.columns
     )
     assert metrics.accuracy == 1.0
+
+
+def test_calibrate_remaps_existing_points_and_posteriors_without_refitting(
+    tmp_path,
+) -> None:
+    rows = []
+    for t in np.arange(0.0, 101.0, 10.0):
+        rows.append(
+            {
+                "source": "paraglider",
+                "flight_id": "one",
+                "segment_id": 0,
+                "t": t,
+                "E": 10.0 * t,
+                "N": 0.0,
+                "z": t,
+                "v_E": 10.0,
+                "v_N": 0.0,
+                "v_z": 1.0,
+                "a_E": 0.0,
+                "a_N": 0.0,
+                "z_reconstructed": False,
+                "edge": False,
+            }
+        )
+    fixes = tmp_path / "fixes.parquet"
+    pd.DataFrame(rows).to_parquet(fixes, index=False)
+    root = tmp_path / "segmentation"
+    model_dir = root / "model"
+    artifact = _artifact()
+    artifact.mapping_method = "provisional-emission-signatures"
+    artifact.save(model_dir)
+    pd.DataFrame(
+        {
+            "source": ["paraglider"],
+            "flight_id": ["one"],
+            "split": ["train"],
+            "priority": [1],
+        }
+    ).to_parquet(model_dir / "split_manifest.parquet", index=False)
+    points_path, _ = apply_discipline(fixes, model_dir, root)
+    before = pd.read_parquet(points_path)
+    usable = before.loc[before["phase_raw"].notna()].copy()
+    manual_names = {0: "climb", 1: "transition", 2: "search"}
+    annotations = pd.DataFrame(
+        {
+            "source": usable["source"],
+            "flight_id": usable["flight_id"],
+            "segment_id": usable["segment_id"],
+            "t_start": usable["t"],
+            "t_end": usable["t"] + 10.0,
+            "state": usable["phase_raw"].astype(int).map(manual_names),
+            "split": "train",
+            "annotator": "tester",
+        }
+    )
+
+    calibrated = calibrate_discipline(root, annotations)
+    after = pd.read_parquet(points_path)
+
+    assert calibrated.mapping_method == "manual-train-hungarian"
+    assert calibrated.state_mapping == manual_names
+    classified = after["phase_raw"].notna()
+    assert after.loc[classified, "phase"].tolist() == [
+        manual_names[int(component)] for component in after.loc[classified, "phase_raw"]
+    ]
+    np.testing.assert_allclose(
+        after.loc[classified, "p_climb"],
+        before.loc[classified, "p_transition"],
+    )
 
 
 def test_apply_records_slow_segments_without_upsampling(tmp_path) -> None:

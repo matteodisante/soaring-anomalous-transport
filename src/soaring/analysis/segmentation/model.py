@@ -48,6 +48,7 @@ class HMMArtifact:
     config: SegmentationConfig
     fit_log_likelihood: float
     selected_restart: int
+    mapping_method: str = "unmapped"
     restart_log_likelihoods: list[float | None] = field(default_factory=list)
     restart_converged: list[bool] = field(default_factory=list)
     n_fit_observations: int = 0
@@ -64,6 +65,7 @@ class HMMArtifact:
             "state_mapping": {
                 str(key): value for key, value in self.state_mapping.items()
             },
+            "mapping_method": self.mapping_method,
             "scaler_mean": self.scaler.mean.tolist(),
             "scaler_scale": self.scaler.scale.tolist(),
             "fit_log_likelihood": self.fit_log_likelihood,
@@ -105,6 +107,7 @@ class HMMArtifact:
             config=config,
             fit_log_likelihood=float(metadata["fit_log_likelihood"]),
             selected_restart=int(metadata["selected_restart"]),
+            mapping_method=str(metadata.get("mapping_method", "legacy-unspecified")),
             restart_log_likelihoods=list(metadata.get("restart_log_likelihoods", [])),
             restart_converged=list(metadata.get("restart_converged", [])),
             n_fit_observations=int(metadata.get("n_fit_observations", 0)),
@@ -129,27 +132,23 @@ def concatenate_sequences(
 ) -> tuple[np.ndarray, list[int]]:
     """Bound fitting memory while preserving every retained sequence boundary.
 
-    Long segments are split into contiguous sub-sequences, which is legitimate because
-    their joins are declared sequence boundaries through ``lengths``.  No observations
-    from two flight segments are ever made adjacent for HMM transition estimation.
+    The pipeline supplies whole valid blocks, never arbitrary prefixes. A block that
+    exceeds either configured cap is refused rather than split, because a synthetic
+    sequence boundary would remove a real HMM transition. No observations from two
+    flight segments are ever made adjacent for HMM transition estimation.
     """
     selected: list[np.ndarray] = []
     lengths: list[int] = []
     used = 0
     for sequence in sequences:
         checked = _check_observations(sequence)
-        for start in range(0, len(checked), config.max_sequence_observations):
-            chunk = checked[start : start + config.max_sequence_observations]
-            remaining = config.max_fit_observations - used
-            if remaining <= 0:
-                break
-            if len(chunk) > remaining:
-                break
-            selected.append(chunk)
-            lengths.append(len(chunk))
-            used += len(chunk)
-        if used >= config.max_fit_observations:
+        if len(checked) > config.max_sequence_observations:
+            raise ValueError("a fitting sequence exceeds max_sequence_observations")
+        if used + len(checked) > config.max_fit_observations:
             break
+        selected.append(checked)
+        lengths.append(len(checked))
+        used += len(checked)
     if not selected:
         raise ValueError("no finite sequences were available for HMM fitting")
     return np.concatenate(selected, axis=0), lengths
@@ -163,39 +162,44 @@ def fit_gaussian_hmm(
     The state mapping is intentionally empty here: semantic labels are fitted only from
     the separately annotated training intervals after this unsupervised step.
     """
-    from hmmlearn.hmm import GaussianHMM
-
     raw, lengths = concatenate_sequences(sequences, config)
     if len(raw) < len(config.states):
         raise ValueError("HMM fitting needs at least one observation per state")
     scaler = Standardizer.fit(raw)
     values = scaler.transform(raw)
-    best_model: Any | None = None
-    best_score = -np.inf
-    selected_restart = -1
-    restart_scores: list[float | None] = []
-    restart_converged: list[bool] = []
-    for restart in range(config.n_restarts):
-        try:
-            model = GaussianHMM(
-                n_components=len(config.states),
-                covariance_type=config.covariance_type,
-                min_covar=config.min_covar,
-                random_state=config.random_seed + restart,
-                n_iter=config.n_iter,
-                tol=config.tol,
-                implementation="log",
+    if config.n_jobs == 1 or config.n_restarts == 1:
+        results = [
+            _fit_restart(restart, values, lengths, config)
+            for restart in range(config.n_restarts)
+        ]
+    else:
+        from joblib import Parallel, delayed, parallel_config
+
+        worker_count = min(config.n_jobs, config.n_restarts)
+        with parallel_config(backend="loky", inner_max_num_threads=1):
+            results = Parallel(
+                n_jobs=worker_count,
+                max_nbytes="16M",
+                mmap_mode="r",
+            )(
+                delayed(_fit_restart)(restart, values, lengths, config)
+                for restart in range(config.n_restarts)
             )
-            model.fit(values, lengths=lengths)
-            score = float(model.score(values, lengths=lengths))
-        except (FloatingPointError, ValueError, np.linalg.LinAlgError):
-            restart_scores.append(None)
-            restart_converged.append(False)
-            continue
-        restart_scores.append(score)
-        restart_converged.append(bool(model.monitor_.converged))
-        if score > best_score:
-            best_model, best_score, selected_restart = model, score, restart
+
+    restart_scores = [result[2] for result in results]
+    restart_converged = [result[3] for result in results]
+    successful = [result for result in results if result[1] is not None]
+    if successful:
+        selected_restart, best_model, score, _ = max(
+            successful,
+            key=lambda result: -np.inf if result[2] is None else result[2],
+        )
+        assert score is not None
+        best_score = score
+    else:
+        best_model = None
+        best_score = -np.inf
+        selected_restart = -1
     if best_model is None:
         raise RuntimeError("all Gaussian-HMM initializations failed")
     return HMMArtifact(
@@ -212,13 +216,81 @@ def fit_gaussian_hmm(
     )
 
 
+def _fit_restart(
+    restart: int,
+    values: np.ndarray,
+    lengths: list[int],
+    config: SegmentationConfig,
+) -> tuple[int, Any | None, float | None, bool]:
+    """Fit one deterministic initialization, suitable for a worker process."""
+    from hmmlearn.hmm import GaussianHMM
+
+    try:
+        model = GaussianHMM(
+            n_components=len(config.states),
+            covariance_type=config.covariance_type,
+            min_covar=config.min_covar,
+            random_state=config.random_seed + restart,
+            n_iter=config.n_iter,
+            tol=config.tol,
+            implementation=config.implementation,
+        )
+        model.fit(values, lengths=lengths)
+        score = float(model.score(values, lengths=lengths))
+    except (FloatingPointError, ValueError, np.linalg.LinAlgError):
+        return restart, None, None, False
+    return restart, model, score, bool(model.monitor_.converged)
+
+
+def heuristic_state_mapping(artifact: HMMArtifact) -> dict[int, str]:
+    """Return an interpretable but explicitly provisional component permutation.
+
+    Gaussian-HMM component numbers carry no semantics.  Before manual annotations are
+    available, this assignment makes diagnostic plots readable by matching three
+    simple flight-mechanics signatures to the standardized emission means: fast and
+    straight for ``transition``, turning without strong lift for ``search``, and
+    positive vertical speed with turning for ``climb``.  It is not ground truth and is
+    replaced by the annotation-based Hungarian assignment for final reporting.
+    """
+    means = np.asarray(artifact.model.means_, dtype=float)
+    if means.shape != (len(artifact.config.states), len(FEATURE_COLUMNS)):
+        raise ValueError("HMM emission means do not match the phase feature schema")
+    vertical, horizontal, turning, coherence = means.T
+    climb_component = int(np.argmax(vertical))
+    remaining = np.asarray(
+        [component for component in range(len(means)) if component != climb_component]
+    )
+    straight_score = horizontal - turning - 0.5 * coherence
+    transition_component = int(remaining[np.argmax(straight_score[remaining])])
+    search_component = int(
+        next(
+            component
+            for component in range(len(means))
+            if component not in {climb_component, transition_component}
+        )
+    )
+    return {
+        transition_component: "transition",
+        search_component: "search",
+        climb_component: "climb",
+    }
+
+
 def decode(
     artifact: HMMArtifact, observations: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return Viterbi components and smoothed posterior state probabilities."""
     values = artifact.scaler.transform(observations)
-    states = artifact.model.predict(values)
-    probabilities = artifact.model.predict_proba(values)
+    # Scaling is faster for repeated EM passes but can underflow on an extreme held-out
+    # sequence.  Decoding is done once per sequence, so prefer the robust log-space
+    # recursions regardless of the implementation used during fitting.
+    fitted_implementation = getattr(artifact.model, "implementation", "log")
+    artifact.model.implementation = "log"
+    try:
+        states = artifact.model.predict(values)
+        probabilities = artifact.model.predict_proba(values)
+    finally:
+        artifact.model.implementation = fitted_implementation
     return np.asarray(states, dtype=int), np.asarray(probabilities, dtype=float)
 
 

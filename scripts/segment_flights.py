@@ -30,6 +30,7 @@ from soaring.analysis.segmentation import load_segmentation_config  # noqa: E402
 from soaring.analysis.segmentation.labels import load_annotations  # noqa: E402
 from soaring.analysis.segmentation.pipeline import (  # noqa: E402
     apply_discipline,
+    calibrate_discipline,
     evaluate_discipline,
     train_discipline,
     validate_annotation_splits,
@@ -50,26 +51,36 @@ def _paths(discipline: str) -> tuple[Path, Path, Path]:
 def main(argv: list[str] | None = None) -> int:
     """Run one explicit phase-segmentation stage."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("action", choices=["train", "apply", "evaluate", "all"])
+    parser.add_argument(
+        "action", choices=["train", "apply", "calibrate", "evaluate", "all"]
+    )
     parser.add_argument("--discipline", choices=list(DISCIPLINES), required=True)
     parser.add_argument("--annotations", type=Path)
     parser.add_argument("--split", choices=["validation", "test"], default="validation")
     parser.add_argument("--config", type=Path)
     args = parser.parse_args(argv)
 
-    needs_annotations = args.action in {"train", "evaluate", "all"}
+    needs_annotations = args.action in {"calibrate", "evaluate", "all"}
     if needs_annotations and args.annotations is None:
-        parser.error("--annotations is required for training and evaluation")
+        parser.error("--annotations is required for calibration and evaluation")
     config = load_segmentation_config(args.config)
     fixes, model_dir, output_dir = _paths(args.discipline)
     annotations = load_annotations(str(args.annotations)) if args.annotations else None
 
     if args.action in {"train", "all"}:
         train_discipline(fixes, model_dir, config, annotations)
-        print(f"{args.discipline}: wrote HMM model to {model_dir}")
+        calibration = "manual" if annotations is not None else "provisional"
+        print(f"{args.discipline}: wrote {calibration} HMM model to {model_dir}")
     if args.action in {"apply", "all"}:
         points, runs = apply_discipline(fixes, model_dir, output_dir)
         print(f"{args.discipline}: wrote {points.name} and {runs.name}")
+    if args.action == "calibrate":
+        assert annotations is not None
+        artifact = calibrate_discipline(output_dir, annotations)
+        print(
+            f"{args.discipline}: calibrated state mapping "
+            f"{artifact.state_mapping} from train annotations"
+        )
     if args.action in {"evaluate", "all"}:
         assert annotations is not None  # constrained by the argument parser above
         annotations = validate_annotation_splits(

@@ -1692,6 +1692,7 @@ docs = [
 [package.dev-dependencies]
 analysis = [
     { name = "hmmlearn" },
+    { name = "joblib" },
     { name = "matplotlib" },
     { name = "pyarrow" },
     { name = "scipy" },
@@ -1722,6 +1723,7 @@ provides-extras = ["docs"]
 [package.metadata.requires-dev]
 analysis = [
     { name = "hmmlearn", specifier = ">=0.3.3" },
+    { name = "joblib", specifier = ">=1.4" },
     { name = "matplotlib", specifier = ">=3.7" },
     { name = "pyarrow", specifier = ">=14.0" },
     { name = "scipy", specifier = ">=1.11" },

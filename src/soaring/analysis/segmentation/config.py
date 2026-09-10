@@ -53,6 +53,8 @@ class SegmentationConfig:
     max_fit_observations: int
     max_sequence_observations: int
     bootstrap_replicates: int
+    n_jobs: int = 1
+    implementation: str = "scaling"
 
     def __post_init__(self) -> None:
         """Check the invariants that make the HMM configuration interpretable."""
@@ -87,11 +89,14 @@ class SegmentationConfig:
             self.max_fit_observations,
             self.max_sequence_observations,
             self.bootstrap_replicates,
+            self.n_jobs,
         )
         if min(integer_limits) < 1:
             raise ValueError("HMM iteration and fitting caps must be positive")
         if self.random_seed < 0:
             raise ValueError("segmentation random seed must be non-negative")
+        if self.implementation not in {"log", "scaling"}:
+            raise ValueError("HMM implementation must be 'log' or 'scaling'")
 
 
 def load_segmentation_config(path: str | Path | None = None) -> SegmentationConfig:
@@ -124,4 +129,6 @@ def load_segmentation_config(path: str | Path | None = None) -> SegmentationConf
         max_fit_observations=int(raw["max_fit_observations"]),
         max_sequence_observations=int(raw["max_sequence_observations"]),
         bootstrap_replicates=int(raw["bootstrap_replicates"]),
+        n_jobs=int(raw.get("n_jobs", 1)),
+        implementation=str(raw.get("implementation", "scaling")),
     )
