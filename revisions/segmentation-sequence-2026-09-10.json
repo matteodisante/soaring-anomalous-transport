@@ -1,0 +1,209 @@
+{
+  "date": "2026-09-10",
+  "note": "Soft decoding policy; no annotation-based accuracy claim. Coverage masks are unchanged. Archive tables use legacy decoding; viewer explicitly uses current sequence policy.",
+  "policy": {
+    "weight": 0.75,
+    "mean_dwell_s": 120.0,
+    "forward_probability": 0.85
+  },
+  "disciplines": {
+    "paragliders": {
+      "coverage": {
+        "cleaned_duration_s": 1731393271.5,
+        "decisions_by_reason": {
+          "classified": 160228411,
+          "feature_edge": 622558,
+          "quality_masked": 11005607
+        },
+        "directory": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/segmentation",
+        "n_cleaned_fixes": 1371539748,
+        "n_cleaned_segments": 180154,
+        "n_decision_points": 171856576,
+        "seconds_by_reason": {
+          "classified": 1602284110.0,
+          "feature_edge": 5034717.0,
+          "outside_decision_cells": 149164.5,
+          "quality_masked": 110056070.0,
+          "skipped_native_cadence": 13869210.0
+        },
+        "sequence_prior_weight": 0.0,
+        "unclassified_decision_percent": 6.766203115788831,
+        "unclassified_duration_percent": 7.456951787050999
+      },
+      "model_metadata_sha256": "a825d260d0129f196f375d498401a4cbf4bccc3e77442d91d3bbf6a07bf950e8",
+      "state_order": [
+        "transition",
+        "search",
+        "climb"
+      ],
+      "learned_transitions": [
+        [
+          0.9395840415113128,
+          0.05824571719520675,
+          0.0021702412934804897
+        ],
+        [
+          0.06730331947139459,
+          0.8429285035010166,
+          0.08976817702758888
+        ],
+        [
+          0.00591846594824349,
+          0.1670336236995872,
+          0.8270479103521694
+        ]
+      ],
+      "regularized_transitions": [
+        [
+          0.9395840415113128,
+          0.05307660283533976,
+          0.007339355653347432
+        ],
+        [
+          0.021794103981549406,
+          0.9007654368472466,
+          0.07744045917120396
+        ],
+        [
+          0.06667592662820838,
+          0.03652878481175685,
+          0.8967952885600348
+        ]
+      ]
+    },
+    "hang gliders": {
+      "coverage": {
+        "cleaned_duration_s": 73393940.0,
+        "decisions_by_reason": {
+          "classified": 6967583,
+          "feature_edge": 24484,
+          "quality_masked": 314436
+        },
+        "directory": "/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc/derived/segmentation",
+        "n_cleaned_fixes": 34590779,
+        "n_cleaned_segments": 6863,
+        "n_decision_points": 7306503,
+        "seconds_by_reason": {
+          "classified": 69675830.0,
+          "feature_edge": 194683.0,
+          "outside_decision_cells": 3657.0,
+          "quality_masked": 3144360.0,
+          "skipped_native_cadence": 375410.0
+        },
+        "sequence_prior_weight": 0.0,
+        "unclassified_decision_percent": 4.638607552751296,
+        "unclassified_duration_percent": 5.065963211676604
+      },
+      "model_metadata_sha256": "c330cbd8086a92cbbf0b2054f6444c6b1bb456c4d1d7ce8add31e0dab386b33a",
+      "state_order": [
+        "transition",
+        "search",
+        "climb"
+      ],
+      "learned_transitions": [
+        [
+          0.9319905407214064,
+          0.04915372614276735,
+          0.018855733135826187
+        ],
+        [
+          0.06265741805776176,
+          0.8136273965099302,
+          0.12371518543230803
+        ],
+        [
+          0.021260036878948403,
+          0.10190136113403232,
+          0.8768386019870194
+        ]
+      ],
+      "regularized_transitions": [
+        [
+          0.9319905407214064,
+          0.05564446182579526,
+          0.01236499745279833
+        ],
+        [
+          0.020944186269621055,
+          0.893440160099475,
+          0.08561565363090393
+        ],
+        [
+          0.06177421665189696,
+          0.028982821879355754,
+          0.9092429614687473
+        ]
+      ]
+    }
+  },
+  "example_flights": [
+    {
+      "flight_id": "20279877",
+      "changes_before": 48,
+      "changes_after": 42,
+      "decisions_changed": 12,
+      "n_decisions": 391,
+      "coverage": {
+        "n_cleaned_fixes": 1953,
+        "unclassified_fix_percent": 0.9216589861751152,
+        "fixes_by_reason": {
+          "classified": 1935,
+          "feature_edge": 18
+        },
+        "cleaned_duration_s": 3904.0,
+        "unclassified_duration_percent": 0.8709016393442623,
+        "seconds_by_reason": {
+          "classified": 3870.0,
+          "feature_edge": 34.0
+        }
+      }
+    },
+    {
+      "flight_id": "20275040",
+      "changes_before": 113,
+      "changes_after": 111,
+      "decisions_changed": 2,
+      "n_decisions": 802,
+      "coverage": {
+        "n_cleaned_fixes": 8015,
+        "unclassified_fix_percent": 1.1852776044915783,
+        "fixes_by_reason": {
+          "classified": 7920,
+          "quality_masked": 60,
+          "feature_edge": 35
+        },
+        "cleaned_duration_s": 8014.0,
+        "unclassified_duration_percent": 1.1729473421512353,
+        "seconds_by_reason": {
+          "classified": 7920.0,
+          "feature_edge": 34.0,
+          "quality_masked": 60.0
+        }
+      }
+    },
+    {
+      "flight_id": "20275270",
+      "changes_before": 93,
+      "changes_after": 93,
+      "decisions_changed": 0,
+      "n_decisions": 910,
+      "coverage": {
+        "n_cleaned_fixes": 9096,
+        "unclassified_fix_percent": 1.8249780123131047,
+        "fixes_by_reason": {
+          "classified": 8930,
+          "quality_masked": 140,
+          "feature_edge": 25,
+          "outside_decision_cells": 1
+        },
+        "cleaned_duration_s": 9095.0,
+        "unclassified_duration_percent": 1.8141836173721826,
+        "seconds_by_reason": {
+          "classified": 8930.0,
+          "feature_edge": 25.0,
+          "quality_masked": 140.0
+        }
+      }
+    }
+  ]
+}

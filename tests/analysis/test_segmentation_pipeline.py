@@ -4,6 +4,7 @@ from dataclasses import replace
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from soaring.analysis.segmentation.config import SegmentationConfig, SplitFractions
 from soaring.analysis.segmentation.labels import validate_annotations
@@ -26,6 +27,8 @@ from soaring.analysis.segmentation.pipeline import (
 
 class _DeterministicModel:
     """Small pickle-safe HMM stand-in for output-contract tests."""
+
+    transmat_ = np.full((3, 3), 1 / 3)
 
     def predict(self, values: np.ndarray) -> np.ndarray:
         return np.arange(len(values)) % 3
@@ -308,8 +311,11 @@ def test_apply_and_evaluate_round_trip_with_parquet_artifacts(tmp_path) -> None:
     assert metrics.accuracy == 1.0
 
 
+@pytest.mark.parametrize("prior_weight", [0.0, 0.75])
 def test_calibrate_remaps_existing_points_and_posteriors_without_refitting(
     tmp_path,
+    prior_weight,
+    monkeypatch,
 ) -> None:
     rows = []
     for t in np.arange(0.0, 101.0, 10.0):
@@ -336,7 +342,12 @@ def test_calibrate_remaps_existing_points_and_posteriors_without_refitting(
     root = tmp_path / "segmentation"
     model_dir = root / "model"
     artifact = _artifact()
+    from soaring.analysis.segmentation.config import SequencePrior
+
     artifact.mapping_method = "provisional-emission-signatures"
+    artifact.config = replace(
+        artifact.config, sequence_prior=SequencePrior(weight=prior_weight)
+    )
     artifact.save(model_dir)
     pd.DataFrame(
         {
@@ -363,7 +374,19 @@ def test_calibrate_remaps_existing_points_and_posteriors_without_refitting(
         }
     )
 
+    from soaring.analysis.segmentation import pipeline as pipeline_module
+
+    calls = []
+    original_decode = pipeline_module._phase_points
+
+    def record_decode(frame, fitted):
+        calls.append(fitted.state_mapping.copy())
+        return original_decode(frame, fitted)
+
+    monkeypatch.setattr(pipeline_module, "_phase_points", record_decode)
     calibrated = calibrate_discipline(root, annotations)
+    assert bool(calls) == bool(prior_weight)
+    assert all(mapping == manual_names for mapping in calls)
     after = pd.read_parquet(points_path)
 
     assert calibrated.mapping_method == "manual-train-hungarian"

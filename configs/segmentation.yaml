@@ -38,3 +38,12 @@ max_fit_observations: 1000000
 # against malformed sequences.
 max_sequence_observations: 6000
 bootstrap_replicates: 1000
+
+# Soft decoding assumptions, not validated behavioural measurements. Existing saved
+# artifacts without this block retain their fitted matrix; the viewer explicitly
+# applies this policy to its on-demand decoding. Use apply --sequence-prior for a
+# separate archive export with identical decoding and persisted provenance.
+sequence_prior:
+  weight: 0.75
+  mean_dwell_s: 120.0
+  forward_probability: 0.85

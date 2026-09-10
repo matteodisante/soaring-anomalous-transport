@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
@@ -228,9 +227,17 @@ def test_load_flight_phases_decodes_only_selected_flight_and_splits_runs(
             base_url="https://x",
         ),
     )
-    artifact = SimpleNamespace(
+    from soaring.analysis.segmentation.config import load_segmentation_config
+    from soaring.analysis.segmentation.model import HMMArtifact
+
+    artifact = HMMArtifact(
+        model=None,
+        scaler=None,
+        state_mapping={},
+        config=load_segmentation_config(),
+        fit_log_likelihood=0.0,
+        selected_restart=0,
         mapping_method="provisional-emission-signatures",
-        config=SimpleNamespace(decision_step_s=10.0),
     )
     monkeypatch.setattr(viewer_data, "_load_phase_artifact", lambda *_: artifact)
     decoded = pd.DataFrame(

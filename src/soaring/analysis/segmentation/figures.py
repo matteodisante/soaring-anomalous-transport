@@ -9,7 +9,7 @@ import pandas as pd
 
 from .features import FEATURE_COLUMNS
 from .labels import STATES
-from .model import HMMArtifact
+from .model import HMMArtifact, effective_transition_matrix
 
 
 def plot_model_diagnostics(artifact: HMMArtifact, output: str | Path) -> None:
@@ -22,7 +22,9 @@ def plot_model_diagnostics(artifact: HMMArtifact, output: str | Path) -> None:
     if set(inverse_mapping) != set(STATES):
         raise ValueError("model diagnostic requires a complete semantic state mapping")
     components = [inverse_mapping[state] for state in STATES]
-    transition_matrix = artifact.model.transmat_[np.ix_(components, components)]
+    transition_matrix = effective_transition_matrix(artifact)[
+        np.ix_(components, components)
+    ]
     figure, axes = plt.subplots(2, 3, figsize=(14, 8.2), constrained_layout=True)
     image = axes[0, 0].imshow(transition_matrix, vmin=0.0, vmax=1.0, cmap="Blues")
     axes[0, 0].set(
@@ -32,7 +34,7 @@ def plot_model_diagnostics(artifact: HMMArtifact, output: str | Path) -> None:
         yticklabels=STATES,
         xlabel="next phase",
         ylabel="current phase",
-        title="HMM transition probabilities",
+        title="Decoding transition probabilities",
     )
     for row in range(len(STATES)):
         for col in range(len(STATES)):

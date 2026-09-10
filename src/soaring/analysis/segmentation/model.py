@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import pickle
 from dataclasses import asdict, dataclass, field
@@ -10,7 +11,7 @@ from typing import Any
 
 import numpy as np
 
-from .config import SegmentationConfig
+from .config import SegmentationConfig, SequencePrior
 from .features import FEATURE_COLUMNS
 
 
@@ -89,6 +90,9 @@ class HMMArtifact:
         metadata = json.loads((target / "metadata.json").read_text(encoding="utf-8"))
         config_data = metadata["config"].copy()
         split_data = config_data.pop("split")
+        config_data["sequence_prior"] = SequencePrior(
+            **config_data.get("sequence_prior", {})
+        )
         config_data["states"] = tuple(config_data["states"])
         from .config import SplitFractions
 
@@ -276,21 +280,62 @@ def heuristic_state_mapping(artifact: HMMArtifact) -> dict[int, str]:
     }
 
 
+def effective_transition_matrix(artifact: HMMArtifact) -> np.ndarray:
+    """Return the soft, semantic sequence policy without mutating the fitted model.
+
+    Persistence is increased toward exp(-decision_step / mean_dwell_s) only when
+    that exceeds learned persistence. Conditional exit probabilities are blended
+    with a cyclic preference; all exceptions remain possible when weight > 0.
+    Applied after state naming, so raw component permutations cannot reverse it.
+    """
+    learned = np.asarray(artifact.model.transmat_, dtype=float)
+    prior = artifact.config.sequence_prior
+    if prior.weight == 0 or not artifact.state_mapping:
+        return learned.copy()
+    inverse = {name: component for component, name in artifact.state_mapping.items()}
+    states = artifact.config.states
+    if set(inverse) != set(states) or set(inverse.values()) != set(range(len(states))):
+        raise ValueError(
+            "sequence prior requires a complete one-to-one semantic mapping"
+        )
+    result = np.zeros_like(learned)
+    persistence = np.exp(-artifact.config.decision_step_s / prior.mean_dwell_s)
+    for index, name in enumerate(states):
+        component = inverse[name]
+        forward = inverse[states[(index + 1) % len(states)]]
+        exits = [j for j in range(len(states)) if j != component]
+        weights = learned[component, exits].copy()
+        weights = weights / weights.sum() if weights.sum() else np.full(len(exits), 0.5)
+        target = np.array(
+            [
+                prior.forward_probability
+                if j == forward
+                else 1 - prior.forward_probability
+                for j in exits
+            ]
+        )
+        weights = (1 - prior.weight) * weights + prior.weight * target
+        stay = learned[component, component]
+        stay += prior.weight * max(0.0, persistence - stay)
+        # An absorbing fitted component must not make the soft policy deterministic.
+        stay = min(stay, 1 - np.finfo(float).eps)
+        result[component, component] = stay
+        result[component, exits] = (1 - stay) * weights
+    return result
+
+
 def decode(
     artifact: HMMArtifact, observations: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return Viterbi components and smoothed posterior state probabilities."""
     values = artifact.scaler.transform(observations)
-    # Scaling is faster for repeated EM passes but can underflow on an extreme held-out
-    # sequence.  Decoding is done once per sequence, so prefer the robust log-space
-    # recursions regardless of the implementation used during fitting.
-    fitted_implementation = getattr(artifact.model, "implementation", "log")
-    artifact.model.implementation = "log"
-    try:
-        states = artifact.model.predict(values)
-        probabilities = artifact.model.predict_proba(values)
-    finally:
-        artifact.model.implementation = fitted_implementation
+    # A shallow model copy keeps shared archive workers and the cached viewer
+    # artifact immutable; both Viterbi and posterior use the same transition matrix.
+    model = copy.copy(artifact.model)
+    model.implementation = "log"
+    model.transmat_ = effective_transition_matrix(artifact)
+    states = model.predict(values)
+    probabilities = model.predict_proba(values)
     return np.asarray(states, dtype=int), np.asarray(probabilities, dtype=float)
 
 

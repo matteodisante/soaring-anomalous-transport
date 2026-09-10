@@ -13,7 +13,7 @@ each function a self-contained entry point that only needs a path.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
@@ -63,6 +63,8 @@ class PhaseTrack:
 
     fixes: pd.DataFrame
     mapping_method: str
+    sequence_prior_weight: float = 0.0
+    coverage: dict = field(default_factory=dict)
 
 
 def load_raw(igc_path: str | Path, cfg: PreprocConfig | None = None) -> RawTrack:
@@ -165,18 +167,28 @@ def load_flight_phases(
     if not metadata_path.is_file() or not model_path.is_file():
         return None
 
+    from ..analysis.segmentation.config import load_segmentation_config
     from ..analysis.segmentation.pipeline import segment_flight
 
     artifact = _load_phase_artifact(
         str(model_dir.resolve()), metadata_path.stat().st_mtime_ns
     )
+    policy = load_segmentation_config().sequence_prior
+    artifact = replace(artifact, config=replace(artifact.config, sequence_prior=policy))
     points = segment_flight(cleaned_fixes, artifact).sort_values(
         ["segment_id", "t"], kind="stable", ignore_index=True
     )
     fixes = phases_on_cleaned_fixes(
         cleaned_fixes, points, decision_step_s=artifact.config.decision_step_s
     )
-    return PhaseTrack(fixes=fixes, mapping_method=artifact.mapping_method)
+    from ..analysis.segmentation.coverage import native_coverage_summary
+
+    return PhaseTrack(
+        fixes=fixes,
+        mapping_method=artifact.mapping_method,
+        sequence_prior_weight=policy.weight,
+        coverage=native_coverage_summary(fixes),
+    )
 
 
 def phases_on_cleaned_fixes(
@@ -195,6 +207,7 @@ def phases_on_cleaned_fixes(
         .copy()
     )
     out["phase"] = "unclassified"
+    out["phase_reason"] = "outside_decision_cells"
     out["track_run"] = 0
     run_offset = 0
     for segment_id, group in out.groupby("segment_id", sort=False):
@@ -206,9 +219,11 @@ def phases_on_cleaned_fixes(
         out.loc[group.index, "track_run"] = runs
         run_offset = int(runs[-1]) + 1
         if points.empty:
+            out.loc[group.index, "phase_reason"] = "no_eligible_decisions"
             continue
         decisions = points.loc[points["segment_id"] == segment_id].sort_values("t")
         if decisions.empty:
+            out.loc[group.index, "phase_reason"] = "no_eligible_decisions"
             continue
         times = decisions["t"].to_numpy(dtype=float)
         indexes = np.searchsorted(times - decision_step_s / 2, t, side="right") - 1
@@ -216,6 +231,10 @@ def phases_on_cleaned_fixes(
         covered = (indexes >= 0) & (t < times[safe] + decision_step_s / 2)
         labels = decisions["phase"].fillna("unclassified").to_numpy()
         out.loc[group.index[covered], "phase"] = labels[safe[covered]]
+        from ..analysis.segmentation.coverage import decision_reasons
+
+        reasons = decision_reasons(decisions)
+        out.loc[group.index[covered], "phase_reason"] = reasons[safe[covered]]
     starts = out["track_run"].ne(out["track_run"].shift()) | out["phase"].ne(
         out["phase"].shift()
     )

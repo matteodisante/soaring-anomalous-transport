@@ -180,6 +180,30 @@ class MainWindow(QMainWindow):
                     status += " HMM phases use the manual train-set calibration."
                 else:
                     status += " HMM phase names are provisional pending annotation."
+                if self._phases is not None:
+                    coverage = self._phases.coverage
+                    percent = coverage.get("unclassified_fix_percent")
+                    if percent is not None:
+                        status += f" Unclassified: {percent:.1f}% of cleaned fixes."
+                        reasons = coverage.get("fixes_by_reason", {})
+                        names = {
+                            "feature_edge": "window edges",
+                            "quality_masked": (
+                                "reconstructed altitude / preprocessing edges"
+                            ),
+                            "no_eligible_decisions": "no eligible decision grid",
+                            "outside_decision_cells": "outside decision cells",
+                            "unavailable_features": "unavailable features",
+                        }
+                        details = [
+                            f"{names.get(k, k)}: {v}"
+                            for k, v in reasons.items()
+                            if k != "classified"
+                        ]
+                        if details:
+                            status += " (" + "; ".join(details) + ")."
+                    if self._phases.sequence_prior_weight:
+                        status += " Soft phase-cycle preference active (provisional)."
             except Exception as exc:
                 status += f" HMM phases could not be decoded ({exc})."
 
@@ -288,6 +312,8 @@ class MainWindow(QMainWindow):
                     if phase_track.mapping_method.startswith("manual")
                     else "provisional state names"
                 )
+                if phase_track.sequence_prior_weight:
+                    qualifier += "; soft cycle prior"
                 ax.set_title(f"Viterbi flight-phase segmentation — {qualifier}")
             elif self._controls.color_mode == "single":
                 color_by = None

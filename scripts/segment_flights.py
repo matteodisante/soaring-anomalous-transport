@@ -16,7 +16,10 @@ It never changes the preprocessed ``fixes.parquet`` input.
 from __future__ import annotations
 
 import argparse
+import json
+import shutil
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import pandas as pd
@@ -52,19 +55,56 @@ def main(argv: list[str] | None = None) -> int:
     """Run one explicit phase-segmentation stage."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
-        "action", choices=["train", "apply", "calibrate", "evaluate", "all"]
+        "action", choices=["train", "apply", "calibrate", "evaluate", "all", "coverage"]
     )
     parser.add_argument("--discipline", choices=list(DISCIPLINES), required=True)
     parser.add_argument("--annotations", type=Path)
     parser.add_argument("--split", choices=["validation", "test"], default="validation")
     parser.add_argument("--config", type=Path)
+    parser.add_argument(
+        "--sequence-prior",
+        action="store_true",
+        help="Apply the configured soft sequence policy to a separate export",
+    )
     args = parser.parse_args(argv)
 
+    if args.sequence_prior and args.action not in {
+        "apply",
+        "coverage",
+        "calibrate",
+        "evaluate",
+    }:
+        parser.error(
+            "--sequence-prior supports apply, coverage, calibrate and evaluate"
+        )
     needs_annotations = args.action in {"calibrate", "evaluate", "all"}
     if needs_annotations and args.annotations is None:
         parser.error("--annotations is required for calibration and evaluation")
     config = load_segmentation_config(args.config)
     fixes, model_dir, output_dir = _paths(args.discipline)
+    if args.sequence_prior:
+        output_dir = output_dir / "sequence-prior"
+        original_model = model_dir
+        model_dir = output_dir / "model"
+        if args.action == "apply":
+            from soaring.analysis.segmentation.model import HMMArtifact
+
+            artifact = HMMArtifact.load(original_model)
+            artifact = replace(
+                artifact,
+                config=replace(artifact.config, sequence_prior=config.sequence_prior),
+            )
+            artifact.save(model_dir)
+            for manifest in original_model.glob("*manifest.parquet"):
+                shutil.copy2(manifest, model_dir / manifest.name)
+    if args.action == "coverage":
+        from soaring.analysis.segmentation.coverage import archive_coverage_summary
+
+        summary = archive_coverage_summary(output_dir)
+        text = json.dumps(summary, indent=2, sort_keys=True) + "\n"
+        (output_dir / "coverage_summary.json").write_text(text, encoding="utf-8")
+        print(text)
+        return 0
     annotations = load_annotations(str(args.annotations)) if args.annotations else None
 
     if args.action in {"train", "all"}:

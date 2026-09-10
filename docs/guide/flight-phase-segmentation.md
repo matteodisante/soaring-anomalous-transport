@@ -158,3 +158,102 @@ in the viewer.
   occupancies, run and censoring counts and uncensored mean durations, plus every restart
   score and convergence flag. The reporting command also writes the model matrices, example trajectories,
   test confusion matrices and the generated thesis metric table.
+
+## Soft sequence preference and coverage audit (2026-09-10)
+
+The viewer now explicitly uses `sequence_prior` from `configs/segmentation.yaml`
+when decoding the selected flight. State names still require manual validation.
+The preference is **transition → search → climb → transition**, with persistence
+within each phase. It changes Viterbi decoding and the posterior together, not a
+post-hoc recolouring or a deletion of short runs. Every exceptional transition
+remains possible; no minimum phase duration is imposed.
+
+For a learned transition row, let `s` be its self-transition probability and `q`
+its conditional distribution given an exit. The configured weight is `w = 0.75`.
+The decoding row uses:
+
+- `s_new = s + w * max(0, exp(-decision_step_s / 120 s) - s)`;
+- `q_new = (1 - w) * q + w * q_cycle`, where `q_cycle` assigns 0.85 to the
+  next phase in the cycle and 0.15 to the other exit;
+- off-diagonal probabilities `(1 - s_new) * q_new`.
+
+These are provisional modelling choices, not fitted or validated behavioural
+frequencies. The 120-s scale is a soft persistence target, not a measured dwell time.
+The policy is applied after semantic naming and is invariant to raw component IDs.
+Before names are assigned, decoding uses the learned matrix. If an artifact with
+an active policy is manually calibrated, its saved features are decoded again:
+simply renaming existing predictions would leave the wrong semantic transition prior.
+
+The existing paraglider model favoured climb → search (0.1670 per 10-s decision)
+over climb → transition (0.0059). The policy changes those probabilities to 0.0365
+and 0.0667, respectively, and increases climb persistence from 0.8270 to 0.8968.
+The narrow climb emission distribution discussed above still matters: this policy
+cannot guarantee that every visually plausible climb is recognised.
+
+On three already identified retained flights, the number of adjacent classified
+phase changes was 48 → 42 (`20279877`), 113 → 111 (`20275040`), and 93 → 93
+(`20275270`). Acquisition gaps and unclassified intervals are excluded from those
+counts. This checks the effect on fragmentation; **it is not an accuracy score**.
+The cropped screenshots do not provide readable flight IDs, so these are separate
+reproducible examples, not a claim to have identified every screenshot interval.
+
+Legacy model metadata without a `sequence_prior` field preserves its original
+transition matrix. Existing archive phase tables are unchanged. To export the same
+policy the viewer uses into a separate archive subdirectory:
+
+```bash
+uv run python scripts/segment_flights.py apply --discipline paragliders --sequence-prior
+# writes derived/segmentation/sequence-prior/{model,phase_*.parquet}
+# Calibrate or evaluate that variant with the same flag and manual annotations:
+uv run python scripts/segment_flights.py evaluate --discipline paragliders \
+  --sequence-prior --annotations /path/to/phase_annotations.csv --split validation
+```
+
+The variant stores its model, policy configuration and fitting manifests together;
+it does not replace the legacy tables or refit emissions. Newly trained artifacts
+store the configured policy for subsequent decoding. Model diagnostic transition
+plots show the effective decoding matrix. Fit log likelihood still describes the
+original emission/transition fit, not validation of the added policy.
+
+### What unclassified means
+
+There is **no posterior-confidence cutoff**. Every valid feature window receives
+one of the three phases. Grey denotes unavailable inputs/support:
+
+- a centred 30-s feature window extending past a preprocessing segment boundary;
+- a feature window touching `z_reconstructed` or preprocessing `edge` fixes;
+- a native cadence above the 10-s eligibility limit, so no decision grid is emitted;
+- a cleaned tail beyond the final half-open decision cell.
+
+The viewer reports the percentage of its **cleaned fixes** and counts by cause.
+For an archive, use the streaming audit, which writes `coverage_summary.json`:
+
+```bash
+uv run python scripts/segment_flights.py coverage --discipline paragliders
+uv run python scripts/segment_flights.py coverage --discipline "hang gliders"
+# Add --sequence-prior to audit an already generated variant.
+```
+
+The complete archive audit on 2026-09-10 found:
+
+| Denominator | Paragliders | Hang gliders |
+| --- | ---: | ---: |
+| Non-classified HMM decisions / all emitted HMM decisions | 6.7662% | 4.6386% |
+| Non-classified duration / all retained cleaned-segment duration | 7.4570% | 5.0660% |
+| Emitted HMM decisions | 171,856,576 | 7,306,503 |
+
+The duration denominator includes slow segments omitted from the decision grid,
+excludes acquisition gaps, and clips decision cells at segment boundaries. It
+measures time coverage, not the fraction of flights, segments, or native fixes.
+Breakdown as percentages of that total cleaned duration:
+
+| Exclusion | Paragliders | Hang gliders |
+| --- | ---: | ---: |
+| Windows touching reconstructed altitude / preprocessing edges | 6.3565% | 4.2842% |
+| Ineligible native cadence | 0.8010% | 0.5115% |
+| Feature-window boundaries | 0.2908% | 0.2653% |
+| Tails outside decision cells | 0.0086% | 0.0050% |
+
+The masks are unchanged by the sequence policy. Machine-readable counts, model
+metadata hashes, transition matrices and example-flight results are in
+[`revisions/segmentation-sequence-2026-09-10.json`](../../revisions/segmentation-sequence-2026-09-10.json).

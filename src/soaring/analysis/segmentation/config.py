@@ -34,6 +34,35 @@ class SplitFractions:
 
 
 @dataclass(frozen=True)
+class SequencePrior:
+    """Soft persistence and cyclic exit preference, independent of component IDs.
+
+    Weight zero reproduces the fitted transition matrix exactly. Positive weight
+    blends exit probabilities toward transition -> search -> climb -> transition.
+    The dwell scale supplies a soft persistence floor, not a minimum phase length.
+    These are modelling assumptions awaiting annotation-based validation.
+    """
+
+    weight: float = 0.0
+    mean_dwell_s: float = 120.0
+    forward_probability: float = 0.85
+
+    def __post_init__(self) -> None:
+        """Keep exceptions possible and reject invalid probability/time scales."""
+        if not all(
+            isfinite(v)
+            for v in (self.weight, self.mean_dwell_s, self.forward_probability)
+        ):
+            raise ValueError("sequence prior parameters must be finite")
+        if not 0 <= self.weight <= 1 or self.mean_dwell_s <= 0:
+            raise ValueError(
+                "sequence weight must be in [0, 1] and dwell time positive"
+            )
+        if not 0.5 < self.forward_probability < 1:
+            raise ValueError("forward probability must lie strictly between 0.5 and 1")
+
+
+@dataclass(frozen=True)
 class SegmentationConfig:
     """All fixed choices of the Gaussian-HMM segmentation protocol."""
 
@@ -55,6 +84,7 @@ class SegmentationConfig:
     bootstrap_replicates: int
     n_jobs: int = 1
     implementation: str = "scaling"
+    sequence_prior: SequencePrior = SequencePrior()
 
     def __post_init__(self) -> None:
         """Check the invariants that make the HMM configuration interpretable."""
@@ -131,4 +161,5 @@ def load_segmentation_config(path: str | Path | None = None) -> SegmentationConf
         bootstrap_replicates=int(raw["bootstrap_replicates"]),
         n_jobs=int(raw.get("n_jobs", 1)),
         implementation=str(raw.get("implementation", "scaling")),
+        sequence_prior=SequencePrior(**raw.get("sequence_prior", {})),
     )

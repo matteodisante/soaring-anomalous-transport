@@ -6,6 +6,7 @@ import hashlib
 import json
 from collections.abc import Iterator
 from concurrent.futures import ProcessPoolExecutor
+from dataclasses import replace
 from itertools import islice
 from pathlib import Path
 from typing import Any
@@ -899,6 +900,7 @@ def calibrate_discipline(
     manifest = pd.read_parquet(model_dir / "split_manifest.parquet")
     new_mapping = _mapping_from_decoded_points(points_path, annotations, manifest)
     old_mapping = artifact.state_mapping.copy()
+    calibrated = replace(artifact, state_mapping=new_mapping)
 
     temporary_points = root / ".phase_points.calibrating.parquet"
     temporary_runs = root / ".phase_segments.calibrating.parquet"
@@ -913,7 +915,18 @@ def calibrate_discipline(
     point_rows = run_rows = 0
     try:
         for flight in stream_flights(points_path):
-            remapped = _remap_points(flight, old_mapping, new_mapping)
+            if artifact.config.sequence_prior.weight:
+                # Semantic transition preferences change when names are calibrated.
+                # Re-decode saved features, preserving segment and quality boundaries.
+                remapped = pd.concat(
+                    [
+                        _phase_points(segment.reset_index(drop=True), calibrated)
+                        for _, segment in flight.groupby("segment_id", sort=False)
+                    ],
+                    ignore_index=True,
+                )
+            else:
+                remapped = _remap_points(flight, old_mapping, new_mapping)
             point_buffer.append(remapped)
             point_rows += len(remapped)
             for _, segment in remapped.groupby("segment_id", sort=False):

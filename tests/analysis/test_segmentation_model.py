@@ -110,3 +110,97 @@ def test_provisional_mapping_matches_flight_mechanics_signatures(
         1: "search",
         2: "climb",
     }
+
+
+def _policy_artifact(config):
+    from hmmlearn.hmm import GaussianHMM
+
+    model = GaussianHMM(n_components=3, covariance_type="full", init_params="")
+    model.startprob_ = np.full(3, 1 / 3)
+    model.transmat_ = np.full((3, 3), 0.3)
+    np.fill_diagonal(model.transmat_, 0.4)
+    model.means_ = np.array(
+        [[0.0, 0.0, 0.0, 0.0], [3.0, 0.0, 0.0, 0.0], [6.0, 0.0, 0.0, 0.0]]
+    )
+    model.covars_ = np.array([np.eye(4)] * 3)
+    return HMMArtifact(
+        model=model,
+        scaler=Standardizer(np.zeros(4), np.ones(4)),
+        state_mapping={0: "transition", 1: "search", 2: "climb"},
+        config=config,
+        fit_log_likelihood=0.0,
+        selected_restart=0,
+    )
+
+
+def test_soft_cycle_reduces_ambiguous_fragments_but_allows_supported_exceptions(config):
+    from soaring.analysis.segmentation.config import SequencePrior
+    from soaring.analysis.segmentation.model import effective_transition_matrix
+
+    artifact = _policy_artifact(config)
+    observations = np.zeros((61, 4))
+    observations[:, 0] = (
+        [6.0] * 12 + [3.5] + [6.0] * 12 + [0.0] * 12 + [3.0] * 12 + [6.0] * 12
+    )
+    original = artifact.model.transmat_.copy()
+    baseline, _ = decode(artifact, observations)
+    policy = replace(
+        artifact, config=replace(config, sequence_prior=SequencePrior(weight=0.75))
+    )
+    states, posterior = decode(policy, observations)
+    assert baseline[12] == 1
+    assert states[12] == 2
+    assert np.sum(np.diff(states) != 0) < np.sum(np.diff(baseline) != 0)
+    np.testing.assert_allclose(posterior.sum(axis=1), 1.0)
+    np.testing.assert_array_equal(artifact.model.transmat_, original)
+    matrix = effective_transition_matrix(policy)
+    assert (matrix > 0).all()
+    np.testing.assert_allclose(matrix.sum(axis=1), 1.0)
+    for state in range(3):
+        assert matrix[state, state] > original[state, state]
+        assert matrix[state, (state + 1) % 3] > matrix[state, (state + 2) % 3]
+    # A sustained climb -> search exception remains admissible.
+    exception = np.zeros((40, 4))
+    exception[:20, 0] = 6.0
+    exception[20:, 0] = 3.0
+    exception_states, _ = decode(policy, exception)
+    assert exception_states[10] == 2 and exception_states[30] == 1
+
+
+def test_sequence_policy_is_invariant_to_raw_component_permutation(config):
+    from soaring.analysis.segmentation.config import SequencePrior
+    from soaring.analysis.segmentation.model import effective_transition_matrix
+
+    artifact = _policy_artifact(
+        replace(config, sequence_prior=SequencePrior(weight=0.75))
+    )
+    matrix = effective_transition_matrix(artifact)
+    permutation = np.array([2, 0, 1])
+    permuted = _policy_artifact(artifact.config)
+    permuted.state_mapping = {
+        i: artifact.state_mapping[int(j)] for i, j in enumerate(permutation)
+    }
+    permuted.model.transmat_ = artifact.model.transmat_[
+        np.ix_(permutation, permutation)
+    ]
+    np.testing.assert_allclose(
+        effective_transition_matrix(permuted), matrix[np.ix_(permutation, permutation)]
+    )
+
+
+def test_legacy_artifact_has_no_implicit_sequence_policy(tmp_path, config):
+    import json
+
+    from soaring.analysis.segmentation.model import effective_transition_matrix
+
+    artifact = _policy_artifact(config)
+    artifact.save(tmp_path)
+    path = tmp_path / "metadata.json"
+    metadata = json.loads(path.read_text())
+    del metadata["config"]["sequence_prior"]
+    path.write_text(json.dumps(metadata))
+    restored = HMMArtifact.load(tmp_path)
+    assert restored.config.sequence_prior.weight == 0
+    np.testing.assert_array_equal(
+        effective_transition_matrix(restored), artifact.model.transmat_
+    )
