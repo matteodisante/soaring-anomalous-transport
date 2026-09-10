@@ -116,7 +116,7 @@ empirical organisation of the soaring cycle.
 
 Conditional on $Q_t=i$, the adopted emission density is the multivariate Gaussian
 \begin{equation}
-  b_i(\mathbf x)=p(\mathbf X_t=\mathbf x\mid Q_t=i)
+  b_i(\mathbf x)=f_{\mathbf X_t\mid Q_t}(\mathbf x\mid i)
   =\frac{\exp\!\left[-\tfrac12(\mathbf x-\boldsymbol\mu_i)^\mathsf T
        \Sigma_i^{-1}(\mathbf x-\boldsymbol\mu_i)\right]}
        {(2\pi)^{d/2}|\Sigma_i|^{1/2}},\qquad d=4.
@@ -146,7 +146,13 @@ rather than enumerating paths:
  \mathcal L=\sum_i\alpha_T(i).
  \label{eq:forward}
 \end{equation}
-The corresponding backward recursion gives the posterior occupation probability
+The corresponding backward recursion is
+\begin{equation}
+ \beta_T(i)=1,\qquad
+ \beta_t(i)=\sum_j a_{ij}b_j(\mathbf x_{t+1})\beta_{t+1}(j).
+ \label{eq:backward}
+\end{equation}
+Together the recursions give the posterior occupation probability
 $\gamma_t(i)=\Pr(Q_t=i\mid\mathbf x_{1:T})=\alpha_t(i)\beta_t(i)/\mathcal L$.
 It quantifies uncertainty even where a single phase label is ultimately required.
 
@@ -159,12 +165,20 @@ forward--backward supplies $\gamma_t(i)$ and the two-time posterior
 $\xi_t(i,j)=\Pr(Q_t=i,Q_{t+1}=j\mid\mathbf x_{1:T})$. In the M step these expected hidden
 counts update, for example,
 \begin{equation}
+ \pi_i=\gamma_1(i),\qquad
  a_{ij}=\frac{\sum_{t=1}^{T-1}\xi_t(i,j)}
                  {\sum_{t=1}^{T-1}\gamma_t(i)},\qquad
  \boldsymbol\mu_i=\frac{\sum_t\gamma_t(i)\mathbf x_t}{\sum_t\gamma_t(i)},
  \label{eq:baumwelch}
 \end{equation}
-with $\Sigma_i$ the analogue weighted covariance around $\boldsymbol\mu_i$. The likelihood
+and
+\begin{equation}
+ \Sigma_i=\frac{\sum_t\gamma_t(i)
+ (\mathbf x_t-\boldsymbol\mu_i)(\mathbf x_t-\boldsymbol\mu_i)^\mathsf T}
+ {\sum_t\gamma_t(i)}.
+ \label{eq:baumwelchcovariance}
+\end{equation}
+The likelihood
 does not decrease at each EM iteration, but can have local optima; ten fixed-seed
 initialisations are therefore fitted and the one with the largest training likelihood is
 retained. Sequence lengths are passed explicitly to the fitting routine, so the final
@@ -194,7 +208,8 @@ The ordinary HMM has limits that the output must not conceal. It assumes station
 emissions within a phase and conditional independence of observations given $Q_t$; rolling
 features make the latter only approximate. It also imposes a geometric dwell-time law,
 \begin{equation}
- \Pr(D_i=d)=a_{ii}^{d-1}(1-a_{ii}),\qquad
+ \Pr(D_i=m\Delta)=a_{ii}^{m-1}(1-a_{ii}),\qquad m=1,2,\ldots,
+ \qquad
  \mathbb E[D_i]=\frac{\Delta}{1-a_{ii}}.
  \label{eq:hmmsojourn}
 \end{equation}
@@ -224,11 +239,114 @@ matrix, Gaussian emission parameters, posterior uncertainty, phase occupancy and
 distributions. No universal pass/fail accuracy or expected time budget is imposed; those
 quantities are empirical results of this archive.
 
-The two persistent artefacts are a point table, carrying the decision time, four features,
-Viterbi phase and three posteriors, and a run table, carrying each consecutive phase,
-its duration and its boundary-censoring flags. They are written separately from
-\path{fixes.parquet}, together with the model, scaler, state mapping, configuration and
-flight-split manifest. The conversion from an unsegmented trajectory to the three phase
+
+\subsection{Archive-scale fit and provisional segmentation}
+\label{sec:phaseprovisional}
+\IfFileExists{generated/segmentation.tex}{%
+The unsupervised fit and archive-wide decoding have been run independently for both
+disciplines.  Table~\ref{tab:segmentationfit} records the actual sample sizes rather than
+only the configured caps.  The paraglider fit contains
+\StatSegParaFitObservations{} decision points from \StatSegParaFitSequences{} contiguous
+blocks and \StatSegParaFitFlights{} distinct flights; the hang-glider fit contains
+\StatSegHangFitObservations{} points from \StatSegHangFitSequences{} blocks and
+\StatSegHangFitFlights{} flights.  These are approximately \SI{2675}{hours} and
+\SI{2778}{hours} of decision-grid time, respectively.  The small shortfall from the
+one-million-point cap for paragliders is deliberate: the last complete block that would
+exceed the cap is omitted instead of being cut at a fictitious HMM boundary.
+
+The selected models have then decoded the full eligible archives, producing
+\StatSegParaDecodedPoints{} paraglider and \StatSegHangDecodedPoints{} hang-glider
+decision points.  The different scales reflect the underlying archive sizes, not a
+discipline-specific sampling rule.  This establishes that the examples below are not
+small demonstration fits: fitting is flight-balanced and bounded for tractability, while
+application covers every eligible preprocessed segment.
+
+At this stage only the component-to-name permutation remains provisional.  To make the
+unsupervised output inspectable before annotation, the component with the largest
+standardized mean vertical speed is called climb, the faster and straighter remaining
+component transition, and the third search.  This mechanics-based convention changes
+neither the fitted Gaussian distributions nor the Viterbi component path, but it must be
+replaced by the train-only manual assignment before accuracy, confusion matrices or final
+semantic claims are reported.  Figures~\ref{fig:segmentationmodelpara}--
+\ref{fig:segmentationexamplehang} are therefore diagnostics of the completed numerical
+segmentation, not substitutes for held-out validation.
+}{}
+
+\IfFileExists{generated/segmentation_fit_table.tex}{%
+  \input{generated/segmentation_fit_table}%
+}{}
+
+\IfFileExists{generated/segmentation_table.tex}{%
+  \input{generated/segmentation_table}%
+}{}
+
+\IfFileExists{generated/segmentation_model_para.pdf}{%
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.97\textwidth]{generated/segmentation_model_para.pdf}
+  \caption{Fitted paraglider HMM diagnostics:
+  transition probabilities, standardized Gaussian emission means and covariances, and
+  training likelihood per observation for all ten deterministic initializations.  State
+  names use the provisional emission-signature mapping described in
+  Sec.~\ref{sec:phaseprovisional}.}
+  \label{fig:segmentationmodelpara}
+\end{figure}
+}{}
+
+\IfFileExists{generated/segmentation_model_hang.pdf}{%
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.97\textwidth]{generated/segmentation_model_hang.pdf}
+  \caption{Fitted hang-glider HMM diagnostics, with the same quantities, ordering and
+  provisional state-naming convention as Fig.~\ref{fig:segmentationmodelpara}.  The
+  separate emission and transition parameters are essential: no fitted parameter or
+  scaler is shared between disciplines.}
+  \label{fig:segmentationmodelhang}
+\end{figure}
+}{}
+
+\IfFileExists{generated/segmentation_example_para.pdf}{%
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.97\textwidth]{generated/segmentation_example_para.pdf}
+  \caption{A held-out paraglider trajectory after Viterbi decoding.  The plan view and
+  altitude profile are coloured by phase; the middle panels show the four continuous
+  observations responsible for the separation; the bottom panel retains all smoothed
+  posterior probabilities.  Grey samples are explicitly non-classifiable windows.}
+  \label{fig:segmentationexamplepara}
+\end{figure}
+}{}
+
+\IfFileExists{generated/segmentation_example_hang.pdf}{%
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.97\textwidth]{generated/segmentation_example_hang.pdf}
+  \caption{The corresponding held-out hang-glider trajectory diagnostic.  Its HMM,
+  standardizer and Viterbi path are independent of the paraglider model; colours retain
+  the common provisional semantic convention to make the panels comparable.}
+  \label{fig:segmentationexamplehang}
+\end{figure}
+}{}
+
+\IfFileExists{generated/segmentation_confusion_para.pdf}{%
+\begin{figure*}[tb]
+  \centering
+  \includegraphics[width=0.42\textwidth]{generated/segmentation_confusion_para.pdf}
+  \IfFileExists{generated/segmentation_confusion_hang.pdf}{%
+    \includegraphics[width=0.42\textwidth]{generated/segmentation_confusion_hang.pdf}%
+  }{}
+  \caption{Confusion matrices on the untouched manually annotated test intervals for
+  paragliders (left) and hang gliders (right).}
+  \label{fig:segmentationconfusion}
+\end{figure*}
+}{}
+
+The persistent outputs are a point table, carrying the decision time, four features,
+Viterbi phase and three posteriors; a run table, carrying each consecutive phase, its
+duration and boundary-censoring flags; and a coverage table that also records segments
+too sparse to classify. They are written separately from \path{fixes.parquet}, together
+with the model, scaler, state mapping, configuration, flight-split manifest and exact
+fitting-sample manifest. The conversion from an unsegmented trajectory to the three phase
 sequences is therefore reproducible and auditable rather than a visual classification.
 
 \section{Phase-resolved observables}

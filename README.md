@@ -11,7 +11,8 @@ the code that produced every number in it. They live in one repository on purpos
 measurement is ever typed into the thesis by hand. Every number is written by a script,
 and if a script and the thesis disagree, the build fails instead of quietly going stale.
 
-**Work in progress.** Three chapters are measured and written; the fourth is a plan.
+**Work in progress.** Three chapters are measured; the fourth now has an implemented,
+tested segmentation pipeline and awaits the final manual-label evaluation.
 
 📄 [`thesis/main.pdf`](thesis/main.pdf) · 📖 [Documentation](https://matteodisante.github.io/soaring-anomalous-transport/)
 
@@ -22,7 +23,7 @@ and if a script and the thesis disagree, the build fails instead of quietly goin
 | 1 | Introduction | written |
 | 2 | The dataset | **measured and written.** Acquisition from the FFVL CFD, and the seven-stage pre-processing pipeline that turns roughly 190 000 raw `.igc` tracklogs into the analysis ensemble. |
 | 3 | Global transport | **measured and written.** Everything the un-segmented ensemble can be asked, and the class of transport it fixes. |
-| 4 | Flight phases | **a plan so far.** Segmentation into climb, glide and search, and the modelling it would enable; none of it is built yet. |
+| 4 | Flight phases | **method and code implemented.** Separate continuous Gaussian HMMs segment paraglider and hang-glider trajectories into transition, search and climb; final reported metrics require the held-out manual annotations. |
 
 Appendices 2.A–2.B (PSD, geodesy), 3.A (CTRW), and an implementation appendix per chapter.
 
@@ -56,9 +57,9 @@ would not:
 - The scaling law only holds approximately over the fitted window. The exponent shifts
   when the fitted range is halved by more than the sampling error would predict, and the
   fit is built to return one exponent, not to detect how many regimes are really there.
-- Whether flight legs are correlated with each other is still open. Testing that needs a
-  segmentation into legs, which doesn't exist yet. Nothing here shows, for instance, that
-  a glide tends to point at the next thermal.
+- Whether flight legs are correlated with each other is still open. The segmentation
+  pipeline needed to test it now exists, but no claim is made until its held-out manual
+  validation and the downstream phase-resolved analysis have been run.
 
 ## What is in the repository
 
@@ -68,16 +69,17 @@ src/soaring/  the installable package: acquisition, pre-processing, estimators
   acquisition/ffvl/     .igc download and cataloguing from the two CFD sites
   analysis/preproc/     the seven-stage cleaning pipeline, one module per stage
   analysis/observables/ the transport estimators, and the synthetic nulls they are validated against
+  analysis/segmentation/ continuous features, Gaussian HMM fitting, decoding and validation
   analysis/figures/     plotting code shared by more than one script, kept apart from the estimators
   analysis/stats/       the clustered bootstrap
   reporting/            what the reporting scripts share: the disciplines, the macro contract
 scripts/      the command-line entry points that drive the package
   reporting/            grouped by which thesis chapter each script feeds:
-                        ch2_dataset/, ch3_global_transport/, plus checks/ and tools/
+                        ch2_dataset/, ch3_global_transport/, ch4_flight_phases/, plus checks/ and tools/
 docs/         the published documentation (MkDocs + mkdocstrings)
 configs/      every threshold, kept out of the code: acquisition and pre-processing YAML
 data/         the only versioned data: two per-season summary CSVs and a basemap
-tests/        557 tests, mirroring src/ module for module
+tests/        tests mirroring src/ module for module
 revisions/    the annotated PDFs and answers from the two review passes
 global_analysis_sketches/  the July 2026 specification the analysis was built from
 ```

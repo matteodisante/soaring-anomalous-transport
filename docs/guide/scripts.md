@@ -24,8 +24,9 @@ dataset", and `ch3_global_transport/` for Chapter 3, "Global transport" — plus
 therefore sit side by side in the same chapter folder (`measure_msd.py` and
 `generate_msd_figure.py` are both under `ch3_global_transport/`), not in a `passes/` or
 `reductions/` folder of their own: that distinction lives on this page, in the section
-headings below, rather than in the filesystem. Chapter 4, "Flight phases", has no folder yet
-because it has no script yet — it is a plan, not a result.
+headings below, rather than in the filesystem. Chapter 4, "Flight phases", has its own
+`ch4_flight_phases/` reporting folder; the archive-scale fitting and decoding entry point
+is `scripts/segment_flights.py`.
 
 `scripts/regenerate.sh` runs all eighteen in the one order that is correct, and its header
 explains why the order is a constraint rather than a convenience. Every script that touches the
