@@ -50,6 +50,7 @@ class MainWindow(QMainWindow):
         self._flight_id: str | None = None
         self._raw: data.RawTrack | None = None
         self._cleaned: FlightResult | None = None
+        self._phases: data.PhaseTrack | None = None
         self._frame: LocalFrame | None = None
         # The plotted data's own (100 %-zoom) axis limits, captured right after each
         # full redraw so the 3D zoom slider has a fixed baseline to scale from -- set
@@ -128,6 +129,7 @@ class MainWindow(QMainWindow):
         self._discipline = discipline
         self._flight_id = flight_id
         self._cleaned = None
+        self._phases = None
         self._frame = None
 
         try:
@@ -159,6 +161,20 @@ class MainWindow(QMainWindow):
                 f"{igc_path.name}: the pipeline raised while cleaning it ({exc}); "
                 "showing raw only."
             )
+
+        if self._cleaned is not None and self._cleaned.kept:
+            try:
+                self._phases = data.load_flight_phases(self._cleaned.fixes, discipline)
+                if self._phases is None:
+                    status += " HMM phase model unavailable; using segment colours."
+                elif self._phases.fixes.empty:
+                    status += " No HMM-classifiable decision points."
+                elif self._phases.mapping_method.startswith("manual"):
+                    status += " HMM phases use the manual train-set calibration."
+                else:
+                    status += " HMM phase names are provisional pending annotation."
+            except Exception as exc:
+                status += f" HMM phases could not be decoded ({exc})."
 
         if self._frame is None:
             # No pipeline-produced frame -- either it never ran that far, or it
@@ -215,20 +231,57 @@ class MainWindow(QMainWindow):
                 raw_table = data.raw_to_enu(self._raw, frame)
 
         cleaned_table = None
+        color_by: str | None = "segment_id"
+        group_by: str | None = None
+        color_map = None
         show_cleaned = self._controls.show_cleaned
         if show_cleaned and self._cleaned is not None and self._cleaned.kept:
+            phase_track = self._phases
+            phase_mode = (
+                self._controls.color_mode == "phase"
+                and phase_track is not None
+                and not phase_track.fixes.empty
+            )
+            cleaned_fixes = (
+                phase_track.fixes
+                if phase_mode and phase_track is not None
+                else self._cleaned.fixes
+            )
             if frame_kind == "geographic":
                 # cleaned.kept implies frame is not None: both are set together, at
                 # (and only past) pipeline stage (v) -- see data.frame_from_meta.
                 assert frame is not None
-                cleaned_table = data.cleaned_to_geographic(self._cleaned.fixes, frame)
+                cleaned_table = data.cleaned_to_geographic(cleaned_fixes, frame)
             else:
-                cleaned_table = self._cleaned.fixes
+                cleaned_table = cleaned_fixes
+            if phase_mode:
+                color_by = "phase"
+                group_by = "phase_run"
+                color_map = plotting.PHASE_COLORS
+                assert phase_track is not None
+                qualifier = (
+                    "manual calibration"
+                    if phase_track.mapping_method.startswith("manual")
+                    else "provisional state names"
+                )
+                ax.set_title(f"Viterbi flight-phase segmentation — {qualifier}")
+            elif self._controls.color_mode == "single":
+                color_by = None
+                group_by = "segment_id"
 
         color = self._discipline.color if self._discipline is not None else "#3477a8"
         plotting.plot_trajectory(
-            ax, raw=raw_table, cleaned=cleaned_table,
-            x=x, y=y, z=z, dms=self._controls.dms, cleaned_color=color,
+            ax,
+            raw=raw_table,
+            cleaned=cleaned_table,
+            x=x,
+            y=y,
+            z=z,
+            dms=self._controls.dms,
+            cleaned_color=color,
+            color_by=color_by,
+            group_by=group_by,
+            color_map=color_map,
         )
         if is_3d and (raw_table is not None or cleaned_table is not None):
             # matplotlib autoscaled to the plotted data as part of plot_trajectory's

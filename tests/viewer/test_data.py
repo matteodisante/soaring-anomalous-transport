@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
@@ -14,12 +15,15 @@ from soaring.analysis.preproc.altchannel import adopt_alt_channel
 from soaring.analysis.preproc.enu import LocalFrame
 from soaring.analysis.preproc.pipeline import run_flight
 from soaring.reporting import disciplines as disciplines_mod
+from soaring.viewer import data as viewer_data
 from soaring.viewer.data import (
+    PhaseTrack,
     RawTrack,
     cleaned_to_geographic,
     format_dms,
     frame_from_meta,
     load_cleaned,
+    load_flight_phases,
     load_raw,
     raw_only_frame,
     raw_to_enu,
@@ -190,7 +194,9 @@ def test_resolve_discipline(tmp_path, monkeypatch):
 
     def fake_config(self):
         root = para_root if self.name == "paragliders" else hang_root
-        return Config(data_root=root, season_start=2020, season_end=2021, base_url="https://x")
+        return Config(
+            data_root=root, season_start=2020, season_end=2021, base_url="https://x"
+        )
 
     monkeypatch.setattr(disciplines_mod.Discipline, "config", fake_config)
 
@@ -201,3 +207,65 @@ def test_resolve_discipline(tmp_path, monkeypatch):
     assert resolve_discipline(igc_file).name == "paragliders"
     assert resolve_discipline(hang_root / "elsewhere.igc").name == "hang gliders"
     assert resolve_discipline(tmp_path / "outside.igc") is None
+
+
+def test_load_flight_phases_decodes_only_selected_flight_and_splits_runs(
+    tmp_path, monkeypatch
+):
+    root = tmp_path / "archive"
+    model_dir = root / "derived" / "segmentation" / "model"
+    model_dir.mkdir(parents=True)
+    (model_dir / "metadata.json").write_text("{}", encoding="utf-8")
+    (model_dir / "gaussian_hmm.pkl").touch()
+    discipline = next(iter(disciplines_mod.DISCIPLINES.values()))
+    monkeypatch.setattr(
+        disciplines_mod.Discipline,
+        "config",
+        lambda self: Config(
+            data_root=root,
+            season_start=2020,
+            season_end=2021,
+            base_url="https://x",
+        ),
+    )
+    artifact = SimpleNamespace(
+        mapping_method="provisional-emission-signatures",
+        config=SimpleNamespace(decision_step_s=10.0),
+    )
+    monkeypatch.setattr(viewer_data, "_load_phase_artifact", lambda *_: artifact)
+    decoded = pd.DataFrame(
+        {
+            "segment_id": [0, 0, 0, 0, 1],
+            "t": [0.0, 10.0, 20.0, 50.0, 0.0],
+            "phase": ["transition", "transition", "search", "search", "search"],
+        }
+    )
+    decoded["phase"] = decoded["phase"].astype("string[pyarrow]")
+    monkeypatch.setattr(
+        "soaring.analysis.segmentation.pipeline.segment_flight",
+        lambda fixes, fitted: decoded.copy(),
+    )
+    one_flight = pd.DataFrame({"source": ["paraglider"], "flight_id": ["selected"]})
+
+    result = load_flight_phases(one_flight, discipline)
+
+    assert isinstance(result, PhaseTrack)
+    assert result.mapping_method == "provisional-emission-signatures"
+    assert result.fixes["phase_run"].tolist() == [0, 0, 1, 2, 3]
+
+
+def test_load_flight_phases_is_optional_when_model_is_unreachable(
+    tmp_path, monkeypatch
+):
+    discipline = next(iter(disciplines_mod.DISCIPLINES.values()))
+    monkeypatch.setattr(
+        disciplines_mod.Discipline,
+        "config",
+        lambda self: Config(
+            data_root=tmp_path / "missing",
+            season_start=2020,
+            season_end=2021,
+            base_url="https://x",
+        ),
+    )
+    assert load_flight_phases(pd.DataFrame(), discipline) is None

@@ -11,7 +11,13 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 
-from soaring.viewer.plotting import center_message, make_axes, plot_trajectory, save_pdf
+from soaring.viewer.plotting import (
+    PHASE_COLORS,
+    center_message,
+    make_axes,
+    plot_trajectory,
+    save_pdf,
+)
 
 
 def _raw_geo(n=50):
@@ -80,6 +86,48 @@ def test_color_by_none_draws_cleaned_as_a_single_line():
         ax, cleaned=_cleaned_geo(n_segments=3), x="lon", y="lat", color_by=None
     )
     assert len(ax.lines) == 1
+    plt.close(fig)
+
+
+def test_phase_colours_keep_repeated_noncontiguous_runs_separate():
+    phase_track = _cleaned_geo(n=6, n_segments=1)
+    phase_track["phase"] = [
+        "transition",
+        "transition",
+        "search",
+        "search",
+        "transition",
+        "climb",
+    ]
+    phase_track["phase_run"] = [0, 0, 1, 1, 2, 3]
+    fig = plt.figure()
+    ax = make_axes(fig, is_3d=False)
+
+    plot_trajectory(
+        ax,
+        cleaned=phase_track,
+        x="lon",
+        y="lat",
+        color_by="phase",
+        group_by="phase_run",
+        color_map=PHASE_COLORS,
+    )
+
+    assert len(ax.lines) == 4
+    assert [line.get_color() for line in ax.lines] == [
+        PHASE_COLORS["transition"],
+        PHASE_COLORS["search"],
+        PHASE_COLORS["transition"],
+        PHASE_COLORS["climb"],
+    ]
+    assert [line.get_label() for line in ax.lines] == [
+        "transition",
+        "search",
+        "_nolegend_",
+        "climb",
+    ]
+    assert len(ax.lines[-1].get_xdata()) == 1
+    assert ax.lines[-1].get_marker() == "."
     plt.close(fig)
 
 

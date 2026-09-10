@@ -14,6 +14,7 @@ each function a self-contained entry point that only needs a path.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
@@ -30,6 +31,7 @@ from .geodesy import enu_to_geodetic
 if TYPE_CHECKING:
     from ..analysis.config import PreprocConfig
     from ..analysis.preproc.pipeline import FlightRecord
+    from ..analysis.segmentation.model import HMMArtifact
 
 
 @dataclass(frozen=True)
@@ -48,6 +50,19 @@ class RawTrack:
 
     fixes: pd.DataFrame
     alt_channel: AltChannel
+
+
+@dataclass(frozen=True)
+class PhaseTrack:
+    """One selected flight decoded on the HMM's common decision grid.
+
+    ``phase_run`` changes at every phase, preprocessing-segment, or temporal-gap
+    boundary.  The viewer uses it as a line-group key, preventing equal phases that
+    occur at different times from being joined by an artificial straight line.
+    """
+
+    fixes: pd.DataFrame
+    mapping_method: str
 
 
 def load_raw(igc_path: str | Path, cfg: PreprocConfig | None = None) -> RawTrack:
@@ -112,6 +127,61 @@ def load_cleaned(
     return run_flight(
         fixes, cfg, source=source, flight_id=flight_id, discipline=discipline
     )
+
+
+@lru_cache(maxsize=8)
+def _load_phase_artifact(model_dir: str, metadata_mtime_ns: int) -> HMMArtifact:
+    """Load and cache a model until its metadata file changes on disk."""
+    del metadata_mtime_ns  # part of the cache key; the loader only needs the path
+    from ..analysis.segmentation.model import HMMArtifact
+
+    return HMMArtifact.load(model_dir)
+
+
+def load_flight_phases(
+    cleaned_fixes: pd.DataFrame, discipline: Discipline
+) -> PhaseTrack | None:
+    """Decode only the selected cleaned flight with its discipline's fitted HMM.
+
+    The archive-wide ``phase_points.parquet`` can be many gigabytes.  An interactive
+    lookup therefore does not scan it: the small saved model is cached, and the exact
+    same feature/decode path is run over the one ``FlightResult.fixes`` table already
+    in memory.  This also makes the viewer immediately reflect a newly calibrated
+    semantic mapping, detected through ``metadata.json``'s modification time.
+
+    Args:
+        cleaned_fixes: One retained, fully preprocessed flight.
+        discipline: Its selected viewer discipline.
+
+    Returns:
+        A phase track, or ``None`` when the SSD/model is not currently reachable.
+    """
+    try:
+        model_dir = discipline.config().derived_dir / "segmentation" / "model"
+    except (FileNotFoundError, KeyError):
+        return None
+    metadata_path = model_dir / "metadata.json"
+    model_path = model_dir / "gaussian_hmm.pkl"
+    if not metadata_path.is_file() or not model_path.is_file():
+        return None
+
+    from ..analysis.segmentation.pipeline import segment_flight
+
+    artifact = _load_phase_artifact(
+        str(model_dir.resolve()), metadata_path.stat().st_mtime_ns
+    )
+    points = segment_flight(cleaned_fixes, artifact).sort_values(
+        ["segment_id", "t"], kind="stable", ignore_index=True
+    )
+    if points.empty:
+        points["phase_run"] = pd.Series(dtype="int64")
+    else:
+        segment_changed = points["segment_id"].ne(points["segment_id"].shift())
+        phase_changed = points["phase"].ne(points["phase"].shift())
+        time_gap = points["t"].diff().gt(1.5 * artifact.config.decision_step_s)
+        run_starts = (segment_changed | phase_changed | time_gap).to_numpy(dtype=bool)
+        points["phase_run"] = np.cumsum(run_starts, dtype=np.int64) - 1
+    return PhaseTrack(fixes=points, mapping_method=artifact.mapping_method)
 
 
 def frame_from_meta(meta: FlightRecord) -> LocalFrame | None:

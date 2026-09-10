@@ -108,12 +108,17 @@ class PlotControls(QWidget):
         self._chk_cleaned = QCheckBox("Show cleaned")
         self._chk_raw.setChecked(True)
         self._chk_cleaned.setChecked(True)
+        self._color_combo = QComboBox()
+        self._color_combo.addItem("Flight phase (HMM)", "phase")
+        self._color_combo.addItem("Preprocessing segment", "segment")
+        self._color_combo.addItem("Single discipline colour", "single")
         self._btn_save_pdf = QPushButton("Save PDF…")
 
         display_row = QHBoxLayout()
         display_row.addWidget(self._chk_dms)
         display_row.addWidget(self._chk_raw)
         display_row.addWidget(self._chk_cleaned)
+        display_row.addWidget(_labeled("Cleaned colour", self._color_combo))
         display_row.addStretch(1)
         display_row.addWidget(self._btn_save_pdf)
 
@@ -134,6 +139,7 @@ class PlotControls(QWidget):
         self._chk_dms.toggled.connect(self.changed.emit)
         self._chk_raw.toggled.connect(self.changed.emit)
         self._chk_cleaned.toggled.connect(self.changed.emit)
+        self._color_combo.currentIndexChanged.connect(self.changed.emit)
         self._btn_save_pdf.clicked.connect(self.save_pdf_requested.emit)
 
         for slider, label, suffix in (
@@ -192,6 +198,11 @@ class PlotControls(QWidget):
     def show_cleaned(self) -> bool:
         """Whether the cleaned trajectory should be drawn."""
         return self._chk_cleaned.isChecked()
+
+    @property
+    def color_mode(self) -> str:
+        """``phase``, ``segment``, or ``single`` for the cleaned trajectory."""
+        return self._color_combo.currentData()
 
     @property
     def azim_deg(self) -> int:
