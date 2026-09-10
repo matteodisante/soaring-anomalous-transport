@@ -39,13 +39,17 @@ class SequencePrior:
 
     Weight zero reproduces the fitted transition matrix exactly. Positive weight
     blends exit probabilities toward transition -> search -> climb -> transition.
-    The dwell scale supplies a soft persistence floor, not a minimum phase length.
+    With allow_search_skip, exits from transition have a neutral target instead.
+    The dwell scale supplies a soft persistence floor, not a minimum phase length;
+    search_mean_dwell_s optionally gives search its own, possibly shorter scale.
     These are modelling assumptions awaiting annotation-based validation.
     """
 
     weight: float = 0.0
     mean_dwell_s: float = 120.0
     forward_probability: float = 0.85
+    allow_search_skip: bool = False
+    search_mean_dwell_s: float | None = None
 
     def __post_init__(self) -> None:
         """Keep exceptions possible and reject invalid probability/time scales."""
@@ -58,6 +62,12 @@ class SequencePrior:
             raise ValueError(
                 "sequence weight must be in [0, 1] and dwell time positive"
             )
+        if self.search_mean_dwell_s is not None and (
+            not isfinite(self.search_mean_dwell_s) or self.search_mean_dwell_s <= 0
+        ):
+            raise ValueError("search dwell time must be finite and positive")
+        if not isinstance(self.allow_search_skip, bool):
+            raise ValueError("allow_search_skip must be boolean")
         if not 0.5 < self.forward_probability < 1:
             raise ValueError("forward probability must lie strictly between 0.5 and 1")
 
@@ -85,9 +95,12 @@ class SegmentationConfig:
     n_jobs: int = 1
     implementation: str = "scaling"
     sequence_prior: SequencePrior = SequencePrior()
+    marginalize_turn_coherence: bool = False
 
     def __post_init__(self) -> None:
         """Check the invariants that make the HMM configuration interpretable."""
+        if not isinstance(self.marginalize_turn_coherence, bool):
+            raise ValueError("marginalize_turn_coherence must be boolean")
         continuous_values = (
             self.decision_step_s,
             self.feature_window_s,
@@ -162,4 +175,5 @@ def load_segmentation_config(path: str | Path | None = None) -> SegmentationConf
         n_jobs=int(raw.get("n_jobs", 1)),
         implementation=str(raw.get("implementation", "scaling")),
         sequence_prior=SequencePrior(**raw.get("sequence_prior", {})),
+        marginalize_turn_coherence=raw.get("marginalize_turn_coherence", False),
     )

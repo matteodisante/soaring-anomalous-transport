@@ -46,4 +46,12 @@ bootstrap_replicates: 1000
 sequence_prior:
   weight: 0.75
   mean_dwell_s: 120.0
-  forward_probability: 0.85
+  forward_probability: 0.95
+  allow_search_skip: true
+  search_mean_dwell_s: 20.0
+
+# The fitted climb component has a nearly singular coherence distribution at 1.
+# Decode its exact 3D Gaussian marginal (vertical speed, horizontal speed, turn
+# rate), integrating out coherence rather than requiring near-perfect circles.
+# The original 4D fit and its parameters remain available for comparison.
+marginalize_turn_coherence: true

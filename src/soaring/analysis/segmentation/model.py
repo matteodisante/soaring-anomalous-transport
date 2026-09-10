@@ -284,8 +284,9 @@ def effective_transition_matrix(artifact: HMMArtifact) -> np.ndarray:
     """Return the soft, semantic sequence policy without mutating the fitted model.
 
     Persistence is increased toward exp(-decision_step / mean_dwell_s) only when
-    that exceeds learned persistence. Conditional exit probabilities are blended
-    with a cyclic preference; all exceptions remain possible when weight > 0.
+    that exceeds learned persistence, except for search with an explicit shorter
+    dwell scale. Exits are blended with a cycle preference; optional search uses
+    a neutral exit target from transition. All exceptions remain possible.
     Applied after state naming, so raw component permutations cannot reverse it.
     """
     learned = np.asarray(artifact.model.transmat_, dtype=float)
@@ -314,9 +315,20 @@ def effective_transition_matrix(artifact: HMMArtifact) -> np.ndarray:
                 for j in exits
             ]
         )
+        if name == "transition" and prior.allow_search_skip:
+            # No imposed search stage: either search or climb may follow transit.
+            target = np.full(len(exits), 0.5)
         weights = (1 - prior.weight) * weights + prior.weight * target
         stay = learned[component, component]
-        stay += prior.weight * max(0.0, persistence - stay)
+        if name == "search" and prior.search_mean_dwell_s is not None:
+            # Search can be brief. Unlike climb/transit, do not impose a long
+            # persistence floor on it; blend toward its own soft duration scale.
+            search_stay = np.exp(
+                -artifact.config.decision_step_s / prior.search_mean_dwell_s
+            )
+            stay += prior.weight * (search_stay - stay)
+        else:
+            stay += prior.weight * max(0.0, persistence - stay)
         # An absorbing fitted component must not make the soft policy deterministic.
         stay = min(stay, 1 - np.finfo(float).eps)
         result[component, component] = stay
@@ -327,13 +339,32 @@ def effective_transition_matrix(artifact: HMMArtifact) -> np.ndarray:
 def decode(
     artifact: HMMArtifact, observations: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Return Viterbi components and smoothed posterior state probabilities."""
+    """Decode with configured transition policy and Gaussian emission marginal.
+
+    With marginalize_turn_coherence, the fitted four-dimensional Gaussian is
+    integrated over coherence. Its three-dimensional marginal retains vertical
+    speed, horizontal speed and turn rate. This is not a refit or conditioning on
+    a chosen coherence value; posterior and Viterbi use the same likelihood.
+    """
     values = artifact.scaler.transform(observations)
     # A shallow model copy keeps shared archive workers and the cached viewer
     # artifact immutable; both Viterbi and posterior use the same transition matrix.
     model = copy.copy(artifact.model)
     model.implementation = "log"
     model.transmat_ = effective_transition_matrix(artifact)
+    if artifact.config.marginalize_turn_coherence:
+        # A Gaussian marginal uses the covariance submatrix, not conditioning
+        # on coherence=0 (which would alter the means and covariance). Keep the
+        # fitted 4D artifact and scaler immutable for legacy comparisons.
+        indexes = [
+            i for i, name in enumerate(FEATURE_COLUMNS) if name != "turn_coherence"
+        ]
+        model.n_features = len(indexes)
+        model.means_ = np.asarray(artifact.model.means_)[:, indexes].copy()
+        model.covars_ = np.asarray(artifact.model.covars_)[:, indexes][
+            :, :, indexes
+        ].copy()
+        values = values[:, indexes]
     states = model.predict(values)
     probabilities = model.predict_proba(values)
     return np.asarray(states, dtype=int), np.asarray(probabilities, dtype=float)

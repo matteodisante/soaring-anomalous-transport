@@ -1,5 +1,8 @@
 # Flight-phase segmentation
 
+The current viewer decoder allows search to be skipped and uses the Gaussian emission
+marginal without turn coherence; see [Current decoder](#current-decoder-optional-search-and-marginal-emissions).
+
 The phase analysis reads the final preprocessed `fixes.parquet` table and writes new
 tables in `derived/segmentation/`; it never modifies the input trajectories. A separate
 continuous Gaussian HMM is fitted for paragliders and hang gliders. Its decision interval
@@ -159,9 +162,11 @@ in the viewer.
   score and convergence flag. The reporting command also writes the model matrices, example trajectories,
   test confusion matrices and the generated thesis metric table.
 
-## Soft sequence preference and coverage audit (2026-09-10)
+## Earlier cyclic policy and coverage audit (2026-09-10)
 
-The viewer now explicitly uses `sequence_prior` from `configs/segmentation.yaml`
+This audit records the initial symmetric cycle policy. The current decoder below
+supersedes that policy while preserving the coverage masks and counts.
+The viewer explicitly uses `sequence_prior` from `configs/segmentation.yaml`
 when decoding the selected flight. State names still require manual validation.
 The preference is **transition → search → climb → transition**, with persistence
 within each phase. It changes Viterbi decoding and the posterior together, not a
@@ -257,3 +262,65 @@ Breakdown as percentages of that total cleaned duration:
 The masks are unchanged by the sequence policy. Machine-readable counts, model
 metadata hashes, transition matrices and example-flight results are in
 [`revisions/segmentation-sequence-2026-09-10.json`](../../revisions/segmentation-sequence-2026-09-10.json).
+
+
+## Current decoder: optional search and marginal emissions
+
+Flight `20311250` (2021-10-01) exposed two distinct problems. Search must be optional
+or brief, whereas climb should preferentially exit to transition. Also, the fitted
+climb component's raw turn-coherence standard deviation is only 0.0000883 around a
+mean of 0.9999986. Ordinary circling with slightly irregular turning consequently
+receives negligible climb likelihood even with positive vertical speed. The hang-glider
+artifact has the same defect (coherence standard deviation 0.0000604). A transition
+prior alone cannot overcome this emission effect.
+
+The current configuration therefore makes two independent changes:
+
+- `allow_search_skip: true` makes the exit target from transition neutral between
+  search and climb. It blends with the learned exit probabilities, so it allows a
+  direct transition → climb without forcing either exit.
+- `search_mean_dwell_s: 20` gives search a separate soft target. Its persistence is
+  blended toward `exp(-decision_step_s / 20)`, including downward changes. Climb and
+  transition keep the earlier 120-s persistence floor. Neither scale is a minimum
+  duration or a measured behavioural duration. The cyclic exit target from search
+  and climb uses `forward_probability: 0.95`, with exceptions still allowed.
+
+For the paraglider model, transition → climb increases from 0.00734 to 0.02320 per
+10-s step; search self-transition decreases from 0.90077 to 0.66563; climb exits
+prefer transition (0.07442) over search (0.02879).
+
+Separately, `marginalize_turn_coherence: true` decodes the **three-dimensional Gaussian
+marginal** over mean vertical speed, mean horizontal speed and mean absolute turn rate.
+It integrates out coherence using the retained mean entries and principal covariance
+submatrix. It does not condition on a fixed coherence value, alter native fixes, or
+retrain the original four-dimensional model. The original Gaussian parameters remain
+available. Viterbi and posterior probabilities use the same marginal likelihood.
+Coherence is still calculated and saved as a diagnostic feature.
+
+On the reported flight, changing the sequence prior alone leaves 6 decisions labelled
+climb. With the marginal emissions, this becomes 32. In the reproducible interval
+`t=1640..1810 s` (relative to cleaned-flight start), the rising turn is now continuous
+climb; transition starts at `t=1820 s`, without an inserted search at the summit.
+This is a targeted regression expectation, not an independent validation annotation.
+The retained search regions elsewhere in the flight are not automatically erased.
+
+Four-flight comparisons, including the sequence-only ablation, are recorded in
+[`revisions/segmentation-optional-search-2026-09-10.json`](../../revisions/segmentation-optional-search-2026-09-10.json).
+The compact numerical regression fixture in `tests/fixtures/segmentation_20311250.json`
+contains the original fitted parameters and feature-window excerpt, making this check
+independent of the mounted SSD. Tests also verify marginal Gaussian probabilities,
+component-permutation invariance, and preservation of the original artifact.
+
+The viewer applies both current options to on-demand decoding. For matching separate
+archive exports, `--current-decoder` is an alias of `--sequence-prior` and applies both
+the configured sequence policy and emission marginalization:
+
+```bash
+uv run python scripts/segment_flights.py apply --discipline paragliders --current-decoder
+```
+
+The destination remains `derived/segmentation/sequence-prior/`, with both choices
+persisted in its model metadata. Legacy metadata missing the new options reproduces
+the old behaviour. Existing archive phase tables and their coverage masks are unchanged.
+The three-dimensional marginal can still overlap search and climb; semantic calibration
+and accuracy claims require independent manual annotations.

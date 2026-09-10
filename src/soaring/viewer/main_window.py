@@ -203,7 +203,12 @@ class MainWindow(QMainWindow):
                         if details:
                             status += " (" + "; ".join(details) + ")."
                     if self._phases.sequence_prior_weight:
-                        status += " Soft phase-cycle preference active (provisional)."
+                        status += (
+                            " Search optional; climb-to-transition preferred."
+                            " Names remain provisional."
+                            if self._phases.search_optional
+                            else " Soft phase-cycle preference active (provisional)."
+                        )
             except Exception as exc:
                 status += f" HMM phases could not be decoded ({exc})."
 
@@ -313,7 +318,11 @@ class MainWindow(QMainWindow):
                     else "provisional state names"
                 )
                 if phase_track.sequence_prior_weight:
-                    qualifier += "; soft cycle prior"
+                    qualifier += (
+                        "; search optional"
+                        if phase_track.search_optional
+                        else "; soft cycle prior"
+                    )
                 ax.set_title(f"Viterbi flight-phase segmentation — {qualifier}")
             elif self._controls.color_mode == "single":
                 color_by = None

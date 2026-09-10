@@ -63,8 +63,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--config", type=Path)
     parser.add_argument(
         "--sequence-prior",
+        "--current-decoder",
         action="store_true",
-        help="Apply the configured soft sequence policy to a separate export",
+        help=(
+            "Use configured sequence and emission decoding policies "
+            "in a separate export"
+        ),
     )
     args = parser.parse_args(argv)
 
@@ -92,7 +96,11 @@ def main(argv: list[str] | None = None) -> int:
             artifact = HMMArtifact.load(original_model)
             artifact = replace(
                 artifact,
-                config=replace(artifact.config, sequence_prior=config.sequence_prior),
+                config=replace(
+                    artifact.config,
+                    sequence_prior=config.sequence_prior,
+                    marginalize_turn_coherence=config.marginalize_turn_coherence,
+                ),
             )
             artifact.save(model_dir)
             for manifest in original_model.glob("*manifest.parquet"):

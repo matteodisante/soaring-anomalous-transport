@@ -64,6 +64,7 @@ class PhaseTrack:
     fixes: pd.DataFrame
     mapping_method: str
     sequence_prior_weight: float = 0.0
+    search_optional: bool = False
     coverage: dict = field(default_factory=dict)
 
 
@@ -173,8 +174,16 @@ def load_flight_phases(
     artifact = _load_phase_artifact(
         str(model_dir.resolve()), metadata_path.stat().st_mtime_ns
     )
-    policy = load_segmentation_config().sequence_prior
-    artifact = replace(artifact, config=replace(artifact.config, sequence_prior=policy))
+    decoder_config = load_segmentation_config()
+    policy = decoder_config.sequence_prior
+    artifact = replace(
+        artifact,
+        config=replace(
+            artifact.config,
+            sequence_prior=policy,
+            marginalize_turn_coherence=decoder_config.marginalize_turn_coherence,
+        ),
+    )
     points = segment_flight(cleaned_fixes, artifact).sort_values(
         ["segment_id", "t"], kind="stable", ignore_index=True
     )
@@ -187,6 +196,7 @@ def load_flight_phases(
         fixes=fixes,
         mapping_method=artifact.mapping_method,
         sequence_prior_weight=policy.weight,
+        search_optional=policy.allow_search_skip,
         coverage=native_coverage_summary(fixes),
     )
 
