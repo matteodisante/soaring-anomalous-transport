@@ -275,6 +275,17 @@ def _draw_grouped(
             labelled_values.add(value)
         else:
             line_label = label if first else "_nolegend_"
+        # Close each colour run at the next native vertex of the same physical
+        # track. This colours every edge, including phase changes, without joining
+        # disconnected segments or nonconsecutive occurrences of the same phase.
+        if group_by == "phase_run" and "track_run" in table.columns:
+            last_position = table.index.get_loc(segment.index[-1])
+            if last_position + 1 < len(table):
+                following = table.iloc[[last_position + 1]]
+                if following["track_run"].iloc[0] == segment["track_run"].iloc[-1]:
+                    import pandas as pd
+
+                    segment = pd.concat([segment, following])
         _draw(
             ax,
             segment,

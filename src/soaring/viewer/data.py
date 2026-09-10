@@ -54,7 +54,7 @@ class RawTrack:
 
 @dataclass(frozen=True)
 class PhaseTrack:
-    """One selected flight decoded on the HMM's common decision grid.
+    """Every cleaned fix of one flight, coloured from the HMM decision grid.
 
     ``phase_run`` changes at every phase, preprocessing-segment, or temporal-gap
     boundary.  The viewer uses it as a line-group key, preventing equal phases that
@@ -173,15 +173,54 @@ def load_flight_phases(
     points = segment_flight(cleaned_fixes, artifact).sort_values(
         ["segment_id", "t"], kind="stable", ignore_index=True
     )
-    if points.empty:
-        points["phase_run"] = pd.Series(dtype="int64")
-    else:
-        segment_changed = points["segment_id"].ne(points["segment_id"].shift())
-        phase_changed = points["phase"].ne(points["phase"].shift())
-        time_gap = points["t"].diff().gt(1.5 * artifact.config.decision_step_s)
-        run_starts = (segment_changed | phase_changed | time_gap).to_numpy(dtype=bool)
-        points["phase_run"] = np.cumsum(run_starts, dtype=np.int64) - 1
-    return PhaseTrack(fixes=points, mapping_method=artifact.mapping_method)
+    fixes = phases_on_cleaned_fixes(
+        cleaned_fixes, points, decision_step_s=artifact.config.decision_step_s
+    )
+    return PhaseTrack(fixes=fixes, mapping_method=artifact.mapping_method)
+
+
+def phases_on_cleaned_fixes(
+    cleaned: pd.DataFrame, points: pd.DataFrame, *, decision_step_s: float
+) -> pd.DataFrame:
+    """Colour native cleaned fixes without replacing their geometry.
+
+    Each decision labels its half-open time cell [t-step/2, t+step/2), matching
+    the segmentation run export. Missing decisions and ineligible segments remain
+    unclassified. No label crosses a preprocessing segment or a missing time cell.
+    ``track_run`` marks physical continuity; ``phase_run`` also splits on colour.
+    """
+    out = (
+        cleaned.sort_values(["segment_id", "t"], kind="stable")
+        .reset_index(drop=True)
+        .copy()
+    )
+    out["phase"] = "unclassified"
+    out["track_run"] = 0
+    run_offset = 0
+    for segment_id, group in out.groupby("segment_id", sort=False):
+        t = group["t"].to_numpy(dtype=float)
+        dt = np.diff(t)
+        cadence = np.median(dt[dt > 0]) if np.any(dt > 0) else np.inf
+        breaks = np.r_[True, (dt <= 0) | (dt > 1.5 * cadence)]
+        runs = np.cumsum(breaks) - 1 + run_offset
+        out.loc[group.index, "track_run"] = runs
+        run_offset = int(runs[-1]) + 1
+        if points.empty:
+            continue
+        decisions = points.loc[points["segment_id"] == segment_id].sort_values("t")
+        if decisions.empty:
+            continue
+        times = decisions["t"].to_numpy(dtype=float)
+        indexes = np.searchsorted(times - decision_step_s / 2, t, side="right") - 1
+        safe = np.clip(indexes, 0, len(times) - 1)
+        covered = (indexes >= 0) & (t < times[safe] + decision_step_s / 2)
+        labels = decisions["phase"].fillna("unclassified").to_numpy()
+        out.loc[group.index[covered], "phase"] = labels[safe[covered]]
+    starts = out["track_run"].ne(out["track_run"].shift()) | out["phase"].ne(
+        out["phase"].shift()
+    )
+    out["phase_run"] = starts.cumsum() - 1
+    return out
 
 
 def frame_from_meta(meta: FlightRecord) -> LocalFrame | None:

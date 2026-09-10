@@ -58,6 +58,7 @@ class PlotControls(QWidget):
 
     changed = pyqtSignal()
     view_changed = pyqtSignal()
+    reset_view_requested = pyqtSignal()
     save_pdf_requested = pyqtSignal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -241,6 +242,7 @@ class PlotControls(QWidget):
         self._slider_azim.setValue(_DEFAULT_AZIM_DEG)
         self._slider_elev.setValue(_DEFAULT_ELEV_DEG)
         self._slider_zoom.setValue(_DEFAULT_ZOOM_PERCENT)
+        self.reset_view_requested.emit()
 
     def _populate_axes(self) -> None:
         axes = _GEOGRAPHIC_AXES if self.frame_kind == "geographic" else _ENU_AXES

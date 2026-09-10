@@ -105,10 +105,36 @@ The **Cleaned colour** selector defaults to **Flight phase (HMM)**. Transition, 
 climb and non-classifiable decision points have fixed colours in both 2-D and 3-D views;
 preprocessing-segment and single-colour modes remain available. The viewer does not scan
 the multi-gigabyte `phase_points.parquet`: it caches the small discipline model and runs
-the same feature/Viterbi path only for the selected, already-cleaned flight. Equal phases
-separated in time, acquisition gaps and preprocessing segments are drawn as independent
-runs, so the display never inserts a false connecting line. The title and status line say
-whether state names are provisional or manually calibrated.
+the same feature/Viterbi path only for the selected, already-cleaned flight. The display
+keeps **every native cleaned vertex**: a 10-s decision supplies a colour for the half-open
+cell `[t - 5 s, t + 5 s)`, never replacement coordinates. Missing decisions, feature
+edges and ineligible segments remain grey. Consecutive colour runs share an endpoint
+so every cleaned edge is visible; acquisition gaps and preprocessing segments are never
+bridged. This display interpolation adds no temporal precision to the classifier.
+
+Colour, visibility and tick-format changes preserve zoom, pan and the 3-D camera,
+including rotations made with the mouse. Zoom controls preserve orientation and the
+current centre; orientation controls preserve zoom. Each coordinate/axis combination
+remembers its view until another flight is loaded. Home/Reset view explicitly reset it.
+
+Catalog search exposes every matching row through a virtual table, with no 500-flight
+cutoff. Pipeline status distinguishes `Kept`, `Dropped` (hover for the archived reason),
+`No archived result`, and `Pipeline results unavailable`. A catalog entry without a
+pipeline record is not evidence of rejection; it may lack a downloaded trajectory.
+Opening a flight recomputes preprocessing with the current configuration, and the status
+message reports that current result separately from the archived verdict.
+
+The title and status line say whether state names are provisional or manually calibrated.
+A circling trajectory is not by itself a validated `climb` label: the model also uses
+30-s vertical/horizontal speed and turning statistics. In the current provisional
+paraglider artifact, the component named climb has mean turn coherence approximately
+0.999999, versus 0.643 for search. Consequently some rising, circling intervals with
+less uniform turning are labelled search. For flight `20279877`, 41 decision points
+with mean vertical speed above 0.5 m/s and mean absolute turn rate above 0.12 rad/s
+are labelled search, versus 34 labelled climb (diagnostic thresholds, not ground truth).
+The plot correction does not change these predictions. Resolving that semantic issue
+requires annotated examples and validation of the mapping/emissions, not a colour swap
+in the viewer.
 
 ## Outputs
 

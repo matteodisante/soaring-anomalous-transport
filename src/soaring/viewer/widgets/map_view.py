@@ -66,7 +66,12 @@ _ZONES = [
 ]
 
 _PLOTTED_COLUMNS = [
-    "flight_id", "season_year", "date", "lat0", "lon0", "discipline",
+    "flight_id",
+    "season_year",
+    "date",
+    "lat0",
+    "lon0",
+    "discipline",
     *catalog_index.TOOLTIP_COLUMNS,
 ]
 
@@ -305,8 +310,10 @@ class MapView(QWidget):
         lon = points["lon0"].to_numpy(dtype=float)
         lat = points["lat0"].to_numpy(dtype=float)
         inside = (
-            (lon >= extent[0]) & (lon <= extent[2])
-            & (lat >= extent[1]) & (lat <= extent[3])
+            (lon >= extent[0])
+            & (lon <= extent[2])
+            & (lat >= extent[1])
+            & (lat <= extent[3])
         )
         visible = points[inside]
         self._visible = visible
@@ -315,8 +322,13 @@ class MapView(QWidget):
             self._mode = "points"
             if len(visible):
                 self._scatter_artist = ax.scatter(
-                    visible["lon0"], visible["lat0"], s=24, c="#b5482a",
-                    edgecolors="white", linewidths=0.6, zorder=3,
+                    visible["lon0"],
+                    visible["lat0"],
+                    s=24,
+                    c="#b5482a",
+                    edgecolors="white",
+                    linewidths=0.6,
+                    zorder=3,
                 )
                 title = f"{len(visible)} flight(s) — hover or click a point"
             else:

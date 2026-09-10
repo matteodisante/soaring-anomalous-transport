@@ -7,7 +7,7 @@ imports Qt (see the package docstring).
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
@@ -28,6 +28,8 @@ from .widgets.map_view import MapView
 from .widgets.plot_controls import PlotControls
 
 if TYPE_CHECKING:
+    from mpl_toolkits.mplot3d import Axes3D
+
     from ..analysis.preproc.enu import LocalFrame
     from ..analysis.preproc.pipeline import FlightResult
     from ..reporting.disciplines import Discipline
@@ -52,12 +54,10 @@ class MainWindow(QMainWindow):
         self._cleaned: FlightResult | None = None
         self._phases: data.PhaseTrack | None = None
         self._frame: LocalFrame | None = None
-        # The plotted data's own (100 %-zoom) axis limits, captured right after each
-        # full redraw so the 3D zoom slider has a fixed baseline to scale from -- set
-        # only when the current axes are 3D and actually hold plotted data.
-        self._natural_xlim: tuple[float, float] | None = None
-        self._natural_ylim: tuple[float, float] | None = None
-        self._natural_zlim: tuple[float, float] | None = None
+        self._view_key: tuple[str, str, str, str | None] | None = None
+        self._saved_views: dict[tuple, dict] = {}
+        self._last_view_controls = (-60, 30, 100)
+        self._has_3d_data = False
 
         self._picker = FlightPicker()
         self._picker.flight_chosen.connect(self._on_flight_chosen)
@@ -68,6 +68,7 @@ class MainWindow(QMainWindow):
         self._controls = PlotControls()
         self._controls.changed.connect(self._redraw)
         self._controls.view_changed.connect(self._apply_view)
+        self._controls.reset_view_requested.connect(self._reset_view)
         self._controls.save_pdf_requested.connect(self._on_save_pdf)
 
         self._figure = Figure(figsize=(7.5, 6.5))
@@ -125,6 +126,8 @@ class MainWindow(QMainWindow):
     def _on_flight_chosen(
         self, igc_path: Path, discipline: Discipline, flight_id: str
     ) -> None:
+        self._saved_views.clear()
+        self._view_key = None
         self._igc_path = igc_path
         self._discipline = discipline
         self._flight_id = flight_id
@@ -150,6 +153,8 @@ class MainWindow(QMainWindow):
                 discipline=discipline.name,
             )
             self._frame = data.frame_from_meta(self._cleaned.meta)
+            if self._cleaned.kept:
+                status += " Current preprocessing: kept."
             if not self._cleaned.kept:
                 meta = self._cleaned.meta
                 status = (
@@ -167,8 +172,10 @@ class MainWindow(QMainWindow):
                 self._phases = data.load_flight_phases(self._cleaned.fixes, discipline)
                 if self._phases is None:
                     status += " HMM phase model unavailable; using segment colours."
-                elif self._phases.fixes.empty:
-                    status += " No HMM-classifiable decision points."
+                elif not self._phases.fixes["phase"].ne("unclassified").any():
+                    status += (
+                        " No HMM-classifiable decision points; cleaned track in grey."
+                    )
                 elif self._phases.mapping_method.startswith("manual"):
                     status += " HMM phases use the manual train-set calibration."
                 else:
@@ -192,16 +199,33 @@ class MainWindow(QMainWindow):
         is_3d = self._controls.is_3d
         x, y = self._controls.x_column, self._controls.y_column
         z = self._controls.z_column if is_3d else None
-        ax = plotting.make_axes(self._figure, is_3d=is_3d)
+        key = (frame_kind, x, y, z)
+        if self._view_key is not None and self._figure.axes:
+            old_ax = self._figure.axes[0]
+            view = {"xlim": old_ax.get_xlim(), "ylim": old_ax.get_ylim()}
+            if self._view_key[-1] is not None:
+                old_ax3d = cast("Axes3D", old_ax)
+                view.update(
+                    zlim=old_ax3d.get_zlim(),
+                    elev=old_ax3d.elev,
+                    azim=old_ax3d.azim,
+                    roll=old_ax3d.roll,
+                )
+            self._saved_views[self._view_key] = view
+        saved_view = self._saved_views.get(key)
+        if key == self._view_key and self._figure.axes:
+            ax = self._figure.axes[0]
+            ax.clear()
+        else:
+            ax = plotting.make_axes(self._figure, is_3d=is_3d)
+            self._toolbar.update()
+        self._view_key = key
 
         # A local copy, not `self._frame` at each use below: mypy narrows a local's
         # type across a function body but not an attribute's (another method could
         # change it in between, in general), and this function never reassigns it.
         frame = self._frame
-        # Nothing plotted yet this call: cleared up front so an early return below
-        # (nothing to draw) can't leave a stale baseline for the zoom slider to scale
-        # a now-empty plot from.
-        self._natural_xlim = self._natural_ylim = self._natural_zlim = None
+        self._has_3d_data = False
 
         if self._raw is None and self._cleaned is None:
             plotting.center_message(ax, "Pick a flight to plot.", is_3d=is_3d)
@@ -283,32 +307,70 @@ class MainWindow(QMainWindow):
             group_by=group_by,
             color_map=color_map,
         )
-        if is_3d and (raw_table is not None or cleaned_table is not None):
-            # matplotlib autoscaled to the plotted data as part of plot_trajectory's
-            # own .plot()/.scatter() calls; this is that natural extent, captured
-            # before _apply_view narrows it to the current zoom setting.
-            self._natural_xlim = ax.get_xlim()
-            self._natural_ylim = ax.get_ylim()
-            self._natural_zlim = ax.get_zlim()  # type: ignore[attr-defined]
-        self._apply_view()
+        self._has_3d_data = is_3d and (
+            raw_table is not None or cleaned_table is not None
+        )
+        if saved_view is not None:
+            ax.set_xlim(saved_view["xlim"])
+            ax.set_ylim(saved_view["ylim"])
+            if is_3d:
+                ax3d = cast("Axes3D", ax)
+                ax3d.set_zlim(saved_view["zlim"])
+                ax3d.view_init(
+                    elev=saved_view["elev"],
+                    azim=saved_view["azim"],
+                    roll=saved_view["roll"],
+                )
+        elif is_3d:
+            ax3d = cast("Axes3D", ax)
+            ax3d.view_init(elev=self._controls.elev_deg, azim=self._controls.azim_deg)
+            factor = 100.0 / self._controls.zoom_percent
+            ax.set_xlim(self._scaled(ax.get_xlim(), factor))
+            ax.set_ylim(self._scaled(ax.get_ylim(), factor))
+            ax3d.set_zlim(self._scaled(ax3d.get_zlim(), factor))
+        self._last_view_controls = (
+            self._controls.azim_deg,
+            self._controls.elev_deg,
+            self._controls.zoom_percent,
+        )
+        self._canvas.draw_idle()
+
+    def _reset_view(self) -> None:
+        """Reset the camera only when the user explicitly requests it."""
+        self._saved_views.clear()
+        self._view_key = None
+        self._redraw()
 
     def _apply_view(self) -> None:
         """Orient/zoom the current 3D axes to match the controls, without re-plotting.
 
         A no-op in 2D, and whenever there is no plotted trajectory to orient (both
-        guarded by ``_natural_xlim`` being unset -- see ``_redraw``).
+        guarded by ``_has_3d_data`` -- see ``_redraw``).
         """
-        if not self._controls.is_3d or self._natural_xlim is None:
+        if not self._has_3d_data:
             self._canvas.draw_idle()
             return
-        ax = self._figure.axes[0]
-        ax.view_init(  # type: ignore[attr-defined]
-            elev=self._controls.elev_deg, azim=self._controls.azim_deg
+        ax = cast("Axes3D", self._figure.axes[0])
+        old_azim, old_elev, old_zoom = self._last_view_controls
+        azim, elev, zoom = (
+            self._controls.azim_deg,
+            self._controls.elev_deg,
+            self._controls.zoom_percent,
         )
-        factor = 100.0 / self._controls.zoom_percent
-        ax.set_xlim(self._scaled(self._natural_xlim, factor))
-        ax.set_ylim(self._scaled(self._natural_ylim, factor))  # type: ignore[arg-type]
-        ax.set_zlim(self._scaled(self._natural_zlim, factor))  # type: ignore[attr-defined,arg-type]
+        # A zoom change must preserve mouse rotation; an orientation change must
+        # preserve pan/zoom. Apply only the control that actually changed.
+        if azim != old_azim or elev != old_elev:
+            ax.view_init(
+                elev=elev if elev != old_elev else ax.elev,
+                azim=azim if azim != old_azim else ax.azim,
+                roll=ax.roll,
+            )
+        if zoom != old_zoom:
+            factor = old_zoom / zoom
+            ax.set_xlim(self._scaled(ax.get_xlim(), factor))
+            ax.set_ylim(self._scaled(ax.get_ylim(), factor))
+            ax.set_zlim(self._scaled(ax.get_zlim(), factor))
+        self._last_view_controls = (azim, elev, zoom)
         self._canvas.draw_idle()
 
     @staticmethod

@@ -74,7 +74,9 @@ def _load_flights_meta(discipline: Discipline) -> pd.DataFrame | None:
             )
             meta = meta.drop_duplicates(subset="flight_id", keep="last")
             meta["kept"] = meta["drop_reason"].isna()
-            _flights_meta_cache[discipline.name] = meta[["flight_id", "kept"]]
+            _flights_meta_cache[discipline.name] = meta[
+                ["flight_id", "kept", "drop_reason"]
+            ]
     return _flights_meta_cache[discipline.name]
 
 
@@ -82,7 +84,14 @@ def _load_flights_meta(discipline: Discipline) -> pd.DataFrame | None:
 # argument of filter_flights() each corresponds to (same name, checked below by a
 # loop rather than a repetitive if-chain, one per column).
 _TEXT_FILTER_COLUMNS = (
-    "dept", "flight_type", "wing_class", "takeoff", "landing", "club", "wing", "pilot",
+    "dept",
+    "flight_type",
+    "wing_class",
+    "takeoff",
+    "landing",
+    "club",
+    "wing",
+    "pilot",
 )
 
 
@@ -130,7 +139,8 @@ def filter_flights(
     Returns:
         A copy of the matching catalog rows, with a ``kept`` column added: ``True`` /
         ``False`` from the pipeline's verdict, ``pd.NA`` where ``flights_meta.parquet``
-        is unreachable or the flight is not in it.
+        is unreachable or the flight is not in it. ``pipeline_status`` explains
+        that distinction; ``drop_reason`` is included when archive results exist.
 
     Raises:
         FileNotFoundError: If this discipline's ``catalog.csv`` is not reachable.
@@ -138,8 +148,13 @@ def filter_flights(
     df = _load_catalog(discipline)
     mask = pd.Series(True, index=df.index)
     text_filters = {
-        "dept": dept, "flight_type": flight_type, "wing_class": wing_class,
-        "takeoff": takeoff, "landing": landing, "club": club, "wing": wing,
+        "dept": dept,
+        "flight_type": flight_type,
+        "wing_class": wing_class,
+        "takeoff": takeoff,
+        "landing": landing,
+        "club": club,
+        "wing": wing,
         "pilot": pilot,
     }
     for column in _TEXT_FILTER_COLUMNS:
@@ -157,6 +172,13 @@ def filter_flights(
         result = result.merge(meta, on="flight_id", how="left")
     else:
         result["kept"] = pd.NA
+    result["pipeline_status"] = (
+        result["kept"]
+        .map({True: "Kept", False: "Dropped"})
+        .fillna(
+            "No archived result" if meta is not None else "Pipeline results unavailable"
+        )
+    )
     if kept_only:
         result = result[result["kept"].fillna(False).astype(bool)]
     return result.reset_index(drop=True)
@@ -192,8 +214,14 @@ def distinct_values(discipline: Discipline, column: str) -> list[str]:
 # Catalog columns the map's hover tooltip shows alongside a point, on top of the
 # flight_id/season_year/date/lat0/lon0 every takeoff_points() row already carries.
 TOOLTIP_COLUMNS = [
-    "pilot", "flight_type", "wing_class", "distance_km", "duration_s",
-    "takeoff", "landing", "dept",
+    "pilot",
+    "flight_type",
+    "wing_class",
+    "distance_km",
+    "duration_s",
+    "takeoff",
+    "landing",
+    "dept",
 ]
 
 

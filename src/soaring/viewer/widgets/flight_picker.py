@@ -19,7 +19,7 @@ import os
 from pathlib import Path
 
 import pandas as pd
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -33,8 +33,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QPushButton,
     QScrollArea,
-    QTableWidget,
-    QTableWidgetItem,
+    QTableView,
     QVBoxLayout,
     QWidget,
 )
@@ -44,12 +43,23 @@ from ...reporting.disciplines import DISCIPLINES, Discipline
 from .. import catalog_index, data
 
 _RESULT_COLUMNS = [
-    "flight_id", "date", "dept", "takeoff", "flight_type", "wing_class", "kept",
+    "flight_id",
+    "date",
+    "dept",
+    "takeoff",
+    "flight_type",
+    "wing_class",
+    "kept",
 ]
 _RESULT_HEADERS = [
-    "Flight ID", "Date", "Dept.", "Takeoff", "Type", "Wing class", "Kept",
+    "Flight ID",
+    "Date",
+    "Dept.",
+    "Takeoff",
+    "Type",
+    "Wing class",
+    "Pipeline status",
 ]
-_MAX_RESULT_ROWS = 500
 # A folder can hold the entire archive (186,052 .igc files for paragliders per
 # docs/guide/data-on-disk.md): walking all of it just to fill a picker list would
 # make "Browse folder..." itself the slow path. Capped at the walk, not after it.
@@ -69,6 +79,57 @@ _FILTER_FIELDS = [
     ("club", "Club"),
     ("pilot", "Pilot"),
 ]
+
+
+class FlightResultsModel(QAbstractTableModel):
+    """Expose every matching flight without allocating a widget item per cell."""
+
+    def __init__(self, parent=None):
+        """Start with an empty result table."""
+        super().__init__(parent)
+        self.rows = pd.DataFrame(columns=_RESULT_COLUMNS)
+
+    def set_rows(self, rows: pd.DataFrame) -> None:
+        """Replace the search results atomically."""
+        self.beginResetModel()
+        self.rows = rows.reset_index(drop=True)
+        self.endResetModel()
+
+    def rowCount(self, parent=None):  # noqa: N802
+        """Make all matches addressable by the view."""
+        return 0 if parent is not None and parent.isValid() else len(self.rows)
+
+    def columnCount(self, parent=None):  # noqa: N802
+        """Return the fixed number of result columns."""
+        return 0 if parent is not None and parent.isValid() else len(_RESULT_COLUMNS)
+
+    def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):  # noqa: N802
+        """Label the columns and number the rows."""
+        if role == Qt.ItemDataRole.DisplayRole:
+            return (
+                _RESULT_HEADERS[section]
+                if orientation == Qt.Orientation.Horizontal
+                else str(section + 1)
+            )
+        return None
+
+    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+        """Format boolean verdicts and explain genuinely absent pipeline results."""
+        if not index.isValid() or role not in (
+            Qt.ItemDataRole.DisplayRole,
+            Qt.ItemDataRole.ToolTipRole,
+        ):
+            return None
+        row = self.rows.iloc[index.row()]
+        key = _RESULT_COLUMNS[index.column()]
+        value = row.get(key)
+        if key == "kept":
+            if pd.isna(value):
+                return str(row.get("pipeline_status", "Not evaluated"))
+            if role == Qt.ItemDataRole.ToolTipRole and not bool(value):
+                return f"Dropped: {row.get('drop_reason', 'see pipeline result')}"
+            return "Kept" if bool(value) else "Dropped"
+        return "" if pd.isna(value) else str(value)
 
 
 def _make_searchable_combo() -> QComboBox:
@@ -145,14 +206,20 @@ class FlightPicker(QWidget):
         filter_scroll.setWidgetResizable(True)
         filter_scroll.setMaximumHeight(420)
 
-        self._results = QTableWidget(0, len(_RESULT_COLUMNS))
-        self._results.setHorizontalHeaderLabels(_RESULT_HEADERS)
+        self._results = QTableView()
+        self._results_model = FlightResultsModel(self._results)
+        self._results.setModel(self._results_model)
         header = self._results.horizontalHeader()
         if header is not None:
-            header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+            header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+            self._results.setColumnWidth(0, 100)
+            self._results.setColumnWidth(1, 100)
+            self._results.setColumnWidth(6, 170)
         self._results.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self._results.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self._results.itemDoubleClicked.connect(self._on_result_double_clicked)
+        self._results.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
+        self._results.doubleClicked.connect(self._on_result_double_clicked)
 
         self._status = QLabel("No flight loaded.")
         self._status.setWordWrap(True)
@@ -172,7 +239,9 @@ class FlightPicker(QWidget):
         self._btn_browse.clicked.connect(self._on_browse)
         self._btn_browse_folder.clicked.connect(self._on_browse_folder)
         self._btn_search.clicked.connect(self._on_search)
-        self._discipline_combo.currentIndexChanged.connect(self._repopulate_filter_combos)
+        self._discipline_combo.currentIndexChanged.connect(
+            self._repopulate_filter_combos
+        )
 
         self._update_discipline_selector()
         self._update_folder_buttons()
@@ -316,21 +385,24 @@ class FlightPicker(QWidget):
                 date, flight_id = "—", path.stem
             records.append(
                 {
-                    "flight_id": flight_id, "date": date, "dept": "—",
-                    "takeoff": "—", "flight_type": "—", "wing_class": "—",
-                    "kept": pd.NA, "path": path,
+                    "flight_id": flight_id,
+                    "date": date,
+                    "dept": "—",
+                    "takeoff": "—",
+                    "flight_type": "—",
+                    "wing_class": "—",
+                    "kept": pd.NA,
+                    "path": path,
                 }
             )
         self._rows = pd.DataFrame(records, columns=[*_RESULT_COLUMNS, "path"])
-        self._results.setRowCount(len(records))
-        for i, record in enumerate(records):
-            for col, key in enumerate(_RESULT_COLUMNS):
-                self._results.setItem(i, col, QTableWidgetItem(str(record[key])))
+        self._results_model.set_rows(self._rows)
 
         truncated = len(paths) == _MAX_FOLDER_SCAN
         suffix = (
             f" (stopped at {_MAX_FOLDER_SCAN}; narrow the folder for more)"
-            if truncated else ""
+            if truncated
+            else ""
         )
         self.set_status(f"{len(paths)} .igc file(s) found in {root.name}{suffix}.")
 
@@ -358,7 +430,7 @@ class FlightPicker(QWidget):
             )
         except FileNotFoundError as exc:
             self._rows = pd.DataFrame(columns=_RESULT_COLUMNS)
-            self._results.setRowCount(0)
+            self._results_model.set_rows(self._rows)
             self.set_status(str(exc))
             return
         except ValueError:
@@ -368,21 +440,10 @@ class FlightPicker(QWidget):
             self._btn_search.setEnabled(True)
 
         self._rows = rows
-        shown = rows.head(_MAX_RESULT_ROWS)
-        self._results.setRowCount(len(shown))
-        for i, (_, row) in enumerate(shown.iterrows()):
-            for col, key in enumerate(_RESULT_COLUMNS):
-                value = row.get(key, "")
-                if key == "kept":
-                    text = "yes" if value is True else ("no" if value is False else "?")
-                else:
-                    text = str(value)
-                self._results.setItem(i, col, QTableWidgetItem(text))
-        truncated = len(rows) > _MAX_RESULT_ROWS
-        suffix = f" (showing the first {_MAX_RESULT_ROWS})" if truncated else ""
-        self.set_status(f"{len(rows)} flight(s) match{suffix}.")
+        self._results_model.set_rows(rows)
+        self.set_status(f"{len(rows)} flight(s) match — all available in the table.")
 
-    def _on_result_double_clicked(self, item: QTableWidgetItem) -> None:
+    def _on_result_double_clicked(self, item: QModelIndex) -> None:
         row = self._rows.iloc[item.row()]
         discipline = self.current_discipline()
         # A folder-scan row already carries its own path (found by rglob, not looked

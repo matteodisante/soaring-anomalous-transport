@@ -29,9 +29,15 @@ def test_field_treats_nan_and_blank_strings_as_absent():
 def test_tooltip_text_includes_the_requested_fields():
     row = pd.Series(
         {
-            "flight_id": "42", "date": "2020-07-15", "pilot": "Alice",
-            "flight_type": "Dist libre", "wing_class": "A", "distance_km": 51.3,
-            "duration_s": 7200.0, "takeoff": "SAINT HILAIRE", "landing": "LUMBIN",
+            "flight_id": "42",
+            "date": "2020-07-15",
+            "pilot": "Alice",
+            "flight_type": "Dist libre",
+            "wing_class": "A",
+            "distance_km": 51.3,
+            "duration_s": 7200.0,
+            "takeoff": "SAINT HILAIRE",
+            "landing": "LUMBIN",
             "dept": "38",
         }
     )

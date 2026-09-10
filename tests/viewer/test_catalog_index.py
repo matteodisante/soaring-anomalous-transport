@@ -151,12 +151,22 @@ def test_distinct_values_are_sorted_and_exclude_blanks(discipline):
 
 def test_distinct_values_excludes_ffvl_anonymised_pilot_placeholders(discipline):
     root = discipline.config().data_root
-    rows = [*_CATALOG_ROWS, {
-        "flight_id": 5, "season_year": 2020, "date": "2020-07-15", "dept": "Isere",
-        "flight_type": "Dist libre", "wing_class": "A", "takeoff": "SAINT HILAIRE",
-        "landing": "LUMBIN", "club": "GCVL", "wing": "Atos V",
-        "pilot": "$2A$07$FFVL0RGPD1SALT2345678U.FOBPSYACWGVBWKRYQXQSFQKY9ZOQVM",
-    }]
+    rows = [
+        *_CATALOG_ROWS,
+        {
+            "flight_id": 5,
+            "season_year": 2020,
+            "date": "2020-07-15",
+            "dept": "Isere",
+            "flight_type": "Dist libre",
+            "wing_class": "A",
+            "takeoff": "SAINT HILAIRE",
+            "landing": "LUMBIN",
+            "club": "GCVL",
+            "wing": "Atos V",
+            "pilot": "$2A$07$FFVL0RGPD1SALT2345678U.FOBPSYACWGVBWKRYQXQSFQKY9ZOQVM",
+        },
+    ]
     pd.DataFrame(rows).to_csv(root / "catalog" / "catalog.csv", index=False)
     pilots = catalog_index.distinct_values(discipline, "pilot")
     assert pilots == ["Alice", "Bob", "Carla"]
@@ -246,3 +256,20 @@ def test_takeoff_points_is_empty_when_flights_meta_is_unreachable(discipline):
     points = catalog_index.takeoff_points(discipline)
     assert points.empty
     assert {"flight_id", "season_year", "date", "lat0", "lon0"} <= set(points.columns)
+
+
+def test_pipeline_status_distinguishes_missing_results_from_rejection(discipline):
+    absent = catalog_index.filter_flights(discipline)
+    assert absent.pipeline_status.eq("Pipeline results unavailable").all()
+    pd.DataFrame(_FLIGHTS_META_ROWS).to_parquet(
+        discipline.config().derived_dir / "flights_meta.parquet"
+    )
+    catalog_index.clear_cache()
+    result = catalog_index.filter_flights(discipline)
+    assert result.pipeline_status.tolist() == [
+        "Kept",
+        "Dropped",
+        "No archived result",
+        "No archived result",
+    ]
+    assert result.loc[1, "drop_reason"] == "duration_below_minimum"

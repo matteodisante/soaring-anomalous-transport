@@ -63,7 +63,10 @@ def draw_land(ax: Axes, rings: list[list[list[float]]], extent: Extent) -> None:
     ax.add_collection(
         PolyCollection(
             [np.asarray(ring) for ring in rings],
-            facecolors=LAND, edgecolors=COAST, linewidths=0.35, zorder=0,
+            facecolors=LAND,
+            edgecolors=COAST,
+            linewidths=0.35,
+            zorder=0,
         )
     )
     ax.set_facecolor(SEA)
@@ -99,6 +102,10 @@ def draw_density(
     if counts.max() < 1:
         return None
     return ax.pcolormesh(
-        lon_edges, lat_edges, np.ma.masked_less(counts.T, 1),
-        cmap=cmap, norm=LogNorm(vmin=1, vmax=max(counts.max(), 2)), zorder=2,
+        lon_edges,
+        lat_edges,
+        np.ma.masked_less(counts.T, 1),
+        cmap=cmap,
+        norm=LogNorm(vmin=1, vmax=max(counts.max(), 2)),
+        zorder=2,
     )

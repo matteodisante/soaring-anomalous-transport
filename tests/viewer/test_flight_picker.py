@@ -11,6 +11,7 @@ below pass by accident.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import pytest
 
@@ -115,7 +116,9 @@ def test_set_folder_points_the_env_var_and_updates_the_selector(
         from pathlib import Path
 
         return Config(
-            data_root=Path(root), season_start=2020, season_end=2021,
+            data_root=Path(root),
+            season_start=2020,
+            season_end=2021,
             base_url="https://x",
         )
 
@@ -172,3 +175,41 @@ def test_set_folder_emits_folders_changed(qapp, tmp_path, monkeypatch):
     ):
         picker._on_set_folder(disciplines_mod.PARAGLIDERS)
     assert received == []
+
+
+def test_all_catalog_matches_are_selectable_and_verdicts_are_explicit(
+    qapp, monkeypatch
+):
+    import numpy as np
+    import pandas as pd
+    from PyQt6.QtCore import Qt
+
+    monkeypatch.setattr(FlightPicker, "_repopulate_filter_combos", lambda self: None)
+    rows = pd.DataFrame({"flight_id": [str(i) for i in range(200_001)]})
+    rows["kept"] = pd.Series(
+        [True, False, pd.NA] + [True] * (len(rows) - 3), dtype="boolean"
+    )
+    rows["pipeline_status"] = "No archived result"
+    rows["drop_reason"] = "altitude unavailable"
+    monkeypatch.setattr(catalog_index, "filter_flights", lambda *a, **kw: rows)
+    chosen_path = Path("last.igc")
+    monkeypatch.setattr(catalog_index, "resolve_igc_path", lambda d, row: chosen_path)
+    picker = FlightPicker()
+    picker._on_search()
+    model = picker._results.model()
+    assert model.rowCount() == len(rows)
+    assert isinstance(rows.iloc[0]["kept"], np.bool_)
+    assert [model.data(model.index(i, 6)) for i in range(3)] == [
+        "Kept",
+        "Dropped",
+        "No archived result",
+    ]
+    assert "altitude unavailable" in model.data(
+        model.index(1, 6), Qt.ItemDataRole.ToolTipRole
+    )
+    received = []
+    picker.flight_chosen.connect(lambda *args: received.append(args))
+    picker._on_result_double_clicked(model.index(len(rows) - 1, 0))
+    assert received[0][0] == chosen_path
+    assert received[0][2] == "200000"
+    picker.close()

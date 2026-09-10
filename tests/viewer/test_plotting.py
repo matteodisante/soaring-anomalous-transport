@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from itertools import pairwise
+
 import matplotlib
 import numpy as np
 import pandas as pd
@@ -220,4 +222,49 @@ def test_save_pdf_writes_a_vector_pdf(tmp_path):
     save_pdf(fig, out)
     assert out.is_file()
     assert out.stat().st_size > 0
+    plt.close(fig)
+
+
+@pytest.mark.parametrize("is_3d", [False, True])
+def test_phase_colour_changes_cover_every_native_edge_without_crossing_gaps(is_3d):
+    from soaring.viewer.data import phases_on_cleaned_fixes
+
+    cleaned = pd.DataFrame(
+        {
+            "segment_id": [0] * 31 + [1] * 3,
+            "t": [*range(31), 0, 1, 2],
+            "E": np.cos(np.arange(34)),
+            "N": np.sin(np.arange(34)),
+            "z": np.arange(34),
+        }
+    )
+    decisions = pd.DataFrame(
+        {
+            "segment_id": [0, 0, 0],
+            "t": [0.0, 10.0, 20.0],
+            "phase": ["climb", "search", "climb"],
+        }
+    )
+    coloured = phases_on_cleaned_fixes(cleaned, decisions, decision_step_s=10.0)
+    fig = plt.figure()
+    ax = make_axes(fig, is_3d=is_3d)
+    plot_trajectory(
+        ax,
+        cleaned=coloured,
+        x="E",
+        y="N",
+        z="z" if is_3d else None,
+        color_by="phase",
+        group_by="phase_run",
+        color_map=PHASE_COLORS,
+    )
+    actual = []
+    for line in ax.lines:
+        xs, ys = line.get_data_3d()[:2] if is_3d else line.get_data()
+        actual.extend(pairwise(zip(xs, ys, strict=True)))
+    expected = []
+    for _, segment in cleaned.groupby("segment_id"):
+        xy = list(zip(segment.E, segment.N, strict=True))
+        expected.extend(pairwise(xy))
+    assert actual == expected
     plt.close(fig)

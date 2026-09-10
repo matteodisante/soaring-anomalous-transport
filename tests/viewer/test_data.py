@@ -245,7 +245,9 @@ def test_load_flight_phases_decodes_only_selected_flight_and_splits_runs(
         "soaring.analysis.segmentation.pipeline.segment_flight",
         lambda fixes, fitted: decoded.copy(),
     )
-    one_flight = pd.DataFrame({"source": ["paraglider"], "flight_id": ["selected"]})
+    one_flight = decoded[["segment_id", "t"]].copy()
+    one_flight["source"] = "paraglider"
+    one_flight["flight_id"] = "selected"
 
     result = load_flight_phases(one_flight, discipline)
 
@@ -269,3 +271,33 @@ def test_load_flight_phases_is_optional_when_model_is_unreachable(
         ),
     )
     assert load_flight_phases(pd.DataFrame(), discipline) is None
+
+
+def test_phase_overlay_preserves_native_vertices_and_uncovered_segments():
+    cleaned = pd.DataFrame(
+        {
+            "segment_id": [0] * 61 + [1] * 3,
+            "t": [*range(61), 0, 1, 2],
+            "E": np.cos(np.arange(64)),
+            "N": np.sin(np.arange(64)),
+            "z": np.arange(64),
+        }
+    )
+    points = pd.DataFrame(
+        {
+            "segment_id": [0] * 4,
+            "t": [0.0, 10.0, 20.0, 50.0],
+            "phase": ["unclassified", "climb", "search", "climb"],
+            # Decision coordinates must never replace the cleaned coordinates.
+            "E": [999.0] * 4,
+        }
+    )
+    result = viewer_data.phases_on_cleaned_fixes(cleaned, points, decision_step_s=10.0)
+    pd.testing.assert_frame_equal(result[cleaned.columns], cleaned)
+    assert result.loc[4, "phase"] == "unclassified"
+    assert result.loc[5:14, "phase"].eq("climb").all()
+    assert result.loc[15:24, "phase"].eq("search").all()
+    assert result.loc[25:44, "phase"].eq("unclassified").all()
+    assert result.loc[45:54, "phase"].eq("climb").all()
+    assert result.loc[55:, "phase"].eq("unclassified").all()
+    assert result.loc[60, "track_run"] != result.loc[61, "track_run"]
