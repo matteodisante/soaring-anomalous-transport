@@ -12,6 +12,7 @@ from soaring.analysis.preproc.cleaning import (
     clean_flight,
     hampel_flags,
     integrity_gate,
+    local_vz,
     longest_non_decreasing,
 )
 
@@ -19,6 +20,30 @@ FIX = load_preproc_config().fix
 LAT0, LON0 = 45.0, 7.0
 _M_PER_DEG_LAT = 111_320.0
 _M_PER_DEG_LON = _M_PER_DEG_LAT * np.cos(np.radians(LAT0))
+
+
+def test_vertical_median_and_support_exclude_the_same_nonfinite_steps():
+    """Infinite increments must not make a sparse median appear well supported."""
+    t = np.arange(8, dtype=float)
+    vz = np.array([np.inf, 1.0, 2.0, np.nan, 3.0, -np.inf, 4.0])
+    median, populated = local_vz(t, vz, window_s=10.0)
+    np.testing.assert_array_equal(populated, np.full(7, 4))
+    np.testing.assert_array_equal(median, np.full(7, 2.5))
+
+
+def test_sustained_rule_can_censor_a_fix_with_small_own_increments():
+    """The chapter's overlap example tests the neighbourhood, not attribution."""
+    dt = 2.0
+    t = dt * np.arange(8)
+    vz = np.array([2.0, 12.0, 12.0, 2.0, 2.0, 12.0, 12.0])
+    altitude = 1700.0 + np.r_[0.0, np.cumsum(dt * vz)]
+    median, populated = local_vz(t, vz, FIX.vz_window_s)
+    np.testing.assert_array_equal(populated[3:5], [5, 5])
+    np.testing.assert_array_equal(median[3:5], [12, 12])
+    assert np.all(vz[3:5] < FIX.max_vertical_speed_mps)
+    out = _clean(_flight(12.0 * t, np.zeros(t.size), altitude, dt=dt))
+    assert out.fixes.loc[out.fixes.t == 8.0, "alt_invalidated"].item()
+    assert len(out.fixes) == t.size
 
 
 def _flight(east_m, north_m, alt_m, dt=1.0, valid=None, baro_m=None):
@@ -62,6 +87,25 @@ def _clean(flight, baro_witness=True):
     return clean_flight(
         flight, FIX, discipline="paragliders", baro_witness=baro_witness
     )
+
+
+@pytest.mark.parametrize("available", [True, False])
+def test_duplicate_seconds_do_not_average_missing_barometer_as_zero(available):
+    """Only actual readings at the shared timestamp can supply the witness."""
+    flight = _glide()
+    expected = float(flight.loc[150, "baro_alt"])
+    duplicate = flight.iloc[[150]].copy()
+    duplicate["baro_alt"] = 0.0
+    if not available:
+        flight.loc[150, "baro_alt"] = 0.0
+    raw = pd.concat(
+        [flight.iloc[:151], duplicate, flight.iloc[151:]], ignore_index=True
+    )
+    row = _clean(raw).fixes.loc[lambda f: f.t == 150].iloc[0]
+    if available:
+        assert row.baro_alt == pytest.approx(expected)
+    else:
+        assert np.isnan(row.baro_alt)
 
 
 # --------------------------------------------------------------------------------
@@ -346,6 +390,26 @@ def test_the_witness_is_the_raw_barometer_and_not_the_adopted_altitude():
     assert _clean(flight, baro_witness=False).report.n_removed_frozen == 0
 
 
+@pytest.mark.parametrize("missing", [np.nan, 0.0])
+def test_a_missing_interior_barometer_cannot_certify_a_flat_frozen_run(missing):
+    """Globally usable barometers must also cover every fix of this candidate."""
+    flight = _with_frozen_run(jitter=1.5)
+    flight.loc[100:190, "baro_alt"] = 1800.0
+    assert _clean(flight).report.n_removed_frozen > 0
+    flight.loc[145, "baro_alt"] = missing
+    # The GNSS declaration must not silently replace a locally missing sensor.
+    flight.loc[100:189, "valid"] = False
+    assert _clean(flight).report.n_removed_frozen == 0
+
+
+def test_gnss_altitude_need_not_be_present_to_read_the_barometric_witness():
+    """The independent signal remains useful precisely during a GNSS dropout."""
+    flight = _with_frozen_run(jitter=1.5)
+    flight.loc[100:190, "baro_alt"] = 1800.0
+    flight.loc[100:189, "alt"] = np.nan
+    assert _clean(flight).report.n_removed_frozen > 0
+
+
 # --------------------------------------------------------------------------------
 # (4) Altitude: the band, the local vertical-speed test, and the out-and-back rule
 # --------------------------------------------------------------------------------
@@ -385,25 +449,20 @@ def _with_sink(rate_mps, seconds=30, start=120):
     return flight
 
 
-def test_a_sink_inside_the_envelope_is_left_alone():
-    # A dive is a manoeuvre, not a defect, and the rule must not reach it. 25 m/s of
-    # sustained sink -- the far end of what an aggressive spiral or acro descent can
-    # hold (a plain spiral dive alone is 15-20 m/s) -- still sits under the bound and
-    # nothing fires.
-    out = _clean(_with_sink(25.0))
+def test_a_sink_below_the_operational_bound_is_left_alone():
+    # Pin the retained side of the configured 10 m/s cutoff without interpreting
+    # that cutoff as a universal physical limit.
+    out = _clean(_with_sink(9.0))
     assert out.report.n_alt_vz_sustained == 0
     assert out.report.n_alt_vz_spike == 0
     assert np.isfinite(out.fixes["alt"].to_numpy()).all()
 
 
 def test_a_sustained_excess_is_censored_through_its_interior():
-    # Past the bound and carried by the whole neighbourhood: not a gust, not a spike.
-    # 35 m/s is well beyond even an aggressive spiral dive or acro descent (the bound
-    # sits above that envelope on purpose, test_a_sink_inside_the_envelope_is_left_alone
-    # pins the envelope side), so this is squarely in the region the rule exists to
-    # catch. The interior of the run is censored; the fixes at its ends stay, as the
-    # boundary between the good data and the bad.
-    out = _clean(_with_sink(35.0))
+    # A coherent 12 m/s descent is above the new operating point. The detector
+    # censors its interior even when the input is real, noiseless motion: its
+    # classification is an operational choice, not a proof of sensor corruption.
+    out = _clean(_with_sink(12.0))
 
     assert out.report.n_alt_vz_sustained == 29
     assert out.report.n_vz_runs == 1  # one stretch, not a scatter of short ones
@@ -412,17 +471,12 @@ def test_a_sustained_excess_is_censored_through_its_interior():
     assert censored.min() >= 120 and censored.max() <= 150
 
 
-def test_a_gust_past_the_bound_censors_nothing():
-    """The reason the rule is windowed at all (sec:fixlevel).
-
-    A gust carries one step past the climb/sink envelope without carrying its
-    neighbourhood there. The per-step form this replaces condemned it; a median over the
-    window does not move, so nothing is censored.
-    """
+def test_a_brief_same_sign_pulse_past_the_bound_censors_nothing():
+    """A two-step pulse changes altitude without an immediate out-and-back spike."""
     flight = _glide()
     alt = flight["alt"].to_numpy(copy=True)
-    alt[100] += 16.0  # one step of +17 m/s, one of -15 m/s: over the bound both ways
-    alt[101] += 30.0
+    alt[100:] += 16.0  # successive speeds +15, +13, then ordinary -1 m/s
+    alt[101:] += 14.0
     flight["alt"] = alt
     flight["baro_alt"] = alt - 50.0
     out = _clean(flight)
@@ -443,17 +497,13 @@ def test_the_windowed_rule_is_blind_to_an_isolated_spike_and_the_other_rule_is_n
     assert out.report.n_alt_vz_spike == 1
 
 
-def test_gnss_vertical_noise_alone_does_not_trip_the_windowed_rule():
-    """What the per-step form could not do, and why the change was forced.
-
-    On the adopted GNSS channel a clean flight carries metres of vertical noise. At
-    sigma = 12 m and 1 Hz -- plausible for the noisy-GNSS minority this archive
-    measures directly (altitude_noise.hf_floor_excess_fraction) -- that puts the
-    largest *per-step* ``|v_z|`` past the bound on a flight with no defect in it at
-    all; the window median reads well under.
-    """
+@pytest.mark.parametrize("noise_sigma_m, censored", [(3.0, False), (12.0, True)])
+def test_windowing_reduces_but_does_not_eliminate_noise_exceedances(
+    noise_sigma_m, censored
+):
+    """At 10 m/s, strong GNSS noise can trip even the windowed rule."""
     flight = _glide()
-    noise = np.random.default_rng(0).normal(0.0, 12.0, len(flight))
+    noise = np.random.default_rng(0).normal(0.0, noise_sigma_m, len(flight))
     flight["alt"] = flight["alt"].to_numpy() + noise
     flight["baro_alt"] = flight["alt"].to_numpy() - 50.0
     t = flight["t"].to_numpy()
@@ -462,15 +512,12 @@ def test_gnss_vertical_noise_alone_does_not_trip_the_windowed_rule():
     assert per_step.max() > FIX.max_vertical_speed_mps  # the per-step rule would fire
 
     out = _clean(flight)
-    assert out.report.n_alt_vz_sustained == 0
+    assert (out.report.n_alt_vz_sustained > 0) == censored
+    assert len(out.fixes) == len(flight)
 
 
 def test_a_thin_window_falls_back_to_the_per_step_bound():
-    """At a slow cadence the median is not estimable, and the per-step value stands in.
-
-    Safe precisely because it is the sparse case: at this cadence the bound is hundreds
-    of metres per step, which no gust produces.
-    """
+    """At a slow cadence the median lacks support, so per-step speed stands in."""
     n = 40
     alt = 2000.0 - 10.0 * np.arange(float(n))
     alt[20] -= 300.0

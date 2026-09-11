@@ -1,69 +1,16 @@
-"""Stage (vii): Savitzky-Golay smoothing and differentiation (thesis, sec:savgol).
+"""Stage (vii): local polynomial smoothing and derivatives within each segment.
 
-Two needs are met here, on the same footing. The raw GNSS coordinate series is itself
-noisy, and since it feeds path length, displacement and the phase segmentation directly,
-the position needs denoising in its own right. Velocity and acceleration drive the
-kinematics and the segmentation too, but differencing the raw series to get them only
-amplifies that same high-frequency noise. A Savitzky-Golay filter meets both needs in
-one pass: it fits a low-order polynomial to a sliding window by least squares and reads
-off that polynomial, or its derivatives, at the window centre, returning smoothed
-position, velocity and acceleration together, one component at a time. In
-the window of ``w`` samples centred on sample ``i``, the coefficients of
-``P(u) = sum_k a_k u^k`` (``u`` the integer offset of a sample from the centre) minimise
-the squared residuals; the smoothed value is ``a_0``, the velocity ``a_1``, the
-acceleration ``2 a_2``. The fit is linear in the ``a_k``, so it has a closed-form
-solution that is itself linear in the samples: each ``a_k`` comes from a fixed linear
-combination of the window's samples, with weights that depend only on ``w`` and the
-polynomial order, never on the data. Because the grid is uniform, the same weights apply
-at every window position, so the whole filter is a convolution with precomputed
-coefficients.
+A cubic Savitzky--Golay fit returns position, velocity and acceleration in physical
+units. The configured timescale determines a sample count, rounded upward to odd and
+floored at five; the sample-to-sample window span is ``(w - 1) * dt``. This heuristic
+is not the filter's spectral cutoff. Its effects on observables require validation
+within cadence groups, especially when the five-sample floor determines the window.
 
-The fit is done in units of samples, so the physical velocity and acceleration are
-``a_1 / dt`` and ``2 a_2 / dt^2``, with the flight's own ``dt`` -- ``delta=dt`` in the
-call below. **This is the only place the cadence enters, and it is why flights of
-different cadences need no common grid** (sec:uniform).
-
-The two hyperparameters come from the measured noise spectrum, not from taste:
-
-* the **window** ``w`` is ``tau_c / dt`` rounded up to the nearest odd integer -- odd,
-  so the window has a centre sample to evaluate at -- with a floor at 5 samples, the
-  smallest on which a cubic fit is meaningfully determined (:func:`savgol_window`).
-  Making ``w`` span ``tau_c`` is a *choice*, the natural one: it puts the filter's
-  cut-off at the measured knee of the noise spectrum. At the dominant 1 s cadence the
-  two rules coincide, ``w = 5`` spanning exactly ``tau_c``; at every slower cadence the
-  floor binds and the five-sample window spans *more* than ``tau_c``. That cost is
-  accepted: at those cadences the noise band sits at or beyond the Nyquist frequency, so
-  there is little to remove at the noise scale in the first place.
-* the **order** is ``p = 3``, the lowest that works. An acceleration needs curvature, so
-  ``p >= 2``; one order more is needed for the *velocity*, because on a symmetric window
-  adding an even-order term leaves the odd-order coefficients untouched, so the velocity
-  of a ``p = 2`` fit is identical to that of a straight-line fit. The cubic term is the
-  first whose velocity responds to the acceleration *varying* across the window. Going
-  higher only lets the fit follow more noise.
-
-The vertical is treated separately from the horizontal, on its own timescale. It was
-once split further, into a barometric and a GNSS timescale conditioned on the channel
-the flight had adopted, on the a-priori expectation that the noisier channel would need
-the longer window; the measurement disconfirmed it, the three knees coinciding at
-``f_c ~ 0.2 Hz`` because every channel's floor is the IGC format's own rounding rather
-than receiver noise. With one adopted channel for the whole archive (sec:altchannel)
-that split has no subject left, and the machinery is gone with it.
-
-**The window never crosses a segment boundary**: the filter runs per segment, with
-``mode='interp'``, so the terminal half-windows are fitted on the edge window and
-evaluated off-centre rather than on padded data. An off-centre evaluation extrapolates
-the fitted polynomial, and the variance of a least-squares polynomial grows towards the
-ends of its fitting interval, so the first and last ``w // 2`` samples of a segment
-carry a larger uncertainty than the interior ones. They are flagged ``edge`` -- the same
-per-sample flag mechanism as ``interpolated`` -- so that an observable sensitive to it
-can be recomputed on interior samples only, which is the empirical check sec:savgol asks
-for.
-
-What this stage does **not** do is validate its own hyperparameters. The acceptance
-criteria of sec:savgol -- a flat residual spectrum above ``f_c``, smoothed kinematics
-inside the physical envelopes, stability under a one-step change of ``w`` -- are a
-diagnostic on a held-out sample, and ``tau_c`` itself is provisional until it is re-read
-on the cleaned ensemble.
+``mode='interp'`` evaluates terminal polynomials inside their fitted edge windows,
+without extrapolation outside the observations. ``edge`` identifies the output rows
+with off-centre weights. ``z_derivative_reconstructed`` marks every output whose
+vertical fit uses at least one reconstructed input altitude; the original
+``z_reconstructed`` flag remains the resampling-stage mask.
 """
 
 from __future__ import annotations
@@ -87,7 +34,12 @@ KINEMATIC_COLUMNS = ["v_E", "v_N", "v_z", "a_E", "a_N", "a_z"]
 
 # Columns of the per-fix table this stage produces, in order (carried-through columns
 # follow). `edge` joins `interpolated` as the second per-sample caution flag.
-SMOOTHED_COLUMNS = [*FIX_COLUMNS, *KINEMATIC_COLUMNS, "edge"]
+SMOOTHED_COLUMNS = [
+    *FIX_COLUMNS,
+    *KINEMATIC_COLUMNS,
+    "edge",
+    "z_derivative_reconstructed",
+]
 
 # The smallest window this stage will use, whatever the cadence says (sec:savgol): five
 # samples, the least on which a cubic fit is meaningfully determined.
@@ -106,7 +58,7 @@ class SavgolWindows:
     Attributes:
         horizontal: Window in samples for ``E`` and ``N``.
         vertical: Window in samples for ``z``. Equal to ``horizontal`` under the
-            adopted timescales, which the measurement found to coincide; the two stay
+            adopted working timescales; the two stay
             separate keys because they answer to different noise floors in principle,
             and only happen to agree in this archive.
         polyorder: The polynomial order, ``p = 3``.
@@ -236,6 +188,24 @@ def smooth_segment(
     edge[:half] = True
     edge[len(segment) - half :] = True
     out["edge"] = edge
+    reconstructed = (
+        segment["z_reconstructed"].to_numpy(dtype=bool)
+        if "z_reconstructed" in segment
+        else np.zeros(len(segment), dtype=bool)
+    )
+    # Interior fits use a centred window; terminal fits use the first/last full
+    # window, exactly as scipy.signal.savgol_filter(mode="interp"). The union
+    # supports position and both vertical derivatives, including zero coefficients
+    # that differ between derivative orders.
+    starts = np.clip(
+        np.arange(len(segment)) - windows.vertical // 2,
+        0,
+        len(segment) - windows.vertical,
+    )
+    prefix = np.r_[0, np.cumsum(reconstructed, dtype=np.int64)]
+    out["z_derivative_reconstructed"] = (
+        prefix[starts + windows.vertical] - prefix[starts]
+    ) > 0
     return out
 
 
@@ -295,6 +265,7 @@ def _empty_smoothed(fixes: pd.DataFrame) -> pd.DataFrame:
     for name in KINEMATIC_COLUMNS:
         empty[name] = pd.Series(dtype="float64")
     empty["edge"] = pd.Series(dtype="bool")
+    empty["z_derivative_reconstructed"] = pd.Series(dtype="bool")
     return _ordered(empty)
 
 

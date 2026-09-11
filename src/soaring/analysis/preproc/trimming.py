@@ -1,56 +1,32 @@
 """Stage (iii): trimming of ground phases (thesis, sec:trimming).
 
-The logger starts recording before take-off and stops after landing, and those ground
-phases must be stripped before any kinematic analysis. Detection uses the **horizontal**
-speed alone -- the vertical plays no role here -- through the sustained-speed rule of
-Eq. eq:trimming, read forward for take-off and time-reversed for landing::
+The outer trimming rule uses observed horizontal step speeds to estimate the
+airborne interval (thesis, Eq. eq:trimming)::
 
     t_on  = min{ t : v_xy > v0 throughout [t, t + T0] }
     t_off = max{ t : v_xy > v0 throughout [t - T0, t] }
 
-Reading the landing rule backward from the end matters. "Cut at the first sustained drop
-below ``v0``" would fire in the middle of the flight, because a wing soaring into wind
-can hold a ground speed near zero while genuinely flying. The persistence ``T0`` stops a
-gust or a GPS glitch on the ground from being read as take-off; it is set between two
-scales rather than tuned -- long enough to outlast those artefacts, short enough that
-misfiring costs at most ``T0`` at each end, negligible against the minimum duration a
-retained flight has to reach anyway.
+The rule takes the first and last qualifying fast runs, so an interior slow run
+does not define the outer boundaries. Persistence reduces sensitivity to short
+excursions but does not bound trimming error by ``T0``. Long slow flight at either
+end can be clipped, and sustained fast ground movement can be retained. Speeds are
+inferred between recorded fixes; they do not observe motion throughout a gap.
 
-**The clock is re-zeroed here**, at the first fix of free flight, so that ``t`` is
-elapsed flight time from then on (sec:notation). The spatial origin is set one stage
-later, at the same fix (sec:enu). The window in the *recorded* clock is kept in the
-report, because the integrity gate of stage (ii) has to count its removals inside it.
+The clock is re-zeroed at the estimated onset. The original-clock boundaries are
+stored for the integrity audit. They are processing estimates, not independently
+verified take-off and landing times.
 
-**Interior ground stints.** The rule above trims only the outer phases: a mid-flight
-landing and relaunch recorded in one log -- a top-landing -- would survive as an
-interior
-near-zero-speed stint and read downstream as a false long wait in the tail of
-``psi(tau)``. The guard is built like the frozen-lock rule, and cuts only on
-corroborated
-evidence, because its dangerous error is the opposite one -- the soaring-into-wind
-failure mode. A stint is excised only when **both** hold: ``v_xy < v0`` continuously for
-at least ``T_ground``, far beyond any search phase; **and** the *barometer* flat over
-the whole stint once its slow drift has been removed. The detrending is not a detail --
-the barometric reference itself wanders by tens of metres over an hour, which over
-``T_ground`` is already of the order of the tolerance, so testing the raw range would
-let a perfectly stationary pilot fail the flatness condition on a pressure change alone.
+Interior slow runs are candidates for ground stops. Removal requires a duration
+of at least ``T_ground`` and complete local coverage from an eligible raw barometer.
+The pressure-altitude residual's 95th-minus-5th percentile span and fitted linear
+slope must both satisfy their bounds. Neither test identifies pressure drift or
+real vertical motion uniquely. Missing pressure evidence makes this guard abstain;
+GNSS altitude does not replace it. A removed stint creates a segment boundary.
 
-The witness is the raw barometric channel and not the adopted altitude, for the same
-reason the frozen-lock rule reads it (sec:altchannel): the analysis altitude is GNSS,
-and GNSS vertical noise is metres, so the central spread of a long stint's residual is
-already of the order of the tolerance and the condition could never be met. A flight
-with no usable barometer therefore has no witness, and the guard **abstains** rather
-than falling back to the speed condition alone -- speed alone is exactly the
-soaring-into-wind failure mode the second condition exists to prevent. This makes
-explicit what was already true in practice: on a GNSS-derived altitude the flatness test
-never passed.
-
-A cut stint is excised and the flight is split at the excision, exactly as at a long
-gap.
-Shorter stints meeting the same predicate are not cut but **flagged**: they are returned
-as a list of suspect intervals, for the ``psi(tau)`` fits to be re-run with and without
-them as a sensitivity check -- the same flag-without-deleting pattern as the outlier
-identifier.
+The driver uses ``frozen_tau_s`` as the minimum span worth reporting as suspect.
+With the current threshold ordering, slow-and-flat runs at least this long but
+shorter than ``T_ground`` are returned for future sensitivity analyses. Briefer
+runs are not reported. This module does not perform waiting-time fits.
 """
 
 from __future__ import annotations
@@ -69,11 +45,8 @@ if TYPE_CHECKING:
 # A flight with no sustained airborne stretch at all has no airborne segment.
 DROP_NO_FLIGHT = "no_sustained_flight"
 
-# Suspect (slow and flat) stints shorter than this are not reported. The floor is
-# tau_freeze, reused rather than invented: below two thermalling periods a slow, flat
-# stretch is not distinguishable from a genuine tight climb -- the same argument the
-# frozen-lock rule makes when it abstains -- and reporting every such stretch would bury
-# the mid-flight landings the list exists to surface.
+# The driver reuses this configured duration as the suspect-reporting floor.
+# It is a working threshold, not a universal separation of ground and airborne motion.
 _SUSPECT_MIN_SPAN_KEY = "frozen_tau_s"
 
 
@@ -82,19 +55,13 @@ class Trimmed:
     """One flight after stage (iii).
 
     Attributes:
-        fixes: The airborne stretch, with the clock re-zeroed at its first fix and
+        fixes: The estimated airborne stretch, with the clock re-zeroed at onset and
             ``split_before`` set where an interior ground stint was excised.
-        t_on: Take-off, in the *recorded* clock (the one the input carried).
-        t_off: Landing, in the same clock.
-        trimmed_fraction: Share of the span *this stage* received that it removed.
-            Its distribution over the archive bounds the exposure to the one structural
-            failure of this rule -- a launch straight into ridge lift, clipped along
-            with the ground phase, since a ground speed cannot tell the two apart. It
-            is trimming's *marginal* share, and often zero on real data: a pilot
-            standing still writes a collapsed, flat-barometer run, so the frozen-lock
-            rule of stage (ii) has usually removed the ground phase already. What each
-            stage took is then read from the fix counts of the two reports, and this
-            number stays what the ridge-lift diagnostic needs it to be.
+        t_on: Estimated onset, in the input's recorded clock.
+        t_off: Estimated end, in the same clock.
+        trimmed_fraction: Fraction of the received elapsed span outside the outer
+            window. Interior excisions do not enter this fraction. It describes
+            processing impact, not the fraction of genuine flight wrongly removed.
         suspect_intervals: Slow-and-flat stints too short to excise, as ``t_start`` /
             ``t_end`` in the re-zeroed clock.
         n_interior_excised: How many interior ground stints were cut.
@@ -119,7 +86,7 @@ def _runs(mask: np.ndarray) -> list[tuple[int, int]]:
 def airborne_window(
     t: np.ndarray, lat: np.ndarray, lon: np.ndarray, trimming: TrimmingThresholds
 ) -> tuple[float, float] | None:
-    """The ``[t_on, t_off]`` of Eq. eq:trimming, or ``None`` if the flight never flew.
+    """Estimate ``[t_on, t_off]``, or return ``None`` if no run meets the speed rule.
 
     Args:
         t: Fix times, strictly increasing.
@@ -129,7 +96,7 @@ def airborne_window(
 
     Returns:
         The window in the input clock, or ``None`` when no stretch holds ``v_xy > v0``
-        continuously for ``T0``.
+        on consecutive observed steps for at least ``T0``.
     """
     if t.size < 2:
         return None
@@ -150,39 +117,29 @@ def airborne_window(
 def _is_flat(
     t: np.ndarray, alt: np.ndarray, tolerance_m: float, max_drift_mps: float
 ) -> bool:
-    """Whether the altitude is flat over a stint once its linear drift is removed.
+    """Test pressure-altitude residual spread and fitted slope on a covered stint.
 
-    Two conditions, not one. The detrended spread must stay within the tolerance --
-    that is the test sec:trimming states -- but detrending alone cannot separate a
-    pressure drift from a steady climb, because both are linear and the fit removes
-    either completely. A wing thermalling at 1 m/s in still air holds a ground speed
-    near zero and gains 700 m over a ``T_ground`` stint, and its detrended residual is
-    *zero*: without a second condition it would be excised as a mid-flight landing,
-    which is exactly the failure this guard is built to avoid.
+    Every candidate fix needs finite pressure altitude, with at least three samples.
+    Ordinary least squares gives a linear trend; its absolute slope must not exceed
+    ``max_drift_mps``. The driver sets this to
+    ``frozen_delta_z_m / frozen_tau_s``. The residual's 95th-minus-5th percentile span
+    must not exceed ``tolerance_m``.
 
-    What separates the two is the *rate*. Barometric drift runs at tens of metres per
-    hour; a soaring climb runs two orders of magnitude faster. The bound on the fitted
-    slope is therefore ``max_drift_mps``, and the driver derives it from the
-    frozen-lock rule's own statement of what counts as motionless,
-    ``frozen_delta_z_m / frozen_tau_s`` -- a rate the configuration already fixes, not a
-    new threshold.
+    A linear climb and a linear pressure drift both disappear from the residual.
+    The slope bound constrains their observed rate without identifying its cause.
+    Slow real motion can pass; rapid pressure drift can fail.
 
-    The spread is the *central* one, the span from the 5th to the 95th percentile of
-    the residual, and not its full range. A full range is a maximum statistic: over
-    zero-mean noise it grows without bound with the number of samples, by roughly ``2
-    sigma sqrt(2 ln n)``. At the metre-scale barometric noise of this archive it reads
-    4.6 m over a 60-sample stint and 7.1 m over 3000, so with a 5 m tolerance the test
-    passed on short stints and failed on long ones, on noise alone; and an interior
-    stint must last minutes to be considered at all, so it failed on every one of
-    them. The rule could not fire. The central span has the same units and the same
-    reading, and for Gaussian noise it sits at 3.3 sigma whatever the stint's length,
-    so the threshold means the same thing on a one-minute stint and a one-hour one. A
-    genuine climb of hundreds of metres exceeds it either way.
+    For an independent Gaussian reference model, the population central span is
+    about ``3.29 sigma`` and the leading large-sample full-range scale is
+    ``2 sigma sqrt(2 log n)``. Finite-sample percentile estimates fluctuate; neither
+    expression is a distribution-free guarantee. A central span can also hide short
+    excursions. Passing this test does not establish that a glider was on the ground.
     """
     finite = np.isfinite(alt)
-    if finite.sum() < 3:
-        # No witness to test with -- an absent barometer arrives here as an all-``nan``
-        # column -- so the guard abstains and the stint is kept.
+    if finite.sum() < 3 or not finite.all():
+        # A flight-level usable sensor need not cover this candidate stint. Sparse
+        # observed endpoints cannot certify that the unobserved interior was flat.
+        # Keep the stint when any contemporaneous barometric witness is missing.
         return False
     slope, intercept = np.polyfit(t[finite], alt[finite], 1)
     residual = alt[finite] - (slope * t[finite] + intercept)
@@ -265,8 +222,7 @@ def trim_flight(
             split[stop] = True
     out["split_before"] = split
     out = out.loc[~excise].reset_index(drop=True)
-    # The clock zero of sec:notation: elapsed flight time from the first fix of free
-    # flight. The spatial origin follows at the same fix, one stage later.
+    # Elapsed time from the estimated onset; this is not verified take-off time.
     out["t"] = out["t"].to_numpy(dtype=float) - t_on
 
     airborne_span = t_off - t_on

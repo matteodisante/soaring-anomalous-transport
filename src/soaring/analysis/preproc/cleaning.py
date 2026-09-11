@@ -1,60 +1,21 @@
-"""Stage (ii): fix-level cleaning (thesis, sec:fixlevel and impl:fixlevel).
+"""Fix-level cleaning before projection, resampling and smoothing.
 
-Corrupt or physically impossible fixes must go without discarding the flight around
-them. Every removed fix also modifies the trajectory whose statistics are about to be
-measured, so an over-aggressive cleaning biases the result as much as dirty data would.
-The cleaning therefore assumes as little as possible about the motion -- only smoothness
-at the sampling scale, never a model of the transport -- and **defaults to keeping**: a
-fix is removed only on positive evidence of a defect.
+Position and time rules remove selected fixes; altitude rules invalidate only that
+channel. These are operational decisions, not a guarantee that every removed fix
+is erroneous or every retained fix is correct. Slowly varying errors can survive,
+and interpolation cannot reconstruct unobserved manoeuvres.
 
-The two errors are not symmetric. A spurious fix that survives lies at worst a speed
-bound times a native step from the true track, tens of metres, which the smoothing
-absorbs. A genuine fix removed from a slow, horizontally localized phase -- a search, a
-climb -- erases a real trapping event, and nothing downstream can restore it.
+After timestamp handling, Hampel residuals identify and attribute candidates, while
+the horizontal impossibility/rejoin gate controls deletion independently of the
+flag. Collapsed or exactly repeated coordinate runs are tested for duration and
+witness support. Removed frozen-run intervals force segment boundaries. Altitude
+uses absolute bounds, adjacent windowed speed tests and isolated return-spike rules.
 
-**The invariant**: a usable horizontal position is never discarded. A fix is deleted
-only
-when its own position or timestamp is corrupt or invented; when only the altitude is
-wrong, the fix stays and that channel is marked missing, restored once at resampling
-(sec:uniform). The asymmetry is deliberate: ten kept-but-positionless fixes would look
-to the resampler like ten samples of a continuously recorded stretch, the gap rule would
-never fire, and an invented straight line would be laid across an interval that may hold
-a full thermalling circle. Deleting them leaves the hole visible.
-
-Everything runs on the **raw geodetic coordinates**, before the Cartesian conversion, so
-distances are great-circle (haversine): replacing the ellipsoid by a sphere perturbs an
-inter-fix distance by at most ~0.3 %, about 3 cm on a 10 m step, far below the
-metre-scale GPS noise on the same quantity.
-
-The detectors run in a fixed order, and the order matters -- a speed or a residual is
-only meaningful once the time base is monotone and free of duplicates:
-
-1. **time defects** -- backward steps by minimal removal, then duplicate seconds merged
-   to their centroid;
-2. **position outliers** -- the Hampel identifier *flags*, and an absolute ``v_xy``
-   bound must corroborate before anything is deleted;
-3. **frozen-lock runs** -- cut only on three agreeing signatures, and marked as a gap;
-4. **altitude** -- an absolute band, a *local* vertical-speed test on the median of
-   ``|v_z|`` over a window, and an isolated out-and-back rule beside it.
-
-The altitude's local test is a median of speeds and not a Hampel test on ``z`` itself,
-and the difference matters (sec:fixlevel). A Hampel residual on ``z`` would flag the
-physics: the departure from a local median is largest exactly at the thermal entries the
-segmentation is built on, and the vertical channel has no corroborating witness of the
-kind the speed bound gives the horizontal one. A median of ``|v_z|`` over the same
-window flags none of that -- a thermal entry is a *change* of vertical speed, not a
-sustained impossible one -- while still refusing to condemn a fix on the strength of a
-single step, which is what the earlier per-step form did. The costs set the posture: an
-interpolation laid across a thermal entry erases the transition rather than restoring
-it, so the rule fires only where the excess is carried by the neighbourhood rather than
-by one sample.
-
-The **integrity gate** is not applied here. It counts over the *airborne* window --
-defects in a ground phase that trimming removes anyway must not condemn a flight -- and
-that window does not exist until stage (iii) has run. :func:`integrity_gate` is
-therefore
-called by the driver, after trimming, with the record this stage returns.
-"""
+Distances here are spherical great-circle approximations on raw geodetic
+coordinates. The later ENU transform and smoothing define different coordinates,
+so a speed bound enforced here is not a bound on every smoothed output step.
+The integrity gate is called after trimming and measures reconstruction burden
+over the retained airborne interval, without estimating a true defect rate."""
 
 from __future__ import annotations
 
@@ -84,8 +45,8 @@ REMOVED_FROZEN_RUN = "frozen_lock_run"
 # The flight-level verdict of :func:`integrity_gate`.
 DROP_INTEGRITY = "cleaning_rebuilt_too_much"
 
-# Rescales the median absolute deviation into an estimate of a Gaussian standard
-# deviation (thesis, Eq. eq:hampel).
+# Conventional scalar Gaussian MAD normalization; radial local residuals do not
+# inherit an exact Gaussian standard-deviation interpretation (Eq. eq:hampel).
 _MAD_TO_SIGMA = 1.4826
 
 
@@ -137,7 +98,7 @@ class Cleaned:
 def longest_non_decreasing(values: np.ndarray) -> np.ndarray:
     """Indices of a longest non-decreasing subsequence of ``values``.
 
-    The minimal-removal rule for backward timestamps (impl:fixlevel): delete the
+    The minimal-removal rule for backward timestamps (sec:fixlevel): delete the
     smallest set of fixes whose removal leaves a clock that never goes back, i.e. keep a
     longest non-decreasing subsequence. Ties are kept, because two fixes in one UTC
     second are a *duplicate*, handled by the merge that runs next, not a backward step.
@@ -174,34 +135,18 @@ def longest_non_decreasing(values: np.ndarray) -> np.ndarray:
 
 
 def unwrap_longitude(lon_deg: np.ndarray) -> np.ndarray:
-    """Put a flight's longitudes on one continuous branch, across the antimeridian.
+    """Place longitude on a continuous branch before componentwise calculations.
 
-    Three of the detectors here work *componentwise* on longitude -- the Hampel window
-    median, the bounding box of a candidate frozen run, the centroid of a duplicate
-    second -- and every one of them is wrong on a track that crosses 180 degrees, where
-    consecutive fixes are written ``+179.99`` and ``-179.99``.
-
-    The failure is not the obvious one. Great-circle distance is *correctly* aware of
-    the wrap, so the two numerical extremes of a straddling window read as five metres
-    apart: the bounding box of a wing moving at 12 m/s collapses to nothing and the
-    frozen-lock rule fires on genuine motion. The componentwise mean fails the other
-    way, placing the centroid of ``+179.99`` and ``-179.99`` at longitude zero -- the
-    null island, which is the very artefact the cleaning exists to remove.
-
-    Unwrapping once, here, fixes all three: on a continuous branch (``179.99``,
-    ``180.01``, ...) a median, a min, a max and a mean all mean what they say. Nothing
-    downstream minds -- distances and the ENU rotation are trigonometric and periodic --
-    so only the stored coordinate is wrapped back, at the end of the pass.
-
-    Today's archive never triggers this: the FFVL flights reach 169 degrees east and 150
-    west. It is the further, non-French sources that would.
+    Medians, bounding boxes and duplicate-time centroids must not average values just
+    below +180 degrees with values just above -180 degrees as if they were far apart.
+    Unwrapping avoids that coordinate discontinuity; trigonometric distance and ENU
+    calculations remain periodic. Stored longitude is wrapped again at the end.
 
     Args:
-        lon_deg: Longitudes in degrees.
+        lon_deg: Longitude in degrees.
 
     Returns:
-        The same longitudes on a branch with no jumps, possibly outside [-180, 180].
-    """
+        A continuous branch, possibly outside [-180, 180]."""
     return np.degrees(np.unwrap(np.radians(lon_deg)))
 
 
@@ -213,41 +158,18 @@ def wrap_longitude(lon_deg: np.ndarray) -> np.ndarray:
 def hampel_flags(
     t: np.ndarray, lat: np.ndarray, lon: np.ndarray, fix_level: FixLevelThresholds
 ) -> np.ndarray:
-    """The Hampel identifier on the horizontal position (thesis, Eq. eq:hampel).
+    """Identify local horizontal-position residuals; do not delete fixes.
 
-    In the window of fixes within ``+/- w`` of ``t_k``, take the componentwise medians
-    of
-    latitude and longitude; the residual ``r_k`` is the great-circle distance of the fix
-    from that median point, and the local scale is ``sigma_k = 1.4826 med{r_j}`` over
-    the
-    same window. The fix is flagged when ``r_k > max(k sigma_k, eps_min)``.
+    At each fix, compute the componentwise median latitude/longitude in the inclusive
+    physical-time window +/- w and the great-circle residual r_k from that median.
+    The local scale is 1.4826 times the median of neighbouring residuals r_j, each of
+    which was formed around its own local median. Flag r_k above the greater of
+    k times this scale and the configured metre floor, only if enough fixes exist.
 
-    Both halves of that threshold earn their place. The multiple of ``sigma_k`` makes
-    the
-    test context-sensitive -- a 30 m/s step out of a 12 m/s glide is flagged, the same
-    step passes where it is ordinary -- and the floor ``eps_min`` stops the test chasing
-    GPS noise on a very smooth stretch, where ``sigma_k -> 0`` and any sub-metre wiggle
-    would otherwise clear ``k sigma_k``.
-
-    The window is a *time* window, not a sample count, so it adapts to the native
-    cadence
-    and to irregular sampling. Where it holds fewer than ``hampel_min_window_fixes``,
-    the
-    local scale is not estimable and the fix is left to the absolute bounds alone.
-
-    This is the *identifier*, the detection half of the eponymous filter, never the
-    median-substituting filter: the local median enters only as the reference for the
-    residual, never as an output value. A flag does not delete on its own.
-
-    Args:
-        t: Fix times in seconds, strictly increasing.
-        lat: Latitudes in degrees.
-        lon: Longitudes in degrees.
-        fix_level: The adopted thresholds.
-
-    Returns:
-        A boolean array, ``True`` where the fix is off the local trend.
-    """
+    The factor is the conventional scalar Gaussian MAD normalization; it does not
+    make this radial, correlated residual an exactly calibrated Gaussian statistic.
+    The flag attributes a candidate. The separate impossibility/rejoin gate makes
+    the horizontal deletion decision, and no median is substituted for a position."""
     index = pd.to_timedelta(t, unit="s")
     roll = {
         "window": pd.Timedelta(seconds=2.0 * fix_level.hampel_window_s),
@@ -282,34 +204,21 @@ def _scan_positions(
     max_speed_mps: float,
     block_span_s: float,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """One left-to-right scan: delete corroborated spikes, split at discontinuities.
+    """Scan left to right, removing bounded excursions and splitting discontinuities.
 
-    The scan carries the last accepted fix as an anchor, so it never re-walks the track.
-    What condemns a fix is the **impossibility gate**: it is unreachable from the last
-    accepted fix at the absolute speed bound, and removing the block it belongs to makes
-    the bracketing neighbours rejoin within that bound. Both halves matter. The first
-    keeps a genuine tight thermalling circle safe -- its fixes sit on opposite sides of
-    their own window median, but a circling wing flies at an ordinary speed and is never
-    a candidate. The second is what attributes the defect: a speed belongs to the
-    segment *between* two fixes and does not say which endpoint is wrong, and the block
-    whose removal restores the trend is the answer.
+    The last accepted fix anchors the impossibility gate. An unreachable block is
+    deleted if its removal lets the bracketing fixes rejoin within the speed bound.
+    This assigns a removal using local geometry; it cannot prove which position is
+    erroneous. A real manoeuvre whose recorded steps respect the bound is retained.
 
-    The Hampel flag is recorded for every fix (the per-flight anomaly count) but is not
-    required for the deletion, and that is a deliberate departure from the
-    two-conditions rule as sec:fixlevel first stated it. The reason is the identifier's
-    own 50 % breakdown point. Where more than half of a window is corrupt -- runs of
-    null-island ``(0, 0)`` fixes are the case seen in the archive -- the *median itself*
-    moves onto the corruption, the corrupt fixes score a residual of zero and go
-    unflagged, and it is the good fixes around them that get flagged instead. Requiring
-    the flag there does not make the rule conservative, it makes it blind, and what
-    survives is a 5000 km step. The impossibility gate has no local scale in it, so
-    contamination cannot break it; the protection the flag was there to provide -- never
-    cutting a real manoeuvre -- is provided by the speed bound itself.
+    The Hampel flag is recorded but does not gate deletion (ADR 0001). Contamination
+    of most of a median window can hide the anomalous block from that identifier;
+    the absolute-speed gate does not depend on its local scale. This avoids that
+    particular failure, without guaranteeing correct attribution in every record.
 
-    A burst is absorbed as one block, the smallest whose removal lets the trend rejoin.
-    When no removal restores continuity -- a re-acquisition offset, where the track
-    jumps and stays -- the scan stops deleting and marks a split at the step: both sides
-    are genuine, only the transition between them is unknown.
+    When a candidate excursion cannot rejoin within the permitted span, the scan
+    retains both sides and marks a discontinuity. Keeping them does not certify
+    their positions; the transition is excluded from subsequent path accumulation.
 
     Args:
         t: Fix times, strictly increasing.
@@ -317,13 +226,10 @@ def _scan_positions(
         lon: Longitudes in degrees.
         flagged: The Hampel flags, recorded per fix.
         max_speed_mps: The discipline's absolute horizontal-speed bound.
-        block_span_s: Longest a tentatively removed block may run before the scan calls
-            the step a discontinuity instead. It bounds what an excursion deletion can
-            cost in genuine samples, and it sets the scale at which the two cases part:
-            an offset smaller than ``max_speed_mps * block_span_s`` becomes reachable
-            from the anchor before the cap expires and is therefore removed as an
-            excursion rather than split. That is a real limit of the rule, and a bounded
-            one -- at most this many seconds of genuine fixes, at a discontinuity.
+        block_span_s: Permitted span of a pending excursion before an unresolved
+            continuation becomes a discontinuity. A persistent offset can become
+            reachable before this cap and be treated as an excursion; the parameter
+            therefore affects attribution as well as computational work.
 
     Returns:
         ``(delete, split_before)``, two boolean arrays over the fixes. The invariant
@@ -424,61 +330,32 @@ def _frozen_runs(
     fix_level: FixLevelThresholds,
     baro_witness: bool,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Frozen-lock runs: the three-signature rule of Eq. eq:frozenlock.
+    """Detect candidate repeated-position intervals with joint operational criteria.
 
-    When the receiver loses its lock, many loggers repeat the last position for tens of
-    seconds while the clock keeps running. Such a run passes every other test -- speed
-    zero, altitude in range, valid timestamps -- and if kept it enters the analysis as a
-    long *waiting time*, contaminating exactly the tail of ``psi(tau)`` where the
-    anomalous exponent is read. Cutting too eagerly is the mirror error: tight
-    thermalling climbs are also slow and horizontally localized, and an erased trapping
-    event is unrecoverable where a kept freeze is merely flagged.
+    Candidates are exact runs of repeated decoded coordinates and greedy intervals
+    whose bounding-box diameter stays below the configured distance. They must last
+    at least frozen_tau_s and pass _is_witnessed. Those criteria are not statistically
+    independent and do not prove the receiver's internal lock state. Slow or quantized
+    physical motion and shared recorder failures remain possible confounders.
 
-    A run is cut only when three independent signatures agree:
-
-    (i) *collapsed* -- the run is the maximal stretch whose bounding diameter stays
-    below
-        ``delta_xy``. A circling wing traces a disc of 30-100 m, above ``delta_xy`` by a
-        factor of at least two, and clears the test on the diameter alone;
-    (ii) *witnessed* -- where the flight carries a usable barometer, by that barometer
-        reading flat, since a lock loss freezes the GNSS position while the pressure
-        sensor, a separate instrument, keeps recording a real climb. This is the one
-        place the barometric channel still earns its keep once the analysis reads GNSS
-        throughout (sec:altchannel): it enters no observable, it is used here as an
-        instrument, and the independence is the whole point -- the adopted altitude
-        comes from the very receiver whose lock is in doubt, so it cannot witness
-        against itself. Where there is no barometer, the recorder's own declarations are
-        all that is left. A byte-identical repeat of the coordinates overrules either:
-        no moving receiver rewrites the same bits;
-    (iii) *long enough* -- at least ``tau_freeze``, about two thermalling periods, so a
-        run long enough to be cut spans at least two full circles of any genuine climb,
-        whose diameter test (i) then sees in full.
-
-    Below ``tau_freeze`` the rule deliberately abstains: at a few tens of seconds a
-    collapsed run and a genuine slow stretch are not distinguishable by these
-    signatures,
-    and a kept short freeze lengthens one waiting time by at most ``tau_freeze``, where
-    a
-    wrongly cut climb removes one outright.
+    Exact coordinate repetition is accepted as a witness by the current policy.
+    Otherwise a flight with an eligible barometer needs a finite reading at every
+    candidate fix and a small difference between its first/last-quarter medians;
+    missing local support causes abstention. Without an eligible barometer, a majority
+    of GNSS-invalid or missing-altitude declarations supplies the fallback witness.
+    The barometer comparison measures net change, not the absence of interior motion.
 
     Returns:
-        ``(delete, split_before)``: the run's fixes are deleted -- the positions are
-        invented -- and the fix after the run is marked, so the trajectory is split
-        there
-        rather than interpolated across even at a cadence whose gap bound would
-        otherwise
-        bridge the hole the deletion leaves.
-    """
+        Deletion mask and split-before mask. Every removed block ends in a forced
+        boundary at its next surviving fix, preventing interpolation across that block."""
     n = t.size
     delete = np.zeros(n, dtype=bool)
     split = np.zeros(n, dtype=bool)
     if n < 2:
         return delete, split
 
-    # Two families of candidate run, because the byte-identical signature has to be
-    # tested on the stretch that actually is byte-identical: a greedy collapsed run
-    # reaches one fix past the freeze -- the wing has not yet moved delta_xy away -- and
-    # that one fix would break an exact-equality test that is meant to be conclusive.
+    # Exact-repeat candidates are tracked separately: a greedy collapsed interval
+    # can include a nearby nonidentical fix and would then fail the equality test.
     runs = _identical_runs(lat, lon) + _collapsed_runs(t, lat, lon, fix_level)
     for i, j in runs:
         if t[j] - t[i] < fix_level.frozen_tau_s:
@@ -502,14 +379,11 @@ def _frozen_runs(
 
 
 def _identical_runs(lat: np.ndarray, lon: np.ndarray) -> list[tuple[int, int]]:
-    """Maximal runs of byte-identically repeated coordinates, as inclusive ranges.
+    """Find inclusive runs of exactly equal decoded latitude/longitude values.
 
-    Exact equality on the decoded values, which is exactly the test on the raw record:
-    the ``DDMM.mmm`` field is a fixed-width integer count of thousandths of an arc-
-    minute,
-    so the decode is injective and two records are byte-identical in latitude and
-    longitude iff their decoded values compare equal.
-    """
+    This is equality without a distance tolerance, not a comparison of whole raw IGC
+    records. Coordinate quantization can produce equal values during physical motion.
+    The frozen-run policy additionally requires the configured minimum duration."""
     same = (lat[1:] == lat[:-1]) & (lon[1:] == lon[:-1])
     edges = np.flatnonzero(np.diff(np.concatenate([[False], same, [False]])))
     return [(int(a), int(b)) for a, b in zip(edges[::2], edges[1::2], strict=True)]
@@ -518,14 +392,11 @@ def _identical_runs(lat: np.ndarray, lon: np.ndarray) -> list[tuple[int, int]]:
 def _collapsed_runs(
     t: np.ndarray, lat: np.ndarray, lon: np.ndarray, fix_level: FixLevelThresholds
 ) -> list[tuple[int, int]]:
-    """Maximal runs whose bounding diameter stays below ``delta_xy``, greedily.
+    """Find greedy candidate intervals with bounding-box diameter below delta_xy.
 
-    A vectorised pre-filter first: a run that can qualify must keep the wing inside
-    ``delta_xy`` for at least ``tau_freeze``, so the bounding box of every trailing
-    ``tau_freeze`` window must be that small somewhere. On a real track it never is --
-    a glide covers hundreds of metres in a minute -- so the exact scan below runs on a
-    vanishing share of the archive's fixes and the whole rule stays linear.
-    """
+    A trailing-window bounding-box prefilter limits the exact scan to potentially
+    collapsed stretches. Such geometry identifies candidates; it does not establish
+    that a slow, spatially confined interval is a recorder defect."""
     eps = fix_level.frozen_eps_m
     index = pd.to_timedelta(t, unit="s")
     roll = {
@@ -591,31 +462,39 @@ def _is_witnessed(
     fix_level: FixLevelThresholds,
     baro_witness: bool,
 ) -> bool:
-    """The witness ``W`` of Eq. eq:frozenlock, for one candidate run.
+    """Evaluate the configured witness for one candidate interval.
+
+    Exact decoded coordinate repetition passes directly. Otherwise a barometer deemed
+    eligible at flight level must also be finite at every candidate fix; the first
+    and last quarter medians are compared. This is a net-change test. No missing
+    barometric reading is interpolated. If no eligible barometer exists, the fallback
+    requires a majority of invalid-GNSS or missing-altitude declarations.
 
     Args:
-        lat: Latitudes over the run.
-        lon: Longitudes over the run.
-        alt: The *adopted* (GNSS) altitude over the run, for the declaration test.
-        baro: The *raw* barometric channel over the run, ``nan`` where absent. This is
-            the independent instrument, read here and nowhere else in the analysis.
-        valid: The recorder's per-fix ``A``/``V`` flag.
-        fix_level: The adopted thresholds.
-        baro_witness: Whether this flight's barometric channel is present and alive
-            enough to witness with.
-    """
+        lat: Decoded latitudes over the run.
+        lon: Decoded longitudes over the run.
+        alt: Adopted GNSS altitude, with unavailable values represented by NaN.
+        baro: Raw pressure-altitude readings, NaN where absent.
+        valid: Recorder A/V flags.
+        fix_level: Operational thresholds.
+        baro_witness: Flight-level barometer eligibility; not local coverage."""
     byte_identical = bool(np.all(lat == lat[0]) and np.all(lon == lon[0]))
     if byte_identical:
-        # Exact equality and no tolerance: a tolerance would turn the one conclusive
-        # signature into the jittering-freeze case it exists to exclude.
+        # This branch uses exact equality, with no tolerance. It is a configured
+        # decision rule, not proof that physical motion was impossible.
         return True
     if baro_witness:
-        # Between medians of the run's ends, so an altitude spike inside the run -- not
-        # yet cleaned, the altitude pass runs last -- cannot fake a climb.
+        # Flight-level presence does not establish coverage of this particular run.
+        # Require a contemporaneous barometric reading at every candidate fix; do not
+        # interpolate a missing witness or infer a flat run from two observed ends.
+        # Abstain locally rather than falling back to a weaker GNSS declaration when
+        # an otherwise usable independent sensor happens to be missing here.
+        if not np.isfinite(baro).all():
+            return False
+        # Between medians of the run's ends: this tests net altitude change, not the
+        # absence of every interior excursion. The geometric condition is still needed.
         end = max(1, baro.size // 4)
-        if not (np.isfinite(baro[:end]).any() and np.isfinite(baro[-end:]).any()):
-            return False  # no barometer to witness with: in doubt, the run is kept
-        head, tail = np.nanmedian(baro[:end]), np.nanmedian(baro[-end:])
+        head, tail = np.median(baro[:end]), np.median(baro[-end:])
         return abs(tail - head) < fix_level.frozen_delta_z_m
     # No barometer: the recorder's own declarations are the only witness left, and they
     # must speak for the run rather than for a stray fix in it.
@@ -686,29 +565,16 @@ def local_vz(
     is centred on a step's own midpoint ``(t_j + t_{j+1})/2`` and holds every step
     whose midpoint falls within ``+/- window_s`` of it.
 
-    The median, rather than a mean or an endpoint-to-endpoint slope, is what makes the
-    test a statement about the neighbourhood instead of about one step. A gust pushes a
-    single step past the bound and leaves the median exactly where it was; so does an
-    isolated sensor spike, which is two large steps of opposite sign out of ten. Only an
-    excess carried by more than half the window moves it, and that is what "sustained"
-    means. Measured on synthetic tracks at 1 Hz against a 3 m/s climb: a two-sample gust
-    of +16 and +14 m/s reads 3.0, a 200 m spike reads 3.0, while a genuine 18 m/s sink
-    held for 15 s reads 15.0. The mean and the chord slope fail the spike case, at 42.4
-    and 23.0 respectively.
+    The median describes a neighbourhood rather than a single increment. With an
+    odd number of finite steps, it exceeds a bound only if a majority exceed it;
+    with an even number, the average of the two central order statistics decides.
+    Isolated excursions therefore need not trigger this statistic, and are tested
+    separately by the out-and-back rule in ``_clean_altitude``.
 
-    Noise is the reason the rule is windowed at all, and not a nicety: on the same
-    synthetic climb, GNSS vertical noise of sigma = 12 m -- plausible for the
-    noisy-GNSS minority this archive measures directly, rather than infers
-    (:func:`soaring.analysis.altitude_noise.hf_floor_excess_fraction`) -- puts the
-    largest *per-step* ``|v_z|`` at 36.3 m/s, past ``max_vertical_speed_mps``, on a
-    flight that is perfectly clean; the window median stays at 15.8, comfortably under
-    it. Once the adopted channel is GNSS (sec:altchannel) a per-step test fires on the
-    noise floor itself.
-     A *time* window and not a fixed number of steps, for the reason every other window
-    in this module is one: the archive's cadences run from 1 to 10 s, and a fixed count
-    would ask a 10 s logger to sustain the excess for two minutes and a 1 Hz logger for
-    ten
-    seconds.
+    This is not a noise-free velocity estimate: sufficiently strong GNSS noise or
+    sustained real motion can exceed an operational bound. A time window keeps the
+    temporal scale fixed across logging cadences. The caller falls back to per-step
+    speed when too few finite steps support the median.
 
     Args:
         t: Fix times in seconds, strictly increasing.
@@ -731,7 +597,11 @@ def local_vz(
         "closed": "both",
         "min_periods": 1,
     }
-    series = pd.Series(np.abs(v_z), index=pd.to_timedelta(midpoint, unit="s"))
+    magnitude = np.abs(v_z)
+    # Rolling median ignores infinities, whereas rolling count otherwise includes
+    # them. Both operations must use exactly the same finite support.
+    magnitude = np.where(np.isfinite(magnitude), magnitude, np.nan)
+    series = pd.Series(magnitude, index=pd.to_timedelta(midpoint, unit="s"))
     return (
         series.rolling(**roll).median().to_numpy(),
         series.rolling(**roll).count().to_numpy(),
@@ -741,46 +611,26 @@ def local_vz(
 def _clean_altitude(
     t: np.ndarray, alt: np.ndarray, fix_level: FixLevelThresholds
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, int, int]:
-    """Bounds on the adopted altitude channel (thesis, tab:cleaning).
+    """Operational cuts on GNSS altitude (thesis, tab:cleaning).
 
-    Three rules, all marking the altitude missing and none touching the fix:
+    Three rules mark altitude missing without deleting horizontal fixes:
 
-    * *out of band* -- outside the sensor-plausibility window;
-    * *sustained excess* -- the local vertical speed of :func:`local_vz` is past the
-      climb/sink envelope. A fix is censored when the step *into* it and the step *out
-      of* it are both in such a neighbourhood, so a defect is condemned from both sides
-      and never by a single step. A sustained run is therefore censored through its
-      interior, with the two fixes at its ends left standing as the boundary between the
-      good data and the bad;
-    * *isolated vertical spike* -- an altitude the record jumps away from and back to
-      within one step each way, both steps past the envelope. The windowed rule cannot
-      see this shape, by construction: two opposite-signed steps out of ten do not move
-      a median. That is not a gap but the division of labour -- one rule for the excess
-      that is typical of its neighbourhood, one for the excursion that is not.
+    * out of band: altitude outside the configured range;
+    * sustained excess: both adjacent local magnitudes from :func:`local_vz`
+      exceed the configured vertical-speed cutoff;
+    * out-and-back spike: both adjacent per-step magnitudes exceed that cutoff
+      and their signed velocities have opposite signs.
 
-    No corroboration clause ties the sustained rule back to the fix's own step, and its
-    absence is deliberate. Inside a long run one fix may happen to sit on a small step,
-    and requiring the step to be excessive too would punch holes through an otherwise
-    uniformly censored stretch.
+    The sustained rule tests the neighbourhood, without additionally requiring the
+    fix's own increments to be excessive. If fewer than ``vz_min_window_fixes``
+    finite steps support a median, its per-step magnitude stands in. Such windows
+    occur at sparse cadence, record boundaries, or around missing altitudes; this
+    fallback is less robust than the populated-window test.
 
-    Where the window holds fewer than ``vz_min_window_fixes`` steps the median is not
-    estimable and the per-step value stands in for it. That fallback is safe precisely
-    because it is the sparse case: at 1 Hz the bound is a few tens of metres per step,
-    within reach of a gust plus noise, while at a 10 s cadence it is a few hundred,
-    which no gust produces. The problem the window exists to solve is a fast-cadence
-    problem.
-
-    A third shape exists and is neither of these: a *level shift*, one single super-
-    threshold step that is never undone: a barometric re-reference, or a one-record
-    corruption. It matches neither rule, so before this counter existed it was
-    censored by nothing and counted by nothing, and the smoothing stage
-    differentiated it into a vertical velocity of up to 5117 m/s in the written
-    table. It is not rare: on a sample of the archive, 8.3 % of paraglider flights
-    and 6.2 % of hang-glider flights carry at least one. It is counted here so that
-    it is visible and auditable; what to *do* about it is an open decision, since
-    the three candidate treatments -- split the flight there, re-reference the
-    altitude after it, or invalidate a window around it -- each change a rule the
-    thesis argues, and none is implied by the specification (sec:fixlevel).
+    A threshold exceedance does not identify its cause: sustained real motion and
+    GNSS noise can both trigger censoring. Unreturned isolated level shifts are
+    counted separately, without correction; their treatment remains an explicit
+    methodological decision (sec:fixlevel).
 
     Returns:
         ``(out_of_band, vz_sustained, vz_spike, n_runs, n_level_shifts)``: three boolean
@@ -853,8 +703,9 @@ def clean_flight(
             ``"hang gliders"``): the two types have markedly different speed envelopes,
             so one shared bound is either too loose for the slower or clips the faster.
         baro_witness: Whether this flight's raw barometric channel is usable as the
-            frozen-lock witness (stage (i) decides). Defaults to ``False``, the
-            conservative reading: with no witness the rule abstains and keeps the run.
+            frozen-lock witness (stage (i) decides). Local completeness is also
+            required. With ``False``, exact repeats or sustained recorder declarations
+            can still witness a collapsed run.
 
     Returns:
         The :class:`Cleaned` record.
@@ -989,13 +840,20 @@ def _merge_duplicate_seconds(fixes: pd.DataFrame) -> tuple[pd.DataFrame, int]:
     centroid is order-independent and the sub-second resolution it discards is discarded
     anyway once the flight is resampled. One dilution case is accepted: if one member is
     itself a position spike, the centroid halves its amplitude before the outlier pass
-    sees it; a large spike is still flagged at half size, and one small enough to slip
-    under the local scale afterwards is within what the smoother absorbs.
+    sees it. A diluted spike may escape a later threshold; smoothing does not
+    establish a bound on the resulting position error.
     """
     t = fixes["t"].to_numpy(dtype=float)
     if t.size < 2 or not (np.diff(t) == 0).any():
         return fixes, 0
-    grouped = fixes.groupby("t", sort=True)
+    # Zero is the raw IGC absence sentinel, not a pressure reading. Normalise before
+    # averaging duplicates; {0, 1000} must yield the one available reading, not 500 m.
+    # Two missing members stay missing, while an observed member supplies the witness
+    # at their shared timestamp without temporal interpolation.
+    work = fixes.copy()
+    if "baro_alt" in work:
+        work["baro_alt"] = work["baro_alt"].mask(work["baro_alt"] == 0.0)
+    grouped = work.groupby("t", sort=True)
     merged = grouped.mean(numeric_only=True)
     if "valid" in fixes.columns:
         merged["valid"] = grouped["valid"].all()
@@ -1100,8 +958,8 @@ def _boundary_impossible_steps(
 ) -> int:
     """Make every impossible step between two surviving fixes a segment boundary.
 
-    The invariant the rest of the pipeline leans on: *no step between two fixes that
-    reach the analysis may break the absolute speed bound*. Whatever the detectors
+    Before projection and smoothing, each surviving raw-geodetic step above the
+    configured absolute speed bound must become a segment boundary. Whatever the detectors
     resolved, a step they leave standing past that bound is a transition whose course is
     unknown, which is what a long gap is, so it is marked as one (sec:fixlevel).
 

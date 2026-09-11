@@ -1,4 +1,4 @@
-"""The seven stages, chained: one IGC file in, three table rows out.
+"""The seven stages, chained: one IGC file in, trajectory and audit products out.
 
 This is the only place the pipeline order of sec:preproc is written down as code, and it
 is not an implementation choice -- it is argued in the thesis and is fixed::
@@ -15,7 +15,7 @@ is not an implementation choice -- it is argued in the thesis and is fixed::
 Stages (i)-(iv) act on the raw geographic coordinates, because the only geometry they
 need is a scalar distance, which the haversine formula gives directly from latitude and
 longitude. The conversion (v) then runs on the cleaned, trimmed track, so the tangent
-frame is built from good data, and (vi)-(vii) come last because they produce *vector*
+frame uses retained data, and (vi)-(vii) come last because they produce *vector*
 quantities, which need Cartesian axes to be expressed in.
 
 A flight that fails a gate stops there. It still produces a ``flights_meta`` row, with
@@ -72,8 +72,8 @@ if TYPE_CHECKING:
 #          every coordinate of the record (sec:fixlevel, sec:flightfilter).
 # 1.3.1 -- the IGC parser requires the *degrees* field of a coordinate to be digits, as
 #          it already required the minutes. `int` accepts a leading sign or space, so
-#          "-123456N" decoded to a plausible latitude instead of being rejected. No stored
-#          table changes: a scan of 3000 files across both archives, 21 million B records,
+#          "-123456N" decoded to a plausible latitude instead of being rejected.
+#          No table changes: a scan of 3000 files across both archives (21M records)
 #          found no such token, and the rule can only reject what was accepted before.
 # 2.0.0 -- one altitude channel for the whole archive, and a local test to go with it.
 #          Stage (i) no longer chooses between the barometric and GNSS altitudes per
@@ -100,12 +100,19 @@ if TYPE_CHECKING:
 #          than carried over from the barometric per-step regime: 13.0 -> 30.0, since
 #          the bin-to-bin-ratio method that placed the horizontal bounds does not
 #          transfer to a statistic the windowing has already made robust to single-fix
-#          artifacts (configs/preprocessing.yaml has the full reasoning). New counter
+#          artifacts (historical 2.0.0 operating point). New counter
 #          `n_alt_vz_sustained`; `n_vz_runs` changes meaning, from
 #          coherent runs left in place to distinct runs censored. The V flag now
 #          invalidates the altitude on every flight, not only the fallback minority.
 #          Major bump: no stored table from 1.x is comparable.
-PIPELINE_VERSION = "2.0.0"
+# 2.0.1: pressure witnesses require complete local paired-fix coverage for frozen
+#        positions and interior-ground intervals; absent raw pressure values are
+#        normalised before duplicate merging. Rebuild 2.0.0 tables to adopt it.
+# 2.1.0: default windowed vertical-speed threshold lowered from 30 to 10 m/s,
+#        at the empirical change into the slower-decaying raw-distribution tail.
+#        This changes altitude censoring and requires rebuilding derived tables.
+# 2.2.0: propagate reconstructed-altitude support through the vertical SG fit.
+PIPELINE_VERSION = "2.2.0"
 
 # The reason a flight carries when the driver could not run the pipeline over it at all
 # -- an unreadable file, a parser failure, a bug. It lives here, with the other stage
@@ -131,6 +138,7 @@ FIX_TABLE_COLUMNS = [
     "a_z",
     "interpolated",
     "z_reconstructed",
+    "z_derivative_reconstructed",
     "edge",
     "hampel_flagged",
     "alt_invalidated",
@@ -261,9 +269,9 @@ def run_flight(
     meta.baro_range_m = channel.baro_range_m
     meta.n_alt_missing_raw = channel.n_missing
     if channel.drop_reason is not None:
-        # No vertical coordinate at all: with one adopted channel there is nothing to
-        # fall back to, so the flight stops here rather than entering the analysis with
-        # an altitude that is not there (sec:altchannel).
+        # The logged GNSS channel failed its presence or range requirement.
+        # Some readings can still exist; this operational policy drops the flight
+        # without substituting pressure altitude (sec:altchannel).
         meta.drop_stage, meta.drop_reason = "alt_channel", channel.drop_reason
         return FlightResult(meta=meta)
 

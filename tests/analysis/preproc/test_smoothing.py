@@ -82,7 +82,7 @@ def _run(flight, savgol=SAVGOL):
     [
         (0.2, 25, "tau_c / dt = 25, already odd"),
         (0.5, 11, "tau_c / dt = 10, rounded up to odd"),
-        (1.0, 5, "the two rules coincide: 5 samples span exactly tau_c"),
+        (1.0, 5, "the two sample-count rules coincide; endpoint span is 4 s"),
         (2.0, 5, "the floor binds already here (tau_c / dt = 2.5 < 5)"),
         (5.0, 5, "the floor binds"),
         (10.0, 5, "the floor binds"),
@@ -123,9 +123,7 @@ def test_the_vertical_window_has_a_timescale_of_its_own():
 
 
 def test_adopted_config_gives_one_window_per_axis():
-    # The measured result, not an assumption: the knees coincide at ~0.2 Hz because
-    # every channel's floor is the IGC quantization, so the adopted windows are equal
-    # even though the two timescales stay separate keys.
+    # The adopted configuration has equal working timescales, stored separately.
     savgol = load_preproc_config().savgol
     assert savgol.polyorder == 3
     assert savgol_windows(savgol, 1.0) == SavgolWindows(
@@ -414,3 +412,36 @@ def test_the_filter_does_not_eat_the_displacement_it_is_meant_to_measure():
     # (3) And smoothing is what pulls that floor down, which is why it is applied.
     wider = ratio(1.8, 11, noise=3.0)
     assert wider[0] < noisy[0]
+
+
+@pytest.mark.parametrize("missing_index", [0, 2, 4, 12, 22, 24])
+def test_reconstructed_altitude_marks_every_fit_that_uses_it(missing_index):
+    """Impulse responses give an independent check of the implementation's support."""
+    from scipy.signal import savgol_filter
+
+    segment = _cubic_flight(duration_s=24.0)
+    segment["z_reconstructed"] = False
+    segment.loc[missing_index, "z_reconstructed"] = True
+    out = smooth_segment(segment, SavgolWindows(5, 5, 3), 1.0)
+    impulse = np.zeros(len(segment))
+    impulse[missing_index] = 1.0
+    expected = np.logical_or.reduce(
+        [
+            np.abs(savgol_filter(impulse, 5, 3, deriv=d, mode="interp")) > 1e-12
+            for d in (0, 1, 2)
+        ]
+    )
+    np.testing.assert_array_equal(out["z_derivative_reconstructed"], expected)
+    np.testing.assert_array_equal(out["z_reconstructed"], segment["z_reconstructed"])
+
+
+def test_reconstruction_support_does_not_cross_segment_boundaries():
+    flight = _cubic_flight(duration_s=240.0)
+    flight["split_before"] = False
+    flight.loc[120, "split_before"] = True
+    flight.loc[119, "z"] = np.nan
+    out = _run(flight)
+    assert out.fixes.loc[out.fixes.segment_id == 0, "z_derivative_reconstructed"].any()
+    assert not out.fixes.loc[
+        out.fixes.segment_id == 1, "z_derivative_reconstructed"
+    ].any()

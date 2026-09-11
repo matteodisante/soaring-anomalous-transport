@@ -21,5 +21,5 @@ Thresholds are never hard-coded: they live in ``configs/preprocessing.yaml`` and
 stage as the typed dataclasses of :mod:`soaring.analysis.config`, whose entry point is
 ``load_preproc_config``. Stage (v) is
 the one stage with no thresholds at all -- it is pure coordinate geometry (thesis,
-impl:enu).
+sec:enu).
 """

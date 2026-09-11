@@ -1,234 +1,58 @@
-# =============================================================================
-#  Pre-processing thresholds -- the AUTHORITATIVE source.
-#
-#  Every numeric threshold of the trajectory pre-processing lives here, never
-#  hard-coded in Python. To change a cut, edit the value here: nothing else needs
-#  touching. Loaded by `soaring.analysis.preprocessing.load_preproc_config`.
-#
-#  Grouped by the pipeline level at which each acts (see the thesis chapter
-#  "The dataset", sec:preproc, and docs/guide/preprocessing-pipeline.md). All speeds in
-#  m/s, distances in km unless the name says otherwise; altitudes are the adopted GNSS
-#  channel (sec:altchannel), except where a key names the barometer, which survives only
-#  as the frozen-lock witness.
-# =============================================================================
+# Working preprocessing parameters. Values and units follow the key names.
+# See Chapter 2 and docs/guide/preprocessing-pipeline.md for the rules.
+# Raw files are preserved; cleaning decisions are operational quality criteria.
 
-# --- fix level: applied PER FIX, on the raw geographic coordinates -----------
-# Speeds here are great-circle (haversine) speeds between consecutive fixes
-# (no coordinate conversion yet); see the thesis for the formula. Each bound sits in
-# the physically-implausible tail of its per-fix distribution, so it removes GPS errors
-# rather than signal (audited in the thesis, fig:fixlevel). Inter-fix gaps are handled
-# once, at the flight level, by `sampling` below -- not with a second absolute bound here.
 fix_level:
-  # Per discipline: paragliders and hang gliders have markedly different speed
-  # envelopes (thesis fig:fixlevel), so one shared bound is either too loose for the
-  # slower type or clips real dynamics of the faster one. Values set from the full
-  # per-fix distribution at a large sample (15000 paragliders, the full hang-glider
-  # population), placed where the bin-to-bin ratio of a fine (2.5 m/s)
-  # histogram actually settles near 1 -- i.e. where the decay stops, not just slows --
-  # since a shallower-but-still-decreasing stretch beyond the steepest part of the
-  # curve can still be genuine (rare but real) dynamics; only a genuinely flat tail
-  # reads as a GPS/logger artifact with no credible speed explanation (hang gliders:
-  # the decay first slows near ~40 m/s, but the genuinely flat plateau runs ~55 to
-  # ~90 m/s, which is where the bound sits). Add a "sailplanes" key once that source
-  # is in.
-  max_horizontal_speed_mps:        # v_xy above this between two fixes => GPS position jump
+  max_horizontal_speed_mps:
     paragliders: 45.0
-    "hang gliders": 55.0
-  # The vertical bound is on a LOCAL vertical speed, not a per-fix one: the median of
-  # |v_z| over the steps within vz_window_s of each step (cleaning.local_vz). A fix is
-  # censored when the step into it and the step out of it are both in such a
-  # neighbourhood. The per-step form this replaces condemned two things it should not
-  # have: a wind gust, which carries one step past the bound without carrying its
-  # neighbours there, and -- once the adopted channel became GNSS -- the vertical noise
-  # floor itself: at sigma = 12 m and 1 Hz, plausible for the noisy-GNSS minority this
-  # archive measures directly (altitude_noise.hf_floor_excess_fraction), the largest
-  # per-step |v_z| reaches 36.3 m/s on a perfectly clean flight, past this bound; the
-  # window median stays at 15.8. Shared across disciplines: the two vz distributions are
-  # close enough that splitting it, unlike horizontal speed, buys nothing (thesis
-  # fig:fixlevel).
-  #
-  # Re-measured on the GNSS channel (2026-09-08, generate_preproc_figure.py /
-  # measure_vz_threshold.py, 15000 paraglider + 6716 hang-glider flights, pooled). The
-  # horizontal bounds above are placed where a fine histogram's bin-to-bin ratio settles
-  # near 1 -- a genuinely flat tail with no credible speed explanation. That method does
-  # NOT transfer here: pooled from 8 to ~50 m/s the histogram decays smoothly and
-  # continuously (bin-to-bin ratio holding at roughly 0.75-0.95 throughout, never
-  # settling), with no plateau to read a cut off. This is the windowing working as
-  # intended, not a failure of the method: local_vz's median is already robust to a
-  # single corrupt fix by construction, so the artifact population the horizontal bound
-  # exists to separate has already been suppressed before this histogram is even drawn.
-  # What is left in the tail is overwhelmingly genuine dynamics -- strong thermals,
-  # aggressive spiral dives, acro/SIV manoeuvres, all of which this archive contains and
-  # none of which a vertical-speed rule should censor.
-  #
-  # The bound is therefore set on physical grounds instead: above the extreme-but-real
-  # envelope (a spiral dive sustaining 15-20 m/s reads ~15 on this exact statistic per
-  # cleaning.local_vz's own docstring measurement; acro/SIV can sustain a comparable
-  # descent rate for a full window), with a wide margin below where the tail stops being
-  # explicable by any manoeuvre at all -- the pooled sample's most extreme values run into
-  # the thousands of m/s, three orders of magnitude past any candidate cut in this range.
-  # 30.0 sits comfortably above the former and two orders of magnitude below the latter;
-  # at this window width it censors 0.014% of window-samples archive-wide, essentially
-  # all of it in that unreachable tail. Shared across disciplines, as below: p50/p99/p99.9
-  # coincide between paragliders and hang gliders at every window width tried.
-  max_vertical_speed_mps: 30.0     # median |v_z| over the window, beyond the climb/sink range
-  vz_window_s: 5.0                 # half-width of the centred window. A TIME window, like every
-                                   #   other window here, because the archive's cadences run 1 to
-                                   #   10 s and a fixed step count would ask a slow logger to
-                                   #   sustain the excess for two minutes and a 1 Hz one for ten
-                                   #   seconds. At the modal 1 Hz cadence this is +-5 fixes. Swept
-                                   #   against {5, 10, 20} s on the same 2026-09-08 measurement: a
-                                   #   wider window only ever suppresses the tail further (fewer
-                                   #   exceedances at every candidate cut), so nothing in the data
-                                   #   argues for widening it, and 5 s stays the shortest window
-                                   #   that still lets a Hampel-scale local test react to a defect
-                                   #   spanning a few seconds rather than tens of them.
-  vz_min_window_fixes: 5           # below this the median is not estimable and the per-step value
-                                   #   stands in -- safe precisely because it is the sparse case:
-                                   #   at 1 Hz the bound is tens of metres per step, within reach
-                                   #   of gust plus noise, at 10 s it is hundreds, which no gust
-                                   #   produces. Reuses the Hampel rule's population floor.
-  min_altitude_m: -100.0           # plausible altitude range on the adopted channel: lower bound.
-                                   #   Negative because the GNSS altitude is an ELLIPSOIDAL height,
-                                   #   and the geoid runs tens of metres below the WGS84 ellipsoid
-                                   #   over western Europe, so a genuine sea-level fix reads
-                                   #   negative. (Not per-discipline: it bounds the receiver's
-                                   #   reading range, not glider performance -- see thesis.)
-  max_altitude_m: 6000.0           # ... upper bound
-  # Robust local-outlier test (Hampel identifier) and structural rules: working values,
-  # fixed a priori and checked a posteriori on the per-rule removal fractions (threshold
-  # sweeps around each value; injected defects only as targeted follow-up) -- thesis
-  # sec:fixlevel "Validating the cleaning" + impl:fixlevel (July 2026 review pass).
-  hampel_window_s: 20.0            # half-width (+/- s) of the local time window
-  hampel_k: 5.0                    # flag threshold, in robust standard deviations
-  hampel_eps_min_m: 15.0           # absolute residual floor, a few x horizontal GPS noise
-  hampel_min_window_fixes: 5       # sparser neighbourhoods fall back to the absolute bounds
-  frozen_eps_m: 15.0               # frozen-lock run-extent tolerance (<< 2R of a climb)
-  frozen_delta_z_m: 5.0            # barometric-flatness witness (median-based Delta z), on the
-                                   #   RAW baro channel: the adopted altitude comes from the very
-                                   #   receiver whose lock is in doubt and cannot witness against
-                                   #   itself (sec:altchannel)
-  frozen_tau_s: 60.0               # minimum span of a cut run, two thermalling periods
-  integrity_max_fraction: 0.10     # flight-level integrity gate f, over the airborne window
-
-# --- altitude channel: gated per flight, before any cleaning -------------------
-# The analysis reads the GNSS altitude for EVERY flight (thesis sec:altchannel). There is
-# no per-flight choice left; what these keys do is decide (a) whether a flight has a usable
-# vertical coordinate at all, and (b) whether its barometer is good enough to witness a
-# frozen GNSS lock. Same two tests -- present, and alive -- asked of two channels for two
-# different consequences, which is why they are two pairs of keys and not one shared pair.
+    hang gliders: 55.0
+  # Operational magnitude cutoff; not a proved physical maximum.
+  max_vertical_speed_mps: 10.0
+  # Half-width around step midpoints; endpoints included.
+  vz_window_s: 5.0
+  # Minimum number of finite STEPS, despite the historical key name.
+  vz_min_window_fixes: 5
+  min_altitude_m: -100.0
+  max_altitude_m: 6000.0
+  hampel_window_s: 20.0
+  # Scale multiplier for a diagnostic flag; does not gate deletion.
+  hampel_k: 5.0
+  hampel_eps_min_m: 15.0
+  hampel_min_window_fixes: 5
+  frozen_eps_m: 15.0
+  frozen_delta_z_m: 5.0
+  # Minimum candidate frozen-run duration, in seconds.
+  frozen_tau_s: 60.0
+  integrity_max_fraction: 0.1
 alt_channel:
-  gnss_present_min: 0.95           # a flight has a GNSS altitude when at least this share of
-                                   #   its fixes carry a non-zero one. Presence is bimodal -- a
-                                   #   logger either writes the channel or leaves it all zero --
-                                   #   so the threshold sits high rather than mid-scale: a
-                                   #   partially filled channel is worse than a missing one,
-                                   #   since its v_z would rest on holes interpolated over
-                                   #   stretches long enough to erase transitions. Below this
-                                   #   the flight is DROPPED: there is no second channel to move
-                                   #   it to any more.
-  gnss_min_range_m: 30.0           # a "present" GNSS channel whose total range over the flight
-                                   #   stays under this is a stuck sensor, not a measurement,
-                                   #   and would feed the segmentation a vertical velocity of
-                                   #   identically zero. Also a drop.
-  baro_witness_present_min: 0.95   # the same presence test on the RAW barometric channel. It
-                                   #   selects a TEST, never a measured quantity: a flight that
-                                   #   passes gets the flat-barometer frozen-lock witness, one
-                                   #   that fails keeps the weaker test on the recorder's own
-                                   #   A/V declarations (thesis sec:fixlevel).
-  baro_witness_min_range_m: 30.0   # ... and the same liveness test, for the same purpose
-
-# --- trimming: strip ground phases (take-off / landing), on v_xy alone --------
+  gnss_present_min: 0.95
+  # Range gate; little altitude variation alone does not prove a stuck sensor.
+  gnss_min_range_m: 30.0
+  # Global eligibility; the witness additionally needs complete local paired coverage.
+  baro_witness_present_min: 0.95
+  baro_witness_min_range_m: 30.0
 trimming:
-  takeoff_speed_mps: 5.0           # airborne once v_xy exceeds this...
-  sustained_s: 30.0                # ...continuously for at least this long
-  interior_ground_s: 600.0         # interior stint of sustained v_xy < takeoff speed AND
-                                   #   flat baro at least this long => a mid-flight landing:
-                                   #   excise and split (thesis sec:trimming); shorter stints
-                                   #   only set the suspect-wait flag
-  ground_flatness_m: 5.0           # the "flat baro" tolerance of the interior-ground guard, on
-                                   #   the RAW baro channel where the flight has one. GNSS
-                                   #   vertical noise is metres, so the adopted channel could not
-                                   #   clear a 5 m tolerance and the guard would never fire; a
-                                   #   flight with no barometer falls back to the speed condition
-
-# --- flight level: applied PER FLIGHT (drops whole flights), from the track --
+  takeoff_speed_mps: 5.0
+  sustained_s: 30.0
+  # Excise a sufficiently long slow interval only with the local barometric witness.
+  interior_ground_s: 600.0
+  # No usable local barometer: abstain; no speed-only fallback.
+  ground_flatness_m: 5.0
 flight_level:
-  min_duration_s: 2400.0           # 40 min: shortest genuine XC flight; the SMALLEST cut
-                                   #   that clears sled runs / tows / aborted logs
-  min_path_km: 20.0                # total flown path length (sum of great-circle steps).
-                                   #   Census (generate_census_stats.py, flight-level macros):
-                                   #   above 40 min, path<20 km catches 236 of 184,583
-                                   #   paraglider flights (median extent 5.0 km) and 7 of
-                                   #   6,638 hang gliders; an earlier 30 km draft removed
-                                   #   5,229 genuine localized flights (median extent 7.4 km,
-                                   #   the most-trapped tail). Duration already clears sleds
-                                   #   and tows.
-  max_duration_s: 57600.0          # 16 h: daylight sanity bound. The census holds 15 "flights"
-                                   #   of 16 to 166 h (loggers left running, paths up to
-                                   #   10,000 km) that would poison the long-lag MSD.
-  min_alt_range_m: 600.0           # total altitude range on the adopted channel: a >=40 min
-                                   #   "flight" spanning less is not free flight (vehicle log,
-                                   #   dead sensor); counted and dropped with reason.
-                                   #   Raised 75 -> 600 (2026-08-02). 75 m only excluded a
-                                   #   dead sensor; 600 m asks for the altitude budget an
-                                   #   actual XC flight spends, since a 40 min cross-country
-                                   #   needs several climbs of several hundred metres each.
-                                   #   The census says the two are nearly equivalent in
-                                   #   practice -- retention 69.8% -> 68.1% (para), 83.0% ->
-                                   #   81.1% (hang) -- i.e. the cut sits on a plateau and the
-                                   #   population between the two values is thin.
-
-# --- sampling: intra-flight uniformity, a prerequisite for Savitzky-Golay -----
-# Flight-level cuts: a flight too irregular to resample onto a uniform grid is excluded
-# (audited in the thesis, fig:gaps).
+  # Minimum recorded duration, excluding gaps and forced boundaries.
+  min_duration_s: 2400.0
+  # Minimum accumulated distance within contiguous blocks.
+  min_path_km: 20.0
+  # Maximum elapsed span, including gaps.
+  max_duration_s: 57600.0
+  # Select appreciable vertical excursion; this can exclude genuine soaring.
+  min_alt_range_m: 600.0
 sampling:
-  max_gap_factor: 10.0             # split the flight at any inter-fix gap exceeding this
-                                   #   multiple of its own native dt. Segments keep the
-                                   #   parent's origin/clock and are analysed independently;
-                                   #   the flight-level cuts are NOT re-applied to them.
-                                   #   RELATIVE to native dt, so the tolerated absolute gap
-                                   #   scales with the logger's rate.
-  max_gap_seconds: 20.0            # absolute cap on a bridgeable gap: the split bound is
-                                   #   min(max_gap_factor * dt, max(max_gap_seconds, 2*dt)).
-                                   #   Set by the motion's own timescales, not the logger's:
-                                   #   >= 2x the slowest common dt (10 s: one missed fix never
-                                   #   splits a flight), <= ~2/3 of a thermalling period
-                                   #   (~30 s: a bridged gap can never hide a full circle),
-                                   #   << tau_freeze (60 s: an excised frozen-lock run is
-                                   #   split, so a native gap of comparable length cannot be
-                                   #   bridged). Floored at 2*dt so the thin tail of very slow
-                                   #   loggers also tolerates a single missed fix.
-                                   #
-                                   # A 4x loosening was tried on 2026-08-02 and REVERTED: it
-                                   # cut the split shares (para 15.3% -> 5.7%, hang 40.5% ->
-                                   # 6.2%) but broke both the circle guarantee and the
-                                   # ordering against tau_freeze. The high hang-glider split
-                                   # share is real and stays an open question -- it is a
-                                   # consequence of their slow cadences, and the place to
-                                   # address it is the sweep, not a hand-set multiple.
-  max_missing_fraction: 0.10       # drop a segment more than this fraction uncovered on its
-                                   #   uniform grid at the native dt (the whole flight only
-                                   #   if no segment survives)
-  min_segment_duration_s: 90.0     # a segment shorter than this cannot support the smoothing
-                                   #   window and within-segment statistics; dropped alone
-
-# --- Savitzky-Golay smoothing + differentiation (per ENU component) ----------
-# window is set PER FLIGHT from the noise timescale: window = max(odd(tau_c / dt), 5).
-# ONE vertical timescale. There used to be two, conditioned on whether the flight's
-# altitude came from the barometer or from GNSS, on the a-priori expectation that the
-# noisier channel would need the longer window. Measurement DISCONFIRMED it: all three
-# knees land at ~0.2 Hz because the common floor is the IGC quantization, not receiver
-# noise. With a single adopted channel (sec:altchannel) the distinction has no subject
-# left either way.
+  max_gap_factor: 10.0
+  max_gap_seconds: 20.0
+  max_missing_fraction: 0.1
+  min_segment_duration_s: 90.0
 savgol:
-  polyorder: 3                     # lowest order that works: >=2 for an acceleration, =3
-                                   #   so the velocity responds to curvature (parity of
-                                   #   symmetric LSQ: p=2 velocity == straight-line fit)
-  # Measured 2026-07 by estimate_savgol_timescales.py (seeded 1 Hz sample, 908/719/189
-  # flight-channels; median Welch knee against the quantization floor, factor 3). The
-  # three knees nearly coincide at ~0.2 Hz: every channel's typical floor is the
-  # metre/arc-minute quantization of the IGC format, not receiver noise. Validated per
-  # thesis sec:savgol.
+  polyorder: 3
   tau_c_horizontal_s: 5.0
   tau_c_vertical_s: 5.0

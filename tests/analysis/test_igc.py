@@ -142,7 +142,7 @@ def test_backward_jitter_is_not_a_new_day(tmp_path):
     # pathology). Elapsed time must stay a few seconds -- and the backward step must
     # survive: the parser no longer flattens it with a running maximum, because that
     # repair would destroy the evidence fix-level cleaning acts on (thesis,
-    # impl:fixlevel "Time-base defects").
+    # sec:fixlevel "Time-base defects").
     lines = [
         "AXXX",
         "B1000004432469N00542796EA014700155600",  # 10:00:00

@@ -1,49 +1,27 @@
-"""Stage (v): from geographic coordinates to the local Cartesian ENU frame.
+"""Map geodetic fixes into the fixed local Cartesian frame used for analysis.
 
-The two stages that follow -- resampling (sec:uniform) and Savitzky-Golay smoothing
-(sec:savgol) -- act on the coordinates *componentwise*, and the smoothing returns their
-derivatives the same way. They therefore need genuine Cartesian components to act on:
-latitude and longitude are angles on a curved surface, and differencing them
-componentwise does not give a displacement. This module supplies those components
-(thesis, sec:enu).
+WGS84 geodetic latitude, longitude and a height proxy are first converted to ECEF.
+Subtracting the origin and applying an orthogonal rotation gives East, North and Up.
+The rotation preserves the full three-dimensional chord; retaining East and North
+projects it into the tangent plane, so it does not preserve all surface distances.
+The frame is anchored at the first retained fix after trimming and does not move.
 
-The mapping is two rotations and a shift, with no configurable parameter anywhere (hence
-the empty impl:enu):
+For a spherical surface point at arc distance d from the origin, the horizontal
+projection is R*sin(d/R), with shortening d^3/(6*R^2) to leading order: 0.03 m at
+20 km, 0.51 m at 50 km, and 33 m at 200 km. Arc versus full ECEF chord instead has
+leading deficit d^3/(24*R^2). Remote within-flight pairs require a separate estimate.
 
-1. **geodetic to ECEF** -- each fix ``(phi, lambda, h)`` becomes Earth-Centred,
-   Earth-Fixed ``(X, Y, Z)`` on the WGS84 ellipsoid, Eq. eq:ecef;
-2. **ECEF to ENU** -- the displacement ``X - X0`` from the origin fix is *rotated* into
-   the East-North-Up frame tangent to the ellipsoid at that origin. The origin shift is
-   already taken out by forming the displacement, so what is left is an orthogonal
-   matrix of unit determinant: lengths and angles are preserved, only the axes change.
+The logged GNSS altitude is used as a proxy for ellipsoidal height. IGC-approved and
+CIVL recorder specifications differ in vertical datum, and the parser does not yet
+harmonize them. A height error delta_h gives horizontal error of order abs(delta_h)*d/R
+near the origin; there is no established 100 m bound on that error across the archive.
 
-Three points of the thesis argument are load-bearing here, and each is a test:
-
-* **The latitude is the geodetic one** -- the angle between the equatorial plane and the
-  ellipsoid *normal*, not the geocentric angle to the Earth's centre. No conversion is
-  needed anywhere in the pipeline: WGS84, hence the GPS receiver and the IGC ``B``
-  records, reports geodetic latitude, and both Eq. eq:ecef (through ``N(phi)``) and the
-  rotation matrix (through the Up direction) consume exactly that. Confusing the two
-  would misplace a fix by up to ~20 km (Appendix app:geodesy).
-* **The ECEF frame is an intermediate, never an observable** -- no quantity of the
-  analysis is expressed in it.
-* **The vertical of the analysis is not the rotation's ``U``** -- it is the flight's
-  adopted altitude channel (sec:altchannel) at its measured value, ``z(t) = h(t)``,
-  never re-zeroed: increments are invariant to the reference, while the absolute height
-  is an observable in its own right. ``U`` is the tangent-plane height, which falls away
-  from the true altitude by the sagitta ``d^2 / (2 R)`` -- tens of metres at 20 km -- so
-  it serves the geometric construction only and is not carried into the ``fixes`` table
-  (:func:`geodetic_to_enu` still returns it, for diagnostics and for the tests).
-
-Accuracy of the fixed tangent frame over one flight: projecting a surface distance ``d``
-onto the plane shortens it by ``d^3 / (24 R^2)``, about 1 cm at 20 km and 13 cm at
-50 km, against metre-scale GPS noise on the same coordinates (Appendix app:geodesy).
-
-The horizontal origin is the **first fix of the trimmed track** -- the first fix of free
-flight, close to but not the take-off point on the ground, since trimming has removed
-the ground phase (sec:trimming). The *clock* zero is set there too, but by trimming, not
-here (sec:notation): this stage carries ``t`` through untouched.
-"""
+The analysis stores logged altitude z, not the rotated Up coordinate and not altitude
+relative to the origin. A surface point's Up coordinate falls below the tangent plane
+by approximately d^2/(2*R). Constant offsets cancel from z increments; changing datum
+corrections or sensor biases do not. Missing altitude is temporarily interpolated only
+for the geometric conversion; its missingness remains available to later resampling.
+This stage carries elapsed time through unchanged. See thesis sec:enu and app:geodesy."""
 
 from __future__ import annotations
 
@@ -67,14 +45,12 @@ LOCAL_COLUMNS = ["t", "E", "N", "z"]
 
 @dataclass(frozen=True)
 class LocalFrame:
-    """The origin of one flight's local ENU frame: what ``flights_meta`` records.
+    """Origin and orientation of a flight's fixed ENU frame.
 
-    The three numbers that pin the frame to the Earth, and hence the only thing needed
-    to map the flight's ``(E, N)`` back to geographic coordinates. ``alt0_m`` is the
-    adopted altitude channel at the origin fix; it is informational (the vertical
-    coordinate ``z`` is never re-zeroed by it) and enters the geometry only through the
-    radius factor of Eq. eq:ecef.
-    """
+    These values locate the frame in ECEF. Inverting a complete ENU vector also requires
+    its Up component; East and North alone do not uniquely specify a geodetic position.
+    alt0_m is the height proxy used at the origin, including temporary interpolation if
+    its logged altitude is missing. It does not re-zero the stored altitude channel."""
 
     lat0_deg: float
     lon0_deg: float
@@ -84,9 +60,9 @@ class LocalFrame:
 def prime_vertical_radius_m(lat_deg: np.ndarray | float) -> np.ndarray:
     """Prime-vertical radius of curvature ``N(phi)`` of the WGS84 ellipsoid, in metres.
 
-    The distance, along the ellipsoid normal at geodetic latitude ``phi``, from the
-    surface point to the polar axis (the segment ``Q``--``P`` of the thesis
-    fig:ellipsoid). It is what replaces "the radius of the Earth" on an ellipsoid, and
+    Away from the poles, this is the distance along the ellipsoid normal from the
+    surface point to the polar axis (segment ``Q``--``P`` in thesis fig:ellipsoid).
+    At the poles that intersection is degenerate and the formula extends by continuity. It is what replaces "the radius of the Earth" on an ellipsoid, and
     it is *not* the distance to the centre: the normal misses the centre except at the
     equator and the poles.
 
@@ -116,12 +92,9 @@ def geodetic_to_ecef(
     Args:
         lat_deg: Geodetic latitude in degrees.
         lon_deg: Longitude in degrees.
-        alt_m: Height above the ellipsoid, in metres -- in the pipeline, the flight's
-            adopted altitude channel (sec:altchannel). The barometric altitude is not
-            strictly an ellipsoidal height, and it does not need to be: the choice of
-            channel moves the horizontal components by a relative
-            ``delta_h / (N + h) <~ 2e-5``, under a metre over the extent of a flight
-            (sec:enu).
+        alt_m: Height above the ellipsoid, in metres. The pipeline supplies logged
+            GNSS altitude as a proxy without a recorder-datum correction; its
+            horizontal geometric effect scales as ``abs(delta_h) * d / R``.
 
     Returns:
         ``(x, y, z)`` in metres, broadcast to the common shape of the inputs.
@@ -253,17 +226,11 @@ def to_local_frame(
     lat = fixes["lat"].to_numpy(dtype=float)
     lon = fixes["lon"].to_numpy(dtype=float)
     alt = fixes[alt_column].to_numpy(dtype=float)
-    # The transform needs an altitude at every fix, and stage (ii) is entitled to leave
-    # one missing: it keeps a fix whose position is good and marks only its altitude
-    # invalid (sec:fixlevel). Passing that gap straight into Eq. eq:ecef would be a
-    # silent disaster, because h enters the *horizontal* components too, through the
-    # radius factor (N + h): one missing altitude would destroy the position that was
-    # kept precisely because it was intact. What makes the repair safe is the same
-    # insensitivity sec:enu argues for the choice of channel -- h moves E and N by a
-    # relative delta_h/(N + h) <~ 2e-5, under a metre across a whole flight -- so any
-    # plausible altitude serves here. The one used is the flight's own, interpolated
-    # across the gap; the gap itself stays in `z`, for the single audited fill of
-    # stage (vi) to close.
+    # Height enters every ECEF component, so a missing value would also invalidate
+    # the otherwise retained horizontal coordinates. Interpolate a height proxy for
+    # this transform only, leaving the altitude-channel gap marked in the output.
+    # Its horizontal influence is approximately abs(delta_h)*d/R near the origin;
+    # this sensitivity is not a uniform sub-metre guarantee across all flights.
     for_frame = _altitude_for_frame(fixes["t"].to_numpy(dtype=float), alt)
     frame = LocalFrame(
         lat0_deg=float(lat[0]), lon0_deg=float(lon[0]), alt0_m=float(for_frame[0])

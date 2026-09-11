@@ -42,13 +42,14 @@ A segment failing either is dropped **alone**; the flight is lost only if no seg
 survives. Every segment the split produced is reported, kept or not, with the reason --
 the material for the gap-cap sweep that sec:uniform owes.
 
-The fill is per channel: **monotone piecewise cubic** (PCHIP) on the horizontal
-coordinates, **linear** on the altitude. The asymmetry is deliberate (sec:uniform): a
-spline free to choose its slopes can swing outside the range of the points it passes
-through, and to the smoothing such an excursion is indistinguishable from a real
-manoeuvre; ``z`` is differentiated once more than ``E`` and ``N`` before it decides
-phases, so it gets the estimator that cannot overshoot at all, at an error bounded by
-``max|z''| g^2 / 8`` -- metres at the ``g_max`` cap, far less for typical holes.
+The fill is per channel: shape-preserving piecewise cubic (PCHIP) on the horizontal
+coordinates and linear on altitude. Both preserve the scalar range between consecutive
+finite endpoints. Componentwise range preservation does not guarantee a physically
+correct two-dimensional path. For a twice-differentiable true altitude and exact
+endpoints, the linear interpolation error is bounded by max|z''|*g^2/8; missing altitude
+runs have no duration cap in this stage, so this formula is not a global metre-scale
+accuracy guarantee. Outside finite altitude support, numpy.interp uses the nearest
+endpoint value. These reconstructions are flagged separately from missing grid times.
 
 ``scipy`` is imported lazily, as elsewhere in this package, so importing this module
 never requires the ``analysis`` dependency group.
@@ -106,7 +107,7 @@ DROP_TOO_SPARSE = "missing_fraction_above_max"
 DROP_INCOMPLETE = "channel_not_reconstructable"  # a channel with nothing to fill from
 
 # A grid point counts as *measured* when a fix lies within half a native step of it
-# (impl:uniform), interpolated otherwise. The slack absorbs the floating-point dust of
+# (sec:uniform), interpolated otherwise. The slack absorbs the floating-point dust of
 # building the grid by repeated addition; it is nanoseconds against a step of seconds.
 _HALF_STEP_SLACK_S = 1e-9
 
@@ -134,7 +135,7 @@ class Resampled:
             number that separates a two-second hole from the 500 s one that made the
             flag necessary. A fraction alone cannot tell them apart.
         was_resampled: Whether any grid point had to be reconstructed. Its complement is
-            the thesis' "uniform as recorded" case (impl:uniform).
+            the thesis' "uniform as recorded" case (sec:uniform).
         drop_reason: ``None`` when at least one segment survived, otherwise
             :data:`DROP_NO_CADENCE` or :data:`DROP_NO_SEGMENT`.
     """

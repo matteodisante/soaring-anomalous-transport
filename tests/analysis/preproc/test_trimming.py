@@ -160,6 +160,16 @@ def test_a_long_flat_interior_stint_is_excised_and_split():
     assert not ((out.fixes["t"] > 600.0) & (out.fixes["t"] < 1320.0)).any()
 
 
+@pytest.mark.parametrize("missing", [np.nan, 0.0])
+def test_missing_interior_pressure_cannot_certify_a_ground_stint(missing):
+    """One paired-channel gap makes the pressure-based ground test abstain."""
+    flight = _with_interior_stint(720)
+    flight.loc[1000, "baro_alt"] = missing
+    out = _trim(flight)
+    assert out.n_interior_excised == 0
+    assert not out.fixes["split_before"].any()
+
+
 def test_a_stint_where_the_wing_is_still_climbing_is_kept():
     # The independent-sensor argument again: a wing at zero ground speed in real air
     # still moves vertically, so the flatness condition is what separates a landing from

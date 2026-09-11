@@ -198,7 +198,7 @@ def parse_igc(path: str | Path) -> pd.DataFrame:
     # running maximum, as this parser used to, is a repair, and repairing it here would
     # destroy the evidence the fix-level cleaning has to act on: a backward timestamp is
     # a defect to be recorded and removed by minimal deletion, not silently absorbed
-    # (thesis, impl:fixlevel "Time-base defects"). The returned ``t`` is therefore
+    # (thesis, sec:fixlevel "Time-base defects"). The returned ``t`` is therefore
     # elapsed seconds from the first fix, monotonic *except* where the log itself is
     # not.
     #

@@ -2,8 +2,8 @@
 
 Every value the pipeline acts on lives in that file rather than in code, so a threshold
 can be changed, quoted in the thesis through a generated macro, and audited, without a
-source edit. This module is the typed view of it: one frozen dataclass per pipeline stage
-and one loader that fails loudly on a missing key.
+source edit. This module is the typed view of it: one frozen dataclass per pipeline
+stage and one loader that fails loudly on a missing key.
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ DEFAULT_PREPROC_CONFIG_PATH = (
 
 @dataclass(frozen=True)
 class FixLevelThresholds:
-    """Physical bounds for fix-level cleaning (loaded from the config).
+    """Operational bounds for fix-level cleaning (loaded from the config).
 
     The horizontal speeds are great-circle (haversine) speeds between consecutive
     fixes, on the raw geographic coordinates (no conversion yet). The vertical-speed and
@@ -39,11 +39,11 @@ class FixLevelThresholds:
 
     ``max_vertical_speed_mps`` bounds a *local* vertical speed, not a per-step one: the
     median of ``|v_z|`` over the steps within ``vz_window_s`` of each step
-    (``soaring.analysis.preproc.cleaning.local_vz``). A gust carries one step past any
-    reasonable bound without carrying its neighbourhood there, and on the GNSS channel
-    so does the noise floor, so the per-step form condemned physics and noise alike.
-    ``vz_min_window_fixes`` is the population below which that median is not estimable
-    and the per-step value stands in.
+    (``soaring.analysis.preproc.cleaning.local_vz``). The median reduces sensitivity
+    to isolated increments but is not immune to GNSS noise or real extreme motion.
+    ``vz_min_window_fixes`` is the minimum finite support for using the median;
+    below it, the per-step value stands in. The separate out-and-back detector
+    also compares per-step magnitudes against ``max_vertical_speed_mps``.
 
     ``max_horizontal_speed_mps`` is keyed by discipline (``"paragliders"``,
     ``"hang gliders"``, later ``"sailplanes"``): the two types have markedly different
@@ -62,7 +62,7 @@ class FixLevelThresholds:
     min_altitude_m: float
     max_altitude_m: float
     # Robust local-outlier test (Hampel identifier) and structural rules: working
-    # values, to be finalized by the injected-defect calibration (thesis impl:fixlevel).
+    # values, to be finalized by the injected-defect calibration (thesis sec:fixlevel).
     hampel_window_s: float
     hampel_k: float
     hampel_eps_min_m: float
@@ -146,12 +146,9 @@ class SamplingThresholds:
 class SavgolParams:
     """Savitzky-Golay parameters (loaded from the config; window is set per flight).
 
-    One vertical timescale. The pipeline once carried two, conditioned on whether the
-    flight's altitude came from the barometer or from GNSS, on the expectation that the
-    noisier channel would need the longer window. Measurement disconfirmed it: all three
-    knees land near 0.2 Hz because the common floor is the IGC metre quantization rather
-    than receiver noise (thesis, sec:savgol). With a single adopted channel
-    (sec:altchannel) the distinction has no subject left either way.
+    Separate horizontal and vertical working timescales define the per-flight
+    sample counts. Their current equality is a configuration choice motivated by
+    raw spectral diagnostics, not proof of a common sensor-noise mechanism.
     """
 
     polyorder: int
