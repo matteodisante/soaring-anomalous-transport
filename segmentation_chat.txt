@@ -1,0 +1,1025 @@
+NOTA DI LAVORO STORICA, NON DOCUMENTAZIONE DELLA PIPELINE ATTUALE
+Conversazione preliminare conservata per riferimento. Numeri, tempi stimati,
+confronti tra metodi e proposte non sono risultati verificati della tesi.
+Per il metodo implementato: capitolo 4 e docs/guide/flight-phase-segmentation.md.
+
+Segmentazione Traiettorie Parapendio con HMM - Strategia Completa
+Indice
+Introduzione
+Concetti Fondamentali
+Fase 1: Labeling Manuale
+Fase 2: Feature Engineering
+Fase 3: Analisi Distribuzioni
+Fase 4: Divisione Train/Val/Test
+Fase 5: HMM Gaussiano
+Fase 6: Mapping e Validazione
+Fase 7: Applicazione Completa
+Fase 8: Troubleshooting
+Fase 9: Analisi Risultati Finali
+Introduzione
+Obiettivo
+Segmentare automaticamente 180.000 voli di parapendio in tre stati comportamentali: CLIMB (salita termica in spirale stretta), SEARCH (ricerca della termica, movimenti caotici), TRANSITION (movimento diretto verso nuova termica).
+
+Approccio
+Usare Hidden Markov Model (HMM) Gaussiano con variabili continue per catturare: la natura probabilistica dei cambi di stato, la persistenza temporale (uno stato tende a durare), la variabilità naturale nei dati GPS/IMU.
+
+Timeline Complessivo
+Fase	Durata
+Labeling manuale	4-5 ore
+Analisi dati	2-3 ore
+Implementazione	2-3 ore
+Validazione	1-2 ore
+Totale	∼10-15 ore
+Concetti Fondamentali
+Cos'è un HMM?
+Un Hidden Markov Model è un sistema probabilistico che modella:
+
+Stati nascosti (Hidden): quello che vuoi conoscere
+
+yaml
+Minuto 0-5:   CLIMB (nascosto, non osservabile)
+Minuto 5-12:  SEARCH (nascosto, non osservabile)
+Minuto 12-20: TRANSITION (nascosto, non osservabile)
+Osservazioni: quello che misuri effettivamente
+
+bash
+Minuto 0: vertical_speed=2.1 m/s, rate_of_turn=9.3°/s, ...
+Minuto 1: vertical_speed=1.8 m/s, rate_of_turn=10.1°/s, ...
+...
+Funzionamento:
+HMM osserva le misurazioni → Deduce quale stato nascosto probabilmente le ha generate → Output: sequenza di stati (CLIMB, SEARCH, TRANSITION, ...)
+
+Perché HMM e non altre tecniche?
+Criterio	HMM	Supervised ML	CPD
+Cattura temporalità	✓✓	✓	✗
+Probabilistico	✓✓	✗	✗
+Unsupervised	✓	✗	✓
+Interpretabile	✓	✗	✓
+Scalabile a 180k voli	✓	?	✓
+HMM è ideale perché: Unsupervised (scopre pattern dai dati non etichettati, i 108k voli di training), Probabilistico (gestisce incertezza e transizioni graduale), Temporale (sfrutta che uno stato persiste nel tempo), Interpretabile (puoi vedere medie e varianze di ogni stato).
+
+HMM Gaussiano
+"Gaussiano" significa che ogni stato ha una distribuzione normale per ogni feature: P(feature | stato) ~ N(μ, σ²)
+
+Esempio:
+
+css
+CLIMB:
+  vertical_speed ~ N(μ=2.1, σ=0.5)
+  rate_of_turn ~ N(μ=9.2, σ=1.8)
+  turn_consistency ~ N(μ=0.82, σ=0.12)
+
+SEARCH:
+  vertical_speed ~ N(μ=-0.3, σ=1.5)
+  rate_of_turn ~ N(μ=4.1, σ=3.2)
+  turn_consistency ~ N(μ=0.25, σ=0.35)
+
+TRANSITION:
+  vertical_speed ~ N(μ=0.2, σ=0.7)
+  rate_of_turn ~ N(μ=2.8, σ=1.5)
+  turn_consistency ~ N(μ=0.45, σ=0.25)
+HMM apprende automaticamente μ e σ dai dati.
+
+Fase 1: Labeling Manuale
+1.1 Perché labeliare?
+Confusione comune: "HMM è unsupervised, perché labeliare?"
+
+Risposta: HMM fit è unsupervised (scopre pattern da solo), HMM interpretazione richiede labeling (cosa significano i pattern?). Senza labeling: HMM scopre 3 cluster ← OK, ma non sai cosa sono ← Problema. Con labeling: HMM scopre 3 cluster ← OK, sai che cluster 0 = CLIMB, cluster 1 = SEARCH, etc. ← OK.
+
+Labeling serve per: 1) Scoprire le distribuzioni reali (sono gaussiane?), 2) Mappare numeri (0,1,2) a nomi semantici (climb, search, transition), 3) Validare che il modello abbia imparato correttamente.
+
+1.2 Quanto labeliare?
+Minimo vitale:
+
+2-3 voli completi (labeling totale) └─ Scopo: scoprire distribuzioni, ∼30-50 minuti di volo
+10 voli parziali per VAL (etichettature 5-10 segmenti per volo) └─ Scopo: tuning durante training, ∼50 minuti total
+10 voli parziali per TEST (etichettature 5-10 segmenti per volo) └─ Scopo: valutazione finale, mai toccare durante training, ∼50 minuti total
+TOTALE: ∼23 voli, 4-5 ore di lavoro manuale
+Consigliato (migliore qualità): 5-10 voli completi, 50 voli parziali (20 VAL, 20 TEST, 10 di riserva), TOTALE: ∼60-70 voli, 8-10 ore di lavoro.
+
+1.3 Quali voli scegliere per il labeling?
+Principio: massimizzare diversità
+
+Criteri di selezione:
+
+Giorni diversi (almeno 3 giorni in condizioni diverse)
+Piloti diversi (se possibile)
+Condizioni meteo diverse: un volo con termiche forti e stabili (climb pulito), un volo con meteo turbolento (search caotico), un volo medio (mix di stati)
+Orari diversi (mattina, pomeriggio)
+Altitudini iniziali diverse
+Perché? Così il modello generalizza su variabilità reale.
+
+1.4 Come labeliare
+Segmentazione grossolana (non per campione):
+
+Metodo:
+
+Apri visualizzazione traiettoria (Google Earth, QGIS, script Python)
+Guarda la forma della traiettoria nel tempo
+Identifica segmenti con comportamento omogeneo
+Marca i break point (quando cambia stato)
+Assegna etichetta a ogni intervallo
+Esempio output (CSV):
+
+css
+volo_id,time_start,time_end,state
+volo_20240115_001,0,47,climb
+volo_20240115_001,47,125,search
+volo_20240115_001,125,180,transition
+volo_20240115_001,180,220,climb
+1.5 Criteri per assegnare etichette
+CLIMB:
+
+Spirale stretta e persistente
+Heading cambia continuamente nello stesso verso (sinistra O destra, non entrambi)
+Altitudine sale costantemente (vertical_speed > 0.5 m/s)
+Durata tipica: 20-60 secondi
+Test visuale: vedi una spirale su Google Earth
+SEARCH:
+
+Movimenti erratici e disordinati
+Heading cambia frequentemente di verso (gli "8")
+Altitudine scende o varia molto
+Turn consistency bassa (oscillazioni)
+Durata tipica: 10-40 secondi
+Test visuale: vedi zigzag sulla mappa, no pattern
+TRANSITION:
+
+Movimento quasi lineare
+Heading stabile o cambia lentamente
+Rate of turn basso (< 5°/s)
+Altitudine può salire/scendere gradualmente
+Durata tipica: 5-30 secondi
+Test visuale: linea retta o curva gentile sulla mappa
+1.6 Controllo qualità del labeling
+Prima di usare i dati labeling, verifica:
+
+☐ Ogni segmento dura almeno 5-10 secondi (non rumore)
+☐ Niente "frame" singoli etichettati
+☐ Transizioni tra stati sono "naturali" (climb→search→transition→climb)
+☐ Non ci sono 2 stati identici consecutivi (consolida)
+☐ Se dubbio: salta quella zona (meglio perdere dati che etichettare male)
+☐ Almeno 3-5 segmenti per volo
+☐ Distribuzione: ∼40% climb, ∼35% search, ∼25% transition (circa)
+Fase 2: Feature Engineering
+2.1 Concetto: Finestra Mobile
+Le features non sono calcolate punto per punto, ma su finestre temporali.
+
+Motivo: il singolo campione è noisy, la finestra è robusta.
+
+Esempio: Campione singolo: vertical_speed[5] = 2.3 m/s (rumoroso), Finestra t=0-10s: vertical_speed_medio = 2.1 m/s (più pulito), Meglio usare la finestra.
+
+Parametri della finestra:
+
+Window size: Dipende da Hz di sampling, Tipico: 30-60 campioni (∼5-10 secondi), Regola: 2-3x la risoluzione temporale dello stato, Esempio: se climbing dura 20+ sec, window=30 campioni OK
+Slide: Tipico: 1 campione (ogni campione nuovo genera una feature), Output: features_array ha stessa lunghezza di campioni originali
+2.2 Feature Candidates (5 principali)
+Feature 1: Vertical Speed
+VS_i = (alt_i - alt_(i-w)) / (time_i - time_(i-w))
+
+Dove: alt_i = altitudine al campione i, w = window size (es. 30 campioni), VS_i in m/s
+
+Interpretazione:
+
+CLIMB: VS > 0.5 m/s (tipicamente 1.5-3.0)
+SEARCH: VS ≈ -0.5 to +0.5 m/s (variabile)
+TRANSITION: VS ≈ 0 to +0.5 m/s
+Feature 2: Rate of Turn
+ROT_i = media(|Δheading_j|) per j ∈ [i-w, i]
+
+Dove: Δheading_j = heading_j - heading_(j-1) (cambio di heading in gradi), Calcola il valore assoluto (ignora verso), ROT in °/s o °/campione
+
+Interpretazione:
+
+CLIMB: ROT > 5-10 °/s (curva stretta)
+SEARCH: ROT ≈ 3-8 °/s (curva media)
+TRANSITION: ROT < 3°/s (movimento rettilineo)
+Feature 3: Turn Consistency
+TC_i = |media(sign(Δheading_j))| per j ∈ [i-w, i]
+
+Dove: sign(Δheading_j) = +1 se Δheading_j > 0, -1 se Δheading_j < 0, Media dei segni indica se il heading cambia sempre nello stesso verso, Output: TC ∈ [0, 1]
+
+Interpretazione:
+
+TC = 1: heading cambia sempre nello stesso verso (spirale coerente) → CLIMB
+TC = 0.5: heading cambia verso frequentemente (8-pattern) → SEARCH
+TC = 0.1-0.3: heading stabile o cambia poco → TRANSITION
+Feature 4: Horizontal Speed
+HS_i = distanza_planare(lat_(i-w:i), lon_(i-w:i)) / Δt
+
+Dove: distanza calcolata con Haversine formula (distanza su sfera), HS in m/s
+
+Interpretazione:
+
+CLIMB: HS bassa (0.5-2 m/s, rimani in spirale)
+SEARCH: HS media (1-3 m/s, cerchi confuse)
+TRANSITION: HS alta (3-8 m/s, vai verso target)
+Feature 5: Altitude Variance
+AV_i = var(alt_j) per j ∈ [i-w, i]
+
+Dove: Varianza dell'altitudine nella finestra
+
+Interpretazione:
+
+CLIMB: AV bassa (salita costante, altitudine aumenta uniformemente)
+SEARCH: AV alta (altitudine oscilla mentre cerchi)
+TRANSITION: AV bassa-media (discesa controllata o stabile)
+2.3 Dimensionalità
+Mantieni SOLO le 5 features principali.
+
+Perché non aggiungerne altre? Problemi dell'aggiungere troppe features: Curse of dimensionality (più features → più dati servono), Overfitting (il modello memorizza rumore), HMM converge male con tante dimensioni, Interpretazione diventa impossibile, Tempo di calcolo aumenta.
+
+Regola empirica: n_samples ≥ 10 × n_features × n_states. Nel tuo caso: n_samples (training): ∼50 milioni, n_features: 5, n_states: 3, Bisogna: n_samples ≥ 10 × 5 × 3 = 150, 50 milioni >> 150: OK, anzi potremmo aggiungerne altre. MA: mantieni 5 per semplicità e interpretabilità.
+
+Se scopri che 5 features non bastano: Prova aggiungere: heading_autocorrelation, altitude_std, curvature. Una alla volta. Valuta su VAL set se migliora.
+
+2.4 Normalizzazione (StandardScaler)
+Perché normalizzare? Immagina features in scale diverse: vertical_speed: 0.5 - 3.0 m/s, rate_of_turn: 2 - 15 °/s, horizontal_speed: 0.5 - 8 m/s, turn_consistency: 0.1 - 1.0, altitude_variance: 1 - 100 m². HMM fa distanze euclidee tra campioni └─ Feature a scala più grande (altitude_variance) domina. Soluzione: normalizza tutte a media 0, std 1.
+
+Formula StandardScaler: x_scaled = (x - mean(X_train)) / std(X_train)
+
+Regola d'oro:
+
+Fit scaler su TRAINING set SOLO: Calcola mean e std dai dati di training, Salva questi valori
+Applica STESSA trasformazione a VAL e TEST: Usi mean e std di training (non di val/test), Questo è critico per evitare data leakage
+SBAGLIATO: Fittare scaler su training + val + test → Causa: val/test contengono informazione di training
+
+CORRETTO: Fit scaler su training, Transform training con scaler, Transform val con STESSA scaler (fit su training), Transform test con STESSA scaler.
+
+Fase 3: Analisi Distribuzioni (EDA)
+3.1 Domanda fondamentale
+Perché è importante validare che le distribuzioni siano gaussiane?
+
+HMM Gaussiano ASSUNZIONE: P(feature | stato) ~ N(μ, σ²). Se la realtà è diversa (es. distribuzione bimodale): HMM non cattura bene i dati, Accuratezza scende, Devi usare altra distribuzione.
+
+3.2 Procedura di EDA
+STEP 1: Separa dati per stato (usando labeling manuale)
+
+Prendi i 2-3 voli labeling completo:
+
+Estrai features come nella Fase 2
+Filtra per stato:
+climb_features = features[state == 'climb']
+search_features = features[state == 'search']
+transition_features = features[state == 'transition']
+Ora hai dati "puri" per ogni stato
+STEP 2: Plotta istogrammi
+
+Per ogni feature, per ogni stato:
+
+Esempio feature: vertical_speed
+
+CLIMB: plotta histogram di vertical_speed nei campioni CLIMB → Aspettativa: campana centrata su ∼2.0 m/s
+
+SEARCH: plotta histogram di vertical_speed nei campioni SEARCH → Aspettativa: campana larga centrata su ∼-0.2 m/s
+
+TRANSITION: plotta histogram di vertical_speed nei campioni TRANSITION → Aspettativa: campana centrata su ∼0.3 m/s
+
+Visualmente: le forme sembrano gaussiane?
+
+STEP 3: Test statistico (Shapiro-Wilk)
+
+Test di gaussianità: H_0: i dati provengono da una distribuzione normale
+
+Processo:
+
+Per ogni (feature, stato) pair:
+Calcola test Shapiro-Wilk
+Output: p-value ∈ [0, 1]
+Interpretazione:
+p-value > 0.05: NON rifiuti H_0 → distribuzione gaussiana ✓
+p-value < 0.05: rifiuti H_0 → distribuzione NON gaussiana ✗
+Regola: p-value basso = evidenza contro gaussiana
+Risultato complessivo:
+Se > 80% dei test danno p-value > 0.05 → USA HMM Gaussiano
+Se < 50% danno p-value > 0.05 → CAMBIA distribuzione
+STEP 4: Analizza correlazioni
+
+Calcola correlation matrix tra le 5 features:
+
+Correlazione di Pearson: corr(X, Y) = cov(X, Y) / (std(X) × std(Y))
+
+Interpretazione:
+
+corr = 1: perfettamente correlati
+corr = 0: indipendenti
+corr = -1: perfettamente anti-correlati
+Azione:
+
+Se corr > 0.9 tra due features: rimuovi una └─ Motivo: ridondanza, HMM assume indipendenza
+Se tutte < 0.7: OK, tienile tutte
+Se mix: decidi caso per caso
+3.3 Output dell'EDA
+Documento da salvare:
+
+yaml
+EDA Report per Distribuzione delle Features
+============================================
+
+Feature: vertical_speed
+├─ CLIMB: mean=2.1, std=0.5, shapiro_p=0.087 ✓ gaussiana
+├─ SEARCH: mean=-0.3, std=1.5, shapiro_p=0.012 ✗ NON gaussiana
+└─ TRANSITION: mean=0.2, std=0.7, shapiro_p=0.156 ✓ gaussiana
+
+Feature: rate_of_turn
+├─ CLIMB: mean=9.2, std=1.8, shapiro_p=0.234 ✓ gaussiana
+├─ SEARCH: mean=4.1, std=3.2, shapiro_p=0.045 ✗ NON gaussiana
+└─ TRANSITION: mean=2.8, std=1.5, shapiro_p=0.302 ✓ gaussiana
+
+...
+
+Conclusione: 5/6 distribuzioni sono gaussiane. Usa HMM Gaussiano.
+Fase 4: Divisione Train/Val/Test
+4.1 Importanza della divisione
+Scenario SBAGLIATO:
+
+Addestri HMM su dataset intero
+Validi su stesso dataset
+Risultato: 95% accuracy
+Problema: il modello ha "memorizzato" i dati (overfitting)
+Scenario CORRETTO:
+
+Dividi PRIMA di fare qualsiasi cosa
+Train: 60% (non etichettato, HMM scopre pattern)
+Val: 20% (parzialmente etichettato, tuning)
+Test: 20% (parzialmente etichettato, valutazione finale)
+Risultato: stima onesta della performance
+4.2 Come dividere 180.000 voli
+STEP 1: Crea mapping voli
+
+Crea array di 180.000 indici: indices = [0, 1, 2, 3, ..., 179999]
+
+Shuffle casuale (con seed fisso per riproducibilità): np.random.seed(42), np.random.shuffle(indices)
+
+STEP 2: Dividi per proporzione
+
+scss
+n_total = 180000
+
+train_size = int(0.6 * n_total) = 108000
+val_size = int(0.2 * n_total) = 36000
+test_size = int(0.2 * n_total) = 36000
+
+train_idx = indices[0:108000]
+val_idx = indices[108000:144000]
+test_idx = indices[144000:180000]
+
+Output:
+├─ train_voli.txt: contiene ID voli per training (108k)
+├─ val_voli.txt: contiene ID voli per validation (36k)
+└─ test_voli.txt: contiene ID voli per testing (36k)
+4.3 Quando labeliare
+Timeline cruciale:
+
+PASSO 1: Dividi i 180k voli in train/val/test ← PRIMA di tutto → Salva mapping
+
+PASSO 2: Etichetta manualmente:
+
+2-3 voli da TRAIN (labeling completo) └─ Scopo: scoprire distribuzioni
+10 voli da VAL (labeling parziale) └─ Scopo: tuning durante training
+10 voli da TEST (labeling parziale) └─ Scopo: valutazione finale ONESTA
+PASSO 3: Estrai features
+
+Su TUTTI i 180k voli (anche unlabeled)
+Normalizza con scaler fit su TRAIN SOLO
+PASSO 4: Addestra HMM
+
+Su features di TRAIN set (no label usati)
+PASSO 5: Valida su VAL
+
+Confronta predizioni vs label VAL
+PASSO 6: Testa su TEST
+
+Misura finale onesta
+4.4 Dati leakage: cosa evitare
+ERRORE 1: Fit scaler su train + val + test → Conseguenza: val/test "vedono" informazione di training
+
+ERRORE 2: Usare campioni da TRAIN in VAL → Conseguenza: valutazione non onesta
+
+ERRORE 3: Labeliare TUTTI i voli → Conseguenza: niente data discovery, overfitting certo
+
+ERRORE 4: Togliere outliers da train ma non da test → Conseguenza: distribuzione diversa
+
+Fase 5: HMM Gaussiano
+5.1 Fondamenti matematici
+Definizione formale
+Un HMM è definito da: λ = (A, B, π)
+
+Dove:
+
+A: matrice di transizione (3×3) = probabilità di passare da uno stato a un altro
+B: distribuzione di emissione = probabilità di osservare una feature dato uno stato
+π: distribuzione iniziale = probabilità di iniziare in ogni stato
+Matrice di transizione A
+sql
+       ↓ da stato →
+     Climb Search Trans
+Climb  0.85   0.10   0.05
+Search 0.10   0.70   0.20
+Trans  0.20   0.05   0.75
+Interpretazione:
+
+Se in CLIMB, 85% rimani in CLIMB (persistenza)
+Se in SEARCH, 70% rimani in SEARCH
+Se in TRANS, 75% rimani in TRANSITION
+Le transizioni hanno probabilità bassa (cambio di stato è raro)
+Distribuzione di emissione B
+Per HMM Gaussiano, ogni stato ha una distribuzione normale multivariata: B_i(x) = N(x | μ_i, Σ_i)
+
+Dove:
+
+x = vettore di features [VS, ROT, TC, HS, AV] (5-dimensionale)
+μ_i = vettore media dello stato i
+Σ_i = matrice covarianza dello stato i
+Esempio:
+
+makefile
+CLIMB:
+  μ_climb = [2.1, 9.2, 0.82, 1.2, 5.3]
+  Σ_climb = diag[0.25, 3.24, 0.014, 0.36, 8.41]
+
+SEARCH:
+  μ_search = [-0.3, 4.1, 0.25, 2.1, 32.5]
+  Σ_search = diag[2.25, 10.24, 0.1225, 1.21, 132.25]
+
+TRANSITION:
+  μ_trans = [0.2, 2.8, 0.45, 4.5, 3.1]
+  Σ_trans = diag[0.49, 2.25, 0.06, 1.44, 5.29]
+La probabilità di osservare un campione dato uno stato è calcolata con la gaussiana multivariata.
+
+Distribuzione iniziale π
+π = [P(inizia in CLIMB), P(inizia in SEARCH), P(inizia in TRANSITION)]
+
+Tipicamente: π ≈ [0.33, 0.33, 0.33] (uguale per tutti gli stati, senza informazione a priori)
+
+5.2 Processo di fitting (Baum-Welch)
+Cosa succede quando chiami model.fit(X_train)?
+
+HMM scopre i parametri (A, B, π) che meglio spiegano i dati di training.
+
+Algoritmo: Baum-Welch (EM Algorithm)
+
+Iterazione (semplificato):
+
+Iterazione 1:
+
+Inizializza A, B, π casualmente
+E-step: calcola prob. di ogni stato a ogni timestep
+M-step: aggiorna A, B, π basato su probabilità
+Calcola log-likelihood
+Iterazione 2-1000:
+
+Ripeti E-step e M-step
+Log-likelihood aumenta (convergenza)
+Quando convergenza < threshold: stop
+Convergenza: log-likelihood(t) - log-likelihood(t-1) < ε
+
+Quando questo è vero, il modello ha imparato.
+
+5.3 Configurazione di HMM Gaussiano
+Parametri critici:
+
+java
+n_components = 3
+└─ Numero di stati (già sai che sono 3: climb, search, transition)
+
+covariance_type = "diag"
+├─ "diag": matrice covarianza diagonale (solo varianze, no correlazioni)
+├─ "full": matrice covarianza completa (più parametri, overfitting)
+├─ Consiglio: "diag" per robustezza, "full" se dati abbondanti
+└─ Nel tuo caso: "diag" è appropriato (180k voli >> parametri)
+
+n_iter = 1000
+├─ Numero massimo di iterazioni Baum-Welch
+├─ Tipico: 100-1000
+├─ Se non converge in 1000: aumenta o cambia dati
+└─ Nel tuo caso: 1000 è ragionevole
+
+random_state = 42
+└─ Seed per riproducibilità
+
+tol = 0.01
+├─ Threshold di convergenza
+├─ HMM stop quando log-likelihood cambia < 0.01
+└─ Default: OK
+5.4 Fitting su TRAIN set
+Processo:
+
+Carica features di TRAIN (108k voli): X_train = load_train_features() └─ Shape: (N_train_samples, 5)  [es. (50M, 5)]
+
+Normalizza (fit scaler su training):
+
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+Fit HMM:
+
+model = GaussianHMM(n_components=3, covariance_type="diag", n_iter=1000, random_state=42)
+model.fit(X_train_scaled)
+Output del fit:
+
+model.means_: shape (3, 5) └─ media di ogni feature per ogni stato
+model.covars_: shape (3, 5) └─ varianza di ogni feature per ogni stato
+model.transmat_: shape (3, 3) └─ matrice di transizione
+model.startprob_: shape (3,) └─ probabilità iniziale
+Salva il modello per dopo:
+
+Scopo: non rifare il fit ogni volta
+
+Metodo:
+
+Serializza model e scaler (pickle, joblib)
+Salva su disco
+Ricarica quando serve (prediction, tuning)
+Fase 6: Mapping e Validazione
+6.1 Il problema del mapping
+HMM fit restituisce numeri di stato (0, 1, 2), non nomi.
+
+Predizioni HMM raw: [0, 0, 0, 1, 1, 2, 0, 0, ...]
+
+Non sai cosa significano: Lo stato 0 è CLIMB, SEARCH, o TRANSITION? Lo stato 1? Lo stato 2?
+
+Problema: come mappare?
+
+6.2 Procedura di mapping
+STEP 1: Predici sui dati labeling
+
+Prendi i 2-3 voli labeling completo:
+
+Estrai features
+Normalizza con scaler fit su training
+Predici con HMM: y_pred_raw = model.predict(X_labeled_scaled)
+Ora hai y_pred_raw [0, 1, 2, ...]
+STEP 2: Crea confusion matrix
+
+Confronta predizioni HMM vs label manuale:
+
+less
+           Pred 0  Pred 1  Pred 2
+Label CLIMB  500    40     10        (totale CLIMB: 550)
+Label SEARCH  30    450    20        (totale SEARCH: 500)
+Label TRANS   20     30   200        (totale TRANS: 250)
+Leggi per colonna (cosa predice ogni stato HMM):
+
+Stato HMM 0 predice:
+
+500 CLIMB (maggioranza!)
+30 SEARCH
+20 TRANS
+→ Conclusione: stato 0 = CLIMB
+Stato HMM 1 predice:
+
+40 CLIMB
+450 SEARCH (maggioranza!)
+30 TRANS
+→ Conclusione: stato 1 = SEARCH
+Stato HMM 2 predice:
+
+10 CLIMB
+20 SEARCH
+200 TRANS (maggioranza!)
+→ Conclusione: stato 2 = TRANSITION
+STEP 3: Crea dizionario mapping
+
+css
+mapping = {
+    0: "climb",
+    1: "search",
+    2: "transition"
+}
+
+(O potrebbe essere diverso ordine, dipende da come HMM ha scoperto i cluster)
+6.3 Validazione su VAL set
+STEP 1: Predici su VAL
+
+scss
+X_val = load_val_features()
+X_val_scaled = scaler.transform(X_val)
+
+y_val_pred_raw = model.predict(X_val_scaled)
+y_val_pred = [mapping[state] for state in y_val_pred_raw]
+y_val_true = load_val_labels()
+
+Ora hai:
+├─ y_val_pred: predizioni HMM su VAL
+└─ y_val_true: label manuale su VAL
+STEP 2: Calcola metriche
+
+Accuracy: accuracy = (y_val_pred == y_val_true).mean() → Interpretazione: % di campioni corretti
+
+F1-score (per ogni classe):
+
+Per CLIMB: precision, recall, f1
+Per SEARCH: precision, recall, f1
+Per TRANSITION: precision, recall, f1
+F1 = media armonica di precision e recall
+Meglio di accuracy se classi sbilanciate
+Confusion matrix (3×3): Vedi quanti CLIMB predici come SEARCH, etc.
+
+Valutazione:
+
+Se accuracy ≥ 75%: buono, prosegui
+Se 70% ≤ accuracy < 75%: mediocre, considera tuning
+Se accuracy < 70%: cattivo, vai a troubleshooting
+STEP 3: Interpretazione di F1 per classe
+
+Precision (per CLIMB): = (veri CLIMB predetti correttamente) / (tutti predetti CLIMB) = TP / (TP + FP) → Significato: quando HMM dice CLIMB, ha ragione?
+
+Recall (per CLIMB): = (veri CLIMB predetti correttamente) / (tutti i veri CLIMB) = TP / (TP + FN) → Significato: HMM trova tutti i veri CLIMB?
+
+F1 = 2 × (precision × recall) / (precision + recall) → Bilanciamento tra precision e recall
+
+6.4 Validazione su TEST set
+Importante: TEST set è SACRO
+
+TEST set deve essere:
+
+Completamente separato da training
+MAI usato durante tuning
+Usato UNA SOLA VOLTA per valutazione finale
+Dà stima ONESTA di performance su dati nuovi
+STEP 1: Predici su TEST (come VAL)
+
+scss
+X_test = load_test_features()
+X_test_scaled = scaler.transform(X_test)
+
+y_test_pred_raw = model.predict(X_test_scaled)
+y_test_pred = [mapping[state] for state in y_test_pred_raw]
+y_test_true = load_test_labels()
+STEP 2: Calcola metriche TEST
+
+Stesse metriche di VAL:
+
+Accuracy
+F1-score per classe
+Confusion matrix
+STEP 3: Confronta VAL vs TEST
+
+Scenario 1: TEST accuracy ≈ VAL accuracy
+
+OK: il modello generalizza bene
+Prosegui a FASE 7
+Scenario 2: TEST accuracy << VAL accuracy (es. 85% vs 60%)
+
+OVERFITTING: il modello ha memorizzato VAL
+Azioni:
+Riduci features
+Cambia covariance_type a "tied"
+Raccogli più dati di training
+Riaddestra
+Scenario 3: TEST accuracy bassa (< 70%)
+
+Modello insufficiente
+Vai a TROUBLESHOOTING (Fase 8)
+Non deployare
+Fase 7: Applicazione Completa
+7.1 Quando deployare
+Criterio: TEST accuracy ≥ 70%
+
+Se soddisfatto: procedi a deployment
+Se non: torna a tuning (Fase 8)
+7.2 Refit su train+val
+Perché?
+
+Ora che sai il modello funziona (validato su test):
+
+Hai più dati se usi train + val
+Migliore stima dei parametri μ, σ, A
+Accuratezza finale migliore
+Come:
+
+Combina training e val: X_trainval = concatena(X_train, X_val)
+
+Rifit HMM: model_final = GaussianHMM(...).fit(X_trainval_scaled)
+
+OUTPUT:
+
+model_final con parametri aggiornati
+Pronto per predire su TUTTI i 180k voli
+7.3 Predici su tutti 180k voli
+STEP 1: Carica features di TUTTI i voli → X_all = load_all_180k_voli_features()
+
+STEP 2: Normalizza con scaler → X_all_scaled = scaler.transform(X_all) └─ Usa STESSO scaler fit su training originale
+
+STEP 3: Predici → y_all_pred_raw = model_final.predict(X_all_scaled) → y_all_pred = [mapping[state] for state in y_all_pred_raw]
+
+STEP 4: Salva risultati → Crea dataframe: volo_id, timestamp, lat, lon, alt, heading, predicted_state (CLIMB, SEARCH, TRANSITION), features utilizzate (VS, ROT, TC, HS, AV) → Esporta CSV
+
+Output file: segmentazione_180k_voli.csv: 180.000 voli, Centinaia di milioni di campioni, Ogni campione con stato predetto
+
+7.4 Post-processing (opzionale)
+Smoothing temporale:
+
+Motivo: HMM predice stato per ogni campione. A volte un singolo campione è "rumore" tra altri stati.
+
+Esempio "prima": [CLIMB, CLIMB, SEARCH, CLIMB, CLIMB] └─ ↑ outlier singolo
+
+Soluzione: moda su finestra
+
+Prendi ogni campione
+Guarda i 5 campioni intorno
+Prendi lo stato più frequente
+Se diverso, cambia
+Esempio "dopo": [CLIMB, CLIMB, CLIMB, CLIMB, CLIMB]
+
+Effetto: riduce artefatti, output più pulito
+
+Filtro durata minima:
+
+Motivo: stati che durano < 2-3 secondi sono sospetti (rumore?)
+
+Azione:
+
+Identifica run (sequenze di uno stato)
+Se run < min_duration: unisci con stato prevalente intorno
+Esempio:
+Prima: [CLIMB, CLIMB, SEARCH, SEARCH, TRANSITION, TRANSITION]
+Dopo: [CLIMB, CLIMB, CLIMB, CLIMB, CLIMB, CLIMB] (SEARCH durava < threshold, rimpiazzato)
+Fase 8: Troubleshooting
+8.1 TEST accuracy < 70%
+Cosa non funziona e come sistemare:
+
+Causa 1: Features non separabili
+Sintomi: Confusion matrix molto squilibrata: Tutte le predizioni vanno a uno stato, Accuracy bassa ma falsa (predice sempre "climb", non impara)
+
+Azioni:
+a) Aggiungi features
+
+Prova: heading_autocorrelation
+Prova: altitude_std
+Valuta su VAL
+b) Cambia window_size
+
+Prova size più grande (60, 90)
+Prova size più piccolo (15, 20)
+Effetto: cattura pattern a scale diverse
+c) Rimuovi feature ridondante
+
+Correlazione > 0.9?
+Rimuovi una
+Riaddestra
+Causa 2: Labeling sporco
+Sintomi: EDA mostra distribuzioni chiaramente diverse (CLIMB vs SEARCH), Ma HMM non riesce a separarle
+
+Azioni:
+a) Revisiona labeling manuale
+
+Sono i 2-3 voli labeling davvero corretti?
+Segmenti troppo piccoli? (< 5 sec)
+Ridefinisci label se necessario
+b) Aggiungi più voli labeling
+
+5-10 voli invece di 2-3
+Copri più variabilità
+Ridà distribuzione più robusta
+Causa 3: Distribuzioni non gaussiane
+Sintomi: EDA mostra: Distribuzioni bimodali, Code lunghe (outliers), Forme non a campana
+
+Azioni:
+a) Prova altra distribuzione HMM
+
+Cambio a distribuzione generale (GMM)
+Oppure: discretizza (bin features → binarie)
+Sperimenta
+b) Filtra outliers
+
+Rimuovi campioni > 3σ dalla media
+Rischio: perdi informazione legittima
+Usa con cautela
+c) Transform features (log, sqrt)
+
+Se feature è log-normale: prendi logaritmo prima
+Trasforma a gaussiana
+Riaddestra HMM
+Causa 4: Dati leakage
+Sintomi: VAL accuracy alta (85%), TEST accuracy bassa (60%)
+
+Azioni: Controlla:
+
+Scaler: fittato su TRAIN solo? ✓
+Features: calcolate da train/val/test separatamente? ✓
+Label: test set è veramente nuovo? ✓
+Se uno NO: ripara il problema, riaddestra
+8.2 TEST accuracy ≈ 70-75% (mediocre)
+Accettabile? Dipende da caso d'uso:
+
+70-75%: uso non critico, OK
+< 70%: uso critico, considera alternativa
+80%: buono per deploy
+
+Migliorie marginali:
+
+Aggiusta threshold nel post-processing
+Aumenta window_size (leggermente)
+Prova RandomSearch nei hyperparameter
+Ma ritorni decrescenti
+8.3 VAL accuracy alta, TEST bassa (overfitting)
+Sintomo: VAL 85% vs TEST 60%
+
+Azioni:
+a) Riduci complessità
+
+Prova covariance_type="tied" (condivide cov tra stati)
+Riduci features (da 5 a 3)
+Riaddestra
+b) Aumenta dati di training
+
+Usa 70% train, 15% val, 15% test
+Più dati → meno overfitting
+Rilabela se serve
+c) Aggiusta regolarizzazione
+
+Aumenta n_iter threshold (convergenza più lenta)
+Diminuisci tol (richiedi convergenza stretta)
+Riaddestra
+8.4 HMM non converge (iter = 1000 ma non converge)
+Sintomi: Log-likelihood ancora cambia molto dopo 1000 iterazioni, Predicizioni instabili, Risultati strani
+
+Azioni:
+a) Aumenta n_iter
+
+Prova 2000, 5000
+Aspetta convergenza vera
+b) Cambia seed
+
+Talvolta seed sfortunato
+Prova random_state diverso
+Vedi se converge
+c) Normalizza features diversamente
+
+StandardScaler → MinMaxScaler
+O normalizza per stato
+Influisce sulla convergenza
+d) Riduci complessità
+
+Troppi dati?
+Campiona subset di training
+Vedi se converge
+8.5 Quando abbandonare HMM e usare alternativa
+Se dopo tutti i tentativi TEST accuracy rimane < 60%:
+
+Option A: Supervised Learning (Random Forest, SVM)
+
+Usa label manuale come training
+Apprendi direttamente dalla label
+Richiede più labeling (∼100-200 voli)
+Probabilmente migliore se dati abbondanti
+Option B: Hybrid CPD + Classifier
+
+Usa CPD per trovare break point
+Classifica segmenti con rule-based
+Meno ML, più control
+Se HMM troppo complesso
+Option C: Binario + HMM discreto
+
+Torna al vecchio approccio (binario con thresholds)
+HMM su features binarie
+Più semplice, meno potente
+Fase 9: Analisi Risultati Finali
+9.1 Statistiche per volo
+Per ogni volo calcola:
+
+% tempo in CLIMB
+% tempo in SEARCH
+% tempo in TRANSITION
+Numero di cambii di stato
+Durata media di ogni stato
+Efficienza (tempo climb / tempo totale)
+9.2 Validazione qualitativa
+Seleziona 10 voli random dal deploy:
+
+Visualizza traiettoria 3D
+Colora per stato predetto
+Guarda manualmente: ha senso?
+Spirali = CLIMB? ✓
+Zigzag = SEARCH? ✓
+Linee dritte = TRANSITION? ✓
+Se sì: confida nel modello
+9.3 Metriche di qualità complessiva
+Su TUTTI i 180k voli:
+
+Distribuzione degli stati:
+Atteso: ∼40% climb, ∼35% search, ∼25% transition
+Se molto sbilanciato: revisiona
+Lunghezza media run (persistenza):
+CLIMB: atteso 20-60 sec
+SEARCH: atteso 10-40 sec
+TRANSITION: atteso 5-20 sec
+Se diverso: modello non ha imparato bene
+Checklist Finale
+Prima del deployment:
+
+LABELING:
+
+☐ 2-3 voli labeling completo
+☐ 10 voli VAL etichettati parzialmente
+☐ 10 voli TEST etichettati parzialmente
+☐ Qualità labeling verificata
+FEATURES:
+
+☐ 5 features calcolate correttamente
+☐ Normalizzazione con scaler fit su training
+☐ Niente data leakage
+EDA:
+
+☐ Distribuzioni gaussiane verificate (Shapiro-Wilk)
+☐ Correlazioni < 0.9
+☐ Niente anomalie ovvie
+TRAIN/VAL/TEST:
+
+☐ Divisi PRIMA di labeling
+☐ Separazione rigorosa
+☐ Niente contaminazione
+HMM:
+
+☐ Fittato su training SOLO
+☐ Parametri salvati (mean, cov, transition)
+☐ Scaler salvato
+VALIDAZIONE:
+
+☐ VAL accuracy ≥ 70%
+☐ TEST accuracy ≥ 70%
+☐ TEST ≈ VAL (no overfitting)
+DEPLOYMENT:
+
+☐ Model refittato su train+val
+☐ Predizioni su tutti 180k voli
+☐ Risultati salvati
+☐ Post-processing (smoothing, min_duration)
+☐ Analisi qualitativa OK
+☐ Statistiche nel range atteso
+GO/NO-GO:
+
+☐ Se tutti ✓ sopra: DEPLOY
+☐ Se alcuni ✗: back to troubleshooting
+Note Finali
+Riproducibilità
+Salva SEMPRE:
+
+Seed casuale (random_state=42)
+Hyperparameter HMM (n_components, covariance_type, n_iter)
+Scaler (mean, std)
+Modello HMM (means, covars, transmat)
+Mapping (0→climb, 1→search, 2→transition)
+Dataset mapping (quali voli in train/val/test)
+Permette:
+
+Rifare lo stesso esperimento
+Capire quale config era migliore
+Documentazione per team
+Maintainability
+Quando arrivano NUOVI voli:
+
+Opzione 1: Riaddestra HMM ogni mese
+
+Raccogli nuovi voli
+Risegmenta un sottinsieme
+Riaddestra model
+Deploy versione nuova
+Migliore performance nel tempo
+Opzione 2: Transfer learning
+
+Prendi model vecchio
+Fine-tune su nuovi dati
+Più veloce, meno rischio
+Se dati molto diversi: non funziona
+Scegli in base a:
+
+Velocità di raccolta dati
+Velocità cambio distribuzione
+Risorse computazionali disponibili
+Miglioramenti Futuri
+Se volessi spingersi oltre:
+
+Modello dinamico: Matrice transizione varia nel tempo, Es: al mattino più climb, sera più search, Kalman filter, DBN
+
+Feature selection automatica: Invece di manual, usa algoritmo, Recursive feature elimination, etc., Optimizza feature set
+
+Ensemble: Addestra 5-10 HMM su bootstrapped data, Predici con vote, Più robusta, Overhead computazionale
+
+Real-time classification: Classifica il volo mentre accade (online), Varient di HMM (forward algorithm), Per feedback al pilota?
+
+Anomaly detection: Sequenze di stato improbabili, Es: CLIMB→CLIMB→TRANSITION sempre no (improbabile), Flag voli sospetti
+
+Riferimenti e Risorse
+Teorie:
+
+HMM: https://en.wikipedia.org/wiki/Hidden_Markov_model
+Baum-Welch: https://en.wikipedia.org/wiki/Baum%E2%80%93Welch_algorithm
+Viterbi: https://en.wikipedia.org/wiki/Viterbi_algorithm
+Librerie Python:
+
+hmmlearn: https://github.com/hmmlearn/hmmlearn
+sklearn: https://scikit-learn.org/
+numpy: https://numpy.org/
+pandas: https://pandas.pydata.org/
+Tutorial online:
+
+Rabiner's HMM tutorial (classic)
+Towards Data Science: HMM guide
+StatQuest with Josh Starmer (YouTube)
+Documento creato: Strategia Completa Segmentazione Parapendio
+
+Versione: 1.0
+
+Stato: Pronto per implementazione

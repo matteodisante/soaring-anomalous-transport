@@ -1,0 +1,183 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[italian]{babel}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage{hyperref}
+
+\geometry{
+    a4paper,
+    top=25mm,
+    bottom=25mm,
+    left=25mm,
+    right=25mm
+}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    urlcolor=blue!70!black
+}
+
+\title{\textbf{Analisi Cinematica e Detrending nei Voli in Parapendio:\\Distinzione tra Vincolo Orografico e Vento e Isotropizzazione del Processo}}
+\author{\textbf{Analisi Cinematica da Dati GPS/IGC}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{quote}\small
+\textbf{Stato della nota.} Documento di lavoro conservato per la discussione delle
+ipotesi, distinto dai metodi adottati nella tesi. In particolare, la separazione
+univoca tra vento e orografia a partire dalla sola cinematica e il recupero di un
+processo fisico isotropo mediante detrending non sono risultati dimostrati.
+Il capitolo 3 della tesi esplicita i limiti di identificabilit\`a e i controlli attuali.
+\end{quote}
+
+\section{Domanda e Inquadramento del Problema}
+
+\textbf{Scenario:} Si consideri la dinamica di volo di un parapendio (o di un insieme statistico di vele/gliders) descritta da traiettorie campionate ad alta risoluzione con posizione $\vec{x}(t)$, ground speed $\vec{v}_g(t)$ e accelerazione $\vec{a}(t)$. Si pongono a confronto due condizioni fisiche:
+\begin{enumerate}
+    \item \textbf{Scenario 1 (Vincolo Orografico):} Presenza di una direzione geometricamente privilegiata dovuta a una catena montuosa (es. Pirenei con orientamento Est-Ovest), che confina il volo prevalentemente lungo l'asse E-W rispetto all'asse N-S, in assenza di un forte vento medio lungo la catena.
+    \item \textbf{Scenario 2 (Avvezione / Vento E-W):} Presenza di un campo di vento sostenuto che spira lungo la direttrice Est-Ovest.
+\end{enumerate}
+
+\textbf{Obiettivi di analisi:}
+\begin{enumerate}
+    \item Distinguere univocamente i due scenari a partire dalle sole grandezze cinematiche osservabili.
+    \item Definire una procedura formale di detrending per rimuovere entrambi gli effetti e ricondurre la dinamica a un processo stocastico isotropo.
+\end{enumerate}
+
+\section{Modello Fisico di Riferimento}
+
+La relazione cinematica fondamentale che lega la velocit\`a rispetto al suolo (\textit{ground speed}) $\vec{v}_g$, la velocit\`a rispetto alla massa d'aria (\textit{airspeed}) $\vec{v}_a$ e il campo di velocit\`a del vento $\vec{w}$ \`e:
+\begin{equation}
+    \vec{v}_g(t) = \vec{v}_a(t) + \vec{w}(\vec{x}, t)
+\end{equation}
+dove l'airspeed in regime di planata stazionaria varia all'interno di un intervallo caratteristico ristretto ($|\vec{v}_a| \in [35, 50]\,\mathrm{km/h}$ per un parapendio moderno), mentre l'accelerazione misurata \`e:
+\begin{equation}
+    \vec{a}(t) = \frac{d\vec{v}_g}{dt} = \frac{d\vec{v}_a}{dt} + \frac{d\vec{w}}{dt}
+\end{equation}
+Assumendo su scala locale un vento stazionario e uniforme rispetto ai tempi caratteristici di manovra ($\frac{d\vec{w}}{dt} \approx 0$), si ha $\vec{a}(t) \approx \frac{d\vec{v}_a}{dt}$.
+
+\section{Criteri di Distinzione Cinematica}
+
+\subsection{1. Deriva del Centroide nelle Fasi di Spiraleggio (Termica / $360^\circ$)}
+Isolando i tratti in virata continua:
+\begin{itemize}
+    \item \textbf{Scenario 2 (Vento E-W):} Durante un giro completo a $360^\circ$ di periodo $T$, integrando la ground speed:
+    \begin{equation}
+        \langle \vec{v}_g \rangle_T = \frac{1}{T}\int_0^T \vec{v}_g(t)\,dt = \vec{w} \neq \vec{0}
+    \end{equation}
+    La traiettoria al suolo descrive una cicloide/trocoide con traslazione progressiva verso Est (o Ovest). Inoltre, il modulo $|\vec{v}_g|$ \`e modulato sinusoidalmente con massimo sottovento ($|\vec{v}_a| + |\vec{w}|$) e minimo controvento ($|\vec{v}_a| - |\vec{w}|$).
+    \item \textbf{Scenario 1 (Vincolo Orografico):} I centri dei cerchi successivi restano stazionari lungo l'asse E-W ($\langle v_{g,x} \rangle_T \approx 0$), oppure presentano una deriva limitata alla componente ortogonale (es. brezza anabatica o di valle N-S).
+\end{itemize}
+
+\subsection{2. Asimmetria della Distribuzione di Ground Speed nei Transiti Lineari}
+Nei tratti di volo rettilineo orientati lungo la direttrice Est-Ovest:
+\begin{itemize}
+    \item \textbf{Scenario 2 (Vento E-W):} La densit\`a di probabilit\`a $P(|\vec{v}_g|)$ sui segmenti rettilinei E-W presenta una netta separazione bimodale asimmetrica:
+    \begin{equation}
+        \langle |\vec{v}_g| \rangle_{\text{verso Est}} \neq \langle |\vec{v}_g| \rangle_{\text{verso Ovest}}
+    \end{equation}
+    Ad esempio, con $|\vec{w}| = 15\,\mathrm{km/h}$ verso Est e $|\vec{v}_a| = 40\,\mathrm{km/h}$, si registrano velocit\`a medie di circa $55\,\mathrm{km/h}$ in andata verso Est e $25\,\mathrm{km/h}$ al ritorno verso Ovest.
+    \item \textbf{Scenario 1 (Vincolo Orografico):} La distribuzione delle velocit\`a al suolo \`e simmetrica e invariante per inversione di marcia:
+    \begin{equation}
+        \langle |\vec{v}_g| \rangle_{\text{verso Est}} \approx \langle |\vec{v}_g| \rangle_{\text{verso Ovest}} \approx |\vec{v}_a|
+    \end{equation}
+    Il vincolo montuoso confina lo spazio delle configurazioni geometriche $(x, y)$, ma preserva la simmetria dinamica delle velocit\`a scalari.
+\end{itemize}
+
+\subsection{3. Analisi dell'Hodografo delle Velocit\`a}
+Rappresentando la distribuzione congiunta delle velocit\`a $(v_{g,x}, v_{g,y})$ nel piano polare:
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Caratteristica} & \textbf{Scenario 1: Orografia E-W} & \textbf{Scenario 2: Vento E-W} \\ \midrule
+Centro di simmetria & Origine $(0,0)$ & Traslato di $\vec{w} = (w_x, 0)$ \\
+Forma globale & Anisotropia ellittica simmetrica & Circonferenza/corona traslata lungo $v_x$ \\
+Minimo di velocit\`a & $v_{g,x} \approx 0$ durante le inversioni & $v_{g,x} \approx w_x$ \\ \bottomrule
+\end{tabular}
+\caption{Confronto delle propriet\`a dell'hodografo di velocit\`a nei due scenari.}
+\end{table}
+
+\subsection{4. Relazione tra Accelerazione e Curvatura al Suolo}
+L'accelerazione centripeta in virata \`e generata dalle forze aerodinamiche nel sistema dell'aria:
+\begin{equation}
+    \vec{a}(t) = \vec{\omega}(t) \times \vec{v}_a(t)
+\end{equation}
+\begin{itemize}
+    \item \textbf{Scenario 1:} In assenza di vento E-W, $\vec{v}_g \approx \vec{v}_a$, dunque il vettore accelerazione $\vec{a}(t)$ punta verso il centro di curvatura istantaneo della traiettoria al suolo.
+    \item \textbf{Scenario 2:} Con $\vec{w} \neq \vec{0}$, la traiettoria al suolo subisce una distorsione cicloidale e $\vec{a}(t)$ risulta disallineato rispetto alla normale geometrica di $\vec{x}(t)$, permettendo la stima di $\vec{w}$ mediante fitting non lineare.
+\end{itemize}
+
+\section{Detrending e Isotropizzazione del Processo}
+
+Per ricondurre la cinematica a un processo stocastico isotropo \`e necessario operare a due livelli distinti, poich\'e i due effetti agiscono in spazi di stato differenti:
+\begin{enumerate}
+    \item \textbf{Il vento} rappresenta un termine di \textit{deriva deterministica} (\textit{drift}) nello \textbf{spazio delle velocit\`a}.
+    \item \textbf{L'orografia} agisce come un \textit{potenziale di confinamento} o come un \textit{tensore di diffusione anisotropo} nello \textbf{spazio delle posizioni}.
+\end{enumerate}
+
+\subsection{Fase 1: Rimozione dell'Avvezione da Vento (Airframe Transformation)}
+Il primo passo consiste nel passare al sistema di riferimento solidale con la massa d'aria locale:
+\begin{enumerate}
+    \item \textbf{Stima del vento locale $\hat{\vec{w}}(t)$:}
+    Pu\`o essere ottenuta integrando sui singoli cerchi di termica $\hat{\vec{w}} = \langle \vec{v}_g \rangle_{\text{giro}}$, oppure minimizzando la varianza del modulo dell'airspeed su finestre scorrevoli $\Delta t$:
+    \begin{equation}
+        \hat{\vec{w}} = \arg\min_{\vec{w}} \mathrm{Var}\left( \|\vec{v}_g(t) - \vec{w}\| \right)
+    \end{equation}
+    \item \textbf{Sottrazione della deriva:}
+    Si calcolano la velocit\`a rispetto all'aria $\vec{v}_a(t)$ e la traiettoria de-avvettata $\vec{x}_{\text{air}}(t)$:
+    \begin{equation}
+        \vec{v}_a(t) = \vec{v}_g(t) - \hat{\vec{w}}(t), \qquad \vec{x}_{\text{air}}(t) = \vec{x}_0 + \int_0^t \vec{v}_a(s)\,ds
+    \end{equation}
+\end{enumerate}
+Questa trasformazione centra l'hodografo nell'origine ed elimina ogni bias direzionale indotto dal trasporto dell'aria.
+
+\subsection{Fase 2: Rimozione dell'Anisotropia Orografica}
+Nel sistema di riferimento dell'aria, la distribuzione delle traiettorie mantiene una preferenza direzionale dettata dalla linea di cresta. La rimozione di questa anisotropia spaziale pu\`o essere implementata attraverso due formulazioni formali.
+
+\subsubsection{Metodo A: Sbiancamento della Matrice di Covarianza (Covariance Whitening)}
+Definendo gli incrementi spaziali $\Delta \vec{x}_{\text{air}}(\tau) = \vec{x}_{\text{air}}(t+\tau) - \vec{x}_{\text{air}}(t)$ a un lag temporale $\tau$:
+\begin{enumerate}
+    \item Si calcola la matrice di covarianza degli incrementi:
+    \begin{equation}
+        \mathbf{\Sigma}(\tau) = \langle \Delta \vec{x}_{\text{air}}(\tau) \Delta \vec{x}_{\text{air}}(\tau)^T \rangle = \begin{pmatrix} \sigma_x^2 & \sigma_{xy} \\ \sigma_{xy} & \sigma_y^2 \end{pmatrix}
+    \end{equation}
+    \item Si effettua la decomposizione spettrale $\mathbf{\Sigma} = \mathbf{V} \mathbf{\Lambda} \mathbf{V}^T$, dove $\mathbf{V}$ definisce l'orientamento degli assi principali (la direttrice della catena montuosa) e $\mathbf{\Lambda} = \mathrm{diag}(\lambda_1, \lambda_2)$ con $\lambda_1 \gg \lambda_2$.
+    \item Si applica la trasformazione di whitening:
+    \begin{equation}
+        \Delta \vec{\xi}(\tau) = \mathbf{\Sigma}^{-1/2} \Delta \vec{x}_{\text{air}}(\tau) = \mathbf{V} \mathbf{\Lambda}^{-1/2} \mathbf{V}^T \Delta \vec{x}_{\text{air}}(\tau)
+    \end{equation}
+\end{enumerate}
+Nel dominio trasformato $\vec{\xi}$, la covarianza \`e proporzionale all'identit\`a $\langle \Delta \vec{\xi} \Delta \vec{\xi}^T \rangle = \mathbf{I}$, garantendo l'isotropia statistica degli incrementi.
+
+\subsubsection{Metodo B: Decomposizione Drift-Diffusione (Formalismo di Langevin/Fokker-Planck)}
+Modellando il volo lungo il rilievo come un processo diffusivo in presenza di un campo di confinamento $U_{\text{oro}}(\vec{x})$:
+\begin{equation}
+    d\vec{x}_{\text{air}}(t) = -\nabla U_{\text{oro}}(\vec{x})\,dt + \sqrt{2 \mathbf{D}}\,d\vec{W}_t
+\end{equation}
+\begin{enumerate}
+    \item Si stima il campo di velocit\`a deterministico condizionato alla posizione $\vec{F}_{\text{oro}}(\vec{x}) = \langle \vec{v}_a \mid \vec{x} \rangle \approx -\nabla U_{\text{oro}}(\vec{x})$.
+    \item Si sottraggono le componenti deterministiche di confinamento:
+    \begin{equation}
+        d\vec{\eta}(t) = \vec{v}_a(t)\,dt - \vec{F}_{\text{oro}}(\vec{x})\,dt
+    \end{equation}
+    \item Se il tensore di diffusione locale residuo $\mathbf{D}$ presenta anisotropia ($D_{xx} \neq D_{yy}$), si normalizzano le coordinate tramite $\mathbf{D}^{-1/2}$, riconducendo la dinamica a un moto browniano standard isotropo $d\vec{W}_t$.
+\end{enumerate}
+
+\section{Schema Riassuntivo della Pipeline}
+
+La pipeline completa di de-anisotropizzazione \`e schematizzata come segue:
+\begin{equation*}
+    \vec{x}(t) \xrightarrow[\text{Sottrazione vento}]{\vec{v}_g - \vec{w}} \vec{x}_{\text{air}}(t) \xrightarrow[\text{Detrending orografico}]{\text{Rimozione } \vec{F}_{\text{oro}}(\vec{x})} \Delta \vec{x}_{\text{flutt}} \xrightarrow[\text{Riscalamento metrico}]{\mathbf{\Sigma}^{-1/2} \text{ o } \mathbf{D}^{-1/2}} \vec{\xi}_{\text{iso}}(t)
+\end{equation*}
+
+\end{document}

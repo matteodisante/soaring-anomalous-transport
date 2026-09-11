@@ -1,8 +1,9 @@
 # Protocollo di revisione da PDF annotato con Skim
 
-> Questo file era il prompt del secondo giro (agosto 2026), che è stato eseguito per intero.
-> Lo tengo come **ricetta riutilizzabile** per il giro successivo, aggiornata con quello che
-> si è imparato facendolo.
+> Protocollo storico del secondo giro di revisione (agosto 2026), conservato come
+> riferimento per leggere le annotazioni. Le regole operative di quel giro, compresi
+> colori e commit, non definiscono il workflow attuale: si vedano il README della repo
+> e `docs/guide/rebuilding.md`.
 
 ---
 
@@ -63,8 +64,8 @@ Attenzione: **il verde non è sempre un "ok" secco.** Nel secondo giro una nota 
    solo scorrevolezza. Blocchi lunghi: ambienti `revblock` / `flowblock`.
 6. I float **non** ereditano il colore del blocco: dentro `figure`/`table` ri-metti
    `\ifrevmode\color{revblue}\fi`. E `\path{}` si rompe dentro `\caption`: lì usa `\texttt{}`.
-7. Il contratto di cleaning vive in tre posti che devono restare allineati:
-   `sections/03-dataset.tex`, `appendices/impl/C2-dataset.tex`,
+7. Il contratto di cleaning deve restare allineato fra questi documenti e il codice:
+   `sections/03-dataset.tex`,
    `docs/guide/preprocessing-pipeline.md`.
 
 ## 4. Verifiche finali (automatizzabili, e da fare)

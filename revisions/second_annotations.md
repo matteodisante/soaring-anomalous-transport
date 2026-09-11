@@ -92,7 +92,7 @@
 - **note**: ok
 
 ### [21] green Highlight
-- **marked**: is collected in Implementation and Computational Details, from p. 50.
+- **marked**: is collected in [sezione rimossa].
 - **note**: ok
 
 ### [22] yellow Highlight
@@ -292,7 +292,7 @@
   Warning: a good check would also pay attention at what are the seasons more affected. For example, it could be that all the problematic flights are the ones that refer to the older season. In this case, one should check how many flights of a given season remain after removing the issued one having placeholder date.
 
 ### [51] green Highlight
-- **marked**: i i i i – with both altitude channels retained (implementation details: Sec. 2.6).
+- **marked**: i i i i – with both altitude channels retained [rimando rimosso].
 - **note**: ok
 
 ### [52] yellow Highlight
@@ -439,7 +439,7 @@
 - **note**: ok
 
 ### [74] green Highlight
-- **marked**: Source recorded. Which channel a flight uses is recorded as a per-flight attribute of the processed dataset, so the two source groups remain separable in every downstream analysis; the raw IGC files are never modified (implementation details: Sec. 2.6.1).
+- **marked**: Source recorded. Which channel a flight uses is recorded as a per-flight attribute of the processed dataset, so the two source groups remain separable in every downstream analysis; the raw IGC files are never modified [rimando rimosso].
 - **note**: ok
 
 ### [75] green Highlight
@@ -643,7 +643,7 @@
 
 ### [121] yellow Highlight
 - **marked**: (working value in Sec. 2.6.2).
-- **note**: È bene avere tutti i working values dichiarati in una tabella nella main section. E non solo nella sezione sugli implementation details
+- **note**: È bene avere tutti i working values dichiarati in una tabella nella main section. E non solo nella sezione sugli [sezione rimossa]
 
 ### [122] green Highlight
 - **marked**: the flatness tolerance , which is set well below that scale φ z
@@ -793,8 +793,8 @@
 - **note**: Forse potrebbe essere utilissimo. Si sa quanti defects vengono injected. A quel punto si fa una bella tabella per vedere l’efficacia di ogni rule contro ogni tipo di defect. Molto interessante. Direi di adottare questa procedura. Mi sembra un metodo molto solido. In questo modo si potrebbe costruire una tabella con il numero di falsi positivi, negativi e vero positivo vero negativo
 
 ### [156] green Highlight
-- **marked**: (implementation details: Sec. 2.6.2)
-- **note**: (implementation details: Sec. 2.6.2)
+- **marked**: [rimando rimosso]
+- **note**: [rimando rimosso]
 
 ### [157] green Highlight
 - **marked**: Outer ground phases (take-o! and landing).
@@ -813,7 +813,7 @@
 - **note**: for minutes
 
 ### [161] orange Highlight
-- **marked**: To keep this failure mode auditable, the fraction of each flight that trimming removes is recorded per flight, and its distribution over the archive will be reported as a histogram once the pipeline runs in full; both and a!ect that fraction, v T 0 0 so they are made explicit (implementation details: Sec. 2.6.3).
+- **marked**: To keep this failure mode auditable, the fraction of each flight that trimming removes is recorded per flight, and its distribution over the archive will be reported as a histogram once the pipeline runs in full; both and a!ect that fraction, v T 0 0 so they are made explicit [rimando rimosso].
 - **note**: Mi piace ed apprezzo l’idea di fare un istogramma della frazione trimmed però non credo che facendolo sia possibile avere il failure come auditable. Intendo il failure di tritare una parte di moto iniziale
 
 ### [162] green Highlight
@@ -910,8 +910,8 @@
 - **note**: Questi numeri potrebbero cambiare dopo il fix-level clearing
 
 ### [184] yellow Highlight
-- **marked**: The census behind these counts is not throwaway work: the numbers above are generated macros, recomputed by the same committed script that produces every census figure in this chapter (scripts/reporting/generate_census_stats.py) from the cached full-archive track scan (one per-flight summary table per discipline), against the thresholds in the configuration; changing a threshold re-draws the diagnostics without re-reading the raw tracks(implementation details: Sec. 2.6.4). The thin tail of very slow loggers is handled by the !t stratification (Sec. 2.7.6); a separate minimum-fix-count cut would be redundant, since above the duration cut even a 10 s logger records hundreds of fixes.
-- **note**: Mi sembra che sia da mettere in implementation details piuttosto che qui
+- **marked**: The census behind these counts is not throwaway work: the numbers above are generated macros, recomputed by the same committed script that produces every census figure in this chapter (scripts/reporting/generate_census_stats.py) from the cached full-archive track scan (one per-flight summary table per discipline), against the thresholds in the configuration; changing a threshold re-draws the diagnostics without re-reading the raw tracks[rimando rimosso]. The thin tail of very slow loggers is handled by the !t stratification (Sec. 2.7.6); a separate minimum-fix-count cut would be redundant, since above the duration cut even a 10 s logger records hundreds of fixes.
+- **note**: Mi sembra che sia da mettere in [sezione rimossa] piuttosto che qui
 
 ### [185] red Highlight
 - **marked**: Figure 2.3 shows these diagnostics for both disciplines, computed on the full census (no subsampling).
@@ -1089,7 +1089,7 @@
 
 ### [224] red Highlight
 - **marked**: one below a minimal duration
-- **note**: Qual è la minima duration??? Come si chiama questo parametro?? Quanto vale?? È la minima duration che può avere un segmento?? Nel caso deve essere dichiara qui, non basta dichiararla negli implementation details
+- **note**: Qual è la minima duration??? Come si chiama questo parametro?? Quanto vale?? È la minima duration che può avere un segmento?? Nel caso deve essere dichiara qui, non basta dichiararla negli [sezione rimossa]
 
 ### [225] green Highlight
 - **marked**: The scope of this step is set by the split bound: a gap longer than splits the flight and is never interpolated, so what is filled here are only the g max holes, up to , that remain inside a segment. The fill is done per channel, where short g max a channel is one of the three scalar series on the uniform grid: the horizontal coordinates and (t) and the adopted altitude The two horizontal coordinates are interpolated E(t) N z(t). independently, which is the componentwise interpolation of the horizontal position; the barometric and GNSS altitudes are never mixed here—only the flight’s adopted channel is filled (Sec. 2.7.1).
@@ -1144,8 +1144,8 @@
 - **note**: È il posto giusto dove mettere questo paragrafo?
 
 ### [238] red StrikeOut
-- **marked**: in the same way as the duration and path-length cuts (implementation details: Sec. 2.6.6).
-- **note**: in the same way as the duration and path-length cuts (implementation details: Sec. 2.6.6)
+- **marked**: in the same way as the duration and path-length cuts [rimando rimosso].
+- **note**: in the same way as the duration and path-length cuts [rimando rimosso]
 
 ### [239] red Highlight
 - **marked**: Figure 2.6
