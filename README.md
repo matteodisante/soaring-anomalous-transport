@@ -1,6 +1,7 @@
 # soaring-anomalous-transport
 
 [![Tests](https://github.com/matteodisante/soaring-anomalous-transport/actions/workflows/tests.yml/badge.svg)](https://github.com/matteodisante/soaring-anomalous-transport/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/matteodisante/soaring-anomalous-transport/branch/main/graph/badge.svg)](https://codecov.io/gh/matteodisante/soaring-anomalous-transport)
 [![docs](https://img.shields.io/badge/docs-online-blue)](https://matteodisante.github.io/soaring-anomalous-transport/)
 
 The thesis and Python code for studying transport in paraglider and hang-glider flights.
@@ -37,7 +38,7 @@ retained. The [fresh-results review](revisions/fresh-results-review-2026-09-11.m
 records the empirical interpretation. The 101-page PDF of that run was checked and reconciled
 with the SSD run, including the corrected rejection cascade. The manuscript figures were
 restyled afterwards, which moved the build to 102 pages. Validation includes
-824 passing tests, 258 additional algebraic/support checks on saved results, and
+834 passing tests, 258 additional algebraic/support checks on saved results, and
 agreement of the annotation pack with both mounted archives.
 The [completion record](revisions/manuscript-review-2026-09-11/completion.json)
 identifies the reviewed sources, outputs and PDF; the
