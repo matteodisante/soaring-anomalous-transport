@@ -5,6 +5,8 @@ Questo documento registra la lettura dei prodotti completati. Il rebuild ha conc
 tutti i 38 stadi; la successiva revisione del manoscritto e del PDF è conclusa e
 riconciliata con i manifesti sull'SSD. Le conclusioni descrittive non sono test di
 reiezione calibrati né una validazione delle etichette di fase.
+È conclusa questa passata di revisione: gli obiettivi scientifici ancora aperti dei
+capitoli 3 e 4 sono elencati nel [registro delle richieste](request-checklist-2026-09-11.md).
 
 ## Durata ed equipaggiamento
 

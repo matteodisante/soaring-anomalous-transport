@@ -8,15 +8,35 @@ e numeriche sono documentate negli audit dei capitoli e nell'audit di correttezz
 
 ## Stato corrente
 
-Cleaning, rebuild, revisione del manoscritto e riconciliazione con il run SSD sono
-completati. La cascata corretta coincide con la rigenerazione dai metadati SSD,
+Cleaning, rebuild, passata di revisione del manoscritto e riconciliazione con il run SSD
+sono completati. Il traguardo scientifico dei capitoli 3 e 4 semi-definitivi resta
+aperto: la chiusura del run non equivale al completamento di tutte le richieste.
+La cascata corretta coincide con la rigenerazione dai metadati SSD,
 l'inventario del disco è aggiornato e il PDF finale comprende 101 pagine. Sono passati
 824 test e 258 controlli aggiuntivi sui risultati. Il
 [verbale conclusivo](manuscript-review-2026-09-11/completion.json) registra le identità
 verificate. I gruppi di modifiche sono descritti nel
 [piano dei commit](commit-plan-2026-09-11.md); l'esecuzione è documentata dalla storia Git.
-Le annotazioni umane, i test di reiezione calibrati e i capitoli successivi restano
-attività scientifiche future, dichiarate come tali nella tesi e nella roadmap.
+La validazione della segmentazione e il confronto quantitativo con i modelli richiesto
+per il capitolo 3 sono ancora parte del lavoro attuale. I capitoli successivi sono
+invece il programma da affrontare dopo, secondo la roadmap.
+
+## Lavoro ancora necessario per consolidare i capitoli attuali
+
+| Obiettivo | Stato effettivo e prossimo risultato necessario |
+|---|---|
+| Escludere modelli stocastici specifici nel capitolo 3 | Confrontate le predizioni di Browniano, drift + Browniano, fBm, persistenza esponenziale e Lévy walk standard. Mancano confronti calibrati su traiettorie finite con campionamento e selezione comparabili. La mancata ginocchiatura dello spettro dei momenti non costituisce da sola un'esclusione del Lévy walk. La persistenza esponenziale resta candidata. |
+| Quantificare l'affidabilità delle differenze osservate | I controlli a voli, pesi e origini fissi sono eseguiti. Le pendenze dei quantili e diversi altri diagnostici sono ancora descrittivi: restano incertezza a livello dell'unità di campionamento e sensibilità all'influenza dei singoli voli e al supporto. Le bande regionali già presenti non risolvono queste altre domande. |
+| Risolvere il problema numerico del fit HMM | Sono registrati incrementi finali negativi della likelihood e una componente di coerenza molto stretta. È stata corretta la dichiarazione di convergenza, non dimostrata la convergenza del fit. Restano da confrontare un fit tridimensionale autonomo e un trattamento adeguato della componente problematica. |
+| Verificare la scelta del decoder e la classificazione delle fasi | Il decoder corrente marginalizza il modello 4D e impone preferenze di sequenza. Confronti di plausibilità e ablation sono eseguiti; il confronto su etichette indipendenti è aperto. Occorrono train per i nomi, validation per le scelte e test finale separato. Gli indicatori di errore ai confini, copertura delle annotazioni e accordo tra osservatori non sono ancora completi. |
+| Misurare la sensibilità del cleaning e dello smoothing | I test di codice e gli esempi reali sono eseguiti. Restano confronti mirati delle osservabili al variare delle soglie e della finestra, e l'effetto dei passi verticali candidati vicini al supporto delle feature. Il dataset rigenerato è conforme ai criteri correnti; ciò non dimostra che l'effetto dei criteri sia trascurabile. |
+| Separare vento, orografia e dinamica intrinseca | Anisotropia regionale e PCA sono misurate, ma non identificano separatamente le forzanti. Non è stato costruito né validato un dataset equivalente al volo senza vento e orografia, né ottenuta una stima validata del suo Hurst. Va definito quali confronti ambientali e informazioni indipendenti consentano di affrontare la domanda. |
+| Completare verifiche geodetiche e delle fonti dove necessarie | Le quote GNSS non sono armonizzate tra datum; l'impatto sulle conclusioni pertinenti resta da delimitare. La bibliografia distingue gli originali effettivamente consultati dai controlli parziali: per Mardia manca la sezione originale completa sulla curtosi; per EN è stato consultato il draft 2012, non il testo pubblicato con gli aggiornamenti. Queste limitazioni non vanno trasformate in verifiche integrali già svolte. |
+
+Le attività eseguibili su codice e dati non dipendono tutte dalle annotazioni umane:
+il controllo del fit, il confronto 3D, le sensibilità e i benchmark del capitolo 3
+possono avanzare autonomamente. Nessun nuovo calcolo viene presentato come eseguito
+in questa rettifica dello stato.
 
 ## Priorità e procedura
 
@@ -28,7 +48,7 @@ attività scientifiche future, dichiarate come tali nella tesi e nella roadmap.
 | Usare la CPU secondo l'ultima indicazione | Otto worker, thread numerici interni limitati a uno; ultima richiesta di massima potenza sostituisce quella precedente di riduzione. |
 | Spiegare i lanci e non fare ricalcoli senza motivo | Ogni stadio ha comando, log e manifest; le interruzioni per modifiche ai sorgenti non sono run completi. |
 | Completare prima 2, 3 e 4, poi confronto solo/gruppo | Sequenza registrata nella roadmap; i capitoli futuri non sono presentati come già svolti. |
-| Add e commit finali di tutte le modifiche, separati per logica | Otto gruppi logici, con diff, provenienza e descrizione separati; esecuzione documentata nella storia Git, nessun push. |
+| Add e commit finali di tutte le modifiche, separati per logica | Otto gruppi principali, con diff, provenienza e descrizione separati, più la rettifica documentale dello stato scientifico; esecuzione documentata nella storia Git. Nessun push eseguito dall'agente. |
 
 ## Introduzione, struttura e scrittura
 
@@ -62,7 +82,7 @@ attività scientifiche future, dichiarate come tali nella tesi e nella roadmap.
 | Richiesta | Intervento / verifica restante |
 |---|---|
 | Launch/ensemble MSD riportata senza studio interpretativo | Mantenuta descrittiva, con eterogeneità per sito, stagione e anno; nessuna assunzione di repliche della stessa legge. |
-| Utilità della filtered variation ed esponente H senza drift | Differenze seconde, cancellazione esatta della velocità costante e ipotesi per ricavare H esplicitate; non identificare drift e vento. |
+| Utilità della filtered variation ed esponente H senza drift | Controllo implementato: differenze seconde, cancellazione esatta della velocità costante e ipotesi per ricavare H esplicitate. Non è stata stabilita una stima dell'Hurst intrinseco priva degli effetti ambientali. |
 | Fit principale 10–10.000 s | Implementato, con supporto effettivo dichiarato. Confronti secondari più brevi identificati esplicitamente. |
 | Più attenzione open-loop / closed-loop | Diagnostiche e schema geometrico interpretati: l'ordinamento open/closed cambia fra differenza prima e seconda; nessuna decomposizione causale del drift. |
 | Ridurre la sezione pesante sull'incertezza | Integrati limiti operativi e conteggi nei metodi; evitare sezioni prive di una domanda scientifica. |
@@ -77,7 +97,7 @@ attività scientifiche future, dichiarate come tali nella tesi e nella roadmap.
 | Eliminare tail control e sezioni shape/heading se inutili | Percorsi legacy ritirati; diagnostiche informative integrate nella discussione dei modelli. |
 | Autocovarianza su tempi più lunghi e log–log | Velocità mediate a 10/60/300 s; pannelli positivi log–log e pannelli con segno conservato. Non trasformare valori negativi in positivi. |
 | Significato del parametro non gaussiano | Eccesso di Mardia centrato con covarianza completa; distinguere gaussianità omogenea da miscele condizionate. |
-| Escludere modelli poco adatti con osservabili informative | Predizioni di Browniano, Browniano con drift, fBm, memoria esponenziale e Lévy walk confrontate. Reiezione formale richiede calibrazione finita; non dichiararla senza test. |
+| Escludere modelli poco adatti con osservabili informative | **Parziale.** Predizioni di Browniano, Browniano con drift, fBm, memoria esponenziale e Lévy walk confrontate descrittivamente. I confronti calibrati restano da eseguire per completare l'obiettivo richiesto al capitolo 3. |
 | Eliminare ergodicità; durata con conteggi e deduzioni severe | Sezione rimossa; confronto TAMSD per durata con numerosità e limiti. Nessuna indipendenza dedotta dalla sola somiglianza delle curve. |
 | Durata × beginners/experts, pendenze e composizione | MSD entro ciascuno dei due gruppi, otto celle, miscela osservata e composizione fissa. **Risultati interpretati:** experts con crescita descrittiva maggiore, differenze di durata anche entro classe; la composizione spiega solo parte del contrasto. |
 
@@ -90,7 +110,7 @@ attività scientifiche future, dichiarate come tali nella tesi e nella roadmap.
 | Tutti gli indicatori definiti quantitativamente | Coerenza, parametri di emissione, likelihood, posteriori, copertura, precisione/recall/F1 e ablation definiti; schema della coerenza. |
 | Serie temporali leggibili, meno minuti | Finestre di otto minuti controllate nel PDF; ridotte a 9 pt le etichette degli assi che si toccavano. Tracciati e fasi invariati. |
 | Figure 4.4, 4.5, 4.6 e successive aggiornate | Figure legate al nuovo modello/decoder, con riproduzione dei percorsi verificata. Revisione visiva effettuata e registrata sul manifest SSD. |
-| Evidenza quantitativa e grafica del funzionamento | Diagnostiche di plausibilità, copertura, stabilità e ablation; nessuna confusione tra posteriori e accuratezza misurata. |
+| Evidenza quantitativa e grafica del funzionamento | **Parziale.** Diagnostiche di plausibilità, copertura e ablation eseguite. Stabilità del fit e accuratezza comportamentale non sono ancora dimostrate; servono i confronti e la validazione indicati sopra. |
 | Preparare eventuale labeling manuale | Nuovo pacchetto `20260910T221820Z-05d36ab4` pronto: 40 voli, 4/8/8 train/validation/test per disciplina. Checksum locali e identità degli archivi montati controllati; istruzioni aggiornate; l'annotazione resta un'azione umana futura. |
 
 ## Figure, repository e consegna

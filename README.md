@@ -42,6 +42,9 @@ The [completion record](revisions/manuscript-review-2026-09-11/completion.json)
 identifies the reviewed sources, outputs and PDF; the
 [request checklist](revisions/request-checklist-2026-09-11.md) records the scope.
 
+The computational rebuild and one manuscript-review pass are complete. Making
+Chapters 3 and 4 semi-final still requires quantitative model comparisons and
+segmentation validation.
 The current HMM remains a model requiring independent phase validation. Its selected
 restart has a negative final likelihood increment, and its coverage and posterior
 probabilities are not classification accuracy. These limits and the absence of
