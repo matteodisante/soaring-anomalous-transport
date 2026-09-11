@@ -1,0 +1,46 @@
+# Ordered stages after cleaning. Arguments are passed directly, never through a shell.
+# Audit arrays and annotation packs get a separate directory for every run.
+stages:
+  - {id: verify, script: scripts/verify_dataset.py}
+  - {id: reproduce, script: scripts/check_reproducible.py, args: [--sample, '250']}
+  - {id: acquisition, script: scripts/reporting/ch2_dataset/generate_stats.py}
+  - {id: raw_diagnostics, script: scripts/reporting/ch2_dataset/generate_preproc_figure.py, args: [--rescan]}
+  - {id: raw_census, script: scripts/reporting/ch2_dataset/generate_census_stats.py}
+  - {id: pipeline_census, script: scripts/reporting/ch2_dataset/generate_pipeline_census.py}
+  - {id: dataset, script: scripts/reporting/ch2_dataset/generate_dataset_stats.py}
+  - {id: altitude_noise, script: scripts/reporting/ch2_dataset/generate_altitude_noise_figure.py, args: [--rescan]}
+  - {id: altitude_offsets, script: scripts/reporting/ch2_dataset/generate_alt_offset_stats.py, args: [--rescan]}
+  - {id: altitude_offset_figure, script: scripts/reporting/ch2_dataset/generate_alt_offset_figure.py}
+  - {id: smoothing, script: scripts/reporting/ch2_dataset/generate_savgol_figure.py}
+  - {id: smoothing_spectrum, script: scripts/reporting/ch2_dataset/generate_savgol_spectrum_figure.py, args: [--rescan]}
+  - {id: cleaning_schematics, script: scripts/reporting/ch2_dataset/generate_cleaning_explainers.py}
+  - {id: cleaning_examples, script: scripts/reporting/ch2_dataset/generate_cleaning_examples.py}
+  - {id: terrain, script: scripts/reporting/ch2_dataset/generate_terrain_figure.py}
+  - {id: msd_measure, script: scripts/reporting/ch3_global_transport/measure_msd.py, args: [--out, '{audit_dir}']}
+  - {id: msd_figure, script: scripts/reporting/ch3_global_transport/generate_msd_figure.py, args: [--audit-dir, '{audit_dir}']}
+  - {id: duration_equipment, script: scripts/reporting/ch3_global_transport/generate_duration_equipment.py, args: [--audit-dir, '{audit_dir}']}
+  - {id: msd_audit_measure, script: scripts/reporting/ch3_global_transport/audit_msd.py, args: [--out, '{audit_dir}']}
+  - {id: msd_audit_report, script: scripts/reporting/ch3_global_transport/audit_msd_report.py, args: [--audit-dir, '{audit_dir}']}
+  - {id: preliminary, script: scripts/reporting/ch2_dataset/generate_prelim_figure.py, args: [--audit-dir, '{audit_dir}']}
+  - {id: kinematics, script: scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py, args: [--audit-dir, '{audit_dir}']}
+  - {id: transport_subset, script: scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py, args: [--audit-dir, '{audit_dir}']}
+  - {id: scaling_schematics, script: scripts/reporting/ch3_global_transport/generate_scaling_schematics.py}
+  - {id: para_train, script: scripts/segment_flights.py, args: [train, --discipline, paragliders, --config, configs/segmentation.yaml]}
+  - {id: para_apply, script: scripts/segment_flights.py, args: [apply, --discipline, paragliders, --config, configs/segmentation.yaml]}
+  - {id: para_coverage, script: scripts/segment_flights.py, args: [coverage, --discipline, paragliders, --config, configs/segmentation.yaml]}
+  - {id: hang_train, script: scripts/segment_flights.py, args: [train, --discipline, 'hang gliders', --config, configs/segmentation.yaml]}
+  - {id: hang_apply, script: scripts/segment_flights.py, args: [apply, --discipline, 'hang gliders', --config, configs/segmentation.yaml]}
+  - {id: hang_coverage, script: scripts/segment_flights.py, args: [coverage, --discipline, 'hang gliders', --config, configs/segmentation.yaml]}
+  - {id: segmentation_report, script: scripts/reporting/ch4_flight_phases/generate_segmentation_report.py, args: [--config, configs/segmentation.yaml]}
+  - {id: segmentation_audit, script: scripts/reporting/ch4_flight_phases/generate_decoder_audit.py, args: [--config, configs/segmentation.yaml]}
+  - {id: annotations, script: scripts/reporting/ch4_flight_phases/prepare_annotation_pack.py, args: [--output-dir, '{annotation_dir}']}
+  - {id: ssd_inventory, script: scripts/reporting/tools/write_ssd_readme.py}
+  - {id: snapshot_status, script: scripts/reporting/checks/generate_snapshot_status.py, args: [--audit-dir, '{audit_dir}']}
+  - {id: macros, script: scripts/reporting/checks/check_generated_macros.py}
+  - {id: provenance, script: scripts/reporting/checks/generate_provenance.py}
+
+# This is a dated comparison of two old cleaners at a fixed 30 m/s setting.
+# Re-running it against a new archive would change the experiment it documents.
+historical_outputs:
+  - cleaning_witness_audit.tex
+  - cleaning_witness_audit.json

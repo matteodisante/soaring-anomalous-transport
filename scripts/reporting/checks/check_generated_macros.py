@@ -1,29 +1,16 @@
 #!/usr/bin/env python3
-r"""Check that every generated macro the thesis quotes is one a generator writes.
+r"""Check generated macro names used by the manuscript.
 
-The thesis quotes its numbers through macros (``\StatPipe*``, ``\StatScan*``,
-``\StatMsd*``, ``\Preproc*``) so that no figure is ever typed by hand: each is written
-into ``thesis/generated/`` by a reporting script, from the data itself. The contract
-has one failure mode, and it is worse than it sounds. A macro *quoted* and never
-*written* is an undefined control sequence, and where it sits inside a ``\\SI{}`` --
-which is where most of them sit, since most are physical quantities -- siunitx does
-not degrade to a warning: the argument fails to parse, the braces unbalance, and the
-build dies with dozens of *Extra }* errors pointing at lines that are perfectly
-correct. One missing macro is therefore not a blemish on a page, it is a thesis that
-does not compile, diagnosed from a symptom that names the wrong place. It has happened
-here three times, each time because a number was argued for in the text before its
-generator knew about it.
+Definitions in ``thesis/generated/*.tex`` are compared with uses of the ``Stat``
+and ``Preproc`` families in the other thesis sources. Undefined names and invalid
+control-sequence names fail the check; unused definitions are reported separately.
+The scan also flags numerical literals for editorial inspection.
 
-This script reads both sides and reports the difference, in a second and with no build:
-
-* **quoted but not defined** is an error. Either the generator is missing the number, or
-  the thesis quotes a macro that no longer exists.
-* **defined but not quoted** is only reported. A generator may legitimately write more
-  than the current draft uses -- a macro dropped from the text in a revision, or one
-  written for a section not yet drafted -- so it is a note, not a failure.
-
-The numbers themselves are not checked here; that is the job of the generators, which
-recompute them from the data. What is checked is that the two lists agree.
+This is a name-consistency check. It does not evaluate numerical values, follow
+LaTeX's input graph or ensure that every empirical statement uses a macro. Tables
+and standard numerical summaries are generated; prose interpreting curves must be
+reviewed against the corresponding saved products. Compilation separately checks
+that the definitions are available where LaTeX uses them.
 
 Usage::
 
@@ -103,8 +90,24 @@ _LITERAL = re.compile(r"\\(?:num|SI)\{([0-9][0-9.]*)\}")
 # expected to appear typed. Each is a decision the thesis makes, not a number it measures,
 # so a generator has nothing to say about it.
 _TYPED_ON_PURPOSE = {
-    "1", "2", "3", "4", "5", "10", "20", "25", "40", "50", "60", "90", "100", "120",
-    "200", "300", "500", "1000",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "10",
+    "20",
+    "25",
+    "40",
+    "50",
+    "60",
+    "90",
+    "100",
+    "120",
+    "200",
+    "300",
+    "500",
+    "1000",
 }
 
 
@@ -136,7 +139,9 @@ def literals_that_shadow_a_macro() -> list[str]:
         for line in path.read_text(encoding="utf-8").splitlines():
             match = re.match(r"\\newcommand\{\\([A-Za-z]+)\}\{([^}]*)\}", line)
             if match:
-                by_value.setdefault(match.group(2).lstrip("+"), []).append(match.group(1))
+                by_value.setdefault(match.group(2).lstrip("+"), []).append(
+                    match.group(1)
+                )
 
     found = []
     for path in sorted(THESIS.rglob("*.tex")):
@@ -203,6 +208,6 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    bare_cli(__doc__, known=['--quiet'])
+    bare_cli(__doc__, known=["--quiet"])
 
     raise SystemExit(main())

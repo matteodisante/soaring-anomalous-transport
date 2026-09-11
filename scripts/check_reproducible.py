@@ -34,6 +34,7 @@ Exits non-zero if any flight disagrees.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
@@ -43,6 +44,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from preprocess import _process_one, _resolve
+
 from soaring.reporting import DISCIPLINES
 
 # The kinematic columns, compared numerically, and the flags, compared exactly. A flag
@@ -51,6 +53,7 @@ _NUMERIC = ["t", "E", "N", "z", "v_E", "v_N", "v_z", "a_E", "a_N", "a_z"]
 _FLAGS = [
     "interpolated",
     "z_reconstructed",
+    "z_derivative_reconstructed",
     "edge",
     "hampel_flagged",
     "alt_invalidated",
@@ -81,7 +84,16 @@ def _disagreement(old, new) -> str | None:
     """Why these two tables of the same flight differ, or ``None`` if they do not."""
     if len(new) != len(old):
         return f"{len(new)} rows now, {len(old)} stored"
+    for column in ["source", "flight_id", "segment_id"]:
+        if (
+            column in old
+            and column in new
+            and not np.array_equal(old[column], new[column])
+        ):
+            return f"row identity differs in `{column}`"
     for column in _FLAGS:
+        if column not in old or column not in new:
+            return f"missing required quality flag `{column}`"
         if not np.array_equal(
             new[column].to_numpy(dtype=bool), old[column].to_numpy(dtype=bool)
         ):
@@ -96,12 +108,8 @@ def _disagreement(old, new) -> str | None:
         b = new[column].to_numpy(dtype=float)
         if not a.size:
             continue
-        # Where a value is missing has to be compared before how much it differs by. The
-        # difference is taken with nanmax, which SKIPS the NaNs rather than failing on them:
-        # a value that turned NaN leaves |a - b| undefined there, nanmax steps over it, and
-        # a flight whose z channel had gone missing entirely came back as "identical". The
-        # comparison is the guarantee behind sec:reproducible, so the missing-value pattern
-        # is part of what must agree, not a gap in what is checked.
+        # Compare missingness first: a nanmax-only comparison silently skips any
+        # values that changed from finite to missing, or vice versa.
         missing_old, missing_new = np.isnan(a), np.isnan(b)
         if not np.array_equal(missing_old, missing_new):
             moved = int((missing_old != missing_new).sum())
@@ -113,10 +121,12 @@ def _disagreement(old, new) -> str | None:
         both = ~missing_old
         if not both.any():
             continue
-        scale = max(1.0, float(np.max(np.abs(a[both]))))
-        worst = float(np.max(np.abs(a[both] - b[both])))
-        if worst > 10.0 * _FLOAT32_RELATIVE * scale:
-            return f"`{column}` differs by {worst:.4g} (scale {scale:.4g})"
+        if not np.isfinite(a[both]).all() or not np.isfinite(b[both]).all():
+            return f"`{column}` contains infinite values"
+        error = np.abs(a[both] - b[both])
+        tolerance = _FLOAT32_RELATIVE * np.maximum(1.0, np.abs(b[both]))
+        if (error > tolerance).any():
+            return f"`{column}` differs by {error.max():.4g}, above float32 tolerance"
     return None
 
 
@@ -126,10 +136,15 @@ def check(discipline: str, sample: int, seed: int) -> list[str]:
 
     acq = _resolve(discipline)
     if acq is None:
-        print(f"[{discipline}] no processed dataset; skipped.")
-        return []
+        return [f"{discipline}: archive is not reachable; nothing was checked"]
     derived = acq.derived_dir
     meta = pd.read_parquet(derived / "flights_meta.parquet")
+    from soaring.analysis.preproc.pipeline import PIPELINE_VERSION
+
+    if set(meta["pipeline_version"].unique()) != {PIPELINE_VERSION}:
+        return [
+            f"{discipline}: stored pipeline version differs from {PIPELINE_VERSION}"
+        ]
     kept = meta[meta["drop_reason"].isna()]
     if kept.empty:
         return [f"{discipline}: no retained flight to check"]
@@ -146,10 +161,19 @@ def check(discipline: str, sample: int, seed: int) -> list[str]:
         for flight_id in sorted(stored)
         if flight_id in paths
     ]
-    with ProcessPoolExecutor(max_workers=8) as pool:
+    workers = max(1, int(os.environ.get("SOARING_MAX_WORKERS", "1")))
+    with ProcessPoolExecutor(max_workers=workers) as pool:
         fresh = list(pool.map(_process_one, jobs, chunksize=4))
 
-    problems, agreed = [], 0
+    problems = [
+        f"{flight_id}: selected retained flight missing from fixes"
+        for flight_id in sorted(wanted - stored.keys())
+    ]
+    problems += [
+        f"{flight_id}: raw IGC file missing"
+        for flight_id in sorted(wanted - paths.keys())
+    ]
+    agreed = 0
     for (path, _, _), (_meta, fixes, _segments, _stints) in zip(
         jobs, fresh, strict=True
     ):
@@ -179,6 +203,8 @@ def main(argv=None) -> int:
     )
     parser.add_argument("--seed", type=int, default=19, help="sampling seed")
     args = parser.parse_args(argv)
+    if args.sample < 1:
+        parser.error("--sample must be positive")
 
     total = 0
     for discipline in DISCIPLINES:
@@ -194,7 +220,7 @@ def main(argv=None) -> int:
             "written by this code: re-run scripts/preprocess.py."
         )
         return 1
-    print("\nthe stored dataset is what this code produces.")
+    print("\nAll sampled flights reproduce within float32 storage precision.")
     return 0
 
 

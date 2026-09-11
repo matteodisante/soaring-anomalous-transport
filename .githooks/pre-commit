@@ -1,73 +1,14 @@
 #!/usr/bin/env bash
-# Keep the deterministic parts of the documents in sync with each commit.
+# Read-only index check. A commit must not regenerate data, rebuild the PDF, or
+# silently stage files: these actions would invalidate the reviewed run identity
+# and interfere with splitting a scientific revision into coherent commits.
 #
-#  - refresh the committed seasons_index snapshots from the SSD when it is mounted
-#  - regenerate the dataset statistics from those snapshots (text, instant)
-#  - if the commit touches the thesis, rebuild thesis/main.pdf and stage it
-#
-# Best-effort: a missing tool or a LaTeX failure WARNS but never blocks the commit.
-# The narrative prose (thesis text, README/docs) is updated on demand,
-# not here. Enable with:  git config core.hooksPath .githooks
-set -uo pipefail
+# Rebuild explicitly with scripts/rebuild_thesis.py; review subsequent manuscript
+# edits with scripts/review_thesis.py. This hook checks whitespace only. It does
+# not certify scientific correctness, output freshness, or source/PDF agreement.
+# Enable with: git config core.hooksPath .githooks
+set -euo pipefail
 
-ROOT="$(git rev-parse --show-toplevel)"
-cd "$ROOT"
-
-command -v python3 >/dev/null 2>&1 || { echo "pre-commit: python3 not found; skipping doc sync" >&2; exit 0; }
-
-# 0) Refresh the committed seasons_index snapshots from the SSD when it is mounted
-#    (best-effort; a fresh checkout / CI has no SSD and keeps the committed copies).
-python3 scripts/reporting/tools/refresh_seasons_index.py >/dev/null 2>&1 || true
-
-# 1) Stats sources (cheap, deterministic).
-python3 scripts/reporting/ch2_dataset/generate_stats.py    >/dev/null || echo "pre-commit: stats generation failed" >&2
-# Census macros: reads the cached track scans on the SSD (instant, never rescans);
-# a missing SSD/cache/dependency keeps the committed census.tex (best-effort, like
-# the seasons_index refresh above).
-python3 scripts/reporting/ch2_dataset/generate_census_stats.py >/dev/null 2>&1 || true
-git add thesis/generated/stats.tex thesis/generated/census.tex \
-    thesis/generated/seasons_table_para.tex thesis/generated/seasons_table_hang.tex \
-    data/paragliders/seasons_index.csv data/hang_gliders/seasons_index.csv 2>/dev/null || true
-
-# What is being committed (stats files are already staged above).
-staged="$(git diff --cached --name-only)"
-
-# 2) Public thesis PDF: rebuild only when the thesis changed (a data change flows through
-#    the regenerated, staged thesis/generated/stats.tex, so it is covered by ^thesis/).
-#
-#    Built from a clean checkout of the INDEX, not from the working tree. Building
-#    in-place would read whatever else happens to sit unstaged in thesis/ alongside
-#    what is actually being committed -- harmless for an ordinary commit (staged and
-#    working tree agree), but wrong the moment several commits are carved by hand out
-#    of one larger set of changes (e.g. splitting a bulk `regenerate.sh` output): the
-#    FIRST such commit would already get a PDF built from everything, while its own
-#    .tex sources still show only what it committed -- a tree that is not
-#    self-consistent, discovered once after exactly that happened (2026-09).
-#    `git checkout-index` sidesteps it entirely, at the cost of losing this one
-#    rebuild's SOURCE_DATE_EPOCH pin (no `.git` in the checkout, so build_docs.sh's own
-#    fallback to wall-clock time applies) -- a metadata-only trade, not a content one.
-if grep -qE '^thesis/' <<<"$staged"; then
-    if command -v latexmk >/dev/null 2>&1; then
-        build_dir="$(mktemp -d)"
-        # The figures are gitignored build artefacts (.gitignore: thesis/generated/*.pdf),
-        # so the index checkout contains none of them and every \IfFileExists in the
-        # document falls back to its "generated locally" placeholder box -- which is how
-        # the committed PDF lost all 18 of its figures once the build moved to the index.
-        # Copy the figure PDFs across from the working tree, and ONLY those: the generated
-        # *.tex macros must keep coming from the index, since a commit's numbers have to
-        # match the sources that commit actually carries.
-        if git checkout-index --prefix="$build_dir/" -a \
-            && { cp thesis/generated/*.pdf "$build_dir/thesis/generated/" 2>/dev/null || true; } \
-            && ( cd "$build_dir" && bash scripts/build_docs.sh thesis >/dev/null 2>&1 ) \
-            && cp "$build_dir/thesis/main.pdf" thesis/main.pdf; then
-            git add thesis/main.pdf 2>/dev/null || true
-        else
-            echo "pre-commit: thesis PDF build failed; committing sources without a fresh PDF" >&2
-        fi
-        rm -rf "$build_dir"
-    else
-        echo "pre-commit: latexmk not found; skipping thesis PDF rebuild" >&2
-    fi
-fi
-
-exit 0
+# Preserve Windows line endings in historical author notes while checking actual
+# trailing blanks, terminal blank lines and spaces preceding indentation tabs.
+git -c core.whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol diff --cached --check

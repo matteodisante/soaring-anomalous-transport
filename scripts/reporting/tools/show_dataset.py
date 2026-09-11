@@ -30,6 +30,7 @@ if _SRC not in sys.path:
 # directly, so the import cannot move to the top of the file.
 from soaring.reporting import DISCIPLINES  # noqa: E402
 
+
 def _root(discipline: str) -> Path | None:
     """The discipline's data root, or ``None`` if it is not reachable."""
     try:

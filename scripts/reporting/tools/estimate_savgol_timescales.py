@@ -5,7 +5,7 @@ Implements the noise-matched procedure of the thesis (sec:savgol) to measure the
 ``tau_c`` values that were placeholders in ``configs/preprocessing.yaml``: the knee
 frequency ``f_c`` where each channel's dynamical spectrum meets its flat noise floor,
 read from the per-frequency *median* Welch spectrum over a seeded sample of 1 Hz
-flights, exactly as in the altitude-noise study (impl:altchannel): modal
+flights, exactly as in the altitude-noise study (sec:altchannel): modal
 ``dt = 1 s``, flights within 0.25 s of it and with at least 256 fixes, linear
 resampling onto the 1 s grid, ``scipy.signal.welch`` with ``nperseg=256``, Hann
 window, 50% overlap, linear detrending per segment.
@@ -161,7 +161,7 @@ def main() -> int:
         fc = 1.0 / tau if np.isfinite(tau) else float("nan")
         # The 90th-percentile spectrum: the noisy edge of the band. Relevant for the
         # GNSS vertical, whose median coincides with the barometric one while its
-        # noisy minority does not (impl:altchannel).
+        # noisy minority does not (sec:altchannel).
         tau90, _ = _knee_tau(freqs, np.quantile(arr, 0.90, axis=0))
         print(
             f"{ch:14s} {counts[ch]:9d}  {tau:7.1f}  {fc:8.4f}  {floor:11.3g}"

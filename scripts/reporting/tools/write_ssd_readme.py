@@ -1,267 +1,304 @@
 #!/usr/bin/env python3
-r"""Write a README at the root of the data disk, describing what is on it.
+"""Generate the SSD README from directories, file sizes and Parquet metadata.
 
-The disk outlives any one working session and is the only copy of the data. Somebody
--- the author in a year, a successor, an examiner asking where a number came from --
-will mount it without this repository at hand, and needs to be able to tell what each
-directory is, which files are inputs and which are derived, and which of them can be
-deleted and rebuilt. That is what this writes.
-
-It is generated rather than typed, and generated *from the disk itself*: the file
-sizes, the row counts, the column lists and the pipeline version are read off the
-tables as they are, so the README cannot describe a layout the disk no longer has. Re-
-run it after every processing run; it takes seconds, since it reads Parquet metadata
-rather than data.
-
-The one thing it does not do is duplicate the column-by-column documentation, which
-lives in ``docs/guide/data-on-disk.md`` in the repository and is far longer than a
-README should be. The README points at it, names the repository, and gives the
-environment variables that connect the two.
-
-Usage::
-
-    SOARING_PARA_DATA_ROOT=... SOARING_DELTA_DATA_ROOT=... \\
-    uv run python scripts/reporting/tools/write_ssd_readme.py [--root /Volumes/SSD_DISANTE]
+The inventory never reads trajectory values or changes data. Unknown directories
+are listed without inspecting their contents. Run after a completed rebuild.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
+import os
 import sys
-from datetime import date
+from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "src"))
+from soaring.reporting import DISCIPLINES  # noqa: E402
 
-from soaring.reporting import DISCIPLINES
-
-# What each derived table is, in one line. The full column documentation is in the repo.
 _TABLES = {
-    "fixes.parquet": "the trajectories: one row per grid point of every "
-    "retained segment",
-    "flights_meta.parquet": "one row per flight *attempted*, kept or dropped, with the "
-    "reason and every per-stage counter",
-    "segments.parquet": "one row per segment the splitting produced, retained or not",
-    "suspect_intervals.parquet": "slow-and-flat stints too short to excise, for the "
-    "psi(tau) sensitivity check",
-    "track_scan.parquet": "the raw-archive census: one scalar row per parsed flight, "
-    "cached so a threshold can be re-queried without re-reading the archive",
-    "alt_offset_scan.parquet": "the barometric-against-GNSS offset, one row per flight "
-    "of a seeded sample, cached so the macros recompute without reparsing the archive",
-    "fixlevel_scan.parquet": "the fix-level diagnostic figure's pooled sample -- "
-    "horizontal speed, vertical speed and altitude, one row per pooled value, cached "
-    "so the figure redraws without reparsing the archive",
-    "psd_sample.npz": "the altitude-noise figure's PSD ensemble (one row per sampled "
-    "flight, shared frequency grid) and its one representative flight, cached so the "
-    "figure redraws without reparsing the archive",
-    "savgol_psd_sample.npz": "the Savitzky-Golay spectrum figure's PSD ensemble "
-    "(horizontal, barometric-vertical, GNSS-vertical), cached so the figure redraws "
-    "without reparsing the archive",
+    "fixes.parquet": "retained trajectories on each flight's native-rate grid",
+    "flights_meta.parquet": "every attempted flight, decisions and stage counters",
+    "segments.parquet": "retained and rejected segments, with coverage diagnostics",
+    "suspect_intervals.parquet": "flagged slow/flat intervals; the proposed waiting-time sensitivity analysis is not implemented",
+    "track_scan.parquet": "raw per-flight census cache",
+    "alt_offset_scan.parquet": "sampled paired altitude offsets",
+    "fixlevel_scan.parquet": "streamed raw diagnostic values",
+    "psd_sample.npz": "paired-channel raw altitude PSD sample and its selection policy",
+    "savgol_psd_sample.npz": "raw horizontal and vertical PSD samples used to discuss smoothing",
+    "run_manifest.json": "cleaning definition, completion state and identities of all four cleaned tables",
+    ".run_incomplete": "cleaning is unfinished: do not use the four tables as a complete dataset",
+    ".preprocess.lock": "advisory lock file; its presence alone does not mean a process is running",
 }
 
-# Tables listed above that are .npz, not Parquet, so their row count has to be read
-# differently (see _describe: the sum of their 2-D arrays' row counts).
-_NPZ_TABLES = {"psd_sample.npz", "savgol_psd_sample.npz"}
 
-
-def _human(size: float) -> str:
-    """A byte count a person can read."""
-    for unit in ("B", "kB", "MB", "GB", "TB"):
-        if size < 1024 or unit == "TB":
+def _human(size):
+    size = float(size)
+    for unit in ("B", "KiB", "MiB", "GiB", "TiB"):
+        if size < 1024 or unit == "TiB":
             return f"{size:.0f} {unit}" if unit == "B" else f"{size:.1f} {unit}"
         size /= 1024
-    return f"{size:.1f} TB"
+    raise AssertionError("unreachable")
 
 
-def _tree_size(path: Path) -> tuple[int, int]:
-    """``(bytes, files)`` under a directory, or ``(0, 0)`` if it is not there."""
-    if not path.is_dir():
-        return 0, 0
+def _tree_size(path):
+    """Count regular files without following symlinks or counting AppleDouble copies."""
     total = count = 0
-    for item in path.rglob("*"):
-        if item.is_file():
-            total += item.stat().st_size
-            count += 1
+    if path.is_dir():
+        for directory, _, files in os.walk(path, followlinks=False):
+            for name in files:
+                item = Path(directory) / name
+                if name.startswith("._") or item.is_symlink():
+                    continue
+                total += item.stat().st_size
+                count += 1
     return total, count
 
 
-def _describe(discipline: str) -> list[str]:
-    """The section of the README for one discipline's root."""
+def _rows(path):
+    if path.suffix != ".parquet":
+        return "—"
+    import pyarrow.parquet as pq
+
+    try:
+        return f"{pq.read_metadata(path).num_rows:,}"
+    except (OSError, ValueError):
+        return "unreadable / incomplete"
+
+
+def _files(directory):
+    return sorted(
+        (p for p in directory.iterdir() if p.is_file() and not p.name.startswith("._")),
+        key=lambda p: p.name,
+    )
+
+
+def _describe(discipline):
     glider = DISCIPLINES[discipline]
-    env = glider.env
-    try:
-        cfg = glider.config()
-    except (FileNotFoundError, KeyError):
-        return [
-            f"## {discipline}\n\nNot reachable from this machine's configuration.\n"
-        ]
-
+    cfg = glider.config()
     root = cfg.data_root
-    lines = [f"## {discipline}", "", f"`{root}`  — environment variable `{env}`", ""]
-
-    raw_bytes, raw_files = _tree_size(cfg.igc_dir)
-    lines += [
-        "| directory | what it is | size |",
-        "|---|---|---|",
-        f"| `raw/igc/<season>/` | **the input.** One `.igc` tracklog per flight, plain "
-        f"text, named `<date>_<flight_id>.igc`. {raw_files:,} files. Irreplaceable: "
-        f"everything else on the disk is rebuilt from these | {_human(raw_bytes)} |",
-        f"| `raw/raw_xml/` | **the provenance.** One XML export per season, exactly as the "
-        f"site returned it. Irreplaceable for the same reason as the tracks: the listing it "
-        f"records is not archived anywhere else | "
-        f"{_human(_tree_size(root / 'raw' / 'raw_xml')[0])} |",
-        f"| `catalog/` | **rebuildable.** `catalog.csv` and `seasons_index.csv`, regenerated "
-        f"from the XML by `soaring-{{para,delta}} build-catalog` | "
-        f"{_human(_tree_size(root / 'catalog')[0])} |",
-        f"| `derived/` | **rebuildable.** The processed tables below, written by "
-        f"`scripts/preprocess.py` | {_human(_tree_size(cfg.derived_dir)[0])} |",
-        f"| `logs/` | acquisition logs | {_human(_tree_size(root / 'logs')[0])} |",
+    lines = [
+        f"## {discipline.capitalize()}",
         "",
-    ]
-
-    derived = cfg.derived_dir
-    if not derived.is_dir():
-        lines += ["No `derived/` yet: run `scripts/preprocess.py`.", ""]
-        return lines
-
-    lines += [
-        "### `derived/`",
+        f"Root: `{root}`.",
         "",
-        "| file | rows | size | what it holds |",
-        "|---|---|---|---|",
+        "| Directory | Files | Size | Contents |",
+        "|---|---:|---:|---|",
     ]
-    for name, what in _TABLES.items():
-        path = derived / name
-        if not path.is_file():
+    descriptions = {
+        "raw": "downloaded IGC tracks and original season XML; preserve and back up",
+        "catalog": "catalogue reconstructed from source XML, with acquisition state",
+        "derived": "cleaned tables, diagnostic caches and fitted segmentation products",
+        "logs": "acquisition logs",
+    }
+    for directory in sorted(root.iterdir()):
+        if not directory.is_dir() or directory.name.startswith("."):
             continue
-        try:
-            if name in _NPZ_TABLES:
-                # Not a flat table: sum the rows of whichever 2-D arrays it holds (the
-                # 1-D freqs/target_dt/representative-flight arrays are not "rows").
-                import numpy as np
-
-                with np.load(path) as data:
-                    rows = f"{sum(a.shape[0] for a in data.values() if a.ndim == 2):,}"
-            else:
-                import pyarrow.parquet as pq
-
-                rows = f"{pq.ParquetFile(path).metadata.num_rows:,}"
-        except Exception:  # a table we cannot read is still worth listing
-            rows = "?"
-        lines.append(f"| `{name}` | {rows} | {_human(path.stat().st_size)} | {what} |")
-    lines.append("")
-
-    try:
-        import pandas as pd
-
-        meta = pd.read_parquet(
-            derived / "flights_meta.parquet",
-            columns=["drop_reason", "pipeline_version"],
+        if directory.name in descriptions:
+            size, count = _tree_size(directory)
+            lines.append(
+                f"| `{directory.name}/` | {count:,} | {_human(size)} | {descriptions[directory.name]} |"
+            )
+        else:
+            lines.append(
+                f"| `{directory.name}/` | — | — | additional directory; contents not inspected |"
+            )
+    lines += [
+        "",
+        "The actual raw-data subdirectories are: "
+        + ", ".join(
+            f"`raw/{p.name}/`" for p in sorted((root / "raw").iterdir()) if p.is_dir()
         )
-        kept = int(meta["drop_reason"].isna().sum())
-        version = str(meta["pipeline_version"].iloc[0])
+        + ".",
+        "",
+    ]
+    derived = cfg.derived_dir
+    if not derived.exists():
+        return lines + ["No processed tables are present.", ""]
+    incomplete = (derived / ".run_incomplete").exists()
+    manifest_path = derived / "run_manifest.json"
+    if manifest_path.exists():
+        manifest = json.loads(manifest_path.read_text())
+        version = manifest.get("cleaning", {}).get("pipeline_version", "unknown")
+        status = "unfinished" if incomplete else manifest.get("status", "unknown")
         lines += [
-            f"Written by pipeline version **{version}**: {len(meta):,} flights "
-            f"attempted, ",
-            f"{kept:,} retained ({100 * kept / max(len(meta), 1):.1f} %). The "
-            f"reason for ",
-            "every drop is in `flights_meta.drop_reason`.",
+            f"Cleaning manifest: **{status}**, pipeline **{version}**. "
+            f"Run identifier: `{manifest.get('run_id', 'not recorded')}`.",
             "",
         ]
-    except Exception:
-        pass
+    elif incomplete:
+        lines += [
+            "**Cleaning is unfinished.** The tables are not a complete snapshot.",
+            "",
+        ]
+    else:
+        lines += [
+            "No cleaning manifest is present; completeness and source agreement are unverified.",
+            "",
+        ]
+    lines += [
+        "### Files directly in `derived/`",
+        "",
+        "| File | Rows | Size | Purpose |",
+        "|---|---:|---:|---|",
+    ]
+    for path in _files(derived):
+        rows = (
+            "in progress"
+            if incomplete
+            and path.name
+            in {
+                "fixes.parquet",
+                "flights_meta.parquet",
+                "segments.parquet",
+                "suspect_intervals.parquet",
+            }
+            else _rows(path)
+        )
+        lines.append(
+            f"| `{path.name}` | {rows} | {_human(path.stat().st_size)} | {_TABLES.get(path.name, 'additional generated file; inspect its metadata before reuse')} |"
+        )
+    lines += ["", "### Subdirectories of `derived/`", ""]
+    for directory in sorted(derived.iterdir()):
+        if not directory.is_dir() or directory.name.startswith("."):
+            continue
+        lines += [f"`{directory.name}/`", ""]
+        if directory.name == "segmentation":
+            lines += [
+                "Fitted HMMs, their training provenance, decoded phase products and coverage. "
+                "These require `segment_flights.py train`, `apply` and `coverage`; cleaning alone does not regenerate them.",
+                "",
+            ]
+        lines += ["| File | Rows | Size |", "|---|---:|---:|"]
+        for path in _files(directory):
+            lines.append(
+                f"| `{path.name}` | {_rows(path)} | {_human(path.stat().st_size)} |"
+            )
+        for child in sorted(directory.iterdir()):
+            if child.is_dir() and not child.name.startswith("."):
+                lines.append(f"| `{child.name}/` | — | directory |")
+        lines.append("")
     return lines
 
 
-def main(argv=None) -> int:
-    """Write the README at the disk root."""
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
-        "--root",
-        type=Path,
-        default=Path("/Volumes/SSD_DISANTE"),
-        help="where to write the README (default: the disk root)",
-    )
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=Path("/Volumes/SSD_DISANTE"))
     args = parser.parse_args(argv)
-
+    if not args.root.is_dir():
+        parser.error(f"Data disk is not mounted: {args.root}")
+    # Reject a misleading inventory of configured archives outside the requested disk.
+    for glider in DISCIPLINES.values():
+        if not glider.config().data_root.resolve().is_relative_to(args.root.resolve()):
+            parser.error(f"{glider.name} data root is outside {args.root}")
     lines = [
         "# Soaring flight data",
         "",
-        "The data behind *Anomalous Transport in Soaring Flights* (MSc, Physics of "
-        "Complex Systems, University of Pisa). This file is **generated** "
-        "from the disk ",
-        "itself by `scripts/reporting/tools/write_ssd_readme.py`; re-run it after a "
-        "processing ",
-        f"run rather than editing it. Last written {date.today().isoformat()}.",
+        "External data for `matteodisante/soaring-anomalous-transport`. This inventory is generated "
+        "from the mounted disk by `scripts/reporting/tools/write_ssd_readme.py`.",
         "",
-        "## Reading this disk",
+        f"Generated {datetime.now().astimezone().isoformat(timespec='seconds')}.",
         "",
-        "One root per discipline, identically laid out. Nothing here is "
-        "referenced by an ",
-        "absolute path: the code finds each root through an environment "
-        "variable, so the ",
-        "disk can be mounted anywhere.",
+        "## Disk root",
+        "",
+        "| Entry | Purpose |",
+        "|---|---|",
+    ]
+    known = {
+        "paragliders": "paraglider archive",
+        "hang_gliders": "hang-glider archive",
+        "derived-audit": "analysis arrays, audit logs and rebuild manifests",
+        "README.md": "this generated inventory",
+    }
+    for path in sorted(args.root.iterdir()):
+        if path.name.startswith("."):
+            continue
+        label = path.name + ("/" if path.is_dir() else "")
+        lines.append(
+            f"| `{label}` | {known.get(path.name, 'outside the thesis data workflow; contents not inspected')} |"
+        )
+    lines += [
+        "",
+        "Hidden macOS indexing, trash and filesystem directories are omitted.",
+        "",
+        "## Connecting the repository",
+        "",
+        "Default paths are in `configs/para_download.yaml` and `configs/delta_download.yaml`. "
+        "Environment variables override them when the disk mounts elsewhere:",
         "",
         "```bash",
-        "export SOARING_PARA_DATA_ROOT=/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc",
-        "export "
-        "SOARING_DELTA_DATA_ROOT=/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc",
+        f"export SOARING_PARA_DATA_ROOT='{DISCIPLINES['paragliders'].config().data_root}'",
+        f"export SOARING_DELTA_DATA_ROOT='{DISCIPLINES['hang gliders'].config().data_root}'",
         "```",
         "",
-        "**What is irreplaceable and what is not.** `raw/igc/` and `raw/raw_xml/` are the "
-        "downloaded record and cannot be regenerated if the source withdraws a flight; "
-        "back those up. `catalog/` is rebuilt from the XML by `build-catalog`, and "
-        "everything under `derived/` is a pure function of the tracks "
-        "and of the ",
-        "code, and can be deleted and rebuilt with `scripts/preprocess.py` — which is "
-        "checked, not assumed: `scripts/check_reproducible.py` re-runs a sample of "
-        "flights through the current code and compares them with what is stored.",
+        "Preserve raw downloads, catalogues containing acquisition state, human labels and run records. "
+        "Cleaned tables can be regenerated from the raw tracks with the recorded code, configuration and dependencies. "
+        "Diagnostic caches, transport arrays and segmentation need their respective reporting and fitting steps. "
+        "The complete sequence is `uv run python scripts/rebuild_thesis.py --clean --jobs 8 --full-speed`.",
         "",
-        "**Column-by-column documentation** — every field of every table, with example "
-        "rows — is `docs/guide/data-on-disk.md` in the repository, which also explains "
-        "the conventions a reader has to know (the clock is zero at take-off, segments "
-        "keep their parent's clock and origin, coordinates are a local ENU frame).",
+        "Schema and mathematical conventions: `docs/guide/data-on-disk.md`, "
+        "`docs/guide/preprocessing-pipeline.md` and `docs/guide/rebuilding.md` in the repository.",
         "",
     ]
     for discipline in DISCIPLINES:
         lines += _describe(discipline)
-
+    audit = args.root / "derived-audit"
+    if audit.is_dir():
+        lines += [
+            "## `derived-audit/`",
+            "",
+            "Intermediate arrays are inputs to figure and table generators. They depend on a specific "
+            "cleaned archive and must not be mixed across cleaning runs. `runs/<run-id>/` contains "
+            "fresh `arrays/`, one log per stage and `manifest.json`. A completed manifest records "
+            "source and table identities, generated-output hashes and the built PDF hash. "
+            "`cleaning/` holds standalone cleaning logs. Older arrays outside `runs/` are not "
+            "evidence that the current thesis was rebuilt.",
+            "",
+            "Actual entries:",
+            "",
+        ]
+        lines += [
+            f"- `{p.name}{'/' if p.is_dir() else ''}`"
+            for p in sorted(audit.iterdir())
+            if not p.name.startswith(".")
+        ]
+        run_root = audit / "runs"
+        if run_root.is_dir():
+            lines += ["", "| Rebuild run | State at inventory time |", "|---|---|"]
+            for path in sorted(run_root.glob("*/manifest.json")):
+                manifest = json.loads(path.read_text())
+                lines.append(
+                    f"| `{path.parent.name}` | {manifest.get('status', 'unknown')} |"
+                )
+        lines.append("")
     lines += [
-        "## `derived-audit/`, alongside the two roots above",
+        "## Reading trajectories",
         "",
-        "Not written by this pipeline, but worth naming: it holds the intermediate "
-        "`.npz`/`.parquet` arrays the Chapter 3 estimator scripts cache between the "
-        "expensive pass over `fixes.parquet` and the reduction that turns it into a "
-        "figure or macro (`AUDIT_DIR` in `docs/guide/scripts.md` and "
-        "`docs/guide/global-transport.md`). It is not itself an input to anything: "
-        "every file in it is reproducible from `derived/fixes.parquet` and the "
-        "repository's code, on the same rebuildable footing as `derived/` above, and a "
-        "researcher who only wants the dataset does not need it.",
-        "",
-    ]
-
-    lines += [
-        "## Reading `fixes.parquet`",
-        "",
-        "It is tens of gigabytes and must be streamed. Do **not** iterate Parquet row "
-        "groups directly: a row group is a unit of storage and cuts across flights, so "
-        "grouping its rows by `flight_id` yields fragments at each boundary. Use the "
-        "reader that reassembles them:",
+        "Stream `fixes.parquet`; storage row groups can split a flight. This reader restores complete flights:",
         "",
         "```python",
         "from soaring.analysis.derived import stream_flights",
         "",
         "for flight in stream_flights(root / 'derived' / 'fixes.parquet',",
         "                             ['segment_id', 't', 'E', 'N']):",
-        "    ...  # one whole flight per iteration",
+        "    ...",
         "```",
         "",
+        "Time is elapsed from the trimmed flight origin. Segments retain their parent's clock and local "
+        "east–north frame. Form increments within one retained segment. The quality flags distinguish "
+        "missing-position interpolation, reconstructed altitude, affected vertical derivatives and filter edges.",
+        "",
+        "Manual annotation packs live in the repository under `annotations/phase_labeling/`, "
+        "with their source provenance. They are not reproduced by cleaning and human labels must be preserved.",
+        "",
     ]
-
-    args.root.mkdir(parents=True, exist_ok=True)
     out = args.root / "README.md"
-    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"Wrote {out} ({len(lines)} lines).")
+    temporary = out.with_suffix(".md.tmp")
+    temporary.write_text("\n".join(lines) + "\n")
+    temporary.replace(out)
+    print(f"Wrote {out}")
     return 0
 
 

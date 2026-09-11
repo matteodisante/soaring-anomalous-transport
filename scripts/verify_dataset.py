@@ -1,43 +1,14 @@
 #!/usr/bin/env python3
-r"""Check the processed dataset against the invariants the thesis claims for it.
+r"""Check processed-table integrity and report filtered kinematic anomalies.
 
-``scripts/preprocess.py`` writes four tables; this reads back the three that carry the
-invariants -- fixes, segments and flight metadata -- and tests, on the data itself, the
-properties Chapter 2 states. Each check names the section it comes
-from, so a failure says which claim is false rather than only that something is wrong:
+Structural requirements are finite kinematics, increasing uniform time inside segments,
+matching retained flights and segment counts, and unique metadata keys. Speed, origin
+and reach checks use operational tolerances on the filtered coordinates: they flag
+anomalies requiring investigation, not proven sensor errors. Every stored coordinate
+has been smoothed, including interior rows with no interpolation flag.
 
-* **completeness** (sec:uniform) -- within a retained segment every grid point carries a
-  defined ``(E, N, z)``; no ``nan`` reaches the analysis;
-* **uniform, monotone time base** (sec:uniform) -- inside a segment the clock is
-  strictly increasing and the step is constant to a tolerance;
-* **no impossible step between two measured samples** (sec:fixlevel, the postcondition)
-  -- a step past the discipline's ``v_xy`` bound is a transition of unknown course and
-  must be a segment boundary, never flown path. Three separate archive defects turned
-  out to violate it, which is why the check exists as a check. It is read between
-  samples that are both *measured* and *centred*, because the other two cases are
-  reconstruction and the table flags them as such: at a segment edge the filter is
-  evaluated off-centre (sec:savgol), and across a bridged gap the monotone cubic can
-  exceed the secant it spans. Their excess is counted and reported instead -- that
-  number is one of the acceptance criteria sec:savgol asks for, and it is a measurement,
-  not a broken invariant;
-* **the origin** (sec:enu, sec:notation) -- the first fix of the first retained segment
-  sits at the frame origin, to within the metre-scale offset the smoothing leaves at a
-  segment edge;
-* **no measured position out of reach of its own origin** -- ``|r(t)| <= v_max t``,
-  since the flight started at the origin and cannot have left it faster than the bound
-  allows. It is stated in terms of nothing but the frame and the bound, so it holds
-  whatever the pipeline did, and it catches the failure a per-step check cannot see: a
-  flight whose *origin fix* was corrupt keeps every step plausible while sitting
-  thousands of kilometres from where it began. Like the step bound it is a claim about
-  *measured* motion, so a reconstructed sample is reported rather than failed;
-* **referential integrity** -- every ``flight_id`` in ``fixes`` is a retained flight in
-  ``flights_meta``, and every segment's row count matches ``segments.n_fix``.
-
-It streams the Parquet row groups, so it runs on the full archive without loading it.
-Exit code is non-zero if any check fails, which makes it usable as a gate.
-
-    SOARING_PARA_DATA_ROOT=... SOARING_DELTA_DATA_ROOT=... \
-    uv run python scripts/verify_dataset.py
+Tables are streamed by whole flight across Parquet row-group boundaries. A failing
+check returns nonzero and does not replace the thesis macros.
 """
 
 from __future__ import annotations
@@ -46,6 +17,8 @@ import sys
 from pathlib import Path
 
 import numpy as np
+
+GENERATED_OUTPUTS = ("verify.tex",)
 
 ROOT = Path(__file__).resolve().parents[1]
 _SRC = str(ROOT / "src")
@@ -67,12 +40,8 @@ _STEP_TOLERANCE_S = 0.05
 
 _KINEMATIC = ["t", "E", "N", "z", "v_E", "v_N", "v_z", "a_E", "a_N", "a_z"]
 
-# The cleaning guarantees its bound on the *raw* fixes; every position in this table has
-# since been through a Savitzky-Golay filter, which shifts an interior sample by a metre
-# or two. A raw step just under the bound can read a few per cent over it here.
-# The check exists to catch data defects, and what separates a defect from filter noise
-# is orders of magnitude -- the ones it found were 40 km and 400 km in one second -- so
-# it fails on a gross excess and reports the small ones with their size.
+# An operational gross-anomaly gate on filtered interior steps. Savitzky--Golay
+# overshoot is possible; passing/failing this threshold does not identify its cause.
 _GROSS_EXCESS = 2.0
 
 
@@ -96,7 +65,26 @@ def verify(
     failures: list[str] = []
     meta = pd.read_parquet(derived / "flights_meta.parquet")
     segments = pd.read_parquet(derived / "segments.parquet")
+    meta["flight_id"] = meta["flight_id"].astype(str)
+    segments["flight_id"] = segments["flight_id"].astype(str)
+    if meta["flight_id"].duplicated().any():
+        failures.append("integrity: duplicate flight_id in flights_meta")
+    if segments.duplicated(["flight_id", "segment_id"]).any():
+        failures.append("integrity: duplicate (flight_id, segment_id) in segments")
+    from soaring.analysis.preproc.pipeline import DROP_ERROR
+
+    failed = meta["drop_reason"].eq(DROP_ERROR)
+    if "drop_stage" in meta:
+        failed |= meta["drop_stage"].eq("error")
+    if failed.any():
+        columns = [name for name in ("flight_id", "error_detail") if name in meta]
+        examples = meta.loc[failed, columns].head(3).to_dict("records")
+        failures.append(
+            f"pipeline errors: {int(failed.sum())} flights; examples={examples}"
+        )
     retained = set(meta.loc[meta["drop_reason"].isna(), "flight_id"])
+    if (segments.loc[segments["kept"], "n_fix"] <= 0).any():
+        failures.append("integrity: a retained segment declares no fixes")
     declared = (
         segments[segments["kept"]]
         .set_index(["flight_id", "segment_id"])["n_fix"]
@@ -105,7 +93,7 @@ def verify(
 
     seen: set[str] = set()
     counted: dict[tuple, int] = {}
-    n_nan = n_backwards = n_ragged = n_impossible = n_off_origin = 0
+    n_nonfinite = n_backwards = n_ragged = n_impossible = n_off_origin = 0
     n_reconstructed_over = n_marginal = n_steps = n_unreachable = n_rows = 0
     n_unreachable_recon = 0
     worst_step = 0.0
@@ -118,7 +106,10 @@ def verify(
     # have (see soaring.analysis.derived).
     for frame in stream_flights(derived / "fixes.parquet"):
         n_rows += len(frame)
-        n_nan += int(frame[_KINEMATIC].isna().to_numpy().sum())
+        n_nonfinite += int(
+            (~np.isfinite(frame[_KINEMATIC].to_numpy(dtype=float))).sum()
+        )
+        frame["flight_id"] = frame["flight_id"].astype(str)
         seen |= set(frame["flight_id"].unique())
         for key, segment in frame.groupby(["flight_id", "segment_id"], sort=False):
             counted[key] = counted.get(key, 0) + len(segment)
@@ -135,11 +126,8 @@ def verify(
             with np.errstate(divide="ignore", invalid="ignore"):
                 speed = np.where(step > 0, distance / step, 0.0)
             over = speed > max_speed_mps
-            # A step is a claim about measured motion only when both its ends are
-            # measured and centred. An edge sample is an off-centre evaluation of the
-            # filter and an interpolated one is a reconstruction; the table flags both,
-            # and sec:savgol asks for the excess on them to be *measured*, not assumed
-            # away. So they are counted and reported, and only the rest can fail.
+            # Interior filtered estimates and edge/interpolated estimates are
+            # reported separately; neither category is an untouched measurement.
             reconstructed = segment["edge"].to_numpy(dtype=bool) | segment[
                 "interpolated"
             ].to_numpy(dtype=bool)
@@ -158,24 +146,9 @@ def verify(
                 or abs(first["N"]) > _ORIGIN_TOLERANCE_M
             ):
                 n_off_origin += 1
-            # The displacement across a *retained* segment boundary. A boundary at a
-            # gap leaves the position on either side genuine; one at a re-acquisition
-            # offset does not, and everything after it carries an unknown constant that
-            # enters the ensemble MSD (absolute position) and cancels out of the
-            # time-averaged one (increments). Reported, never asserted: the point is to
-            # bound the effect on the ensemble the analysis actually uses, which the
-            # per-flight `split_jump_max_m` cannot do because it is measured before
-            # trimming and so counts jumps inside a ground phase.
-            #
-            # The two kinds are told apart by the bound itself, with no extra column.
-            # A boundary at a *gap* is a stretch the recorder missed and the wing flew:
-            # the displacement across it is genuine and satisfies |dr| <= v_max dt like
-            # any other motion. A boundary at a re-acquisition *offset* exists precisely
-            # because that inequality failed. So the same speed bound separates them,
-            # and only the second kind puts an unknown constant into the absolute
-            # position. Reporting one number for both would have been useless: over the
-            # archive the median boundary displacement is 381 m and the maximum 237 km,
-            # and almost all of it is a wing flying across a hole in its own log.
+            # Boundary displacement and excess against the configured reach envelope
+            # are descriptive. They do not distinguish reacquisition error from every
+            # physical, interpolation or reference-frame mechanism.
             edges = np.flatnonzero(np.diff(ordered["segment_id"].to_numpy()))
             if edges.size:
                 east = ordered["E"].to_numpy(dtype=float)
@@ -186,16 +159,8 @@ def verify(
                 boundary_jumps.append(jump.max())
                 if offset.any():
                     offset_jumps.append(float(jump[offset].max()))
-            # Reachability, with the same qualification the step check carries and for
-            # the same reason: a reconstructed sample is not a measurement. This is the
-            # third invariant in this file to have been stated without it and the third
-            # to have been wrong -- every one of the 188 samples that failed the
-            # unqualified form was an interpolated grid point at t = 5 to 15 s, where
-            # v_max t is still only a couple of hundred metres and the monotone cubic
-            # bridging the flight's first gap lands 50 to 190 m beyond it. The wing was
-            # somewhere in between; the interpolant guessed, and a guess is not a claim
-            # about measured motion. Any check added here should start from the same
-            # question: is this sample a measurement?
+            # Apply the reach envelope with the declared origin tolerance. Filtering
+            # can shift the origin and local positions, so this is an anomaly check.
             reach = np.hypot(
                 ordered["E"].to_numpy(dtype=float), ordered["N"].to_numpy(dtype=float)
             )
@@ -207,20 +172,26 @@ def verify(
             n_unreachable += int((beyond & ~invented).sum())
             n_unreachable_recon += int((beyond & invented).sum())
 
-    if n_nan:
-        failures.append(f"completeness (sec:uniform): {n_nan} nan in the kinematics")
+    if n_nonfinite:
+        failures.append(
+            f"completeness (sec:uniform): {n_nonfinite} non-finite "
+            "values in the kinematics"
+        )
     if n_backwards:
         failures.append(f"time base (sec:uniform): {n_backwards} non-increasing steps")
     if n_ragged:
         failures.append(f"uniformity (sec:uniform): {n_ragged} steps off the grid")
     if n_impossible:
         failures.append(
-            f"postcondition (sec:fixlevel): {n_impossible} measured in-segment steps "
+            f"kinematic anomaly (sec:fixlevel): {n_impossible} filtered interior steps "
             f"exceed {_GROSS_EXCESS:.0f}x the {max_speed_mps:.0f} m/s bound "
-            f"(worst {worst_step:.0f} m/s) -- that is a data defect, not filter noise"
+            f"(worst {worst_step:.0f} m/s); investigate data and filtering"
         )
     if n_off_origin:
-        failures.append(f"origin (sec:enu): {n_off_origin} flights not at r(0) = 0")
+        failures.append(
+            f"origin anomaly (sec:enu): {n_off_origin} flights exceed the "
+            f"{_ORIGIN_TOLERANCE_M:g} m coordinate tolerance at t=0"
+        )
     if n_unreachable_recon:
         print(
             f"[{discipline}] {n_unreachable_recon} reconstructed samples beyond "
@@ -229,7 +200,8 @@ def verify(
         )
     if n_unreachable:
         failures.append(
-            f"reachability (sec:enu): {n_unreachable} measured positions lie further "
+            f"reachability (sec:enu): {n_unreachable} filtered interior positions "
+            "lie further "
             f"from the origin than {max_speed_mps:.0f} m/s allows"
         )
     # Both directions. Testing only `seen - retained` asks whether the table holds
@@ -247,7 +219,9 @@ def verify(
             f"integrity: {len(retained - seen)} flights are retained in flights_meta "
             "but have no rows in fixes"
         )
-    mismatched = [k for k, n in counted.items() if declared.get(k) != n]
+    mismatched = [
+        k for k in counted.keys() | declared.keys() if counted.get(k) != declared.get(k)
+    ]
     if mismatched:
         failures.append(
             f"integrity: {len(mismatched)} segments whose row count differs from "
@@ -259,23 +233,23 @@ def verify(
             f"[{discipline}] displacement across a retained segment boundary: "
             f"median {np.median(jumps):.0f} m, p90 {np.percentile(jumps, 90):.0f} m, "
             f"max {jumps.max() / 1000:.1f} km, on {jumps.size:,} of {len(seen):,} "
-            "flights -- almost all of it a wing flying across a hole in its own log"
+            "flights"
         )
     if offset_jumps:
         off = np.asarray(offset_jumps)
         print(
-            f"[{discipline}] of those, the ones the speed bound cannot explain (a "
-            f"re-acquisition offset, which does put an unknown constant into the "
-            f"absolute position): {off.size:,} flights, median {np.median(off):.0f} m, "
+            f"[{discipline}] boundaries exceeding the speed-envelope diagnostic: "
+            f"{off.size:,} flights, median {np.median(off):.0f} m, "
             f"p90 {np.percentile(off, 90) / 1000:.1f} km, max {off.max() / 1000:.1f} km"
         )
     else:
         print(f"[{discipline}] none of them exceeds what the speed bound allows")
     print(
         f"[{discipline}] {n_rows:,} rows, {len(seen):,} flights, "
-        f"{len(counted):,} segments | worst measured speed {worst_step:.1f} m/s | "
+        f"{len(counted):,} segments | worst filtered interior speed "
+        f"{worst_step:.1f} m/s | "
         f"steps over the bound: {n_reconstructed_over:,} reconstructed, "
-        f"{n_marginal:,} measured but within {_GROSS_EXCESS:.0f}x, of {n_steps:,} "
+        f"{n_marginal:,} filtered interior within {_GROSS_EXCESS:.0f}x, of {n_steps:,} "
         f"({100 * (n_reconstructed_over + n_marginal) / max(n_steps, 1):.4f} %)"
     )
     tag = "Para" if discipline.startswith("para") else "Hang"
@@ -316,15 +290,11 @@ def main() -> int:
     from soaring.analysis.config import load_preproc_config
 
     parser = argparse.ArgumentParser(description=__doc__)
-    # The reductions already refuse this, and for the reason that applies here twice over:
-    # ``verify.tex`` is rewritten wholesale, so one unreachable data root does not leave the
-    # other discipline's macros alone -- it deletes them. The build then dies hundreds of
-    # lines later on an undefined control sequence inside \SI{}, naming the sentence rather
-    # than the root that was never exported. Fatal by default; the escape hatch is asked for.
+    # Refuse partial macro files unless the caller explicitly requests one.
     parser.add_argument(
         "--allow-partial",
         action="store_true",
-        help="write the macros for whichever disciplines are reachable, instead of failing",
+        help="allow a macro file containing only the reachable disciplines",
     )
     args = parser.parse_args()
 
@@ -345,25 +315,27 @@ def main() -> int:
         for failure in failures:
             print(f"  FAIL  {failure}")
         if not failures:
-            print("  every invariant holds.")
+            print(
+                "  structural checks passed; kinematic anomalies are within "
+                "the adopted tolerances."
+            )
         total += len(failures)
 
     if missing and not args.allow_partial:
         roots = ", ".join(DISCIPLINES[d].env for d in missing)
-        print(
-            f"\nUnreachable: {', '.join(missing)}. verify.tex NOT rewritten -- it would have "
-            f"lost the macros of the missing discipline and broken the build with an error "
-            f"naming the wrong line. Export {roots}, or pass --allow-partial."
-        )
+        print(f"Unreachable: {', '.join(missing)}. verify.tex not replaced.")
+        print(f"Export {roots}, or pass --allow-partial.")
+        return 1
+
+    if total:
+        print("Verification failed; verify.tex was not replaced.")
         return 1
 
     if quoted:
         out = (
             Path(__file__).resolve().parents[1] / "thesis" / "generated" / "verify.tex"
         )
-        write_macros(
-            out, quoted, generator="scripts/verify_dataset.py", sort=True
-        )
+        write_macros(out, quoted, generator="scripts/verify_dataset.py", sort=True)
         print(f"Wrote {out.name} ({len(quoted)} macros).")
     return 1 if total else 0
 
