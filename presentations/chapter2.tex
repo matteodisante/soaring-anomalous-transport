@@ -1,0 +1,421 @@
+\documentclass[11pt,aspectratio=169]{beamer}
+\newcommand{\TalkShort}{Chapter 2: data and cleaning}
+\input{theme}
+\input{data/pipeline_census.tex}
+\input{data/dataset_stats.tex}
+\input{data/stats.tex}
+\hypersetup{pdftitle={From IGC records to measurable trajectories: cleaning and open validation questions}}
+
+\begin{document}
+% MAIN TALK: 18 slides. Speaker notes distinguish rule checks from validity claims.
+\titleframe{From IGC records to measurable trajectories}
+ {Cleaning decisions and their unresolved effects}
+ {Chapter 2\enspace$\bullet$\enspace20-minute supervisor meeting}
+\timing{0:20}{This talk explains the current cleaning chain and asks which remaining uncertainties matter for the transport and phase results. The complete archive was rebuilt with the current 10 m/s vertical threshold. The open question is the effect and validity of the choices, not whether that rebuild has happened.}
+
+\begin{frame}{The archive contains recorded cross-country flights}
+\begin{columns}[T,onlytextwidth]
+\column{.58\textwidth}
+\small\renewcommand{\arraystretch}{1.45}
+\begin{tabular}{@{}lrr@{}}\toprule
+ & \textcolor{para}{Paragliders} & \textcolor{hang}{Hang gliders}\\\midrule
+Catalogue entries &\num{\StatParaTotalFlights}&\num{\StatHangTotalFlights}\\
+Downloaded IGC logs &\num{\StatPipeParaAttempted}&\num{\StatPipeHangAttempted}\\
+Retained flights &\num{\StatPipeParaKept}&\num{\StatPipeHangKept}\\
+Retention &84.0\%&90.7\%\\\bottomrule
+\end{tabular}\par\medskip
+FFVL Coupe F\'ed\'erale de Distance: self-declared flights, heterogeneous recorders, sites and seasons.
+\column{.38\textwidth}
+\textbf{Each decoded fix supplies}\par\medskip
+\small
+Time and horizontal position; GNSS and pressure altitude when recorded; receiver validity declaration.\par\medskip
+Neither the catalogue nor the retained sample is an unbiased population of all soaring flights.
+\end{columns}
+\question{The analysis population is defined jointly by who records and declares a flight, and by which records our criteria retain.}
+\source{Current pipeline census. Para catalogue seasons: 1999--2000 to 2025--2026; hang: 2001--2002 to 2025--2026. Downloaded-track coverage differs.}
+\timing{0:50}{Distinguish catalogue entries from downloaded tracks and retained flights. The attempted cleaning counts are 186052 and 6716, and the output counts are 156305 and 6093. The archive is unusually large but selected through participation, declarations, recording availability and our cross-country criteria. The source spans changing devices and conventions. These selection effects matter whenever we compare regions, equipment or long flights.}
+\end{frame}
+
+\begin{frame}{The processing order determines what each cut acts on}
+\centering
+\begin{tikzpicture}[node distance=5mm,>=Stealth,
+ pipelinebox/.style={draw=pisablue,fill=pisablight!22,rounded corners=1pt,align=center,
+              text width=39mm,minimum height=11mm,font=\small}]
+ \node[pipelinebox](a){1. GNSS channel\\availability};
+ \node[pipelinebox,right=of a](b){2. Fix-level cleaning\\and forced boundaries};
+ \node[pipelinebox,right=of b](c){3. Ground-phase\\trimming};
+ \node[pipelinebox,below=8mm of c](d){4. Parent-flight\\selection};
+ \node[pipelinebox,left=of d](e){5. Local east--north\\coordinates};
+ \node[pipelinebox,left=of e](f){6. Native-rate grid\\and segment selection};
+ \node[pipelinebox,below=8mm of e](g){7. Smoothing\\and derivatives};
+ \draw[->](a)--(b);\draw[->](b)--(c);\draw[->](c)--(d);
+ \draw[->](d)--(e);\draw[->](e)--(f);\draw[->](f.south)|-(g.west);
+\end{tikzpicture}
+\small\raggedright\medskip
+Parent-flight restrictions: recorded duration $\ge40$ min, path $\ge20$ km,
+altitude range $\ge600$ m, elapsed span $\le16$ h, plus integrity and reach checks.
+\source{These restrictions select a study population. Genuine short flights or nearly level soaring can fail them. Flight-level cuts are not reapplied to every later segment.}
+\timing{1:00}{Cleaning precedes smoothing. Trimming precedes the cross-country selection, so parked time is not counted as flown duration. Duration and path sum within contiguous blocks; elapsed span includes gaps. Fix-level rules can remove positions, invalidate only altitude or impose boundaries. Sampling later decides which remaining holes may be bridged. The 600 m altitude-range rule is a population restriction; it is not proof that an excluded flight was not soaring.}
+\end{frame}
+
+\begin{frame}{GNSS supplies altitude; pressure has a separate witness role}
+\begin{columns}[T,onlytextwidth]
+\column{.48\textwidth}
+\textbf{Adopted altitude channel}\par\medskip
+\small One channel throughout the population: GNSS presence $\ge95\%$ and range $\ge30$ m at flight level.\par\medskip
+Missing or invalid GNSS altitude becomes missing $z$; horizontal coordinates remain subject to their own tests.\par\medskip
+The barometer does not substitute for GNSS altitude.
+\column{.48\textwidth}
+\textbf{Locally available corroboration}\par
+\[
+ B_I=B_{\rm flight}\prod_{i\in I}b_i.
+\]
+\small Here $b_i=1$ for a finite, nonzero pressure reading at fix $i$, and $0$ otherwise.\par\medskip
+\small The candidate interval needs simultaneous position and pressure readings. An incomplete local witness abstains.
+\end{columns}
+\question{Keep usable horizontal trajectories; assess witness-dependent results with a paired-coverage sensitivity analysis.}
+\source{Eligible barometer: flight presence $\ge95\%$, range $\ge30$ m. Eligibility occurs in 72.1\% para / 84.8\% hang flights attempted by the pipeline.}
+\timing{1:10}{The local pressure requirement answers the concern about GNSS lock. A pressure observation must accompany the horizontal fix when used; it must not be interpolated into the candidate interval. Valid GNSS altitude is not an additional requirement for that witness, since its failure may be the reason pressure is useful. A global rule discarding every unpaired fix would select devices and discard horizontal information unnecessarily. GNSS altitude is a consistent operational channel choice, not a claim that it is always less noisy than pressure altitude. Different height datums across recorders remain unresolved.}
+\end{frame}
+
+\begin{frame}{A Hampel flag describes a departure; the reach/rejoin rule removes it}
+\begin{columns}[c,onlytextwidth]
+\column{.59\textwidth}\fig[43mm]{defect-position.pdf}
+\column{.38\textwidth}\small
+\textbf{Horizontal removal requires}\par\medskip
+\begin{enumerate}
+ \item An unreachable position from the last accepted fix.
+ \item A reachable rejoin after removing the block.
+\end{enumerate}
+$v_{xy}^{\max}=45$ m/s (para), $55$ m/s (hang).
+\end{columns}
+\question{Resolved: the Hampel flag is not required for deletion. A long corrupt block can contaminate the median and evade that flag.}
+\source{Real paraglider flight 20030236. The displayed coordinate is a projection used to show the defect; the rule uses geodetic horizontal distances. \hyperlink{hampel-backup}{Identifier formula and assumptions}.}
+\timing{1:10}{A median-based geometric flag and an absolute reachability decision answer different questions. In the actual example the removed point is far off the local course. But a tight turn can also differ from a local median, so the flag alone must not remove it. A corrupt block longer than the local window can move the median into the corruption; requiring both tests would then miss it. Any impossible step left after the scan becomes a boundary. The initial anchor needs a separate whole-flight reach check because the forward scan does not reconsider it.}
+\end{frame}
+
+\begin{frame}{A frozen-position candidate is removed and split}
+\begin{columns}[c,onlytextwidth]
+\column{.59\textwidth}\fig[43mm]{defect-frozen.pdf}
+\column{.38\textwidth}\small
+Three joint conditions:
+\[
+ D_I<15\ \mathrm m,\quad T_I\ge60\ \mathrm s,\quad W_I=1.
+\]
+$D_I$ is the horizontal bounding-box diagonal.\par\medskip
+The witness uses exact repetition, locally complete barometry, or a stated recorder-declaration fallback.
+\end{columns}
+\question{A removed frozen candidate never becomes an interpolated straight flight. Its unobserved motion stays separated.}
+\source{Real paraglider flight 20050872. These signatures support a cleaning action; they do not prove the receiver's internal lock state. \hyperlink{witness-backup}{Complete witness branches}.}
+\timing{1:20}{The example stays in a small spatial region while time advances. Extent, duration and witness must agree. An exact coordinate repeat supplies a separate signature. With an eligible barometer, its local coverage must be complete and the first/last quarter medians close. Without an eligible barometer, a majority of invalid GNSS declarations or missing GNSS altitudes is the fallback. With globally eligible but locally incomplete pressure, the barometric branch abstains instead of switching fallback. Quantization, genuine slow motion and shared logger failures are possible confounders.}
+\end{frame}
+
+\begin{frame}{Requiring complete local pressure coverage changed real decisions}
+\begin{columns}[T,onlytextwidth]
+\column{.48\textwidth}
+\textbf{A corrected decision rule}\par\medskip
+\begin{tikzpicture}[x=.57cm,y=.6cm]
+ \node[anchor=west]at(0,2.4){Position};\node[anchor=west]at(0,1.2){Pressure};
+ \foreach\x in {0,...,7}{\fill[muted](\x,1.8)circle(2pt);}
+ \foreach\x in {0,1,2,4,5,6,7}{\fill[teal](\x,.6)circle(2pt);}
+ \draw[wine,thick](2.85,.45)--(3.15,.75)(2.85,.75)--(3.15,.45);
+ \node[anchor=north,align=center,text width=5cm]at(3.5,.05){\small One missing pressure fix:\\the barometric branch abstains.};
+\end{tikzpicture}
+\column{.48\textwidth}
+\small\textbf{Targeted old/new-rule comparison}\par\medskip
+2,388 candidates; \kw{189 flights changed}.\par\medskip
+22,468 additional horizontal fixes retained; no flight admission changed in that targeted set.\par\medskip
+The complete archive was subsequently rebuilt with the corrected rule.
+\end{columns}
+\source{Frozen-run counts changed in 188 cases; interior-ground counts in 2, with overlap possible. These counts measure algorithmic impact, not detector accuracy.}
+\timing{1:10}{This is an example of a concern that produced a concrete correction. Missing pressure is no longer treated as evidence of flatness. Zero pressure values are marked missing before duplicate timestamps are merged, avoiding an invented mean such as 500 m from zero and 1000 m. The targeted old/new comparison is not a random labelled evaluation and does not give false-positive or false-negative rates. The full cleaning rebuild already incorporates the corrected behavior. Sensitivity restricted to complete paired coverage would still help quantify the weaker fallback's influence.}
+\end{frame}
+
+\begin{frame}{The vertical-speed threshold is now 10 m/s}
+\begin{columns}[c,onlytextwidth]
+\column{.42\textwidth}\centering\fig[53mm]{vertical-threshold.pdf}
+\column{.54\textwidth}\small
+The threshold lies near the slower-decaying tail and the crossing of the two discipline densities around 9--10 m/s.\par\medskip
+Above 10 m/s: \kw{0.069\% of window medians} in the diagnostic sample.\par\medskip
+This is an exceedance fraction, not the fraction of altitudes removed. Both neighbouring decisions still enter the rule.
+\question{Does changing the threshold materially alter vertical features or phase statistics?}
+\end{columns}
+\source{The curve motivates an operational cutoff. It does not establish a physical speed maximum or prove that every larger value is an outlier.}
+\timing{1:00}{Use the requested graphical criterion without overinterpreting it. The older threshold was 30 m/s and the corresponding exceedance fraction was 0.014 percent. A histogram knee or density crossing can guide a working threshold, but its shape depends on heterogeneous physical motion and recorder errors. The median alone cannot distinguish an exceptional descent from a defective altitude interval. The sensitivity of downstream observables matters more than the small marginal exceedance fraction.}
+\end{frame}
+
+\begin{frame}{Two window medians determine one altitude decision}
+\small With at least five finite steps in a window,
+\[
+ u_j=\operatorname{median}_{|m_i-m_j|\le5\,\mathrm s}|v_{z,i}^{\rm obs}|,
+ \quad m_i=(t_i+t_{i+1})/2;
+ \qquad z_k\to\mathrm{missing}\ \text{if }u_{k-1}>10\ \land\ u_k>10.
+\]
+\centering
+\begin{tikzpicture}[x=.68cm,y=.65cm,>=Stealth]
+ \node[anchor=east,text=teal]at(1,2.4){Incoming window};
+ \node[anchor=east,text=wine]at(1,1.1){Outgoing window};
+ \fill[black!4](4,.65)rectangle(12,2.9);
+ \draw[teal,line width=1.2pt](2,2.4)--(12,2.4);
+ \draw[wine,line width=1.2pt,dashed](4,1.1)--(14,1.1);
+ \foreach\x/\v in{3/12,5/12,7/2,9/2,11/12}
+  \node[fill=white,inner sep=2pt,text=teal]at(\x,2.4){$\v$};
+ \foreach\x/\v in{5/12,7/2,9/2,11/12,13/12}
+  \node[fill=white,inner sep=2pt,text=wine]at(\x,1.1){$\v$};
+ \node[anchor=west]at(14.5,2.4){median $=12$};
+ \node[anchor=west]at(14.5,1.1){median $=12$};
+ \draw[->](2,0)--(14.3,0)node[right]{time [s]};
+ \foreach\x in{2,4,6,8,10,12,14}{\fill[black](\x,0)circle(1.6pt);\node[below]at(\x,-.1){$\x$};}
+ \node[above]at(8,.1){fix $k$};
+\end{tikzpicture}
+\question{Both medians exceed the threshold although the two steps touching fix $k$ are only 2 m/s. This is a neighbourhood decision.}
+\source{Schematic with 2-s cadence; speeds in m/s. Below five finite steps, $u_j=|v_{z,j}^{\rm obs}|$ instead of the median. Equality at 10 m/s does not trigger invalidation.}
+\timing{1:40}{This is the diagram to explain the two formulae without hiding their limitation. Windows are centred on step midpoints, not on fixes. In the example the two central touching steps have magnitudes two, yet the surrounding three large values make each median twelve. Both tests are needed, but their heavily overlapping observations are not independent confirmation. The rule invalidates only altitude, leaving time and horizontal position. The sparse-window fallback uses the step magnitude if fewer than five finite speeds are available. With adequate support, an isolated out-and-back spike can leave the median low and needs the separate opposite-sign step test.}
+\end{frame}
+
+\begin{frame}{Altitude invalidation preserves the horizontal trajectory}
+\begin{columns}[c,onlytextwidth]
+\column{.61\textwidth}\fig[43mm]{defect-altitude.pdf}
+\column{.35\textwidth}\small
+Crosses mark altitudes invalidated by the current implementation.\par\medskip
+Horizontal fixes remain, unless they fail their own tests.\par\medskip
+Reconstructed altitude is identified later by a separate quality flag.
+\end{columns}
+\question{An inspectable decision is useful evidence of implementation behavior. It does not supply an independent label of the true altitude.}
+\source{Real paraglider flight 20040590. \hyperlink{median-backup}{Synthetic spike and sustained-excess examples} isolate what the separate tests do.}
+\timing{1:00}{Use the real example to distinguish channel invalidation from removal of the whole fix. An altitude spike is handled by an out-and-back rule with excessive bounding steps of opposite sign. The sustained-excess rule uses the two window statistics just explained. The plotted crosses are the output of the same code used for cleaning. The figure verifies that the implementation and description agree, but we still cannot infer a false-detection rate from these selected examples.}
+\end{frame}
+
+\begin{frame}{An unreturned altitude step remains an unresolved case}
+\begin{columns}[c,onlytextwidth]
+\column{.43\textwidth}
+\centering\begin{tikzpicture}[x=.8cm,y=.8cm,>=Stealth]
+ \draw[->](0,0)--(5.2,0)node[below]{time};
+ \draw[->](0,0)--(0,4.1)node[above]{altitude};
+ \draw[muted,line width=1.1pt](.3,.7)--(2.1,1.1)--(2.4,3)--(4.8,3.5);
+ \draw[wine,->](3,1.6)--(2.35,2.15);
+ \node[align=center,text=wine]at(3.9,1.3){One large step;\\no rapid return};
+\end{tikzpicture}
+\column{.53\textwidth}\small
+A single jump may leave the median low and fail the out-and-back test.\par\medskip
+Candidate counters occur in \kw{47,341 para / 1,349 hang} retained-flight records, before later trimming and segment selection.\par\medskip
+A targeted check found candidate times inside usable phase-feature windows in all eight inspected examples.
+\end{columns}
+\question{Compare exclusion or splitting near candidates before deciding whether an automatic correction is justified.}
+\source{Schematic. Candidate counts do not count confirmed sensor defects surviving in the final trajectories. No automatic level-shift correction is implemented.}
+\timing{0:50}{This is one of the most consequential open cleaning questions for segmentation. The detector records an excessive step without a return within 30 percent of its amplitude among the next five available fix positions with finite altitude. That short observation horizon does not prove a persistent sensor offset. The counter is computed before later cuts. A slowly varying noise process or real descent can also create such a candidate. An offset can produce a derivative transient after smoothing even when reconstruction masks are false. The eight targeted examples show possibility, not an archive-wide frequency of corrupted features.}
+\end{frame}
+
+\begin{frame}{A time gap and a missing altitude are treated differently}
+\small
+\[
+ \Delta t=\operatorname{median}(t_{i+1}-t_i),\qquad
+ g_{\max}=\min\{10\Delta t,\max(20\ \mathrm s,2\Delta t)\}.
+\]
+\centering
+\begin{tikzpicture}[x=.68cm,y=.58cm]
+ \node[anchor=east]at(-.4,3.6){15-s gap};
+ \draw[muted](0,3.6)--(12,3.6);
+ \foreach\x in{0,1,2,5,6,7,8,9,10,11,12}{\fill[black](\x,3.6)circle(1.8pt);}
+ \foreach\x in{3,4}{\draw[teal,fill=white,thick](\x,3.6)circle(2.5pt);}
+ \node[anchor=west,text=teal]at(12.5,3.6){Fill on the grid};
+ \node[anchor=east]at(-.4,2){30-s gap};
+ \draw[muted](0,2)--(4,2);\draw[muted](10,2)--(12,2);
+ \foreach\x in{0,1,2,3,4,10,11,12}{\fill[black](\x,2)circle(1.8pt);}
+ \node[anchor=west,text=wine]at(12.5,2){Split};
+ \node[anchor=east]at(-.4,.4){Missing $z$};\draw[muted](0,.4)--(12,.4);
+ \foreach\x in{0,...,12}{\fill[black](\x,.4)circle(1.8pt);}
+ \foreach\x in{3,...,8}{\draw[teal,thick](\x-.12,.25)rectangle(\x+.12,.55);}
+ \node[anchor=west,text=teal]at(12.5,.4){Reconstruct $z$ only};
+\end{tikzpicture}
+\question{Current limitation: altitude-only reconstruction has no duration cap. Quality masks, rather than the time-gap rule, protect vertical analyses.}
+\source{Examples at $\Delta t=5$ s, hence $g_{\max}=20$ s. Existing cleaning boundaries always split. Segment duration $\ge90$ s; interpolated grid fraction $\le10\%$.}
+\timing{1:20}{The grid preserves each flight's native median interval. PCHIP reconstructs horizontal coordinates and linear interpolation reconstructs altitude, carrying the nearest finite endpoint outside altitude support. A temporal hole longer than gmax splits the trajectory. Missing altitude at existing horizontal fixes creates no temporal hole and is filled even when its duration exceeds gmax. The stored \texttt{z\_reconstructed} and propagated derivative flags are therefore essential. They exclude unsupported vertical dynamics downstream; numerical finiteness is not proof of information. Segment selection tests interpolation in time, not the amount of altitude-only reconstruction.}
+\end{frame}
+
+\begin{frame}{One local polynomial estimates position and derivatives}
+\begin{columns}[c,onlytextwidth]
+\column{.59\textwidth}\centering\fig[48mm]{sg-fit.pdf}
+\column{.38\textwidth}\small
+For offsets $u=-m,\ldots,m$,
+\[
+ P_i(u)=\sum_{k=0}^3 a_k(i)u^k,
+\]
+\[
+ \begin{aligned}
+ \widehat x_i&=a_0,\\
+ \widehat v_i&=a_1/\Delta t,\\
+ \widehat a_i&=2a_2/\Delta t^2.
+ \end{aligned}
+\]
+The same fit is applied separately to $E,N,z$ inside each segment.
+\end{columns}
+\question{Smoothing controls derivative noise, but it also changes resolved motion and propagates reconstructed values through its windows.}
+\source{Synthetic illustration of the implemented Savitzky--Golay fit. \href{https://doi.org/10.1021/ac60214a047}{Savitzky \& Golay (1964)}.}
+\timing{1:00}{The polynomial is fitted in sample offsets, so physical derivatives require division by cadence and its square. A cubic is the present modelling choice; a quadratic would already permit nonzero acceleration. The coefficients are computed using the numerical library rather than explicitly inverting a normal-equation matrix. The example is synthetic and only illustrates the estimator. Real GNSS noise can be correlated and nonstationary, and a plausible filtered curve is not proof that a manoeuvre has been preserved.}
+\end{frame}
+
+\begin{frame}{The nominal 5-s timescale does not mean a 5-s window for every logger}
+\begin{columns}[c,onlytextwidth]
+\column{.58\textwidth}\centering\fig[48mm]{sg-response.pdf}
+\column{.39\textwidth}\small
+\[
+ w=\max\{\lceil5\,\mathrm s/\Delta t\rceil_{\rm odd},5\}.
+\]
+Five samples span:\par\medskip
+\begin{tabular}{@{}rr@{}}\toprule
+Cadence & Window span\\\midrule
+1 s & 4 s\\
+3 s & 12 s\\
+5 s & 20 s\\\bottomrule
+\end{tabular}\par\medskip
+The filter's frequency response depends on cadence.
+\end{columns}
+\question{Quantify the sensitivity of 10-s transport and phase features to cadence and the smoothing window.}
+\source{The observed spectral knee motivates a working timescale; it is not the exact cutoff of the Savitzky--Golay filter. The response shown is the interior value-filter response.}
+\timing{1:00}{Even though the configured timescale is five seconds, the minimum five-sample window can span twenty seconds for a five-second logger. This makes the 10-second endpoint of Chapter 3 potentially sensitive to preprocessing. The current horizontal and vertical timescales are separate parameters that happen to have equal values. The exact filter response was computed from the adopted coefficients. What is still missing is a targeted comparison of the scientific observables under alternative cadences and windows, not another statement that the filter is smooth.}
+\end{frame}
+
+\begin{frame}{Most rejected paraglider records fail to yield a usable segment}
+\centering\small\renewcommand{\arraystretch}{1.35}
+\begin{tabular}{@{}lrr@{}}\toprule
+First recorded rejection reason & \textcolor{para}{Para} & \textcolor{hang}{Hang}\\\midrule
+No segment survives resampling &20,899&194\\
+Altitude range below 600 m &4,899&155\\
+Recorded duration below 40 min &2,084&79\\
+All other rejection reasons &1,865&195\\\midrule
+\textbf{Retained} &\textbf{156,305}&\textbf{6,093}\\\bottomrule
+\end{tabular}\par\medskip
+\normalsize The largest loss makes sampling and segment selection a priority for sensitivity checks.
+\question{How do retention and the resulting observables change across recorder cadence, season and region?}
+\source{Sequential pipeline census. Rejection reasons are mutually exclusive first failures; changing their order would change the attribution. \hyperlink{census-backup}{Complete census}.}
+\timing{1:00}{For paragliders the segment stage removes 20899 flights; the next largest rejection is insufficient altitude range. A final flight can contain several surviving segments, so the reason is that none survived, not necessarily one single gap. The sum of all first-failure categories plus retained flights matches the attempted total. These counts say what our pipeline selects. They do not show that every rejected flight was physically invalid, and individual raw retention curves are not the final sequential rejection rates.}
+\end{frame}
+
+\begin{frame}{What has been checked, and what still needs empirical validation?}
+\begin{columns}[T,onlytextwidth]
+\column{.48\textwidth}
+\textbf{Completed}\par\medskip\small
+\begin{itemize}
+ \item Current cleaning and all 38 rebuild stages.
+ \item Rule tests, reconstruction masks and trajectory examples.
+ \item Reproduction of stored cleaned outputs for 250 retained flights per discipline.
+ \item Reconciliation of numerical reports and manuscript definitions.
+\end{itemize}
+\column{.48\textwidth}
+\textbf{Still open}\par\medskip\small
+\begin{itemize}
+ \item Independent detector error rates.
+ \item Observable sensitivity to thresholds, smoothing and cadence.
+ \item Candidate altitude steps and retained suspect intervals.
+ \item GNSS height-datum consistency where it affects conclusions.
+\end{itemize}
+\end{columns}
+\question{Prioritize checks that could change the transport conclusions or the phase features.}
+\source{Numerical reproducibility and mathematical consistency are necessary. They do not establish physical correctness of every retained fix or every selection rule.}
+\timing{0:50}{The earlier mathematical and implementation audit found and fixed concrete issues, including incomplete pressure coverage and reconstruction masks. The new archive and figures have been generated from the current rules. The recorded checks are evidence of reproducibility, not 500 manually verified flights. Independent labels, realistic injected defects and sensitivity of the downstream observables answer different questions. We should agree the smallest defensible set of those checks before treating the methods chapter as nearly final.}
+\end{frame}
+
+\begin{frame}{Inspect one of the records together}
+\begin{columns}[c,onlytextwidth]
+\column{.58\textwidth}\fig[40mm]{defect-position.pdf}
+\column{.38\textwidth}
+\centering
+\href{soaring-viewer://open}{\beamergotobutton{Open the Python viewer}}\par\medskip
+\small Paraglider flight \textbf{20030236}\par
+Position-spike example around 4410 s after the raw record begins.\par\medskip
+Compare the raw and current processed trajectory, then zoom into the suspect interval.
+\end{columns}
+\source{Local macOS link; the companion launcher must be registered. The viewer can open without the SSD; this raw flight needs the connected archive. Offline fallback: the exact frozen example above.}
+\timing{1:00}{Click the button, use Browse .igc file and select the path for flight 20030236 given in the presentation README. If the archive or PDF application's external-link support is unavailable, use the figure already displayed and continue within the one-minute slot. The launcher opens the current Python viewer, with numerical thread limits to keep the demo responsive. It does not rerun archive cleaning. Loading one chosen flight may compute that flight's current preprocessing. Explore whether the neighboring track supports the deletion convention and what independent information would be needed to label the fix.}
+\end{frame}
+
+\begin{frame}{Which cleaning uncertainties should we resolve first?}
+\begin{enumerate}
+ \item \kw{Vertical reliability.}\par\small
+ Compare observables with and without neighbourhoods of candidate altitude steps; assess an explicit limit on altitude-only reconstruction.
+ \normalsize
+ \item \kw{Sensitivity of the scientific results.}\par\small
+ Vary the 10-m/s threshold and smoothing/cadence choices on a fixed comparison population; report changes in transport and phase features.
+ \normalsize
+ \item \kw{Independent evidence for difficult decisions.}\par\small
+ Review paired-channel examples and realistic injected defects; distinguish acceptance criteria from measured error rates.
+\end{enumerate}
+\question{The rebuilt trajectories are reproducible. Their remaining uncertainties must be quantified where they affect the physics.}
+\timing{2:20}{Ask the supervisors to prioritize these three tasks. The largest raw count need not be the greatest scientific bias: a small set of unflagged altitude steps can influence phase derivatives more than a larger set of correctly split time gaps. Changes to thresholds also change which flights remain, so hold the comparison population fixed where possible and separately report selection effects. Decide whether manual inspection should first target frozen-lock witnesses, vertical jumps or low-speed boundary cases. The roadmap and annotation material are working tools; the current presentation does not claim that independent validation has already happened.}
+\end{frame}
+
+\backupstart
+\begin{frame}[label=hampel-backup]{The identifier's scale is a convention, not a false-alarm probability}
+\small
+\[
+ r_k=d\big((\varphi_k,\lambda_k),
+           (\widetilde\varphi_k,\widetilde\lambda_k)\big),\quad
+ \sigma_k=1.4826\operatorname{median}_{|t_j-t_k|\le20\,\mathrm s}r_j.
+\]
+\[
+ \text{Flag when } r_k>\max(5\sigma_k,15\ \mathrm m),
+ \quad\text{with at least five fixes in the window}.
+\]
+\begin{itemize}
+ \item Component-wise medians define the local reference position; residuals use horizontal great-circle distance.
+ \item The factor 1.4826 is the one-dimensional Gaussian MAD normalization. For these radial residuals it is an operational scale convention.
+ \item The absolute reach/rejoin gate acts independently of this diagnostic flag.
+\end{itemize}
+\source{Identifier terminology: \href{https://doi.org/10.1080/01621459.1993.10476339}{Davies \& Gather (1993)}, Example 2.2. Thresholds and GPS removal rules are choices of this analysis.}
+\end{frame}
+
+\begin{frame}[label=witness-backup]{The complete frozen-position witness}
+\small Let $E_I$ mean exact coordinate repetition; $d_I$ is the fraction with invalid GNSS declaration or missing GNSS altitude. Then
+\[
+ W_I=E_I\ \lor\
+ \begin{cases}
+  |\Delta b_I|<5\ \mathrm m,& B_I=1,\\
+  \mathrm{false},& B_{\rm flight}=1,\ B_I=0,\\
+  d_I>1/2,& B_{\rm flight}=0.
+ \end{cases}
+\]
+$\Delta b_I$ is the last-quarter minus first-quarter pressure-altitude median.\par\medskip
+For interior ground detection, the pressure test instead uses a detrended 5--95\% span and a slope guard, with sustained low speed for at least 10 min. Missing local pressure always causes that guard to abstain.
+\source{Small net pressure change can hide an excursion; distinct sensors do not guarantee independent recorder errors. Shorter qualifying slow intervals are flagged and retained.}
+\end{frame}
+
+\begin{frame}[label=median-backup]{An isolated spike and a sustained excess trigger different evidence}
+\centering\fig[27mm]{vertical-spike.pdf}\vspace{1mm}
+\fig[27mm]{vertical-sustained.pdf}
+\source{Synthetic data processed by the actual implementation. The spike scarcely changes a populated-window median; excessive opposite-sign bounding steps trigger its separate test. The sustained excess raises both local medians.}
+\end{frame}
+
+\begin{frame}{Cadence and the spectral motivation for smoothing}
+\begin{columns}[c,onlytextwidth]
+\column{.48\textwidth}\fig[54mm]{sampling_intervals.pdf}
+\column{.48\textwidth}\fig[54mm]{savgol_spectrum.pdf}
+\end{columns}
+\source{The raw spectral knee around 0.2 Hz motivates a working timescale. The recorder population and the Savitzky--Golay response still require explicit cadence controls.}
+\end{frame}
+
+\begin{frame}[label=census-backup]{The complete first-failure census}
+\centering\footnotesize\renewcommand{\arraystretch}{1.05}\PipeCensusTable
+\source{Current clean archive, pipeline version 2.2.0. All numerical entries are imported from the frozen generated table.}
+\end{frame}
+
+\begin{frame}{Geographic coverage is part of the sampling problem}
+\begin{columns}[c,onlytextwidth]
+\column{.54\textwidth}\fig[60mm]{prelim_map.pdf}
+\column{.43\textwidth}\small
+Launch sites and flight characteristics are unevenly represented.\par\medskip
+Equipment, season, recording technology and environment can change together.\par\medskip
+Directional transport is analysed in Chapter 3; this chapter establishes which observations reach that analysis.
+\end{columns}
+\end{frame}
+
+\begin{frame}{Methods and provenance}
+\small
+\refitem{https://doi.org/10.1021/ac60214a047}{Savitzky \& Golay (1964)}{Polynomial smoothing and derivatives}
+\refitem{https://doi.org/10.1137/0905021}{Fritsch \& Butland (1984)}{Monotone piecewise cubic interpolation}
+\refitem{https://doi.org/10.1080/01621459.1993.10476339}{Davies \& Gather (1993)}{Hampel identifier}
+\medskip
+Numerical sources: current Chapter 2 census, witness comparison and real cleaning examples. Figure and value snapshots are identified by SHA-256 hashes in the companion manifest.\par\medskip
+The cited methods do not establish the validity of the chosen numerical thresholds, the recorder status of individual fixes or the accuracy of downstream phase labels.
+\end{frame}
+\end{document}
