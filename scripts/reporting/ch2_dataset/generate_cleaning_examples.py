@@ -32,7 +32,7 @@ from soaring.analysis.igc import parse_igc  # noqa: E402
 from soaring.analysis.preproc.altchannel import adopt_alt_channel  # noqa: E402
 from soaring.analysis.preproc.cleaning import clean_flight  # noqa: E402
 from soaring.reporting import DISCIPLINES  # noqa: E402
-from soaring.reporting.style import paper_style
+from soaring.reporting.style import ILLUSTRATION_COLORS, paper_style
 
 
 def main():
@@ -137,7 +137,7 @@ def main():
                 xx[~marked],
                 y[~marked],
                 ".",
-                color="#3477A8",
+                color=ILLUSTRATION_COLORS["primary"],
                 ms=4,
                 label="Retained",
             )
@@ -145,7 +145,7 @@ def main():
                 xx[marked],
                 y[marked],
                 "x",
-                color="#B5482A",
+                color=ILLUSTRATION_COLORS["secondary"],
                 ms=5,
                 label="Removed / invalidated",
             )
@@ -156,7 +156,7 @@ def main():
                 None: "Altitude invalidated; horizontal fixes retained",
             }[reason]
             ax.set_title(f"{title}\nFlight {r.flight_id}", loc="left", fontsize=10)
-            ax.grid(alpha=0.2)
+            ax.grid(visible=True, which="major", color=".9", lw=0.5)
             ax.legend(loc="best", fontsize=8, frameon=False, ncol=3)
             examples.append(
                 {

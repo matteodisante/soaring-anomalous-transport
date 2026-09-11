@@ -13,7 +13,7 @@ from scipy.stats import lognorm, norm
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "src"))
-from soaring.reporting.style import QUANTILE_COLORS
+from soaring.reporting.style import ILLUSTRATION_COLORS, QUANTILE_COLORS, paper_style
 
 # Static output contract for the provenance checker; paths may be built dynamically.
 GENERATED_OUTPUTS = (
@@ -23,21 +23,24 @@ GENERATED_OUTPUTS = (
 )
 
 OUT = ROOT / "thesis" / "generated"
-COLORS = ["#3477A8", "#B5482A", "#4E8A5B", "#CC79A7"]
+# Analytic limbs, not measured populations, so they keep off the discipline pair.
+COLORS = [
+    ILLUSTRATION_COLORS["primary"],
+    ILLUSTRATION_COLORS["secondary"],
+    ILLUSTRATION_COLORS["tertiary"],
+    ILLUSTRATION_COLORS["reference"],
+]
 META = {"Creator": "soaring.analysis", "CreationDate": None, "ModDate": None}
-plt.rcParams.update(
-    {
-        "font.size": 9.5,
-        "axes.titlesize": 10,
-        "axes.labelsize": 9.5,
-        "xtick.labelsize": 9,
-        "ytick.labelsize": 9,
-        "axes.spines.top": False,
-        "axes.spines.right": False,
-        "savefig.bbox": None,
-        "pdf.fonttype": 42,
-    }
-)
+# These illustrations sit among measured figures and must not read as a different
+# kind of object: the shared house style (boxed axes, left-set panel titles, 9pt
+# DejaVu Sans, pale grid) is what the measured figures use.
+paper_style()
+plt.rcParams.update({"savefig.bbox": None})
+
+
+def _grid(ax) -> None:
+    """The pale major grid the measured figures draw."""
+    ax.grid(visible=True, which="major", color=".9", lw=0.5)
 
 
 def quantiles():
@@ -58,13 +61,7 @@ def quantiles():
         ylabel="Displacement quantile (a.u.)",
         title="(a) All quantiles grow",
     )
-    axs[0, 0].legend(
-        ncol=2,
-        frameon=False,
-        fontsize=9,
-        loc="upper center",
-        bbox_to_anchor=(0.5, -0.3),
-    )
+    axs[0, 0].legend(loc="upper left", ncol=2, handlelength=1.4, columnspacing=1.1)
     x = np.linspace(0.015, 4.5, 700)
     for lag, color in [(1, COLORS[0]), (100, COLORS[1])]:
         spread = 0.9 - 0.1 * np.log(lag)
@@ -77,7 +74,7 @@ def quantiles():
         ylabel="Probability density",
         title="(b) Relative width decreases",
     )
-    axs[0, 1].legend(frameon=False)
+    axs[0, 1].legend(loc="upper right")
     axs[1, 0].plot(100 * probabilities, h, "o-", color=COLORS[0])
     for p, value in zip(probabilities, h, strict=True):
         axs[1, 0].annotate(
@@ -85,13 +82,13 @@ def quantiles():
             (100 * p, value),
             xytext=(4, 7),
             textcoords="offset points",
-            fontsize=9,
         )
     axs[1, 0].set(
         xlabel="Percentile",
         ylabel=r"Quantile exponent $H_p$",
         title="(c) Quantile exponents",
         xticks=100 * probabilities,
+        xlim=(19, 101),  # room for the value printed beside the last marker
         ylim=(0.69, 0.96),
     )
     axs[1, 1].semilogx(tau, q[:, 3] / q[:, 0], color=COLORS[1])
@@ -101,7 +98,7 @@ def quantiles():
         title="(d) Quantile ratio",
     )
     for ax in axs.flat:
-        ax.grid(alpha=0.18)
+        _grid(ax)
     fig.savefig(OUT / "quantile_scaling_schematic.pdf", metadata=META)
     plt.close(fig)
 
@@ -128,7 +125,8 @@ def geometry():
         title="(a) Same constant speed",
     )
     axs[0].set_aspect("equal", adjustable="datalim")
-    axs[0].legend(frameon=False, fontsize=9, loc="upper right")
+    axs[0].legend(loc="upper right")
+    _grid(axs[0])
     for ax, order in zip(axs[1:], [1, 2], strict=True):
         circle = (4 * np.sin(np.pi * u) ** 2) ** order
         straight = (2 * np.pi * u) ** 2 if order == 1 else 0 * u
@@ -140,7 +138,7 @@ def geometry():
             ylabel=rf"$V_{order}/a^2$",
             title="(b) Displacement" if order == 1 else "(c) Second difference",
         )
-        ax.grid(alpha=0.18)
+        _grid(ax)
 
     fig.savefig(OUT / "closed_loop_schematic.pdf", metadata=META)
     plt.close(fig)
@@ -161,16 +159,13 @@ def spectra():
         (2, 2 * h),
         xytext=(0.15, 2.2),
         arrowprops={"arrowstyle": "->", "color": ".4"},
-        fontsize=9,
     )
     axs[0].set(
         xlabel=r"Moment order $q$",
         ylabel=r"$\zeta(q)$",
         title="(a) Same MSD, different spectra",
     )
-    axs[0].legend(
-        frameon=False, fontsize=9, loc="upper center", bbox_to_anchor=(0.5, -0.27)
-    )
+    axs[0].legend(loc="upper left")
     nonzero = q > 0
     axs[1].plot(q[nonzero], q[nonzero] * 0 + h, color=COLORS[0])
     axs[1].plot(q[nonzero], levy[nonzero] / q[nonzero], color=COLORS[1])
@@ -181,11 +176,7 @@ def spectra():
     )
     for ax in axs:
         ax.axvline(beta, color=".6", ls=":", lw=1)
-        ax.grid(alpha=0.18)
-    # Reserve a fixed left margin and space for the outside legend; automatic
-    # layout otherwise underestimates the rotated math label's width in PDF.
-    fig.set_layout_engine(None)
-    fig.subplots_adjust(left=0.12, right=0.98, bottom=0.30, top=0.89, wspace=0.36)
+        _grid(ax)
     fig.savefig(OUT / "moment_spectrum_schematic.pdf", metadata=META)
     plt.close(fig)
 

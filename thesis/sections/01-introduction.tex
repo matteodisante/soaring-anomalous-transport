@@ -157,25 +157,44 @@ solo--group comparison with the necessary observables conditioned on phase.
 
 \begin{figure}[H]
   \centering
-  \begin{tikzpicture}[
-    box/.style={draw=figblue,rounded corners=2pt,align=center,text width=11.6cm,
-                inner sep=7pt,font=\small},
-    future/.style={box,draw=gray,dashed},
-    >=Latex,node distance=6mm]
-    \node[box] (data) {\textbf{Chapter 2: trustworthy trajectories}\\
-      Recorder channels, cleaning, coverage and retained uncertainty};
-    \node[box,below=of data] (global) {\textbf{Chapter 3: global observables}\\
-      Scaling, distribution shape, memory and environmental geometry};
-    \node[box,below=of global] (phases) {\textbf{Chapter 4: flight phases}\\
-      Explicit segmentation model, diagnostic figures and independent validation};
-    \node[future,below=of phases] (conditional) {\textbf{Observables conditioned on phase; solo--group comparison}\\
-      Mechanisms within episodes, dependencies between episodes, social information};
-    \node[future,below=of conditional] (model) {\textbf{Stochastic model and Monte Carlo}\\
-      Joint reproduction of global and conditional observables on held-out data};
-    \node[future,below=of model] (routes) {\textbf{Thermal landscapes and route optimisation}\\
-      Lift availability, wind, altitude budget and possible terrain constraints};
-    \foreach \a/\b in {data/global,global/phases,phases/conditional,conditional/model,model/routes}
-      \draw[->,thick,gray] (\a)--(\b);
+  \begin{tikzpicture}[schematic, node distance=5.5mm,
+      % Present chapters read as solid, filled blue; the research programme as
+      % dashed grey, so the two groups separate before any word is read.
+      box/.style={rounded corners=2pt, align=center, text width=12.6cm,
+                  inner xsep=8pt, inner ysep=7pt, line width=0.7pt},
+      done/.style={box, draw=figblue, fill=figblue!6},
+      future/.style={box, draw=black!45, dashed, fill=black!3},
+    ]
+    % A centred box breaks words when a line is a touch too long; the flow chart
+    % is short enough to forbid that outright.
+    \hyphenpenalty=10000 \exhyphenpenalty=10000
+    \node[done] (data) {{\bfseries Chapter 2: trustworthy trajectories}\\[2pt]
+      {\footnotesize\color{black!70} Recorder channels, cleaning, coverage and retained uncertainty}};
+    \node[done, below=of data] (global) {{\bfseries Chapter 3: global observables}\\[2pt]
+      {\footnotesize\color{black!70} Scaling, distribution shape, memory and environmental geometry}};
+    \node[done, below=of global] (phases) {{\bfseries Chapter 4: flight phases}\\[2pt]
+      {\footnotesize\color{black!70} Explicit segmentation model, diagnostic figures and independent validation}};
+    \node[future, below=of phases] (conditional)
+      {{\bfseries Observables conditioned on phase; solo--group comparison}\\[2pt]
+      {\footnotesize\color{black!70} Mechanisms within episodes, dependencies between episodes, social information}};
+    \node[future, below=of conditional] (model)
+      {{\bfseries Stochastic model and Monte Carlo}\\[2pt]
+      {\footnotesize\color{black!70} Joint reproduction of global and conditional observables on held-out data}};
+    \node[future, below=of model] (routes)
+      {{\bfseries Thermal landscapes and route optimisation}\\[2pt]
+      {\footnotesize\color{black!70} Lift availability, wind, altitude budget and possible terrain constraints}};
+    \foreach \a/\b in {data/global, global/phases, phases/conditional,
+                       conditional/model, model/routes}
+      \draw[->, black!45, line width=0.7pt] (\a) -- (\b);
+    % Group labels in the left margin of the float, set against the brace they span.
+    \draw[decorate, decoration={brace, amplitude=4pt}, black!45, line width=0.6pt]
+      ($(data.north west)+(-3mm,0)$) -- ($(phases.south west)+(-3mm,0)$);
+    \node[fig note, rotate=90, anchor=south]
+      at ($($(data.north west)!0.5!(phases.south west)$)+(-6mm,0)$) {this document};
+    \draw[decorate, decoration={brace, amplitude=4pt}, black!45, line width=0.6pt]
+      ($(conditional.north west)+(-3mm,0)$) -- ($(routes.south west)+(-3mm,0)$);
+    \node[fig note, rotate=90, anchor=south]
+      at ($($(conditional.north west)!0.5!(routes.south west)$)+(-6mm,0)$) {subsequent work};
   \end{tikzpicture}
   \caption{Logical structure of the thesis. Solid boxes are developed in this document;
   dashed boxes describe subsequent work. Model comparison must return to the measured

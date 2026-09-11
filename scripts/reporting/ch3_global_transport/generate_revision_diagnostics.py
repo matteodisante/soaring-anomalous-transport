@@ -62,7 +62,13 @@ REGIONS = {
     "Channel Coast": (-1.8, 2.0, 48.3, 51.2),
 }
 PDF_META = {"CreationDate": None, "Creator": "soaring.analysis"}
-from soaring.reporting.style import DISCIPLINE_COLORS, QUANTILE_COLORS, paper_style
+from soaring.reporting.style import (
+    COMPONENT_COLORS,
+    CONTROL_GREYS,
+    DISCIPLINE_COLORS,
+    QUANTILE_COLORS,
+    paper_style,
+)
 
 PLOT_COLORS = DISCIPLINE_COLORS
 CACHE_VERSION = 3
@@ -509,7 +515,7 @@ def draw(measured, summaries):
         }
     )
     names = {"paragliders": "Paragliders", "hang gliders": "Hang gliders"}
-    colors = ["#3477A8", "#B5482A", "#4E8A5B", "#CC79A7"]
+    colors = list(COMPONENT_COLORS.values())
 
     def finish(fig, filename):
         for ax in fig.axes:
@@ -654,7 +660,7 @@ def draw(measured, summaries):
     finish(fig, "ch3_quantiles.pdf")
 
     fig, axes = plt.subplots(2, 2, figsize=(6.1, 5.5), layout="constrained")
-    control_colors = (".55", "#3477A8", "#6A3D9A", "#B5482A")
+    control_colors = CONTROL_GREYS
     control_styles = (":", "--", "-.", "-")
     for col, (discipline, _m) in enumerate(measured.items()):
         control = summaries[discipline]["quantile_control"]

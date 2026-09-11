@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from soaring.reporting.style import PHASE_COLORS
+from soaring.reporting.style import PHASE_COLORS, TRACE_COLOR
 
 from .features import FEATURE_COLUMNS
 from .labels import STATES
@@ -104,7 +104,7 @@ def plot_model_diagnostics(artifact: HMMArtifact, output: str | Path) -> None:
         )
         restart_axis.axvline(
             artifact.selected_restart + 1,
-            color="#C98A1E",
+            color=TRACE_COLOR,
             linestyle="--",
             label="selected",
         )
@@ -298,12 +298,12 @@ def plot_phase_trajectory(
         axes[1].autoscale_view()
         axes[1].set_ylabel("Altitude\n(m)")
         features = [
-            ("mean_v_z", "Vertical speed\n(m/s)", "#4E8A5B", 1.0),
-            ("mean_v_h", "Horizontal speed\n(m/s)", "#3477A8", 1.0),
+            ("mean_v_z", "Vertical speed\n(m/s)", TRACE_COLOR, 1.0),
+            ("mean_v_h", "Horizontal speed\n(m/s)", TRACE_COLOR, 1.0),
             (
                 "mean_abs_turn_rate",
                 "Mean absolute\nturn rate (deg/s)",
-                "#B66A00",
+                TRACE_COLOR,
                 180 / np.pi,
             ),
             (

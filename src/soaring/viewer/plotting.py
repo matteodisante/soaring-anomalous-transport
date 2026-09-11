@@ -12,6 +12,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Literal
 
+from soaring.reporting.style import DISCIPLINE_COLORS, UNCLASSIFIED_COLOR
+from soaring.reporting.style import PHASE_COLORS as _MANUSCRIPT_PHASE_COLORS
+
 from .data import format_dms
 
 if TYPE_CHECKING:
@@ -36,12 +39,9 @@ _AXIS_UNITS = {
     "z": "altitude [m]",
 }
 
-PHASE_COLORS = {
-    "transition": "#3477A8",
-    "search": "#B5482A",
-    "climb": "#4E8A5B",
-    "unclassified": "#9E9E9E",
-}
+# The manuscript's phase set, so a label looks the same in the tool a person marks
+# it in and in the figure it ends up as, plus the tool-only "unclassified" grey.
+PHASE_COLORS = {**_MANUSCRIPT_PHASE_COLORS, "unclassified": UNCLASSIFIED_COLOR}
 
 
 def make_axes(fig: Figure, *, is_3d: bool) -> Axes:
@@ -98,7 +98,7 @@ def plot_trajectory(
     z: str | None = None,
     dms: bool = False,
     raw_color: str = "0.45",
-    cleaned_color: str = "#3477a8",
+    cleaned_color: str = DISCIPLINE_COLORS["paragliders"],
     color_by: str | None = "segment_id",
     group_by: str | None = None,
     color_map: Mapping[str, str] | None = None,

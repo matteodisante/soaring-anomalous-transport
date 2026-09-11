@@ -31,9 +31,16 @@ from soaring.analysis.preproc.cleaning import (  # noqa: E402
     local_vz,
     step_vz,
 )
+from soaring.reporting.style import ILLUSTRATION_COLORS, paper_style  # noqa: E402
+
+# These schematics face measured figures, so they take the same house style:
+# boxed axes, left-set panel titles and 9pt DejaVu Sans.
+paper_style()
 
 OUT = ROOT / "thesis" / "generated"
-BLUE, RED, GREY = "#3477A8", "#B5482A", "0.65"
+BLUE = ILLUSTRATION_COLORS["primary"]
+RED = ILLUSTRATION_COLORS["secondary"]
+GREY = ILLUSTRATION_COLORS["reference"]
 META = {
     "Creator": "soaring.analysis",
     "Producer": "soaring.analysis",
@@ -57,12 +64,6 @@ def frame(t, altitude):
 
 def save(fig, name):
     """Save an archival PDF and close its figure."""
-    for axis in fig.axes:
-        axis.tick_params(labelsize=8)
-        axis.xaxis.label.set_size(9)
-        axis.yaxis.label.set_size(9)
-        axis.spines["top"].set_visible(False)
-        axis.spines["right"].set_visible(False)
     OUT.mkdir(parents=True, exist_ok=True)
     fig.savefig(OUT / f"{name}.pdf", metadata=META, bbox_inches="tight")
     fig.savefig(Path("/tmp") / f"{name}.png", dpi=130, bbox_inches="tight")
@@ -115,9 +116,9 @@ def defects():
             )
         ax[1, col].set_title(note, loc="left", fontsize=9)
         for row in range(2):
-            ax[row, col].set_xlabel("time [s]")
-            ax[row, col].set_ylabel("east position [m]" if col < 2 else "altitude [m]")
-            ax[row, col].grid(alpha=0.2)
+            ax[row, col].set_xlabel("Time [s]")
+            ax[row, col].set_ylabel("East position [m]" if col < 2 else "Altitude [m]")
+            ax[row, col].grid(visible=True, which="major", color=".9", lw=0.5)
     save(fig, "cleaning_defects_schematic")
 
 
@@ -163,14 +164,14 @@ def median():
         axes[1, col].set_ylim(
             0, max(cfg.fix.max_vertical_speed_mps * 1.5, np.max(np.abs(vz)) * 1.08)
         )
-        axes[1, col].set_xlabel("time [s]")
+        axes[1, col].set_xlabel("Time [s]")
         axes[0, col].set_ylabel("Altitude [m]")
         axes[1, col].set_ylabel(r"$|v_z|$ [m/s]")
         axes[1, col].axvspan(
             30 - cfg.fix.vz_window_s, 30 + cfg.fix.vz_window_s, color=BLUE, alpha=0.07
         )
         for row in range(2):
-            axes[row, col].grid(alpha=0.2)
+            axes[row, col].grid(visible=True, which="major", color=".9", lw=0.5)
     axes[1, 0].legend(loc="upper left", fontsize=8, frameon=False)
     save(fig, "vertical_median_explainer")
 

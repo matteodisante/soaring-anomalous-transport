@@ -32,6 +32,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from soaring.reporting.style import ILLUSTRATION_COLORS
+
 from ...reporting.disciplines import DISCIPLINES
 from .. import catalog_index, geography
 
@@ -325,7 +327,7 @@ class MapView(QWidget):
                     visible["lon0"],
                     visible["lat0"],
                     s=24,
-                    c="#b5482a",
+                    c=ILLUSTRATION_COLORS["secondary"],
                     edgecolors="white",
                     linewidths=0.6,
                     zorder=3,

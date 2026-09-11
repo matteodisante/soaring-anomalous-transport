@@ -517,8 +517,8 @@ removals, reconstruction and remaining uncertainty inspectable.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\linewidth]{generated/cleaning_defects_schematic}
-  \caption{Three synthetic defects and their distinct consequences. Red marks show
-  the suspect readings; blue shows the retained information. A horizontal spike is
+  \caption{Three synthetic defects and their distinct consequences. Crosses mark
+  the suspect readings; dots show the retained information. A horizontal spike is
   deleted only after the speed/rejoin test; a repeated-position interval is cut and split;
   an altitude spike leaves the horizontal fixes in place. Dashed lines show possible
   reconstruction, performed later at resampling. These examples illustrate the rules
@@ -625,48 +625,55 @@ is the average of the two central values.
 
 \begin{figure}[htbp]
   \centering
-  \begin{tikzpicture}[font=\small, >=Latex]
-    \node[anchor=west, font=\small\bfseries] at (0,4.55)
-      {(a) Select steps by their midpoint};
-    \begin{scope}[shift={(3.25,1.3)}, x=0.43cm, y=0.16cm]
-      \fill[figblue!8] (-5,0) rectangle (5,14.5);
-      \draw[figblue, dashed] (-5,0) -- (-5,14.5);
-      \draw[figblue, dashed] (5,0) -- (5,14.5);
-      \draw[->] (-7,0) -- (7,0);
-      \draw[->] (-7,0) -- (-7,15);
-      \foreach \y in {0,5,10} {
-        \draw (-7.15,\y) -- (-7,\y);
-        \node[anchor=east, font=\footnotesize] at (-7.2,\y) {\y};
+  \begin{tikzpicture}[schematic]
+    % ---- (a) the window, as a bar chart on a boxed axis ---------------------
+    \node[panel title] at (0,5.6) {(a) Select steps by their midpoint};
+    % Data units: midpoint offset in seconds (x) against |v_z| in m/s (y).
+    \begin{scope}[shift={(4.6,1.15)}, x=0.4375cm, y=0.2357cm]
+      \fill[figblue!7] (-5,0) rectangle (5,17);
+      \draw[fig grid] (-7.6,5) -- (7.6,5);
+      \draw[fig grid] (-7.6,10) -- (7.6,10);
+      % bars: pale grey outside the window, blue inside it
+      \foreach \x/\h in {-6/4, 6/4}
+        \fill[black!22] (\x-0.38,0) rectangle (\x+0.38,\h);
+      \foreach \x/\h in {-4/2, -2/2, 0/12, 2/2, 4/2} {
+        \fill[figblue!80] (\x-0.38,0) rectangle (\x+0.38,\h);
+        \node[fig tick, text=black!75, above=1pt] at (\x,\h) {\h};
       }
-      \foreach \x/\height in {-6/4,6/4} {
-        \fill[black!18] (\x-0.38,0) rectangle (\x+0.38,\height);
-      }
-      \foreach \x/\height in {-4/2,-2/2,0/12,2/2,4/2} {
-        \fill[figblue!75] (\x-0.38,0) rectangle (\x+0.38,\height);
-        \node[above, font=\footnotesize] at (\x,\height) {\height};
+      \draw[figblue, densely dashed, line width=0.6pt] (-5,0) -- (-5,17);
+      \draw[figblue, densely dashed, line width=0.6pt] (5,0) -- (5,17);
+      \node[text=figblue, fig tick, text=figblue, anchor=north east, inner sep=4pt] at (5,17)
+        {$|m_i-m_j|\leq\SI{5}{\second}$};
+      % boxed axes, as in the plotted figures
+      \draw[fig axis] (-7.6,0) rectangle (7.6,17);
+      \foreach \y in {0,5,10,15} {
+        \draw[fig axis] (-7.6,\y) -- (-7.95,\y);
+        \node[fig tick, anchor=east] at (-8.15,\y) {\y};
       }
       \foreach \x in {-6,-4,-2,0,2,4,6} {
-        \draw (\x,0) -- (\x,-0.35);
-        \node[below, font=\footnotesize] at (\x,-0.35) {$\x$};
+        \draw[fig axis] (\x,0) -- (\x,-0.45);
+        \node[fig tick, anchor=north] at (\x,-0.75) {$\x$};
       }
-      \node[above, text=figblue] at (0,14.6) {$|m_i-m_j|\leq 5\,\mathrm{s}$};
+      \node[fig label, rotate=90, anchor=south] at (-10.6,8.5)
+        {$|v_{z,i}^{\mathrm{obs}}|$ [m/s]};
+      \node[fig label, anchor=north] at (0,-3.1) {Midpoint relative to $m_j$ [s]};
     \end{scope}
-    \node[rotate=90] at (-0.5,2.4) {$|v_{z,i}^{\mathrm{obs}}|$ [m/s]};
-    \node at (3.25,0.45) {Midpoint relative to $m_j$ [s]};
-    \node[anchor=west, font=\small\bfseries] at (7.2,4.55)
-      {(b) Sort the five selected magnitudes};
-    \foreach \x/\value in {7.65/2,8.85/2,10.05/2,11.25/2,12.45/12} {
-      \node[draw=black!25, rounded corners=1pt, minimum width=0.85cm,
-            minimum height=0.7cm] at (\x,2.9) {$\value$};
-    }
-    \node[draw=figblue, fill=figblue!12, rounded corners=1pt,
-          minimum width=0.85cm, minimum height=0.7cm, very thick]
-          (middle) at (10.05,2.9) {$2$};
-    \node[text=figblue] (medianresult) at (10.05,1.8)
-      {$\tilde v_j=2\,\mathrm{m/s}$};
-    \draw[->, figblue] (medianresult) -- (middle);
-    \node[align=center, text width=6cm] at (10.05,0.8)
-      {The value $12$ enters the window,\\but does not determine its median.};
+
+    % ---- (b) the same five magnitudes, sorted -------------------------------
+    \node[panel title] at (8.4,5.6) {(b) Sort the selected magnitudes};
+    \begin{scope}[shift={(8.4,0)}]
+      \foreach \i/\v in {0/2, 1/2, 3/2, 4/12}
+        \node[draw=black!30, rounded corners=1.5pt, line width=0.6pt,
+              minimum width=0.95cm, minimum height=0.76cm]
+              at ({0.5+1.3*\i},4.0) {$\v$};
+      \node[draw=figblue, fill=figblue!10, rounded corners=1.5pt, line width=1.1pt,
+            minimum width=0.95cm, minimum height=0.76cm] (middle) at (3.1,4.0) {$2$};
+      \node[text=figblue, anchor=north] (median) at (3.1,2.85)
+        {$\tilde v_j=\SI{2}{\metre\per\second}$};
+      \draw[->, figblue, line width=0.7pt] (median.north) -- (middle.south);
+      \node[fig note, align=left, anchor=north west, text width=6.1cm] at (0,2.1)
+        {The value 12 enters the window, but does not determine its median.};
+    \end{scope}
   \end{tikzpicture}
   \caption{How Eq.~\eqref{eq:vzlocal} is evaluated. This schematic uses
   fixes every \SI{2}{\second} and a half-window of \SI{5}{\second}:
@@ -702,48 +709,57 @@ confirmation, nor does it identify which altitude caused the excess.
 
 \begin{figure}[htbp]
   \centering
-  \begin{tikzpicture}[font=\small, >=Latex]
-    \node[anchor=west, font=\small\bfseries] at (0,5.9)
-      {(a) Two windows meet at one decision};
-    % Times in seconds; only coordinate positions are scaled, not the text.
-    \begin{scope}[x=0.87cm]
-      \fill[black!4] (4,3.55) rectangle (12,5.25);
-      \draw[figblue, very thick] (2,5.1) -- (12,5.1);
-      \draw[figblue] (2,4.96) -- (2,5.24) (12,4.96) -- (12,5.24);
-      \node[above, text=figblue] at (7,5.16)
-        {Incoming window: $u_{k-1}=12\,\mathrm{m/s}$};
-      \foreach \t/\value in {3/12,5/12,7/2,9/2,11/12} {
-        \node[fill=white, inner sep=2pt, text=figblue] at (\t,5.1) {$\value$};
-      }
-      \draw[figred, very thick, dashed] (4,4.1) -- (14,4.1);
-      \draw[figred] (4,3.96) -- (4,4.24) (14,3.96) -- (14,4.24);
-      \node[above, text=figred] at (9,4.16)
-        {Outgoing window: $u_k=12\,\mathrm{m/s}$};
-      \foreach \t/\value in {5/12,7/2,9/2,11/12,13/12} {
-        \node[fill=white, inner sep=2pt, text=figred] at (\t,4.1) {$\value$};
-      }
-      \draw[figblue, densely dotted] (7,5.1) -- (7,2.9);
-      \draw[figred, densely dotted] (9,4.1) -- (9,2.9);
-      \draw[->, black!50] (0,2.9) -- (15,2.9) node[right] {$t$};
+  \begin{tikzpicture}[schematic]
+    \node[panel title] at (-5.2,4.5) {(a) Two windows meet at one decision};
+    % Time in seconds along x; the three lanes are the two windows and the fix axis.
+    \begin{scope}[x=0.655cm]
+      % the interval both windows contain
+      \fill[black!5] (4,1.32) rectangle (12,3.88);
+      \node[fig note, anchor=south] at (8,3.9) {shared interval};
+
+      % --- incoming window: the five step midpoints behind fix k ---------------
+      \draw[figblue, line width=1.1pt] (2,3.4) -- (12,3.4);
+      \draw[figblue, line width=0.9pt] (2,3.26) -- (2,3.54) (12,3.26) -- (12,3.54);
+      \foreach \t/\v in {3/12, 5/12, 7/2, 9/2, 11/12}
+        \node[fill=white, inner sep=1.5pt, text=figblue, font=\footnotesize\figfont]
+          at (\t,3.4) {$\v$};
+      \node[anchor=east, text=figblue, align=right] at (-0.6,3.4)
+        {Incoming window\\[1pt]{\footnotesize median $u_{k-1}=\SI{12}{\metre\per\second}$}};
+
+      % --- outgoing window: the five ahead of it --------------------------------
+      \draw[figred, line width=1.1pt, densely dashed] (4,2.2) -- (14,2.2);
+      \draw[figred, line width=0.9pt] (4,2.06) -- (4,2.34) (14,2.06) -- (14,2.34);
+      \foreach \t/\v in {5/12, 7/2, 9/2, 11/12, 13/12}
+        \node[fill=white, inner sep=1.5pt, text=figred, font=\footnotesize\figfont]
+          at (\t,2.2) {$\v$};
+      \node[anchor=east, text=figred, align=right] at (-0.6,2.2)
+        {Outgoing window\\[1pt]{\footnotesize median $u_k=\SI{12}{\metre\per\second}$}};
+
+      % --- the record itself -----------------------------------------------------
+      \draw[fig axis, ->] (-0.2,1.0) -- (15.1,1.0) node[anchor=west, fig note] {$t$};
       \foreach \t in {0,2,4,6,8,10,12,14} {
-        \fill[black!50] (\t,2.9) circle (1.7pt);
-        \node[below, font=\footnotesize] at (\t,2.78) {$\t$};
+        \fill[black!45] (\t,1.0) circle (1.6pt);
+        \node[fig tick, anchor=north] at (\t,0.82) {\t};
       }
-      \draw[->, figblue, very thick] (6,2.9) -- (7.92,2.9);
-      \draw[->, figred, very thick, dashed] (8.08,2.9) -- (10,2.9);
-      \fill (8,2.9) circle (2.7pt);
-      \node[above] at (8,3.0) {fix $k$};
-      \node[font=\footnotesize, text=figblue, below] at (7,2.3) {step $k-1$};
-      \node[font=\footnotesize, text=figred, below] at (9,1.94) {step $k$};
-      \node[anchor=west, font=\footnotesize] at (0,2.1) {Time [s]};
+      \draw[figblue, line width=1.6pt, ->] (6,1.0) -- (7.86,1.0);
+      \draw[figred, line width=1.6pt, densely dashed, ->] (8.14,1.0) -- (10,1.0);
+      \fill (8,1.0) circle (2.6pt);
+      \node[anchor=south, inner sep=3pt] at (8,1.06) {fix $k$};
+      \node[fig note, text=figblue, anchor=east] at (7.85,0.2) {step $k-1$};
+      \node[fig note, text=figred, anchor=west] at (8.15,0.2) {step $k$};
+      \node[anchor=east, align=right] at (-0.6,1.0) {Fix times [s]};
+      \draw[figblue, densely dotted, line width=0.5pt] (7,3.3) -- (7,1.15);
+      \draw[figred, densely dotted, line width=0.5pt] (9,2.1) -- (9,1.15);
     \end{scope}
-    \node[anchor=west, font=\small\bfseries] at (0,1.45)
-      {(b) Apply the AND condition};
-    \node[anchor=north] at (6.6,1.15) {%
-      \renewcommand{\arraystretch}{1.12}%
+
+    \node[panel title] at (-5.2,-0.5) {(b) Apply the AND condition};
+    \node[anchor=north west] at (-5.2,-0.9) {%
+      \footnotesize
+      \renewcommand{\arraystretch}{1.15}%
       \begin{tabular}{@{}cccl@{}}
         \toprule
-        $u_{k-1}$ [m/s] & $u_k$ [m/s] & Both $>10\,\mathrm{m/s}$? & Result of this rule \\
+        $u_{k-1}$ [m/s] & $u_k$ [m/s] & Both $>\SI{10}{\metre\per\second}$?
+          & Result of this rule \\
         \midrule
         $2$ & $2$ & No & Keep altitude \\
         $2$ & $12$ & No & Keep altitude \\
@@ -781,10 +797,10 @@ remain relevant to phase segmentation.
   \includegraphics[width=\linewidth]{generated/vertical_median_explainer}
   \caption{The median test at a one-second cadence, using the configured window and
   speed threshold. Left: synthetic observed altitude. Right: absolute per-step speed
-  (grey), window median (blue), and the bound (dashed). A change between plausible
+  (grey), window median (solid), and the bound (dashed). A change between plausible
   climb rates remains below the bound; an isolated spike barely affects the median
   and is handled by the separate spike rule; a sustained excessive interval raises
-  the median. Red crosses mark altitudes invalidated by the actual implementation.}
+  the median. Crosses mark altitudes invalidated by the actual implementation.}
   \label{fig:vertical-median}
 \end{figure}
 
@@ -813,7 +829,7 @@ The vertical-speed threshold is placed at
 \SI{\PreprocMaxVSpeedMps}{\metre\per\second}, near the change from a steep decrease
 to a more slowly decaying tail in Fig.~\ref{fig:fixlevel}(b). Around
 \SIrange{9}{10}{\metre\per\second}, the paraglider density (blue) also begins to
-exceed the hang-glider density (red). These visual features motivate an empirical
+exceed the hang-glider density (terracotta). These visual features motivate an empirical
 cleaning threshold: the transition is gradual, and neither the change of slope nor the
 crossing establishes a physical maximum or proves that every larger value is an error.
 Values in this tail are treated as candidate outliers by the two-window and spike
@@ -1058,7 +1074,7 @@ labelled audit remains needed for an archive-wide error rate.
   \caption{Short examples extracted from the interior of raw flight records and reprocessed
   with the current cleaning implementation. Top: the horizontal coordinate projected
   along the detected excursion direction, making the removed spike visible. Middle:
-  a collapsed-position interval; red marks are removed and the surviving sides split.
+  a collapsed-position interval; crossed marks are removed and the surviving sides split.
   Bottom: GNSS altitude invalidation, with all horizontal fixes retained. Flight
   identifiers and plotted raw values are saved with the figure. The examples document
   detector decisions; no independent sensor truth is available for these intervals.}
@@ -1263,20 +1279,17 @@ Step~2 (Figure~\ref{fig:enu-rotation}).}
 
 \begin{figure}[htbp]
   \centering
-  \begin{tikzpicture}[
-      >=Latex,
-      dot/.style={circle, fill, inner sep=1.3pt},
-    ]
+  \begin{tikzpicture}[schematic, dot/.style={circle, fill, inner sep=1.3pt}]
     % --- geometry (flattening exaggerated for visibility; see caption) -----------
-    \def\aax{4}      % semi-major (equatorial) axis, drawing units
-    \def\bax{3}      % semi-minor (polar) axis, drawing units
+    \def\aax{4.3}    % semi-major (equatorial) axis, drawing units
+    \def\bax{3.1}    % semi-minor (polar) axis, drawing units
     \def\phideg{50}  % geodetic latitude phi, degrees
     \pgfmathsetmacro{\eesq}{1-(\bax*\bax)/(\aax*\aax)}
     \pgfmathsetmacro{\Nval}{\aax/sqrt(1-\eesq*sin(\phideg)*sin(\phideg))}
     \pgfmathsetmacro{\Px}{\Nval*cos(\phideg)}
     \pgfmathsetmacro{\Pz}{\Nval*(1-\eesq)*sin(\phideg)}
     \pgfmathsetmacro{\Qz}{-\Nval*\eesq*sin(\phideg)}
-    \def\hlen{0.7}   % exaggerated height above the ellipsoid
+    \def\hlen{0.8}   % exaggerated height above the ellipsoid
     \pgfmathsetmacro{\Phx}{\Px+\hlen*cos(\phideg)}
     \pgfmathsetmacro{\Phz}{\Pz+\hlen*sin(\phideg)}
     \coordinate (O)  at (0,0);
@@ -1286,37 +1299,43 @@ Step~2 (Figure~\ref{fig:enu-rotation}).}
     \coordinate (Ph) at (\Phx,\Phz);
 
     % --- meridian cross-section of the WGS84 ellipsoid --------------------------
-    \draw[thick] (0,0) ellipse [x radius=\aax, y radius=\bax];
+    \draw[draw=black!60, line width=0.8pt] (0,0) ellipse [x radius=\aax, y radius=\bax];
+    \draw[fig rule, densely dashed] (-\aax-0.8,0) -- (\aax+0.8,0);
+    \node[fig note, anchor=west] at (\aax+0.9,0) {equatorial plane};
+    \draw[fig axis, ->] (0,-\bax-0.5) -- (0,\bax+0.95)
+      node[anchor=south, fig label] {$Z$ (polar axis)};
     \node[dot] at (O) {};
-    \node[below left] at (O) {$O$ (Earth's centre)};
-    \draw[dashed, gray] (-\aax-0.9,0) -- (\aax+0.9,0);
-    \node[gray, right] at (\aax+0.9,0) {equatorial plane};
-    \draw[gray, ->] (0,-\bax-0.5) -- (0,\bax+1.0) node[above] {$Z$ (polar axis)};
-    \draw[<->, thin] (0,-\bax-0.35) -- (\aax,-\bax-0.35)
-      node[midway, below] {\scriptsize $a$};
-    \draw[<->, thin] (-\aax-0.35,0) -- (-\aax-0.35,\bax)
-      node[midway, left] {\scriptsize $b$};
+    \node[fig label, anchor=north east, inner sep=3pt] at (O) {$O$ (Earth's centre)};
 
-    % --- geocentric radius O--P (dashed) for contrast with the normal ------------
+    % semi-axis dimensions
+    \draw[<->, black!45, line width=0.5pt] (0,-\bax-0.4) -- (\aax,-\bax-0.4)
+      node[midway, anchor=north, fig tick] {$a$};
+    \draw[<->, black!45, line width=0.5pt] (-\aax-0.4,0) -- (-\aax-0.4,\bax)
+      node[midway, anchor=east, fig tick] {$b$};
+
+    % --- geocentric radius O--P (dash-dotted) for contrast with the normal -------
     \coordinate (OH) at (1.5,0);   % horizontal reference at O, for the psi angle
-    \draw[thin, densely dashdotted] (O) -- (P);
-    \pic[draw, angle radius=12mm, "$\psi$"] {angle = OH--O--P};
+    \draw[black!45, densely dashdotted, line width=0.6pt] (O) -- (P);
+    \pic[draw=black!45, line width=0.5pt, angle radius=15mm,
+         "{\footnotesize$\psi$}"{black, inner sep=1pt}] {angle = OH--O--P};
 
     % --- the ellipsoid normal: Q (crosses polar axis) -- P (surface) -- Ph (fix) --
-    \draw[very thick, figblue] (Q) -- (P)
-      node[dot,pos=0] {} node[dot,pos=1] {};
-    \draw[very thick, figred, densely dashed] (P) -- (Ph);
+    \draw[figblue, line width=1.4pt] (Q) -- (P) node[dot,pos=0] {} node[dot,pos=1] {};
+    \draw[figred, densely dashed, line width=1.4pt] (P) -- (Ph);
     \node[dot, figred] at (Ph) {};
-    \node[above left, figblue] at ($(Q)!0.6!(P)$) {$N(\varphi)$};
-    \node[right, figred] at ($(P)!0.5!(Ph)$) {$h$};
-    \node[below left] at (Q) {$Q$};
-    \node[above right, figred] at (Ph) {fix: lat.\ $\varphi$, height $h$};
-    \pic[draw, angle radius=8mm, "$\varphi$"] {angle = QH--Q--P};
+    \node[text=figblue, anchor=north west, inner sep=2pt]
+      at ($(Q)!0.42!(P)$) {$N(\varphi)$};
+    \node[text=figred, anchor=west, inner sep=3pt] at ($(P)!0.5!(Ph)$) {$h$};
+    \node[fig label, anchor=north east, inner sep=3pt] at (Q) {$Q$};
+    \node[text=figred, anchor=south west, inner sep=3pt] at (Ph)
+      {fix: latitude $\varphi$, height $h$};
+    \pic[draw=figblue, line width=0.5pt, angle radius=10mm,
+         "{\footnotesize$\varphi$}"{figblue, inner sep=1pt}] {angle = QH--Q--P};
 
-    % small legend distinguishing the two latitudes, below the a-dimension arrow
-    \node[anchor=north west, align=left] at (-\aax-0.9,-\bax-0.75)
-      {\scriptsize $\varphi$: geodetic (via the normal) --- \emph{the one used}\\[-1pt]
-       \scriptsize $\psi$: geocentric (via the centre $O$)};
+    % two latitudes, named once under the drawing
+    \node[fig note, anchor=north west, align=left] at (-\aax-0.8,-\bax-0.85)
+      {$\varphi$: geodetic, measured along the normal; this is the one used\\[1pt]
+       $\psi$: geocentric, measured from the centre $O$};
   \end{tikzpicture}
   \caption{Geodetic latitude and height on the reference ellipsoid, in meridian
   cross-section (flattening exaggerated; the true WGS84 $f\approx1/298$ would be
@@ -1363,12 +1382,11 @@ bound for every pair of fixes in a fixed frame.
 
 \begin{figure}[htbp]
   \centering
-  \begin{minipage}{0.59\linewidth}
+  \begin{minipage}[t]{0.57\linewidth}
+    \raggedright
+    {\sffamily\small (a) The global frame and the two angles}\\[4pt]
     \centering
-    \begin{tikzpicture}[
-        >=Latex,
-        dot/.style={circle, fill, inner sep=1pt},
-      ]
+    \begin{tikzpicture}[schematic, scale=1.15, dot/.style={circle, fill, inner sep=1pt}]
       % Orthographic projection M(az,el): world (x,y,z) -> screen
       % (x*bXu+y*bYu+z*bZu, x*bXv+y*bYv+z*bZv), times \Rg. Drawn as an OBLATE ellipsoid
       % (polar ratio \kk=b/a, flattening exaggerated); everything is true-to-ECEF, so U
@@ -1424,66 +1442,65 @@ bound for every pair of fixes in a fixed frame.
                            {\PY{\Px+\hs*\Ex-\hs*\Nx}{\Py+\hs*\Ey-\hs*\Ny}{\Pz-\hs*\Nz}});
 
       % ellipsoid: equator (back half dashed / front half solid) + exact projected outline
-      \draw[gray!55, densely dashed] plot[domain=115:295, samples=48, smooth, variable=\t]
+      \draw[black!35, densely dashed, line width=0.5pt] plot[domain=115:295, samples=48, smooth, variable=\t]
         ({\PX{cos(\t)}{sin(\t)}{0}},{\PY{cos(\t)}{sin(\t)}{0}});
-      \draw[thick, gray!75] plot[domain=0:360, samples=96, smooth, variable=\t]
+      \draw[black!55, line width=0.7pt] plot[domain=0:360, samples=96, smooth, variable=\t]
         ({\PX{cos(\t)*\fIx+sin(\t)*\fIIx}{cos(\t)*\fIy+sin(\t)*\fIIy}{\kk*sin(\t)*\fIIz}},
          {\PY{cos(\t)*\fIx+sin(\t)*\fIIx}{cos(\t)*\fIy+sin(\t)*\fIIy}{\kk*sin(\t)*\fIIz}});
-      \draw[gray!70] plot[domain=-65:115, samples=48, smooth, variable=\t]
+      \draw[black!45, line width=0.6pt] plot[domain=-65:115, samples=48, smooth, variable=\t]
         ({\PX{cos(\t)}{sin(\t)}{0}},{\PY{cos(\t)}{sin(\t)}{0}});
       % prime meridian (X--Z plane) and P0's meridian (equator up to the pole); z scaled by kk
-      \draw[gray!55] plot[domain=-68:112, samples=40, smooth, variable=\t]
+      \draw[black!30, line width=0.5pt] plot[domain=-68:112, samples=40, smooth, variable=\t]
         ({\PX{cos(\t)}{0}{\kk*sin(\t)}},{\PY{cos(\t)}{0}{\kk*sin(\t)}});
-      \draw[gray!55] plot[domain=0:90, samples=30, smooth, variable=\t]
+      \draw[black!30, line width=0.5pt] plot[domain=0:90, samples=30, smooth, variable=\t]
         ({\PX{cos(\t)*\clam}{cos(\t)*\slam}{\kk*sin(\t)}},
          {\PY{cos(\t)*\clam}{cos(\t)*\slam}{\kk*sin(\t)}});
 
       % global ECEF axes (blue): dashed stub on the hidden side, solid arrow outward
-      \draw[figblue, densely dashed] (O) -- ({\PX{-0.5}{0}{0}},{\PY{-0.5}{0}{0}});
-      \draw[figblue, ->] (O) -- ({\PX{1.5}{0}{0}},{\PY{1.5}{0}{0}}) node[below] {\small $X$};
-      \draw[figblue, densely dashed] (O) -- ({\PX{0}{-0.5}{0}},{\PY{0}{-0.5}{0}});
-      \draw[figblue, ->] (O) -- ({\PX{0}{1.55}{0}},{\PY{0}{1.55}{0}}) node[right] {\small $Y$};
-      \draw[figblue, densely dashed] (O) -- (0,{\PY{0}{0}{-1.15}});
-      \draw[figblue, ->] (O) -- (0,{\PY{0}{0}{1.32}}) node[above] {\small $Z$};
-      \node[dot, gray] at (O) {};
-      \node[gray, below left=-2pt] at (O) {\small $O$};
+      \draw[figblue, densely dashed, line width=0.7pt] (O) -- ({\PX{-0.5}{0}{0}},{\PY{-0.5}{0}{0}});
+      \draw[figblue, ->, line width=0.7pt] (O) -- ({\PX{1.5}{0}{0}},{\PY{1.5}{0}{0}}) node[anchor=north, inner sep=3pt] {$X$};
+      \draw[figblue, densely dashed, line width=0.7pt] (O) -- ({\PX{0}{-0.5}{0}},{\PY{0}{-0.5}{0}});
+      \draw[figblue, ->, line width=0.7pt] (O) -- ({\PX{0}{1.55}{0}},{\PY{0}{1.55}{0}}) node[anchor=west, inner sep=3pt] {$Y$};
+      \draw[figblue, densely dashed, line width=0.7pt] (O) -- (0,{\PY{0}{0}{-0.62}});
+      \draw[figblue, ->, line width=0.7pt] (O) -- (0,{\PY{0}{0}{1.32}}) node[anchor=south, inner sep=3pt] {$Z$};
+      \node[dot, black!55] at (O) {};
+      \node[text=black!55, fill=white, inner sep=1pt, below left=-2pt] at (O) {$O$};
 
       % local tangent plane (green square), drawn first so the normal/angles show on top
       \draw[figgreen, fill=figgreen!8] (sa) -- (sb) -- (sc) -- (sd) -- cycle;
 
       % locating angles (red): longitude lambda at O (equatorial plane); geodetic latitude
       % phi at the foot G, between the equatorial direction and the normal G--P0 (= Up line)
-      \draw[figred, thin] (O) -- (G) -- (P0);
-      \draw[figred] plot[domain=0:\lon, samples=24, smooth, variable=\t]
+      \draw[figred, line width=0.7pt] (O) -- (G) -- (P0);
+      \draw[figred, line width=0.7pt] plot[domain=0:\lon, samples=24, smooth, variable=\t]
         ({\PX{0.48*cos(\t)}{0.48*sin(\t)}{0}},{\PY{0.48*cos(\t)}{0.48*sin(\t)}{0}});
-      \node[figred] at ({\PX{0.60*cos(\lon/2)}{0.60*sin(\lon/2)}{0}},
-                        {\PY{0.60*cos(\lon/2)}{0.60*sin(\lon/2)}{0}}) {\small $\lambda$};
-      \draw[figred] plot[domain=0:\lat, samples=24, smooth, variable=\t]
+      \node[figred, fill=white, inner sep=1pt]
+        at ({\PX{0.62*cos(\lon/2)}{0.62*sin(\lon/2)}{0}},
+            {\PY{0.62*cos(\lon/2)}{0.62*sin(\lon/2)}{0}}) {$\lambda$};
+      \draw[figred, line width=0.7pt] plot[domain=0:\lat, samples=24, smooth, variable=\t]
         ({\PX{\Gx+0.5*cos(\t)*\clam}{\Gy+0.5*cos(\t)*\slam}{0.5*sin(\t)}},
          {\PY{\Gx+0.5*cos(\t)*\clam}{\Gy+0.5*cos(\t)*\slam}{0.5*sin(\t)}});
-      \node[figred] at
-        ({\PX{\Gx+0.66*cos(\lat/2)*\clam}{\Gy+0.66*cos(\lat/2)*\slam}{0.66*sin(\lat/2)}},
-         {\PY{\Gx+0.66*cos(\lat/2)*\clam}{\Gy+0.66*cos(\lat/2)*\slam}{0.66*sin(\lat/2)}})
-        {\small $\varphi$};
-      \node[figred, below right=-1pt] at (G) {\scriptsize $G$};
+      \node[figred, fill=white, inner sep=1pt] at
+        ({\PX{\Gx+0.80*cos(\lat/2)*\clam}{\Gy+0.80*cos(\lat/2)*\slam}{0.80*sin(\lat/2)}},
+         {\PY{\Gx+0.80*cos(\lat/2)*\clam}{\Gy+0.80*cos(\lat/2)*\slam}{0.80*sin(\lat/2)}})
+        {$\varphi$};
+      \node[figred, fill=white, inner sep=1pt, below right=-2pt] at (G) {$G$};
 
       % ENU triad at P0 (Up is the normal, drawn on top of the square and the red normal)
-      \draw[->, thick, figgreen] (P0) -- (Et) node[right=-1pt] {\small $E$};
-      \draw[->, thick, figgreen] (P0) -- (Nt) node[above left=-2pt] {\small $N$};
-      \draw[->, thick, figgreen] (P0) -- (Ut) node[above right=-2pt] {\small $U$};
+      \draw[->, line width=1.2pt, figgreen] (P0) -- (Et) node[anchor=west, inner sep=2pt] {$E$};
+      \draw[->, line width=1.2pt, figgreen] (P0) -- (Nt) node[anchor=south east, inner sep=1pt] {$N$};
+      \draw[->, line width=1.2pt, figgreen] (P0) -- (Ut) node[anchor=south west, inner sep=1pt] {$U$};
       \node[dot] at (P0) {};
-      \node[right=1pt] at (P0) {\small $P_0$};
+      \node[fill=white, inner sep=1pt, right=1pt] at (P0) {$P_0$};
     \end{tikzpicture}
 
-    \small (a)
   \end{minipage}\hfill
-  \begin{minipage}{0.39\linewidth}
+  \begin{minipage}[t]{0.41\linewidth}
+    \raggedright
+    {\sffamily\small (b) The tangent frame, close up}\\[4pt]
     \centering
-    \begin{tikzpicture}[
-        >=Latex,
-        scale=1.1,
-        dot/.style={circle, fill, inner sep=1.1pt},
-      ]
+    \begin{tikzpicture}[schematic, scale=1.15,
+        dot/.style={circle, fill, inner sep=1.1pt}]
       % Oblique projection of the LOCAL tangent frame: E true-horizontal, U true-vertical,
       % N receding at 45 deg. The Earth is a curved surface patch (curvilinear mesh),
       % z(e,n) = -kk(e^2+n^2), with the flat tangent plane resting on it and touching at P0.
@@ -1493,14 +1510,14 @@ bound for every pair of fixes in a fixed frame.
 
       % --- curved Earth surface (spherical cap) as a curvilinear mesh; apex at P0 ---
       \foreach \nn in {-0.4,0,0.45,0.9,1.2}{
-        \draw[gray!45, thin] plot[domain=-0.7:2.5, samples=28, smooth, variable=\e]
+        \draw[black!30, line width=0.45pt] plot[domain=-0.7:2.5, samples=28, smooth, variable=\e]
           ({\e+\nvx*\nn},{\nvy*\nn-\kk*(\e*\e+\nn*\nn)});
       }
       \foreach \ee in {-0.7,0,0.8,1.6,2.4}{
-        \draw[gray!45, thin] plot[domain=-0.4:1.2, samples=18, smooth, variable=\n]
+        \draw[black!30, line width=0.45pt] plot[domain=-0.4:1.2, samples=18, smooth, variable=\n]
           ({\ee+\nvx*\n},{\nvy*\n-\kk*(\ee*\ee+\n*\n)});
       }
-      \node[gray] at (0.55,-0.72) {\scriptsize Earth's surface (locally)};
+      \node[fig note, anchor=north] at (1.1,-0.95) {Earth's surface, locally};
 
       % --- flat tangent plane (box base) resting on the surface, tangent at P0 ---
       \coordinate (A)  at (0,0);                                   % P0 (tangent point)
@@ -1509,15 +1526,15 @@ bound for every pair of fixes in a fixed frame.
       \coordinate (D)  at ($(A)+\Ncomp*(\nvx,\nvy)$);
       \coordinate (Cp) at ($(C)+(0,\Ucomp)$);                      % + U(t) = fix
       \fill[figgreen!16] (A) -- (B) -- (C) -- (D) -- cycle;
-      \draw[figgreen!60] (A) -- (B) -- (C) -- (D) -- cycle;
+      \draw[figgreen!60, line width=0.6pt] (A) -- (B) -- (C) -- (D) -- cycle;
 
       % the three ENU components = the three visible edges of the box
-      \draw[very thick, figgreen] (A) -- (B) node[midway, below=1pt] {$E(t)$};
-      \draw[very thick, figgreen] (B) -- (C) node[midway, right=1pt] {$N(t)$};
-      \draw[very thick, figgreen] (C) -- (Cp) node[midway, right=1pt] {$U(t)$};
+      \draw[line width=1.4pt, figgreen] (A) -- (B) node[midway, below=1pt] {$E(t)$};
+      \draw[line width=1.4pt, figgreen] (B) -- (C) node[midway, right=1pt] {$N(t)$};
+      \draw[line width=1.4pt, figgreen] (C) -- (Cp) node[midway, right=1pt] {$U(t)$};
 
       % the displacement = the space diagonal of the box
-      \draw[->, very thick] (A) -- (Cp);
+      \draw[->, line width=1.4pt] (A) -- (Cp);
       \node[above left=-1pt] at ($(A)!0.62!(Cp)$) {$\Delta\mathbf{X}(t)$};
 
       \node[dot] at (A) {}; \node[above left=-2pt] at (A) {$P_0$};
@@ -1526,7 +1543,6 @@ bound for every pair of fixes in a fixed frame.
       \node[above right=-1pt] at (Cp) {fix at $t$};
     \end{tikzpicture}
 
-    \small (b)
   \end{minipage}
   \caption{The ENU rotation\rev{: it turns a vector's global ECEF components into local
   East, North, Up ones}. (a)~The global ECEF frame $(X,Y,Z)$ in
@@ -1567,7 +1583,7 @@ Figure~\ref{fig:sampling} shows these intervals in the archive.
 \begin{figure}[!htbp]
   \centering
   \IfFileExists{generated/sampling_intervals.pdf}{%
-    \includegraphics[width=0.62\linewidth]{generated/sampling_intervals}%
+    \includegraphics[width=\linewidth]{generated/sampling_intervals}%
   }{%
     \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
     \texttt{scripts/reporting/ch2\_dataset/generate\_preproc\_figure.py} from the raw IGC tracks on the
@@ -1601,48 +1617,52 @@ manoeuvres inside a short gap are resolved.
 
 \begin{figure}[htbp]
   \centering
-  \begin{tikzpicture}[x=1.15cm, y=1cm, font=\small]
-    \node[anchor=west] at (0,4.05)
+  \begin{tikzpicture}[schematic, x=1.0cm, y=1cm]
+    % One second of record is 0.2 x-units; the three lanes share the time axis below.
+    \node[panel title, text=black!60] at (0,6.05)
       {Local examples: $\Delta t=\SI{5}{\second}$, $g_{\max}=\SI{20}{\second}$};
-    \node[anchor=west] at (0,3.55) {(a) Short gap between fixes};
-    \draw[gray!55] (0,3.05) -- (12,3.05);
-    \foreach \x in {0,1,2,5,6,7,8,9,10,11,12}
-      \fill (\x,3.05) circle (1.7pt);
-    \foreach \x in {3,4}
-      \draw[figblue,fill=white,thick] (\x,3.05) circle (2.4pt);
-    \draw[<->,figblue] (2,3.28) -- (5,3.28);
-    \node[anchor=east,font=\scriptsize,text=figblue] at (12,3.55)
-      {\SI{15}{\second}: fill};
 
-    \node[anchor=west] at (0,2.25) {(b) Long gap between fixes};
-    \draw[gray!55] (0,1.75) -- (4,1.75);
-    \draw[gray!55] (10,1.75) -- (12,1.75);
-    \foreach \x in {0,1,2,3,4,10,11,12}
-      \fill (\x,1.75) circle (1.7pt);
-    \draw[<->,figred] (4,1.98) -- (10,1.98);
-    \node[anchor=east,font=\scriptsize,text=figred] at (12,2.25)
-      {\SI{30}{\second}: split};
-    \node[font=\scriptsize,text=figred] at (7,1.68) {no reconstructed path};
+    % --- (a) a gap short enough to bridge -----------------------------------
+    \node[panel title] at (0,5.35) {(a) Short gap between fixes};
+    \draw[fig rule] (0,4.5) -- (12,4.5);
+    \foreach \x in {0,1,2,5,6,7,8,9,10,11,12} \fill[black!75] (\x,4.5) circle (1.7pt);
+    \foreach \x in {3,4} \draw[figblue, fill=white, line width=0.9pt] (\x,4.5) circle (2.5pt);
+    \draw[<->, figblue, line width=0.7pt] (2,4.86) -- (5,4.86);
+    \node[fig note, text=figblue, anchor=west] at (12.4,4.5) {\SI{15}{\second}: fill};
 
-    \node[anchor=west] at (0,0.95) {(c) Fixes present, altitude missing};
-    \draw[gray!55] (0,0.45) -- (12,0.45);
-    \foreach \x in {0,1,2,3,4,5,6,7,8,9,10,11,12}
-      \fill (\x,0.45) circle (1.7pt);
+    % --- (b) a gap that ends the segment ------------------------------------
+    \node[panel title] at (0,3.85) {(b) Long gap between fixes};
+    \draw[fig rule] (0,3.0) -- (4,3.0);
+    \draw[fig rule] (10,3.0) -- (12,3.0);
+    \foreach \x in {0,1,2,3,4,10,11,12} \fill[black!75] (\x,3.0) circle (1.7pt);
+    \draw[<->, figred, line width=0.7pt] (4,3.36) -- (10,3.36);
+    \node[fig note, text=figred] at (7,2.68) {no reconstructed path};
+    \node[fig note, text=figred, anchor=west] at (12.4,3.0) {\SI{30}{\second}: split};
+
+    % --- (c) every fix present, the altitude channel missing ------------------
+    \node[panel title] at (0,2.35) {(c) Fixes present, altitude missing};
+    \draw[fig rule] (0,1.5) -- (12,1.5);
+    \foreach \x in {0,...,12} \fill[black!75] (\x,1.5) circle (1.7pt);
     \foreach \x in {3,4,5,6,7,8}
-      \draw[figblue,thick] (\x-0.09,0.34) rectangle (\x+0.09,0.56);
-    \draw[<->,figblue] (2,0.68) -- (9,0.68);
-    \node[anchor=east,font=\scriptsize,text=figblue] at (12,0.95)
-      {\SI{35}{\second}: fill $z$ only};
-    \foreach \x/\tt in {0/0,2/10,4/20,6/30,8/40,10/50,12/60}
-      \node[below,font=\scriptsize] at (\x,0.22) {\tt};
-    \node[anchor=east,font=\scriptsize] at (12,-0.25) {time within excerpt [s]};
-    \fill (0,-0.65) circle (1.7pt);
-    \node[anchor=west,font=\scriptsize] at (0.2,-0.65) {retained fix};
-    \draw[figblue,fill=white,thick] (4,-0.65) circle (2.4pt);
-    \node[anchor=west,font=\scriptsize] at (4.2,-0.65) {time grid filled};
-    \fill (8,-0.65) circle (1.7pt);
-    \draw[figblue,thick] (7.91,-0.76) rectangle (8.09,-0.54);
-    \node[anchor=west,font=\scriptsize] at (8.2,-0.65) {altitude filled};
+      \draw[figblue, line width=0.9pt] (\x-0.1,1.38) rectangle (\x+0.1,1.62);
+    \draw[<->, figblue, line width=0.7pt] (2,1.86) -- (9,1.86);
+    \node[fig note, text=figblue, anchor=west] at (12.4,1.5) {\SI{35}{\second}: fill $z$ only};
+
+    % --- shared time axis ------------------------------------------------------
+    \foreach \x/\tt in {0/0, 2/10, 4/20, 6/30, 8/40, 10/50, 12/60} {
+      \draw[fig axis] (\x,1.25) -- (\x,1.1);
+      \node[fig tick, anchor=north] at (\x,1.05) {\tt};
+    }
+    \node[fig label, anchor=north] at (6,0.6) {Time within the excerpt [s]};
+
+    % --- key -------------------------------------------------------------------
+    \fill[black!75] (0.15,-0.35) circle (1.7pt);
+    \node[fig note, anchor=west] at (0.4,-0.35) {retained fix};
+    \draw[figblue, fill=white, line width=0.9pt] (4.15,-0.35) circle (2.5pt);
+    \node[fig note, anchor=west] at (4.4,-0.35) {time grid filled};
+    \fill[black!75] (8.15,-0.35) circle (1.7pt);
+    \draw[figblue, line width=0.9pt] (8.05,-0.47) rectangle (8.25,-0.23);
+    \node[fig note, anchor=west] at (8.5,-0.35) {altitude filled};
   \end{tikzpicture}
   \caption{Three local examples of resampling. Circles mark new grid times in a short
   gap; a long gap leaves separate segments. Squares mark reconstructed altitude at
@@ -1925,7 +1945,7 @@ dataset.
   % Local to this float. \stghead: stage number, name, and the section that argues the
   % choice. The adopted values used to sit in each node, below the effect; they now live
   % in Table~\ref{tab:workingparams}, which faces this map.
-  \newcommand{\stghead}[3]{\textbf{#1\quad #2}\hfill{\scriptsize\S\ref{#3}}\\[3pt]}
+  \newcommand{\stghead}[3]{\textbf{#1\quad #2}\hfill{\footnotesize\S\ref{#3}}\\[3pt]}
   % Spacing is deliberate, not default: node distance sets the arrow length (at the 1mm
   % it used to be the arrows read as ticks, and the stages as one block), and the inner
   % sep keeps the descriptions off the rules. The 110mm box plus badge and brace lanes
@@ -1933,15 +1953,15 @@ dataset.
   % The stage boxes are ragged right (align=left), so nothing is gained by breaking a
   % word across their two lines and the reader loses a little each time.
   \hyphenpenalty=10000 \exhyphenpenalty=10000
-  \begin{tikzpicture}[
-      >=Latex, node distance=5.5mm,
-      stage/.style={draw=black!60, thick, rounded corners=2pt, fill=black!4,
-                    text width=110mm, inner xsep=6pt, inner ysep=5pt, align=left},
-      io/.style={draw=black!60, thick, rounded corners=7pt, fill=black!12,
-                 inner xsep=6pt, inner ysep=6pt, align=center, text width=108mm},
-      badge/.style={font=\scriptsize\scshape, anchor=west, align=left,
-                    text width=24mm, inner sep=0pt},
-      lane/.style={font=\scriptsize\itshape, text=black!60, align=center},
+  \begin{tikzpicture}[schematic,
+      node distance=5.5mm,
+      stage/.style={draw=black!55, line width=0.7pt, rounded corners=2pt, fill=black!3,
+                    text width=107mm, inner xsep=7pt, inner ysep=6pt, align=left},
+      io/.style={draw=figblue, line width=0.7pt, rounded corners=7pt, fill=figblue!7,
+                 inner xsep=7pt, inner ysep=7pt, align=center, text width=105mm},
+      badge/.style={font=\footnotesize\figfont, anchor=west, align=left,
+                    text width=26mm, inner sep=0pt},
+      lane/.style={font=\footnotesize\figfont\itshape, text=black!55, align=center},
     ]
     \node[io] (raw) {\textbf{Raw IGC archive}\\[3pt]
       {\footnotesize one track per flight: times $t$, geodetic fixes
@@ -1983,7 +2003,7 @@ dataset.
 
     \foreach \a/\b in {raw/alt, alt/fix, fix/trim, trim/filt, filt/enu, enu/uni,
                        uni/sg, sg/out}
-      \draw[->, thick] (\a) -- (\b);
+      \draw[->, black!55, line width=0.7pt] (\a) -- (\b);
 
     \node[badge] at ($(alt.east)+(3mm,0)$)  {\textcolor{figblue}{per flight}};
     \node[badge] at ($(fix.east)+(3mm,0)$)  {\textcolor{figred}{per fix}};
@@ -1994,12 +2014,12 @@ dataset.
                                              \textcolor{figgreen}{per segment}};
     \node[badge] at ($(sg.east)+(3mm,0)$)   {\textcolor{figgreen}{per segment}};
 
-    \draw[decorate, decoration={brace, amplitude=5pt}, thick, black!60]
+    \draw[decorate, decoration={brace, amplitude=5pt}, line width=0.6pt, black!45]
       ($(filt.south west)+(-3mm,0)$) -- ($(alt.north west)+(-3mm,0)$);
     \node[lane, rotate=90, anchor=south]
       at ($($(alt.north west)!0.5!(filt.south west)$)+(-7mm,0)$)
       {scalar record, as logged};
-    \draw[decorate, decoration={brace, amplitude=5pt}, thick, black!60]
+    \draw[decorate, decoration={brace, amplitude=5pt}, line width=0.6pt, black!45]
       ($(sg.south west)+(-3mm,0)$) -- ($(enu.north west)+(-3mm,0)$);
     \node[lane, rotate=90, anchor=south]
       at ($($(enu.north west)!0.5!(sg.south west)$)+(-7mm,0)$)

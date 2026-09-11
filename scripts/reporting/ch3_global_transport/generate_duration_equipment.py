@@ -358,7 +358,7 @@ def main():
         lags[ratio_support],
         adjusted[ratio_support],
         "--",
-        color="#6A3D9A",
+        color="#3A3A3A",
         label="Fixed class proportions",
     )
     _axis(axes[1], "(b) T ≥ 4 h / all durations", ratio=True)

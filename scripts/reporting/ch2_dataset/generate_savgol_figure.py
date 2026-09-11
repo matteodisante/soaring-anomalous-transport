@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "src"))
 from soaring.reporting import bare_cli  # noqa: E402
+from soaring.reporting.style import ILLUSTRATION_COLORS  # noqa: E402
 
 GENERATED_OUTPUTS = ("savgol_explainer.pdf", "savgol_response.pdf")
 META = {
@@ -21,7 +22,9 @@ META = {
     "Producer": "soaring.analysis",
     "CreationDate": None,
 }
-BLUE, ORANGE, GREY = "#3477A8", "#B5482A", "#77818A"
+BLUE = ILLUSTRATION_COLORS["primary"]
+ORANGE = ILLUSTRATION_COLORS["secondary"]
+GREY = ILLUSTRATION_COLORS["reference"]
 
 
 def main() -> int:

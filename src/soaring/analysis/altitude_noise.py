@@ -17,6 +17,12 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
+from soaring.reporting.style import (
+    CHANNEL_COLORS,
+    DISCIPLINE_COLORS,
+    ILLUSTRATION_COLORS,
+)
+
 from .igc import (
     baro_present_fraction,
     gnss_present_fraction,
@@ -91,7 +97,8 @@ def proportion_ci(k: int, n: int, *, confidence: float = 0.95) -> tuple[float, f
 
     Returns:
         Estimate and z*sqrt(p_hat*(1-p_hat)/n) half-width. For n=0, returns
-        (0, NaN); endpoint estimates give zero width under this approximation."""
+        (0, NaN); endpoint estimates give zero width under this approximation.
+    """
     if n == 0:
         return 0.0, float("nan")
     p_hat = k / n
@@ -156,7 +163,8 @@ def _welch(z: np.ndarray, fs: float) -> tuple[np.ndarray, np.ndarray]:
     """Welch PSD after subtracting each window's fitted linear trend.
 
     Detrending suppresses slow variation but does not remove every climb shape or
-    separate physical dynamics from sensor noise."""
+    separate physical dynamics from sensor noise.
+    """
     from scipy.signal import welch
 
     nperseg = min(NPERSEG, len(z))
@@ -666,8 +674,11 @@ def render_altitude_noise_figure(acc: _Accumulator, disciplines: list[str]) -> F
     """
     import matplotlib.pyplot as plt
 
-    ch_color = {"baro": "#3477a8", "gnss": "#b5482a"}
-    diff_color = "#4e8a5b"  # distinct from both baro (blue) and gnss (red)
+    ch_color = {
+        "baro": CHANNEL_COLORS["vertical_baro"],
+        "gnss": CHANNEL_COLORS["vertical_gnss"],
+    }
+    diff_color = ILLUSTRATION_COLORS["reference"]  # their difference, not a channel
     # Use the same 30-minute interval for the raw channels and their difference.
     # Spectra are a separate diagnostic of their frequency content.
     window_s = 1800.0
@@ -741,13 +752,10 @@ def render_altitude_noise_figure(acc: _Accumulator, disciplines: list[str]) -> F
     ax.set_ylabel(r"PSD [m$^2$/Hz]")
     ax.set_title("(c) Paired altitude spectra")
     ax.legend(fontsize=8)
-    ax.grid(alpha=0.3, which="both")
+    ax.grid(visible=True, which="both", color=".9", lw=0.5)
 
     # (d) GNSS-presence distribution near the admission cutoff -------------------
-    # Discipline colours matching figures/preproc.py's _DISC_COLOR, kept in sync by
-    # comment rather than import: that module imports soaring.analysis.census, which
-    # imports this one, so the reverse import would cycle.
-    disc_color = {"paragliders": "#3477a8", "hang gliders": "#b5482a"}
+    disc_color = DISCIPLINE_COLORS
     ax = axd["d"]
     # Zoomed to [0.80, 1.0], not the full [0, 1] population: presence is bimodal (see
     # module docstring), so the flights with essentially no GNSS at all -- already

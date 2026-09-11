@@ -22,6 +22,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from soaring.reporting.style import DISCIPLINE_COLORS
+
 from . import data, plotting
 from .widgets.flight_picker import FlightPicker
 from .widgets.map_view import MapView
@@ -328,7 +330,11 @@ class MainWindow(QMainWindow):
                 color_by = None
                 group_by = "segment_id"
 
-        color = self._discipline.color if self._discipline is not None else "#3477a8"
+        color = (
+            self._discipline.color
+            if self._discipline is not None
+            else DISCIPLINE_COLORS["paragliders"]
+        )
         plotting.plot_trajectory(
             ax,
             raw=raw_table,

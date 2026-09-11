@@ -115,7 +115,39 @@
 \definecolor{figblue}{HTML}{3477A8}
 \definecolor{figred}{HTML}{B5482A}
 \definecolor{figgreen}{HTML}{4E8A5B}
-\definecolor{phasesearch}{HTML}{C98A1E}
+% Flight-phase colours, shared with PHASE_COLORS in src/soaring/reporting/style.py.
+% They are deliberately not figblue/figred: blue and terracotta mean paraglider and
+% hang glider throughout, and a phase is a different variable.
+\definecolor{phasetransition}{HTML}{2E7D8A}
+\definecolor{phasesearch}{HTML}{A9629E}
+\definecolor{phaseclimb}{HTML}{4E8A5B}
+
+% ---- Diagram typography, shared with the plotted figures --------------------
+% The measured figures are drawn by Matplotlib in DejaVu Sans at 9pt on a 6.1-inch
+% canvas (src/soaring/reporting/style.py), which is this document's text width, so
+% they print at that size. Loading DejaVuSans redefines only the sans family: the
+% body text stays Latin Modern, while \figfont switches a hand-drawn schematic to
+% the plotting face, mathematics included. The styles below carry the rest of what
+% those figures share -- hairline axes, pale grid, grey annotation, left-set panel
+% titles -- so a schematic and a measurement look like one set of figures.
+\usepackage[scaled=0.90]{DejaVuSans}
+\usepackage{sansmath}
+\newcommand{\figfont}{\sffamily\sansmath}
+\tikzset{
+  schematic/.style={
+    >=Latex,
+    line width=0.9pt,
+    font=\small\figfont,
+    every node/.append style={font=\small\figfont},
+  },
+  fig axis/.style={draw=black!55, line width=0.6pt},
+  fig rule/.style={draw=black!35, line width=0.5pt},
+  fig grid/.style={draw=black!14, line width=0.4pt},
+  fig tick/.style={font=\footnotesize\figfont, text=black!55},
+  fig note/.style={font=\footnotesize\figfont, text=black!55},
+  fig label/.style={font=\small\figfont},
+  panel title/.style={font=\small\figfont, anchor=west, inner sep=0pt},
+}
 
 % ---- Revision markup (July 2026 review pass on main_revision.pdf). Two channels:
 % ----   \rev{...}  (blue)   -- text added or rewritten in response to a reviewer annotation;

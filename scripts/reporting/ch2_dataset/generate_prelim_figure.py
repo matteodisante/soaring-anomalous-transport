@@ -441,7 +441,7 @@ def draw_maps(loaded: dict) -> object:
         cells.lon,
         cells.lat,
         s=3 + 14 * np.log10(cells.n + 1),
-        c="#B5482A",
+        c="#5A5A5A",
         alpha=0.75,
         linewidths=0,
         zorder=2,

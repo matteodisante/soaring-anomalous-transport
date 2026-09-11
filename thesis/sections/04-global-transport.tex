@@ -379,24 +379,40 @@ law. Their effects cannot be removed by averaging the individual quantiles.
 
 \begin{figure}[tb]
  \centering
- \begin{tikzpicture}[x=1cm,y=1cm,font=\small,>=Latex]
-  \foreach \x/\title in {0/Short lag,6/Long lag}{
-    \draw[->,black!65] (\x,0)--(\x+4.6,0);
-    \draw[->,black!65] (\x,0)--(\x,3.15);
-    \node[above] at (\x+2.2,3.3) {\title};
-    \foreach \v in {1,4}{\draw (\x+\v,.05)--(\x+\v,-.05) node[below] {$\v$};}
-    \draw[densely dashed,black!40] (\x,.7)--(\x+4.4,.7);
-    \draw[densely dashed,black!40] (\x,2.52)--(\x+4.4,2.52);
-    \node[below] at (\x+2.2,-.5) {$R/\tau$ (m\,s$^{-1}$)};
+ \begin{tikzpicture}[schematic]
+  % Two empirical CDFs of R/tau, drawn on the same axes so the quantile levels
+  % can be read across. x: R/tau in m/s (0 to 5.4); y: cumulative probability.
+  \foreach \ox/\pt in {0/{(a) Short lag}, 7.4/{(b) Long lag}} {
+    \begin{scope}[shift={(\ox,0)}, x=1.11cm, y=4.4cm]
+      \node[panel title] at (0,1.22) {\pt};
+      \draw[fig grid] (0,0.25) -- (5.4,0.25);
+      \draw[fig grid] (0,0.90) -- (5.4,0.90);
+      \draw[fig axis] (0,0) rectangle (5.4,1.13);
+      \foreach \x in {1,4} {
+        \draw[fig axis] (\x,0) -- (\x,-0.022);
+        \node[fig tick, anchor=north, inner sep=3pt] at (\x,-0.022) {$\x$};
+      }
+      \node[fig label, anchor=north] at (2.7,-0.11) {$R/\tau$ [m\,s$^{-1}$]};
+    \end{scope}
   }
-  \node[left] at (0,.7) {$0.25$};
-  \node[left] at (0,2.52) {$0.90$};
-  \node[left] at (0,2.8) {$1$};
-  \node[rotate=90] at (-1.35,1.5) {Cumulative probability};
-  \draw[figblue,thick] (0,0)--(1,0)--(1,2.24)--(4,2.24)--(4,2.8)--(4.4,2.8);
-  \draw[figred,thick] (6,0)--(7,0)--(7,2.8)--(10.4,2.8);
-  \node[below,font=\footnotesize] at (2.2,-1.0) {$Q_{.25}/\tau=1$, $Q_{.90}/\tau=4$};
-  \node[below,font=\footnotesize] at (8.2,-1.0) {$Q_{.25}/\tau=Q_{.90}/\tau=1$};
+  % y ticks and axis label, on the left-hand panel only
+  \begin{scope}[x=1.11cm, y=4.4cm]
+    \foreach \y/\lb in {0/0, 0.25/0.25, 0.90/0.90, 1.00/1.00} {
+      \draw[fig axis] (0,\y) -- (-0.11,\y);
+      \node[fig tick, anchor=east, inner sep=3pt] at (-0.11,\y) {\lb};
+    }
+    \node[fig label, rotate=90, anchor=south] at (-0.78,0.565) {Cumulative probability};
+    % (a) four fast flights in five: the 0.90 quantile sits at 4 m/s
+    \draw[figblue, line width=1.2pt] (0,0) -- (1,0) -- (1,0.80) -- (4,0.80)
+      -- (4,1.00) -- (5.4,1.00);
+  \end{scope}
+  \begin{scope}[shift={(7.4,0)}, x=1.11cm, y=4.4cm]
+    \foreach \y in {0, 0.25, 0.90, 1.00} \draw[fig axis] (0,\y) -- (-0.11,\y);
+    % (b) the fast flights supply no window at all: both quantiles sit at 1 m/s
+    \draw[figred, line width=1.2pt] (0,0) -- (1,0) -- (1,1.00) -- (5.4,1.00);
+  \end{scope}
+  \node[fig note] at (3.0,-1.55) {$Q_{0.25}/\tau=1$, $Q_{0.90}/\tau=4$};
+  \node[fig note] at (10.4,-1.55) {$Q_{0.25}/\tau=Q_{0.90}/\tau=1$};
  \end{tikzpicture}
  \caption{A sampling effect can imitate different quantile growth rates. Consider two
  straight flights at \SI{1}{\metre\per\second} lasting \SI{20000}{\second} each and two
@@ -707,8 +723,9 @@ cause.
  \includegraphics[width=\linewidth]{generated/kinematic_isotropy_terrain_level}%
  }{\fbox{\parbox{.8\linewidth}{Equipment comparisons await the complete rebuild.}}}
  \caption{Paraglider second-moment ratios within each take-off region for two
- equipment-based experience groups: beginners (EN A/B, blue) and experts
- (EN C/D/CCC, terracotta). These names refer to the experience proxy defined in the text.
+ equipment-based experience groups: beginners (EN A/B, violet) and experts
+ (EN C/D/CCC, ochre). Blue and terracotta are reserved for the two disciplines
+ throughout, so an equipment split never wears them. These names refer to the experience proxy defined in the text.
  Tandem, non-certified and unclassified records are excluded from
  this contrast. Lines, pointwise bootstrap bands and coverage minima follow
  Figure~\ref{fig:kinematic-isotropy-terrain}; panel limits follow the observed range.}

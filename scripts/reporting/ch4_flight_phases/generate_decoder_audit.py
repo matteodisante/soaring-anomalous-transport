@@ -51,9 +51,17 @@ from soaring.analysis.segmentation.model import (  # noqa: E402
 )
 from soaring.analysis.segmentation.pipeline import _phase_points  # noqa: E402
 from soaring.reporting import DISCIPLINES, tex_int  # noqa: E402
-from soaring.reporting.style import PHASE_COLORS
+from soaring.reporting.style import (
+    PHASE_COLORS,
+    STACK_GREYS,
+    TRACE_COLOR,
+    paper_style,
+)
 
 PALETTE = PHASE_COLORS
+
+# The chapter's figures share the house style with the measured ones.
+paper_style()
 
 
 def current_artifact(legacy: HMMArtifact, config) -> HMMArtifact:
@@ -110,7 +118,7 @@ def _ordered_matrix(artifact: HMMArtifact, *, fitted: bool) -> np.ndarray:
 def _transition_figure(artifacts: dict[str, HMMArtifact], output: Path) -> None:
     import matplotlib.pyplot as plt
 
-    with plt.rc_context({"font.size": 10, "pdf.fonttype": 42}):
+    with plt.rc_context({"pdf.fonttype": 42}):
         figure, axes = plt.subplots(2, 2, figsize=(6.1, 5.1), constrained_layout=True)
         for row, (discipline, artifact) in enumerate(artifacts.items()):
             for col, fitted in enumerate((True, False)):
@@ -126,7 +134,7 @@ def _transition_figure(artifacts: dict[str, HMMArtifact], output: Path) -> None:
                             ha="center",
                             va="center",
                             color="white" if matrix[i, j] > 0.65 else "black",
-                            fontsize=10,
+                            fontsize=8.5,
                         )
                 axis.set(
                     xticks=range(3),
@@ -137,7 +145,7 @@ def _transition_figure(artifacts: dict[str, HMMArtifact], output: Path) -> None:
                     ylabel="Current phase",
                 )
                 title = "Fitted matrix" if fitted else "Current decoding matrix"
-                axis.set_title(f"{discipline.capitalize()}\n{title}", fontsize=11)
+                axis.set_title(f"{discipline.capitalize()}: {title.lower()}")
         figure.savefig(output, metadata={"CreationDate": None})
         plt.close(figure)
 
@@ -145,13 +153,15 @@ def _transition_figure(artifacts: dict[str, HMMArtifact], output: Path) -> None:
 def _coverage_figure(summaries: dict[str, dict], output: Path) -> None:
     import matplotlib.pyplot as plt
 
+    # Four parts of one excluded total, so a ramp rather than four hues: the bar
+    # is a decomposition, and the rows beside it are already the two disciplines.
     categories = [
-        ("quality_masked", "Reconstructed altitude / derivative edge", "#756BB1"),
-        ("skipped_native_cadence", "Native cadence > 10 s", "#D7A445"),
-        ("feature_edge", "Incomplete feature window", "#3477A8"),
-        ("outside_decision_cells", "Tail outside decision cells", "#777777"),
+        ("quality_masked", "Reconstructed altitude / derivative edge", STACK_GREYS[0]),
+        ("skipped_native_cadence", "Native cadence > 10 s", STACK_GREYS[1]),
+        ("feature_edge", "Incomplete feature window", STACK_GREYS[2]),
+        ("outside_decision_cells", "Tail outside decision cells", STACK_GREYS[3]),
     ]
-    with plt.rc_context({"font.size": 10, "pdf.fonttype": 42}):
+    with plt.rc_context({"pdf.fonttype": 42}):
         figure, axis = plt.subplots(figsize=(6.1, 2.6))
         figure.subplots_adjust(left=0.2, right=0.97, top=0.92, bottom=0.40)
         left = np.zeros(len(summaries))
@@ -176,11 +186,12 @@ def _coverage_figure(summaries: dict[str, dict], output: Path) -> None:
         axis.set(
             yticks=range(len(summaries)),
             yticklabels=[s.capitalize() for s in summaries],
-            xlabel="Unclassified time / all retained cleaned duration (%)",
+            xlabel="Unclassified time / all retained cleaned duration [%]",
             xlim=(0, max(left) + 1.2),
         )
         axis.invert_yaxis()
-        axis.spines[["top", "right"]].set_visible(False)
+        axis.grid(visible=True, axis="x", which="major", color=".9", lw=0.5)
+        axis.set_axisbelow(True)
         figure.legend(loc="lower center", ncol=2, frameon=False, fontsize=8.5)
         figure.savefig(output, metadata={"CreationDate": None})
         plt.close(figure)
@@ -201,7 +212,7 @@ def _ablation_figure(
     origin = float(points.t.iloc[0])
     keep = (points.t >= origin + 1500) & (points.t <= origin + 1980)
     time = (points.loc[keep, "t"].to_numpy() - origin) / 60
-    with plt.rc_context({"font.size": 10, "pdf.fonttype": 42}):
+    with plt.rc_context({"pdf.fonttype": 42}):
         figure, axes = plt.subplots(
             5,
             1,
@@ -214,7 +225,7 @@ def _ablation_figure(
         )
         axes[0].plot(time, points.loc[keep, "z"], color="#333333")
         axes[0].set_ylabel("Altitude\n(m)")
-        axes[1].plot(time, points.loc[keep, "mean_v_z"], color="#4E8A5B")
+        axes[1].plot(time, points.loc[keep, "mean_v_z"], color=TRACE_COLOR)
         axes[1].axhline(0, color=".6", linestyle="--", linewidth=0.8)
         axes[1].set_ylabel("Mean vertical\nspeed (m/s)")
         for axis, (name, frame) in zip(axes[2:], decoded.items(), strict=True):

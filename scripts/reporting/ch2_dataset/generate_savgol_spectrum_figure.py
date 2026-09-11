@@ -45,6 +45,7 @@ from soaring.reporting import (  # noqa: E402
     unreachable_reason,
     write_macros,
 )
+from soaring.reporting.style import CHANNEL_COLORS  # noqa: E402
 
 _PDF_METADATA = {
     "Creator": "soaring.analysis",
@@ -58,11 +59,8 @@ _CHANNEL_LABEL = {
     "vertical_baro": "barometric altitude",
     "vertical_gnss": "GNSS altitude",
 }
-_CHANNEL_COLOR = {
-    "horizontal": "#6A3D9A",
-    "vertical_baro": "#3477A8",
-    "vertical_gnss": "#B5482A",
-}
+# The two altitude sources and the horizontal channel; see style.CHANNEL_COLORS.
+_CHANNEL_COLOR = CHANNEL_COLORS
 _CHANNEL_TAG = {
     "horizontal": "Horiz",
     "vertical_baro": "Baro",

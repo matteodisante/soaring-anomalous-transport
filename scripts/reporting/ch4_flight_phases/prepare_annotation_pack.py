@@ -24,6 +24,10 @@ if _SRC not in sys.path:
 from soaring.analysis.segmentation.features import FEATURE_COLUMNS  # noqa: E402
 from soaring.analysis.segmentation.pack import write_pack_provenance  # noqa: E402
 from soaring.reporting import DISCIPLINES  # noqa: E402
+from soaring.reporting.style import (  # noqa: E402
+    ILLUSTRATION_COLORS,
+    TRACE_COLOR,
+)
 
 PACK_COLUMNS = [
     "candidate_id",
@@ -270,10 +274,10 @@ def _plot_page(points: pd.DataFrame, row: pd.Series, pdf) -> None:
     time = points["t"]
     axes[0, 0].plot(points["E"], points["N"], color="#303030", linewidth=0.9)
     axes[0, 0].scatter(
-        points["E"].iloc[0], points["N"].iloc[0], color="#4E8A5B", s=25, label="start"
+        points["E"].iloc[0], points["N"].iloc[0], color=ILLUSTRATION_COLORS["primary"], s=25, label="start"
     )
     axes[0, 0].scatter(
-        points["E"].iloc[-1], points["N"].iloc[-1], color="#C98A1E", s=25, label="end"
+        points["E"].iloc[-1], points["N"].iloc[-1], color=ILLUSTRATION_COLORS["secondary"], s=25, label="end"
     )
     axes[0, 0].set(
         xlabel="east (m)", ylabel="north (m)", aspect="equal", title="Plan view"
@@ -283,16 +287,16 @@ def _plot_page(points: pd.DataFrame, row: pd.Series, pdf) -> None:
     axes[0, 1].set(
         xlabel="processed time t (s)", ylabel="altitude (m)", title="Altitude"
     )
-    axes[1, 0].plot(time, points["mean_v_z"], color="#4E8A5B")
+    axes[1, 0].plot(time, points["mean_v_z"], color=TRACE_COLOR)
     axes[1, 0].axhline(0.0, color="black", linewidth=0.6)
     axes[1, 0].set(
         xlabel="t (s)", ylabel=r"$\bar v_z$ (m s$^{-1}$)", title="Vertical speed"
     )
-    axes[1, 1].plot(time, points["mean_v_h"], color="#3477A8")
+    axes[1, 1].plot(time, points["mean_v_h"], color=TRACE_COLOR)
     axes[1, 1].set(
         xlabel="t (s)", ylabel=r"$\bar v_h$ (m s$^{-1}$)", title="Horizontal speed"
     )
-    axes[2, 0].plot(time, np.degrees(points["mean_abs_turn_rate"]), color="#C98A1E")
+    axes[2, 0].plot(time, np.degrees(points["mean_abs_turn_rate"]), color=TRACE_COLOR)
     axes[2, 0].set(
         xlabel="t (s)", ylabel="absolute turn rate (deg/s)", title="Turning intensity"
     )

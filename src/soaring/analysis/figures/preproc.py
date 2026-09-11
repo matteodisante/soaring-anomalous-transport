@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
-from soaring.reporting.style import DISCIPLINE_COLORS, paper_style
+from soaring.reporting.style import DISCIPLINE_COLORS, SAILPLANE_COLOR, paper_style
 
 from ..census import retention_curve
 from ..preproc.resample import split_bound_s
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
         SamplingThresholds,
     )
 
-_DISC_COLOR = {**DISCIPLINE_COLORS, "sailplanes": "#4E8A5B"}
+_DISC_COLOR = {**DISCIPLINE_COLORS, "sailplanes": SAILPLANE_COLOR}
 
 
 def make_flightlevel_diagnostics_figure(
@@ -107,34 +107,34 @@ def make_flightlevel_diagnostics_figure(
                 edges,
                 color=color,
                 lw=1.5,
-                label=disc,
+                label=disc.capitalize(),
             )
         axes[1, 0].plot(
             dur_grid,
             100.0 * retention_curve(dur_h * 60.0, dur_grid)[1],
             color=color,
             lw=1.6,
-            label=disc,
+            label=disc.capitalize(),
         )
         axes[1, 1].plot(
             path_grid,
             100.0 * retention_curve(path, path_grid)[1],
             color=color,
             lw=1.6,
-            label=disc,
+            label=disc.capitalize(),
         )
         axes[1, 2].plot(
             alt_grid,
             100.0 * retention_curve(alt_range, alt_grid)[1],
             color=color,
             lw=1.6,
-            label=disc,
+            label=disc.capitalize(),
         )
 
     axes[0, 0].axvline(flight_level.min_duration_s / 3600.0, **line_kw)
     axes[0, 0].set(
-        xlabel="recorded flight duration [h]",
-        ylabel="density",
+        xlabel="Recorded flight duration [h]",
+        ylabel="Density",
         title="(a) Duration",
         xlim=(0, 12),
     )
@@ -142,45 +142,45 @@ def make_flightlevel_diagnostics_figure(
 
     axes[0, 1].axvline(flight_level.min_path_km, **line_kw)
     axes[0, 1].set(
-        xlabel="flown path length [km]",
-        ylabel="density",
+        xlabel="Flown path length [km]",
+        ylabel="Density",
         title="(c) Path length",
         xscale="log",
     )
 
     axes[0, 2].axvline(flight_level.min_alt_range_m, **line_kw)
     axes[0, 2].set(
-        xlabel="whole-flight altitude range [m]",
-        ylabel="density",
+        xlabel="Whole-flight altitude range [m]",
+        ylabel="Density",
         title="(e) Altitude range",
         xscale="log",
     )
 
     axes[1, 0].axvline(flight_level.min_duration_s / 60.0, **line_kw)
     axes[1, 0].set(
-        xlabel=r"minimum duration $T_{\min}$ [min]",
-        ylabel="flights retained [%]",
+        xlabel=r"Minimum duration $T_{\min}$ [min]",
+        ylabel="Flights retained [%]",
         title="(b) Duration criterion",
     )
-    axes[1, 0].grid(alpha=0.3)
+    axes[1, 0].grid(visible=True, which="major", color=".9", lw=0.5)
 
     axes[1, 1].axvline(flight_level.min_path_km, **line_kw)
     axes[1, 1].set(
-        xlabel="minimum path length [km]",
-        ylabel="flights retained [%]",
+        xlabel="Minimum path length [km]",
+        ylabel="Flights retained [%]",
         title="(d) Path criterion",
         xscale="log",
     )
-    axes[1, 1].grid(alpha=0.3)
+    axes[1, 1].grid(visible=True, which="major", color=".9", lw=0.5)
 
     axes[1, 2].axvline(flight_level.min_alt_range_m, **line_kw)
     axes[1, 2].set(
-        xlabel="minimum altitude range [m]",
-        ylabel="flights retained [%]",
+        xlabel="Minimum altitude range [m]",
+        ylabel="Flights retained [%]",
         title="(f) Altitude-range criterion",
         xscale="log",
     )
-    axes[1, 2].grid(alpha=0.3)
+    axes[1, 2].grid(visible=True, which="major", color=".9", lw=0.5)
 
     if fig.get_layout_engine() is None:
         fig.tight_layout()
@@ -281,27 +281,27 @@ def make_gap_diagnostics_figure(
                 edges,
                 color=color,
                 lw=1.5,
-                label=disc,
+                label=disc.capitalize(),
             )
         axes[1, 0].plot(
             gap_grid,
             100.0 * retention_curve(gaps[disc], gap_grid, mode="at_most")[1],
             color=color,
             lw=1.6,
-            label=disc,
+            label=disc.capitalize(),
         )
         axes[1, 1].plot(
             miss_grid,
             100.0 * retention_curve(misses[disc], miss_grid, mode="at_most")[1],
             color=color,
             lw=1.6,
-            label=disc,
+            label=disc.capitalize(),
         )
 
     axes[0, 0].axvline(1.0, **line_kw)
     axes[0, 0].set(
-        xlabel=r"largest gap / this flight's $g_{\max}$",
-        ylabel="density",
+        xlabel=r"Largest gap / this flight's $g_{\max}$",
+        ylabel="Density",
         title="(a) Largest gap",
         xlim=(0.0, gap_hi),
     )
@@ -310,7 +310,7 @@ def make_gap_diagnostics_figure(
     axes[0, 1].axvline(sampling.max_missing_fraction, **line_kw)
     axes[0, 1].set(
         xlabel="Missing fraction",
-        ylabel="density",
+        ylabel="Density",
         title="(b) Missing fraction",
         xlim=(0.0, miss_hi),
     )
@@ -318,19 +318,19 @@ def make_gap_diagnostics_figure(
     axes[1, 0].axvline(1.0, **line_kw)
     axes[1, 0].set(
         xlabel=r"Gap threshold / $g_{\max}$",
-        ylabel="flights retained [%]",
+        ylabel="Flights retained [%]",
         title="(c) Gap criterion",
         xscale="log",
     )
-    axes[1, 0].grid(alpha=0.3)
+    axes[1, 0].grid(visible=True, which="major", color=".9", lw=0.5)
 
     axes[1, 1].axvline(sampling.max_missing_fraction, **line_kw)
     axes[1, 1].set(
-        xlabel="cut on missing fraction",
-        ylabel="flights retained [%]",
+        xlabel="Cut on missing fraction",
+        ylabel="Flights retained [%]",
         title="(d) Missing-fraction criterion",
     )
-    axes[1, 1].grid(alpha=0.3)
+    axes[1, 1].grid(visible=True, which="major", color=".9", lw=0.5)
 
     if fig.get_layout_engine() is None:
         fig.tight_layout()
@@ -362,7 +362,7 @@ def make_sampling_figure(scans: dict[str, pd.DataFrame]) -> Figure:
 
     paper_style()
 
-    fig, ax = plt.subplots(figsize=(3.8, 2.7))
+    fig, ax = plt.subplots(figsize=(6.1, 3.0), layout="constrained")
     upper = 11  # aggregates the long, thin tail beyond it (up to a few tens of
     # seconds for a handful of flights) into one bin, rather than stretching the axis
     bins = np.arange(0.5, upper + 1.5, 1.0)
@@ -375,18 +375,16 @@ def make_sampling_figure(scans: dict[str, pd.DataFrame]) -> Figure:
             bins=bins,  # type: ignore[arg-type]
             density=True,
             histtype="step",
-            lw=1.5,
+            lw=1.2,
             color=_DISC_COLOR.get(disc, "gray"),
-            label=disc,
+            label=disc.capitalize(),
         )
     ax.set_xticks(range(1, upper + 1))
     ax.set_xticklabels([str(i) for i in range(1, upper)] + [f"$\\geq${upper}"])
-    ax.set_xlabel(r"native sampling interval $\Delta t$ [s]")
-    ax.set_ylabel("fraction of flights")
-    ax.set_title("Native sampling interval, per flight")
-    ax.legend(fontsize=8)
-    if fig.get_layout_engine() is None:
-        fig.tight_layout()
+    ax.set_xlabel(r"Native sampling interval $\Delta t$ [s]")
+    ax.set_ylabel("Fraction of flights")
+    ax.legend(loc="best")
+    ax.grid(visible=True, which="major", color=".9", lw=0.5)
     return fig
 
 
@@ -514,11 +512,11 @@ def make_fixlevel_diagnostics_figure(
                     histtype="step",
                     lw=1.5,
                     color=_DISC_COLOR.get(disc, "gray"),
-                    label=disc,
+                    label=disc.capitalize(),
                 )
         ax.set(
             xlabel=xlabel,
-            ylabel="density",
+            ylabel="Density",
             title=title,
             yscale="log",
             xscale=xscale,
@@ -675,7 +673,7 @@ def make_fixlevel_histogram_figure(
                 h["edges"],
                 color=_DISC_COLOR.get(disc, ".5"),
                 lw=1.3,
-                label=disc,
+                label=disc.capitalize(),
             )
             if key == "v_xy":
                 ax.axvline(
@@ -704,7 +702,7 @@ def make_fixlevel_histogram_figure(
                 fontsize=8,
                 color=".25",
             )
-        ax.set(xlabel=xlabel, ylabel="density", title=title, yscale="log")
+        ax.set(xlabel=xlabel, ylabel="Density", title=title, yscale="log")
         ax.set_xlim(h["edges"][0], h["edges"][-1])
         ax.tick_params(labelsize=8)
         ax.xaxis.label.set_size(9)
