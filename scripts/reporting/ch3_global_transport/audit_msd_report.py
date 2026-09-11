@@ -114,10 +114,7 @@ def local_slope(t: np.ndarray, y: np.ndarray, half: float = SLOPE_HALF_DECADES):
     out = np.full(t.size, np.nan)
     for i in range(t.size):
         window = (
-            (t >= t[i] / 10**half)
-            & (t <= t[i] * 10**half)
-            & np.isfinite(y)
-            & (y > 0)
+            (t >= t[i] / 10**half) & (t <= t[i] * 10**half) & np.isfinite(y) & (y > 0)
         )
         if window.sum() < 3:
             continue
@@ -179,8 +176,13 @@ def residual_runs(t: np.ndarray, y: np.ndarray) -> tuple[int, float, float]:
     return runs, float(expected), float(z)
 
 
-def residual_against_noise(y: np.ndarray, low: np.ndarray, high: np.ndarray,
-                           counts: np.ndarray, residual_dex: float) -> float:
+def residual_against_noise(
+    y: np.ndarray,
+    low: np.ndarray,
+    high: np.ndarray,
+    counts: np.ndarray,
+    residual_dex: float,
+) -> float:
     """How many times the per-lag sampling error the residual is.
 
     The non-circular version of the question the runs test was asked. If the departure from
@@ -254,8 +256,15 @@ def audit(discipline: str, audit_dir: Path) -> dict[str, str]:
     )
 
     ea_range = coverage_limited_range(
-        MSDResult(t=ea_t, msd=ea_msd, n_flights=ea_n.astype(int), sem=None,
-                  p10=None, p50=None, p90=None),
+        MSDResult(
+            t=ea_t,
+            msd=ea_msd,
+            n_flights=ea_n.astype(int),
+            sem=None,
+            p10=None,
+            p50=None,
+            p90=None,
+        ),
         t_min_s=FIT_MIN_S,
     )
     ta_range = (TA_FIT_MIN_S, TA_FIT_MAX_S)
@@ -304,8 +313,10 @@ def audit(discipline: str, audit_dir: Path) -> dict[str, str]:
     covered = np.isfinite(squared)
     with np.errstate(invalid="ignore"):
         mean_speed_sq = np.array(
-            [speed_sq[covered[:, i]].mean() if covered[:, i].any() else np.nan
-             for i in range(lags.size)]
+            [
+                speed_sq[covered[:, i]].mean() if covered[:, i].any() else np.nan
+                for i in range(lags.size)
+            ]
         )
     ballistic = msd / (mean_speed_sq * lags**2)
     put("BallisticRmsMs", f"{np.sqrt(np.nanmean(speed_sq)):.2f}")
@@ -321,7 +332,9 @@ def audit(discipline: str, audit_dir: Path) -> dict[str, str]:
         member = np.isclose(flights.native_dt_s.to_numpy(), step)
         if member.sum() < 300:
             continue
-        cadence_slopes.append(local_slope(lags, np.nanmean(squared[member], 0))[probe_idx])
+        cadence_slopes.append(
+            local_slope(lags, np.nanmean(squared[member], 0))[probe_idx]
+        )
     cadence = np.vstack(cadence_slopes)
     put("CadenceCohorts", str(cadence.shape[0]))
     put("CadenceSpread", f"{np.nanmax(cadence.max(0) - cadence.min(0)):.2f}")
@@ -332,7 +345,13 @@ def audit(discipline: str, audit_dir: Path) -> dict[str, str]:
         if member.sum() < 300:
             continue
         slopes = local_slope(lags, np.nanmean(squared[member], 0))
-        duration_slopes.append([slopes[i] for i, p in zip(probe_idx, probes, strict=True) if p <= threshold])
+        duration_slopes.append(
+            [
+                slopes[i]
+                for i, p in zip(probe_idx, probes, strict=True)
+                if p <= threshold
+            ]
+        )
     common = min(len(s) for s in duration_slopes)
     duration = np.vstack([s[:common] for s in duration_slopes])
     put("DurationSpread", f"{np.nanmax(duration.max(0) - duration.min(0)):.2f}")
@@ -413,9 +432,12 @@ def audit(discipline: str, audit_dir: Path) -> dict[str, str]:
 
     fingerprint = (
         kept.lat0.round(4).astype(str)
-        + "|" + kept.lon0.round(4).astype(str)
-        + "|" + kept.duration_flight_s.round(0).astype(str)
-        + "|" + kept.path_km.round(2).astype(str)
+        + "|"
+        + kept.lon0.round(4).astype(str)
+        + "|"
+        + kept.duration_flight_s.round(0).astype(str)
+        + "|"
+        + kept.path_km.round(2).astype(str)
     )
     duplicated = fingerprint.duplicated(keep=False)
     put("DupFlights", str(int(duplicated.sum())))
@@ -423,8 +445,10 @@ def audit(discipline: str, audit_dir: Path) -> dict[str, str]:
     put("DupPct", f"{100 * duplicated.mean():.3f}")
 
     first_kept = (
-        segments[segments.kept].sort_values(["flight_id", "segment_id"])
-        .groupby("flight_id").first()
+        segments[segments.kept]
+        .sort_values(["flight_id", "segment_id"])
+        .groupby("flight_id")
+        .first()
     )
     put("LateStartPct", f"{100 * (first_kept.t_start > 0).mean():.1f}")
     at_zero = flights.flight_id.map(first_kept.t_start).eq(0).to_numpy()
@@ -457,17 +481,22 @@ def main() -> int:
         print("no audit inputs reachable; audit.tex not written")
         return 1
     refusal = partial_write_refusal(
-        missing, OUT_TEX.name, allow_partial=args.allow_partial,
+        missing,
+        OUT_TEX.name,
+        allow_partial=args.allow_partial,
         reasons=[
-            unreachable_reason(DISCIPLINES[d], "flights_meta.parquet")
-            for d in missing
+            unreachable_reason(DISCIPLINES[d], "flights_meta.parquet") for d in missing
         ],
     )
     if refusal:
         print(refusal)
         return 1
 
-    write_macros(OUT_TEX, macros, generator="scripts/reporting/ch3_global_transport/audit_msd_report.py")
+    write_macros(
+        OUT_TEX,
+        macros,
+        generator="scripts/reporting/ch3_global_transport/audit_msd_report.py",
+    )
     print(f"wrote {OUT_TEX} ({len(macros)} macros)")
     for k, v in macros.items():
         print(f"  {k:42s} {v}")

@@ -19,7 +19,8 @@ import pandas as pd
 #: Table~\ref{tab:aileclass}. ``Biplace`` (tandem) and the two codes Table~\ref{tab:aileclass}
 #: does not itemise (``Open Class certification``, an uncertified competition wing;
 #: ``test en charge seulement``, load-tested only) join ``non homologuée`` in the
-#: table's pooled "tandem / non-certified" row -- none of the four is EN/LTF-certified.
+#: table's pooled "tandem / non-certified" row. None supplies a single-seat EN/LTF
+#: grade in this catalogue field; a tandem designation alone does not rule out certification.
 PARA_CLASS_MAP: dict[str, str] = {
     "A ou 1": "EN A",
     "B ou 1-2": "EN B",
@@ -76,3 +77,25 @@ def canonical_wing_class(discipline: str, raw: pd.Series) -> np.ndarray:
             "PARA_CLASS_MAP / HANG_CLASS_MAP in soaring.reporting.glider_class"
         )
     return stripped.map(class_map).to_numpy()
+
+
+EQUIPMENT_CLASSES = {
+    "EN A/B": ("EN A", "EN B"),
+    "EN C/D/CCC": ("EN C", "EN D", "CCC"),
+}
+EQUIPMENT_LABELS = {"EN A/B": "Beginners", "EN C/D/CCC": "Experts"}
+EQUIPMENT_TAGS = {"EN A/B": "AB", "EN C/D/CCC": "CDCCC"}
+
+
+def equipment_group(wing_class):
+    """Two equipment-based experience proxies, not individual skill measurements.
+
+    A/B forms the beginners group; C/D/CCC forms the experts group. Experienced
+    pilots can use A/B wings, and observed differences also include equipment effects.
+    Tandem, unknown and non-certified catalogue entries receive neither label.
+    """
+    wing_class = np.asarray(wing_class, dtype=object)
+    labels = np.full(wing_class.shape, "", dtype=object)
+    for name, classes in EQUIPMENT_CLASSES.items():
+        labels[np.isin(wing_class, classes)] = name
+    return labels

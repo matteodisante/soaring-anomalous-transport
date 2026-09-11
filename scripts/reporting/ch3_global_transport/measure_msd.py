@@ -1,20 +1,10 @@
 #!/usr/bin/env python3
-r"""One streaming pass computing the ensemble and time-averaged MSD, per discipline.
+r"""Stream the cleaned archive into displacement curves and reusable segment samples.
 
-The traversal every downstream MSD question is built on: the two pooled estimators
-(Sec. 3.1), their east-only and north-only twins (Sec. 3.5), and the fixed-duration
-cohorts that control for the ensemble thinning out with the lag -- all read off the same
-pass over ``fixes.parquet``, because the table is tens of gigabytes and reading it twice to
-ask a second question is the one cost worth avoiding.
-
-Writes ``msd_<discipline>.npz`` into ``--out``: the lag grid, every curve
-(``MSDAccumulator``/``TAMSDAccumulator`` results), and the per-flight or per-segment
-samples the bootstrap needs -- kept, not discarded, since a naive least-squares error
-understates the truth here by about fivefold and the honest one has to be resampled from
-the flights themselves (:func:`soaring.analysis.observables.transport.bootstrap_alpha_error`).
-Kept on disk rather than recomputed is also what makes a change to a fit range, a
-bootstrap count, or a figure's colours cost a reduction (``generate_msd_figure.py``,
-seconds) and not this pass again.
+Writes ``msd_<slug>.npz`` and ``msd_segments_<slug>.parquet`` into ``--out``.
+The segment table identifies each stored TAMSD row and records its cadence, fix count
+and parent flight's total retained duration, allowing duration and equipment controls
+without another traversal of the fix table.
 """
 
 from __future__ import annotations
@@ -24,6 +14,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[3]
 _SRC = str(ROOT / "src")
@@ -38,14 +29,15 @@ from soaring.reporting import DISCIPLINES  # noqa: E402
 # bound of the flight-level filter, geometrically spaced.
 LAG_MIN_S, LAG_MAX_S, N_LAGS = 1.0, 43_200.0, 90
 
-# Fixed-duration cohorts, in seconds: the control on the ensemble thinning out with the
-# lag. All start above the 40 min retention floor, so each is a genuine sub-population
-# and not the whole ensemble under another name, and they climb by roughly a factor of
-# two so that a trend in alpha across them would be visible rather than a scatter.
+# Historical elapsed-span thresholds retained in the measurement file. The current
+# duration report instead uses retained flight duration and identified segment curves;
+# threshold selection does not hold the contributing population fixed at every lag.
 COHORTS_S = (3600.0, 7200.0, 14_400.0)
 
 
-def _dump(container: dict, prefix: str, result, samples: np.ndarray | None = None) -> None:
+def _dump(
+    container: dict, prefix: str, result, samples: np.ndarray | None = None
+) -> None:
     """Flatten one ``MSDResult``, and optionally its stacked samples, into named arrays."""
     container[f"{prefix}_t"] = result.t
     container[f"{prefix}_msd"] = result.msd
@@ -72,7 +64,7 @@ def run(discipline: str, out_dir: Path) -> int:
         print(f"{discipline}: fixes.parquet not reachable, skipping")
         return 1
 
-    lags = log_lag_grid(LAG_MAX_S, LAG_MIN_S, N_LAGS)
+    lags = np.unique(np.r_[log_lag_grid(LAG_MAX_S, LAG_MIN_S, N_LAGS), 10.0, 10000.0])
 
     ensemble = MSDAccumulator(lags)
     time_averaged = TAMSDAccumulator(lags)
@@ -85,21 +77,22 @@ def run(discipline: str, out_dir: Path) -> int:
     ensemble_north = MSDAccumulator(lags)
     ta_east = TAMSDAccumulator(lags)
     ta_north = TAMSDAccumulator(lags)
-    # The fixed-duration cohorts. Only flights lasting at least t contribute to MSD(t), so
-    # the ensemble behind the curve *changes with the lag*, and the flights left at the
-    # long-lag end are the ones that kept going rather than a random sample of the
-    # population. Within one cohort every flight is present at every lag of the range, so
-    # the population is fixed by construction and any remaining growth is motion.
+    # These legacy cohort arrays describe elapsed-span selection. They are retained
+    # as diagnostics; the duration/equipment report uses observed retained duration
+    # and computes its own paired support from the identified segment samples.
     cohorts = {
         threshold: MSDAccumulator(lags, keep_samples=False) for threshold in COHORTS_S
     }
     ta_cohorts = {threshold: TAMSDAccumulator(lags) for threshold in COHORTS_S}
 
+    segment_rows = []
     n_flights = n_segments = 0
     for count, flight in enumerate(
         stream_flights(derived / "fixes.parquet", ["segment_id", "t", "E", "N"]), 1
     ):
         ordered = flight.sort_values("t")
+        segment_bounds = ordered.groupby("segment_id").t.agg(["min", "max"])
+        retained_duration = float((segment_bounds["max"] - segment_bounds["min"]).sum())
         times = ordered["t"].to_numpy()
         east, north = ordered["E"].to_numpy(), ordered["N"].to_numpy()
         ensemble.add(times, east, north)
@@ -120,6 +113,15 @@ def run(discipline: str, out_dir: Path) -> int:
             step = float(np.median(np.diff(seg_times)))
             east_s, north_s = segment["E"].to_numpy(), segment["N"].to_numpy()
             time_averaged.add(east_s, north_s, step)
+            segment_rows.append(
+                {
+                    "flight_id": str(flight.flight_id.iloc[0]),
+                    "segment_id": int(segment.segment_id.iloc[0]),
+                    "n_fixes": len(segment),
+                    "dt_s": step,
+                    "total_retained_duration_s": retained_duration,
+                }
+            )
             zeros_s = np.zeros_like(east_s)
             ta_east.add(east_s, zeros_s, step)
             ta_north.add(zeros_s, north_s, step)
@@ -136,17 +138,17 @@ def run(discipline: str, out_dir: Path) -> int:
         "n_flights": np.array(n_flights),
         "n_segments": np.array(n_segments),
     }
-    # Kept for the bootstrap: an uncertainty on the exponent that resamples flights cannot
-    # be had from the averaged curve, and the least-squares error the fit reports
-    # understates the truth about fivefold.
+    # Preserve individual curves so later comparisons can retain the correct weights.
     _dump(out, "ensemble", ensemble.result(), ensemble.stacked_samples())
     _dump(out, "time_averaged", time_averaged.result(), time_averaged.stacked_samples())
     _dump(out, "ensemble_east", ensemble_east.result(), ensemble_east.stacked_samples())
-    _dump(out, "ensemble_north", ensemble_north.result(), ensemble_north.stacked_samples())
+    _dump(
+        out, "ensemble_north", ensemble_north.result(), ensemble_north.stacked_samples()
+    )
     _dump(out, "ta_east", ta_east.result(), ta_east.stacked_samples())
     _dump(out, "ta_north", ta_north.result(), ta_north.stacked_samples())
-    # Cohorts carry no samples: keep_samples=False above, since the bootstrap is never
-    # asked of them -- only fit_msd_exponent, on the same range as the reference curve.
+    # Export aggregate curves for the historical cohorts, without per-flight or
+    # per-segment cohort samples. Current duration contrasts use the identified rows.
     for threshold, accumulator in cohorts.items():
         _dump(out, f"cohort_{int(threshold)}", accumulator.result())
     for threshold, accumulator in ta_cohorts.items():
@@ -154,7 +156,12 @@ def run(discipline: str, out_dir: Path) -> int:
 
     slug = DISCIPLINES[discipline].slug
     out_dir.mkdir(parents=True, exist_ok=True)
+    if len(segment_rows) != out["time_averaged_samples"].shape[0]:
+        raise ValueError("Segment identities do not match stored TAMSD samples")
     np.savez_compressed(out_dir / f"msd_{slug}.npz", **out)
+    pd.DataFrame(segment_rows).to_parquet(
+        out_dir / f"msd_segments_{slug}.parquet", index=False
+    )
     print(f"{discipline}: {n_flights} flights, {n_segments} segments -> {out_dir}")
     return 0
 

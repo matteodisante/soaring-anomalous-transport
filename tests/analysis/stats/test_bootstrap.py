@@ -14,6 +14,32 @@ from soaring.analysis.stats.bootstrap import (
 )
 
 
+@pytest.mark.parametrize("workers", [1, 3])
+def test_cluster_sums_match_explicit_resampled_flights(monkeypatch, workers):
+    """Unequal groups and missing support must keep the original flight weights."""
+    monkeypatch.setenv("SOARING_MAX_WORKERS", str(workers))
+    curves = np.arange(48, dtype=float).reshape(8, 3, 2) + 1
+    curves[0, 2] = np.nan
+    curves[1:4, 1] = np.nan
+    labels = np.array([4, 4, 4, 4, 9, 9, 15, 20])
+
+    def statistic(mean):
+        return mean[:, 0] / mean[:, 1]
+
+    point, actual = cluster_bootstrap(
+        curves, labels, statistic, n_resamples=31, seed=91
+    )
+    members = [np.flatnonzero(labels == label) for label in np.unique(labels)]
+    rng = np.random.default_rng(91)
+    expected = []
+    for _ in range(31):
+        picked = rng.integers(0, len(members), size=len(members))
+        rows = np.concatenate([members[i] for i in picked])
+        expected.append(statistic(np.nanmean(curves[rows], axis=0)))
+    np.testing.assert_allclose(point, statistic(np.nanmean(curves, axis=0)))
+    np.testing.assert_allclose(actual, expected, rtol=2e-14, equal_nan=True)
+
+
 def _clustered(n_groups, per_group, icc, seed=0):
     rng = np.random.default_rng(seed)
     labels = np.repeat(np.arange(n_groups), per_group)
@@ -48,7 +74,9 @@ def test_clustering_changes_nothing_when_there_is_no_clustering():
     _, per_flight = cluster_bootstrap(
         curves, np.arange(len(values)), lambda c: c[0], n_resamples=300, seed=4
     )
-    _, clustered = cluster_bootstrap(curves, labels, lambda c: c[0], n_resamples=300, seed=4)
+    _, clustered = cluster_bootstrap(
+        curves, labels, lambda c: c[0], n_resamples=300, seed=4
+    )
     assert clustered.std() / per_flight.std() == pytest.approx(1.0, abs=0.35)
 
 
@@ -108,3 +136,12 @@ def test_the_lag_correlation_survives_one_much_noisier_lag():
 
     result = sampling_covariance(curves, np.arange(n_curves), n_resamples=80, seed=7)
     assert result["autocorrelation"] == pytest.approx(rho_true, abs=0.1)
+
+
+def test_cluster_keys_preserve_tuples_and_treat_blank_keys_as_unknown():
+    frame = pd.DataFrame(
+        {"date": ["a|b", "a", "d", "d", "d"], "takeoff": ["c", "b|c", " ", "", "valid"]}
+    )
+    labels = cluster_labels(frame, "day_site")
+    assert len(np.unique(labels)) == 5
+    assert cluster_labels(frame.iloc[:0], "day_site").size == 0

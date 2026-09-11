@@ -1,18 +1,10 @@
-r"""How long a heading survives, read from the velocity channel.
+r"""Finite-record velocity correlation and descriptive power-law slope.
 
-The velocity autocorrelation says how long a heading survives, and it is tied to the
-displacement by Green--Kubo,
-:math:`\mathrm{MSD}(t)=2\int_0^t(t-\tau)\,C(\tau)\,\mathrm{d}\tau`. That relation is used
-here only through its scaling corollary --- :math:`C(\tau)\sim\tau^{-\gamma}` with
-:math:`0<\gamma<1` gives :math:`\mathrm{MSD}(t)\sim t^{2-\gamma}` --- and not through the
-integral, for two reasons that are properties of this archive rather than of the method.
-The integral runs from zero and the correlation is only estimable above the smoothing scale
-of the slowest logger, so its first decade is missing; and the correlation is estimated per
-flight with that flight's own mean velocity removed, which biases every lag downwards by
-roughly the record-mean of :math:`C` and so steepens the tail. Both push the same way:
-:func:`vacf_tail_exponent` returns a :math:`\gamma` that is an upper bound, hence a
-:math:`2-\gamma` that is a **lower** bound on the displacement exponent, and it is used as
-one.
+For a stationary centered velocity with covariance K, the centered displacement obeys
+MSD(t)=2 integral_0^t (t-tau) K(tau) d tau. A normalized correlation C=K/K(0)
+therefore requires the additional factor K(0). A finite-lag fitted slope does not
+establish nonintegrability, an asymptotic exponent, or a one-sided bound: subtracting
+an estimated segment mean introduces finite-record bias whose shape is process dependent.
 """
 
 from __future__ import annotations
@@ -28,23 +20,18 @@ __all__ = [
 def velocity_autocorrelation(
     velocity: np.ndarray, max_lag: int | None = None
 ) -> tuple[np.ndarray, np.ndarray]:
-    """``<v(t) . v(t+tau)>`` by FFT, normalised to 1 at zero lag.
+    """Return the centered vector correlation normalized to one at zero lag.
 
-    The record's own mean velocity is removed first, so what is returned is the correlation
-    of the fluctuation about the flown course and not of the velocity itself. That is the
-    quantity wanted --- a shared course would otherwise hold ``C`` up at every lag --- but it
-    costs a bias: subtracting a mean estimated from the same record pulls every lag down by
-    about the record-mean of ``C``, which matters where ``C`` is small, that is in the tail.
-    The estimate is therefore trustworthy in shape and sign, and steep in its tail; see
-    :func:`vacf_tail_exponent`, which uses it one-sidedly for that reason.
+    The mean is estimated from this record. This removes its constant velocity but
+    introduces finite-record bias, especially at long lags. It neither identifies
+    wind nor guarantees a bound on an underlying correlation exponent.
 
     Args:
-        velocity: ``(n, 2)`` velocity samples on a uniform grid.
-        max_lag: Largest lag to return, in samples; ``n // 4`` by default, beyond which
-            the estimate averages too few pairs to mean anything.
+        velocity: Velocity vectors on a uniform time grid.
+        max_lag: Largest lag in samples, by default one quarter of the record.
 
     Returns:
-        ``(lags, correlation)`` with ``correlation[0] == 1``.
+        Sample lags and their normalized correlations.
     """
     velocity = np.asarray(velocity, dtype=float)
     n = len(velocity)
@@ -71,27 +58,20 @@ def vacf_tail_exponent(
     correlation: np.ndarray,
     fit_range: tuple[float, float] | None = None,
 ) -> tuple[float, float, int]:
-    """``(gamma, alpha_implied, n_lags)`` from a power-law fit to the tail of ``C(tau)``.
+    """Fit a finite-window power law to the positive correlation values.
 
-    Green--Kubo in its scaling form: a correlation decaying as ``tau^-gamma`` with
-    ``0 < gamma < 1`` is non-integrable and sustains a displacement growing as
-    ``t^(2-gamma)``, so the tail of the memory and the exponent of the motion are two
-    readings of one thing. Comparing them is a cross-validation between the velocity
-    channel and the position channel, which the pipeline builds by different routes.
-
-    It is one-sided. Both biases documented in the module docstring steepen the measured
-    tail, so ``gamma`` is an upper bound and ``2 - gamma`` a lower bound on the exponent:
-    the check passes when the displacement exponent is the larger, and fails --- meaning
-    one of the two channels is wrong --- only when it is smaller.
+    Returns ``(gamma, 2-gamma, n_lags)``. The second number is only the algebraic
+    Green--Kubo scaling prediction under stationary velocity and a genuinely
+    asymptotic nonintegrable tail with 0 < gamma < 1. The fit itself establishes
+    neither those assumptions nor an upper or lower bound.
 
     Args:
-        lags: Lags in seconds, ascending.
-        correlation: ``C(tau)``, normalised or not; only its slope in log-log is used.
-        fit_range: ``(low, high)`` in seconds; the whole positive range by default.
+        lags: Separations in seconds.
+        correlation: Correlation at those separations.
+        fit_range: Optional inclusive interval in seconds.
 
     Returns:
-        ``(gamma, 2 - gamma, n_lags)``, or ``(nan, nan, 0)`` if fewer than four lags carry
-        a positive correlation inside the range.
+        The fitted exponent, conditional scaling prediction, and usable lag count.
     """
     lags = np.asarray(lags, dtype=float)
     correlation = np.asarray(correlation, dtype=float)

@@ -1,44 +1,17 @@
-r"""The distribution of the increments, and the exponent read from its bulk.
+r"""Histogram-based increment quantiles for the legacy archive reports.
 
-Every exponent this project has measured so far comes from a *moment*: the mean square of a
-displacement, or of a filtered difference of one. That has cost it twice. A moment is
-sensitive to the tail, where the fewest flights contribute; and the ensemble-averaged
-version of it is sensitive to the common origin, which on this archive turned out to measure
-the geometry of the launch site rather than the motion. The first-passage time was tried as
-an escape and shares the second fault, since it too is measured from take-off.
+A common one-dimensional scale family p(x,tau)=a(tau)^(-1) F(x/a(tau)) implies that
+positive absolute-increment quantiles scale with a(tau). Its fixed probability levels
+can diagnose changes of shape without requiring high moments. Quantiles remain sensitive
+to sampling, finite histogram support and the population mixed at each lag.
 
-What escapes both is the distribution of the **increments** themselves. For a self-similar
-process of exponent :math:`H`,
+East, north and radial increments are kept separate. Different marginal scales alone
+do not imply failed radial scaling: an anisotropic joint self-similar law still gives
+self-similar radial displacement. The two-dimensional density has Jacobian a^(-2),
+whereas a component density and the radial density have Jacobian a^(-1).
 
-.. math::
-
-    P(x,\Delta) = \Delta^{-H} F\!\left(\frac{x}{\Delta^{H}}\right),
-
-so every quantile of :math:`|x|` grows as :math:`\Delta^{H}` and the peak height falls as
-:math:`\Delta^{-H}`. Three things follow, and they are why this module exists.
-
-**An exponent from the bulk.** The median absolute increment is an order statistic, not a
-moment: it is set by the middle of the distribution, where every flight contributes, and a
-heavy tail moves it not at all. Its log--log slope is :math:`H`.
-
-**A test of self-similarity rather than an assumption of it.** The same slope read at the
-25th, 50th, 75th and 90th percentiles must be the *same* slope. If the quantiles march at
-different rates the process is not self-similar and no single :math:`H` describes it,
-whatever a second moment returns. Nothing else in this project can say that.
-
-**The collapse.** Plotting :math:`\Delta^{H}P` against :math:`x/\Delta^{H}` puts every lag
-on one curve if the scaling form holds, and the curve is :math:`F` --- the shape the second
-moment only summarises.
-
-The accumulation is a histogram per lag per component, which is what makes it affordable in
-one streaming pass: the archive is :math:`1.4\times10^{9}` fixes and no quantile of it can
-be taken by sorting. The bins are logarithmic in :math:`|x|`, so their resolution is a fixed
-fraction of the value rather than a fixed number of metres, which is the right thing for a
-quantity that ranges over five decades.
-
-The components are kept apart. Sec. 2.8 measures the archive as anisotropic --- the
-east--west and north--south mean squares differ by about a quarter --- so a propagator pooled
-over both would be a mixture of two scales and its collapse would fail for that reason alone.
+The bounded histogram edges exclude out-of-range samples. The fresh Chapter 3 subset
+uses exact sample quantiles in generate_revision_diagnostics.py instead of these bins.
 """
 
 from __future__ import annotations
@@ -65,14 +38,9 @@ EDGES = np.geomspace(1.0, 1.0e5, 241)
 QUANTILES = (0.25, 0.50, 0.75, 0.90)
 
 
-#: The three variables histogrammed at each lag, in the order stored. ``E`` and
-#: ``N`` are the two horizontal components; ``R`` is the modulus of the same vector
-#: difference. The modulus is the one commensurate with the rest of the chapter -- the
-#: ensemble MSD sums ``E**2 + N**2`` and the filtered variation sums over the components
-#: to stay rotation invariant, so both are statements about ``|dr|`` and only a modulus
-#: exponent can be set beside them. The components are kept because this archive is
-#: anisotropic and their *difference* is the finding; they are not interchangeable with
-#: the modulus, and on an anisotropic ensemble the modulus is not a power law of either.
+#: Absolute east, absolute north, and the norm of the same displacement vector.
+#: Component and radial scaling agree when the full joint law has a common scale;
+#: anisotropy alone neither forces nor prevents that property.
 VARIABLES = ("E", "N", "R")
 
 
@@ -129,7 +97,8 @@ class PropagatorAccumulator:
         kernel = _KERNELS[self.order]
         block_counts = self.block_counts
         slot = (
-            None if block_counts is None or block is None
+            None
+            if block_counts is None or block is None
             else int(block) % self.n_blocks
         )
         for i, lag in enumerate(self.lags):
@@ -196,13 +165,14 @@ def quantiles_from_histogram(
     """Quantiles of ``|x|`` read off a histogram, interpolated within the containing bin.
 
     The bins are logarithmic, so the interpolation is in ``log x``: the count is assumed
-    uniform in log within a bin, which is the right assumption for a density falling like a
-    power of ``x`` and is exact when the bins are narrow. At two per cent a bin the error is
-    below the width of the bin either way.
+    uniform in log within a bin, corresponding to a density proportional to ``1/x``
+    there. This is an approximation for other densities; the bin width limits the
+    resolution. The quantiles condition on mass inside the supplied histogram range:
+    discarded underflow or overflow cannot be recovered from these counts.
 
     Returns:
         One quantile per entry of ``probabilities``; ``nan`` where the histogram is empty
-        or the quantile falls outside the binned range.
+        or the requested probability is outside the open interval (0, 1).
     """
     counts = np.asarray(counts, dtype=float)
     edges = np.asarray(edges, dtype=float)
@@ -222,7 +192,9 @@ def quantiles_from_histogram(
             out[k] = edges[i]
             continue
         frac = (p - lower) / (upper - lower)
-        out[k] = np.exp(np.log(edges[i - 1]) + frac * (np.log(edges[i]) - np.log(edges[i - 1])))
+        out[k] = np.exp(
+            np.log(edges[i - 1]) + frac * (np.log(edges[i]) - np.log(edges[i - 1]))
+        )
     return out
 
 
@@ -232,30 +204,12 @@ def scaling_from_quantiles(
     *,
     fit_range: tuple[float, float] | None = None,
 ) -> dict:
-    """``H`` from each quantile's growth with the lag, and how far the four disagree.
+    """Fit each quantile's log--log slope and report their descriptive spread.
 
-    For a self-similar process every quantile of ``|x|`` grows as ``lag^H`` with the same
-    ``H``. Fitting each separately therefore gives one exponent four times, and their spread
-    is a test of the scaling form rather than an error bar on it: quantiles that march at
-    different rates are a distribution changing shape, which no single exponent describes.
-
-    ``per_quantile_err`` is the least-squares standard error of each slope
-    (``np.polyfit(..., cov=True)``, the same convention as :func:`~soaring.analysis.
-    observables.transport.fit_msd_exponent`). It is the precision of the log-log fit
-    itself and nothing else: on this pass every lag's quantile is read off a
-    histogram of millions of increments, so the fit is essentially noiseless and the
-    error is small almost by construction. It answers "is this line straight to the
-    resolution of the fit", not "how much would this exponent move on another sample
-    of flights". For the second question use :func:`hurst_bootstrap_error`, which is
-    what the chapter quotes.
-
-    Args:
-        lags_s: Lags in seconds.
-        quantiles: ``(n_lags, n_quantiles)`` from :func:`quantiles_from_histogram`.
-        fit_range: ``(low, high)`` in seconds; the whole range by default.
-
-    Returns:
-        ``{"hurst", "spread", "per_quantile", "per_quantile_err", "lags_used"}``.
+    Different slopes can reflect shape evolution or changing flight composition.
+    ``per_quantile_err`` is the formal OLS regression error; correlated lag estimates
+    invalidate its reading as sampling uncertainty. The returned ``hurst`` is an
+    effective scaling summary unless the common-scale assumptions have been established.
     """
     lags_s = np.asarray(lags_s, dtype=float)
     quantiles = np.asarray(quantiles, dtype=float)
@@ -281,7 +235,9 @@ def scaling_from_quantiles(
     finite = np.isfinite(per)
     return {
         "hurst": float(np.median(per[finite])) if finite.any() else float("nan"),
-        "spread": float(per[finite].max() - per[finite].min()) if finite.sum() > 1 else float("nan"),
+        "spread": float(per[finite].max() - per[finite].min())
+        if finite.sum() > 1
+        else float("nan"),
         "per_quantile": per,
         "per_quantile_err": per_err,
         "lags_used": int(good.sum()),
@@ -435,9 +391,9 @@ def collapse_residual(
     curves = []
     for i in rows:
         scale = lags_s[i] ** hurst
-        density = counts[i] / counts[i].sum() / widths      # per metre
+        density = counts[i] / counts[i].sum() / widths  # per metre
         rescaled_u = centres / scale
-        rescaled_p = density * scale                        # Delta^H P
+        rescaled_p = density * scale  # Delta^H P
         keep = rescaled_p > 0
         if keep.sum() < 5:
             continue
@@ -458,8 +414,14 @@ def collapse_residual(
     return float(np.nanmedian(spread))
 
 
-def peak_scaling(lags_s: np.ndarray, counts: np.ndarray, edges: np.ndarray,
-                 *, fit_range=None, fraction: float = 0.1) -> tuple[float, int]:
+def peak_scaling(
+    lags_s: np.ndarray,
+    counts: np.ndarray,
+    edges: np.ndarray,
+    *,
+    fit_range=None,
+    fraction: float = 0.1,
+) -> tuple[float, int]:
     """``H`` from the height of the propagator at its centre, ``P_0 ~ Delta^-H``.
 
     The third reading of the same histograms, and the one that uses least of the
@@ -532,7 +494,9 @@ def turning_angles(positions: np.ndarray, stride: int = 1) -> np.ndarray:
     good = norms > 0
     if not good.any():
         return np.empty(0)
-    dot = (first[good, 0] * second[good, 0] + first[good, 1] * second[good, 1]) / norms[good]
+    dot = (first[good, 0] * second[good, 0] + first[good, 1] * second[good, 1]) / norms[
+        good
+    ]
     return np.arccos(np.clip(dot, -1.0, 1.0))
 
 
@@ -594,3 +558,17 @@ class KinematicAccumulator:
             "angle_stride": np.array([self.angle_stride]),
             "angle_counts_one_hz": self.angle_one_hz,
         }
+
+
+def linear_histogram_quantiles(counts, edges, probabilities):
+    """Quantiles under uniform density inside each supplied linear bin.
+
+    Cumulative counts belong to bin edges, not centres. Empty histograms return
+    NaNs. The distribution is conditional on the range covered by the bins.
+    """
+    counts = np.asarray(counts, dtype=float)
+    total = counts.sum()
+    if total <= 0:
+        return [float("nan")] * len(probabilities)
+    cumulative = np.concatenate([[0.0], np.cumsum(counts)]) / total
+    return [float(np.interp(p, cumulative, edges)) for p in probabilities]

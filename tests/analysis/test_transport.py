@@ -502,3 +502,20 @@ def test_the_local_slope_is_robust_to_a_single_bad_lag():
     )
     # And the error bar grows where the window is disturbed, which is the point of it.
     assert np.nanmax(robust_err[near]) > 10 * np.nanmax(error[inside])
+
+
+def test_fft_msd_preserves_small_motion_far_from_coordinate_origin():
+    """A coordinate translation must not erase metre-scale displacement."""
+    from soaring.analysis.observables.transport import time_averaged_msd
+
+    t = np.arange(257, dtype=float)
+    east = 1e12 + np.sin(t / 13)
+    north = -1e12 + .2 * t
+    direct = np.array([
+        0.0 if lag == 0 else np.mean(
+            (east[lag:] - east[:-lag])**2 + (north[lag:] - north[:-lag])**2
+        ) for lag in range(len(t))
+    ])
+    fast = time_averaged_msd(east, north, 1)
+    assert fast[0] == 0
+    np.testing.assert_allclose(fast, direct, rtol=1e-10, atol=1e-9)

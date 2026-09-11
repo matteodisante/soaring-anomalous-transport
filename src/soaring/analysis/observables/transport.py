@@ -1,32 +1,15 @@
-"""Global transport observables: the ones that need no segmentation (sec:obs-global).
+"""Archive launch averages and within-segment displacement observables.
 
-The first of them, and the primary test for anomalous transport, is the
-**ensemble-averaged mean-squared displacement**. Every flight starts at the horizontal
-origin (``r(0) = 0``, sec:notation), so the position at elapsed time ``t`` *is* the
-displacement from the start, and
+A launch average pools squared displacement from the common retained coordinate origin.
+Flights retain their elapsed clocks across segment boundaries; nearest retained fixes
+supply requested times within a half-cadence tolerance. Counts vary with elapsed time.
+The archive is heterogeneous in environment and duration, so launch-average slopes do
+not by themselves identify a stochastic process or its Hurst exponent.
 
-    MSD(t) = < |r(t)|^2 >,
-
-the average taken **over flights** at fixed ``t``. Its growth law ``MSD(t) ~ t^alpha``
-fixes the transport regime: ``alpha = 1`` Brownian, ``alpha > 1`` super-diffusive,
-``alpha < 1`` sub-diffusive, with the Hurst exponent ``H = alpha / 2``.
-
-Three properties of the pre-processed data shape how it is computed here.
-
-* **Segments do not restart the clock.** A flight split at a long gap contributes its
-  position at every elapsed time some segment covers, and nothing at the times that fall
-  inside the gap (sec:uniform, "Consequences of a split"): the MSD needs the position at
-  a given elapsed time, not the path travelled in between, so a split costs it nothing
-  but coverage.
-* **Flights keep their own cadence.** A common grid is unnecessary; what is needed is
-  the position *at* a lag, so a flight contributes to a lag when it has a fix within
-  half its own native step of it, and abstains otherwise. Nothing is interpolated a
-  second time here -- the one audited interpolation of the pipeline is at resampling.
-* **The ensemble shrinks with the lag.** Only flights that lasted at least ``t``
-  contribute to ``MSD(t)``, and the flights that last longest are not a random sample of
-  the ensemble -- they are the ones that kept going. Every result therefore carries the
-  count of contributing flights per lag, and a fit that ignores it is not to be trusted:
-  the exponent is read on the range where the ensemble is still large.
+The TAMSD averages within a segment first, then gives each segment equal weight. Its
+sampling units and discretised lag convention differ from the Chapter 3 diagnostic
+subset, which uses one segment per flight and a common 10 s grid. Neither a fitted
+slope nor a difference between these archive averages establishes ergodicity.
 """
 
 from __future__ import annotations
@@ -329,37 +312,13 @@ def bootstrap_alpha_error(
     n_resamples: int = 200,
     seed: int = 20260803,
 ) -> float:
-    """The sampling uncertainty on ``alpha``, by resampling the flights themselves.
+    """Bootstrap the fitted slope by resampling rows of the supplied curve matrix.
 
-    The error :func:`fit_msd_exponent` reports is the ordinary least-squares error
-    on the slope, and it answers a question nobody asked: how well the fitted line
-    describes *these* points, treating the residual at each lag as an independent
-    draw. They are nothing of the kind. Every lag of an ensemble MSD is an average
-    over the *same* flights, so the residuals are almost perfectly correlated -- a
-    flight that happens to fly far contributes to every lag at once, tilting the
-    whole curve rather than scattering one point off it. The least-squares error
-    cannot see that, and it understates the real uncertainty by roughly a factor of
-    four.
-
-    What the exponent's uncertainty actually depends on is which flights the ensemble
-    happens to contain, so that is what is resampled: draw ``n_resamples`` ensembles of
-    the same size with replacement from the flights, refit each, and report the standard
-    deviation of the exponents. This is the ordinary non-parametric bootstrap with the
-    flight as the resampling unit, which is the unit the ensemble average is over.
-
-    Args:
-        samples: ``(n_flights, n_lags)`` of ``|r(t)|^2``, ``nan`` where a flight did
-            not reach that lag -- what ``keep_samples=True`` makes an accumulator hold.
-        lags: The lag grid, matching the columns of ``samples``.
-        t_min_s: Lower end of the fit range -- the same one the reported fit used.
-        t_max_s: Upper end.
-        n_resamples: How many ensembles to draw. 200 is enough for a standard deviation;
-            a confidence interval would want more.
-        seed: Fixed, so the reported uncertainty is reproducible.
-
-    Returns:
-        The standard deviation of ``alpha`` over the resampled ensembles, or ``nan`` if
-        fewer than three lags of the range can be fitted.
+    Rows must be the independent sampling units assumed by the analysis: here they
+    are flights for launch averages and segments for the archive TAMSD. Segments
+    from one flight and flights from one site--day may remain dependent; this helper
+    does not implement that clustering. It returns a bootstrap standard deviation,
+    not a calibrated confidence interval, and does not include fitting-range sensitivity.
     """
     stacked = np.asarray(samples, dtype=float)
     if stacked.ndim != 2 or stacked.shape[0] < 2:
@@ -388,50 +347,15 @@ def bootstrap_alpha_error(
 def local_slope(
     result: MSDResult, half_width_dex: float = _SLOPE_HALF_WIDTH_DEX
 ) -> tuple[np.ndarray, np.ndarray]:
-    """The local logarithmic slope ``d log MSD / d log t``, by windowed regression.
+    """Estimate a local log--log slope with a moving Theil--Sen regression.
 
-    The honest companion to a fitted exponent: a power law is a *straight line* in
-    log-log, so the slope is flat where one exponent describes the data and bends where
-    the regime changes. Reading a single ``alpha`` off a curve whose local slope drifts
-    would hide exactly the crossover that matters.
+    At each supported lag, take the median of pairwise slopes within
+    ``half_width_dex`` on either side. This reduces sensitivity to individual lags
+    but does not guarantee invariance to their removal or to window width.
 
-    It is a regression over a window and not a centred difference between
-    neighbours, and the difference is visible on the page. Adjacent lags of the grid
-    this module builds are about 0.05 decades apart, so a centred difference divides
-    by twice that and multiplies whatever the curve carries by roughly four. On the
-    archive that turns a point-to-point scatter of a few tenths of a per cent in the
-    MSD into a slope that jitters by 0.05 and reads as noise, on a curve whose own
-    standard error is 0.3 %.
-
-    The window is a compromise stated rather than tuned: too narrow and the
-    amplification returns, too wide and a genuine bend is flattened into the
-    straight line the panel exists to test for. At the adopted 0.15 decades it spans
-    five to six points and resolves a crossover of half a decade. It does not remove
-    the structure it is pointed at: the residual wiggle of this archive is
-    correlated across some four grid points, so it survives the window, which is the
-    correct outcome for something that is not noise.
-
-    The regression is robust in the sense that matters here, which is resistance to
-    a single bad lag rather than to a heavy-tailed residual: it is a Theil--Sen
-    estimator, the median of the slopes of all pairs of points in the window. One
-    lag knocked out by a coverage artefact moves the median by nothing, where least
-    squares would tilt the whole window. On a clean stretch the two agree to a few
-    thousandths, so nothing is lost by using it everywhere.
-
-    It is reported with an uncertainty, because a slope drawn without one invites
-    the eye to read structure into a wiggle. The uncertainty is the interquartile
-    range of those same pairwise slopes divided by ``1.35``, a robust standard
-    deviation, divided again by the square root of the number of points in the
-    window -- the scatter of the window about its own line, expressed as an error on
-    its slope.
-
-    Args:
-        result: The curve.
-        half_width_dex: Half-width of the fitting window, in decades of lag.
-
-    Returns:
-        ``(slope, error)``, both the length of ``result.t``, and both ``nan``
-        wherever the window holds fewer than three usable points.
+    The second returned array is the pairwise-slope IQR / 1.349 / sqrt(n_points).
+    It is a descriptive scatter scale, not a standard error or confidence interval:
+    the pairwise slopes and the underlying lag estimates share data.
     """
     usable = np.isfinite(result.msd) & (result.msd > 0) & (result.t > 0)
     log_t = np.log10(np.where(usable, result.t, np.nan))
@@ -457,23 +381,10 @@ def local_slope(
 def coverage_limited_range(
     result: MSDResult, *, t_min_s: float, min_coverage: float = 0.25
 ) -> tuple[float, float]:
-    """A fit range whose upper end is set by how much of the ensemble is still there.
+    """Choose the last lag retaining the requested fraction of initial contributors.
 
-    The lower end is an argument, because what sets it is physics: below the thermalling
-    period the MSD is dominated by circling rather than by transport, so the fit starts
-    above it. The upper end is not a choice but a consequence -- the ensemble thins out
-    with the lag, and the flights that remain are the ones that kept going, so the curve
-    stops being an average over the population well before it stops being computable.
-    The cut is where the count falls below ``min_coverage`` of the ensemble at the
-    lower end.
-
-    Args:
-        result: The curve.
-        t_min_s: Lower end of the range, in seconds.
-        min_coverage: Fraction of the ensemble at ``t_min_s`` that must survive.
-
-    Returns:
-        ``(t_min_s, t_max_s)``.
+    The lower lag and coverage fraction are analysis choices. Retaining this fraction
+    does not control duration-dependent selection, curvature, or environmental mixture.
     """
     in_range = result.t >= t_min_s
     if not in_range.any() or result.n_flights[in_range][0] == 0:
@@ -491,11 +402,8 @@ def time_averaged_msd(east: np.ndarray, north: np.ndarray, dt_s: float) -> np.nd
 
         delta2(tau) = < |r(t0 + tau) - r(t0)|^2 >_{t0}
 
-    The average over ``t0`` is a **time** average internal to one flight; it has nothing
-    to do with the ensemble average over flights that the MSD uses, and the two answer
-    different questions. A feature at a fixed elapsed time can only be something the
-    ensemble is synchronised on -- every flight starts at take-off -- whereas a feature
-    at a fixed *lag*, seen here, is a property of the motion wherever it occurs.
+    Time averaging pools starting points within this observed segment. Nonstationary
+    motion can therefore produce a mixture over starting times even within one flight.
 
     Computed **within a segment**, never across a split: a time-averaged window is one
     of the quantities sec:uniform requires to stay inside a segment, since the
@@ -522,7 +430,11 @@ def time_averaged_msd(east: np.ndarray, north: np.ndarray, dt_s: float) -> np.nd
     n = int(np.asarray(east).size)
     if n < 2:
         return np.full(1, np.nan)
-    squared = np.asarray(east, dtype=float) ** 2 + np.asarray(north, dtype=float) ** 2
+    # Translation leaves displacements unchanged and avoids cancellation between
+    # large absolute-coordinate terms when the observed motion is small.
+    east = np.asarray(east, dtype=float) - np.asarray(east, dtype=float)[0]
+    north = np.asarray(north, dtype=float) - np.asarray(north, dtype=float)[0]
+    squared = east**2 + north**2
 
     # First term: the mean over starting points of D_j + D_{j+k}. Both sums are
     # contiguous ranges of D, so a prefix sum gives every lag at once -- no Python loop
@@ -540,22 +452,21 @@ def time_averaged_msd(east: np.ndarray, north: np.ndarray, dt_s: float) -> np.nd
         full = np.fft.irfft(spectrum * np.conjugate(spectrum), size)[:n]
         correlation += full / (n - np.arange(n))
     _ = dt_s  # the lag axis is the caller's: k * dt_s
-    return first - 2.0 * correlation
+    result = np.maximum(first - 2.0 * correlation, 0.0)
+    result[0] = 0.0
+    return result
 
 
 class TAMSDAccumulator:
-    """Accumulates the ensemble-averaged time-averaged MSD, one segment at a time.
+    """Average segment TAMSDs with equal weight per contributing segment.
 
-    The companion the ensemble MSD needs, and not a refinement of it. The two average
-    over different things, so a feature can appear in one and not the other, and that
-    difference is itself the measurement: the ensemble is synchronised at take-off, so
-    anything it shows at a fixed *elapsed time* is a property of that common origin,
-    whereas a time average slides its window along each flight and sees a lag wherever
-    it occurs. Where the two disagree the process is not ergodic (sec:obs-global), and
-    where the ensemble alone shows a feature, the feature belongs to the launch.
+    A flight split into several segments can contribute several times. This is not
+    an equal-flight or equal-window estimator. A disagreement with a launch-aligned
+    archive average does not establish nonergodicity in a heterogeneous collection.
 
-    Accumulated on a **time** lag axis, so flights of different cadence pool: each
-    segment contributes at the lags its own grid resolves.
+    Requested lags are rounded to each segment's nearest grid step. Segments do not
+    contribute below their cadence or beyond floor(n / 2) grid steps. This discretised
+    lag convention must be distinguished from an exact common-grid measurement.
     """
 
     def __init__(self, lags_s: np.ndarray) -> None:

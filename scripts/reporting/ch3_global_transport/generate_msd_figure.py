@@ -1,33 +1,10 @@
 #!/usr/bin/env python3
-r"""Reduce the MSD pass into Chapter 3's opening measurement, figure and macros.
+r"""Reduce the archive MSD cache into curves, legacy slope macros and the current figure.
 
-Reads what ``measure_msd.py`` wrote --- the ensemble and time-averaged MSD, their
-east-only and north-only twins (Sec. 3.5), and the fixed-duration cohorts, each with the
-per-flight or per-segment samples the bootstrap needs --- and produces:
-
-* ``thesis/generated/msd.pdf`` -- the three-panel figure of
-  :func:`soaring.analysis.figures.msd.make_msd_figure`: the ensemble MSD with its fitted
-  power law, the local logarithmic slope, and the number of flights contributing at each
-  lag;
-* ``thesis/generated/msd_curve.csv`` -- every curve, one row per lag per discipline, so a
-  number in the text can be traced to the data behind it;
-* ``thesis/generated/msd.tex`` -- the ``\\StatMsd*``/``\\StatMsdTa*`` macros the thesis
-  quotes.
-
-Costs seconds, not minutes: the traversal of ``fixes.parquet`` happens once, in
-``measure_msd.py``, and its output is meant to be kept -- on the SSD beside the raw
-archive, not under a temp directory a reboot clears -- so that a change to a fit range, a
-bootstrap count, or a figure's styling costs this reduction and not that pass again.
-
-The fit range is not free. Its lower end is physics -- above the thermalling period, so
-the fit sees transport and not circling -- and its upper end follows from the ensemble
-thinning out with the lag: past it the average is over the flights that kept going
-rather than over the population. Both ends are reported with the exponent.
-
-Run it after ``measure_msd.py``, with a shared ``--out`` / ``--audit-dir``::
-
-    uv run python scripts/reporting/ch3_global_transport/measure_msd.py --out "$AUDIT_DIR"
-    uv run python scripts/reporting/ch3_global_transport/generate_msd_figure.py --audit-dir "$AUDIT_DIR"
+The displayed figure contains a descriptive launch average and an equal-segment TAMSD.
+It does not interpret launch-average exponents as process parameters. Legacy fitted
+macros are preserved for reproduction; the current chapter uses the separate diagnostic
+subset for its wide-range model comparisons. ``--redraw`` only changes the figure.
 """
 
 from __future__ import annotations
@@ -66,7 +43,7 @@ TA_FIT_MAX_S = 10_000.0
 
 # Matches measure_msd.py's own COHORTS_S -- kept apart rather than imported, the same way
 # ORDERS/AXIS_ORDERS are duplicated between measure_variations.py and
-# generate_transport_figure.py: the two scripts do not import from each other.
+# other analyses: these descriptive archive curves do not determine their fits.
 COHORTS_S = (3600.0, 7200.0, 14_400.0)
 
 # Macro names are spelled out because a LaTeX control sequence takes letters only.
@@ -120,7 +97,9 @@ def load(slug: str, audit_dir: Path):
             name: (_load_result(data, name), _load_samples(data, name))
             for name in AXIS_NAMES
         },
-        "cohort_results": {t: _load_result(data, f"cohort_{int(t)}") for t in COHORTS_S},
+        "cohort_results": {
+            t: _load_result(data, f"cohort_{int(t)}") for t in COHORTS_S
+        },
         "ta_cohort_results": {
             t: _load_result(data, f"ta_cohort_{int(t)}") for t in COHORTS_S
         },
@@ -239,7 +218,10 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
     # (TAMSDAccumulator.add), so a cohort of segments spanning at least T holds its
     # population only to T/2, not to T.
     ta_cohort_fits = _cohort_fits(
-        loaded["ta_cohort_results"], ta_fit, lambda threshold: threshold / 2.0, ta_result
+        loaded["ta_cohort_results"],
+        ta_fit,
+        lambda threshold: threshold / 2.0,
+        ta_result,
     )
     for name, fitted, curves_by_threshold, unit in (
         ("ensemble", cohort_fits, loaded["cohort_results"], "voli"),
@@ -333,7 +315,9 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
             macros[f"{prefix}{tag}CohortAlpha{hours}H"] = f"{cohort_fit.alpha:.3f}"
 
     curves = [("ensemble", result), ("time_averaged", ta_result)]
-    curves += [(name, axis_result) for name, (axis_result, _) in loaded["axis_results"].items()]
+    curves += [
+        (name, axis_result) for name, (axis_result, _) in loaded["axis_results"].items()
+    ]
     curves += [
         (f"cohort_{int(threshold)}s", curve)
         for threshold, curve in sorted(loaded["cohort_results"].items())
@@ -343,7 +327,13 @@ def measure(discipline: str, loaded: dict, macros: dict) -> dict:
         for threshold, curve in sorted(loaded["ta_cohort_results"].items())
     ]
 
-    return {"result": result, "fit": fit, "ta_result": ta_result, "ta_fit": ta_fit, "curves": curves}
+    return {
+        "result": result,
+        "fit": fit,
+        "ta_result": ta_result,
+        "ta_fit": ta_fit,
+        "curves": curves,
+    }
 
 
 def _draw(results, fits, ta_results, ta_fits) -> None:
@@ -352,7 +342,7 @@ def _draw(results, fits, ta_results, ta_fits) -> None:
 
     OUT_FIG.parent.mkdir(parents=True, exist_ok=True)
     make_msd_figure(results, fits, ta_results, ta_fits).savefig(
-        OUT_FIG, metadata=_PDF_METADATA, bbox_inches="tight"
+        OUT_FIG, metadata=_PDF_METADATA
     )
     print(f"Wrote {OUT_FIG.name}.")
 
@@ -423,6 +413,9 @@ def main() -> int:
         print("matplotlib missing ('analysis' group); keeping the committed figure.")
         return 0
     matplotlib.use("Agg")
+    from soaring.reporting.style import paper_style
+
+    paper_style()
 
     import pandas as pd
 
@@ -480,7 +473,9 @@ def main() -> int:
     # CSV -- which is what that mode is for.
     pd.concat(frames, ignore_index=True).to_csv(OUT_CSV, index=False)
     write_macros(
-        OUT_TEX, dict(macros), generator="scripts/reporting/ch3_global_transport/generate_msd_figure.py"
+        OUT_TEX,
+        dict(macros),
+        generator="scripts/reporting/ch3_global_transport/generate_msd_figure.py",
     )
     print(f"Wrote {OUT_CSV.name} and {OUT_TEX.name}.")
     _draw(results, fits, ta_results, ta_fits)

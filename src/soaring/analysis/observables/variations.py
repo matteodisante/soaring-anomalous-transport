@@ -16,11 +16,10 @@ testing for. :func:`centring_bias` measures how much, on a process whose exponen
 
 **Filter the trend out.** A finite difference of order :math:`p` annihilates any
 polynomial of degree :math:`p-1` identically, so the exponent can be read without ever
-estimating a drift. The order scan is the useful part: :math:`\\hat H_1 - \\hat H_2` is how
-much of the apparent exponent was course, and :math:`\\hat H_2 = \\hat H_3` certifies that
-nothing polynomial is left. This is the estimator the chapter should quote from, and the
-lag at which orders 1 and 2 separate is itself the scale above which the motion is locally
-straight.
+estimating a drift. The order scan compares sensitivity to polynomial trends. Differences between
+fitted exponents do not additively measure a drift contribution, and agreement between
+orders cannot certify that all trends are absent. Half a finite-window slope is a Hurst
+parameter only under additional self-similarity and stationary-increment assumptions.
 
 Everything here works on **within-segment increments**, never on the displacement from
 take-off: the second is the contaminated ensemble observable and no amount of filtering

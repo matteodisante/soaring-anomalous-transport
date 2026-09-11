@@ -115,10 +115,16 @@ def run(discipline: str, out_dir: Path) -> int:
 
         e, n, native_dt = _sample_flight(times, east, north, lags)
         ve, vn, _ = _sample_pair(
-            times, ordered["v_E"].to_numpy(dtype=float), ordered["v_N"].to_numpy(dtype=float), lags
+            times,
+            ordered["v_E"].to_numpy(dtype=float),
+            ordered["v_N"].to_numpy(dtype=float),
+            lags,
         )
         ae, an, _ = _sample_pair(
-            times, ordered["a_E"].to_numpy(dtype=float), ordered["a_N"].to_numpy(dtype=float), lags
+            times,
+            ordered["a_E"].to_numpy(dtype=float),
+            ordered["a_N"].to_numpy(dtype=float),
+            lags,
         )
         e_rows.append(e)
         n_rows.append(n)
@@ -153,14 +159,18 @@ def run(discipline: str, out_dir: Path) -> int:
                 "end_n": float(north[-1]),
                 # The mean velocity of the whole flight: the quantity a heterogeneous
                 # ballistic population would write the whole MSD out of.
-                "vbar_e": float((east[-1] - east[0]) / duration) if duration else np.nan,
+                "vbar_e": float((east[-1] - east[0]) / duration)
+                if duration
+                else np.nan,
                 "vbar_n": float((north[-1] - north[0]) / duration)
                 if duration
                 else np.nan,
                 "max_step_speed_ms": float(np.nanmax(speed)) if speed.size else np.nan,
                 "extent_e_m": float(east.max() - east.min()),
                 "extent_n_m": float(north.max() - north.min()),
-                "n_nonfinite": int((~np.isfinite(east)).sum() + (~np.isfinite(north)).sum()),
+                "n_nonfinite": int(
+                    (~np.isfinite(east)).sum() + (~np.isfinite(north)).sum()
+                ),
                 "t_monotone": bool(np.all(np.diff(times) > 0)),
             }
         )
@@ -172,6 +182,7 @@ def run(discipline: str, out_dir: Path) -> int:
     np.savez_compressed(
         out_dir / f"audit_positions_{slug}.npz",
         lags=lags,
+        flight_id=np.asarray([row["flight_id"] for row in rows], dtype=str),
         E=np.vstack(e_rows),
         N=np.vstack(n_rows),
         VE=np.vstack(ve_rows),

@@ -1,46 +1,17 @@
-r"""The spectrum of moments, and the shape of the displacement distribution.
+r"""Finite-window displacement moments and descriptive spectrum comparisons.
 
-The exponent of Chapter 3 is a statement about one moment. Two processes can share it and
-differ in everything else: a correlated Gaussian process and a Lévy walk both give
-:math:`\langle|\Delta\mathbf{r}|^2\rangle\sim\Delta^{2H}` and are not the same physics. What
-separates them is how the *whole spectrum* of moments scales,
+A self-similar law with finite moments has zeta(q)=qH. The standard renewal Lévy walk
+has a two-branch asymptotic spectrum for duration-tail index between one and two.
+A finite-record spectrum alone cannot identify or exclude an entire model family.
 
-.. math::
+Plain increments retain straight-leg displacement and are the relevant observable for
+that comparison. Second differences cancel constant velocity and therefore measure a
+different quantity. Nonoverlapping windows reduce duplication without establishing
+independence. High-order moments remain sensitive to rare large displacements; the
+reported tail share is a diagnostic, not a validity or existence test for a moment.
 
-    \big\langle|\Delta\mathbf{r}(\Delta)|^q\big\rangle \sim \Delta^{\,q\nu(q)},
-
-read as a function of :math:`q`. A self-similar Gaussian process gives a straight line
-through the origin, :math:`q\nu(q)=qH`; a Lévy walk gives a bilinear one with a knee, which
-is the signature called strong anomalous diffusion. One figure decides between them, and it
-decides visually rather than through a delicate fit.
-
-Two things have to be right or the spectrum lies.
-
-**The increments must not overlap.** At :math:`q=2` overlapping windows are harmless -- the
-bias is zero and only the variance suffers -- but above it a single extreme event appears in
-:math:`m` overlapping windows and is counted :math:`m` times, which inflates the high
-moments systematically. The stride is correctness, not economy.
-
-**The tail share must be reported beside every moment.** A fourth moment that is eighty per
-cent one flight is not a moment. :func:`moment_spectrum` returns, for each
-:math:`(\Delta, q)`, the fraction of the sum contributed by the largest one per cent of
-samples, and anything above a half is not an estimate.
-
-**The filter order is a real dilemma here, and it is not resolved by preference.** The
-exponent of this chapter is measured on order-2 differences, because order 1 carries each
-flight's course and the declared task. But the Lévy-walk signature lives in the
-*displacement*, and a second difference of a piecewise-straight path is zero except at its
-corners, so the filter that removes the contamination also removes the thing being looked
-for. Measured on a synthetic Lévy walk of tail index 1.5, under the protocol the tests pin
-(``LAGS = geomspace(20, 3000, 14)``, ``n = 200000``, ``counts > 20``), order 1 recovers the
-knee at 1.56-1.65 over four seeds with a right-hand slope of 0.92-0.95 -- the ballistic
-front, as the theory says -- while order 2 puts it anywhere between 1.93 and 2.90 with a
-slope of 0.78-0.89, which is neither the right answer nor a wrong
-
-So the spectrum is computed at order 1, where it is diagnostic, and read only where the
-closed and open task populations agree; the order is an argument and both are available.
-Reporting it at order 2 alone would be tidy and would measure the curvature spectrum while
-claiming to measure the displacement one.
+These helpers also reproduce legacy reports. The current Chapter 3 reporter pools its
+own explicit nonoverlapping increment sample in generate_revision_diagnostics.py.
 """
 
 from __future__ import annotations
@@ -49,14 +20,12 @@ import numpy as np
 
 __all__ = ["bilinear_fit", "moment_spectrum", "quantile_ratios"]
 
-# Difference kernels by order, matching variations.filtered_variation. Order 1 is the plain
-# increment: contaminated by the course, and the only order at which the Levy-walk knee is
-# in the right place. See the module docstring.
+# First differences here are signed backward differences; their norm is the plain
+# displacement magnitude. Second differences cancel a constant velocity.
 _KERNELS = {1: np.array([1.0, -1.0]), 2: np.array([1.0, -2.0, 1.0])}
 
-# Moment orders. It stops at 4 because the tail control below refuses to certify more on
-# records of this length, and it includes fractional orders because the knee of a Levy
-# walk sits between 1 and 2 and a grid of integers would step over it.
+# Fractional orders resolve the interval 1<q<2 of the illustrative Lévy benchmark.
+# The upper order four is an analysis choice, not a certified tail-sampling bound.
 Q_GRID = (0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0)
 
 
@@ -75,8 +44,8 @@ def _increment_vectors(positions: np.ndarray, lag: int, order: int = 1) -> np.nd
     for j, weight in enumerate(kernel):
         start = j * lag
         acc += weight * positions[start : start + width]
-    # Stride by the span, so no sample enters two windows. This is what stops one
-    # extreme event being counted repeatedly in the high moments.
+    # Stride by the span. Adjacent windows may share an endpoint, and their
+    # increments can remain dependent; this is a sampling convention, not a bias cure.
     return acc[::span]
 
 
@@ -139,30 +108,13 @@ def bilinear_fit(
     knee0: float = 1.7,
     min_departure: float = 0.02,
 ) -> dict | None:
-    """Fit ``q nu(q)`` with a free knee, and say whether the knee is worth having.
+    """Compare a line through zero with a continuous broken-line spectrum.
 
-    For a Lévy walk with tail index :math:`\\alpha`, ``q nu(q) = q/alpha`` below
-    ``q = alpha`` and ``q + 1 - alpha`` above it: a bilinear form whose knee position is a
-    third, independent estimate of the same exponent, and whose right-hand slope is 1
-    because the front is ballistic. For a self-similar Gaussian process the same data is a
-    straight line through the origin.
-
-    The two are compared by three conditions together, because BIC alone is not enough on a
-    grid of ten moment orders: a bilinear fit has two more parameters, always reduces the
-    residual, and on that many points buys the reduction cheaply. Fitted to a fractional
-    Brownian motion -- which has no knee -- BIC prefers the bilinear form while the straight
-    line already fits to an rms of 0.0031. So the knee is declared only when BIC prefers it,
-    **and** the straight line leaves a residual above ``min_departure``, **and** the knee
-    sits inside the grid rather than on its edge. On the same synthetic pair those three
-    give: fractional Brownian motion, no knee (``linear_rms`` 0.0031 at ``seed=1``); Lévy walk
-    of index 1.5, a knee at 1.56-1.65 over four seeds with a right-hand slope of 0.92-0.95.
-
-    Returns:
-        ``{"knee", "slope_low", "slope_high", "rms", "linear_slope", "linear_rms",
-        "linear_departure", "prefers_bilinear"}``, or ``None`` if the fit does not converge.
-        ``linear_departure`` is the same number as ``linear_rms``, kept under the name the
-        thesis macro carries (``generate_shape_figure.py`` writes ``\Stat*LinearDeparture``
-        from it).
+    The returned preference combines a BIC-like score, minimum linear residual and
+    an interior knee. Moment exponents share trajectories and are correlated, so
+    this rule is a descriptive heuristic, not a calibrated model-selection test.
+    The fitted knee and MSD exponent are not statistically independent estimates.
+    The current chapter instead shows the specified theoretical spectrum directly.
     """
     from scipy.optimize import curve_fit
 
