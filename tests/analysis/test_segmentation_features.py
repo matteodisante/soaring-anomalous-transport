@@ -57,6 +57,7 @@ def _segment(
             "a_E": a_e,
             "a_N": a_n,
             "z_reconstructed": False,
+            "z_derivative_reconstructed": False,
             "edge": False,
         }
     )
@@ -156,3 +157,21 @@ def test_quality_mask_covers_fixes_supporting_interpolated_window_endpoints(
     points = build_feature_frame(segment, config)
 
     assert bool(points.loc[points["t"] == 20.0, "quality_masked"].iloc[0])
+
+
+def test_derivative_support_excludes_reconstruction_outside_feature_window(config):
+    segment = _segment()
+    segment.loc[segment.t == 57.0, "z_reconstructed"] = True
+    segment.loc[segment.t.between(55.0, 59.0), "z_derivative_reconstructed"] = True
+    points = build_feature_frame(segment, config)
+    # The feature at 40 s integrates [25, 55]. The imputed fix at 57 s lies
+    # outside, but its SG contribution to the derivative at 55 s is still unsafe.
+    assert bool(points.loc[points.t == 40.0, "quality_masked"].iloc[0])
+    assert not bool(points.loc[points.t == 30.0, "quality_masked"].iloc[0])
+
+
+def test_fresh_features_refuse_legacy_input_without_derivative_provenance(config):
+    with pytest.raises(ValueError, match="z_derivative_reconstructed"):
+        build_feature_frame(
+            _segment().drop(columns="z_derivative_reconstructed"), config
+        )

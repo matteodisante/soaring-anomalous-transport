@@ -336,3 +336,37 @@ def test_current_decoder_policy_survives_artifact_round_trip(tmp_path, config):
     np.testing.assert_array_equal(actual, expected)
     np.testing.assert_allclose(restored_probabilities, probabilities)
     assert restored.model.means_.shape == (3, 4)
+
+
+@pytest.mark.parametrize(
+    ("history", "score", "expected_success", "expected_converged"),
+    [
+        ([1.0, 2.0], 2.0, True, False),
+        ([2.0, 1.0], 1.0, True, False),
+        ([1.0, 1.00001], 1.00001, True, True),
+        ([1.0, 2.0], float("nan"), False, False),
+    ],
+)
+def test_restart_distinguishes_stopping_from_convergence(
+    monkeypatch, config, history, score, expected_success, expected_converged
+):
+    from types import SimpleNamespace
+
+    import hmmlearn.hmm
+
+    from soaring.analysis.segmentation.model import _fit_restart
+
+    class Model:
+        def __init__(self, **kwargs):
+            self.monitor_ = SimpleNamespace(history=history, converged=True)
+
+        def fit(self, *args, **kwargs):
+            return self
+
+        def score(self, *args, **kwargs):
+            return score
+
+    monkeypatch.setattr(hmmlearn.hmm, "GaussianHMM", Model)
+    _, fitted, _, converged = _fit_restart(0, np.ones((5, 4)), [5], config)
+    assert (fitted is not None) is expected_success
+    assert converged is expected_converged

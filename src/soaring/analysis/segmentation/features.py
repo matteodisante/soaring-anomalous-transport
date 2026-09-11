@@ -38,6 +38,7 @@ _REQUIRED_COLUMNS = {
     "a_E",
     "a_N",
     "z_reconstructed",
+    "z_derivative_reconstructed",
     "edge",
 }
 
@@ -140,7 +141,10 @@ def build_feature_frame(
     the original smoothed series.  The first and last half-window are retained as rows
     but marked ``feature_edge`` and have no emission features. A window touching either
     a reconstructed-altitude sample or a Savitzky--Golay derivative-edge sample is also
-    retained but marked ``quality_masked``. Such rows intentionally separate HMM
+    retained but marked ``quality_masked``. The propagated
+    ``z_derivative_reconstructed`` flag also excludes vertical derivatives whose
+    Savitzky--Golay support touches reconstructed altitude outside the feature window.
+    Such rows intentionally separate HMM
     sequences, rather than allowing a vertical reconstruction or an unsafe derivative
     to contribute an emission or a transition.
 
@@ -183,11 +187,10 @@ def build_feature_frame(
     v_z = ordered["v_z"].to_numpy(dtype=float)
     a_e = ordered["a_E"].to_numpy(dtype=float)
     a_n = ordered["a_N"].to_numpy(dtype=float)
-    if ordered[["z_reconstructed", "edge"]].isna().any().any():
+    quality_columns = ["z_reconstructed", "z_derivative_reconstructed", "edge"]
+    if ordered[quality_columns].isna().any().any():
         raise ValueError("phase quality flags must not contain missing values")
-    unsafe_input = ordered["z_reconstructed"].to_numpy(dtype=bool) | ordered[
-        "edge"
-    ].to_numpy(dtype=bool)
+    unsafe_input = ordered[quality_columns].to_numpy(dtype=bool).any(axis=1)
     v_h_squared = v_e**2 + v_n**2
     v_h = np.sqrt(v_h_squared)
     turn_rate = np.zeros_like(v_h)
@@ -222,6 +225,9 @@ def build_feature_frame(
             out=np.zeros_like(absolute_turn),
             where=absolute_turn > np.finfo(float).eps,
         )
+        # Separate cumulative-integral subtractions can exceed the analytic
+        # triangle-inequality bound by floating-point round-off.
+        coherence = np.clip(coherence, 0.0, 1.0)
         features[safe_indexes] = np.column_stack(
             [
                 _window_integrals(t, v_z, safe_left, safe_right) / duration,

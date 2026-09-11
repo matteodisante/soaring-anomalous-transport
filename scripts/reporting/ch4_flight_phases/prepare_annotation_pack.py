@@ -22,6 +22,7 @@ if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
 
 from soaring.analysis.segmentation.features import FEATURE_COLUMNS  # noqa: E402
+from soaring.analysis.segmentation.pack import write_pack_provenance  # noqa: E402
 from soaring.reporting import DISCIPLINES  # noqa: E402
 
 PACK_COLUMNS = [
@@ -55,6 +56,13 @@ POINT_COLUMNS = [
     *FEATURE_COLUMNS,
     "phase",
 ]
+
+# These nominal test flights have already been inspected in decoder development
+# or chapter examples. They cannot become untouched evaluation candidates later.
+DEVELOPMENT_TEST_EXCLUSIONS = {
+    "paragliders": {"20275040", "20279877"},
+    "hang gliders": {"975"},
+}
 
 
 def _catalog(derived: Path) -> pd.DataFrame:
@@ -160,6 +168,10 @@ def _select_candidates(
     test_count: int,
 ) -> pd.DataFrame:
     eligible = _eligible_segments(derived)
+    previously_inspected = (eligible["split"] == "test") & eligible["flight_id"].astype(
+        str
+    ).isin(DEVELOPMENT_TEST_EXCLUSIONS[discipline])
+    eligible = eligible.loc[~previously_inspected]
     rows = []
     counts = {
         "train": train_count,
@@ -212,7 +224,8 @@ def _window(points: pd.DataFrame, row: pd.Series) -> tuple[float, float, bool]:
     digest = hashlib.sha256(str(row.candidate_id).encode()).digest()
     fraction = int.from_bytes(digest[:8], "big") / 2**64
     start = float(longest["t"].iloc[0]) + available * fraction
-    start = 10.0 * round(start / 10.0)
+    origin = float(longest["t"].iloc[0])
+    start = origin + 10.0 * round((start - origin) / 10.0)
     return start, start + window_s, False
 
 
@@ -260,7 +273,7 @@ def _plot_page(points: pd.DataFrame, row: pd.Series, pdf) -> None:
         points["E"].iloc[0], points["N"].iloc[0], color="#4E8A5B", s=25, label="start"
     )
     axes[0, 0].scatter(
-        points["E"].iloc[-1], points["N"].iloc[-1], color="#B5482A", s=25, label="end"
+        points["E"].iloc[-1], points["N"].iloc[-1], color="#C98A1E", s=25, label="end"
     )
     axes[0, 0].set(
         xlabel="east (m)", ylabel="north (m)", aspect="equal", title="Plan view"
@@ -279,7 +292,7 @@ def _plot_page(points: pd.DataFrame, row: pd.Series, pdf) -> None:
     axes[1, 1].set(
         xlabel="t (s)", ylabel=r"$\bar v_h$ (m s$^{-1}$)", title="Horizontal speed"
     )
-    axes[2, 0].plot(time, np.degrees(points["mean_abs_turn_rate"]), color="#B5482A")
+    axes[2, 0].plot(time, np.degrees(points["mean_abs_turn_rate"]), color="#C98A1E")
     axes[2, 0].set(
         xlabel="t (s)", ylabel="absolute turn rate (deg/s)", title="Turning intensity"
     )
@@ -309,17 +322,66 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--train", type=int, default=4)
     parser.add_argument("--validation", type=int, default=8)
     parser.add_argument("--test", type=int, default=8)
+    parser.add_argument(
+        "--record-provenance",
+        action="store_true",
+        help="Verify existing rows against the archive and record provenance",
+    )
     args = parser.parse_args(argv)
     if min(args.train, args.validation, args.test) < 1:
         parser.error("candidate counts must be positive")
+    annotations = args.output_dir / "phase_annotations.csv"
+    if args.record_provenance:
+        existing = pd.read_parquet(args.output_dir / "annotation_candidates.parquet")
+        windows = pd.read_csv(args.output_dir / "annotation_windows.csv")
+        derived_dirs = {}
+        for discipline, definition in DISCIPLINES.items():
+            derived = definition.derived_dir()
+            if derived is None:
+                raise FileNotFoundError(f"{discipline}: source archive unavailable")
+            derived_dirs[discipline] = derived
+            ids = windows.loc[windows.discipline == discipline, "flight_id"].astype(str)
+            source = pd.read_parquet(
+                derived / "segmentation/phase_points.parquet",
+                filters=[("flight_id", "in", ids.tolist())],
+            )
+            for row in windows.loc[windows.discipline == discipline].itertuples():
+                candidate = existing.loc[existing.candidate_id == row.candidate_id]
+                matched = source.loc[
+                    (source.flight_id.astype(str) == str(row.flight_id))
+                    & (source.source.astype(str) == str(row.source))
+                    & (source.segment_id == row.segment_id)
+                    & source.t.between(
+                        row.window_start, row.window_end, inclusive="left"
+                    )
+                ]
+                columns = [
+                    c for c in candidate.columns if c not in {"candidate_id", "split"}
+                ]
+                pd.testing.assert_frame_equal(
+                    candidate[columns].reset_index(drop=True),
+                    matched[columns].sort_values("t").reset_index(drop=True),
+                    check_dtype=False,
+                    check_exact=True,
+                )
+        write_pack_provenance(args.output_dir, derived_dirs)
+        print(f"Verified existing rows; recorded provenance in {args.output_dir}")
+        return 0
+    if annotations.is_file() and not pd.read_csv(annotations).empty:
+        raise ValueError(
+            "This pack already contains manual labels. Use a new --output-dir "
+            "to preserve its fixed candidate identities and windows."
+        )
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     all_points = []
     all_windows = []
+    derived_dirs = {}
     for discipline, definition in DISCIPLINES.items():
         derived = definition.derived_dir()
         if derived is None:
             raise FileNotFoundError(f"{discipline}: processed archive is unavailable")
+        derived_dirs[discipline] = derived
         candidates = _select_candidates(
             discipline,
             derived,
@@ -339,7 +401,6 @@ def main(argv: list[str] | None = None) -> int:
     windows[PACK_COLUMNS].to_csv(
         args.output_dir / "annotation_windows.csv", index=False
     )
-    annotations = args.output_dir / "phase_annotations.csv"
     if not annotations.exists():
         annotations.write_text(
             "source,flight_id,segment_id,t_start,t_end,state,split,annotator\n",
@@ -354,6 +415,7 @@ def main(argv: list[str] | None = None) -> int:
                 candidate_points["candidate_id"] == row.candidate_id
             ]
             _plot_page(selected, row, pdf)
+    write_pack_provenance(args.output_dir, derived_dirs)
     print(
         f"wrote blinded annotation pack with {len(windows)} candidate windows "
         f"to {args.output_dir}"

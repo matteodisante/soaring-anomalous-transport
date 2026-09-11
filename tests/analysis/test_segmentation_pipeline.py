@@ -173,6 +173,7 @@ def test_fit_sample_uses_complete_sequences_within_memory_cap(tmp_path) -> None:
                     "a_E": 0.0,
                     "a_N": 0.0,
                     "z_reconstructed": False,
+                    "z_derivative_reconstructed": False,
                     "edge": False,
                 }
             )
@@ -266,6 +267,7 @@ def test_apply_and_evaluate_round_trip_with_parquet_artifacts(tmp_path) -> None:
                 "a_E": 0.0,
                 "a_N": 0.0,
                 "z_reconstructed": False,
+                "z_derivative_reconstructed": False,
                 "edge": False,
             }
         )
@@ -334,6 +336,7 @@ def test_calibrate_remaps_existing_points_and_posteriors_without_refitting(
                 "a_E": 0.0,
                 "a_N": 0.0,
                 "z_reconstructed": False,
+                "z_derivative_reconstructed": False,
                 "edge": False,
             }
         )
@@ -418,6 +421,7 @@ def test_apply_records_slow_segments_without_upsampling(tmp_path) -> None:
             "a_E": 0.0,
             "a_N": 0.0,
             "z_reconstructed": False,
+            "z_derivative_reconstructed": False,
             "edge": False,
         }
     ).to_parquet(fixes, index=False)

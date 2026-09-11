@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import pickle
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -54,6 +55,10 @@ class HMMArtifact:
     restart_converged: list[bool] = field(default_factory=list)
     n_fit_observations: int = 0
     n_fit_sequences: int = 0
+    convergence_flag_definition: str = (
+        "legacy hmmlearn stopping flag; convergence is not established"
+    )
+    feature_support: str = "legacy reconstruction mask without propagated SG support"
 
     def save(self, directory: str | Path) -> None:
         """Persist model, scaler, mapping, configuration, and fit provenance."""
@@ -76,6 +81,8 @@ class HMMArtifact:
             "n_fit_observations": self.n_fit_observations,
             "n_fit_sequences": self.n_fit_sequences,
             "config": asdict(self.config),
+            "convergence_flag_definition": self.convergence_flag_definition,
+            "feature_support": self.feature_support,
         }
         (target / "metadata.json").write_text(
             json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -116,6 +123,18 @@ class HMMArtifact:
             restart_converged=list(metadata.get("restart_converged", [])),
             n_fit_observations=int(metadata.get("n_fit_observations", 0)),
             n_fit_sequences=int(metadata.get("n_fit_sequences", 0)),
+            convergence_flag_definition=str(
+                metadata.get(
+                    "convergence_flag_definition",
+                    "legacy hmmlearn stopping flag; convergence is not established",
+                )
+            ),
+            feature_support=str(
+                metadata.get(
+                    "feature_support",
+                    "legacy reconstruction mask without propagated SG support",
+                )
+            ),
         )
 
 
@@ -171,7 +190,12 @@ def fit_gaussian_hmm(
         raise ValueError("HMM fitting needs at least one observation per state")
     scaler = Standardizer.fit(raw)
     values = scaler.transform(raw)
-    if config.n_jobs == 1 or config.n_restarts == 1:
+    worker_count = min(
+        config.n_jobs,
+        config.n_restarts,
+        max(1, int(os.environ.get("SOARING_MAX_WORKERS", "1"))),
+    )
+    if worker_count == 1:
         results = [
             _fit_restart(restart, values, lengths, config)
             for restart in range(config.n_restarts)
@@ -179,7 +203,6 @@ def fit_gaussian_hmm(
     else:
         from joblib import Parallel, delayed, parallel_config
 
-        worker_count = min(config.n_jobs, config.n_restarts)
         with parallel_config(backend="loky", inner_max_num_threads=1):
             results = Parallel(
                 n_jobs=worker_count,
@@ -217,6 +240,11 @@ def fit_gaussian_hmm(
         restart_converged=restart_converged,
         n_fit_observations=len(raw),
         n_fit_sequences=len(lengths),
+        convergence_flag_definition=(
+            "finite, non-negative last training likelihood gain below tol; "
+            "reaching n_iter alone is not convergence"
+        ),
+        feature_support="includes propagated SG reconstruction support",
     )
 
 
@@ -243,7 +271,14 @@ def _fit_restart(
         score = float(model.score(values, lengths=lengths))
     except (FloatingPointError, ValueError, np.linalg.LinAlgError):
         return restart, None, None, False
-    return restart, model, score, bool(model.monitor_.converged)
+    if not np.isfinite(score):
+        return restart, None, None, False
+    history = np.asarray(model.monitor_.history, dtype=float)
+    gain = history[-1] - history[-2] if history.size >= 2 else np.nan
+    # hmmlearn.monitor_.converged is also true when n_iter is exhausted or
+    # likelihood decreases. Neither outcome establishes likelihood convergence.
+    converged = bool(np.isfinite(gain) and 0 <= gain < config.tol)
+    return restart, model, score, converged
 
 
 def heuristic_state_mapping(artifact: HMMArtifact) -> dict[int, str]:

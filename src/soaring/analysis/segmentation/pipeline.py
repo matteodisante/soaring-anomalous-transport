@@ -108,6 +108,7 @@ _FEATURE_INPUT_COLUMNS = [
     "a_E",
     "a_N",
     "z_reconstructed",
+    "z_derivative_reconstructed",
     "edge",
 ]
 

@@ -1,0 +1,68 @@
+{
+  "inputs": {
+    "annotation_candidates.parquet": {
+      "mtime_ns": 1789029675999457351,
+      "sha256": "95ad29729a6b682dc2c7b713ee5ce6294bb9e325fd539b7a51db4d09147455bc",
+      "size": 552520
+    },
+    "annotation_windows.csv": {
+      "mtime_ns": 1789053711546598047,
+      "sha256": "78983409b75d03216b72eb59e866606f83aedf48f2effed46d9d8dfcd9da4d64",
+      "size": 5754
+    }
+  },
+  "large_file_identity": "file size, modification time and SHA256 of Parquet footer",
+  "schema_version": 1,
+  "sources": {
+    "hang gliders": {
+      "derived_dir": "/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc/derived",
+      "files": {
+        "fixes.parquet": {
+          "footer_sha256": "cb0a3623f095f4b804c01dbf7b7cf5993ef835bb1591d487a9685fb8435ba01e",
+          "mtime_ns": 1788887350330000000,
+          "size": 1158475543
+        },
+        "segmentation/model/metadata.json": {
+          "mtime_ns": 1788989820310000000,
+          "sha256": "c330cbd8086a92cbbf0b2054f6444c6b1bb456c4d1d7ce8add31e0dab386b33a",
+          "size": 1669
+        },
+        "segmentation/model/split_manifest.parquet": {
+          "mtime_ns": 1788989179590000000,
+          "sha256": "fa8093d25dc06fdf76d9667df5c72ec08cdda8736ad7614a158bc5ccd505c87e",
+          "size": 102724
+        },
+        "segmentation/phase_points.parquet": {
+          "footer_sha256": "8a553a8447bbf2fbf0f4d1eaf3e2d2e3b7b9b5a70171641f82ea75f0d649b6aa",
+          "mtime_ns": 1788990844600000000,
+          "size": 523114242
+        }
+      }
+    },
+    "paragliders": {
+      "derived_dir": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived",
+      "files": {
+        "fixes.parquet": {
+          "footer_sha256": "4b6bdb3242d2b1db03360fcfbb153b8aa05f0e591b66fe87b556422480aae782",
+          "mtime_ns": 1788887155410000000,
+          "size": 43688098722
+        },
+        "segmentation/model/metadata.json": {
+          "mtime_ns": 1788989820200000000,
+          "sha256": "a825d260d0129f196f375d498401a4cbf4bccc3e77442d91d3bbf6a07bf950e8",
+          "size": 1663
+        },
+        "segmentation/model/split_manifest.parquet": {
+          "mtime_ns": 1788989797820000000,
+          "sha256": "46cd08bf3ca5f66ab629414ef9071a94e71eb83fd2355feca96be8b0243ec580",
+          "size": 2457025
+        },
+        "segmentation/phase_points.parquet": {
+          "footer_sha256": "0c9644dbfdf8c01326293c456c9e7e7bac7f4b04344247d9268b0196df924725",
+          "mtime_ns": 1788994155080000000,
+          "size": 11755585914
+        }
+      }
+    }
+  }
+}

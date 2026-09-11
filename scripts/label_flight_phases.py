@@ -30,7 +30,7 @@ from soaring.analysis.segmentation.labels import (  # noqa: E402
     validate_annotations,
 )
 
-PALETTE = {"transition": "#3477A8", "search": "#B5482A", "climb": "#4E8A5B"}
+PALETTE = {"transition": "#0072B2", "search": "#E69F00", "climb": "#009E73"}
 
 
 class AnnotationApp:
@@ -56,6 +56,8 @@ class AnnotationApp:
         self.annotations = self._load_annotations()
         self.figure, axes = plt.subplots(3, 2, figsize=(13.5, 8.7))
         self.axes = axes.ravel()
+        for axis in self.axes[2:]:
+            axis.sharex(self.axes[1])
         self.figure.subplots_adjust(bottom=0.13, hspace=0.42, wspace=0.30)
         button_specs = [
             ("Transition [t]", "transition", 0.10),
@@ -107,7 +109,7 @@ class AnnotationApp:
         time = points["t"]
         self.axes[0].plot(points["E"], points["N"], color="#303030", linewidth=0.9)
         self.axes[0].scatter(
-            points["E"].iloc[0], points["N"].iloc[0], color="#4E8A5B", s=25
+            points["E"].iloc[0], points["N"].iloc[0], color="#009E73", s=25
         )
         self.axes[0].set(
             xlabel="east (m)", ylabel="north (m)", aspect="equal", title="Plan view"
@@ -118,17 +120,17 @@ class AnnotationApp:
             ylabel="altitude (m)",
             title="Drag the interval here",
         )
-        self.axes[2].plot(time, points["mean_v_z"], color="#4E8A5B")
+        self.axes[2].plot(time, points["mean_v_z"], color="#009E73")
         self.axes[2].axhline(0.0, color="black", linewidth=0.6)
         self.axes[2].set(
             xlabel="t (s)", ylabel=r"$\bar v_z$ (m/s)", title="Vertical speed"
         )
-        self.axes[3].plot(time, points["mean_v_h"], color="#3477A8")
+        self.axes[3].plot(time, points["mean_v_h"], color="#0072B2")
         self.axes[3].set(
             xlabel="t (s)", ylabel=r"$\bar v_h$ (m/s)", title="Horizontal speed"
         )
         self.axes[4].plot(
-            time, np.degrees(points["mean_abs_turn_rate"]), color="#B5482A"
+            time, np.degrees(points["mean_abs_turn_rate"]), color="#E69F00"
         )
         self.axes[4].set(
             xlabel="t (s)",
@@ -178,9 +180,18 @@ class AnnotationApp:
         self.figure.canvas.draw_idle()
 
     def _select(self, minimum: float, maximum: float) -> None:
-        row, _ = self._current()
-        start = max(float(row.window_start), 10.0 * round(min(minimum, maximum) / 10.0))
-        end = min(float(row.window_end), 10.0 * round(max(minimum, maximum) / 10.0))
+        row, points = self._current()
+        # The grid is anchored at the segment's clock, which need not be an
+        # integer multiple of 10 s after preprocessing or an acquisition gap.
+        origin = float(points["t"].iloc[0])
+        start = max(
+            float(row.window_start),
+            origin + 10.0 * round((min(minimum, maximum) - origin) / 10.0),
+        )
+        end = min(
+            float(row.window_end),
+            origin + 10.0 * round((max(minimum, maximum) - origin) / 10.0),
+        )
         self.selection = (start, end) if end > start else None
         self.status.set_text(
             f"Selected [{start:.0f}, {end:.0f}) s — press t, s, or c."
@@ -288,10 +299,28 @@ def main(argv: list[str] | None = None) -> int:
         default=ROOT / "annotations" / "phase_labeling",
     )
     parser.add_argument("--annotator", required=True)
+    parser.add_argument(
+        "--split",
+        choices=("train", "validation", "test"),
+        help="Show only one fixed partition while preserving all saved labels",
+    )
     args = parser.parse_args(argv)
+    from soaring.analysis.segmentation.pack import validate_pack_provenance
+
+    offline = validate_pack_provenance(args.pack_dir)
+    if offline:
+        print(
+            "Offline pack: source snapshot cannot currently be compared for "
+            + ", ".join(offline)
+        )
+    windows = pd.read_csv(args.pack_dir / "annotation_windows.csv")
+    if args.split is not None:
+        windows = windows.loc[windows["split"] == args.split]
+    if windows.empty:
+        raise ValueError("No annotation windows in the selected partition")
     app = AnnotationApp(
         pd.read_parquet(args.pack_dir / "annotation_candidates.parquet"),
-        pd.read_csv(args.pack_dir / "annotation_windows.csv"),
+        windows,
         args.pack_dir / "phase_annotations.csv",
         args.annotator,
     )

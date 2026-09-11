@@ -6,6 +6,7 @@ from pathlib import Path
 import matplotlib
 import numpy as np
 import pandas as pd
+import pytest
 
 matplotlib.use("Agg")
 
@@ -17,8 +18,9 @@ labeler = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(labeler)
 
 
-def test_labeler_autosaves_and_reinstalls_span_after_redraw(tmp_path) -> None:
-    time = np.arange(0.0, 60.0, 10.0)
+@pytest.mark.parametrize("origin", [0.0, 3.5])
+def test_labeler_autosaves_and_reinstalls_span_after_redraw(tmp_path, origin) -> None:
+    time = origin + np.arange(0.0, 60.0, 10.0)
     candidates = pd.DataFrame(
         {
             "candidate_id": "para-tra-01",
@@ -40,28 +42,30 @@ def test_labeler_autosaves_and_reinstalls_span_after_redraw(tmp_path) -> None:
             "flight_id": ["one"],
             "segment_id": [0],
             "split": ["train"],
-            "window_start": [0.0],
-            "window_end": [60.0],
+            "window_start": [origin],
+            "window_end": [origin + 60.0],
         }
     )
     output = tmp_path / "phase_annotations.csv"
     app = labeler.AnnotationApp(candidates, windows, output, "tester")
     first_selector = app.span
 
-    app._select(10.0, 30.0)
+    app._select(origin + 10.0, origin + 30.0)
     app._add("climb")
     second_selector = app.span
-    app._select(30.0, 50.0)
+    app._select(origin + 30.0, origin + 50.0)
     app._add("transition")
 
     saved = pd.read_csv(output)
     assert saved["state"].tolist() == ["climb", "transition"]
     assert saved[["t_start", "t_end"]].to_numpy().tolist() == [
-        [10.0, 30.0],
-        [30.0, 50.0],
+        [origin + 10.0, origin + 30.0],
+        [origin + 30.0, origin + 50.0],
     ]
     assert second_selector is not first_selector
     assert app.span is not second_selector
+    for axis in app.axes[2:]:
+        assert axis.get_shared_x_axes().joined(app.axes[1], axis)
 
     import matplotlib.pyplot as plt
 

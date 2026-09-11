@@ -17,6 +17,16 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[3]
+# Static output contract for the provenance checker; paths may be built dynamically.
+GENERATED_OUTPUTS = (
+    "segmentation_model_para.pdf",
+    "segmentation_model_hang.pdf",
+    "segmentation_example_para.pdf",
+    "segmentation_example_hang.pdf",
+    "segmentation_confusion_para.pdf",
+    "segmentation_confusion_hang.pdf",
+)
+
 _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
@@ -57,7 +67,9 @@ def _first_trajectory(points_path: Path, manifest_path: Path):
     manifest = pd.read_parquet(manifest_path)
     held_out = {
         (str(row.source), str(row.flight_id))
-        for row in manifest.loc[manifest["split"] == "test"].itertuples(index=False)
+        for row in manifest.loc[manifest["split"] == "validation"].itertuples(
+            index=False
+        )
     }
     for flight in stream_flights(points_path):
         identity = (str(flight["source"].iloc[0]), str(flight["flight_id"].iloc[0]))
@@ -68,7 +80,7 @@ def _first_trajectory(points_path: Path, manifest_path: Path):
             continue
         first = classified.iloc[0]
         return flight.loc[flight["segment_id"] == first["segment_id"]]
-    raise ValueError(f"{points_path} has no classifiable test-segment phase rows")
+    raise ValueError(f"{points_path} has no classifiable validation-segment phase rows")
 
 
 def _percent(value: float) -> str:
@@ -401,9 +413,36 @@ def main(argv: list[str] | None = None) -> int:
             "trajectory diagnostics without validation metrics"
         ),
     )
+    parser.add_argument(
+        "--examples-only",
+        action="store_true",
+        help="Redraw only the ten-minute held-out trajectory examples",
+    )
     parser.add_argument("--config", type=Path)
     parser.add_argument("--allow-partial", action="store_true")
     args = parser.parse_args(argv)
+    if args.examples_only:
+        for discipline in DISCIPLINES.values():
+            derived = discipline.derived_dir(
+                require="segmentation/phase_points.parquet"
+            )
+            if derived is None:
+                raise FileNotFoundError(f"{discipline.name}: phase archive unavailable")
+            root = derived / "segmentation"
+            points = _first_trajectory(
+                root / "phase_points.parquet", root / "model/split_manifest.parquet"
+            )
+            output = (
+                ROOT
+                / "thesis/generated"
+                / f"segmentation_example_{discipline.slug}.pdf"
+            )
+            plot_phase_trajectory(points, output)
+            print(
+                f"{discipline.name}: wrote {output.name} "
+                f"(first 10 min, flight {points.flight_id.iloc[0]})"
+            )
+        return 0
     annotations = load_annotations(str(args.annotations)) if args.annotations else None
     config = load_segmentation_config(args.config) if args.config else None
     macros: dict[str, str] = {}
