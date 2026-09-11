@@ -7,7 +7,7 @@ The thesis and Python code for studying transport in paraglider and hang-glider 
 The workflow starts from FFVL IGC recordings, cleans trajectories, measures their
 transport statistics and segments flight into transition, search and climb.
 
-[Read the thesis](thesis/main.pdf) · [Documentation](docs/index.md) · [Research roadmap](docs/thesis-roadmap.md)
+[Read the thesis](thesis/main.pdf) · [Documentation](https://matteodisante.github.io/soaring-anomalous-transport/) · [Research roadmap](https://matteodisante.github.io/soaring-anomalous-transport/thesis-roadmap/)
 
 ## Manuscript and scientific scope
 
@@ -34,8 +34,9 @@ Independent manual labels remain necessary before claiming segmentation accuracy
 The cleaning and all 38 rebuild stages completed for run
 `20260910T221820Z-05d36ab4`: 156,305 paraglider and 6,093 hang-glider flights were
 retained. The [fresh-results review](revisions/fresh-results-review-2026-09-11.md)
-records the empirical interpretation. The final 101-page PDF was checked and reconciled
-with the SSD run, including the corrected rejection cascade. Validation includes
+records the empirical interpretation. The 101-page PDF of that run was checked and reconciled
+with the SSD run, including the corrected rejection cascade. The manuscript figures were
+restyled afterwards, which moved the build to 102 pages. Validation includes
 824 passing tests, 258 additional algebraic/support checks on saved results, and
 agreement of the annotation pack with both mounted archives.
 The [completion record](revisions/manuscript-review-2026-09-11/completion.json)
@@ -72,7 +73,7 @@ run the driver without `--clean` to regenerate all downstream results.
 Every rebuild has a separate directory under `derived-audit/runs/` on the SSD, containing
 logs, arrays and a manifest with source and dataset identities. Failed or stale stages
 stop the workflow. A complete manifest with a matching PDF hash identifies a completed
-build. See [the rebuild guide](docs/guide/rebuilding.md) for recovery and provenance limits.
+build. See [the rebuild guide](https://matteodisante.github.io/soaring-anomalous-transport/guide/rebuilding/) for recovery and provenance limits.
 
 ## Repository layout
 
@@ -94,7 +95,7 @@ build. See [the rebuild guide](docs/guide/rebuilding.md) for recovery and proven
 | `revisions/` | Review notes and audit records |
 
 The flight archive lives on the external SSD. Its generated `README.md` inventories the
-actual files; [the data guide](docs/guide/data-on-disk.md) explains the schemas.
+actual files; [the data guide](https://matteodisante.github.io/soaring-anomalous-transport/guide/data-on-disk/) explains the schemas.
 Do not load the full fix table into memory: use `soaring.analysis.derived.stream_flights`.
 
 Earlier working material is preserved separately from the current methods:
@@ -112,12 +113,12 @@ uv run pytest
 uv run --extra docs mkdocs serve
 ```
 
-The [pipeline guide](docs/guide/preprocessing-pipeline.md),
-[transport guide](docs/guide/global-transport.md) and
-[segmentation guide](docs/guide/flight-phase-segmentation.md) connect the methods to code.
-[Figure conventions](docs/guide/figures.md) define colours and printed dimensions.
-[Generated provenance](docs/guide/provenance.md) maps manuscript inputs to their producers;
-[the bibliography audit](docs/guide/bibliography.md) records source verification and its limits.
+The [pipeline guide](https://matteodisante.github.io/soaring-anomalous-transport/guide/preprocessing-pipeline/),
+[transport guide](https://matteodisante.github.io/soaring-anomalous-transport/guide/global-transport/) and
+[segmentation guide](https://matteodisante.github.io/soaring-anomalous-transport/guide/flight-phase-segmentation/) connect the methods to code.
+[Figure conventions](https://matteodisante.github.io/soaring-anomalous-transport/guide/figures/) define colours and printed dimensions.
+[Generated provenance](https://matteodisante.github.io/soaring-anomalous-transport/guide/provenance/) maps manuscript inputs to their producers;
+[the bibliography audit](https://matteodisante.github.io/soaring-anomalous-transport/guide/bibliography/) records source verification and its limits.
 
 The roadmap requires no action. The current [manual annotation pack](annotations/phase_labeling/20260910T221820Z-05d36ab4/README.md) is ready; follow
 [the annotation instructions](annotations/phase_labeling/README.md).
