@@ -1,0 +1,95 @@
+% Visual reference: Matteo Di Sante, 13_06_26_slides_soaring_ctrw.tex.
+% Steel-blue title bar, Palatino, Pisa seal, white pages and a pale title band.
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{mathpazo}
+\usefonttheme{serif}
+\usepackage{amsmath,amssymb,bm,booktabs,array,graphicx,tikz,microtype}
+\usetikzlibrary{arrows.meta,calc,positioning}
+\usepackage{siunitx}
+\sisetup{group-separator={,},group-minimum-digits=4}
+\usepackage{pgfpages}
+\ifdefined\Speakernotes
+  \setbeameroption{show notes on second screen=right}
+\else
+  \setbeameroption{hide notes}
+\fi
+\definecolor{pisablue}{RGB}{74,96,121}
+\definecolor{pisablight}{RGB}{192,206,220}
+\definecolor{accent}{RGB}{26,118,179}
+\definecolor{para}{HTML}{3477A8}
+\definecolor{hang}{HTML}{B5482A}
+\definecolor{beginner}{HTML}{6A3D9A}
+\definecolor{expert}{HTML}{C98A1E}
+\definecolor{teal}{HTML}{2E7D8A}
+\definecolor{wine}{HTML}{8E3B5C}
+\definecolor{muted}{HTML}{666666}
+\setbeamercolor{structure}{fg=pisablue}
+\setbeamercolor{normal text}{fg=black,bg=white}
+\setbeamercolor{frametitle}{fg=white,bg=pisablue}
+\setbeamercolor{alerted text}{fg=accent}
+\setbeamercolor{block title}{fg=white,bg=pisablue}
+\setbeamercolor{block body}{fg=black,bg=pisablight!28}
+\setbeamercolor{discussion}{fg=pisablue,bg=pisablight!30}
+\setbeamercolor{button}{fg=white,bg=pisablue}
+\setbeamerfont{button}{size=\normalsize}
+\setbeamersize{text margin left=7mm,text margin right=7mm}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{itemize item}{\textcolor{pisablue}{\small$\bullet$}}
+\setbeamertemplate{itemize subitem}{\textcolor{pisablue}{\textendash}}
+\setbeamertemplate{itemize/enumerate body begin}{\setlength{\itemsep}{0.55em}}
+\setbeamertemplate{frametitle}{%
+  \nointerlineskip
+  \begin{beamercolorbox}[wd=\paperwidth,ht=9mm,dp=3mm,center]{frametitle}
+    \large\insertframetitle\strut
+  \end{beamercolorbox}
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north west,inner sep=0pt,xshift=2mm,yshift=-1.2mm]
+      at(current page.north west){\includegraphics[height=8mm]{assets/cherubino_white.png}};
+    \node[anchor=north east,text=white,inner sep=0pt,xshift=-2.3mm,yshift=-4.2mm]
+      at(current page.north east){\small\insertframenumber};
+  \end{tikzpicture}
+}
+\setbeamertemplate{footline}{%
+  \hspace{7mm}\textcolor{muted}{\fontsize{6.5}{8}\selectfont
+    Matteo Di Sante\enspace|\enspace\TalkShort\enspace|\enspace11 September 2026}
+  \hfill\textcolor{muted}{\fontsize{6.5}{8}\selectfont Supervisor discussion}\hspace{7mm}\vspace{2mm}
+}
+\newcommand{\kw}[1]{\textcolor{accent}{#1}}
+\newcommand{\source}[1]{\par\vspace{1mm}{\fontsize{7}{8.3}\selectfont\color{muted}#1\par}}
+\newcommand{\question}[1]{\par\vfill
+  \begin{beamercolorbox}[wd=\linewidth,sep=5pt]{discussion}
+    \small #1
+  \end{beamercolorbox}}
+\newcommand{\fig}[2][54mm]{\includegraphics[width=\linewidth,height=#1,keepaspectratio]{assets/#2}\par}
+\newcommand{\timing}[2]{\note{\textbf{Time: #1.}\par\medskip #2}}
+\newcommand{\refitem}[3]{\href{#1}{#2}\hfill {\color{muted}#3}\par\medskip}
+\newcommand{\titleframe}[3]{%
+\begin{frame}[plain]
+\begin{tikzpicture}[remember picture,overlay]
+ \fill[pisablue](current page.south west)rectangle(current page.north east);
+ \fill[pisablight](current page.south west)rectangle([yshift=20mm]current page.south east);
+ \node[anchor=north,yshift=-4mm]at(current page.north){\includegraphics[height=13mm]{assets/cherubino_white.png}};
+ \node[text=white,align=center]at([yshift=19mm]current page.center)
+   {{\scshape\large University of Pisa}\\[2mm]{\small Department of Physics ``Enrico Fermi''}};
+ \node[text=white,align=center,text width=.92\paperwidth]at([yshift=-3mm]current page.center)
+   {{\LARGE\bfseries #1}\\[3mm]{\large #2}};
+ \node[text=pisablue,align=center]at([yshift=10mm]current page.south)
+   {{\normalsize Matteo Di Sante}\quad$\bullet$\quad{\normalsize 11 September 2026}\\[2mm]
+    {\small #3}};
+\end{tikzpicture}
+\end{frame}}
+\newcommand{\backupstart}{%
+\appendix
+\begin{frame}[plain,noframenumbering]
+\begin{tikzpicture}[remember picture,overlay]
+ \fill[pisablue](current page.south west)rectangle(current page.north east);
+ \node[text=white,align=center]at(current page.center)
+  {{\LARGE\bfseries Discussion material}\\[4mm]{\large Extra figures, derivations and references}};
+\end{tikzpicture}
+\end{frame}}
+\hypersetup{colorlinks=true,urlcolor=accent,linkcolor=accent,pdfauthor={Matteo Di Sante}}
+% A notes sheet contains a second rendering of the slide. Disable its duplicate
+% destinations; the normal talk PDF retains all hyperlinks and the viewer button.
+\ifdefined\Speakernotes\hypersetup{draft}\fi
