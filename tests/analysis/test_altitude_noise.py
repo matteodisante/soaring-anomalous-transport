@@ -9,7 +9,7 @@ import pytest
 from soaring.analysis.altitude_noise import (
     _Accumulator,
     _uniform_resample,
-    baro_presence_from_scan,
+    gnss_presence_from_scan,
     load_or_collect_psd,
     load_psd_cache,
     proportion_ci,
@@ -23,22 +23,17 @@ Z95 = 1.959963984540054
 
 
 # --------------------------------------------------------------------------- #
-# baro presence (census from an already-parsed scan)
+# GNSS presence (census from an already-parsed scan)
 # --------------------------------------------------------------------------- #
-def test_baro_presence_from_scan_counts_absent():
-    # BARO_PRESENT_MIN = 0.95: everything below it counts as absent, so a
-    # partially-filled channel (0.6, 0.9) is not a barometric flight.
-    scan = pd.DataFrame({"baro_present_frac": [1.0, 0.0, 0.9, 0.1, 0.6]})
-    absent, n = baro_presence_from_scan(scan)
-    assert n == 5
-    assert absent == 4
+def test_gnss_presence_from_scan_returns_the_column_as_is():
+    scan = pd.DataFrame({"gnss_present_frac": [1.0, 0.0, 0.9, 0.1, 0.6]})
+    frac = gnss_presence_from_scan(scan)
+    np.testing.assert_array_equal(frac, [1.0, 0.0, 0.9, 0.1, 0.6])
 
 
-def test_baro_presence_from_scan_all_present():
-    scan = pd.DataFrame({"baro_present_frac": [1.0, 0.98, 0.95]})
-    absent, n = baro_presence_from_scan(scan)
-    assert absent == 0
-    assert n == 3
+def test_gnss_presence_from_scan_empty_scan_is_empty():
+    scan = pd.DataFrame({"gnss_present_frac": []})
+    assert gnss_presence_from_scan(scan).size == 0
 
 
 # --------------------------------------------------------------------------- #
@@ -230,7 +225,12 @@ def test_save_psd_cache_without_representative_leaves_it_empty(tmp_path):
     acc = _Accumulator()
     f = _fill(acc, "delta", "baro", [[1, 1]], f=np.array([0.0, 1.0]))
     _fill(acc, "delta", "gnss", [[2, 2]], f=f)
-    acc.representative = ("para", np.array([0.0, 1.0]), np.array([1.0, 2.0]), np.array([1.0, 2.0]))
+    acc.representative = (
+        "para",
+        np.array([0.0, 1.0]),
+        np.array([1.0, 2.0]),
+        np.array([1.0, 2.0]),
+    )
 
     cache_path = tmp_path / "psd_sample.npz"
     save_psd_cache(acc, "delta", cache_path)
@@ -282,7 +282,7 @@ def test_load_or_collect_psd_falls_back_when_a_cache_is_missing(tmp_path):
     # path list for both, yields an accumulator with nothing in it rather than
     # silently reusing the stale/partial para-only cache.
     para_acc = _Accumulator()
-    f = _fill(para_acc, "para", "baro", [[1, 1]], f=np.array([0.0, 1.0]))
+    _fill(para_acc, "para", "baro", [[1, 1]], f=np.array([0.0, 1.0]))
     para_acc.target_dt = 1.0
     save_psd_cache(para_acc, "para", tmp_path / "para_psd.npz")
 
@@ -294,3 +294,46 @@ def test_load_or_collect_psd_falls_back_when_a_cache_is_missing(tmp_path):
         },
     )
     assert merged.n_psd("para", "baro") == 0  # cache was NOT trusted
+
+
+def test_psd_interval_never_bridges_missing_altitude_or_bad_time():
+    from soaring.analysis.altitude_noise import longest_regular_block
+
+    t = np.array([0.0, 1.0, 2.0, 10.0, 11.0, 12.0, 13.0, 13.0, 14.0])
+    z = np.column_stack([100 + t, 200 + t])
+    z[1, 1] = np.nan
+    selected_t, selected_z = longest_regular_block(t, z, 1.0)
+    np.testing.assert_array_equal(selected_t, [10.0, 11.0, 12.0, 13.0])
+    assert np.isfinite(selected_z).all()
+
+
+def test_psd_collector_uses_paired_valid_interval(monkeypatch):
+    from pathlib import Path
+
+    import pandas as pd
+
+    from soaring.analysis import altitude_noise
+
+    t = np.arange(700, dtype=float)
+    frame = pd.DataFrame(
+        {
+            "t": t,
+            "baro_alt": 1000 + np.sin(t),
+            "gnss_alt": 1100 + np.sin(t),
+            "valid": True,
+        }
+    )
+    frame.loc[:99, "valid"] = False
+    frame.loc[400, "gnss_alt"] = 0.0
+    monkeypatch.setattr(altitude_noise, "parse_igc", lambda _: frame)
+    result = altitude_noise._collect_psd({"para": [Path("synthetic.igc")]})
+    assert result.n_psd("para", "baro") == result.n_psd("para", "gnss") == 1
+    np.testing.assert_array_equal(result.representative[1], np.arange(100.0, 400.0))
+
+
+def test_old_psd_cache_is_not_reused(tmp_path):
+    from soaring.analysis.altitude_noise import load_psd_cache
+
+    path = tmp_path / "old.npz"
+    np.savez(path, freqs=[0.0, 0.5], baro=[[1.0, 1.0]], gnss=[[1.0, 1.0]])
+    assert load_psd_cache("para", path) is None

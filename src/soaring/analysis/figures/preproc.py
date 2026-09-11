@@ -1,9 +1,7 @@
 """The pre-processing diagnostic figures.
 
-Drawing is kept out of the modules that compute, so that a change to a panel cannot touch
-an estimator and a module can be imported without pulling in Matplotlib. The numbers these
-draw come from :mod:`soaring.analysis.census`; nothing here computes a statistic that the
-thesis quotes.
+Drawing is separate from estimation, so panel changes do not alter estimators.
+The displayed data come from :mod:`soaring.analysis.census`.
 """
 
 from __future__ import annotations
@@ -12,6 +10,8 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
+
+from soaring.reporting.style import DISCIPLINE_COLORS, paper_style
 
 from ..census import retention_curve
 from ..preproc.resample import split_bound_s
@@ -26,11 +26,7 @@ if TYPE_CHECKING:
         SamplingThresholds,
     )
 
-_DISC_COLOR = {
-    "paragliders": "#3477a8",
-    "hang gliders": "#b5482a",
-    "sailplanes": "#3d8c54",
-}
+_DISC_COLOR = {**DISCIPLINE_COLORS, "sailplanes": "#4E8A5B"}
 
 
 def make_flightlevel_diagnostics_figure(
@@ -40,10 +36,10 @@ def make_flightlevel_diagnostics_figure(
 ) -> Figure:
     """Flight-level filtering diagnostics, per discipline, from full-census track data.
 
-    Six panels, each overlaying every discipline. Top row, the distribution of the
-    quantity each of the three track criteria cuts on: (a) recorded flight duration,
-    (b) total flown path length, (c) whole-flight altitude range on the adopted
-    channel, with the adopted cut marked. Bottom row, (d)/(e)/(f) the fraction of
+    Six panels, each overlaying every discipline. Left column: distributions of the
+    three raw-track diagnostic quantities: (a) recorded flight duration,
+    (c) total flown path length, (e) whole-flight altitude range on the adopted
+    channel, with the adopted cut marked. Right column, (b)/(d)/(f) the fraction of
     flights retained versus that cut, computed for **that cut alone** (marginal, not
     cascaded), so each curve isolates the effect of one criterion.
 
@@ -71,8 +67,11 @@ def make_flightlevel_diagnostics_figure(
     """
     import matplotlib.pyplot as plt
 
+    paper_style()
+
     line_kw = {"color": "0.25", "ls": "--", "lw": 1.2}
-    fig, axes = plt.subplots(2, 3, figsize=(13.2, 6.8))
+    fig, grid = plt.subplots(3, 2, figsize=(6.1, 7.4), layout="constrained")
+    axes = grid.T
 
     dur_grid = np.linspace(5.0, 150.0, 80)  # minutes
     path_grid = np.logspace(np.log10(1.0), np.log10(500.0), 80)  # km
@@ -95,33 +94,21 @@ def make_flightlevel_diagnostics_figure(
         )
         alt_range = alt_range[has_alt & (alt_range > 0)]
 
-        axes[0, 0].hist(
-            dur_h[dur_h <= 12],
-            bins=np.linspace(0, 12, 70),
-            density=True,
-            histtype="step",
-            lw=1.5,
-            color=color,
-            label=disc,
-        )
-        axes[0, 1].hist(
-            path,
-            bins=np.logspace(np.log10(0.5), np.log10(1000), 70),
-            density=True,
-            histtype="step",
-            lw=1.5,
-            color=color,
-            label=disc,
-        )
-        axes[0, 2].hist(
-            alt_range,
-            bins=np.logspace(np.log10(1.0), np.log10(10000), 70),
-            density=True,
-            histtype="step",
-            lw=1.5,
-            color=color,
-            label=disc,
-        )
+        for ax, values, edges in (
+            (axes[0, 0], dur_h, np.linspace(0, 12, 70)),
+            (axes[0, 1], path, np.logspace(np.log10(0.5), np.log10(1000), 70)),
+            (axes[0, 2], alt_range, np.logspace(0, 4, 70)),
+        ):
+            values = np.asarray(values, dtype=float)
+            values = values[np.isfinite(values)]
+            counts, _ = np.histogram(values, bins=edges)
+            ax.stairs(
+                counts / max(values.size, 1) / np.diff(edges),
+                edges,
+                color=color,
+                lw=1.5,
+                label=disc,
+            )
         axes[1, 0].plot(
             dur_grid,
             100.0 * retention_curve(dur_h * 60.0, dur_grid)[1],
@@ -157,7 +144,7 @@ def make_flightlevel_diagnostics_figure(
     axes[0, 1].set(
         xlabel="flown path length [km]",
         ylabel="density",
-        title="(b) Path length",
+        title="(c) Path length",
         xscale="log",
     )
 
@@ -165,7 +152,7 @@ def make_flightlevel_diagnostics_figure(
     axes[0, 2].set(
         xlabel="whole-flight altitude range [m]",
         ylabel="density",
-        title="(c) Altitude activity",
+        title="(e) Altitude range",
         xscale="log",
     )
 
@@ -173,7 +160,7 @@ def make_flightlevel_diagnostics_figure(
     axes[1, 0].set(
         xlabel=r"minimum duration $T_{\min}$ [min]",
         ylabel="flights retained [%]",
-        title="(d) Retention vs duration cut (this cut alone)",
+        title="(b) Duration criterion",
     )
     axes[1, 0].grid(alpha=0.3)
 
@@ -181,7 +168,7 @@ def make_flightlevel_diagnostics_figure(
     axes[1, 1].set(
         xlabel="minimum path length [km]",
         ylabel="flights retained [%]",
-        title="(e) Retention vs path cut (this cut alone)",
+        title="(d) Path criterion",
         xscale="log",
     )
     axes[1, 1].grid(alpha=0.3)
@@ -190,12 +177,13 @@ def make_flightlevel_diagnostics_figure(
     axes[1, 2].set(
         xlabel="minimum altitude range [m]",
         ylabel="flights retained [%]",
-        title="(f) Retention vs altitude-range cut (this cut alone)",
+        title="(f) Altitude-range criterion",
         xscale="log",
     )
     axes[1, 2].grid(alpha=0.3)
 
-    fig.tight_layout()
+    if fig.get_layout_engine() is None:
+        fig.tight_layout()
     return fig
 
 
@@ -229,8 +217,10 @@ def make_gap_diagnostics_figure(
     """
     import matplotlib.pyplot as plt
 
+    paper_style()
+
     line_kw = {"color": "0.25", "ls": "--", "lw": 1.2}
-    fig, axes = plt.subplots(2, 2, figsize=(9.4, 6.8))
+    fig, axes = plt.subplots(2, 2, figsize=(6.1, 5.5), layout="constrained")
 
     # Clean per-discipline series once.
     gaps: dict[str, np.ndarray] = {}
@@ -281,24 +271,18 @@ def make_gap_diagnostics_figure(
 
     for disc in scans:
         color = _DISC_COLOR.get(disc, "gray")
-        axes[0, 0].hist(
-            gaps[disc],
-            bins=gap_bins,
-            density=True,
-            histtype="step",
-            lw=1.5,
-            color=color,
-            label=disc,
-        )
-        axes[0, 1].hist(
-            misses[disc],
-            bins=miss_bins,
-            density=True,
-            histtype="step",
-            lw=1.5,
-            color=color,
-            label=disc,
-        )
+        for ax, values, edges in (
+            (axes[0, 0], gaps[disc], gap_bins),
+            (axes[0, 1], misses[disc], miss_bins),
+        ):
+            counts, _ = np.histogram(values, bins=edges)
+            ax.stairs(
+                counts / max(values.size, 1) / np.diff(edges),
+                edges,
+                color=color,
+                lw=1.5,
+                label=disc,
+            )
         axes[1, 0].plot(
             gap_grid,
             100.0 * retention_curve(gaps[disc], gap_grid, mode="at_most")[1],
@@ -318,14 +302,14 @@ def make_gap_diagnostics_figure(
     axes[0, 0].set(
         xlabel=r"largest gap / this flight's $g_{\max}$",
         ylabel="density",
-        title="(a) Largest gap (in units of the split bound)",
+        title="(a) Largest gap",
         xlim=(0.0, gap_hi),
     )
     axes[0, 0].legend(fontsize=8)
 
     axes[0, 1].axvline(sampling.max_missing_fraction, **line_kw)
     axes[0, 1].set(
-        xlabel="missing fraction of the uniform grid",
+        xlabel="Missing fraction",
         ylabel="density",
         title="(b) Missing fraction",
         xlim=(0.0, miss_hi),
@@ -333,9 +317,9 @@ def make_gap_diagnostics_figure(
 
     axes[1, 0].axvline(1.0, **line_kw)
     axes[1, 0].set(
-        xlabel=r"cut on largest gap, in units of $g_{\max}$",
+        xlabel=r"Gap threshold / $g_{\max}$",
         ylabel="flights retained [%]",
-        title="(c) Retention vs gap cut (this cut alone)",
+        title="(c) Gap criterion",
         xscale="log",
     )
     axes[1, 0].grid(alpha=0.3)
@@ -344,11 +328,12 @@ def make_gap_diagnostics_figure(
     axes[1, 1].set(
         xlabel="cut on missing fraction",
         ylabel="flights retained [%]",
-        title="(d) Retention vs missing-fraction cut (this cut alone)",
+        title="(d) Missing-fraction criterion",
     )
     axes[1, 1].grid(alpha=0.3)
 
-    fig.tight_layout()
+    if fig.get_layout_engine() is None:
+        fig.tight_layout()
     return fig
 
 
@@ -375,7 +360,9 @@ def make_sampling_figure(scans: dict[str, pd.DataFrame]) -> Figure:
     """
     import matplotlib.pyplot as plt
 
-    fig, ax = plt.subplots(figsize=(6.6, 4.0))
+    paper_style()
+
+    fig, ax = plt.subplots(figsize=(3.8, 2.7))
     upper = 11  # aggregates the long, thin tail beyond it (up to a few tens of
     # seconds for a handful of flights) into one bin, rather than stretching the axis
     bins = np.arange(0.5, upper + 1.5, 1.0)
@@ -398,7 +385,8 @@ def make_sampling_figure(scans: dict[str, pd.DataFrame]) -> Figure:
     ax.set_ylabel("fraction of flights")
     ax.set_title("Native sampling interval, per flight")
     ax.legend(fontsize=8)
-    fig.tight_layout()
+    if fig.get_layout_engine() is None:
+        fig.tight_layout()
     return fig
 
 
@@ -426,12 +414,11 @@ def make_fixlevel_diagnostics_figure(
     (:func:`soaring.analysis.preproc.cleaning.local_vz`), which is what
     ``max_vertical_speed_mps`` actually bounds -- (c) GNSS altitude. Unlike the
     flight-level figure these are distributions over individual *fixes*, not
-    per-flight summaries: a bound removes only the few offending fixes of an otherwise
-    good flight, so what justifies it is that it sits in the physically-implausible tail
-    (a GPS error, not signal) and removes a negligible fraction of fixes, annotated on
-    each panel. The y-axis is logarithmic so that tail, where the cuts act, is visible;
-    panel (b)'s x-axis is logarithmic too, since ``v_z_local`` spans several decades
-    from level flight up to the cut.
+    per-flight summaries. The annotations measure raw-sample bound exceedances,
+    not the number of fixes removed by the complete cleaning pipeline. A sparse
+    tail alone does not establish that an observation is corrupt. The y-axis is
+    logarithmic so that tail is visible; all horizontal axes are linear to show
+    distances from the bounds.
     Panel (a) marks one cut *per discipline*, colour-matched to that discipline's
     histogram (horizontal-speed envelopes differ too much between paragliders and hang
     gliders for one shared bound); panels (b)/(c) mark one shared cut/band instead,
@@ -448,8 +435,10 @@ def make_fixlevel_diagnostics_figure(
     """
     import matplotlib.pyplot as plt
 
+    paper_style()
+
     shared_line_kw = {"color": "0.25", "ls": "--", "lw": 1.2}
-    fig, axes = plt.subplots(1, 3, figsize=(11.0, 3.7))
+    fig, axes = plt.subplots(1, 3, figsize=(6.1, 3.2))
 
     def _hist_panel(
         ax,
@@ -558,7 +547,7 @@ def make_fixlevel_diagnostics_figure(
             ax.text(
                 0.97,
                 0.95 - 0.09 * i,
-                f"{disc}: cut removes {frac:.2g}%",
+                f"{disc}: {frac:.2g}% above bound",
                 transform=ax.transAxes,
                 fontsize=7.5,
                 ha="right",
@@ -597,10 +586,10 @@ def make_fixlevel_diagnostics_figure(
             ax.axvline(c, **shared_line_kw)
         if len(cuts) == 1:
             frac = float(np.mean(pooled > cuts[0])) * 100.0
-            note = f"cut removes {frac:.2g}% of fixes"
+            note = f"{frac:.2g}% above {cuts[0]:g} m/s"
         else:
             frac = float(np.mean((pooled < cuts[0]) | (pooled > cuts[1]))) * 100.0
-            note = f"band removes {frac:.2g}% of fixes"
+            note = f"{frac:.2g}% of values outside band"
         ax.text(
             0.97,
             0.95,
@@ -625,12 +614,13 @@ def make_fixlevel_diagnostics_figure(
         "v_z_local",
         (fix_level.max_vertical_speed_mps,),
         r"windowed GNSS $\mathrm{med}|v_z|$ [m/s]",
-        "(b) Vertical speed (windowed)",
-        wide_tail=True,
+        "(b) Vertical speed",
+        wide_tail=False,
+        min_hi=60.0,
         # Not integer-aligned: unlike the raw per-step value, a rolling median is not
         # itself a metre-quantized quantity, even though every sample feeding it is.
         integer_aligned=False,
-        xscale="log",
+        xscale="linear",
     )
     _shared_cut_panel(
         axes[2],
@@ -646,5 +636,81 @@ def make_fixlevel_diagnostics_figure(
         # to populate.
         min_hi=10_000.0,
     )
-    fig.tight_layout()
+    for axis in axes:
+        axis.tick_params(labelsize=8)
+        axis.xaxis.label.set_size(9)
+        axis.yaxis.label.set_size(9)
+        axis.title.set_fontsize(9)
+        axis.spines["top"].set_visible(False)
+        axis.spines["right"].set_visible(False)
+    if fig.get_layout_engine() is None:
+        fig.tight_layout()
+    return fig
+
+
+def make_fixlevel_histogram_figure(
+    histograms: dict, fix_level: FixLevelThresholds
+) -> Figure:
+    """Render streamed, unconditional densities and full-sample exceedance counts.
+
+    Each quantity record has ``edges``, ``counts``, ``n_finite`` and ``n_outside``.
+    Truncating the displayed x range does not renormalize the displayed density.
+    """
+    import matplotlib.pyplot as plt
+
+    paper_style()
+
+    fig, axes = plt.subplots(1, 3, figsize=(6.1, 3.2), layout="constrained")
+    labels = [
+        ("v_xy", "(a) Horizontal speed", r"$v_{xy}$ [m/s]"),
+        ("v_z_local", "(b) Vertical speed", r"window median $|v_z|$ [m/s]"),
+        ("altitude", "(c) Altitude", "GNSS altitude [m]"),
+    ]
+    for ax, (key, title, xlabel) in zip(axes, labels, strict=True):
+        for disc, stats in histograms.items():
+            h = stats[key]
+            density = h["counts"] / max(h["n_finite"], 1) / np.diff(h["edges"])
+            ax.stairs(
+                density,
+                h["edges"],
+                color=_DISC_COLOR.get(disc, ".5"),
+                lw=1.3,
+                label=disc,
+            )
+            if key == "v_xy":
+                ax.axvline(
+                    fix_level.max_horizontal_speed_mps[disc],
+                    color=_DISC_COLOR.get(disc, ".5"),
+                    ls="--",
+                    lw=1,
+                )
+        if key != "v_xy":
+            cuts = (
+                [fix_level.max_vertical_speed_mps]
+                if key == "v_z_local"
+                else [fix_level.min_altitude_m, fix_level.max_altitude_m]
+            )
+            for cut in cuts:
+                ax.axvline(cut, color=".25", ls="--", lw=1)
+            n = sum(stats[key]["n_finite"] for stats in histograms.values())
+            outside = sum(stats[key]["n_outside"] for stats in histograms.values())
+            ax.text(
+                0.97,
+                0.95,
+                f"{100 * outside / max(n, 1):.3g}% outside",
+                ha="right",
+                va="top",
+                transform=ax.transAxes,
+                fontsize=8,
+                color=".25",
+            )
+        ax.set(xlabel=xlabel, ylabel="density", title=title, yscale="log")
+        ax.set_xlim(h["edges"][0], h["edges"][-1])
+        ax.tick_params(labelsize=8)
+        ax.xaxis.label.set_size(9)
+        ax.yaxis.label.set_size(9)
+        ax.title.set_fontsize(9)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+    axes[0].legend(frameon=False, fontsize=8, loc="upper right")
     return fig

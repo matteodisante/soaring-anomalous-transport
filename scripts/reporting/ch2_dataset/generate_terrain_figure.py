@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
-r"""Terrain at launch: a France map by raw ground elevation, following [Kapos et al.].
+r"""Map first-fix altitude using four descriptive elevation bands.
 
-A separate figure from ``fig:prelim-map``/``fig:strata-compat`` (Sec.~\ref{sec:prelim}):
-those stratify by named massif box, this one stratifies every launch by its raw altitude
-into the four elevation bands Hernandez-Aguayo, Cristelli \& Benzaquen (arXiv:2608.00241,
-Eq.~1) draw from Kapos et al. (2000)'s global mountain classification: Plains
-(<300 m), Hills (300-800 m), Low mountains (800-1500 m), High mountains (>=1500 m).
+The labels and thresholds follow Hernandez-Aguayo, Cristelli \& Benzaquen
+(arXiv:2608.00241, Eq.~1). These four bands do not reproduce the full mountain
+classification of Kapos et al. (2000), which also uses terrain characteristics.
 
-Their z^gnd is the ERA5 surface geopotential on a 0.25 deg grid, a dataset this project
-does not otherwise use. This script keeps their four labels and thresholds but not their
-altitude source: z^gnd here is the *raw* IGC file's first valid B record, GNSS channel
-(the thesis choice throughout, `soaring.analysis.igc`) falling back to barometric where
-GNSS is absent -- read before any pipeline cleaning touches it, since the cleaned `alt0`
-already reflects the ground-phase trim (Sec.~\ref{sec:prelim}) and is not "the altitude
-the pilot launched at" in the sense this figure wants.
+Here the altitude comes from the raw IGC file's first valid B record: GNSS if
+available, otherwise barometric. It is a rough geographical proxy, with unknown
+datum and possible measurement error; it is neither a terrain model nor a
+verified launch altitude. The barometric fallback is specific to this exploratory
+map and does not change the cleaned trajectory's altitude source.
 
 Writes ``thesis/generated/terrain_map.pdf`` and ``thesis/generated/terrain.tex``.
 """
@@ -42,7 +38,11 @@ from soaring.reporting import (  # noqa: E402
     unreachable_reason,
     write_macros,
 )
-from soaring.viewer.geography import FRANCE_EXTENT, draw_land, load_basemap  # noqa: E402
+from soaring.viewer.geography import (  # noqa: E402
+    FRANCE_EXTENT,
+    draw_land,
+    load_basemap,
+)
 
 OUT_MAP = ROOT / "thesis" / "generated" / "terrain_map.pdf"
 OUT_TEX = ROOT / "thesis" / "generated" / "terrain.tex"
@@ -50,9 +50,8 @@ OUT_TEX = ROOT / "thesis" / "generated" / "terrain.tex"
 CELL_DEG = 0.15
 TOP_N_PER_CLASS = 10
 
-# Kapos et al. (2000) bands as adopted by arXiv:2608.00241 Eq. 1 for the same France
-# domain; kept identical here so the figure is comparable to theirs panel-for-panel even
-# though the altitude underneath is measured differently (see module docstring).
+# Descriptive elevation bands from arXiv:2608.00241 Eq. 1. Their terrain-altitude
+# source differs from the raw first-fix proxy used here (see module docstring).
 TERRAIN_BANDS = [
     ("Plains", -np.inf, 300.0),
     ("Hills", 300.0, 800.0),
@@ -75,11 +74,11 @@ _PDF_METADATA = {
 
 
 def classify(alt: np.ndarray) -> np.ndarray:
-    """Each altitude sorted into its Kapos-et-al. band; empty string outside all of them
-    (only possible for a non-finite input, since the bands themselves cover the line)."""
+    """Assign finite altitude to a descriptive band; otherwise return an empty label."""
     labels = np.full(alt.shape, "", dtype=object)
+    finite = np.isfinite(alt)
     for name, lo, hi in TERRAIN_BANDS:
-        labels[(alt >= lo) & (alt < hi)] = name
+        labels[finite & (alt >= lo) & (alt < hi)] = name
     return labels
 
 
@@ -93,15 +92,20 @@ def _flight_paths(glider) -> pd.DataFrame | None:
     meta = meta[meta.drop_reason.isna()][["flight_id"]].copy()
     meta["flight_id"] = meta["flight_id"].astype(str)
 
-    catalog = pd.read_csv(catalog_path, low_memory=False, usecols=["flight_id", "season", "date"])
+    catalog = pd.read_csv(
+        catalog_path, low_memory=False, usecols=["flight_id", "season", "date"]
+    )
     catalog["flight_id"] = catalog["flight_id"].astype(str)
     frame = meta.merge(catalog, on="flight_id", how="left")
 
     igc_dir = glider.config().igc_dir
     frame["path"] = [
-        None if pd.isna(season) or pd.isna(date)
+        None
+        if pd.isna(season) or pd.isna(date)
         else igc_dir / str(season) / igc_filename(date, flight_id)
-        for season, date, flight_id in zip(frame["season"], frame["date"], frame["flight_id"])
+        for season, date, flight_id in zip(
+            frame["season"], frame["date"], frame["flight_id"], strict=True
+        )
     ]
     return frame
 
@@ -125,6 +129,7 @@ def load_terrain(glider) -> pd.DataFrame | None:
         return None
 
     from soaring.analysis.config import load_preproc_config
+
     alt_lo = load_preproc_config().fix.min_altitude_m
     alt_hi = load_preproc_config().fix.max_altitude_m
 
@@ -153,15 +158,21 @@ def load_terrain(glider) -> pd.DataFrame | None:
     return frame
 
 
-def _cell_table(frame: pd.DataFrame, extent: tuple[float, float, float, float]) -> pd.DataFrame:
+def _cell_table(
+    frame: pd.DataFrame, extent: tuple[float, float, float, float]
+) -> pd.DataFrame:
     """One row per occupied grid cell: its centre, flight count and majority terrain."""
     classified = frame.terrain != ""
-    inside = frame.lon.between(extent[0], extent[2]) & frame.lat.between(extent[1], extent[3])
+    inside = frame.lon.between(extent[0], extent[2]) & frame.lat.between(
+        extent[1], extent[3]
+    )
     sub = frame.loc[classified & inside].copy()
-    sub["lon_bin"] = (np.floor((sub.lon - extent[0]) / CELL_DEG) * CELL_DEG + extent[0]
-                       + CELL_DEG / 2)
-    sub["lat_bin"] = (np.floor((sub.lat - extent[1]) / CELL_DEG) * CELL_DEG + extent[1]
-                       + CELL_DEG / 2)
+    sub["lon_bin"] = (
+        np.floor((sub.lon - extent[0]) / CELL_DEG) * CELL_DEG + extent[0] + CELL_DEG / 2
+    )
+    sub["lat_bin"] = (
+        np.floor((sub.lat - extent[1]) / CELL_DEG) * CELL_DEG + extent[1] + CELL_DEG / 2
+    )
     grouped = sub.groupby(["lon_bin", "lat_bin"])
     cells = grouped.size().rename("n").reset_index()
     majority = grouped["terrain"].agg(lambda s: s.value_counts().idxmax())
@@ -177,7 +188,7 @@ def draw_terrain_map(loaded: dict) -> object:
     frame = pd.concat([d for d in loaded.values() if d is not None], ignore_index=True)
     cells = _cell_table(frame, FRANCE_EXTENT)
 
-    fig, ax = plt.subplots(figsize=(7.5, 7.5))
+    fig, ax = plt.subplots(figsize=(6.1, 6.1))
     panels = load_basemap()
     if panels:
         draw_land(ax, panels["france"]["rings"], FRANCE_EXTENT)
@@ -185,16 +196,34 @@ def draw_terrain_map(loaded: dict) -> object:
     size = 6.0 + 22.0 * np.log10(cells["n"] + 1.0)
     for name in TERRAIN_ORDER:
         sub = cells[cells.terrain == name]
-        ax.scatter(sub.lon_bin, sub.lat_bin, s=size[sub.index], c=TERRAIN_COLORS[name],
-                   marker="s", linewidths=0, alpha=0.85, zorder=2, label=name)
+        ax.scatter(
+            sub.lon_bin,
+            sub.lat_bin,
+            s=size[sub.index],
+            c=TERRAIN_COLORS[name],
+            marker="s",
+            linewidths=0,
+            alpha=0.85,
+            zorder=2,
+            label=name,
+        )
 
     top_cells = []
     for name in TERRAIN_ORDER:
         sub = cells[cells.terrain == name].nlargest(TOP_N_PER_CLASS, "n")
         top_cells.append(sub)
     top = pd.concat(top_cells) if top_cells else cells.iloc[0:0]
-    ax.scatter(top.lon_bin, top.lat_bin, s=90, facecolors="none", edgecolors="0.15",
-               marker="X", linewidths=1.4, zorder=3, label=f"Top-{TOP_N_PER_CLASS} cells")
+    ax.scatter(
+        top.lon_bin,
+        top.lat_bin,
+        s=90,
+        facecolors="none",
+        edgecolors="0.15",
+        marker="X",
+        linewidths=1.4,
+        zorder=3,
+        label=f"Top-{TOP_N_PER_CLASS} cells",
+    )
 
     ax.set_xlim(FRANCE_EXTENT[0], FRANCE_EXTENT[2])
     ax.set_ylim(FRANCE_EXTENT[1], FRANCE_EXTENT[3])
@@ -222,7 +251,10 @@ def macros(loaded: dict) -> dict[str, str]:
         classified = frame[frame.terrain != ""]
         put("Retained", f"{retained}")
         put("Classified", f"{len(classified)}")
-        put("ClassifiedPct", f"{100 * len(classified) / retained:.1f}" if retained else "0.0")
+        put(
+            "ClassifiedPct",
+            f"{100 * len(classified) / retained:.1f}" if retained else "0.0",
+        )
         # Shares are of the *classified* flights, so the four bands sum to 100%; a flight
         # with no usable raw altitude carries no terrain opinion to average in.
         shares = classified["terrain"].value_counts(normalize=True)
@@ -243,7 +275,11 @@ def main() -> int:
     args = parser.parse_args()
 
     import matplotlib
+
     matplotlib.use("Agg")
+    from soaring.reporting.style import paper_style
+
+    paper_style()
 
     loaded = {}
     missing = []
@@ -257,20 +293,25 @@ def main() -> int:
         print("no raw archive reachable; terrain figure not written")
         return 1
     refusal = partial_write_refusal(
-        missing, "the terrain figure", allow_partial=args.allow_partial,
+        missing,
+        "the terrain figure",
+        allow_partial=args.allow_partial,
         reasons=[
-            unreachable_reason(DISCIPLINES[d], "flights_meta.parquet")
-            for d in missing
+            unreachable_reason(DISCIPLINES[d], "flights_meta.parquet") for d in missing
         ],
     )
     if refusal:
         print(refusal)
         return 1
 
-    draw_terrain_map(loaded).savefig(OUT_MAP, metadata=_PDF_METADATA, bbox_inches="tight")
+    draw_terrain_map(loaded).savefig(
+        OUT_MAP, metadata=_PDF_METADATA, bbox_inches="tight"
+    )
     values = macros(loaded)
     write_macros(
-        OUT_TEX, values, generator="scripts/reporting/ch2_dataset/generate_terrain_figure.py"
+        OUT_TEX,
+        values,
+        generator="scripts/reporting/ch2_dataset/generate_terrain_figure.py",
     )
     print(f"wrote {OUT_MAP.name}, {OUT_TEX.name} ({len(values)} macros)")
     for k, v in values.items():

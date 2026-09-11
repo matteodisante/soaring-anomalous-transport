@@ -1,53 +1,19 @@
 #!/usr/bin/env python3
-r"""Regenerate the barometric-against-GNSS *offset* statistics for the thesis.
+"""Generate raw barometric/GNSS offset summaries and availability diagnostics.
 
-Writes ``thesis/generated/alt_offset.tex``: the ``\StatAltOff*`` family quoted by
-``sec:altchannel`` and ``impl:altchannel``, which is what turns the mixed-source
-argument from a plausibility into a measurement. Where
-``generate_altitude_noise_figure.py`` measures how *noisy* each channel is, this
-measures how far apart they *sit*, flight by flight, and what the distance is made of
-(:mod:`soaring.analysis.alt_offset`).
+Writes thesis/generated/alt_offset.tex from a seeded sample of up to
+SAMPLE_PER_DISCIPLINE files per discipline (a census when smaller). Reports medians,
+spread, a common altitude band, conditional site/date comparisons, recorder-era
+summaries and field-presence fractions. Converted temperature equivalents depend
+on an atmospheric model; site/date scatter does not isolate instrument noise.
+These summaries describe raw records, not the output of the current GNSS-only
+altitude selection and cleaning.
 
-Five families of number come out of one pass:
+The cached per-flight offset table is reused unless --rescan is given. The complete
+rebuild requests a rescan. Missing data leave the existing output untouched; the
+rebuild's output-freshness check rejects that outcome as an incomplete stage.
 
-* **the offset itself** -- its median, spread and quantiles per discipline, at flight
-  altitude and inside a fixed altitude band so the two disciplines are compared at the
-  same height;
-* **its decomposition** -- the part independent of height (the reference surfaces: a
-  pressure altitude against an ellipsoidal one) and the part proportional to it, which
-  is the day's departure from the standard temperature profile and is reported in
-  kelvin;
-* **weather against instrument** -- the spread of the offset between flights from the
-  same site on the same day (an air mass and a pressure setting in common, so what is
-  left is the recorders) against its spread between flights from the same site on
-  different days (the atmosphere);
-* **the two decades** -- barometer prevalence and within-flight scatter in the earliest
-  and latest seasons the sample supports, since a 20-year archive is not one fleet;
-* **the fallback check** -- how often a flight without a barometric channel carries a
-  complete GNSS one. ``impl:altchannel`` records this as untested, because the cached
-  track scan has no GNSS-completeness column. This scan does.
-
-**Sampling.** The paraglider archive is too large to census here (a parse of every file,
-not a cached column), so a seeded random subsample of ``SAMPLE_PER_DISCIPLINE`` files is
-measured; the hang-glider archive falls under that size and is censused. The size is set
-by the *finest* cut rather than by the headline. Location and scale of the offset are
-stable on a few thousand flights, but the same-site-same-day grouping needs three
-flights of one site and day to land in the sample together, and at 6000 paraglider files
-that yields a few dozen groups. At 20000 it yields a few hundred, which is what the
-instrument-scatter number rests on. Everything coarser than that grouping is
-over-sampled at this size, which is the right way round.
-
-**Caching.** The per-flight table is written to ``<data_root>/derived/alt_offset_scan
-.parquet`` and reused on the next run, exactly as the track scan is: the macros then
-recompute in a second when a definition changes, with no reparse. ``--rescan`` forces
-the parse.
-
-Best-effort like every reporting script: if the SSD, a config or a dependency is
-missing, the committed ``alt_offset.tex`` is left untouched and the script exits
-cleanly. Macros for *both* disciplines are required -- a file written for one would
-fail the build on the other's macros. Run it with::
-
-    uv run python scripts/reporting/ch2_dataset/generate_alt_offset_stats.py [--rescan]
+Usage: uv run python scripts/reporting/ch2_dataset/generate_alt_offset_stats.py [--rescan]
 """
 
 from __future__ import annotations
@@ -59,29 +25,30 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 OUT = ROOT / "thesis" / "generated" / "alt_offset.tex"
 
-#: Files measured per discipline (see the docstring: sized by the same-site-same-day
-#: grouping, not by the headline statistics). A smaller archive is censused whole.
+#: Maximum sampled files per discipline. A smaller archive is censused whole;
+#: usable site/date group sizes depend on the available metadata and admission cuts.
 SAMPLE_PER_DISCIPLINE = 20_000
 #: Seasons pooled at each end of the archive for the two-decade comparison, and the
 #: smallest measured population a season needs to enter it. A single season is noisy and
 #: the earliest ones are thin, so the eras are blocks rather than endpoints.
 ERA_SEASONS = 5
 ERA_MIN_FLIGHTS = 40
-#: Flights a site-day group needs, and distinct recorders it must span, before its
-#: internal spread is read as an instrument-to-instrument scatter.
+#: Minimum flights and distinct recorded logger labels per site/day group.
+#: Its offset spread does not separate instrument and atmospheric contributions.
 SAME_DAY_MIN_FLIGHTS = 3
 SAME_DAY_MIN_LOGGERS = 3
 #: Flights a recorder make needs before its median enters the between-make spread.
 MAKE_MIN_FLIGHTS = 50
-#: Absolute accuracy a current MEMS barometric sensor is specified to, hPa: the MS5611
-#: (the part behind a large share of free-flight variometers) states +/-1.5 hPa at
-#: 25 C and +/-2.5 hPa over its full temperature band. Quoted here rather than typed in
-#: the thesis so that the metres it becomes are arithmetic on the datasheet figure and
-#: the same conversion the rest of the section uses.
+#: Illustrative MS5611 datasheet pressure limits, hPa. These values apply only
+#: under the specified autozero, pressure and temperature conditions, not to every
+#: recorder in this archive. Conversion to metres uses the same local atmospheric
+#: sensitivity as the other descriptive quantities.
 SENSOR_ACCURACY_HPA = 1.5
 SENSOR_ACCURACY_WIDE_HPA = 2.5
 
-N_JOBS = min(8, os.cpu_count() or 1)
+N_JOBS = max(
+    1, min(int(os.environ.get("SOARING_MAX_WORKERS", "1")), os.cpu_count() or 1)
+)
 
 _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
@@ -179,8 +146,8 @@ def _offset_macros(table, tag: str) -> dict[str, str]:
     writer.put("Measured", n_measured)
     writer.put("BothPct", _fmt(pct_of(int(both.sum()), n_measured)))
     writer.put("Flights", len(flights))
-    # The two exclusions, both reported: a duplicated channel is a property of the
-    # fleet worth quoting, and a broken one bounds what the tail could be hiding.
+    # Report both operational exclusions. Near equality suggests duplicated
+    # fields; failing the offset cut does not by itself identify a broken sensor.
     dup = both & (table["frac_equal"] > 0.99)
     writer.put("DuplicatePct", _fmt(pct_of(int(dup.sum()), int(both.sum()))))
     broken = both & table["med_offset"].notna() & ~keep & ~dup
@@ -193,7 +160,7 @@ def _offset_macros(table, tag: str) -> dict[str, str]:
     writer.put("PFiveM", _fmt(offset.quantile(0.05), 0))
     writer.put("PNinetyFiveM", _fmt(offset.quantile(0.95), 0))
 
-    # --- decomposition: the part proportional to height is the temperature departure
+    # --- descriptive slope and its conditional temperature-equivalent conversion
     sloped = flights[flights["slope"].notna()]
     slope = float(sloped["slope"].median())
     alt = float(sloped["alt_med"].median())
@@ -204,7 +171,7 @@ def _offset_macros(table, tag: str) -> dict[str, str]:
     intercept = sloped["med_offset"] - sloped["slope"] * sloped["alt_med"]
     writer.put("InterceptM", _fmt(intercept.median(), 0))
 
-    # --- at one height, so the two disciplines are comparable
+    # --- restrict median pressure altitude to one band for a descriptive comparison
     lo, hi = FIXED_BAND_M
     band = flights[flights["alt_med"].between(lo, hi)]
     writer.put("BandFlights", len(band))
@@ -218,7 +185,7 @@ def _offset_macros(table, tag: str) -> dict[str, str]:
     writer.put("DriftPNinetyFiveM", _fmt(flights["drift"].quantile(0.95), 0))
     writer.put("DurationMin", _fmt(flights["dur_s"].median() / 60.0, 0))
 
-    # --- weather against instrument
+    # --- scatter conditional on recorded site/date; physical sources remain mixed
     same_day = group_scatter(
         flights,
         ["site", "date"],
@@ -234,8 +201,8 @@ def _offset_macros(table, tag: str) -> dict[str, str]:
     site_sigma = float(per_site["sigma"].median())
     writer.put("SiteSigmaM", _fmt(site_sigma, 0))
     writer.put("SiteHpa", _fmt(site_sigma / metres_per_hpa(), 1))
-    # And between recorder models, which is an upper bound on the instrument family's
-    # own contribution: the same model is also a period and a set of sites.
+    # Compare medians grouped by declared manufacturer prefix. Confounding by
+    # period/site can enhance or cancel equipment effects, so this is not a bound.
     makes = flights.assign(make=recorder_make(flights["logger"]))
     families, family_sigma, family_span = between_group_spread(
         makes, "make", min_flights=MAKE_MIN_FLIGHTS
@@ -262,7 +229,7 @@ def _offset_macros(table, tag: str) -> dict[str, str]:
             writer.put(f"Era{label}WithinIqrM", _fmt(iqr, 0))
             writer.put(f"Era{label}DriftSigmaM", _fmt(sigma_mad(measured["drift"]), 0))
 
-    # --- the fallback the pipeline never checked
+    # Raw presence diagnostics; separate from current GNSS admission in cleaning.
     complete, fallback = fallback_completeness(table)
     writer.put("FallbackCount", fallback)
     writer.put("FallbackPct", _fmt(pct_of(fallback, n_measured)))
@@ -297,7 +264,7 @@ def _shared_macros() -> dict[str, str]:
     writer.put("SensorWideHpa", _fmt(SENSOR_ACCURACY_WIDE_HPA))
     writer.put("SensorM", _fmt(SENSOR_ACCURACY_HPA * metres_per_hpa(), 0))
     writer.put("SensorWideM", _fmt(SENSOR_ACCURACY_WIDE_HPA * metres_per_hpa(), 0))
-    # The diagnostic's own working values, so the appendix that argues for them and the
+    # The diagnostic's own working values, so the chapter that explains them and the
     # code that applies them cannot drift apart.
     writer.put("MinFix", MIN_FIX)
     writer.put("WindowPct", _fmt(100.0 * (1.0 - 2.0 * EDGE_TRIM), 0))
@@ -331,8 +298,9 @@ def main(argv: list[str] | None = None) -> int:
         if not cfg.igc_dir.is_dir():
             print(f"alt offset: {cfg.igc_dir} unreachable; keeping the file.")
             return 0
-        table = _load_or_scan(discipline, cfg.derived_dir / "alt_offset_scan.parquet",
-                              rescan)
+        table = _load_or_scan(
+            discipline, cfg.derived_dir / "alt_offset_scan.parquet", rescan
+        )
         if table is None or table.empty:
             print(f"alt offset: no flights measured for {discipline.name}; keeping it.")
             return 0

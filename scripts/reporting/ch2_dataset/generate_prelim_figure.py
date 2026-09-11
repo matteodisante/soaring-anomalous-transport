@@ -17,9 +17,9 @@ Four figures:
     What its records look like. Airborne duration, flown path and native sampling
     interval, per discipline.
 ``prelim_isotropy.pdf``
-    Whether the 1-D marginal may replace the 2-D propagator: the per-component variance
-    ratio, paragliders against hang gliders. Stays in Chapter 2 -- it is a property of the
-    process, not of who is in the ensemble.
+    Uncentred east/north position second-moment ratio at elapsed time since launch,
+    comparing paragliders and hang gliders. Discussed in Chapter 3 alongside the
+    regional anisotropy diagnostics (Sec.~\ref{sec:transport-anisotropy}).
 ``strata_compat.pdf``
     Whether the ensemble may be pooled across wing class, orographic group and season, on
     the raw MSD. Read by Chapter 3 (Sec.~\ref{sec:strata-compat}), which is the chapter
@@ -49,7 +49,10 @@ if _SRC not in sys.path:
 
 # The sys.path line above is what makes this resolvable when the script is run
 # directly, so the import cannot move to the top of the file.
-from soaring.analysis.stats.bootstrap import cluster_bootstrap, cluster_labels  # noqa: E402
+from soaring.analysis.stats.bootstrap import (  # noqa: E402
+    cluster_bootstrap,
+    cluster_labels,
+)
 from soaring.reporting import (  # noqa: E402
     DISCIPLINES,
     canonical_wing_class,
@@ -57,6 +60,7 @@ from soaring.reporting import (  # noqa: E402
     unreachable_reason,
     write_macros,
 )
+from soaring.reporting.style import REGION_COLORS
 
 OUT_MAP = ROOT / "thesis" / "generated" / "prelim_map.pdf"
 OUT_ENSEMBLE = ROOT / "thesis" / "generated" / "prelim_ensemble.pdf"
@@ -88,17 +92,16 @@ FRAMES = {
 
 # The lag range the transport analysis reads, so a stratum comparison is made where the
 # exponent is read and not over lags nothing is quoted from.
-FIT_MIN_S, FIT_MAX_S = 120.0, 13_021.0
+FIT_MIN_S, FIT_MAX_S = 10.0, 10_000.0
 
-# The isotropy band: resampling whole (take-off site, day) clusters rather than flights,
-# the same unit measure_propagator.py resamples H at -- flights sharing a site and a day
-# shared the same convective conditions and are not independent draws. Checked against
-# flight-only and site-only alternatives: ICC(E(t)^2, day_site) runs 0.37-0.83 over the
-# decade grid, comparable to or above the propagator's 0.57-0.63, and above the
-# site-only level throughout.
+# Flights sharing a recorded site and date may share conditions. Resampling those
+# groups preserves observed within-group dependence, but does not establish their
+# independence across dates, nearby sites or repeated pilots.
 ISO_BOOT_LEVEL = "day_site"
 ISO_BOOT_RESAMPLES = 200
 ISO_BOOT_SEED = 0
+ISO_MIN_FLIGHTS = 30
+ISO_MIN_CLUSTERS = 10
 
 # A stratum below this contributes a curve too noisy to compare and is pooled into the
 # residual group instead of being drawn as if it were a measurement.
@@ -118,7 +121,7 @@ OROGRAPHY = {
 # A control box over genuinely low-relief terrain -- the Channel chalk coast (Normandy,
 # Picardy, the coastal Nord) -- rather than another box defined by what it excludes. Its
 # take-off altitude sits at a median of 220 m against 930-1400 m for the three massifs
-# above (retained paraglider ensemble); see impl:prelim for the check.
+# above (retained paraglider ensemble); see sec:prelim for the check.
 FLAT_CONTROL = {
     "Channel Coast": {"lon": (-1.8, 2.0), "lat": (48.3, 51.2)},
 }
@@ -144,8 +147,10 @@ _PDF_METADATA = {
 def _within(lat, lon, extent):
     """Boolean mask of the points inside a ``(lon_min, lat_min, lon_max, lat_max)``."""
     return (
-        (lon >= extent[0]) & (lon <= extent[2])
-        & (lat >= extent[1]) & (lat <= extent[3])
+        (lon >= extent[0])
+        & (lon <= extent[2])
+        & (lat >= extent[1])
+        & (lat <= extent[3])
     )
 
 
@@ -179,7 +184,15 @@ def load(discipline: str, audit_dir: Path):
     flights = pd.read_parquet(audit_dir / f"audit_flights_{slug}.parquet")
     meta = pd.read_parquet(derived / "flights_meta.parquet")
     meta = meta[meta.drop_reason.isna()][["flight_id", "lat0", "lon0", "alt0"]]
-    frame = flights.merge(meta, on="flight_id", how="left")
+    if "flight_id" not in data.files or not np.array_equal(
+        data["flight_id"], flights["flight_id"].astype(str).to_numpy()
+    ):
+        raise ValueError(
+            "Audit arrays and metadata lack matching flight identities; rerun audit_msd.py"
+        )
+    frame = flights.merge(
+        meta, on="flight_id", how="left", validate="one_to_one", sort=False
+    )
 
     if catalog_path is not None and Path(catalog_path).is_file():
         catalog = pd.read_csv(catalog_path, low_memory=False)
@@ -188,6 +201,8 @@ def load(discipline: str, audit_dir: Path):
             catalog[["flight_id", "wing_class", "season", "date", "takeoff"]],
             on="flight_id",
             how="left",
+            validate="one_to_one",
+            sort=False,
         )
         frame["wing_class"] = canonical_wing_class(discipline, frame["wing_class"])
     else:
@@ -197,7 +212,10 @@ def load(discipline: str, audit_dir: Path):
         frame["takeoff"] = np.nan
 
     frame["group"] = orographic_group(frame.lat0, frame.lon0)
-    assert len(frame) == data["E"].shape[0], "audit rows and flight rows disagree"
+    if len(frame) != data["E"].shape[0] or not np.array_equal(
+        frame["flight_id"].astype(str).to_numpy(), data["flight_id"]
+    ):
+        raise ValueError("Audit rows and flight metadata disagree")
     out = {
         "lags": data["lags"],
         "east": data["E"],
@@ -222,21 +240,58 @@ def stratified_msd(east, north, lags, mask):
         return np.nanmean(squared, axis=0)
 
 
-def iso_ratio_band(east, north, frame):
-    """Median and 10-90% band of ``<E^2>/<N^2>`` over a (site, day) cluster bootstrap."""
+def iso_support(east, north, frame):
+    """Paired finite flight and site/date cluster counts at each elapsed time."""
+    valid = np.isfinite(east) & np.isfinite(north)
     labels = cluster_labels(frame, ISO_BOOT_LEVEL)
-    curves = np.stack([east**2, north**2], axis=-1)
+    order = np.argsort(labels, kind="stable")
+    starts = np.r_[0, np.flatnonzero(np.diff(labels[order])) + 1]
+    groups = np.logical_or.reduceat(valid[order], starts, axis=0).sum(axis=0)
+    return valid.sum(axis=0), groups
+
+
+def directional_ratio(east, north, frame):
+    """Uncentred ratio on paired support; mask times below the display minimum."""
+    valid = np.isfinite(east) & np.isfinite(north)
+    e2 = np.where(valid, np.asarray(east, dtype=float) ** 2, 0).sum(axis=0)
+    n2 = np.where(valid, np.asarray(north, dtype=float) ** 2, 0).sum(axis=0)
+    count, groups = iso_support(east, north, frame)
+    usable = (n2 > 0) & (count >= ISO_MIN_FLIGHTS) & (groups >= ISO_MIN_CLUSTERS)
+    return np.divide(e2, n2, out=np.full_like(e2, np.nan), where=usable)
+
+
+def iso_ratio_band(east, north, frame):
+    """Full-sample ratio with pointwise 10–90% site/date bootstrap limits.
+
+    East and north use exactly the same finite flight rows. Display minima are
+    operational coverage guards, not a guarantee of statistical precision.
+    """
+    labels = cluster_labels(frame, ISO_BOOT_LEVEL)
+    valid = np.isfinite(east) & np.isfinite(north)
+    curves = np.stack(
+        [
+            np.where(valid, np.asarray(east, dtype=float) ** 2, np.nan),
+            np.where(valid, np.asarray(north, dtype=float) ** 2, np.nan),
+        ],
+        axis=-1,
+    )
 
     def ratio(mean_curve):
-        with np.errstate(invalid="ignore"):
-            return mean_curve[:, 0] / mean_curve[:, 1]
+        return np.divide(
+            mean_curve[:, 0],
+            mean_curve[:, 1],
+            out=np.full(mean_curve.shape[0], np.nan),
+            where=mean_curve[:, 1] > 0,
+        )
 
     with np.errstate(invalid="ignore"):
-        _, replicates = cluster_bootstrap(
+        point, replicates = cluster_bootstrap(
             curves, labels, ratio, n_resamples=ISO_BOOT_RESAMPLES, seed=ISO_BOOT_SEED
         )
-        lo, med, hi = np.nanpercentile(replicates, [10, 50, 90], axis=0)
-    return lo, med, hi
+        lo, hi = np.nanpercentile(replicates, [10, 90], axis=0)
+    count, groups = iso_support(east, north, frame)
+    usable = (count >= ISO_MIN_FLIGHTS) & (groups >= ISO_MIN_CLUSTERS)
+    return tuple(np.where(usable, value, np.nan) for value in (lo, point, hi))
 
 
 def _strata(frame: pd.DataFrame, column: str) -> list[tuple[str, np.ndarray]]:
@@ -249,7 +304,9 @@ def _strata(frame: pd.DataFrame, column: str) -> list[tuple[str, np.ndarray]]:
 def _basemap():
     """The committed coastline and border geometry, or ``None`` if it is missing."""
     if not BASEMAP.is_file():
-        print(f"warning: {BASEMAP} is absent; run scripts/reporting/tools/build_basemap.py")
+        print(
+            f"warning: {BASEMAP} is absent; run scripts/reporting/tools/build_basemap.py"
+        )
         return None
     return json.loads(BASEMAP.read_text())["panels"]
 
@@ -266,7 +323,10 @@ def _draw_land(ax, rings, extent):
     ax.add_collection(
         PolyCollection(
             [np.asarray(ring) for ring in rings],
-            facecolors=LAND, edgecolors=COAST, linewidths=0.35, zorder=0,
+            facecolors=LAND,
+            edgecolors=COAST,
+            linewidths=0.35,
+            zorder=0,
         )
     )
     ax.set_facecolor(SEA)
@@ -292,8 +352,12 @@ def _density(ax, lon, lat, extent, cell, cmap="magma_r"):
     if counts.max() < 1:
         return None
     return ax.pcolormesh(
-        lon_edges, lat_edges, np.ma.masked_less(counts.T, 1),
-        cmap=cmap, norm=LogNorm(vmin=1, vmax=max(counts.max(), 2)), zorder=2,
+        lon_edges,
+        lat_edges,
+        np.ma.masked_less(counts.T, 1),
+        cmap=cmap,
+        norm=LogNorm(vmin=1, vmax=max(counts.max(), 2)),
+        zorder=2,
     )
 
 
@@ -305,11 +369,10 @@ def draw_maps(loaded: dict) -> object:
     lat = pd.concat([d["flights"].lat0 for d in loaded.values()]).to_numpy()
     lon = pd.concat([d["flights"].lon0 for d in loaded.values()]).to_numpy()
 
-    fig = plt.figure(figsize=(11.4, 7.6))
-    grid = fig.add_gridspec(2, 2, width_ratios=[1.35, 1.0], height_ratios=[1.0, 1.0],
-                            hspace=0.28, wspace=0.22)
-    france_ax = fig.add_subplot(grid[:, 0])
-    reunion_ax = fig.add_subplot(grid[0, 1])
+    fig = plt.figure(figsize=(6.1, 7.0), layout="constrained")
+    grid = fig.add_gridspec(2, 2, height_ratios=[2.0, 1.0])
+    france_ax = fig.add_subplot(grid[0, :])
+    reunion_ax = fig.add_subplot(grid[1, 0])
     world_ax = fig.add_subplot(grid[1, 1])
 
     # (a) Metropolitan France, where all but a twentieth of the ensemble launches.
@@ -324,15 +387,23 @@ def draw_maps(loaded: dict) -> object:
         france_ax.add_patch(
             plt.Rectangle(
                 (box["lon"][0], box["lat"][0]),
-                box["lon"][1] - box["lon"][0], box["lat"][1] - box["lat"][0],
-                fill=False, edgecolor="#1b6b4f", lw=1.1, ls="--", zorder=3,
+                box["lon"][1] - box["lon"][0],
+                box["lat"][1] - box["lat"][0],
+                fill=False,
+                edgecolor=REGION_COLORS[name],
+                lw=1.1,
+                ls="--",
+                zorder=3,
             )
         )
         x, y, align = _LABEL_ANCHOR[name]
-        france_ax.text(x, y, name, color="#12513b", fontsize=8, ha=align, zorder=4)
+        france_ax.text(
+            x, y, name, color=REGION_COLORS[name], fontsize=8.5, ha=align, zorder=4
+        )
     france_ax.set_title(
-        f"(a) metropolitan France \u2014 {100 * inside.mean():.1f}% of the ensemble",
-        fontsize=10, loc="left",
+        f"(a) France \u2014 {100 * inside.mean():.1f}% of flights",
+        fontsize=10,
+        loc="left",
     )
 
     # (b) La Reunion, the one overseas department with a substantial share. The island is
@@ -344,7 +415,8 @@ def draw_maps(loaded: dict) -> object:
     _density(reunion_ax, lon[on_island], lat[on_island], extent, CELL_ISLAND_DEG)
     reunion_ax.set_title(
         f"(b) La R\u00e9union \u2014 {on_island.sum():,} flights",
-        fontsize=10, loc="left",
+        fontsize=10,
+        loc="left",
     )
 
     # (c) Everything else. Individual sites rather than a density: the counts per site are
@@ -352,17 +424,32 @@ def draw_maps(loaded: dict) -> object:
     extent = FRAMES["world"]
     if panels:
         _draw_land(world_ax, panels["world"]["rings"], extent)
-    elsewhere = ~(_within(lat, lon, FRAMES["france"]) | _within(lat, lon, FRAMES["reunion"]))
-    cells = pd.DataFrame(
-        {"lon": np.round(lon[elsewhere] / 0.5) * 0.5, "lat": np.round(lat[elsewhere] / 0.5) * 0.5}
-    ).value_counts().reset_index(name="n")
+    elsewhere = ~(
+        _within(lat, lon, FRAMES["france"]) | _within(lat, lon, FRAMES["reunion"])
+    )
+    cells = (
+        pd.DataFrame(
+            {
+                "lon": np.round(lon[elsewhere] / 0.5) * 0.5,
+                "lat": np.round(lat[elsewhere] / 0.5) * 0.5,
+            }
+        )
+        .value_counts()
+        .reset_index(name="n")
+    )
     world_ax.scatter(
-        cells.lon, cells.lat, s=3 + 14 * np.log10(cells.n + 1), c="#b5482a",
-        alpha=0.75, linewidths=0, zorder=2,
+        cells.lon,
+        cells.lat,
+        s=3 + 14 * np.log10(cells.n + 1),
+        c="#B5482A",
+        alpha=0.75,
+        linewidths=0,
+        zorder=2,
     )
     world_ax.set_title(
         f"(c) elsewhere \u2014 {int(elsewhere.sum()):,} flights",
-        fontsize=10, loc="left",
+        fontsize=10,
+        loc="left",
     )
 
     for ax in (france_ax, reunion_ax, world_ax):
@@ -376,18 +463,34 @@ def draw_ensemble(loaded: dict) -> object:
     """What the retained records look like: duration, path and cadence."""
     import matplotlib.pyplot as plt
 
-    fig, (dur_ax, path_ax, dt_ax) = plt.subplots(1, 3, figsize=(11.4, 3.5))
+    fig = plt.figure(figsize=(6.1, 5.3), layout="constrained")
+    grid = fig.add_gridspec(2, 2)
+    dur_ax, path_ax = fig.add_subplot(grid[0, 0]), fig.add_subplot(grid[0, 1])
+    dt_ax = fig.add_subplot(grid[1, :])
 
     for discipline, data in loaded.items():
         frame, color = data["flights"], DISCIPLINES[discipline].color
-        dur_ax.hist(frame.duration_s / 3600, bins=np.linspace(0, 10, 80),
-                    histtype="step", density=True, color=color, label=discipline)
-        path_ax.hist(frame.path_m / 1000, bins=np.linspace(0, 300, 80),
-                     histtype="step", density=True, color=color, label=discipline)
+        for ax, values, edges in (
+            (dur_ax, frame.duration_s.to_numpy() / 3600, np.linspace(0, 10, 65)),
+            (path_ax, frame.path_m.to_numpy() / 1000, np.linspace(0, 300, 65)),
+        ):
+            values = values[np.isfinite(values)]
+            counts, _ = np.histogram(values, bins=edges)
+            ax.stairs(
+                counts / max(values.size, 1) / np.diff(edges),
+                edges,
+                color=color,
+                label=discipline,
+            )
         steps = frame.native_dt_s.value_counts(normalize=True).sort_index()
         steps = steps[steps.index <= 12]
-        dt_ax.bar(steps.index + (0.18 if discipline.startswith("hang") else -0.18),
-                  steps.to_numpy(), width=0.36, color=color, label=discipline)
+        dt_ax.bar(
+            steps.index + (0.18 if discipline.startswith("hang") else -0.18),
+            steps.to_numpy(),
+            width=0.36,
+            color=color,
+            label=discipline,
+        )
 
     dur_ax.set_xlabel("airborne duration (h)")
     dur_ax.set_title("(a) airborne duration", fontsize=10, loc="left")
@@ -398,48 +501,37 @@ def draw_ensemble(loaded: dict) -> object:
     for ax in (dur_ax, path_ax, dt_ax):
         ax.set_ylabel("density" if ax is not dt_ax else "share of flights")
         ax.legend(frameon=False, fontsize=8)
-    fig.tight_layout()
+    if fig.get_layout_engine() is None:
+        fig.tight_layout()
     return fig
 
 
 def draw_isotropy(loaded: dict) -> object:
-    """Whether the 1-D marginal may replace the 2-D propagator: the variance ratio alone."""
+    """Directional second-moment ratio at elapsed time, for Chapter 3."""
     import matplotlib.pyplot as plt
 
-    fig, iso_ax = plt.subplots(1, 1, figsize=(5.5, 4.2))
-
-    # Inset: the same bands zoomed to 1e0-1e4 s. Past 1e4 s coverage falls off (few
-    # flights last that long) and the bootstrap band widens enough to swamp the y-scale,
-    # hiding whether the band ever holds unity over a zone rather than at a point in the
-    # decades that are actually well covered.
-    # Placement may need adjusting once run against the real (unversioned) dataset.
-    inset_ax = iso_ax.inset_axes([0.42, 0.55, 0.53, 0.4])
-
+    fig, ax = plt.subplots(figsize=(6.1, 3.4), layout="constrained")
     for discipline, data in loaded.items():
-        lags, east, north = data["lags"], data["east"], data["north"]
-        lo, med, hi = iso_ratio_band(east, north, data["flights"])
-        drawable = np.isfinite(med) & (lags >= 1.0)
+        window = (data["lags"] >= FIT_MIN_S) & (data["lags"] <= FIT_MAX_S)
+        times = data["lags"][window]
+        east, north = data["east"][:, window], data["north"][:, window]
+        lo, point, hi = iso_ratio_band(east, north, data["flights"])
+        count, _ = iso_support(east, north, data["flights"])
+        finite = np.isfinite(point)
+        if not finite.any():
+            continue
         color = DISCIPLINES[discipline].color
-        iso_ax.fill_between(lags[drawable], lo[drawable], hi[drawable],
-                             color=color, alpha=0.25, lw=0)
-        iso_ax.semilogx(lags[drawable], med[drawable], color=color, label=discipline)
-
-        zoom = drawable & (lags <= 1e4)
-        inset_ax.fill_between(lags[zoom], lo[zoom], hi[zoom], color=color, alpha=0.25, lw=0)
-        inset_ax.semilogx(lags[zoom], med[zoom], color=color)
-
-    iso_ax.axhline(1.0, color="0.3", lw=0.8, ls="--")
-    iso_ax.set_xlabel("elapsed time $t$ (s)")
-    iso_ax.set_ylabel(r"$\langle E^2\rangle\,/\,\langle N^2\rangle$")
-    iso_ax.legend(frameon=False, fontsize=9)
-
-    inset_ax.axhline(1.0, color="0.3", lw=0.8, ls="--")
-    inset_ax.set_xlim(1.0, 1e4)
-    inset_ax.set_xticks([1e0, 1e2, 1e4])
-    inset_ax.tick_params(labelsize=7)
-    iso_ax.indicate_inset_zoom(inset_ax, edgecolor="0.4")
-
-    fig.tight_layout()
+        ax.fill_between(times, lo, hi, color=color, alpha=0.15, lw=0)
+        label = f"{discipline.capitalize()}: {count[finite].min():,}–{count[finite].max():,} flights"
+        ax.semilogx(times, point, color=color, label=label)
+    ax.axhline(1, color=".35", lw=0.8, ls="--")
+    ax.set(
+        xlim=(FIT_MIN_S, FIT_MAX_S),
+        xlabel="Time since launch $t$ [s]",
+        ylabel=r"$\langle E^2\rangle/\langle N^2\rangle$",
+    )
+    ax.legend(loc="best")
+    ax.grid(visible=True, which="major", color=".9", lw=0.5)
     return fig
 
 
@@ -447,7 +539,9 @@ def draw_strata(loaded: dict) -> object:
     """Whether the retained ensemble may be pooled: the ensemble MSD, stratified three ways."""
     import matplotlib.pyplot as plt
 
-    fig, (class_ax, group_ax, season_ax) = plt.subplots(1, 3, figsize=(11.4, 4.0))
+    fig, (class_ax, group_ax, season_ax) = plt.subplots(
+        3, 1, figsize=(6.1, 7.0), layout="constrained"
+    )
 
     # Paragliders only: the hang-glider archive is 4% of the size and a stratum of it
     # would be a curve about a few hundred flights.
@@ -466,15 +560,21 @@ def draw_strata(loaded: dict) -> object:
             for index, (name, mask) in enumerate(strata):
                 curve = stratified_msd(east, north, lags, mask)
                 with np.errstate(invalid="ignore", divide="ignore"):
-                    ax.semilogx(lags, curve / pooled, color=colormap(index), lw=1.2,
-                                label=f"{name} ({mask.sum():,})")
+                    ax.semilogx(
+                        lags,
+                        curve / pooled,
+                        color=colormap(index),
+                        lw=1.2,
+                        label=f"{name} ({mask.sum():,})",
+                    )
             ax.axhline(1.0, color="0.3", lw=0.8, ls="--")
             ax.set_xlabel("elapsed time $t$ (s)")
             ax.set_ylabel("MSD / pooled MSD")
             ax.set_ylim(0.0, 2.5)
             ax.set_title(title, fontsize=10, loc="left")
             ax.legend(frameon=False, fontsize=7, ncol=2)
-    fig.tight_layout()
+    if fig.get_layout_engine() is None:
+        fig.tight_layout()
     return fig
 
 
@@ -527,19 +627,28 @@ def macros(loaded: dict) -> dict[str, str]:
         put("ElsewhereFlights", f"{int((~metropolitan & ~island).sum())}")
         put("ElsewherePct", f"{100 * (~metropolitan & ~island).mean():.1f}")
         groups = frame.group.value_counts(normalize=True)
-        for name, key in (("Alps", "Alps"), ("Pyrenees", "Pyrenees"),
-                          ("MassifCentral", "Massif Central"),
-                          ("ChannelCoast", "Channel Coast"),
-                          ("OutsideMassifs", "outside massifs")):
+        for name, key in (
+            ("Alps", "Alps"),
+            ("Pyrenees", "Pyrenees"),
+            ("MassifCentral", "Massif Central"),
+            ("ChannelCoast", "Channel Coast"),
+            ("OutsideMassifs", "outside massifs"),
+        ):
             put(f"Group{name}Pct", f"{100 * groups.get(key, 0.0):.1f}")
-        put("Sites", f"{frame.groupby([frame.lat0.round(2), frame.lon0.round(2)]).ngroups}")
+        put(
+            "Sites",
+            f"{frame.groupby([frame.lat0.round(2), frame.lon0.round(2)]).ngroups}",
+        )
 
         # Take-off altitude of the named boxes (not the two exclusion-defined labels),
-        # backing the impl:prelim claim that Channel Coast is genuinely low-relief and not
+        # backing the sec:prelim claim that Channel Coast is genuinely low-relief and not
         # merely lower than the three massifs by construction.
-        for name, key in (("Alps", "Alps"), ("Pyrenees", "Pyrenees"),
-                          ("MassifCentral", "Massif Central"),
-                          ("ChannelCoast", "Channel Coast")):
+        for name, key in (
+            ("Alps", "Alps"),
+            ("Pyrenees", "Pyrenees"),
+            ("MassifCentral", "Massif Central"),
+            ("ChannelCoast", "Channel Coast"),
+        ):
             alt = frame.loc[frame.group == key, "alt0"]
             if alt.empty:
                 continue
@@ -547,19 +656,20 @@ def macros(loaded: dict) -> dict[str, str]:
             put(f"Group{name}AltNinetyPctM", f"{alt.quantile(0.9):.0f}")
 
         # Isotropy, over the lags the transport analysis reads.
-        with np.errstate(invalid="ignore"):
-            ratio = np.nanmean(east**2, 0) / np.nanmean(north**2, 0)
+        ratio = directional_ratio(east, north, frame)
         window = (lags >= FIT_MIN_S) & (lags <= FIT_MAX_S) & np.isfinite(ratio)
         put("IsoRatioMin", f"{ratio[window].min():.2f}")
         put("IsoRatioMax", f"{ratio[window].max():.2f}")
         put("IsoRatioMedian", f"{np.median(ratio[window]):.2f}")
 
         # Stratum compatibility: the largest departure from the pooled curve, over the
-        # same lags, as a ratio. Quoted rather than a p-value: at 1.5e5 flights every
-        # difference is significant and only the size of it is informative.
+        # same times, as a descriptive ratio. This is not a calibrated hypothesis test.
         pooled = stratified_msd(east, north, lags, np.ones(len(frame), bool))
-        for column, name in (("wing_class", "Class"), ("group", "Group"),
-                             ("season", "Season")):
+        for column, name in (
+            ("wing_class", "Class"),
+            ("group", "Group"),
+            ("season", "Season"),
+        ):
             strata = _strata(frame, column)
             if not strata:
                 continue
@@ -580,6 +690,8 @@ def macros(loaded: dict) -> dict[str, str]:
     # counted but not drawn. Quoted by the text and by two captions, which had it typed.
     out["StatPrelimMinStratum"] = str(MIN_STRATUM)
     out["StatPrelimIsoBootResamples"] = str(ISO_BOOT_RESAMPLES)
+    out["StatPrelimIsoMinFlights"] = str(ISO_MIN_FLIGHTS)
+    out["StatPrelimIsoMinClusters"] = str(ISO_MIN_CLUSTERS)
     return out
 
 
@@ -590,7 +702,11 @@ def main() -> int:
     args = parser.parse_args()
 
     import matplotlib
+
     matplotlib.use("Agg")
+    from soaring.reporting.style import paper_style
+
+    paper_style()
 
     loaded = {}
     missing = []
@@ -604,10 +720,11 @@ def main() -> int:
         print("no audit inputs reachable; prelim figures not written")
         return 1
     refusal = partial_write_refusal(
-        missing, "the prelim figures", allow_partial=args.allow_partial,
+        missing,
+        "the prelim figures",
+        allow_partial=args.allow_partial,
         reasons=[
-            unreachable_reason(DISCIPLINES[d], "flights_meta.parquet")
-            for d in missing
+            unreachable_reason(DISCIPLINES[d], "flights_meta.parquet") for d in missing
         ],
     )
     if refusal:
@@ -620,10 +737,14 @@ def main() -> int:
     draw_strata(loaded).savefig(OUT_STRATA, metadata=_PDF_METADATA)
     values = macros(loaded)
     write_macros(
-        OUT_TEX, values, generator="scripts/reporting/ch2_dataset/generate_prelim_figure.py"
+        OUT_TEX,
+        values,
+        generator="scripts/reporting/ch2_dataset/generate_prelim_figure.py",
     )
-    print(f"wrote {OUT_MAP.name}, {OUT_ENSEMBLE.name}, {OUT_ISOTROPY.name}, "
-          f"{OUT_STRATA.name}, {OUT_TEX.name} ({len(values)} macros)")
+    print(
+        f"wrote {OUT_MAP.name}, {OUT_ENSEMBLE.name}, {OUT_ISOTROPY.name}, "
+        f"{OUT_STRATA.name}, {OUT_TEX.name} ({len(values)} macros)"
+    )
     for k, v in values.items():
         print(f"  {k:44s} {v}")
     return 0

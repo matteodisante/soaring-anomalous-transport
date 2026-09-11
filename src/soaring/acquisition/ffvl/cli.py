@@ -75,22 +75,19 @@ def _resolve_seasons(cfg: Config, seasons_arg: str) -> list[int]:
 def _check_data_root(
     cfg: Config, data_root_env: str = "SOARING_FFVL_DATA_ROOT"
 ) -> None:
-    """Aborts early with a clear message if ``data_root`` is not usable.
+    """Require the configured archive's parent directory to exist.
 
-    The committed config ships a placeholder and the real data lives on an external
-    disk, so a fresh checkout (or an unmounted/renamed disk) would otherwise crash with
-    a cryptic ``PermissionError`` while creating directories under a non-existent path.
-    We require the *parent* of ``data_root`` to exist (the mounted disk): this also
-    catches the unconfigured placeholder, and we explain how to fix it. ``data_root``
-    itself may legitimately not exist yet on a first run.
+    The committed configurations identify the author's external SSD. A missing parent
+    usually signals an unmounted disk or a wrong path; the archive directory itself
+    may be created later. This existence check neither establishes writability nor
+    verifies that an existing parent is the intended mounted archive.
 
     Args:
-        cfg: Configuration.
-        data_root_env: Name of the environment variable that overrides ``data_root``.
+        cfg: Loaded acquisition configuration.
+        data_root_env: Name of the environment override reported in the error message.
 
     Raises:
-        SystemExit: If the parent directory of ``data_root`` does not exist.
-    """
+        SystemExit: If data_root's parent is not an existing directory."""
     if not cfg.data_root.parent.is_dir():
         raise SystemExit(
             f"\nERROR: data_root is not usable: {cfg.data_root}\n"

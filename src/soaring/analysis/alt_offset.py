@@ -1,47 +1,20 @@
-r"""What the two IGC altitude channels disagree about, and what it is made of.
+"""Descriptive differences between raw barometric and GNSS altitude fields.
 
-:mod:`soaring.analysis.altitude_noise` measures the two channels' *noise*, which is what
-decides the vertical dynamics. This module measures their *offset*: the difference
-``baro_alt - gnss_alt``, flight by flight, which is what decides whether a dataset built
-from both channels can be read as an absolute altitude.
+Per-flight summaries measure the median offset, its height slope, spread and drift
+inside the central part of each record. The current cleaner adopts eligible GNSS
+altitude throughout and uses barometric measurements as witnesses; these diagnostics
+do not justify mixing the two altitude channels.
 
-The question it answers is the one the mixed-source choice (thesis, ``sec:altchannel``)
-leaves open. A trajectory uses one channel end to end, so no flight is ever spliced; but
-the ensemble holds both kinds of flight, and if the two channels sat at systematically
-different heights the pooled altitude would be bimodal by instrument rather than by
-atmosphere. The objection has a natural test. The barometric altitude is a pressure read
-through a standard atmosphere, so it already wanders from flight to flight as the real
-atmosphere departs from that standard: if that wander is as large as the gap between the
-channels, mixing them adds nothing a single-channel dataset would not already carry.
+A pressure-altitude model supplies a conditional temperature-equivalent conversion
+of the offset slope. Unknown recorder datums, sensor biases, atmospheric variation
+and correlated errors prevent identifying temperature from this slope alone.
+Similarly, site/day comparisons describe conditional scatter but do not isolate
+weather and instrument effects: flights within a group need not share conditions.
 
-Three quantities are therefore measured per flight, over an in-flight window, and the
-decomposition follows from them rather than from a model:
-
-* the **median offset**, the constant part of the disagreement over the window;
-* its **slope against height**, which isolates the term proportional to altitude. An
-  altimeter reading a standard atmosphere under-reads warm air in proportion to the
-  height flown, by :math:`h\,\Delta T/\bar{T}`, so this slope *is* the day's departure
-  from the standard temperature profile (:func:`temperature_departure_k`), measured
-  without any meteorological input;
-* its **within-flight spread and drift**, which say how much of the offset survives the
-  differencing that every dynamical observable performs.
-
-What separates weather from instrument is then a grouping, not an assumption. Flights
-from the same site on the same day share an air mass and a pressure setting, so what
-remains between them is the instruments; flights from the same site on different days
-share the geoid and the terrain, so what appears between them is the weather. The two
-spreads are computed by the same function (:func:`group_scatter`) on two different keys.
-
-Two populations are excluded, both for the same reason -- they are not two independent
-channels:
-
-* flights whose two altitude fields are byte-identical over the window
-  (:data:`DUPLICATE_MIN_FRAC`), where one sensor is written into both columns;
-* flights whose median offset exceeds :data:`PLAUSIBLE_MAX_M`, where one channel is
-  broken rather than offset.
-
-``pandas`` is imported at module level (as everywhere in this package); the parsing runs
-in a process pool, so the per-file worker is a top-level function.
+The offset analysis excludes nearly equal fields and absolute median offsets of
+at least 1000 m by operational cuts. Passing these cuts does not establish sensor
+independence or accuracy, and failing them does not identify the cause of a defect.
+Numerical methods are separate from the reporting and plotting entry points.
 """
 
 from __future__ import annotations
@@ -67,8 +40,8 @@ R_DRY = 287.0528
 G0 = 9.80665
 #: ICAO sea-level temperature, K.
 ISA_T0 = 288.15
-#: ICAO sea-level pressure, hPa -- the reference every barometric channel here is
-#: written against, since a logger has no way to know the day's actual QNH.
+#: Standard sea-level pressure for the model conversion, hPa. Individual recorder
+#: conventions are not inferred from this constant.
 ISA_P0 = 1013.25
 #: ICAO tropospheric lapse rate, K/m.
 ISA_LAPSE = 0.0065
@@ -77,39 +50,50 @@ ISA_LAPSE = 0.0065
 #: Fewer fixes than this and the per-flight statistics are not worth forming.
 MIN_FIX = 300
 #: A channel is "present" on a flight when it carries a non-zero altitude on at least
-#: this share of the fixes. Deliberately the same cut the pipeline uses to choose the
-#: channel (``BARO_PRESENT_MIN`` in :mod:`soaring.analysis.altitude_noise`), so this
-#: diagnostic and the pre-processing agree on which flights are barometric.
+#: this share of the fixes. This raw diagnostic uses BARO_PRESENT_MIN; current
+#: cleaning admission and local witness coverage are separate criteria.
 PRESENT_MIN = BARO_PRESENT_MIN
-#: Share of the record dropped at each end before the offset is read. The window is an
-#: in-flight one on purpose: a logger switched on in a car park and off in a field
-#: brackets the flight with ground fixes, where the barometer is still settling and the
-#: GNSS solution is still converging, and neither says anything about the two channels
-#: in the air.
+#: Fraction of elapsed record duration excluded at each end. This fixed trim reduces
+#: exposure to endpoints; it neither detects take-off/landing nor identifies settling.
 EDGE_TRIM = 0.10
 #: Fraction of the window at each end used for the drift statistic (median of the last
 #: block minus median of the first), which is the part of the offset that a difference
 #: does *not* remove.
 TAIL_FRAC = 0.20
-#: A flight contributes a slope only if it climbed at least this much: regressing the
-#: offset on height over a 50 m band would return the noise, not the lapse.
+#: Minimum pressure-altitude span for estimating the offset slope. Either ascent or
+#: descent can provide this span; the cut does not remove errors in the GNSS regressor.
 SLOPE_MIN_RANGE_M = 300.0
-#: A flight whose two channels agree byte for byte on more than this share of the window
-#: carries one sensor written into two columns, not two channels.
+#: A flight whose two channels have equal decoded numeric values on more than this share of the window
+#: is excluded as a suspected duplicate-field record; agreement alone is not proof.
 DUPLICATE_MIN_FRAC = 0.99
-#: Beyond this, a channel is broken rather than offset: no atmosphere and no reference
-#: surface puts a kilometre between the two.
+#: Operational absolute-offset cut for this descriptive analysis, not a proved
+#: maximum atmospheric or datum contribution.
 PLAUSIBLE_MAX_M = 1000.0
 #: Fixed altitude band the cross-discipline comparison is read in, m. The offset grows
-#: with height (that is the temperature term), so comparing two disciplines that fly at
+#: with height for several possible reasons, so comparing disciplines that fly at
 #: different altitudes means comparing them inside one band.
 FIXED_BAND_M = (1500.0, 2000.0)
 
 #: Columns of the per-flight table :func:`scan_offsets` returns.
 COLUMNS = [
-    "flight_id", "season", "n_fix", "baro_frac", "gnss_frac", "both", "n_win",
-    "dur_s", "med_offset", "iqr_offset", "drift", "slope", "frac_equal",
-    "alt_med", "alt_range", "lat", "lon", "logger",
+    "flight_id",
+    "season",
+    "n_fix",
+    "baro_frac",
+    "gnss_frac",
+    "both",
+    "n_win",
+    "dur_s",
+    "med_offset",
+    "iqr_offset",
+    "drift",
+    "slope",
+    "frac_equal",
+    "alt_med",
+    "alt_range",
+    "lat",
+    "lon",
+    "logger",
 ]
 
 
@@ -129,70 +113,43 @@ def scale_height_m(temperature_k: float = ISA_T0) -> float:
 def metres_per_hpa(
     temperature_k: float = ISA_T0, pressure_hpa: float = ISA_P0
 ) -> float:
-    """How far an altimeter moves for a one-hectopascal error in its reference.
+    """Local hydrostatic altitude sensitivity H/p, in metres per hectopascal.
 
-    From the hydrostatic relation ``dh = -H dp/p``: an altimeter set to the standard
-    sea-level pressure while the real one differs by ``dp`` reports an altitude wrong by
-    this much per hectopascal, essentially independently of the height flown.
-
-    Args:
-        temperature_k: Mean virtual temperature of the layer, K.
-        pressure_hpa: Pressure at which the sensitivity is evaluated, hPa.
-
-    Returns:
-        Metres per hectopascal (about 8.3 at standard sea level, the familiar
-        27 ft/hPa of the altimeter subscale).
+    For a small pressure perturbation, dh = -H dp/p. The returned magnitude is evaluated
+    at the supplied pressure and temperature; it is not independent of flight altitude.
+    At the default standard sea-level values it is about 8.3 m/hPa.
     """
     return scale_height_m(temperature_k) / pressure_hpa
 
 
 def isa_mean_temperature_k(altitude_m: float) -> float:
-    """Mean standard-atmosphere temperature between sea level and ``altitude_m``.
+    """Arithmetic mean ISA temperature over a layer ending at altitude_m.
 
-    The lapse rate is constant through the troposphere, so the layer mean is the
-    temperature at half the height.
-
-    Args:
-        altitude_m: Top of the layer, m.
-
-    Returns:
-        The layer-mean temperature, K.
+    For the linear tropospheric lapse profile, this is the temperature at half the
+    height. It is a layer approximation for the slope diagnostic, not a retrieved
+    atmospheric temperature or an exact hypsometric mean.
     """
     return ISA_T0 - ISA_LAPSE * altitude_m / 2.0
 
 
 def temperature_departure_k(slope: float, altitude_m: float) -> float:
-    """The day's departure from the standard temperature profile, from the offset slope.
+    """Temperature-equivalent offset slope under a linearized pressure-altitude model.
 
-    A pressure altimeter converts pressure to height through a fixed temperature
-    profile, so in air warmer than that profile by ``dT`` it under-reads by
-    ``h dT/T``: the error is proportional to the height flown. The offset against a
-    GNSS altitude, which has no atmospheric model in it, therefore acquires a slope of
-    ``-dT/T`` against height, and inverting that slope measures ``dT``.
-
-    Args:
-        slope: ``d(baro - gnss)/dh``, dimensionless (metres per metre).
-        altitude_m: Height the slope was measured over, m, which fixes the layer-mean
-            temperature to divide by.
-
-    Returns:
-        The departure ``dT`` in kelvin, positive for air warmer than standard.
+    Returns -slope * T_ISA_mean, where slope is d(baro - gnss)/dh in m/m. Positive
+    values correspond to the warm-air interpretation of an altimeter under-reading.
+    This conversion assumes the offset slope comes from temperature; recorder datums,
+    scale errors and other correlated effects can also produce it. It is therefore
+    a conditional equivalent in kelvin, not an independent meteorological estimate.
     """
     return -slope * isa_mean_temperature_k(altitude_m)
 
 
 def sigma_mad(values: ArrayLike) -> float:
-    """Median absolute deviation, scaled to a standard deviation.
+    """Median absolute deviation multiplied by the Gaussian consistency factor 1.4826.
 
-    The per-flight offsets have a tail of flights with a partly broken channel that no
-    presence test catches, and a standard deviation follows that tail rather than the
-    population. The scaled MAD (1.4826 sigma for a Gaussian) does not.
-
-    Args:
-        values: Anything ``numpy.asarray`` accepts; non-finite entries are dropped.
-
-    Returns:
-        The scaled MAD, or ``nan`` if fewer than three finite values are given.
+    Non-finite entries are dropped and fewer than three finite entries return NaN.
+    For non-Gaussian populations this remains a resistant scale statistic; it need not
+    equal their standard deviation.
     """
     x = np.asarray(values, dtype=float)
     x = x[np.isfinite(x)]
@@ -202,18 +159,11 @@ def sigma_mad(values: ArrayLike) -> float:
 
 
 def _logger_id(path: Path) -> str:
-    """The recorder's ``A`` record: manufacturer and model, as the logger declares them.
+    """Read up to 40 characters of the IGC A record preceding the first fix.
 
-    Read separately from the fixes because :func:`~soaring.analysis.igc.parse_igc`
-    returns the ``B`` records only, and the instrument is exactly what the same-day
-    grouping needs to vary.
-
-    Args:
-        path: The ``.igc`` file.
-
-    Returns:
-        The ``A`` record, truncated, or an empty string if the file has none before its
-        first fix.
+    This declaration can contain manufacturer and recorder identity. The function
+    retains the text as a grouping label; it does not independently identify a model
+    or verify a physical recorder. Missing declarations return an empty string.
     """
     try:
         with path.open("rb") as handle:
@@ -233,7 +183,7 @@ def measure_flight(path: str | Path) -> dict | None:
 
     Every flight with enough fixes returns a row, including the ones that carry only one
     channel: they are the denominator of the availability fractions, and of the check
-    that the GNSS fallback lands on a complete channel.
+    GNSS-presence comparison among records with low barometric availability.
 
     Args:
         path: The ``.igc`` file.
@@ -299,8 +249,9 @@ def measure_flight(path: str | Path) -> dict | None:
         lon=float(np.median(fixes["lon"].to_numpy()[window])),
         logger=_logger_id(path),
     )
-    # The slope is the temperature term. It needs a climb under it: over a flat stretch
-    # the regression reads the GNSS noise instead of the lapse.
+    # Regress the channel difference on GNSS altitude when the pressure-altitude
+    # span is sufficient. This descriptive slope does not identify temperature:
+    # GNSS error enters both the predictor and the response with opposite signs.
     if row["alt_range"] >= SLOPE_MIN_RANGE_M:
         design = np.vstack([gnss_w, np.ones_like(gnss_w)]).T
         row["slope"] = float(np.linalg.lstsq(design, offset, rcond=None)[0][0])
@@ -337,17 +288,11 @@ def scan_offsets(paths: Iterable[str | Path], *, n_jobs: int = 1) -> pd.DataFram
 
 
 def independent(table: pd.DataFrame) -> pd.Series:
-    """Flights carrying two genuinely independent altitude channels.
+    """Mask raw records admitted to the paired-altitude offset diagnostic.
 
-    Both channels present, an offset that was actually read, and neither of the two
-    disqualifications the module docstring names: a duplicated channel
-    (:data:`DUPLICATE_MIN_FRAC`) and a broken one (:data:`PLAUSIBLE_MAX_M`).
-
-    Args:
-        table: A :func:`scan_offsets` table.
-
-    Returns:
-        A boolean mask over its rows.
+    Requires both fields, a measured median offset, equality fraction at most
+    DUPLICATE_MIN_FRAC and absolute median offset below PLAUSIBLE_MAX_M. The historical
+    name does not assert statistical independence of the sensors or flights.
     """
     return (
         table["both"].fillna(False).astype(bool)
@@ -364,26 +309,12 @@ def group_scatter(
     min_flights: int = 3,
     min_loggers: int = 1,
 ) -> pd.DataFrame:
-    """Spread of the per-flight offset within groups of comparable flights.
+    """Count records and distinct logger labels, and describe within-group offset spread.
 
-    The whole separation of weather from instrument is this function called on two
-    keys. Grouped by site and day, the flights share an air mass and a pressure
-    setting, so what is left is the instruments; grouped by site alone, they share the
-    reference surface and the terrain, so what appears is the atmosphere.
-
-    Args:
-        table: A :func:`scan_offsets` table, already restricted to
-            :func:`independent` flights and carrying the grouping columns.
-        keys: Columns to group by (e.g. ``["site"]`` or ``["site", "date"]``).
-        min_flights: Groups smaller than this are dropped: a scale estimate from two
-            flights is not one.
-        min_loggers: Distinct ``logger`` values a group must contain. Set to 3 for the
-            same-day grouping, where the claim being measured is about *instruments*
-            and a group of flights from one recorder cannot support it.
-
-    Returns:
-        One row per surviving group: ``n``, ``n_loggers``, ``sigma`` (the scaled MAD of
-        the offsets) and ``span`` (their full range).
+    Groups are defined by the supplied keys, usually site or site/date. Only groups
+    meeting min_flights and min_loggers are retained. Returned columns are n, n_loggers,
+    sigma (Gaussian-scaled MAD) and span (full range). Site/date grouping reduces some
+    heterogeneity but does not separate weather from instrument contributions.
     """
     rows = []
     for _, block in table.dropna(subset=keys).groupby(keys, sort=True):
@@ -402,12 +333,12 @@ def group_scatter(
 
 
 def fallback_completeness(table: pd.DataFrame) -> tuple[int, int]:
-    """How often the GNSS fallback lands on a complete channel.
+    """GNSS presence among raw flights below the diagnostic barometric presence cut.
 
-    The pipeline sends a flight without a barometric channel to GNSS
-    (``sec:altchannel``) without ever checking that the channel it falls back to is
-    itself complete -- a gap the implementation appendix admits, because the cached
-    track scan carries no GNSS-completeness column. This scan does carry one.
+    The historical function name refers to a channel-selection diagnostic. The current
+    cleaner always adopts eligible GNSS altitude and assesses the barometer separately
+    as a witness. Here, ``complete`` means meeting ``PRESENT_MIN``, not a value at every
+    fix. These raw-census counts do not describe post-cleaning channel completeness.
 
     Args:
         table: A :func:`scan_offsets` table, over the whole sample and not only the
@@ -424,23 +355,12 @@ def fallback_completeness(table: pd.DataFrame) -> tuple[int, int]:
 
 
 def borderline_gnss_advantage(table: pd.DataFrame) -> tuple[int, int]:
-    """Whether the fallback improves on the channel it leaves, in the borderline band.
+    """Compare altitude-field presence fractions near the diagnostic barometric cut.
 
-    Away from the cut the fallback needs no defence: a barometric channel written as
-    zero throughout says nothing about a GNSS solution computed independently. The band
-    just under the cut is the one where it does, since a flight present on nine tenths
-    of its fixes has a defect rather than no sensor, and the pipeline sends it to GNSS
-    without ever comparing the two (``impl:altchannel``). The comparison is one column
-    against another, and both are in this scan.
-
-    Args:
-        table: A :func:`scan_offsets` table over the whole sample.
-
-    Returns:
-        ``(better, borderline)``: within the band
-        ``[PRESENT_MIN - BARO_BORDERLINE_MARGIN, PRESENT_MIN)``, the number of flights
-        whose GNSS channel covers at least as many fixes as their barometric one, and
-        the number of flights in the band.
+    Within [PRESENT_MIN - BARO_BORDERLINE_MARGIN, PRESENT_MIN), return the number whose
+    GNSS presence fraction is at least the barometric fraction, and the total number.
+    Presence does not imply accuracy; the current cleaner's GNSS admission criteria
+    are applied separately.
     """
     frac = table["baro_frac"]
     band = (frac >= PRESENT_MIN - BARO_BORDERLINE_MARGIN) & (frac < PRESENT_MIN)
@@ -449,43 +369,40 @@ def borderline_gnss_advantage(table: pd.DataFrame) -> tuple[int, int]:
 
 
 def recorder_make(logger: pd.Series) -> pd.Series:
-    """The recorder's make, from the ``A`` record's manufacturer code.
+    """Group recorded logger labels by their first four characters.
 
-    The IGC ``A`` record is ``A`` followed by a three-character manufacturer code, then
-    a unique-ID field and free text (the FAI/IGC specification), so the full record
-    identifies a *device* and its first four characters identify a *make*. Both
-    groupings are used here: the device is what "three distinct recorders on the same
-    day" counts, and the make is what :func:`between_group_spread` compares.
+    For an IGC A record these normally comprise A and the three-character manufacturer
+    code. The remaining identity declaration is retained elsewhere as a grouping label;
+    neither grouping independently verifies a physical recorder or its model. Shared or
+    inconsistent declarations can therefore affect counts of distinct logger labels.
 
     Args:
-        logger: The ``logger`` column of a :func:`scan_offsets` table.
+        logger: The logger column of a scan_offsets table.
 
     Returns:
-        The four-character prefix, empty where the file declared no recorder.
-    """
+        Four-character prefix, empty where no recorder was declared."""
     return logger.fillna("").str.slice(0, 4)
 
 
 def between_group_spread(
     table: pd.DataFrame, key: str, *, min_flights: int = 50
 ) -> tuple[int, float, float]:
-    """How far apart whole groups of flights sit, rather than flights within a group.
+    """Describe the spread of group medians for the recorded offset.
 
-    :func:`group_scatter` answers what varies inside a group; this answers what varies
-    between them, which is the question a recorder model raises. It is an upper bound on
-    the instrument-family effect and not a measurement of it: a recorder model is also a
-    period, a price and a set of sites, and this scan holds no way to hold those fixed.
+    Groups with fewer than min_flights observations are omitted. When grouping by a
+    recorder declaration, differences can combine equipment, site, period and selection
+    effects. Such effects may reinforce or cancel each other; the descriptive spread
+    neither identifies nor bounds the instrument contribution.
 
     Args:
-        table: A :func:`scan_offsets` table, restricted to :func:`independent` flights.
-        key: The column defining a group (``"logger"``).
-        min_flights: Groups smaller than this are ignored, so a model carried by a
-            handful of flights cannot set the spread.
+        table: Per-flight offset table after the operational admission cuts.
+        key: Column defining the groups, such as make or logger.
+        min_flights: Minimum number of nonmissing offsets per group.
 
     Returns:
-        ``(n_groups, sigma, span)``: the number of groups kept, the scaled MAD of their
-        median offsets, and the full range of those medians.
-    """
+        Number of admitted groups, Gaussian-scaled MAD of their median offsets, and
+        full range of those medians. Fewer than two groups gives missing spread and
+        range; exactly two groups still gives missing MAD under sigma_mad's rule."""
     medians = (
         table.dropna(subset=[key, "med_offset"])
         .groupby(key)["med_offset"]

@@ -251,10 +251,14 @@ def main() -> int:
         print("No processed dataset reachable; nothing to do.")
         return 0
     refusal = partial_write_refusal(
-        [d for d in DISCIPLINES if d not in metas], OUT.name,
+        [d for d in DISCIPLINES if d not in metas],
+        OUT.name,
         allow_partial="--allow-partial" in sys.argv[1:],
-        reasons=[unreachable_reason(DISCIPLINES[d], "flights_meta.parquet")
-                 for d in DISCIPLINES if d not in metas],
+        reasons=[
+            unreachable_reason(DISCIPLINES[d], "flights_meta.parquet")
+            for d in DISCIPLINES
+            if d not in metas
+        ],
     )
     if refusal:
         print(refusal)

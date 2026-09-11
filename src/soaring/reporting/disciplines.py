@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from .style import DISCIPLINE_COLORS
+
 if TYPE_CHECKING:
     from ..acquisition.ffvl.config import Config
 
@@ -105,7 +107,7 @@ PARAGLIDERS = Discipline(
     tag="Para",
     env="SOARING_PARA_DATA_ROOT",
     config_attr="PARA_CONFIG_PATH",
-    color="#3477a8",
+    color=DISCIPLINE_COLORS["paragliders"],
 )
 
 HANG_GLIDERS = Discipline(
@@ -115,7 +117,7 @@ HANG_GLIDERS = Discipline(
     tag="Hang",
     env="SOARING_DELTA_DATA_ROOT",
     config_attr="DELTA_CONFIG_PATH",
-    color="#b5482a",
+    color=DISCIPLINE_COLORS["hang gliders"],
 )
 
 #: Both disciplines, keyed by name. The iteration order is the order every table, figure

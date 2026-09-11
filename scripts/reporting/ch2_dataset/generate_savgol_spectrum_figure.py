@@ -1,40 +1,12 @@
 #!/usr/bin/env python3
-r"""Regenerate the Savitzky-Golay noise-spectrum figure for the thesis (sec:savgol).
+r"""Plot raw coordinate spectra used to motivate the working smoothing timescale.
 
-Writes ``thesis/generated/savgol_spectrum.pdf``: one panel per discipline
-(paragliders, hang gliders), each the ensemble Welch PSD of the horizontal
-(``E``, ``N`` pooled), barometric-vertical and GNSS-vertical channels. What sec:savgol
-states in words -- that the three channels' knees coincide -- is what this figure lets
-a reader check by eye, per discipline (so also across disciplines, which the text does
-not separately claim).
-
-The knee frequency marked on each panel (:data:`MANUAL_KNEE_HZ`) is read off the curves
-by eye, not estimated by a rule in this script: the point of the figure is that a reader
-can see the coincidence directly, so an automated floor-crossing estimate would only be
-a second, indirect way of asserting what the plot already shows. (The pipeline's own
-``tau_c``, in ``configs/preprocessing.yaml``, was set by such a rule --
-``scripts/reporting/tools/estimate_savgol_timescales.py`` -- which this figure is
-consistent with but does not re-derive.)
-
-Also writes ``thesis/generated/savgol_spectrum_stats.tex``: per discipline and channel,
-how many flights of the seeded sample were actually usable (\StatSavgolSpecParaHorizN,
-\dots) -- the sample is not the full archive, so the count the thesis quotes has to come
-from this run, not be typed in by hand.
-
-The PSD sample is **cached** at each discipline's
-``<data_root>/derived/savgol_psd_sample.npz`` (:func:`_load_or_collect`): parsing
-``N_SAMPLE`` files off the external disk is what makes a cold run slow, and nothing
-about it changes when only the figure's styling or the marked knee does. ``--rescan``
-forces a fresh sample, e.g. after changing ``N_SAMPLE`` or ``SEED``.
-
-Needs the SSD (real IGC tracks); best-effort like every reporting script -- a
-discipline whose archive is not reachable is skipped, and the run refuses to write a
-partial figure unless ``--allow-partial`` is given. Run with (``uv run`` already
-includes the ``analysis`` dependency group by default)::
-
-    SOARING_PARA_DATA_ROOT=/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc \
-    SOARING_DELTA_DATA_ROOT=/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc \
-    uv run python scripts/reporting/ch2_dataset/generate_savgol_spectrum_figure.py [--rescan]
+Writes ``savgol_spectrum.pdf`` and ``savgol_spectrum_stats.tex``. A seeded sample
+of up to 900 flights per discipline contributes each available channel independently.
+Spectra use the longest uninterrupted finite interval near 1 Hz. The marked frequencies
+are visual references, not fitted cutoffs. Cached NPZ version 2 records this selection;
+``--rescan`` forces a fresh collection. This diagnostic does not identify quantization
+as the source of the knee or certify the configured filter for every cadence.
 """
 
 from __future__ import annotations
@@ -83,13 +55,13 @@ _PDF_METADATA = {
 _CHANNELS = ["horizontal", "vertical_baro", "vertical_gnss"]
 _CHANNEL_LABEL = {
     "horizontal": "horizontal ($E,N$)",
-    "vertical_baro": "vertical, barometric",
-    "vertical_gnss": "vertical, GNSS",
+    "vertical_baro": "barometric altitude",
+    "vertical_gnss": "GNSS altitude",
 }
 _CHANNEL_COLOR = {
-    "horizontal": "#3477a8",
-    "vertical_baro": "#b5482a",
-    "vertical_gnss": "#3d8c54",
+    "horizontal": "#6A3D9A",
+    "vertical_baro": "#3477A8",
+    "vertical_gnss": "#B5482A",
 }
 _CHANNEL_TAG = {
     "horizontal": "Horiz",
@@ -130,8 +102,10 @@ def _collect(igc_dir):
         ``(freqs, {channel: list[psd]}, {channel: n_flights})``, or ``(None, {}, {})``
         if nothing usable was sampled.
     """
+    import numpy as np
+
+    from soaring.analysis.altitude_noise import longest_regular_block
     from soaring.analysis.igc import (
-        baro_present_fraction,
         median_sampling_period,
         parse_igc,
     )
@@ -155,18 +129,28 @@ def _collect(igc_dir):
         east, north = _local_en(
             fixes["lat"].to_numpy(dtype=float), fixes["lon"].to_numpy(dtype=float)
         )
-        f, s_e = _psd_1hz(t, east)
-        if f is None:
-            continue
-        _, s_n = _psd_1hz(t, north)
-        freqs = f
-        stacks["horizontal"] += [s_e, s_n]
-        if baro_present_fraction(fixes) >= 0.5:
-            _, s_z = _psd_1hz(t, fixes["baro_alt"].to_numpy(dtype=float))
-            stacks["vertical_baro"].append(s_z)
-        else:
-            _, s_z = _psd_1hz(t, fixes["gnss_alt"].to_numpy(dtype=float))
-            stacks["vertical_gnss"].append(s_z)
+        th, horizontal = longest_regular_block(t, np.column_stack([east, north]), 1.0)
+        if len(th) >= NPERSEG:
+            f, s_e = _psd_1hz(th, horizontal[:, 0])
+            _, s_n = _psd_1hz(th, horizontal[:, 1])
+            if f is not None:
+                freqs = f
+                stacks["horizontal"] += [s_e, s_n]
+        for column, channel in (
+            ("baro_alt", "vertical_baro"),
+            ("gnss_alt", "vertical_gnss"),
+        ):
+            z = fixes[column].to_numpy(dtype=float).copy()
+            z[z == 0] = np.nan
+            if column == "gnss_alt":
+                z[~fixes["valid"].to_numpy(dtype=bool)] = np.nan
+            tz, zv = longest_regular_block(t, z, 1.0)
+            if len(tz) < NPERSEG:
+                continue
+            f, s_z = _psd_1hz(tz, zv)
+            if f is not None:
+                freqs = f
+                stacks[channel].append(s_z)
     if freqs is None:
         return None, {}, {}
     counts = {
@@ -180,18 +164,16 @@ def _collect(igc_dir):
 def _load_or_collect(igc_dir: Path, cache_path: Path, *, rescan: bool = False):
     """Load a cached PSD sample, or run :func:`_collect` and cache the result.
 
-    Mirrors the caches ``generate_preproc_figure.py`` and
-    ``generate_altitude_noise_figure.py`` keep on the SSD: one ``.npz`` per discipline,
-    fixed-width per channel (every flight's Welch spectrum shares the frequency grid
-    ``_psd_1hz`` always returns) -- ``freqs`` plus one 2-D array per entry of
-    ``_CHANNELS`` (``horizontal`` has two rows per flight, E and N; the two vertical
-    channels have at most one, since a flight contributes to whichever channel its
-    barometric presence selects, never both). No invalidation beyond presence: delete
-    ``cache_path`` (or pass ``rescan=True``) to force a fresh sample, e.g. after
-    changing ``N_SAMPLE`` or ``SEED``.
+    Cached arrays contain separately selected channel samples and a selection-policy
+    version. Each horizontal flight contributes two component spectra; each available
+    altitude channel can contribute one. Pass ``rescan=True`` if sample size, seed or
+    raw archive content changes.
     """
     import numpy as np
 
+    if cache_path.is_file() and not rescan:
+        data = np.load(cache_path)
+        rescan = int(data.get("cache_version", 0)) != 2
     if cache_path.is_file() and not rescan:
         data = np.load(cache_path)
         freqs = data["freqs"]
@@ -209,6 +191,7 @@ def _load_or_collect(igc_dir: Path, cache_path: Path, *, rescan: bool = False):
         cache_path.parent.mkdir(parents=True, exist_ok=True)
         np.savez_compressed(
             cache_path,
+            cache_version=np.int64(2),
             freqs=freqs,
             **{
                 ch: (np.vstack(stacks[ch]) if stacks[ch] else np.empty((0, len(freqs))))
@@ -224,7 +207,7 @@ def _make_figure(per_discipline):
     import matplotlib.pyplot as plt
 
     fig, axes = plt.subplots(
-        1, len(per_discipline), figsize=(5.4 * len(per_discipline), 4.2), sharey=True
+        1, len(per_discipline), figsize=(3.05 * len(per_discipline), 3.4), sharey=True
     )
     if len(per_discipline) == 1:
         axes = [axes]
@@ -235,16 +218,29 @@ def _make_figure(per_discipline):
             if ch not in channels:
                 continue
             psd, n = channels[ch]
-            ax.loglog(freqs, psd, color=_CHANNEL_COLOR[ch], lw=1.3,
-                      label=f"{_CHANNEL_LABEL[ch]} ($n={n}$)")
+            ax.loglog(
+                freqs,
+                psd,
+                color=_CHANNEL_COLOR[ch],
+                lw=1.3,
+                label=f"{_CHANNEL_LABEL[ch]} ($n={n}$)",
+            )
         knee = MANUAL_KNEE_HZ.get(disc_name)
         if knee is not None:
-            ax.axvline(knee, color="0.3", ls=":", lw=1.2,
-                       label=f"knee, by eye ({knee:.2f} Hz)")
+            ax.axvline(
+                knee,
+                color="0.3",
+                ls=":",
+                lw=1.2,
+                label=f"visual reference ({knee:.2f} Hz)",
+            )
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.tick_params(labelsize=9)
         ax.set_title(disc_name, fontsize=10)
         ax.set_xlabel("frequency (Hz)")
         ax.set_xlim(freqs[1], freqs[-1])
-        ax.legend(fontsize=6.8, frameon=False, loc="lower left")
+        ax.legend(fontsize=8, frameon=False, loc="lower left")
     axes[0].set_ylabel(r"median PSD ($\mathrm{m^2/Hz}$)")
     fig.tight_layout()
     return fig
@@ -261,6 +257,9 @@ def main(argv: list[str] | None = None) -> int:
         print("matplotlib/numpy missing ('analysis' dependency group); keeping files.")
         return 0
     matplotlib.use("Agg")
+    from soaring.reporting.style import paper_style
+
+    paper_style()
 
     reachable = {}
     for name, disc in DISCIPLINES.items():
@@ -273,7 +272,8 @@ def main(argv: list[str] | None = None) -> int:
 
     missing = [d for d in DISCIPLINES if d not in reachable]
     refusal = partial_write_refusal(
-        missing, OUT_FIG.name,
+        missing,
+        OUT_FIG.name,
         allow_partial="--allow-partial" in sys.argv[1:],
         reasons=[r for d in missing if (r := unreachable_reason(DISCIPLINES[d]))],
     )
@@ -312,7 +312,8 @@ def main(argv: list[str] | None = None) -> int:
         OUT_FIG, metadata=_PDF_METADATA, bbox_inches="tight"
     )
     write_macros(
-        OUT_TEX, values,
+        OUT_TEX,
+        values,
         generator="scripts/reporting/ch2_dataset/generate_savgol_spectrum_figure.py",
     )
     print(f"Wrote {OUT_FIG.name} and {OUT_TEX.name} ({len(values)} macros).")

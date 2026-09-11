@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-r"""Draw the barometric-vs-GNSS offset's site-to-site scatter against its own.
+r"""Draw within-site and pooled scatter of raw barometric/GNSS altitude offsets.
 
 Where ``generate_alt_offset_stats.py`` reduces the per-flight offset scan to the
 \\StatAltOff* medians and spreads ``sec:altchannel`` quotes, this reads the same cached
 table (``<data_root>/derived/alt_offset_scan.parquet``, one row per flight, written by
 that script or by a ``--rescan`` of it) and draws the comparison those numbers argue
 for: ``thesis/generated/alt_offset_hist.pdf``, one histogram per discipline of the
-per-site offset scatter (weather alone, nothing mixed) against a dashed line per
-discipline at the across-flight scatter of the full, mixed population.
+per-site offset scatter against a dashed line per discipline at the across-flight
+scatter of the eligible raw population. Neither statistic isolates weather or sensor
+effects, and the figure is not a validation of mixed-channel altitude selection.
 
 No new pass over the archive: it is a reduction of the cache
 ``generate_alt_offset_stats.py`` already wrote (or would write), so it costs a fraction
@@ -28,7 +29,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 OUT_FIG = ROOT / "thesis" / "generated" / "alt_offset_hist.pdf"
 
-#: Sites a group needs before its internal spread is read as a weather scatter --
+#: Minimum flights per site for displaying its descriptive offset scatter;
 #: matches ``SAME_DAY_MIN_FLIGHTS`` in generate_alt_offset_stats.py, kept independent
 #: here so this script stays a plain reduction of the cache, not a second copy of that
 #: one's config.
@@ -58,7 +59,9 @@ def _attach_site(table, discipline):
         table["site"] = pd.NA
         return table
     catalog = pd.read_csv(
-        catalog_path, usecols=["flight_id", "takeoff"], dtype={"flight_id": str},
+        catalog_path,
+        usecols=["flight_id", "takeoff"],
+        dtype={"flight_id": str},
         low_memory=False,
     ).rename(columns={"takeoff": "site"})
     return table.merge(catalog, on="flight_id", how="left")
@@ -67,12 +70,16 @@ def _attach_site(table, discipline):
 def main() -> int:
     try:
         import matplotlib
-
         import pandas as pd
     except ImportError:
-        print("matplotlib/pandas missing ('analysis' group); keeping the committed figure.")
+        print(
+            "matplotlib/pandas missing ('analysis' group); keeping the committed figure."
+        )
         return 0
     matplotlib.use("Agg")
+    from soaring.reporting.style import paper_style
+
+    paper_style()
 
     from soaring.analysis.alt_offset import group_scatter, independent, sigma_mad
     from soaring.analysis.figures.alt_offset import make_alt_offset_figure
@@ -87,7 +94,9 @@ def main() -> int:
             continue
         cache = cfg.derived_dir / "alt_offset_scan.parquet"
         if not cache.is_file():
-            print(f"alt offset figure: {cache} not found; run generate_alt_offset_stats.py first.")
+            print(
+                f"alt offset figure: {cache} not found; run generate_alt_offset_stats.py first."
+            )
             continue
         table = pd.read_parquet(cache)
         flights = table[independent(table)]
@@ -99,7 +108,7 @@ def main() -> int:
         site_sigma[discipline.name] = per_site["sigma"].to_numpy()
         mix_sigma[discipline.name] = sigma_mad(flights["med_offset"])
         print(
-            f"[{discipline.name}] {len(flights)} independent flights, "
+            f"[{discipline.name}] {len(flights)} paired-altitude records, "
             f"{len(per_site)} site groups"
         )
 

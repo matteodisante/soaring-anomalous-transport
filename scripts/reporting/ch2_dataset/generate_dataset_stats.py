@@ -1,25 +1,14 @@
 #!/usr/bin/env python3
-r"""The dataset statistics of Sec.~\ref{sec:prelim}: what was discarded, and what survived.
+"""Report the rejection cascade and the retained archive's composition.
 
-Three questions the existing census answers only partly.
+The cascade uses attempted-flight metadata and accounts for each rejection in
+pipeline order, including altitude-channel admission. Each percentage uses the
+population reaching that criterion. Unmapped failures stop the report rather
+than silently breaking the reconciliation with the retained-flight count.
 
-**Which cut does the work.** ``tab:pipecensus`` lists how many flights each criterion
-removed, which leaves the reader to compute the thing that matters -- how much of what was
-*still standing* each criterion took. The cascade table here carries the running remainder,
-so the answer is legible rather than derivable, and on this archive it is not the obvious
-one: the resampling sparsity rule removes an order of magnitude more flights than any
-threshold the text argues for.
-
-**Whether the pipeline discards uniformly in time.** Logger technology changed over the two
-decades the archive spans, so a cascade resolved by season is a real check and not a
-formality: a cut that eats one era is a cut that has silently reshaped the ensemble.
-
-**What survived.** Per season and per stratum, the statistics every later chapter refers
-to when it says "within a stratum".
-
-Writes ``thesis/generated/dataset_stats.tex``. Numbers already generated elsewhere
-(``\StatPipe*``, ``\StatPrelim*``) are not recomputed here: two generators disagreeing
-about one quantity is the failure the macro contract exists to prevent.
+Per-season counts, retention rates and retained-flight medians describe changes
+in the observed archive. They do not establish unbiased selection or isolate the
+effect of an individual criterion applied to a different population.
 """
 
 from __future__ import annotations
@@ -54,24 +43,41 @@ OUT_FIG = ROOT / "thesis" / "generated" / "dataset_seasons.pdf"
 # remove on its own.
 CASCADE = [
     ("fewer_than_two_fixes", "unreadable track", "parse"),
+    ("no_usable_altitude_channel", "no usable GNSS altitude", "altitude channel"),
     ("no_sustained_flight", "never airborne", "trimming"),
     ("cleaning_rebuilt_too_much", "integrity gate", "cleaning"),
     ("duration_below_minimum", "shorter than the duration cut", "flight filter"),
     ("duration_above_maximum", "longer than the duration cut", "flight filter"),
     ("path_below_minimum", "path below the floor", "flight filter"),
-    ("altitude_range_below_minimum", "altitude activity below the floor", "flight filter"),
+    (
+        "altitude_range_below_minimum",
+        "altitude activity below the floor",
+        "flight filter",
+    ),
     (
         "mean_ground_speed_above_the_fix_level_bound",
         "mean ground speed over the bound",
         "flight filter",
     ),
-    ("extent_out_of_reach_of_the_first_fix", "out of reach of its own first fix", "flight filter"),
+    (
+        "extent_out_of_reach_of_the_first_fix",
+        "out of reach of its own first fix",
+        "flight filter",
+    ),
     ("no_native_cadence", "no native cadence", "resampling"),
     ("no_segment_survived", "no segment survived resampling", "resampling"),
-    ("shorter_than_smoothing_window", "no segment carries the smoothing window", "smoothing"),
+    (
+        "shorter_than_smoothing_window",
+        "no segment carries the smoothing window",
+        "smoothing",
+    ),
 ]
 
-_PDF_METADATA = {"Creator": "soaring.analysis", "Producer": "soaring.analysis", "CreationDate": None}
+_PDF_METADATA = {
+    "Creator": "soaring.analysis",
+    "Producer": "soaring.analysis",
+    "CreationDate": None,
+}
 
 
 def _tex_int(value: int | float) -> str:
@@ -92,7 +98,11 @@ def load(discipline: str):
     if catalog_path is not None and catalog_path.is_file():
         catalog = pd.read_csv(catalog_path, low_memory=False)
         catalog["flight_id"] = catalog["flight_id"].astype(str)
-        keep = [c for c in ("flight_id", "season", "season_year", "wing_class") if c in catalog]
+        keep = [
+            c
+            for c in ("flight_id", "season", "season_year", "wing_class")
+            if c in catalog
+        ]
         meta = meta.merge(catalog[keep], on="flight_id", how="left")
     return meta
 
@@ -106,6 +116,13 @@ def cascade(meta: pd.DataFrame) -> pd.DataFrame:
     population the earlier cuts have already thinned, so a percentage of the archive
     understates it.
     """
+    known = {reason for reason, _, _ in CASCADE}
+    unknown = set(meta["drop_reason"].dropna()) - known
+    if unknown:
+        raise ValueError(
+            "Cannot place these rejection reasons in pipeline order: "
+            + ", ".join(sorted(unknown))
+        )
     rows = []
     standing = len(meta)
     for reason, label, stage in CASCADE:
@@ -124,6 +141,10 @@ def cascade(meta: pd.DataFrame) -> pd.DataFrame:
             }
         )
         standing -= removed
+    if standing != int(meta["drop_reason"].isna().sum()):
+        raise ValueError(
+            "The rejection cascade does not reconcile with retained flights"
+        )
     return pd.DataFrame(rows)
 
 
@@ -142,10 +163,10 @@ def per_season(meta: pd.DataFrame) -> pd.DataFrame:
     out["median_duration_h"] = survivors["duration_flight_s"].median() / 3600.0
     out["median_path_km"] = survivors["path_km"].median()
     out["median_dt_s"] = survivors["dt_native_s"].median()
-    out["one_hertz_pct"] = 100.0 * survivors["dt_native_s"].apply(
-        lambda s: s == 1
-    ).groupby(level=0).mean() if False else 100.0 * survivors["dt_native_s"].agg(
-        lambda s: float((s == 1).mean())
+    out["one_hertz_pct"] = (
+        100.0 * survivors["dt_native_s"].apply(lambda s: s == 1).groupby(level=0).mean()
+        if False
+        else 100.0 * survivors["dt_native_s"].agg(lambda s: float((s == 1).mean()))
     )
     out["split_pct"] = 100.0 * survivors["n_segments_kept"].agg(
         lambda s: float((s > 1).mean())
@@ -174,13 +195,15 @@ def draw_seasons(seasons: dict[str, pd.DataFrame]):
     """Retention and the survivors' character over the archive's two decades."""
     import matplotlib.pyplot as plt
 
-    fig, (top, mid, bottom) = plt.subplots(3, 1, figsize=(9.6, 7.4), sharex=True)
+    fig, (top, mid, bottom) = plt.subplots(3, 1, figsize=(6.1, 6.8), sharex=True)
 
     # One shared axis for both disciplines. Their season lists differ -- the paraglider
     # ladder opens three years earlier -- so each frame is reindexed onto the union
     # before it is drawn. Indexing each by its own position would slide one discipline's
     # bars along the other's labels.
-    labels = sorted({s for f in seasons.values() if not f.empty for s in f.season.astype(str)})
+    labels = sorted(
+        {s for f in seasons.values() if not f.empty for s in f.season.astype(str)}
+    )
     position = {s: i for i, s in enumerate(labels)}
 
     for discipline, frame in seasons.items():
@@ -189,31 +212,50 @@ def draw_seasons(seasons: dict[str, pd.DataFrame]):
         colour = DISCIPLINES[discipline].color
         offset = 0.2 if discipline.startswith("hang") else -0.2
         x = np.array([position[s] for s in frame.season.astype(str)], dtype=float)
-        top.bar(x + offset, frame.attempted, width=0.4, color=colour, alpha=0.35,
-                label=f"{discipline}, attempted")
-        top.bar(x + offset, frame.retained, width=0.4, color=colour,
-                label=f"{discipline}, retained")
+        top.bar(
+            x + offset,
+            frame.attempted,
+            width=0.4,
+            color=colour,
+            alpha=0.35,
+            label=f"{discipline}, attempted",
+        )
+        top.bar(
+            x + offset,
+            frame.retained,
+            width=0.4,
+            color=colour,
+            label=f"{discipline}, retained",
+        )
         # A season of a handful of flights carries a retention rate that is noise; the
         # open markers say which points are not to be read as a trend.
         big = frame.attempted >= 1000
-        for axis, values in ((mid, frame.retention_pct), (bottom, frame.median_duration_h)):
+        for axis, values in (
+            (mid, frame.retention_pct),
+            (bottom, frame.median_duration_h),
+        ):
             axis.plot(x, values, "-", color=colour, lw=1, label=discipline)
             axis.plot(x[big], values[big], "o", color=colour, ms=3.5)
-            axis.plot(x[~big], values[~big], "o", color=colour, ms=3.5,
-                      markerfacecolor="white")
+            axis.plot(
+                x[~big],
+                values[~big],
+                "o",
+                color=colour,
+                ms=3.5,
+                markerfacecolor="white",
+            )
 
     top.set_yscale("log")
     top.set_ylabel("flights")
     top.set_title("(a) attempted and retained, per season", fontsize=10, loc="left")
-    top.legend(frameon=False, fontsize=7, ncol=2)
+    top.legend(frameon=False, fontsize=8, ncol=2)
     mid.set_ylabel("retention (%)")
-    mid.set_title("(b) retention rate; open markers are seasons under 1000 flights",
-                  fontsize=10, loc="left")
+    mid.set_title("(b) Retention rate", fontsize=10, loc="left")
     mid.set_ylim(0, 100)
     bottom.set_ylabel("median duration (h)")
-    bottom.set_title("(c) median airborne duration of the survivors", fontsize=10, loc="left")
+    bottom.set_title("(c) Median retained duration", fontsize=10, loc="left")
     bottom.set_xticks(np.arange(len(labels)))
-    bottom.set_xticklabels(labels, rotation=60, ha="right", fontsize=7)
+    bottom.set_xticklabels(labels, rotation=60, ha="right", fontsize=8)
     for ax in (mid, bottom):
         ax.legend(frameon=False, fontsize=8)
     fig.tight_layout()
@@ -248,7 +290,10 @@ def macros(discipline: str, meta: pd.DataFrame) -> dict[str, str]:
         put("SecondCutLabel", str(second.label))
         put("SecondCutPct", f"{second.share_of_standing:.1f}")
         put("SecondCutRemoved", _tex_int(second.removed))
-        put("WorstToSecondRatio", f"{worst.share_of_standing / second.share_of_standing:.1f}")
+        put(
+            "WorstToSecondRatio",
+            f"{worst.share_of_standing / second.share_of_standing:.1f}",
+        )
     put("Criteria", str(len(casc)))
     put("Attempted", _tex_int(len(meta)))
     put("Retained", _tex_int(len(kept)))
@@ -261,14 +306,18 @@ def macros(discipline: str, meta: pd.DataFrame) -> dict[str, str]:
         put("SeasonLast", str(seasons.season.iloc[-1]))
         put("RetentionMinPct", f"{seasons.retention_pct.min():.1f}")
         put("RetentionMaxPct", f"{seasons.retention_pct.max():.1f}")
-        put("RetentionSpreadPct", f"{seasons.retention_pct.max() - seasons.retention_pct.min():.1f}")
+        put(
+            "RetentionSpreadPct",
+            f"{seasons.retention_pct.max() - seasons.retention_pct.min():.1f}",
+        )
         big = seasons[seasons.attempted >= 1000]
         if not big.empty:
             put("RetentionMinBigPct", f"{big.retention_pct.min():.1f}")
             put("RetentionMaxBigPct", f"{big.retention_pct.max():.1f}")
             put("SeasonsBig", str(len(big)))
 
-    # The cadence cross-tabulation: the sparsity rule is known to fall unevenly.
+    # The retained macro names refer to all no-surviving-segment failures;
+    # they do not isolate the missing-fraction gate.
     by_cadence = cross_tab(meta, "dt_native_s")
     if not by_cadence.empty and "no_segment_survived" in by_cadence:
         column = by_cadence["no_segment_survived"]
@@ -286,6 +335,9 @@ def main() -> int:
     import matplotlib
 
     matplotlib.use("Agg")
+    from soaring.reporting.style import paper_style
+
+    paper_style()
 
     values: dict[str, str] = {}
     seasons: dict[str, pd.DataFrame] = {}
@@ -301,10 +353,11 @@ def main() -> int:
         print("no dataset reachable; dataset_stats.tex not written")
         return 1
     refusal = partial_write_refusal(
-        missing, OUT_TEX.name, allow_partial=args.allow_partial,
+        missing,
+        OUT_TEX.name,
+        allow_partial=args.allow_partial,
         reasons=[
-            unreachable_reason(DISCIPLINES[d], "flights_meta.parquet")
-            for d in missing
+            unreachable_reason(DISCIPLINES[d], "flights_meta.parquet") for d in missing
         ],
     )
     if refusal:
@@ -315,7 +368,9 @@ def main() -> int:
         draw_seasons(seasons).savefig(OUT_FIG, metadata=_PDF_METADATA)
 
     write_macros(
-        OUT_TEX, values, generator="scripts/reporting/ch2_dataset/generate_dataset_stats.py"
+        OUT_TEX,
+        values,
+        generator="scripts/reporting/ch2_dataset/generate_dataset_stats.py",
     )
     print(f"wrote {OUT_TEX.name}, {OUT_FIG.name} ({len(values)} macros)")
     for k, v in values.items():

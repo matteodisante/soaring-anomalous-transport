@@ -1,50 +1,14 @@
 #!/usr/bin/env python3
-r"""Regenerate the barometric-vs-GNSS altitude noise figure for the thesis.
+r"""Regenerate paired altitude spectra and GNSS-presence diagnostics.
 
-Computes the altitude noise diagnostics (Welch PSD + barometric availability) from raw
-IGC tracks on the external SSD, and writes ``thesis/generated/altitude_noise.pdf`` and
-``thesis/generated/altitude_noise.tex`` (the ``\StatAltNoise*`` macros).
+Writes ``thesis/generated/altitude_noise.pdf`` and ``altitude_noise.tex``. Raw PSDs
+use a seeded sample of 3000 paths per discipline and the longest uninterrupted paired
+interval of valid altitude readings. Versioned NPZ caches preserve the spectra; pass
+``--rescan`` to force collection. The GNSS-presence distribution independently reuses
+the full raw track census when available, otherwise an explicit census/sample fallback.
+High-frequency power is a statistic of logged channels, not an identified error source.
 
-The macros exist because "the medians coincide, so the noisy minority is small" is not
-an inference the median actually licenses -- a median is unmoved by anything up to half
-the population. :func:`soaring.analysis.altitude_noise.hf_floor_excess_fraction` sizes
-the minority directly, per flight, against the barometric channel's own typical floor
-(``soaring.analysis.altitude_noise.FLOOR_BAND_HZ``), on the same PSD sample panel (c)
-already draws from.
-
-The three panels have different precision needs, so they use different data volumes (see
-``soaring.analysis.altitude_noise`` for the full rationale):
-
-* Panel (d), the barometric-presence fraction, is a headline number, so its precision is
-  justified rather than asserted. **Preferred path**: if
-  ``generate_preproc_figure.py`` has already cached a full-dataset scan at
-  ``<data_root>/derived/track_scan.parquet`` (on the SSD), this reuses it -- an *exact*
-  population fraction, no scanning here at all. **Fallback** (no cache yet): a
-  population up to ``CENSUS_MAX_POPULATION`` files is censused exactly (fast enough); a
-  larger one (the paraglider archive, ~186,000 files) is instead estimated from a simple
-  random sample whose size is computed by ``required_sample_size`` for a stated
-  95%-confidence margin of error (``TARGET_MARGIN_OF_ERROR``).
-* Panels (a)/(b), the PSD and the representative flight, use a smaller, fixed-size
-  random subsample (``PSD_SAMPLE_PER_DISCIPLINE``): an ensemble-average spectral shape,
-  not a headline statistic, so a moderate sample is the standard and adequate tool. The
-  ensemble itself -- not just a summary of it -- is now **cached** too, at each
-  discipline's ``<data_root>/derived/psd_sample.npz``
-  (:func:`soaring.analysis.altitude_noise.load_or_collect_psd`): sampling and parsing
-  it off the external disk is what made a cold run of this script slow, and nothing
-  about panels (a)-(c) changes when only their styling does. ``--rescan`` forces a
-  fresh sample, e.g. after changing ``PSD_SAMPLE_PER_DISCIPLINE``.
-
-Like ``generate_preproc_figure.py``, the raw data lives on an external disk and may be
-absent (a fresh checkout, or CI). The data roots come from the same environment
-variables used by the downloaders (``SOARING_PARA_DATA_ROOT`` /
-``SOARING_DELTA_DATA_ROOT``) or the config placeholders; a discipline whose ``igc/``
-directory is missing is skipped, and if no data at all is reachable the committed figure
-is left untouched and the script exits cleanly. It also needs the ``analysis``
-dependency group (``matplotlib`` + ``scipy``; on by default in ``uv run``, see
-``pyproject.toml``); if either is missing it also exits without failing. Run it with,
-e.g.::
-
-    uv run python scripts/reporting/ch2_dataset/generate_altitude_noise_figure.py [--rescan]
+Entry point: ``scripts/reporting/ch2_dataset/generate_altitude_noise_figure.py``.
 """
 
 from __future__ import annotations
@@ -52,6 +16,8 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
+
+GENERATED_OUTPUTS = ("altitude_noise.pdf", "altitude_noise.tex")
 
 ROOT = Path(__file__).resolve().parents[3]
 OUT_PATH = ROOT / "thesis" / "generated" / "altitude_noise.pdf"
@@ -71,7 +37,9 @@ CENSUS_MAX_POPULATION = 10_000
 # (paragliders): +/-2 percentage points, ample precision to tell "a negligible
 # minority" from "a substantial minority" of flights, all this is used for.
 TARGET_MARGIN_OF_ERROR = 0.02
-STAT_N_JOBS = min(8, os.cpu_count() or 1)
+STAT_N_JOBS = max(
+    1, min(int(os.environ.get("SOARING_MAX_WORKERS", "1")), os.cpu_count() or 1)
+)
 
 _SRC = str(ROOT / "src")
 if _SRC not in sys.path:
@@ -120,14 +88,18 @@ def main(argv: list[str] | None = None) -> int:
         print("scipy missing ('analysis' dependency group); keeping the figure.")
         return 0
     matplotlib.use("Agg")
+    from soaring.reporting.style import paper_style
+
+    paper_style()
 
     from soaring.acquisition.ffvl.config import (
         DELTA_CONFIG_PATH,
         PARA_CONFIG_PATH,
     )
     from soaring.analysis.altitude_noise import (
-        baro_presence_from_scan,
+        BARO_PRESENT_MIN,
         collect,
+        gnss_presence_from_scan,
         proportion_ci,
         render_altitude_noise_figure,
         required_sample_size,
@@ -146,34 +118,38 @@ def main(argv: list[str] | None = None) -> int:
         print("No IGC data reachable on the SSD; keeping the committed figure.")
         return 0
     refusal = partial_write_refusal(
-        [d for d in DISCIPLINES if d not in disciplines], OUT_PATH.name,
+        [d for d in DISCIPLINES if d not in disciplines],
+        OUT_PATH.name,
         allow_partial="--allow-partial" in sys.argv[1:],
-        reasons=[unreachable_reason(DISCIPLINES[d], "fixes.parquet")
-                 for d in DISCIPLINES if d not in disciplines],
+        reasons=[
+            unreachable_reason(DISCIPLINES[d], "fixes.parquet")
+            for d in DISCIPLINES
+            if d not in disciplines
+        ],
     )
     if refusal:
         print(refusal)
         return 1
 
     # Prefer generate_preproc_figure.py's cached full-census scan for panel (d): an
-    # EXACT population fraction at zero extra parsing, in place of a sampled estimate.
-    precomputed_baro_stats: dict[str, tuple[int, int]] = {}
+    # EXACT population distribution at zero extra parsing, in place of a sampled one.
+    precomputed_gnss_stats = {}
     for disc, cfg_disc in configs.items():
         cache_path = cfg_disc.derived_dir / "track_scan.parquet"
         if cache_path.is_file():
             import pandas as pd
 
             scan = pd.read_parquet(cache_path)
-            precomputed_baro_stats[disc] = baro_presence_from_scan(scan)
+            precomputed_gnss_stats[disc] = gnss_presence_from_scan(scan)
             print(
                 f"[{disc}] using cached full-census scan at {cache_path} for the "
-                f"barometric-presence fraction (exact, no sampling here)."
+                f"GNSS-presence distribution (exact, no sampling here)."
             )
 
     stat_samples: dict[str, list[Path]] = {}
     for disc, igc_dir in disciplines.items():
-        if disc in precomputed_baro_stats:
-            continue  # exact count already in hand from the cache; no scan needed
+        if disc in precomputed_gnss_stats:
+            continue  # The cached census already supplies this distribution.
         population = sorted(igc_dir.rglob("*.igc"))
         n_pop = len(population)
         if n_pop <= CENSUS_MAX_POPULATION:
@@ -204,20 +180,22 @@ def main(argv: list[str] | None = None) -> int:
         samples,
         stat_samples=stat_samples or None,
         stat_n_jobs=STAT_N_JOBS,
-        precomputed_baro_stats=precomputed_baro_stats,
+        precomputed_gnss_stats=precomputed_gnss_stats,
         psd_cache_paths=psd_cache_paths,
         force_psd_rescan=rescan,
     )
     for disc in disciplines:
-        p_hat, half_width = proportion_ci(acc.baro_absent[disc], acc.n_flights[disc])
-        if disc in precomputed_baro_stats:
+        frac = acc.gnss_present_frac[disc]
+        k = int((frac < BARO_PRESENT_MIN).sum())
+        p_hat, half_width = proportion_ci(k, acc.n_flights[disc])
+        if disc in precomputed_gnss_stats:
             print(
-                f"[{disc}] barometric-absent fraction: {p_hat * 100:.1f}% "
+                f"[{disc}] below-cutoff GNSS-presence fraction: {p_hat * 100:.1f}% "
                 f"(exact, full census, n={acc.n_flights[disc]})."
             )
         else:
             print(
-                f"[{disc}] barometric-absent fraction: "
+                f"[{disc}] below-cutoff GNSS-presence fraction: "
                 f"{p_hat * 100:.1f}% +/- {half_width * 100:.1f} pts "
                 f"(95% CI, n={acc.n_flights[disc]})."
             )

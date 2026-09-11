@@ -18,7 +18,7 @@ numbers (``StatScan*NoBaroPct`` etc.) describe the *witness* population instead 
 flight below the cut keeps the weaker declared-only frozen-lock test. Both channels get
 the same borderline census, the count and share of flights present just under the cut
 rather than at zero (``StatScan*{Gnss,Baro}Borderline{Count,Pct}``, quoted by
-``impl:altchannel``), and the prevalence of *individually* missing values among the
+``sec:altchannel``), and the prevalence of *individually* missing values among the
 flights that carry the channel (``StatScan*{Gnss,Baro}Miss{FlightsPct,MedianFixes,
 MaxFixes}``, quoted by the "Missing fixes" paragraph of thesis ``sec:altchannel``: share
 missing at least one value, and the median/maximum number of missing fixes among them);
@@ -88,7 +88,7 @@ from soaring.reporting import DISCIPLINES, bare_cli, check_name  # noqa: E402
 
 
 # How far below BARO_PRESENT_MIN still counts as "just under the cut" for the
-# borderline-presence census (impl:altchannel), as percentage points, on EITHER channel.
+# borderline-presence census (sec:altchannel), as percentage points, on EITHER channel.
 # The band itself is defined once, beside the threshold, in soaring.analysis
 # .altitude_noise: _scan_macros counts the flights in it, _config_macros quotes its
 # lower bound, so the two cannot describe a different band.
@@ -97,6 +97,7 @@ def _near_cut_margin_pct() -> float:
     from soaring.analysis.altitude_noise import BARO_BORDERLINE_MARGIN
 
     return 100.0 * BARO_BORDERLINE_MARGIN
+
 
 def _fmt(value: float, decimals: int) -> str:
     """Format to ``decimals`` places, dropping a trailing all-zero fraction.
@@ -171,9 +172,7 @@ def _scan_macros(prefix: str, scan, sampling) -> dict[str, str]:
 
     no_gnss = scan["gnss_present_frac"].to_numpy() < BARO_PRESENT_MIN
     no_baro = scan["baro_present_frac"].to_numpy() < BARO_PRESENT_MIN
-    channel_macros[f"StatScan{prefix}NoAltitudePct"] = _fmt(
-        _pct(no_gnss & no_baro), 2
-    )
+    channel_macros[f"StatScan{prefix}NoAltitudePct"] = _fmt(_pct(no_gnss & no_baro), 2)
 
     dt = scan["dt_s"].to_numpy()
     dt = dt[np.isfinite(dt) & (dt > 0)]
