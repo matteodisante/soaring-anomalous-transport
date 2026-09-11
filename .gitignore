@@ -60,10 +60,24 @@ thesis/*.ptc
 # docs/guide/bibliography.md
 thesis/references/
 
-# Figure di diagnostica: generate in locale da scripts/reporting/ch2_dataset/generate_preproc_figure.py
-# (dipendono da data/catalog.csv, non versionato). NON committate; la tesi le include con
-# \IfFileExists, quindi compila comunque anche quando la figura non c'e'.
+# Generated diagnostic PDFs remain local unless required by the manuscript.
+# Required figures are versioned below so the committed manuscript has its inputs.
 thesis/generated/*.pdf
+
+# Figures required by the revised manuscript (also reproducible from their manifests).
+!thesis/generated/msd.pdf
+!thesis/generated/kinematic_isotropy_terrain.pdf
+!thesis/generated/ch3_*.pdf
+!thesis/generated/quantile_scaling_schematic.pdf
+!thesis/generated/closed_loop_schematic.pdf
+!thesis/generated/moment_spectrum_schematic.pdf
+!thesis/generated/cleaning_defects_schematic.pdf
+!thesis/generated/vertical_median_explainer.pdf
+!thesis/generated/cleaning_real_examples.pdf
+!thesis/generated/segmentation_current_example_*.pdf
+!thesis/generated/segmentation_decoding_transitions.pdf
+!thesis/generated/segmentation_decoder_ablation.pdf
+!thesis/generated/segmentation_coverage.pdf
 
 # Copie in stile Finder ("nome 2.py"): compaiono da sole su questo filesystem e, se sono
 # test, vengono raccolte ed eseguite due volte -- 101 test fantasma in un'occasione.
@@ -83,3 +97,32 @@ thesis/generated/*.pdf
 /main.pdf
 /main.toc
 /main.synctex.gz
+
+# Exact configured Savitzky-Golay response used by the revised methods chapter.
+!thesis/generated/savgol_response.pdf
+
+# Required manuscript PDFs resolved by the current reporting graph.
+!thesis/generated/altitude_noise.pdf
+!thesis/generated/ch3_duration.pdf
+!thesis/generated/ch3_duration_composition.pdf
+!thesis/generated/ch3_duration_equipment.pdf
+!thesis/generated/ch3_models.pdf
+!thesis/generated/ch3_pca.pdf
+!thesis/generated/ch3_quantile_control.pdf
+!thesis/generated/ch3_quantiles.pdf
+!thesis/generated/ch3_scaling.pdf
+!thesis/generated/ch3_velocity_memory.pdf
+!thesis/generated/dataset_seasons.pdf
+!thesis/generated/fixlevel_diagnostics.pdf
+!thesis/generated/gap_diagnostics.pdf
+!thesis/generated/kinematic_isotropy_terrain_level.pdf
+!thesis/generated/prelim_ensemble.pdf
+!thesis/generated/prelim_isotropy.pdf
+!thesis/generated/prelim_map.pdf
+!thesis/generated/preproc_diagnostics.pdf
+!thesis/generated/sampling_intervals.pdf
+!thesis/generated/savgol_explainer.pdf
+!thesis/generated/savgol_spectrum.pdf
+!thesis/generated/segmentation_current_example_hang.pdf
+!thesis/generated/segmentation_current_example_para.pdf
+!thesis/generated/terrain_map.pdf

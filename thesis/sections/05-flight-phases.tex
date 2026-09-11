@@ -1,468 +1,770 @@
 \chapter{Flight phases}
 \label{ch:phases}
+\input{generated/segmentation_audit_values}
 
-Chapter~\ref{ch:global} establishes which class of transport the archive exhibits, but it
-cannot say which flight behaviour produces it, since every observable there averages over
-climbs, glides and searches together. Disentangling them requires segmenting each flight
-into its phases. This chapter defines the continuous-observation hidden Markov model
-(HMM) used for that purpose, the reproducible route from a processed trajectory to phase
-labels, and the measurements made possible by those labels.
+The global observables of Chapter~\ref{ch:global} constrain the motion of a complete
+flight, but because they mix directed travel, searching and altitude recovery, they do
+not identify which behaviour contributes to a particular scaling law. Segmentation
+provides the missing conditional description: given a phase, how does the glider move,
+how long does that phase last, and what happens next?
 
-The distinction is worth stating plainly, because it sets what a segmentation is allowed
-to claim. Pre-segmentation determines \emph{which} class of transport is present;
-segmentation explains \emph{which mechanism} produces it. A segmentation explains an
-exponent, it does not measure one --- and if the two disagree, the disagreement is
-evidence about the segmentation rather than about the transport.
+The aim here is to assign these phases reproducibly and establish how the labels can
+be checked, bearing in mind that kinematics provide indirect evidence of behaviour:
+a coloured climb on a trajectory remains an inference. We first build the probabilistic model and define its measured features, then examine its numerical behaviour and the independent
+annotations needed to assess its accuracy.
 
-\section{Segmentation into flight phases}
+\section{What the three phases mean}
 \label{sec:segmentation}
-Building on the previous work of Vilpellet et al.~\cite{vilpellet2026}, each flight is
-segmented into the three phases of the soaring cycle:
-\begin{description}
-  \item[Transition (glide).] The inter-thermal cruise: a near-straight, energy-efficient
-        glide toward the next source of lift (sinking, large directed horizontal
-        displacement). This is the directed ``step''.
-  \item[Search.] The exploratory phase entered when no thermal is found at a comfortable
-        altitude: gentle turns and probing manoeuvres to sample the air mass and locate the
-        next thermal while limiting altitude loss. It mediates the passage from one step to
-        the next trap.
-  \item[Climb (thermalling).] Circling within rising air to regain altitude: persistent
-        turning with small net horizontal displacement. This is the localized ``trap''.
+We retain the three-state description used by Vilpellet et al.~\cite{vilpellet2026},
+with labels $\mathcal S=\{\mathrm T,\mathrm S,\mathrm C\}$:
+\begin{description}[style=nextline]
+  \item[Transition (T).] Sustained directed travel between lift regions, usually with
+  limited turning and altitude loss.
+  \item[Search (S).] Exploratory turns, reversals or recentering without a sustained
+  established climb. Search can be brief or absent between a transition and a climb.
+  \item[Climb (C).] Sustained exploitation of lift, usually combining positive mean
+  vertical speed and circling.
 \end{description}
-Vilpellet et al.~\cite{vilpellet2026} use an HMM~\cite{rabiner1989} with binary
-trajectory-derived observations: the sign of the vertical velocity, curvature-sign
-persistence, and an indicator of straightness. Binary summaries are deliberately robust,
-but discard the amplitude of climbing, speed and turning. Here we retain the same
-three-state interpretation but use continuous kinematic observations and a Gaussian HMM.
-This makes the within-phase variability visible, avoids thresholds that would be specific
-to one aircraft type, and lets correlated features be modelled jointly. A model is fitted
-separately for paragliders and hang gliders: their speeds and turning radii are physical
-properties of different aircraft, not variation that a single emission distribution should
-absorb. This three-state description refines the two-state caricature underlying
-continuous-time random walks and L\'evy walks.
+These definitions concern observable flight geometry rather than a pilot's unrecorded
+intention, and allow departures from a fixed cycle: a glider may encounter lift directly, leave
+an unsuccessful search, or interrupt a climb. Ridge soaring and straight flight in rising
+air may also be ambiguous within this three-state vocabulary. Such cases should remain
+visible during validation instead of being forced to confirm the proposed interpretation.
 
-\subsection{From a trajectory to continuous observations}
-\label{sec:phasefeatures}
-The input is the final table of Chapter~\ref{ch:dataset}: within every retained segment it
-contains a uniform clock $t$, locally Cartesian position $(E,N,z)$, and the
-Savitzky--Golay velocity and acceleration components. It is important that ``segment''
-has the same strict meaning here as in the preprocessing: a long gap or an impossible fix
-ends one observation sequence and begins another. Neither a feature window nor an HMM
-transition is ever allowed to bridge that gap.
+\begin{figure}[tb]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,>=Latex,font=\small]
+  \draw[rounded corners,draw=figblue] (0,0) rectangle (3.8,2.6);
+  \draw[rounded corners,draw=phasesearch] (4.15,0) rectangle (7.95,2.6);
+  \draw[rounded corners,draw=figgreen] (8.3,0) rectangle (12.1,2.6);
+  \node at (1.9,2.25) {Transition};
+  \node at (6.05,2.25) {Search};
+  \node at (10.2,2.25) {Climb};
+  \draw[figblue,thick,->] (.35,.85) .. controls (1.5,1.1) and (2.5,.9) .. (3.45,1.35);
+  \draw[phasesearch,thick,->] (4.5,.7) .. controls (6.6,.6) and (7.2,1.75) .. (5.8,1.65)
+  .. controls (4.7,1.5) and (5.4,.8) .. (7.5,1.05);
+  \draw[figgreen,thick,domain=0:780,samples=100,variable=\a,->]
+    plot ({10.1+.7*cos(\a)+.00045*\a},{1.15+.52*sin(\a)});
+  \node[font=\footnotesize] at (1.9,.3) {directed progress};
+  \node[font=\footnotesize] at (6.05,.3) {exploratory turns};
+  \node[font=\footnotesize] at (10.2,.3) {turning and ascent};
+  \draw[->] (3.82,1.35) -- (4.13,1.35);
+  \draw[->] (7.97,1.35) -- (8.28,1.35);
+  \draw[->] (1.9,0) -- (1.9,-.5) -- (10.2,-.5) -- (10.2,0);
+  \node[fill=white,font=\footnotesize] at (6.05,-.5) {search can be skipped};
+\end{tikzpicture}
+\caption{Schematic plan views of the three phase interpretations. The drawings are
+illustrations, not measured trajectories or decision rules. Climbing circles can drift,
+and searching can cover substantial ground; neither phase is assumed stationary.}
+\label{fig:phasegeometry}
+\end{figure}
 
-The raw archive uses several logger cadences. A discrete-time transition matrix has a
-physical interpretation only when one transition represents the same elapsed time in every
-flight, so each eligible preprocessed segment is evaluated on an internal grid of
-$\Delta=\SI{10}{\second}$. A segment logged more sparsely than this is not upsampled and
-is left unclassified. At faster native cadences the already smoothed kinematics are
-interpolated only to evaluate this common decision grid; no position is invented across a
-preprocessing boundary. Thus a phase boundary is resolvable only to $\Delta$, not to the
-nominal native cadence.
+\section{From a Markov chain to hidden-state inference}
+\label{sec:hmmtheory}
 
-At a decision time $t$ the observation is the four-dimensional vector
+The phase of a flight is not observed directly: a recorder measures motion, and different
+behaviours can produce overlapping ranges of speed and turning. A hidden Markov model
+represents this distinction through two coupled sequences. The latent sequence $Q_k$
+describes the state at decision time $k$, while the observed vector $\mathbf Y_k$ carries
+the measurements associated with that state. The construction and inference below follow
+the standard HMM formulation~\cite[Secs.~II--III]{rabiner1989}; its use for behavioural
+interpretation requires additional care, as discussed by McClintock et al.~\cite{mcclintock2020}.
+
+\subsection{Constructing the probability law}
+
+Begin with a chain on a finite state space $\mathcal S$. Its initial distribution and
+transition probabilities satisfy
 \begin{equation}
-  \mathbf X_t =
-  \left(\overline{v_z},\,\overline{v_h},\,
-        \overline{\lvert\omega\rvert},\,C_\omega\right)_t .
-  \label{eq:phasefeatures}
+ \begin{aligned}
+ \Pr(Q_1=i)&=\pi_i,&\sum_i\pi_i&=1,\\
+ \Pr(Q_{k+1}=j\mid Q_{1:k-1},Q_k=i)&=a_{ij},&\sum_j a_{ij}&=1.
+ \end{aligned}
+ \label{eq:hmm-markov}
 \end{equation}
-Here $v_h=(v_E^2+v_N^2)^{1/2}$ and the signed horizontal turning rate is
-\begin{equation}
-  \omega = \frac{v_Ea_N-v_Na_E}{v_E^2+v_N^2}.
-  \label{eq:turnrate}
-\end{equation}
-The denominator is evaluated only above a conservative horizontal-speed floor, so a
-nearly stationary numerical heading cannot create a spurious turn. Bars in
-Eq.~\eqref{eq:phasefeatures} are time averages over the centred window
-$[t-W/2,t+W/2]$, with $W=\SI{30}{\second}$, approximately one thermalling revolution
-\cite{vilpellet2026}. The fourth feature is the continuous direction-coherence statistic
-\begin{equation}
-  C_\omega(t) =
-  \frac{\left|\int_{t-W/2}^{t+W/2}\omega(u)\,\mathrm du\right|}
-       {\int_{t-W/2}^{t+W/2}|\omega(u)|\,\mathrm du},
-  \qquad 0\le C_\omega\le1,
-  \label{eq:turncoherence}
-\end{equation}
-with $C_\omega=0$ when the denominator vanishes. A sustained circle has high
-$\overline{|\omega|}$ and $C_\omega\simeq1$; a search with reversals has lower coherence;
-and a transition has a small turn rate. The mean vertical velocity separates rising
-thermalling from the other behaviours, while the horizontal speed preserves information
-about directed gliding. A full $W$-second window is required: the first and last
-$W/2$ seconds that cannot support it are retained as explicit \emph{unclassified feature
-edges}, rather than being padded with another segment or silently assigned a phase.
-The preprocessing quality flags are also part of this contract. A feature window that
-touches a reconstructed-altitude sample is excluded, so that $\overline v_z$ is never
-based on an invented vertical channel; one that touches an off-centre
-Savitzky--Golay derivative at a segment edge is excluded as well. These interior
-non-classifiable windows split the HMM sequence just as an acquisition gap does, rather
-than becoming a numerical bridge between two reliable observations.
+Here $a_{ij}=\Pr(Q_{k+1}=j\mid Q_k=i)$ and all probabilities are nonnegative. The Markov assumption concerns the hidden state:
+its present value contains the information about its history used to predict the next
+state. A constant matrix $A$ adds time homogeneity; it is a modelling choice, not a
+consequence of the observations being sampled regularly.
 
-\subsection{Gaussian hidden Markov model}
-\label{sec:gaussianhmm}
-Let $Q_t\in\mathcal S=\{\mathrm T,\mathrm S,\mathrm C\}$ denote the unobserved phase
-(transition, search or climb) at decision time $t$, and let $\mathbf X_t$ be the observed
-feature vector of Eq.~\eqref{eq:phasefeatures}. An HMM separates the state process from
-the observation process, an especially useful construction when behavioural phases are
-not directly observed from telemetry~\cite{langrock2012,mcclintock2020}. Its first-order,
-time-homogeneous state process is specified by
+Now attach an emission density $b_i(\mathbf y)$ to each state, with
+$\int b_i(\mathbf y)\,\mathrm d\mathbf y=1$. Conditional on the complete state sequence,
+the emissions are assumed independent and the density at time $k$ depends only on $Q_k$.
+The chain rule then gives
 \begin{equation}
-  \pi_i=\Pr(Q_1=i),\qquad
-  a_{ij}=\Pr(Q_{t+1}=j\mid Q_t=i),\qquad
-  \sum_j a_{ij}=1.
-  \label{eq:hmmtransition}
-\end{equation}
-The diagonal of $A=(a_{ij})$ captures persistence; its off-diagonal elements describe the
-empirical organisation of the soaring cycle.
-
-Conditional on $Q_t=i$, the adopted emission density is the multivariate Gaussian
-\begin{equation}
-  b_i(\mathbf x)=f_{\mathbf X_t\mid Q_t}(\mathbf x\mid i)
-  =\frac{\exp\!\left[-\tfrac12(\mathbf x-\boldsymbol\mu_i)^\mathsf T
-       \Sigma_i^{-1}(\mathbf x-\boldsymbol\mu_i)\right]}
-       {(2\pi)^{d/2}|\Sigma_i|^{1/2}},\qquad d=4.
-  \label{eq:gaussianemission}
-\end{equation}
-Each state has its own unrestricted covariance matrix $\Sigma_i$. Consequently the model
-does \emph{not} assume that vertical speed, horizontal speed and turning are independent;
-their within-phase covariance is a parameter to estimate. For numerical conditioning all
-four columns are standardized using only the mean and standard deviation of the training
-flights. The fitted transformation is then applied unchanged to validation, test and
-deployment flights, so information from held-out trajectories cannot enter the model.
-
-The HMM assumptions are compactly expressed by the joint density of a state path
-$q_{1:T}$ and observations $\mathbf x_{1:T}$,
-\begin{equation}
- p(q_{1:T},\mathbf x_{1:T})=
- \pi_{q_1}b_{q_1}(\mathbf x_1)
- \prod_{t=1}^{T-1}a_{q_tq_{t+1}}b_{q_{t+1}}(\mathbf x_{t+1}).
+ p(q_{1:K},\mathbf y_{1:K}\mid\theta)
+ =\pi_{q_1}b_{q_1}(\mathbf y_1)
+   \prod_{k=1}^{K-1}a_{q_kq_{k+1}}b_{q_{k+1}}(\mathbf y_{k+1}),
  \label{eq:hmmjoint}
 \end{equation}
-Summing Eq.~\eqref{eq:hmmjoint} over all $3^T$ paths gives the likelihood of an
-unsegmented trajectory. The forward recursion evaluates that sum in $O(T|\mathcal S|^2)$,
-rather than enumerating paths:
-\begin{equation}
- \alpha_1(i)=\pi_i b_i(\mathbf x_1),\qquad
- \alpha_{t+1}(j)=b_j(\mathbf x_{t+1})\sum_i\alpha_t(i)a_{ij},\qquad
- \mathcal L=\sum_i\alpha_T(i).
- \label{eq:forward}
-\end{equation}
-The corresponding backward recursion is
-\begin{equation}
- \beta_T(i)=1,\qquad
- \beta_t(i)=\sum_j a_{ij}b_j(\mathbf x_{t+1})\beta_{t+1}(j).
- \label{eq:backward}
-\end{equation}
-Together the recursions give the posterior occupation probability
-$\gamma_t(i)=\Pr(Q_t=i\mid\mathbf x_{1:T})=\alpha_t(i)\beta_t(i)/\mathcal L$.
-It quantifies uncertainty even where a single phase label is ultimately required.
+where $\theta$ collects $\pi$, $A$ and the emission parameters. This is also a generative
+recipe: draw the first state, generate its observation, then alternate a state transition
+with a new observation. Although emissions are independent conditional on the states,
+the observed sequence is generally correlated and need not itself be first-order Markov.
 
-\subsection{Estimation, decoding and state names}
-\label{sec:hmminference}
-The parameters $\lambda=(\boldsymbol\pi,A,\{\boldsymbol\mu_i,\Sigma_i\})$ are fitted
-without phase labels by maximum likelihood. Baum--Welch~\cite{baum1970}, the HMM instance
-of expectation--maximization~\cite{dempster1977}, alternates two steps. In the E step,
-forward--backward supplies $\gamma_t(i)$ and the two-time posterior
-$\xi_t(i,j)=\Pr(Q_t=i,Q_{t+1}=j\mid\mathbf x_{1:T})$. In the M step these expected hidden
-counts update, for example,
+\begin{figure}[tb]
+ \centering
+ \begin{tikzpicture}[>=Latex,node distance=1.5cm,font=\small,
+     latent/.style={circle,draw=black!75,minimum size=1.0cm},
+     observed/.style={rectangle,draw=black!65,fill=black!6,minimum width=1.05cm,minimum height=.8cm}]
+  \node[latent] (q1) {$Q_{k-1}$};
+  \node[latent,right=2cm of q1] (q2) {$Q_k$};
+  \node[latent,right=2cm of q2] (q3) {$Q_{k+1}$};
+  \node[observed,below=1.2cm of q1] (y1) {$\mathbf Y_{k-1}$};
+  \node[observed,below=1.2cm of q2] (y2) {$\mathbf Y_k$};
+  \node[observed,below=1.2cm of q3] (y3) {$\mathbf Y_{k+1}$};
+  \draw[->] (q1) -- node[above] {$A$} (q2);
+  \draw[->] (q2) -- node[above] {$A$} (q3);
+  \draw[->] (q1) -- node[right] {$b_{Q_{k-1}}$} (y1);
+  \draw[->] (q2) -- node[right] {$b_{Q_k}$} (y2);
+  \draw[->] (q3) -- node[right] {$b_{Q_{k+1}}$} (y3);
+  \node[left=.4cm of q1,align=right] {hidden\\states};
+  \node[left=.4cm of y1,align=right] {observed\\features};
+ \end{tikzpicture}
+ \caption{Conditional structure of an HMM. Horizontal arrows carry state persistence
+ and transitions; vertical arrows describe how a state generates a measurement. Absence
+ of an arrow between observations represents conditional independence given the hidden
+ sequence, not independence of the observed features over time.}
+ \label{fig:hmm-graph}
+\end{figure}
+
+For continuous features, a common emission model is a multivariate Gaussian,
 \begin{equation}
- \pi_i=\gamma_1(i),\qquad
- a_{ij}=\frac{\sum_{t=1}^{T-1}\xi_t(i,j)}
-                 {\sum_{t=1}^{T-1}\gamma_t(i)},\qquad
- \boldsymbol\mu_i=\frac{\sum_t\gamma_t(i)\mathbf x_t}{\sum_t\gamma_t(i)},
- \label{eq:baumwelch}
+ b_i(\mathbf y)=\frac{\exp[-\tfrac12(\mathbf y-\boldsymbol\mu_i)^{\mathsf T}
+                  \Sigma_i^{-1}(\mathbf y-\boldsymbol\mu_i)]}
+ {(2\pi)^{d/2}|\Sigma_i|^{1/2}},\qquad \Sigma_i\succ0.
+ \label{eq:hmm-gaussian-density}
 \end{equation}
-and
+Its full covariance describes dependence among simultaneous features within a state.
+Gaussianity is an additional assumption about the emission shape; it is not part of the
+definition of an HMM. Nor does a state number determine a behavioural name: permuting
+all state labels consistently leaves the observation law unchanged.
+
+\subsection{Likelihood and uncertainty about the states}
+
+Three tasks must be distinguished: evaluating how well given parameters explain an
+observed sequence, inferring its hidden states, and estimating the parameters themselves.
+For the first, the states must be summed out,
 \begin{equation}
- \Sigma_i=\frac{\sum_t\gamma_t(i)
- (\mathbf x_t-\boldsymbol\mu_i)(\mathbf x_t-\boldsymbol\mu_i)^\mathsf T}
- {\sum_t\gamma_t(i)}.
+ \mathcal L(\theta)=p(\mathbf y_{1:K}\mid\theta)
+ =\sum_{q_{1:K}\in\mathcal S^K}p(q_{1:K},\mathbf y_{1:K}\mid\theta).
+ \label{eq:hmm-likelihood}
+\end{equation}
+With continuous observations this is a density evaluated at the recorded vectors, rather
+than the probability of those exact vectors. Direct evaluation would enumerate
+$|\mathcal S|^K$ paths, but the Markov factorization allows their shared prefixes and
+suffixes to be accumulated recursively~\cite[Sec.~III-A]{rabiner1989}.
+
+For one valid block of $K$ observations, define forward and backward quantities
+\begin{align}
+ \alpha_1(i)&=\pi_i b_i(\mathbf y_1),&
+ \alpha_{k+1}(j)&=b_j(\mathbf y_{k+1})\sum_i\alpha_k(i)a_{ij},
+ &\mathcal L&=\sum_i\alpha_K(i),\label{eq:forward}\\
+ \beta_K(i)&=1,&
+ \beta_k(i)&=\sum_j a_{ij}b_j(\mathbf y_{k+1})\beta_{k+1}(j).
+ &&\label{eq:backward}
+\end{align}
+Their cost is $O(K|\mathcal S|^2)$, in contrast to enumerating $|\mathcal S|^K$ paths.
+The posteriors used in Baum--Welch are
+\begin{equation}
+ \gamma_k(i)=\frac{\alpha_k(i)\beta_k(i)}{\mathcal L},\qquad
+ \xi_k(i,j)=\frac{\alpha_k(i)a_{ij}b_j(\mathbf y_{k+1})\beta_{k+1}(j)}{\mathcal L}.
+\end{equation}
+
+Here $\alpha_k(i)$ is the joint density of the observations up to $k$ and state $i$,
+whereas $\beta_k(i)$ is the conditional density of the remaining observations given that
+state. Their product combines evidence on both sides of the decision. Thus
+$\gamma_k(i)$ is a smoothed state probability, while $\xi_k(i,j)$ gives the expected
+weight of a transition $i\to j$. Summing $\gamma_k$ over states, or $\xi_k$ over both
+indices, gives one; no most-probable path needs to be selected to calculate them.
+
+\subsection{Decoding a whole sequence}
+
+Choosing $\arg\max_i\gamma_k(i)$ separately at every time maximizes the expected number
+of correct individual states, but those choices need not form the most probable joint
+sequence and can even violate a forbidden transition. Viterbi instead retains the best
+path ending in each state~\cite{viterbi1967,rabiner1989}. In logarithmic form,
+\begin{align}
+ d_1(j)&=\log\pi_j+\log b_j(\mathbf y_1),\\
+ d_{k+1}(j)&=\log b_j(\mathbf y_{k+1})+
+                    \max_i[d_k(i)+\log a_{ij}],\\
+ \psi_{k+1}(j)&=\arg\max_i[d_k(i)+\log a_{ij}].
+ \label{eq:viterbi-recursion}
+\end{align}
+After choosing $\widehat q_K=\arg\max_jd_K(j)$, backtracking through
+$\widehat q_k=\psi_{k+1}(\widehat q_{k+1})$ recovers the optimal sequence. Zero
+probabilities have log score $-\infty$; ties require a consistent convention.
+The forward recursion adds competing paths, while Viterbi takes their maximum, which
+explains why a decoded path and posterior uncertainty are different outputs. Both
+are conditional on the adopted model, so a high posterior does not independently
+establish that a behavioural interpretation is correct.
+
+\subsection{Learning from unlabelled observations}
+
+If states were observed, transitions could be counted and each Gaussian fitted to its
+assigned measurements. With hidden states, Baum--Welch replaces those unknown assignments
+by their posterior weights and iterates the calculation~\cite{baum1970}. This is an
+expectation--maximization procedure: at iteration $r$, compute
+\begin{equation}
+ \mathcal Q(\theta\mid\theta^{(r)})
+ =\mathbb E_{Q\mid\mathbf y,\theta^{(r)}}
+       [\log p(Q,\mathbf y\mid\theta)],
+ \qquad
+ \theta^{(r+1)}\in\arg\max_\theta\mathcal Q(\theta\mid\theta^{(r)}).
+ \label{eq:hmm-em-objective}
+\end{equation}
+The E step uses forward--backward probabilities; the M step maximizes the resulting
+expected complete-data log likelihood. Its monotonicity follows from the EM lower-bound
+argument under an exact M step~\cite{dempster1977}, but does not imply a global optimum.
+For $B$ observation blocks treated as independent in the likelihood and indexed by $b$, the unregularized Gaussian
+M step gives the following updates, provided each denominator is positive:
+\begin{align}
+ \pi_i^{\mathrm{new}}&=\frac1B\sum_{b=1}^B\gamma_{b,1}(i),&
+ a_{ij}^{\mathrm{new}}&=
+ \frac{\sum_b\sum_{k=1}^{K_b-1}\xi_{b,k}(i,j)}
+      {\sum_b\sum_{k=1}^{K_b-1}\gamma_{b,k}(i)},\label{eq:baumwelch}\\
+ \boldsymbol\mu_i^{\mathrm{new}}&=
+ \frac{\sum_{b,k}\gamma_{b,k}(i)\mathbf y_{b,k}}
+      {\sum_{b,k}\gamma_{b,k}(i)},&
+ \Sigma_i^{\mathrm{new}}&=
+ \frac{\sum_{b,k}\gamma_{b,k}(i)
+ (\mathbf y_{b,k}-\boldsymbol\mu_i^{\mathrm{new}})
+ (\mathbf y_{b,k}-\boldsymbol\mu_i^{\mathrm{new}})^{\mathsf T}}
+ {\sum_{b,k}\gamma_{b,k}(i)}.
  \label{eq:baumwelchcovariance}
-\end{equation}
-The likelihood
-does not decrease at each EM iteration, but can have local optima; ten fixed-seed
-initialisations are therefore fitted and the one with the largest training likelihood is
-retained. Sequence lengths are passed explicitly to the fitting routine, so the final
-point of one flight or preprocessing segment contributes no transition to the first point
-of the next.
+\end{align}
 
-Numerical HMM states have no intrinsic order. Complete train-only manual annotations map
-the three components to $\{\mathrm T,\mathrm S,\mathrm C\}$ by the one-to-one permutation
-that maximizes their agreement; this is a naming operation, not supervised fitting. The
-mapping is fixed before validation and is never informed by test annotations.
+Initial-state counts use only the first observation of each block, and transition counts
+stop at its penultimate observation, so no transition is invented across a gap. These
+formulas explain the statistical fit; numerical scaling, regularization, initialization
+and stopping rules must also be specified for the actual estimator. The next sections
+make those choices for flight observations, rather than treating the general HMM theory
+as evidence that this particular three-state interpretation is correct.
 
-For a new feature sequence, the reported hard segmentation is the \emph{entire} most
-probable path, found by the Viterbi recursion~\cite{viterbi1967},
+\section{From the cleaned flight to observations}
+\label{sec:phasefeatures}
+The input is the final trajectory of Chapter~\ref{ch:dataset}, with local position
+$(E,N,z)$ and the smoothed velocity and acceleration components. Each preprocessing
+segment defines a separate observation sequence, within which feature windows and
+hidden-state transitions cannot cross an acquisition gap or an excluded quality interval.
+
+A common decision interval $\Delta=\SI{10}{\second}$ gives the transition matrix the
+same physical meaning for every flight, restricting the analysis to native cadences no
+slower than this interval. At each decision time $t_k$, we first compute each scalar
+feature at native fixes and linearly interpolate those values. Denoting this interpolant
+by $\mathcal I[f]$, we average it over a centred window of width $W=\SI{30}{\second}$:
 \begin{equation}
- \delta_1(i)=\pi_i b_i(\mathbf x_1),\qquad
- \delta_{t+1}(j)=b_j(\mathbf x_{t+1})\max_i\{\delta_t(i)a_{ij}\},
+ \overline f(t_k)=\frac{1}{W}\int_{t_k-W/2}^{t_k+W/2}\mathcal I[f](u)\,\mathrm du,
+ \qquad
+ \mathbf X_k=\bigl(\overline v_z,\overline v_h,
+                  \overline{|\omega|},C_\omega\bigr)(t_k).
+ \label{eq:phasefeatures}
+\end{equation}
+The window suppresses fix-scale fluctuations while preserving manoeuvres over tens of
+seconds; its width is a chosen measurement scale rather than a measured universal
+thermalling period.
+Although boundaries lie on a 10-s grid, the overlapping 30-s windows prevent a claim of
+independent 10-s temporal resolution.
+
+The horizontal speed and signed turn rate are
+\begin{equation}
+ v_h=\sqrt{v_E^2+v_N^2},\qquad
+ \omega=\frac{v_Ea_N-v_Na_E}{v_E^2+v_N^2}
+ \quad (v_h\ge\SI{1}{\metre\per\second}).
+ \label{eq:turnrate}
+\end{equation}
+Below the stated speed floor the implementation sets $\omega=0$, because numerical
+heading is unreliable when the horizontal velocity nearly vanishes. The fourth feature
+measures whether turning retains its sign:
+\begin{equation}
+ C_\omega(t_k)=
+ \frac{\left|\int_{t_k-W/2}^{t_k+W/2}\mathcal I[\omega](u)\,\mathrm du\right|}
+      {\int_{t_k-W/2}^{t_k+W/2}\mathcal I[|\omega|](u)\,\mathrm du},
+ \qquad 0\le C_\omega\le1,
+ \label{eq:turncoherence}
+\end{equation}
+The denominator is an accumulated angle in radians. The code sets $C_\omega=0$ if
+it is at most machine epsilon ($2^{-52}$ in float64), and clips floating-point round-off
+to $[0,1]$. Turning in one direction
+throughout the window gives $C_\omega=1$ even when its rate varies: coherence is not a
+measure of circularity or of lift by itself. At a reversal between two fixes,
+$\mathcal I[|\omega|]$ differs from $|\mathcal I[\omega]|$: the former is the
+quantity the code integrates. The pointwise inequality
+$|\mathcal I[\omega]|\le\mathcal I[|\omega|]$ proves the stated bound on
+$C_\omega$.
+
+For example, equal-duration turns at $+6$ and $-6$ degrees per second cancel in the
+numerator and give $C_\omega=0$, despite a large mean absolute turn rate. Keeping the
+positive sign throughout gives $C_\omega=1$; spending three quarters of a window at
+$+6$ and one quarter at $-6$ gives $C_\omega=1/2$ in the ideal piecewise-constant limit.
+Thus two different questions are measured: how much the heading turns, and how much
+opposite turns cancel. Figure~\ref{fig:coherence-schematic} makes this distinction explicit.
+
+\begin{figure}[tb]
+ \centering
+ \begin{tikzpicture}[x=1cm,y=1cm,font=\small]
+  \foreach \x/\title in {0/One direction,4.3/Balanced reversal,8.6/Unequal reversal}{
+   \draw[black!40,densely dotted] (\x,.925) -- (\x+3.2,.925);
+   \draw[black!55,->] (\x,0) -- (\x+3.45,0);
+   \draw[black!55,->] (\x,0) -- (\x,2.1);
+   \node[above] at (\x+1.7,2.15) {\title};
+   \foreach \u/\labeltime in {0/0,1.6/15,3.2/30}{\draw (\x+\u,-.02)--(\x+\u,-.08) node[below,font=\footnotesize] {\labeltime};}
+   \node[below,font=\footnotesize] at (\x+1.65,-.45) {Time in window (s)};
+  }
+  \draw[figblue,thick] (0,1.65)--(3.2,1.65);
+  \draw[figblue,thick] (4.3,1.65)--(5.9,1.65)--(5.9,.2)--(7.5,.2);
+  \draw[figblue,thick] (8.6,1.65)--(11,1.65)--(11,.2)--(11.8,.2);
+  \node[left,font=\footnotesize] at (0,1.65) {$+6$};
+  \node[left,font=\footnotesize] at (0,.925) {$0$};
+  \node[left,font=\footnotesize] at (0,.2) {$-6$};
+  \node[rotate=90,font=\footnotesize] at (-.8,1.0) {$\omega$ (deg/s)};
+  \node[below] at (1.6,-.95) {$C_\omega=1$};
+  \node[below] at (5.9,-.95) {$C_\omega=0$};
+  \node[below] at (10.2,-.95) {$C_\omega=1/2$};
+ \end{tikzpicture}
+ \caption{Turning amount and directional coherence measure different properties.
+ All three idealized windows have $\overline{|\omega|}=6$ degrees per second, but their
+ coherence differs because opposite turns cancel in the signed integral. The jumps
+ illustrate limiting waveforms; the data calculation integrates piecewise-linear
+ interpolants of native-fix values as specified in Eqs.~\eqref{eq:phasefeatures}
+ and~\eqref{eq:turncoherence}. No phase label follows from coherence alone.}
+ \label{fig:coherence-schematic}
+\end{figure}
+
+\begin{table}[tb]
+ \centering\small
+ \caption{Quantities shown in the phase time-series figures. Feature windows are
+ centred and 30 s wide; the plotted quantities retain physical units, before standardization.}
+ \label{tab:phase-figure-quantities}
+ \begin{tabularx}{\linewidth}{@{}lXl@{}}
+ \toprule
+ Axis & Mathematical quantity & Unit / range\\
+ \midrule
+ Altitude & $z(t_k)$ from the cleaned trajectory & m\\
+ Vertical speed & $\overline v_z(t_k)$, Eq.~\eqref{eq:phasefeatures} & m\,s$^{-1}$, signed\\
+ Horizontal speed & $\overline{\sqrt{v_E^2+v_N^2}}(t_k)$ & m\,s$^{-1}$, $\ge0$\\
+ Absolute turn rate & $(180/\pi)\overline{|\omega|}(t_k)$ & deg\,s$^{-1}$, $\ge0$\\
+ Coherence & $C_\omega(t_k)$, Eq.~\eqref{eq:turncoherence} & dimensionless, $[0,1]$\\
+ Posterior & $\gamma_k(i)$ for $i\in\{\mathrm T,\mathrm S,\mathrm C\}$ & $[0,1]$, sum $=1$\\
+ Phase strip & $\widehat q_k$ from the joint Viterbi path & T, S, C or unavailable\\
+ \bottomrule
+ \end{tabularx}
+\end{table}
+
+A complete safe window is required. Windows touching reconstructed altitude, a derivative influenced by that reconstruction,
+or an edge derivative from preprocessing are unclassified, as are unsupported feature
+edges. Influence includes the entire Savitzky--Golay vertical fitting window, including
+its off-centre boundary fits.
+The support includes the native fixes bracketing interpolated window endpoints.
+Consequently even an unsafe fix just outside the nominal integration interval can
+invalidate it. Grey in the figures means unavailable support; there is no posterior
+confidence threshold that turns uncertain classifications grey.
+
+\section{A probabilistic segmentation, and its assumptions}
+\label{sec:gaussianhmm}
+\subsection{The fitted hidden Markov model}
+\label{sec:hmminference}
+A separate continuous Gaussian HMM is fitted for each discipline, since speed and turning
+scale differ between paragliders and hang gliders. Write $Q_k\in\mathcal S$ for the
+hidden phase and $\mathbf Y_k$ for the features standardized by training-set means and
+standard deviations. More explicitly, for the $n$ observations actually selected for
+fitting and feature $j$,
+\begin{equation}
+ \bar x_j=\frac1n\sum_{k=1}^n x_{kj},\qquad
+ s_j^2=\frac1n\sum_{k=1}^n(x_{kj}-\bar x_j)^2,\qquad
+ Y_{kj}=\frac{X_{kj}-\bar x_j}{s_j}.
+ \label{eq:phase-standardization}
+\end{equation}
+A numerically constant feature is rejected; the population divisor $n$, rather than
+$n-1$, matches the stored standardizer. The same $\bar x_j,s_j$ are used on held-out
+observations. The model parameters are an initial distribution $\pi$, a transition
+matrix $A$, and a full Gaussian covariance and mean for each component:
+\begin{equation}
+ a_{ij}=\Pr(Q_{k+1}=j\mid Q_k=i),\quad \sum_j a_{ij}=1,
+ \qquad
+ b_i(\mathbf y)=\mathcal N_d(\mathbf y;\boldsymbol\mu_i,\Sigma_i).
+ \label{eq:hmmtransition}
+\end{equation}
+Full covariance allows simultaneous vertical speed, horizontal speed and turning to be
+correlated within a phase. It does not model residual correlation \emph{between}
+successive observations. The factorization in Eq.~\eqref{eq:hmmjoint} assumes first-order phase memory,
+time-homogeneous parameters and conditionally independent emissions.
+The last is only approximate for overlapping windows; posterior confidence may therefore
+be sharper than independent observations would justify. Gaussian emissions also place
+some probability on physically impossible feature values, such as negative speed.
+They are a classification approximation, not a generative model of flight physics.
+
+Baum--Welch applies expectation--maximization to the unlabelled training
+likelihood~\cite{baum1970,dempster1977}. Ten fixed-seed initializations
+are compared by training likelihood. Whole valid blocks enter the fit; the final
+observation of one block never contributes a transition to the next. The fitted scaler
+is frozen for validation and test flights.
+
+A numerical component has no behavioural name. At present the component with greatest
+mean vertical speed is provisionally called climb. Among the other two components,
+transition maximizes $\mu_{v_h}-\mu_{|\omega|}-\tfrac12\mu_{C_\omega}$
+in standardized feature coordinates; the remaining component is called search. Human train labels will resolve this
+permutation. In particular, ``search'' currently also collects observations unexplained
+by the other two components: its behavioural interpretation requires a direct check.
+
+\subsection{Numerical estimation in the fitted model}
+\label{sec:hmmestimation}
+
+Equations~\eqref{eq:baumwelch}--\eqref{eq:baumwelchcovariance} describe unregularized
+maximum likelihood. The stored models were fitted with \texttt{hmmlearn} 0.3.3~\cite{hmmlearn033}. Its default initial/transition
+Dirichlet parameters are one, and its mean weight is zero, so those updates reduce to
+the expressions above. For full covariance the default scalar \texttt{covars\_prior}
+is $0.01$, broadcast to every matrix entry. With $N_i=\sum_{b,k}\gamma_{b,k}(i)$,
+the implemented covariance update is therefore
+\begin{equation}
+ \Sigma_i^{\rm new}
+ =\frac{\sum_{b,k}\gamma_{b,k}(i)
+    (\mathbf y_{b,k}-\boldsymbol\mu_i^{\rm new})
+    (\mathbf y_{b,k}-\boldsymbol\mu_i^{\rm new})^{\mathsf T}
+    +0.01\,\mathbf 1\mathbf 1^{\mathsf T}}{N_i}.
+ \label{eq:hmmactualcovariance}
+\end{equation}
+The added matrix is rank one: it does not impose a positive lower bound on every
+covariance eigenvalue. In particular, \texttt{min\_covar}$=10^{-3}$ is added to the
+initial covariance diagonal; it is not enforced as an eigenvalue floor after every
+M step. This distinction matters for the very narrow coherence component.
+
+Exact unregularized EM cannot decrease its likelihood, but convergence of the
+parameters to a stationary point requires further regularity conditions; a mixture
+can approach a singular covariance. The software's stopping flag is also true when
+the iteration cap is reached or the last likelihood change is negative. That flag in
+an old artifact is not evidence of convergence. New fits record convergence only for
+a finite, non-negative last gain below the tolerance, reject non-finite final scores,
+and still retain all restart scores for inspection. For restart $r$, write $\ell_r=\sum_b\log\mathcal L_b(\widehat\theta_r)$ on the same
+training observations. Its reported relative score is
+$(\ell_r-\max_u\ell_u)/n\le0$, in natural-log units per fitted observation, whereas the
+final EM gain is $\ell^{(m)}-\ell^{(m-1)}$ before normalization. These are numerical
+fit diagnostics, not accuracy scores. Ten fixed-seed restarts are ranked
+by finite training likelihood; a restart can be selected without satisfying the stated
+convergence criterion. Training uses scaled forward--backward arithmetic; current
+Viterbi and posterior decoding use logarithms to avoid underflow.
+
+
+\subsection{Why the current decoder differs from the original fit}
+\label{sec:phaseprovisional}
+The original fit used all four features. Its climb component concentrates coherence
+extremely close to one: the physical standard deviations are approximately
+$\SegAuditParaCoherenceSD$ for paragliders and $\SegAuditHangCoherenceSD$ for hang gliders
+(Table~\ref{tab:segmentationaudit}). A circling climb with a small turn reversal can
+therefore receive negligible climb likelihood. More persistent transitions alone cannot
+repair this emission problem.
+
+The current decoder integrates coherence out of the original four-dimensional Gaussian.
+If $\mathbf U=(Y_1,Y_2,Y_3)$ and $V=Y_4$, then
+\begin{equation}
+ b_i^{(3)}(\mathbf u)
+ =\int_{\mathbb R} b_i^{(4)}(\mathbf u,v)\,\mathrm dv
+ =\mathcal N_3(\mathbf u;\boldsymbol\mu_{i,U},\Sigma_{i,UU}).
+ \label{eq:phasemarginal}
+\end{equation}
+Thus the retained mean entries and principal covariance submatrix define the new
+likelihood. This is marginalization, not conditioning on perfect coherence, and not a
+new three-dimensional fit. Coherence remains recorded and plotted for inspection.
+A separately refitted three-dimensional model remains a validation comparison: the
+original parameters were selected using the problematic fourth feature.
+
+The coherence mean and width in Table~\ref{tab:segmentationaudit} undo the training
+standardization: $\mu_{C,i}^{\rm phys}=\bar x_4+s_4\mu_{i,4}$ and
+$\sigma_{C,i}^{\rm phys}=s_4\sqrt{\Sigma_{i,44}}$. They describe a fitted Gaussian
+component, not the sample mean and standard deviation of decisions labelled climb.
+
+A second, independent choice softens the phase sequence. With $s_i=a_{ii}<1$ and
+$q_{ij}=a_{ij}/(1-s_i)$ for $j\ne i$, the decoding matrix is
+\begin{equation}
+ \widetilde a_{ii}=\widetilde s_i,\qquad
+ \widetilde a_{ij}=(1-\widetilde s_i)
+       \bigl[(1-w)q_{ij}+wq^\star_{ij}\bigr],\quad j\ne i.
+ \label{eq:phaseprior}
+\end{equation}
+Here $w=0.75$. The target exits from transition split equally between search and climb,
+allowing direct entry into lift; from search and climb, the next phase in
+$\mathrm T\to\mathrm S\to\mathrm C\to\mathrm T$ receives target probability $0.95$.
+The persistence rule is
+\begin{equation}
+ \widetilde s_i=
+ \begin{cases}
+ s_i+w\bigl(e^{-\Delta/\theta_S}-s_i\bigr),&i=\mathrm S,\\
+ s_i+w\max\bigl(0,e^{-\Delta/\theta}-s_i\bigr),&i=\mathrm T,\mathrm C,
+ \end{cases}
+ \quad \theta_S=\SI{20}{\second},\quad\theta=\SI{120}{\second}.
+ \label{eq:phasepersistence}
+\end{equation}
+For an absorbing fitted row ($s_i=1$), the code starts from equal exit weights and
+caps the new persistence at $1-\epsilon_{\rm mach}$ to retain possible exits.
+These scales and weights are provisional decoder settings. They are neither fitted
+behavioural durations nor minimum run lengths. Figure~\ref{fig:phasedecodingmatrix}
+shows both matrices so that learned structure and imposed preference can be distinguished.
+Once a semantic prior is active, changing component names requires decoding again,
+rather than merely recolouring an existing path.
+
+\begin{figure}[tb]
+ \centering
+ \includegraphics[width=\linewidth]{generated/segmentation_decoding_transitions.pdf}
+ \caption{Original fitted and current decoding transition matrices, ordered as transition
+ (T), search (S), climb (C). Every entry is a probability per 10-s decision. The right
+ column includes the declared sequence preference and cannot be read as an empirical
+ frequency of pilot behaviour.}
+ \label{fig:phasedecodingmatrix}
+\end{figure}
+
+For both the original and modified model, Viterbi chooses the entire most probable
+path rather than the most likely phase at each isolated time~\cite{viterbi1967}:
+\begin{equation}
+ \widehat q_{1:K}=\arg\max_{q_{1:K}}p(q_{1:K}\mid\mathbf y_{1:K}),\qquad
+ \gamma_k(i)=\Pr(Q_k=i\mid\mathbf y_{1:K}).
  \label{eq:viterbi}
 \end{equation}
-followed by backtracking through the maximizing predecessor of every $\delta_{t+1}(j)$.
-This differs from assigning $\arg\max_i\gamma_t(i)$ separately at each time: Viterbi
-chooses a globally coherent state sequence and incorporates the transition penalties. The
-output retains both the Viterbi phase and all three posterior probabilities, so an
-apparently sharp boundary can be distinguished from an uncertain one without smoothing
-or manually merging short runs afterwards.
+The hard path and posterior $\gamma$ use the same effective transition matrix and
+marginal emission. ``Smoothed posterior'' refers to inference using observations before
+and after $k$, not to an extra filter applied to probabilities.
 
-The ordinary HMM has limits that the output must not conceal. It assumes stationary
-emissions within a phase and conditional independence of observations given $Q_t$; rolling
-features make the latter only approximate. It also imposes a geometric dwell-time law,
+\section{What has been checked}
+\label{sec:phasevalidation}
+\subsection{Archive support and reproducible examples}
+The original models were fitted and applied to both archives.
+Table~\ref{tab:segmentationfit} records the actual fitting and decoding counts. Fitting
+uses a deterministic subset of whole training blocks up to the memory cap; longer selected
+blocks contribute more observations, so this is not equal weighting of flights.
+\SegAuditArchiveStatus
+The figures in this chapter use the current configuration and saved features,
+with complete valid blocks decoded before an eight-minute display excerpt is taken.
+A shortened figure therefore does not shorten the sequence used for inference.
+
+\input{generated/segmentation_fit_table}
+\input{generated/segmentation_audit_table}
+
+\SegAuditFitStatus
+
+Coverage has a separate denominator from classification accuracy:
 \begin{equation}
- \Pr(D_i=m\Delta)=a_{ii}^{m-1}(1-a_{ii}),\qquad m=1,2,\ldots,
- \qquad
- \mathbb E[D_i]=\frac{\Delta}{1-a_{ii}}.
+ f_{\mathrm{unclassified}}
+ =1-\frac{\text{duration covered by classified decision cells}}
+              {\text{total retained cleaned-segment duration}}.
+ \label{eq:phasecoverage}
+\end{equation}
+Decision cells $[t_k-\Delta/2,t_k+\Delta/2)$ are clipped at segment boundaries;
+acquisition gaps contribute to neither duration. For exclusion reason $r$, the plotted
+percentage is $100\sum_k |I_k|\mathbf1\{r_k=r\}/D_{\rm clean}$, with $I_k$ the clipped
+decision cell and $D_{\rm clean}$ the denominator in Eq.~\eqref{eq:phasecoverage}.
+Feature-edge status takes precedence over a quality mask if both apply. Segments with
+native cadence above 10 s contribute their full duration to the cadence category;
+remaining tails outside any cell form the final category. The categories are disjoint. The denominator does include retained
+segments too sparsely sampled for classification. The excluded fractions are \SegAuditParaExcludedPct\%
+for paragliders and \SegAuditHangExcludedPct\% for hang gliders, chiefly from unsafe feature support
+(Fig.~\ref{fig:phasecoverage}). These masks are shared by the two decoders compared on that snapshot.
+\SegAuditSupportStatus Their coverage says how much time is available for subsequent phase statistics,
+not whether any phase label is correct or whether exclusion is behaviourally unbiased.
+
+\begin{figure}[tb]
+ \centering
+ \includegraphics[width=\linewidth]{generated/segmentation_coverage.pdf}
+ \caption{Why retained cleaned time lacks a phase label. Fractions use the same duration
+ denominator in Eq.~\eqref{eq:phasecoverage}; they are not fractions of flights or fixes.
+ Windows touching reconstructed altitude or edge derivatives dominate the excluded time.}
+ \label{fig:phasecoverage}
+\end{figure}
+
+The two examples are selected by a fixed priority from validation flights, independently
+of their apparent phase composition. Recomputing labels with the stored model reproduces the archived paths. Their current labels and posterior curves
+then use Eqs.~\eqref{eq:phasemarginal}--\eqref{eq:phasepersistence}.
+The audit records the selected identities, model hashes, configuration, and changed-label
+counts. Thus each plotted label can be traced to its observations and decoder settings.
+
+\begin{figure}[p]
+ \centering
+ \includegraphics[width=\linewidth]{generated/segmentation_current_example_para.pdf}
+ \caption{Eight minutes of a validation paraglider segment, decoded using the current
+ three-feature marginal and sequence policy. The phase strip, altitude, separate feature
+ axes and posterior probabilities share a time axis marked at one-minute intervals;
+ decisions remain \SI{10}{\second} apart. Table~\ref{tab:phase-figure-quantities}
+ defines every displayed quantity. Coherence is shown as a
+ diagnostic and does not enter the current emission likelihood. Grey indicates unavailable
+ support. Phase names remain provisional.}
+ \label{fig:segmentationexamplepara}
+\end{figure}
+\begin{figure}[p]
+ \centering
+ \includegraphics[width=\linewidth]{generated/segmentation_current_example_hang.pdf}
+ \caption{The corresponding eight-minute hang-glider validation excerpt. It uses its own
+ fitted model and standardizer, with the same feature definitions and display convention
+ as Fig.~\ref{fig:segmentationexamplepara}. A high posterior expresses certainty within
+ the adopted model; it is not an independently measured probability of correct behaviour.}
+ \label{fig:segmentationexamplehang}
+\end{figure}
+
+The paraglider excerpt shows sustained turning and altitude recovery after an initial
+transition, with a climb label that persists through brief changes in vertical speed
+and coherence. The hang-glider excerpt is less clear-cut: part of a sustained ascent
+is assigned to search, and the posterior divides between search and climb. Positive
+vertical speed is therefore not equivalent to the fitted climb state. This could reflect
+a difference in turning behaviour, but the figure alone cannot resolve the behavioural
+name of that component. It gives a concrete interval for human validation rather than
+an example selected to display apparently perfect classification.
+
+The development example in Fig.~\ref{fig:phaseablation} separates the two decoder changes.
+On its full preprocessing segment, the four-dimensional reference assigns \SegAuditReferenceClimb\ decisions to climb,
+the sequence-only variant assigns \SegAuditPriorClimb, and the current
+three-dimensional marginal assigns \SegAuditCurrentClimb. The comparison shows how the coherence coordinate and sequence preference affect
+the same observations. The example helped motivate the change,
+so the comparison is a regression diagnostic, not independent evidence of improved
+accuracy. Neither a longer green interval nor a smaller number of switches is, by itself,
+a success criterion.
+
+\begin{figure}[tb]
+ \centering
+ \includegraphics[width=\linewidth]{generated/segmentation_decoder_ablation.pdf}
+ \caption{An eight-minute development excerpt from flight 20311250. The aligned phase
+ strips compare the fitted four-dimensional reference, a change of sequence policy alone,
+ and the current three-dimensional marginal with that policy. The altitude and vertical
+ speed provide physical context. No human reference labels are present.}
+ \label{fig:phaseablation}
+\end{figure}
+
+\subsection{The manual check that is still needed}
+The prepared blinded pack contains 40 candidate flights: per discipline, four training
+candidates, eight validation candidates and eight test candidates. Human reference intervals are needed before reporting accuracy, confusion matrices
+or a definitive physical meaning for the search state. \SegAuditAnnotationStatus
+The interactive tool is available: select an altitude interval and mark transition, search
+or climb; edits are saved automatically on the 10-s decision grid. The plan view and
+kinematics are visible, while model predictions are hidden. The pack must match the cleaned
+archive used for evaluation; the regeneration procedure creates a new dated pack
+while preserving the previous pack and any labels already written.
+
+Clearly interpretable intervals should be labelled across the whole candidate window;
+ambiguous boundaries can remain unlabelled. The fraction left unlabelled must accompany
+the scores, since evaluating only easy interiors would otherwise conceal the difficult
+part of segmentation. A second independent annotation of a subset will measure human
+agreement and boundary ambiguity. That agreement study has not yet been performed.
+
+The deterministic 70/15/15\% split operates at flight level, so no flight is shared
+between fitting and nominal holdout sets. This alone does not guarantee an untouched
+test: development flights 20275040 and 20279877 were inspected despite belonging to
+the nominal test partition. They, and hang-glider example flight 975, are excluded from the prepared annotation
+test pack and must remain outside final accuracy claims. Repeated pilots, days or sites can also
+make flights statistically related; generalization to a new region or season requires
+an additional grouped holdout, rather than being inferred from a random flight split.
+
+Train annotations resolve state naming; validation annotations compare the original
+four-dimensional model, the marginal decoder with and without the sequence preference,
+and a refitted three-dimensional model. Model choices are then frozen before test
+scores are opened. For human label $i$ and inferred label $j$, let $n_{ij}$ count
+classified, annotated decisions. The core metrics are
+\begin{equation}
+ \begin{aligned}
+ \mathrm{Precision}_i&=\frac{n_{ii}}{\sum_jn_{ji}},&
+ \mathrm{Recall}_i&=\frac{n_{ii}}{\sum_jn_{ij}},\\
+ F_{1,i}&=\frac{2n_{ii}}{\sum_jn_{ji}+\sum_jn_{ij}},&
+ F_{1,\mathrm{macro}}&=\frac13\sum_iF_{1,i}.
+ \end{aligned}
+ \label{eq:phasevalidationmetrics}
+\end{equation}
+If a precision, recall or F1 denominator is zero, the evaluator assigns that metric
+zero and retains the phase in the three-state macro average.
+The corresponding accuracy is
+$\mathrm{Acc}=\sum_i n_{ii}/\sum_{ij}n_{ij}$ on the same annotated, classified decisions;
+the evaluator requires at least one annotated, classified decision. On that
+nonempty set all these classification scores lie in $[0,1]$. The confusion matrix reveals whether search is systematically confused with climbing or
+transition; macro-F1 gives a rare phase the same weight as a frequent one. Accuracy alone
+can be dominated by the most occupied phase. Bootstrap intervals~\cite{efron1979}
+obtained by resampling whole flights preserve
+within-flight dependence, although they do not remove dependence between related flights.
+The existing evaluator provides these classification metrics. Boundary errors, annotation
+coverage and between-observer agreement remain additional validation measurements to
+complete; no values are supplied before labels exist.
+
+\section{What the segmentation will let us measure}
+\label{sec:phaseobs}
+The next empirical chapter will characterize all three phases before selecting a
+stochastic transport model. For a phase occurrence $I=[a,b)$, useful primitive quantities
+are its duration $D=b-a$, horizontal path length $L$, net displacement $R$, and altitude
+change:
+\begin{equation}
+ L=\int_a^b v_h(t)\,\mathrm dt,\qquad
+ R=\|\mathbf r(b)-\mathbf r(a)\|,\qquad
+ \Delta z=z(b)-z(a),\qquad
+ \mathcal P=R/L\in[0,1]\quad(L>0).
+ \label{eq:phaseprimitives}
+\end{equation}
+Here $\mathbf r=(E,N)$ and $v_h=\|\dot{\mathbf r}\|$ refer to the same
+horizontal curve; this consistency is needed for the triangle inequality $R\le L$.
+The discrete implementation must use a matching position-based path length rather
+than assume that separately smoothed derivatives satisfy the inequality exactly.
+The ratio $\mathcal P$ distinguishes local circling from directed progress without
+assuming that either occurs in a particular phase. The ground displacement of a climb
+can be substantial in wind; search is not automatically an immobile waiting state.
+Distributions of $(D,L,R,\Delta z)$ and phase-conditioned velocity correlation will
+quantify those differences.
+
+A phase-conditioned MSD requires an explicit conditioning convention. One useful choice
+keeps the \emph{entire} displacement interval inside a single occurrence of phase $i$:
+\begin{equation}
+ M_i(\tau)=
+ \frac{\sum_I\int_{a_I}^{b_I-\tau}
+       \|\mathbf r(t+\tau)-\mathbf r(t)\|^2\,\mathrm dt}
+      {\sum_I(D_I-\tau)_+},
+ \qquad I\text{ an occurrence of phase }i.
+ \label{eq:phaseconditionalmsd}
+\end{equation}
+Integrals for $D_I\le\tau$ contribute zero, and the observable is defined only
+when its denominator is positive. This weights eligible time origins;
+long occurrences contribute more, and short occurrences disappear at large lags.
+A plot must therefore show the contributing occurrences and durations, and be checked
+against equal-occurrence or equal-flight weighting. Conditioning only the two endpoints
+would define a different observable because it could cross other phases.
+
+\label{sec:reproducing}
+Prior phase-resolved results~\cite{vilpellet2026} supply comparisons, not values that the
+segmenter must be tuned to recover. Agreement in phase MSDs or time budgets cannot
+independently validate a classifier designed around the same kinematic expectations.
+Differences in sampling, geography, wind and the phase definitions must be considered
+before attributing a disagreement to the dynamics.
+
+\subsection{Keeping model assumptions separate from measured physics}
+\label{sec:modelling}
+An HMM imposes a geometric latent dwell-time law. With decoding persistence
+$\widetilde a_{ii}$, its model prediction is
+\begin{equation}
+ \Pr(D_i=m\Delta)=\widetilde a_{ii}^{\,m-1}(1-\widetilde a_{ii}),\qquad
+ \mathbb E[D_i]=\frac{\Delta}{1-\widetilde a_{ii}}.
  \label{eq:hmmsojourn}
 \end{equation}
-Observed run durations and their left/right censoring at feature edges are therefore
-reported beside Eq.~\eqref{eq:hmmsojourn}. A systematic mismatch is evidence for a
-hidden semi-Markov extension, not a reason to alter labels post hoc
-\cite{langrock2012}.
+for $m=1,2,\ldots$ and $0\le\widetilde a_{ii}<1$.
+A Viterbi run-length histogram is not a sample of observed physical durations independent
+of this assumption. It depends on the emissions and the decoder as well as on behaviour.
+Runs cut by a gap, quality mask or feature boundary are censored; merely discarding them
+can bias the surviving duration distribution. Testing non-geometric phase durations
+requires human reference intervals and a sensitivity analysis against a model with
+explicit duration distributions, such as a hidden semi-Markov model~\cite{langrock2012}.
+The imposed exit preferences likewise prevent interpreting the current decoded phase
+order as unqualified evidence of physical memory.
 
-\subsection{Reproducible protocol and validation}
-\label{sec:phasevalidation}
-For each discipline the retained flights are deterministically split at the \emph{flight}
-level into 70\% training, 15\% validation and 15\% test sets. The Gaussian HMM sees only
-unlabelled training observations; the in-memory fitting sample is selected deterministically
-from whole, contiguous sequences and is capped only to bound memory. The train annotations
-name the resulting components. Validation annotations are used to diagnose the feature and
-model assumptions. After the protocol is frozen, the held-out test annotations provide the
-single final estimate of generalization.
+The later transport model must reproduce both these phase observables and the global
+constraints of Chapter~\ref{ch:global}. In particular, the duration of a moving leg and
+its displacement should be studied jointly. A constant-speed L\'evy walk couples a leg's
+length to that \emph{same leg's travel time}; dependence between its length and a
+\emph{subsequent} climb or search is a separate question. A stereotyped phase cycle by
+itself also does not disprove renewal at the level of complete cycles. Renewal requires
+independence of successive cycle variables, which must be tested at the chosen event
+scale.
 
-Annotations record a source, flight and preprocessing-segment identifier, half-open
-interval bounds $[t_{\mathrm{start}},t_{\mathrm{end}})$,
-phase, split and annotator. They are deliberately interval-level judgements: ambiguous
-boundaries can be omitted rather than falsely turned into pointwise ground truth. Evaluation
-reports accuracy and precision, recall and F1 for each phase, together with macro-F1 and a
-95\% bootstrap interval that resamples flights rather than temporally correlated points.
-The result is supplemented by trajectory maps coloured by inferred phase, the transition
-matrix, Gaussian emission parameters, posterior uncertainty, phase occupancy and duration
-distributions. No universal pass/fail accuracy or expected time budget is imposed; those
-quantities are empirical results of this archive.
-
-
-\subsection{Archive-scale fit and provisional segmentation}
-\label{sec:phaseprovisional}
-\IfFileExists{generated/segmentation.tex}{%
-The unsupervised fit and archive-wide decoding have been run independently for both
-disciplines.  Table~\ref{tab:segmentationfit} records the actual sample sizes rather than
-only the configured caps.  The paraglider fit contains
-\StatSegParaFitObservations{} decision points from \StatSegParaFitSequences{} contiguous
-blocks and \StatSegParaFitFlights{} distinct flights; the hang-glider fit contains
-\StatSegHangFitObservations{} points from \StatSegHangFitSequences{} blocks and
-\StatSegHangFitFlights{} flights.  These are approximately \SI{2675}{hours} and
-\SI{2778}{hours} of decision-grid time, respectively.  The small shortfall from the
-one-million-point cap for paragliders is deliberate: the last complete block that would
-exceed the cap is omitted instead of being cut at a fictitious HMM boundary.
-
-The selected models have then decoded the full eligible archives, producing
-\StatSegParaDecodedPoints{} paraglider and \StatSegHangDecodedPoints{} hang-glider
-decision points.  The different scales reflect the underlying archive sizes, not a
-discipline-specific sampling rule.  This establishes that the examples below are not
-small demonstration fits: fitting is flight-balanced and bounded for tractability, while
-application covers every eligible preprocessed segment.
-
-At this stage only the component-to-name permutation remains provisional.  To make the
-unsupervised output inspectable before annotation, the component with the largest
-standardized mean vertical speed is called climb, the faster and straighter remaining
-component transition, and the third search.  This mechanics-based convention changes
-neither the fitted Gaussian distributions nor the Viterbi component path, but it must be
-replaced by the train-only manual assignment before accuracy, confusion matrices or final
-semantic claims are reported.  Figures~\ref{fig:segmentationmodelpara}--
-\ref{fig:segmentationexamplehang} are therefore diagnostics of the completed numerical
-segmentation, not substitutes for held-out validation.
-}{}
-
-\IfFileExists{generated/segmentation_fit_table.tex}{%
-  \input{generated/segmentation_fit_table}%
-}{}
-
-\IfFileExists{generated/segmentation_table.tex}{%
-  \input{generated/segmentation_table}%
-}{}
-
-\IfFileExists{generated/segmentation_model_para.pdf}{%
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.97\textwidth]{generated/segmentation_model_para.pdf}
-  \caption{Fitted paraglider HMM diagnostics:
-  transition probabilities, standardized Gaussian emission means and covariances, and
-  training likelihood per observation for all ten deterministic initializations.  State
-  names use the provisional emission-signature mapping described in
-  Sec.~\ref{sec:phaseprovisional}.}
-  \label{fig:segmentationmodelpara}
-\end{figure}
-}{}
-
-\IfFileExists{generated/segmentation_model_hang.pdf}{%
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.97\textwidth]{generated/segmentation_model_hang.pdf}
-  \caption{Fitted hang-glider HMM diagnostics, with the same quantities, ordering and
-  provisional state-naming convention as Fig.~\ref{fig:segmentationmodelpara}.  The
-  separate emission and transition parameters are essential: no fitted parameter or
-  scaler is shared between disciplines.}
-  \label{fig:segmentationmodelhang}
-\end{figure}
-}{}
-
-\IfFileExists{generated/segmentation_example_para.pdf}{%
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.97\textwidth]{generated/segmentation_example_para.pdf}
-  \caption{A held-out paraglider trajectory after Viterbi decoding.  The plan view and
-  altitude profile are coloured by phase; the middle panels show the four continuous
-  observations responsible for the separation; the bottom panel retains all smoothed
-  posterior probabilities.  Grey samples are explicitly non-classifiable windows.}
-  \label{fig:segmentationexamplepara}
-\end{figure}
-}{}
-
-\IfFileExists{generated/segmentation_example_hang.pdf}{%
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.97\textwidth]{generated/segmentation_example_hang.pdf}
-  \caption{The corresponding held-out hang-glider trajectory diagnostic.  Its HMM,
-  standardizer and Viterbi path are independent of the paraglider model; colours retain
-  the common provisional semantic convention to make the panels comparable.}
-  \label{fig:segmentationexamplehang}
-\end{figure}
-}{}
-
-\IfFileExists{generated/segmentation_confusion_para.pdf}{%
-\begin{figure*}[tb]
-  \centering
-  \includegraphics[width=0.42\textwidth]{generated/segmentation_confusion_para.pdf}
-  \IfFileExists{generated/segmentation_confusion_hang.pdf}{%
-    \includegraphics[width=0.42\textwidth]{generated/segmentation_confusion_hang.pdf}%
-  }{}
-  \caption{Confusion matrices on the untouched manually annotated test intervals for
-  paragliders (left) and hang gliders (right).}
-  \label{fig:segmentationconfusion}
-\end{figure*}
-}{}
-
-The persistent outputs are a point table, carrying the decision time, four features,
-Viterbi phase and three posteriors; a run table, carrying each consecutive phase, its
-duration and boundary-censoring flags; and a coverage table that also records segments
-too sparse to classify. They are written separately from \path{fixes.parquet}, together
-with the model, scaler, state mapping, configuration, flight-split manifest and exact
-fitting-sample manifest. The conversion from an unsegmented trajectory to the three phase
-sequences is therefore reproducible and auditable rather than a visual classification.
-
-\section{Phase-resolved observables}
-\label{sec:phaseobs}
-The segmentation gives access to a second group of observables, defined per phase occurrence and
-then as ensemble distributions. These are the building blocks of an intermittent-transport
-description and, unlike those of Section~\ref{sec:obs-global}, cannot be obtained without
-first segmenting the flight.
-\begin{description}
-  \item[The waiting phase: climb and search.] Between two consecutive glides the flier
-        advances little horizontally: it searches for a thermal and climbs in it. For a
-        transport model these two phases together form the \emph{waiting time} between
-        directed steps, so we treat them on an equal footing and build three distributions --
-        the climb duration $\tau_c$, the search duration $\tau_s$, and their sum
-        $\tau_w=\tau_s+\tau_c$, the total time spent essentially stationary between glides.
-        The distinction matters: Vilpellet et al.~\cite{vilpellet2026} report the
-        search times to be broadly \emph{power-law} distributed while the climb times are
-        closer to \emph{exponential}, so that the heavy tail of the combined waiting time
-        $\psi(\tau_w)$, the quantity that determines whether trapping drives
-        sub-diffusion, would be inherited from the search phase. Whether this still holds on
-        the larger dataset is itself one of the things to re-check once the segmentation is in
-        place. We therefore report $\psi(\tau_w)$ together with the separate $\psi(\tau_c)$ and
-        $\psi(\tau_s)$. Alongside the durations we record the climb kinematics (altitude gained
-        $\Delta z$, mean climb rate, thermalling radius and period) and the search geometry
-        (path length, tortuosity, net displacement) -- the search being the phase in which
-        prior work locates the signature of pilot skill.
-  \item[The directed step: glide (transition).] Each glide contributes a horizontal step of
-        length $\ell$ and duration $\tau_g$, with ground speed, glide ratio (horizontal
-        distance per unit altitude lost) and sink rate. Because a glide is close to ballistic,
-        $\ell\approx v_g\,\tau_g$, step length and duration are expected to be nearly
-        proportional; we test this directly through the joint law of $(\ell,\tau_g)$ -- the
-        $\ell$--$\tau_g$ scatter, the conditional mean $\langle\ell\mid\tau_g\rangle$, and the
-        spread of the ratio $\ell/\tau_g$ (the glide speed). Both marginals matter: the tail of
-        the step-length distribution $\lambda(\ell)$ controls super-diffusive contributions, so
-        we compute the distributions of $\ell$ and $\tau_g$ separately as well as their joint
-        law.
-  \item[Anatomy of a flight.] Number of thermals (climbs) per flight, inter-thermal distances,
-        and the fraction of both time and along-track distance spent in each phase: the coarse
-        composition that sets the weight of each phase in the global transport.
-  \item[Angular diffusion between glides.] The turning angle between the heading of one
-        transition segment and the next -- the segment-level counterpart of the turning angle
-        of Section~\ref{sec:obs-global}. How fast successive glide directions decorrelate is
-        the key ingredient of the minimal model below.
-\end{description}
-
-Two couplings then decide which transport model applies, and are stated here as explicit
-objects of study. The first is the \emph{step--waiting coupling}: whether a long glide tends
-to be followed by a long wait, i.e.\ whether $\ell$ and $\tau_w$ are correlated. A genuine
-coupling is the defining feature of a L\'evy walk and is what separates it from a decoupled
-CTRW, in which jumps and waiting times are drawn independently.
-
-The second is the \emph{memory in the phase sequence}. A flight is a discrete sequence over
-the three states $\{\text{transition},\text{search},\text{climb}\}$, and memory can hide in
-two places. (i) The \emph{order} of the phases, summarised by the transition matrix
-$P_{ij}=\Pr(\text{next}=j\mid\text{current}=i)$: a perfectly cyclic flight
-($\text{T}\!\to\!\text{S}\!\to\!\text{C}\!\to\!\text{T}$) gives a near-deterministic matrix,
-whereas aborted climbs, repeated searches or skipped phases appear as off-cycle probabilities
-and reveal how stereotyped the soaring cycle actually is. (ii) The \emph{durations}, through
-correlations between consecutive phase durations -- for instance whether a long climb tends to
-precede a long glide. Both probe the \emph{renewal} assumption underlying the textbook CTRW
-and L\'evy-walk results, in which each step and wait is independent of the history: if the
-transition matrix is structured or the durations are correlated, the process is non-renewal
-and those formulas must be amended. These measurements determine whether a memoryless
-model is admissible.
-
-\section{Reproducing the reference results}
-\label{sec:reproducing}
-A first objective of the analysis, undertaken once the segmentation is in place, is to check
-whether the enlarged---and eventually multi-source---dataset reproduces the quantitative and
-graphical results of Vilpellet et al.~\cite{vilpellet2026}. That study covers paragliders,
-hang gliders and sailplanes; the present data cover the first two (Chapter~\ref{ch:dataset}),
-so both the paraglider and the hang-glider comparisons are within reach, while the sailplane
-figures become reachable once that source is added. Two figures are the main targets.
-
-The first is the per-phase conditional MSD (their Fig.~3): the transition segments should
-stay ballistic ($\alpha=2$, i.e.\ $H=1$) across time lags; the search phase should be
-strongly sub-diffusive ($H\approx0.3$ for paragliders and hang gliders, $\approx0.2$ for
-sailplanes); and the climb phase should be quasi-ballistic at long lags but with an effective
-velocity about two orders of magnitude smaller, including the transient anti-correlation near
-the $\sim\!30$\,s thermalling period.
-
-The second is the set of per-phase descriptive statistics (their Fig.~4): the glide ratios
-($\approx 8.5$, $10$, and $25$ for paragliders, hang gliders, and sailplanes), the
-horizontal-velocity statistics, the heavy-tailed distribution of transition times, the
-search-time fraction and the effective search radius, the vertical climb velocities, the
-thermalling radii, and the thin, near-exponential distribution of climb times---together with
-the global time budget ($\approx\!60\%$ transition, $\approx\!35\%$ climb, the remainder
-searching). The global exponent is not on this list: it needs no segmentation, and
-Sec.~\ref{sec:transport-verdict} has already put this archive's value beside the reported
-$H\approx0.88$.
-
-Recovering these results would validate the acquisition pipeline and the segmentation and
-would test the universality of the reported behaviour on a substantially larger sample;
-systematic departures would be equally informative, pointing to dataset- or method-dependent
-effects to investigate. This comparison is therefore the bridge between the present
-data-acquisition stage and the original analysis that follows.
-
-\section{Modelling and simulation}
-\label{sec:modelling}
-The aim is a \emph{minimal} stochastic model that reproduces the asymptotic anomalous
-scaling reported for soaring (a Hurst exponent $H \approx 0.88$) with as few ingredients as
-possible. A preliminary working hypothesis---to be made precise, and possibly revised, once
-the empirical phase statistics are available---is that the transport is carried mainly by
-the transition (glide) phases. The model would therefore resolve the transition segments
-explicitly while merging search and climb into a single effective non-transition state, so
-that the soaring cycle reduces to a sequence of directed glides interrupted by
-reorientations. Anomalous transport would then emerge from the directed transition segments
-combined with an \emph{angular diffusion} of the heading from one transition to the next:
-successive glide directions decorrelate gradually rather than abruptly, producing a
-correlated random walk whose persistence controls the long-time exponent. Simulated
-ensembles would be compared with the data to test whether these ingredients suffice. These
-are baseline ideas, to be refined---or changed---as the analysis progresses.
-
-\section{Tooling}
+\section{Chapter summary}
 \label{sec:tooling}
-Mirror the acquisition package with an analysis package, and let the figures and tables of
-this document be generated automatically from the analysis outputs -- as the dataset
-statistics already are -- so that this document stays in step with the work and remains a
-reliable basis for the thesis and for presentations.
+The chapter has built the hidden-state model from its probability law, connected each
+feature to a measured kinematic quantity, and separated parameter fitting from sequence
+decoding. The current labels use a three-feature marginal of a fitted four-feature
+Gaussian HMM and an explicit sequence preference. Coverage, numerical diagnostics,
+short trajectory excerpts and a decoder comparison make those choices inspectable,
+without supplying an independent estimate of behavioural accuracy. The current archive
+leaves \SegAuditParaExcludedPct\% of retained paraglider time and
+\SegAuditHangExcludedPct\% of hang-glider time unclassified. The narrow coherence
+components and negative final likelihood changes remain numerical limitations, while
+the ascent labelled search in the hang-glider example exposes a behavioural ambiguity
+that posterior probabilities cannot settle.
+
+The next step is the independent phase validation. Once its errors and boundary
+uncertainties are known, phase durations, displacements and correlations can be used
+alongside the global observables to test a physical transport model.

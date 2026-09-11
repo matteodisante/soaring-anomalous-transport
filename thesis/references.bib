@@ -87,11 +87,13 @@
   doi     = {10.1103/PhysRevLett.71.3975}
 }
 
-@article{vilpellet2026,
+@misc{vilpellet2026,
   author  = {Vilpellet, J\'er\'emie and Darmon, Alexandre and Benzaquen, Michael},
   title   = {From Random Walks to Thermal Rides: Universal Anomalous Transport in Soaring Flights},
-  journal = {arXiv:2601.01293 [cond-mat.stat-mech]},
-  year    = {2026}
+  howpublished = {arXiv:2601.01293v1 [cond-mat.stat-mech]},
+  year    = {2026},
+  doi     = {10.48550/arXiv.2601.01293},
+  note    = {Version 1, 3 January 2026.}
 }
 
 @article{reddy2016,
@@ -114,7 +116,8 @@
 }
 
 @misc{esa_navipedia_ellipsoidal_cartesian,
-  author       = {{European Space Agency}},
+  author       = {Sanz Subirana, J. and Juan Zornoza, J. M. and Hern\'andez-Pajares, M.},
+  year         = {2011},
   title        = {Ellipsoidal and {C}artesian Coordinates Conversion},
   howpublished = {Navipedia},
   note         = {\url{https://gssc.esa.int/navipedia/index.php/Ellipsoidal_and_Cartesian_Coordinates_Conversion}}
@@ -138,7 +141,7 @@
   institution = {Department of Defense, Washington, DC},
   number      = {5th Edition},
   year        = {2020},
-  note        = {Table~3.8-3. \url{https://www.gps.gov/technical/ps/2020-SPS-performance-standard.pdf}}
+  note        = {Table~3.8-3. \url{https://archive.gps.gov/technical/ps/2020-SPS-performance-standard.pdf}}
 }
 
 % Checked 2026-08: the source for multipath being time-correlated rather than white
@@ -148,13 +151,13 @@
   title     = {Airborne Time-Correlated {GNSS} Multipath Error Modeling of Carrier-phase Smoothed Code},
   booktitle = {Proceedings of the 2024 International Technical Meeting of the Institute of Navigation (ION ITM)},
   year      = {2024},
+  pages     = {301--306},
+  doi       = {10.33012/2024.19499},
   note      = {German Aerospace Center (DLR)}
 }
 
-% The published EN 926-2:2013 is a copyrighted CEN standard sold per copy by the national
-% bodies (AFNOR, DIN, BSI); there is no free authoritative text. This is the final draft
-% submitted to formal vote, circulated publicly by CEN/TC 136/WG 6 -- the closest openly
-% available source. Table 1 is the class description quoted in Sec. 2.4.
+% Consulted source: publicly available 2012 final draft; the published 2013 text
+% was not compared. Table 1 supplies the class descriptions.
 @techreport{fpren926_2_2012,
   author      = {{CEN/TC 136/WG 6}},
   title       = {Paragliding equipment --- Paragliders --- Part~2: Requirements and test
@@ -186,7 +189,7 @@
 }
 
 @article{welch1967,
-  author  = {Welch, P.},
+  author  = {Welch, Peter D.},
   title   = {The use of fast {F}ourier transform for the estimation of power spectra: a method based on time averaging over short, modified periodograms},
   journal = {IEEE Transactions on Audio and Electroacoustics},
   volume  = {15},
@@ -279,7 +282,7 @@
   journal = {Journal of the Royal Statistical Society: Series B (Methodological)},
   volume  = {39},
   number  = {1},
-  pages   = {1--38},
+  pages   = {1--22},
   year    = {1977},
   doi     = {10.1111/j.2517-6161.1977.tb01600.x}
 }
@@ -354,12 +357,12 @@
   howpublished = {2024 edition},
   year         = {2024},
   note         = {Defines the FAI hang-glider classes and their sub-class ceilings
-                  (\S\S1.2, 1.4.1). \url{https://www.fai.org/civl-documents}}
+                  (\S1.4.1). \url{https://www.fai.org/sites/default/files/civl/documents/sporting_code_s7_-_common_2024_v3.pdf}}
 }
 
 % The absolute-accuracy figure quoted in Sec. 2.6 for the barometric side: this part is
 % behind a large share of free-flight variometers, and its specification table states
-% +/-1.5 mbar at 25 C and 750 mbar, an error band of +/-2.5 mbar over -20 to +85 C, a
+% +/-1.5 mbar at 25 C and 750 mbar, an error band of +/-2.5 mbar over -20 to +85 C after one-point autozero, a
 % full-accuracy range of 450 to 1100 mbar, and an altitude resolution of 10 cm -- two
 % orders below the metre to which the IGC format rounds. Read from the document itself
 % (20 pp); MEAS Switzerland was acquired by TE Connectivity in 2014, so later reissues
@@ -369,12 +372,13 @@
 % (Eq. 1) fetched and verified directly against the arXiv HTML source on 2026-09-09.
 % Their z^gnd is ERA5 surface geopotential, not raw flight-log altitude -- this thesis
 % keeps their four labels and thresholds but reads altitude from the raw IGC first fix
-% instead (impl:prelim), so the figure is comparable to theirs panel-for-panel but not a
+% instead (sec:prelim), so the figure is comparable to theirs panel-for-panel but not a
 % reproduction of their pipeline.
 @misc{hernandezaguayo2026,
   author       = {Hern\'{a}ndez-Aguayo, C\'{e}sar and Cristelli, Matthieu and Benzaquen, Michael},
   title        = {From Flight Logs to Atmospheric Science: Paragliders as Convection Sensors for Identifying Thermal Predictors},
-  howpublished = {arXiv:2608.00241},
+  howpublished = {arXiv:2608.00241v2},
+  doi          = {10.48550/arXiv.2608.00241},
   year         = {2026},
   note         = {Eq.~1 and Fig.~2 (terrain classification and map); v2, 7 Sep 2026.}
 }
@@ -398,5 +402,83 @@
   title        = {{MS5611-01BA03} Barometric Pressure Sensor, with stainless steel cap},
   howpublished = {Datasheet DA5611-01BA03\_011 (ECN 1742)},
   year         = {2012},
-  note         = {Specification table, p.~2.}
+  note         = {Specification table, p.~1; error band requires autozero at one pressure point.}
+}
+
+
+@article{mandelbrot1968,
+  author = {Mandelbrot, Benoit B. and Van Ness, John W.},
+  title = {Fractional Brownian Motions, Fractional Noises and Applications},
+  journal = {SIAM Review},
+  volume = {10},
+  number = {4},
+  pages = {422--437},
+  year = {1968},
+  doi = {10.1137/1010093}
+}
+
+@article{rebenshtok2014,
+  author = {Rebenshtok, Adi and Denisov, Sergey and H{\"a}nggi, Peter and Barkai, Eli},
+  title = {Infinite densities for L{\'e}vy walks},
+  journal = {Physical Review E},
+  volume = {90},
+  pages = {062135},
+  year = {2014},
+  doi = {10.1103/PhysRevE.90.062135}
+}
+
+
+@misc{fai_civl_s7h_2024,
+  author = {{F\'ed\'eration A\'eronautique Internationale, CIVL}},
+  title = {Sporting Code Section 7H: CIVL Flight Recorder Specification},
+  year = {2024},
+  howpublished = {2024 edition, stated effective date 1 May 2024},
+  note = {Section 3.2.1 specifies GNSS altitude relative to the geoid. The available document retains draft annotations. \url{https://fai.org/sites/default/files/civl/documents/sporting_code_s7_h_-_civl_flight_recorder_specification_2024.pdf}}
+}
+
+@misc{hmmlearn033,
+  author = {{hmmlearn developers}},
+  title = {hmmlearn documentation and source code},
+  howpublished = {Version 0.3.3},
+  note = {GaussianHMM and ConvergenceMonitor; inspected 10 September 2026. \url{https://hmmlearn.readthedocs.io/en/0.3.3/}}
+}
+
+@misc{scipy_savgol_filter,
+  author = {{SciPy developers}},
+  title = {scipy.signal.savgol\_filter},
+  howpublished = {SciPy 1.18.0 API reference},
+  note = {Polynomial order, window length, derivatives and boundary interpolation. Accessed 10 September 2026. \url{https://docs.scipy.org/doc/scipy-1.18.0/reference/generated/scipy.signal.savgol_filter.html}}
+}
+
+@article{efron1979,
+  author  = {Efron, Bradley},
+  title   = {Bootstrap Methods: Another Look at the Jackknife},
+  journal = {The Annals of Statistics},
+  year    = {1979},
+  volume  = {7},
+  number  = {1},
+  pages   = {1--26},
+  doi     = {10.1214/aos/1176344552}
+}
+
+@article{fritsch1984,
+  author  = {Fritsch, F. N. and Butland, J.},
+  title   = {A Method for Constructing Local Monotone Piecewise Cubic Interpolants},
+  journal = {SIAM Journal on Scientific and Statistical Computing},
+  year    = {1984},
+  volume  = {5},
+  number  = {2},
+  pages   = {300--304},
+  doi     = {10.1137/0905021}
+}
+
+@article{taylor1922,
+  author  = {Taylor, G. I.},
+  title   = {Diffusion by Continuous Movements},
+  journal = {Proceedings of the London Mathematical Society},
+  year    = {1922},
+  volume  = {s2-20},
+  number  = {1},
+  pages   = {196--212},
+  doi     = {10.1112/plms/s2-20.1.196}
 }

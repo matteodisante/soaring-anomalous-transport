@@ -1,0 +1,257 @@
+{
+  "annotations_path": null,
+  "config": {
+    "bootstrap_replicates": 1000,
+    "covariance_type": "full",
+    "decision_step_s": 10.0,
+    "feature_window_s": 30.0,
+    "implementation": "scaling",
+    "marginalize_turn_coherence": true,
+    "max_fit_flights": 1000,
+    "max_fit_observations": 1000000,
+    "max_native_dt_s": 10.0,
+    "max_sequence_observations": 6000,
+    "min_covar": 0.001,
+    "min_horizontal_speed_mps": 1.0,
+    "n_iter": 200,
+    "n_jobs": 8,
+    "n_restarts": 10,
+    "random_seed": 20260909,
+    "sequence_prior": {
+      "allow_search_skip": true,
+      "forward_probability": 0.95,
+      "mean_dwell_s": 120.0,
+      "search_mean_dwell_s": 20.0,
+      "weight": 0.75
+    },
+    "split": {
+      "test": 0.15,
+      "train": 0.7,
+      "validation": 0.15
+    },
+    "states": [
+      "transition",
+      "search",
+      "climb"
+    ],
+    "tol": 0.001
+  },
+  "config_sha256": "39ce905eb39e046b2cb49b16147ff4b29aa0e35e2876ab370f0739dbf3fa28b6",
+  "development_ablation": {
+    "counts_full_segment": {
+      "Current 3D": {
+        "climb": 32,
+        "search": 43,
+        "transition": 220,
+        "unclassified": 4
+      },
+      "Fitted 4D": {
+        "climb": 6,
+        "search": 78,
+        "transition": 211,
+        "unclassified": 4
+      },
+      "Prior only": {
+        "climb": 6,
+        "search": 77,
+        "transition": 212,
+        "unclassified": 4
+      }
+    },
+    "display_elapsed_s": [
+      1500,
+      1980
+    ],
+    "flight_id": "20311250",
+    "split": "train"
+  },
+  "disciplines": {
+    "hang gliders": {
+      "archive_decoder_matches_current": true,
+      "archive_feature_support": "includes propagated SG reconstruction support",
+      "climb_coherence_mean": 0.9999996499233448,
+      "climb_coherence_sd": 6.043454158665021e-05,
+      "coverage": {
+        "cleaned_duration_s": 73381272.0,
+        "decisions_by_reason": {
+          "classified": 6902785,
+          "feature_edge": 24257,
+          "quality_masked": 378148
+        },
+        "directory": "/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc/derived/segmentation",
+        "n_cleaned_fixes": 34588180,
+        "n_cleaned_segments": 6796,
+        "n_decision_points": 7305190,
+        "seconds_by_reason": {
+          "classified": 69027850.0,
+          "feature_edge": 192874.0,
+          "outside_decision_cells": 3658.0,
+          "quality_masked": 3781480.0,
+          "skipped_native_cadence": 375410.0
+        },
+        "sequence_prior_weight": 0.75,
+        "unclassified_decision_percent": 5.508480956689696,
+        "unclassified_duration_percent": 5.9326063467528884
+      },
+      "current_full_archive_export_exists": true,
+      "decoding_transition_matrix": [
+        [
+          0.9320871122676275,
+          0.03771572027687997,
+          0.0301971674554925
+        ],
+        [
+          0.04151137449199813,
+          0.6583177251118397,
+          0.3001709003961621
+        ],
+        [
+          0.0686233982827422,
+          0.022187419721352738,
+          0.909189181995905
+        ]
+      ],
+      "example": {
+        "changed_decisions": 245,
+        "classified_decisions": 892,
+        "counts_current": {
+          "climb": 308,
+          "search": 298,
+          "transition": 286,
+          "unclassified": 58
+        },
+        "display_duration_s": 480,
+        "feature_hash": "2fb9814d4aed7d2e207a30338c2226be6add33eaecaac4e69aac6d2a122f5b7a",
+        "flight_id": "2619",
+        "full_decisions": 950,
+        "segment_id": 0,
+        "selection": "first classifiable segment by ascending validation manifest priority",
+        "source": "hangglider",
+        "split": "validation",
+        "stored_archive_path_reproduced": true
+      },
+      "fit_observations": 1000000,
+      "fit_sequences": 8784,
+      "fitted_transition_matrix": [
+        [
+          0.9320871122676275,
+          0.04899354950896118,
+          0.018919338223411283
+        ],
+        [
+          0.06259729099531239,
+          0.8136789213094584,
+          0.12372378769522936
+        ],
+        [
+          0.0213067622949452,
+          0.1020697536094046,
+          0.8766234840956503
+        ]
+      ],
+      "model_metadata_sha256": "78b7410ff5bdb557ab01bf598089de016488a3d8a2acb7105a6dc215fc360de7",
+      "model_pickle_sha256": "47cae8ef8b51a6b1f489b3d0f4308899ec850d387673b579f884bf9342420ca4",
+      "selected_restart_diagnostics": {
+        "iteration_cap": 200,
+        "iterations": 25,
+        "last_log_likelihood_gain": -0.25260159955359995,
+        "minimum_covariance_eigenvalue": 2.9571688045237182e-08,
+        "nonnegative_gain_below_tolerance": false
+      }
+    },
+    "paragliders": {
+      "archive_decoder_matches_current": true,
+      "archive_feature_support": "includes propagated SG reconstruction support",
+      "climb_coherence_mean": 0.9999985562447008,
+      "climb_coherence_sd": 8.886847959602694e-05,
+      "coverage": {
+        "cleaned_duration_s": 1730039680.5,
+        "decisions_by_reason": {
+          "classified": 158685342,
+          "feature_edge": 621459,
+          "quality_masked": 12414234
+        },
+        "directory": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/segmentation",
+        "n_cleaned_fixes": 1370352162,
+        "n_cleaned_segments": 179843,
+        "n_decision_points": 171721035,
+        "seconds_by_reason": {
+          "classified": 1586853420.0,
+          "feature_edge": 5025828.0,
+          "outside_decision_cells": 148882.5,
+          "quality_masked": 124142340.0,
+          "skipped_native_cadence": 13869210.0
+        },
+        "sequence_prior_weight": 0.75,
+        "unclassified_decision_percent": 7.591203372376599,
+        "unclassified_duration_percent": 8.276472621634761
+      },
+      "current_full_archive_export_exists": true,
+      "decoding_transition_matrix": [
+        [
+          0.9396164747361204,
+          0.037218109072230006,
+          0.023165416191649572
+        ],
+        [
+          0.04839480724701505,
+          0.6656582845291013,
+          0.2859469082238837
+        ],
+        [
+          0.0744088522686867,
+          0.028832836819115366,
+          0.8967583109121979
+        ]
+      ],
+      "example": {
+        "changed_decisions": 606,
+        "classified_decisions": 2383,
+        "counts_current": {
+          "climb": 1108,
+          "search": 153,
+          "transition": 1122,
+          "unclassified": 474
+        },
+        "display_duration_s": 480,
+        "feature_hash": "cbf9719ba73358ea7c11bb790fdb1b198c46536b49ff7d0f8c46cc363a4b30c4",
+        "flight_id": "20398870",
+        "full_decisions": 2857,
+        "segment_id": 0,
+        "selection": "first classifiable segment by ascending validation manifest priority",
+        "source": "paraglider",
+        "split": "validation",
+        "stored_archive_path_reproduced": true
+      },
+      "fit_observations": 953078,
+      "fit_sequences": 11604,
+      "fitted_transition_matrix": [
+        [
+          0.9396164747361204,
+          0.05829714839310077,
+          0.0020863768707789243
+        ],
+        [
+          0.06733317190550349,
+          0.8430411589785045,
+          0.08962566911599192
+        ],
+        [
+          0.0056948954508116555,
+          0.16740510478836632,
+          0.8268999997608221
+        ]
+      ],
+      "model_metadata_sha256": "1d34cc662390731ebed3332b06a00aef5fbcbf040f459ef6e4f579cbd87e1018",
+      "model_pickle_sha256": "1288aac874454fcd133a81a3032f6fa31a66317ca18695ecf9d815a97d1399b8",
+      "selected_restart_diagnostics": {
+        "iteration_cap": 200,
+        "iterations": 68,
+        "last_log_likelihood_gain": -0.22311651101335883,
+        "minimum_covariance_eigenvalue": 5.519889234477456e-08,
+        "nonnegative_gain_below_tolerance": false
+      }
+    }
+  },
+  "purpose": "Current-decoder diagnostics; no independent manual accuracy"
+}

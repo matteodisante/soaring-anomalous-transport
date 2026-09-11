@@ -12,6 +12,17 @@ closes with the size of the tangent-plane error quoted there. Notation as in the
 WGS84 semi-major axis $a$, flattening $f$, $b=a(1-f)$ the semi-minor axis,
 $e^2=f(2-f)=1-b^2/a^2$ the first eccentricity squared~\cite{nga_wgs84}.
 
+In the exact transform, $h$ denotes ellipsoidal height. The GNSS channel in an
+arbitrary HPG record need not follow this convention
+(Sec.~\ref{sec:altchannel}). For orthometric height $H$, the relation is
+$h=H+\mathcal N(\varphi,\lambda)$, where $\mathcal N$ is geoid undulation.
+The pipeline currently inserts the recorded GNSS value as a height proxy;
+it does not infer a datum or apply a geoid correction. A height error $\delta h$
+perturbs a horizontal displacement from the origin by approximately
+$|\delta h|d/R_\oplus$ on a short, level route. This is a sensitivity estimate,
+not an established error bound for every recorder. Moreover, a spatially varying
+geoid correction does not cancel exactly from altitude increments.
+
 \section{Geodetic coordinates to ECEF}
 \label{app:geodesy-ecef}
 
@@ -22,7 +33,7 @@ the meridian plane obtained by rotating the $X$--$Z$ plane by $\lambda$; writing
 the distance from the polar axis, its ECEF coordinates are
 \begin{equation}
 \label{eq:geo-meridian}
-X=p\cos\lambda,\qquad Y=p\sin\lambda,\qquad Z=Z .
+X=p\cos\lambda,\qquad Y=p\sin\lambda.
 \end{equation}
 The problem therefore reduces to the meridian ellipse: find $(p,Z)$ of a point at geodetic
 latitude $\varphi$ and height $h$.
@@ -63,11 +74,13 @@ and, back through \eqref{eq:geo-normal},
 Z_s=(1-e^2)\,N(\varphi)\sin\varphi .
 \end{equation}
 The quantity $N(\varphi)$ so defined is the \emph{prime-vertical radius of curvature}; a
-short computation shows it is precisely the distance, along the normal, from the surface
-point to the polar axis (the segment $Q$--$P$ of Figure~\ref{fig:ellipsoid}): the normal
+computation shows that, away from the poles, it is the distance along the normal
+from the surface point to the polar axis (the segment $Q$--$P$ of Figure~\ref{fig:ellipsoid}): the normal
 direction in the meridian plane is $(\cos\varphi,\sin\varphi)$, and following it inward
 from $(p_s,Z_s)$ a length $N$ lands on the axis,
-$p_s-N\cos\varphi=0$ by \eqref{eq:geo-ps}.
+$p_s-N\cos\varphi=0$ by \eqref{eq:geo-ps}. At the poles the normal lies on the
+polar axis, so this intersection construction is degenerate; the formula for $N$
+remains defined by continuity.
 
 \paragraph{Adding the height.}
 The height $h$ of a fix is measured along the same normal, whose unit vector in ECEF
@@ -110,26 +123,27 @@ that is
 \label{eq:geo-latgap}
   \varphi-\psi\simeq\frac{e^2}{2}\,\sin 2\varphi ,
 \end{equation}
-which is the expression quoted in Sec.~\ref{sec:enu}. It is largest where $\sin2\varphi=1$,
-i.e.\ exactly at $\varphi=45^\circ$, and there equals $e^2/2=3.347\times10^{-3}$ radian, or
+which is the expression quoted in Sec.~\ref{sec:enu}. At this order it is largest
+at $\varphi=45^\circ$, where it equals $e^2/2=3.347\times10^{-3}$ radian, or
 $0.192^\circ\approx11.5'$. Mistaking one latitude for the other therefore displaces a fix
 along the meridian by $R_\oplus\,(e^2/2)\approx\SI{21}{\kilo\metre}$ at mid-latitudes---the
 ${\sim}\SI{20}{\kilo\metre}$ quoted in the body. The error vanishes at the equator and at
-the poles and is symmetric about $45^\circ$.
+the poles; the leading-order approximation is symmetric about $45^\circ$.
 \end{revblock}
 
 \section{ECEF to local ENU}
 \label{app:geodesy-enu}
 
 The local frame at the origin fix $(\varphi_0,\lambda_0,h_0)$ is spanned by three unit
-vectors: East, tangent to the parallel; North, tangent to the meridian, pointing to the
-pole; Up, along the ellipsoid normal \eqref{eq:geo-up}. East is the direction in which the
+vectors: East, tangent to the parallel; North, tangent to the meridian, pointing toward increasing latitude; Up, along the ellipsoid normal \eqref{eq:geo-up}. Away from the poles, East is the direction in which the
 position \eqref{eq:geo-meridian} changes under $\lambda$ alone,
 \begin{equation}
 \hat{\mathbf{e}}_E=\frac{\partial\mathbf{X}/\partial\lambda}
                         {\lVert\partial\mathbf{X}/\partial\lambda\rVert}
 =(-\sin\lambda_0,\;\cos\lambda_0,\;0),
 \end{equation}
+At a pole, longitude fixes a conventional orientation of the horizontal axes;
+the displayed vector still defines that convention although the derivative vanishes.
 Up is $\hat{\mathbf{u}}$ of \eqref{eq:geo-up} evaluated at
 $(\varphi_0,\lambda_0)$, and North completes the right-handed triad,
 \begin{equation}
@@ -159,17 +173,23 @@ is a fixed tangent frame, not one that travels with the wing.
 \section{Size of the tangent-plane error}
 \label{app:geodesy-error}
 
-Working in a fixed tangent frame replaces distances measured \emph{along} the curved
-surface by straight-line (chord) distances in the plane. For two surface points separated
-by an arc $d$ on a sphere of radius $R_\oplus$, the chord is
+Two different distances must be distinguished. On a sphere, an arc of length $d$
+subtends a three-dimensional chord
 \begin{equation}
 c=2R_\oplus\sin\!\frac{d}{2R_\oplus}
- = d-\frac{d^{3}}{24\,R_\oplus^{2}}+O\!\big(d^{5}\big),
+ = d-\frac{d^{3}}{24\,R_\oplus^{2}}+O\!\big(d^{5}/R_\oplus^4\big).
 \end{equation}
-so the horizontal distance error of the tangent-plane picture is
-$d^{3}/(24R_\oplus^{2})$: about \SI{1}{\centi\metre} at $d=\SI{20}{\kilo\metre}$ and
-\SI{13}{\centi\metre} at $d=\SI{50}{\kilo\metre}$ --- far below the metre-scale GPS noise
-on the same displacement, which is the comparison made in Sec.~\ref{sec:enu}. The
+The horizontal EN projection from a frame anchored at one endpoint is instead
+\begin{equation}
+ d_{EN}=R_\oplus\sin(d/R_\oplus),\qquad
+ d-d_{EN}=\frac{d^3}{6R_\oplus^2}+O(d^5/R_\oplus^4).
+\end{equation}
+This deficit is \SI{0.033}{\metre} at \SI{20}{\kilo\metre},
+\SI{0.51}{\metre} at \SI{50}{\kilo\metre}, and about
+\SI{33}{\metre} at \SI{200}{\kilo\metre}. These estimates assume surface points
+and an origin at one endpoint. For increments between two remote points in a
+fixed frame, projection distortion also depends on their distance and bearing
+from the frame origin. It cannot be bounded from increment length alone. The
 \emph{vertical} coordinate of a distant surface point is a different matter: the surface
 falls below the tangent plane by the sagitta $\approx d^{2}/(2R_\oplus)$, which reaches
 tens of metres already at $d=\SI{20}{\kilo\metre}$. This is why the analysis never takes
@@ -189,13 +209,20 @@ Eq.~\eqref{eq:haversine}, which treats the Earth as a sphere of fixed radius
 $R_\oplus=\SI{6371}{\kilo\metre}$ regardless of latitude or heading. This section bounds
 what that costs against the WGS84 ellipsoid.
 
-\paragraph{Local radius of curvature.}
-For a short step of angular length $d\sigma$ at geodetic latitude $\varphi$ and azimuth
-$\alpha$ (measured from north), the ellipsoidal arc length is $ds=R(\varphi,\alpha)\,d\sigma$
-to leading order, with $R(\varphi,\alpha)$ the local (Euler) radius of curvature,
+\paragraph{Local metric.}
+For a short step at geodetic latitude $\varphi$, the ellipsoid and the sphere give
+\begin{equation}
+ ds_{\rm ell}^2=M(\varphi)^2d\varphi^2+
+ N(\varphi)^2\cos^2\varphi\,d\lambda^2,\qquad
+ ds_{\rm sph}^2=R_\oplus^2(d\varphi^2+\cos^2\varphi\,d\lambda^2).
+\end{equation}
+Define $d\sigma=ds_{\rm sph}/R_\oplus$ and the bearing $\alpha$ in this
+spherical metric by $d\varphi=d\sigma\cos\alpha$ and
+$\cos\varphi\,d\lambda=d\sigma\sin\alpha$. Then
 \begin{equation}
 \label{eq:geo-euler}
-\frac{1}{R(\varphi,\alpha)}=\frac{\cos^2\alpha}{M(\varphi)}+\frac{\sin^2\alpha}{N(\varphi)},
+ R_{\rm eff}(\varphi,\alpha)\equiv\frac{ds_{\rm ell}}{d\sigma}
+ =\sqrt{M(\varphi)^2\cos^2\alpha+N(\varphi)^2\sin^2\alpha},
 \end{equation}
 interpolating between the meridian value $M(\varphi)$ ($\alpha=0$, north--south) and the
 prime-vertical value $N(\varphi)$ of Eq.~\eqref{eq:geo-ps} ($\alpha=90^\circ$,
@@ -217,8 +244,9 @@ M(\varphi)=\frac{N(\varphi)(1-e^2)}{1-e^2\sin^2\varphi}=\frac{a(1-e^2)}{(1-e^2\s
 \paragraph{Comparison to the sphere.}
 The reference radius used in Eq.~\eqref{eq:haversine}, $R_\oplus=\SI{6371}{\kilo\metre}$,
 agrees with the ellipsoid's mean radius $R_m=(2a+b)/3=a(1-f/3)=\SI{6371.009}{\kilo\metre}$
-to within \SI{10}{\metre}, so the fractional error of a step in direction $\alpha$,
-$[R(\varphi,\alpha)-R_m]/R_m$, is bounded between the values it takes at $\alpha=0$ and
+to within \SI{10}{\metre}. The fractional difference, expressed as ellipsoidal
+length relative to spherical length, is approximately
+$[R_{\rm eff}(\varphi,\alpha)-R_m]/R_m$, bounded between its values at $\alpha=0$ and
 $\alpha=90^\circ$. Expanding Eqs.~\eqref{eq:geo-ps} and~\eqref{eq:geo-M} to first order in
 the flattening $f$ (using $e^2\simeq2f$),
 \begin{equation}
@@ -229,8 +257,7 @@ the flattening $f$ (using $e^2\simeq2f$),
 both of order the flattening $f=1/298.257223563\approx\SI{0.335}{\percent}$ at every
 latitude: from $-5f/3\approx\SI{-0.56}{\percent}$ at the equator ($\varphi=0$, meridian
 direction) to $+4f/3\approx\SI{0.45}{\percent}$ at the poles ($\varphi=90^\circ$, where
-$M=N$ by symmetry) --- which is why Sec.~\ref{sec:fixlevel} calls $\lesssim0.3\%$ ``the
-flattening scale'' rather than a fixed number.
+$M=N$ by symmetry). Thus $0.3\%$ is a regional estimate, not a global bound.
 
 \paragraph{At the latitudes flown.}
 Most of the archive launches from the Alps box $\varphi\in[43.8^\circ,46.6^\circ]$N used
@@ -241,12 +268,15 @@ points, so its midpoint $\varphi=45^\circ$ is representative:
 \frac{N(45^\circ)}{R_m}-1\simeq\frac{5f}{6}\approx\SI{0.28}{\percent},\qquad
 \frac{M(45^\circ)}{R_m}-1\simeq-\frac{f}{6}\approx\SI{-0.06}{\percent}
 \end{equation}
-(exactly, $N(45^\circ)=\SI{6388.83}{\kilo\metre}$ and $M(45^\circ)=\SI{6367.38}{\kilo\metre}$
-against $R_m=\SI{6371.01}{\kilo\metre}$): a step is stretched by at most
-$\approx\SI{0.28}{\percent}$ running east--west and shortened by at most
-$\approx\SI{0.06}{\percent}$ running north--south, the $\lesssim\SI{0.3}{\percent}$ bound
-quoted in Sec.~\ref{sec:fixlevel}, about \SI{3}{\centi\metre} on a \SI{10}{\metre} step. The
+(numerically, $N(45^\circ)=\SI{6388.84}{\kilo\metre}$ and $M(45^\circ)=\SI{6367.38}{\kilo\metre}$
+against $R_m=\SI{6371.01}{\kilo\metre}$). At $45^\circ$, the sphere
+underestimates an east--west ellipsoidal step by about $0.28\%$ and
+overestimates a north--south step by about $0.06\%$. Across the latitude
+interval above the absolute discrepancy remains below $0.3\%$, or roughly
+\SI{3}{\centi\metre} on a \SI{10}{\metre} step. The
 bound only opens up toward the $0.45$--\SI{0.56}{\percent} extremes for the small remainder
 of flights nearer the equator or at higher latitude (Sec.~\ref{sec:prelim}, ``elsewhere''),
-still two orders of magnitude below the metre-scale GPS noise on the same step.
+corresponding to at most roughly \SI{6}{\centi\metre} on a \SI{10}{\metre} step.
+The uncertainty of a GNSS increment must be assessed separately, since errors at
+successive fixes can be correlated.
 \end{revblock}

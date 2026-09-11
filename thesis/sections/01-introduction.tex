@@ -1,165 +1,201 @@
 \chapter{Introduction}
 \label{ch:introduction}
 
-\section{Motivation}
+\section{A flight is a transport process with an energy budget}
 
-Gliders, paragliders, and soaring birds carry no continuous source of propulsion; to remain
-airborne they extract energy from air currents in the atmosphere, primarily from
-\emph{thermals}, the buoyant updrafts that form as sunlight heats the ground. A
-cross-country flight thus proceeds as a repeating cycle of three phases. In the
-\emph{transition} phase the flyer glides along a nearly straight path toward the next
-source of lift. If none is reached at a safe altitude, a \emph{search} phase follows, during which the flyer
-probes the surrounding air mass to locate lift. Once lift is found, a \emph{climb} phase
-begins, in which the flyer circles within the rising air to regain altitude. The cycle
-alternates long, directed displacements with episodes of slow, localized motion.
+A soaring pilot travels by repeatedly exchanging height for distance and recovering height
+in rising air. The atmosphere supplies the energy, but the pilot must locate that supply
+and decide how to use it. A long displacement is therefore the outcome of several coupled
+processes: motion through the air, encounters with lift, decisions made with incomplete
+information, and constraints imposed by wind and terrain. Because the recorded trajectory
+contains all these contributions, inferring a stochastic description requires more than
+fitting its geometry: the description must also preserve the physical mechanisms that
+allow the pilot to remain airborne.
 
-Intermittent and directionally persistent motion of this kind is one of the settings
-in which \emph{anomalous transport} arises. Let $\mathbf{r}(t)$ denote the horizontal position of a flight, measured from take-off.
-Transport is anomalous when the mean-squared displacement grows as a non-trivial power of
-time, $\langle |\mathbf{r}(t)|^2\rangle \sim t^{\alpha}$ with $\alpha \neq 1$, as opposed to
-the linear growth ($\alpha = 1$) of ordinary Brownian diffusion. The continuous-time
-random walk (CTRW) is one of the standard modelling frameworks for such
-regimes~\cite{metzler2000}: the walker waits a random time $\tau$, then makes a random
-displacement $\mathbf{x}$, and the joint density $\psi(\mathbf{x},\tau)$ of the two fixes
-the transport. When the two are independent, $\psi(\mathbf{x},\tau) =
-\lambda(\mathbf{x})\,w(\tau)$, a heavy-tailed $w$ makes the walk subdiffusive, while a
-heavy-tailed $\lambda$ makes it a L\'evy flight, in which an arbitrarily long displacement
-is made instantaneously and the second moment diverges. The L\'evy walk is not a separate
-framework but the opposite, fully coupled case, which relates 
-displacement to duration through a constant speed $v$,
+Two elementary relations explain why neither an unconstrained random walk nor a purely
+geometrical description is sufficient. Writing $\mathbf r$ for horizontal position and $z$
+for altitude, a local kinematic description is
+\begin{align}
+  \dot{\mathbf r}(t)
+    &=\mathbf v_{\mathrm{air}}(t)+\mathbf w_h(\mathbf r(t),z(t),t),
+    \label{eq:intro-groundspeed}\\
+  \dot z(t)&\simeq w_z(\mathbf r(t),z(t),t)
+                  -s\bigl(|\mathbf v_{\mathrm{air}}(t)|,\phi(t)\bigr).
+    \label{eq:intro-height}
+\end{align}
+Here $\mathbf w_h$ and $w_z$ are the horizontal and vertical air velocities, $s>0$ is the
+sink rate relative to the air, and $\phi$ is bank angle. The second relation is a
+quasi-steady approximation: it makes explicit the competition between lift and aerodynamic
+sink without attempting to model every manoeuvre. Altitude is therefore a finite resource,
+and a transport model must account for its use and replenishment if its trajectories are
+to represent sustained flight.
+
+This physical picture suggests three descriptions of behaviour: directed
+\emph{transition}, exploratory \emph{search}, and \emph{climb} in lift. They are hypotheses
+about the organisation of motion, rather than labels directly supplied by a recorder.
+A pilot can find lift during a transition, climb without completing a circle, or search
+while losing height. Determining which distinctions the data support is part of the
+scientific problem.
+
+Soaring control has been studied through the problem of locating and exploiting thermals,
+including adaptive strategies based on local information~\cite{reddy2016}. The present
+work asks a complementary question: what statistical laws emerge over entire flights, and
+which mechanisms can account for those laws? A direct empirical precedent is the analysis
+of soaring transport and flight phases by Vilpellet et al.~\cite{vilpellet2026}. This
+thesis revisits that connection using the FFVL archive, explicit data-quality controls,
+and a separation between measured properties and assumptions used to interpret them.
+
+\section{The questions and the evidence needed to answer them}
+
+\subsection{Which stochastic models survive the observations?}
+
+A first observable is the squared displacement over an interval $\tau$,
 \begin{equation}
-  \psi(\mathbf{x},\tau) \propto \delta\!\left(|\mathbf{x}| - v\tau\right) w(\tau),
-  \label{eq:levywalk}
+  M_2(\tau)=\left\langle\left|\mathbf r(t+\tau)-\mathbf r(t)\right|^2\right\rangle.
+  \label{eq:intro-msd}
 \end{equation}
-with the direction drawn uniformly, so that each waiting time is spent travelling
-ballistically rather than standing
-still~\cite{zaburdaev2015}. Anomalous transport of this kind has been reported in
-random-search strategies~\cite{viswanathan1999}, in disordered
-media~\cite{bouchaud1990}, and in turbulent flows~\cite{solomon1993}.
+Ordinary diffusion without drift has $M_2\propto\tau$; directed motion can produce a ballistic law
+$M_2\propto\tau^2$. An intermediate slope is informative, but it does not identify a
+mechanism, since correlated Gaussian motion, persistent motion observed during a crossover,
+and mixtures of flight behaviours can produce similar second moments. Random-walk
+frameworks offer competing explanations of anomalous transport~\cite{metzler2000}.
+The purpose here is to discriminate between such explanations using more than one curve.
 
-Both are renewal processes: each step draws a fresh pair $(\mathbf{x},\tau)$
-independently of every step before it, so the walk retains no memory beyond its current
-position. Correlated CTRWs relax that assumption. Correlating successive jumps alone already
-moves the exponent---it can turn the walk superdiffusive---and separates the ensemble average
-from the time average~\cite{tejedor2010}; imposing power-law correlated noise on the jump
-lengths and the waiting times together gives a process carrying scale-free displacements,
-scale-free waiting times, and the long-range memory of fractional Brownian motion at
-once~\cite{schulz2013}.
+Chapter~\ref{ch:global} therefore measures displacement quantiles, the spectrum of
+moments, the shape of the increment distribution, directional anisotropy and velocity
+correlations alongside the MSD. Their roles are complementary: quantile ratios test
+whether the distribution changes shape as the lag increases, while higher moments
+compare the growth of ordinary and large displacements; velocity correlations resolve
+persistence in time. Open and closed tasks help expose the effect of the flight's intended
+geometry. A model is challenged where its predictions disagree with these observations
+under a comparable measurement protocol.
 
-The soaring cycle has three parts rather than two: a directed glide, then a search
-phase, then a localized climb. The glide is a leg flown at nearly constant speed---the
-coupling of Eq.~\eqref{eq:levywalk}, and the only feature of it the cycle inherits, since the
-uniform direction drawn alongside that coupling is itself one of the things to be tested. The
-search and the climb that end each leg are episodes of slow, localized motion, closer to the
-waits of an uncoupled CTRW; whether they can be collapsed into a single waiting phase is a
-modelling decision the data have to support (Sec.~\ref{sec:modelling}).
+This logic also sets the limit of an exclusion. A discrepancy with a homogeneous Gaussian
+model for pooled flights need not exclude Gaussian fluctuations within a flight: different
+conditions can create a non-Gaussian mixture. Similarly, evidence against a particular
+constant-speed renewal L\'evy walk is not a theorem against every process with finite-speed
+legs~\cite{zaburdaev2015}. The chapter specifies the hypotheses being tested and leaves
+unsupported exclusions open.
 
-Whether the resulting sequence of legs is renewal is left open until it can be measured.
-It can fail in four ways, each its own measurement: successive glide \emph{directions},
-successive glide \emph{lengths} and successive \emph{waiting times} may each be correlated,
-and a waiting time may be correlated with the \emph{length of the glide beside it}. Two of
-the four have a mechanism behind them. A glide heading is set by the route flown, the pilot's
-strategy, and the state of the air mass, wind and terrain, none of which changes on the
-timescale of one glide. The wait--length coupling has no sign fixable in advance: what limits
-a glide is the altitude available at its start, and a waiting time is search and climb
-together, of which only the climb converts waiting into height while the search consumes
-it---so what a pooled waiting time shows depends on how the two mix, one more reason the
-collapse has to be argued from the data. These are reasons to look, not results: none of the
-four is assumed here, and since each relates consecutive legs, and a leg exists only once a
-flight has been cut into phases, none can be tested before the segmentation of
-Chapter~\ref{ch:phases}.
+\subsection{How do the flight phases generate global transport?}
 
-The model this thesis works towards is the minimal one consistent with whichever of the
-four survive; its working hypothesis is a persistent random walk in continuous time---legs at
-finite speed, waiting times between them, correlated leg directions---and that persistence
-stands or falls on the measurement. \rev{Chapter~\ref{ch:global} comes first because it needs no
-segmentation. It reads four things off the unsegmented trajectory: the exponent at which
-displacement grows with the time lag; whether moments of every order share that one exponent,
-as a self-similar process requires; how long a heading
-survives, read from the decay of the velocity autocorrelation; and whether any duration over
-which a flight holds its heading is distinguished, or whether those durations carry the
-power-law tail a L\'evy walk needs. Together they fix the class of transport.}
-What that chapter cannot do is reach the four correlations, and the reason is what each of
-them is indexed by. The four compare one leg with the next, so their index is the leg number,
-and it exists only once the flight has been cut. Every statistic in Chapter~\ref{ch:global}
-is indexed by a time lag instead: it compares the trajectory at two instants a fixed interval
-apart, without knowing - if any - either instant falls in. A glide is approximately straight, 
-so a heading held across a lag shorter than one glide is persistence
-\emph{within} a leg, and a velocity autocorrelation that stays positive at those lags reports
-that and not whether the direction of one glide predicts the direction of the next; at longer
-lags the two are mixed rather than separated. The chapter can therefore show that the heading
-has memory without showing that the memory is of the leg-to-leg kind the model needs, and the
-other three correlations, which compare the lengths and the waiting times of legs that have
-not been delimited, it cannot reach at all.
-Chapter~\ref{ch:phases} cuts the flight, and the model is built on what both return.
-Whether the trajectories of real soaring flights belong to an anomalous regime, and of which
-type, is the question addressed in this thesis.
+Although an unsegmented flight supplies constraints on the whole process, it does not
+identify which behaviour generates a long displacement, a change of heading or a period
+of persistence.
+Chapter~\ref{ch:phases} addresses this missing link with a probabilistic segmentation into
+transition, search and climb. It states the mathematical model, displays its behaviour on
+readable trajectory excerpts, and distinguishes internal consistency from accuracy against
+independent annotations.
 
-Soaring has previously been studied mainly as a control problem---how to centre and exploit
-a thermal efficiently ~\cite{reddy2016}. The present
-work is statistical instead: it asks which transport properties emerge at the level of the
-ensemble of observed trajectories. Its direct precedent is the study of Vilpellet et
-al.~\cite{vilpellet2026}, who analysed a large set of human soaring flights and found a
-horizontal transport that is sub-ballistic and approximately independent of aircraft type
-(Hurst exponent $H \approx 0.88$, i.e.\ $\langle|\mathbf{r}(t)|^2\rangle\sim t^{2H}$,
-between diffusive $H=1/2$ and ballistic $H=1$, so that a value $1/2<H<1$ marks
-superdiffusive transport). That study also introduced a
-phase-resolved analysis based on the transition--search--climb cycle. This thesis builds
-on it: it enlarges the dataset, revisits the cleaning and filtering that precede any
-analysis, and re-examines both the phase segmentation and the transport analysis.
+The next step will be a chapter devoted to observables conditioned on phase: episode
+durations, distance and height changes, speed and turning distributions, displacement
+scaling, and dependencies between successive episodes. A useful model must reproduce both
+these conditional statistics and the global ones, a stronger requirement than generating
+a visually plausible sequence of coloured flight segments. Windows that cross
+phase boundaries must also be retained when reconstructing global observables.
 
-\section{Objectives}
+\subsection{Does information from other pilots change the motion?}
 
-The thesis pursues the following objectives:
-\begin{enumerate}
-  \item to assemble a large, reproducible, and documented dataset of real soaring flights;
-  \item to clean and filter the raw GPS logs into analysis-ready trajectories, and to
-        define, measure and analyze suitable transport observables exploited for testing anomalous
-        transport;
-  \item to define a segmentation strategy for the transition--search--climb cycle and
-        characterize the motion statistics within each phase;
-  \item to build a minimal stochastic model able to reproduce the empirical
-        statistics;
-  \item to extend the dataset to competition flights and examine how flying in
-        competition changes the motion relative to solo flights.
-\end{enumerate}
-A first dataset---the archive of the \emph{Coupe F\'ed\'erale de Distance} (CFD) of the
-French free-flight federation (FFVL), covering paraglider and hang-glider flights---has
-been assembled and verified and is described in Chapter~\ref{ch:dataset}; data
-collection continues and will be extended to further sources, in particular sailplanes and
-competition flights (Sec.~\ref{sec:acquisition}).The dataset
-(Secs.~\ref{sec:igcformat}--\ref{sec:coverage}) and its cleaning-and-filtering pipeline
-(Sec.~\ref{sec:preproc}) are described in Chapter~\ref{ch:dataset}, and the transport of the
-unsegmented trajectory is measured in Chapter~\ref{ch:global}; the segmentation, the
-modelling it enables (Chapter~\ref{ch:phases}), and the extension to competition flights
-define the work ahead.
+A nearby pilot can reveal lift before a follower reaches it. This creates a possible
+information channel that is absent from a model of independent searchers. A later chapter
+will compare solitary and group flight using both global and phase-conditioned observables.
+The operational definition of a group will concern simultaneous proximity and plausible
+visibility, not membership of a competition. A competition can contain isolated pilots,
+and pilots outside a competition can travel together.
 
-\section{Scope of this document}
+The comparison will ask where differences occur: in time spent searching, climb selection,
+transition direction, episode persistence, or the efficiency of converting altitude into
+distance. Site, weather, wing and pilot characteristics must be controlled because they can
+produce the same differences without social interaction. Incomplete recording of nearby
+pilots will limit what can be called solitary flight. These are conditions for an
+interpretable comparison, not effects assumed in advance.
 
-This document reports the current state of the project and is revised as the work proceeds.
-The statistics it quotes, and the tables and figures that carry them, are generated from
-the dataset by the analysis code rather than typed, so those numbers cannot drift from the
-data they describe.
-Chapter~\ref{ch:dataset} follows the data end to end: its acquisition and the
-reproducibility of the pipeline (Sec.~\ref{sec:acquisition}); the tracklog format and the
-flight catalog (Secs.~\ref{sec:igcformat}--\ref{sec:catalog}); the glider categories and
-the coverage statistics (Secs.~\ref{sec:glider}--\ref{sec:coverage}); the known data-quality
-caveats (Sec.~\ref{sec:dataquality}); the pre-processing
-that turns the raw logs into analysis-ready trajectories (Sec.~\ref{sec:preproc}); a
-first characterization of the cleaned dataset (Sec.~\ref{sec:prelim}); and a
-one-map summary of the whole pipeline that closes the chapter
-(Sec.~\ref{sec:pipelinemap}).
-Chapter~\ref{ch:global} measures the transport of that ensemble on the whole trajectory,
-without segmenting a flight: the estimator and the exponent it returns
-(Secs.~\ref{sec:variations} and~\ref{sec:transport-measure}), and what a second moment cannot say
-(Sec.~\ref{sec:transport-shape}). Chapter~\ref{ch:phases} sets out the phase segmentation
-and the modelling it enables; none of it is implemented yet.
+\section{From empirical constraints to a physical model}
+\label{sec:intro-method}
 
-Throughout, the discussion keeps to the scientific and statistical reasoning behind each
-choice. Implementation-level detail (code modules, configuration values, sample sizes,
-computation times, reproduction commands) is collected in \nameref{app:implementation},
-from p.~\pageref{app:implementation}. That part is organised chapter by chapter to
-mirror the body, and the body links into it at each point where an implementation detail
-was trimmed out of the text, as ``implementation details: Sec.~I2.7.2''. Its numbers carry
-an \texttt{I}, so a cross-reference always says which of the two parts it points into:
-Sec.~I2.7.2 is the implementation side of Sec.~2.7.2.
+The thesis combines empirical analysis, mathematical modelling and simulation, with a
+distinct role for each. Data analysis establishes the constraints that a candidate process
+must satisfy; mathematics then makes that process precise and derives its predictions,
+which Monte Carlo simulation tests under finite flight durations, heterogeneous environments
+and the actual observation protocol.
+
+Model construction will follow the global analysis and the analysis conditioned on phase.
+Possible ingredients include finite-speed transitions, lift encounters, distributions of
+episode duration, and dependencies between successive directions or episodes. Renewal
+independence is one hypothesis to test; correlated random walks provide alternatives when
+that independence fails~\cite{tejedor2010,schulz2013}. The choice among these ingredients must be justified by the observations and an explicit
+physical mechanism, rather than fixed by the outline of the thesis. Parameters fitted on one set of flights will be checked on
+separate flights or days, using several observables jointly.
+
+A reference model without wind and terrain may help isolate mechanisms, but obtaining it
+requires an inference about the environment: mean ground velocity alone does not determine
+wind, and rotating a trajectory into its principal axes does not remove orography. Artificially
+making a covariance matrix isotropic changes the measured object; it does not recreate a
+flight in still air. The analysis consequently preserves the motion in geographical
+coordinates and studies environmental strata before asking which properties could survive
+in a common reference model.
+
+A further part of the programme concerns the spatial organisation of thermals and route
+choice. It will first estimate the two-dimensional distribution of \emph{visited} lift
+regions, accounting for where pilots have searched. Recovering the distribution of
+available thermals requires an observation model: unvisited terrain is not evidence of
+absent lift. A mathematical description of thermal availability and strength could then
+support separate optimisation problems, such as minimum-time travel between two locations,
+a closed route, or maximum distance within a specified flight budget. Wind and, subsequently,
+possible geometrical constraints from terrain will be introduced in stages. A spatial
+density alone cannot determine an optimal path without assumptions about thermal strength,
+spatial dependence, altitude and the pilot's information.
+
+\section{Structure and current scope}
+
+Figure~\ref{fig:thesis-structure} shows how the measurements support the later modelling.
+The present document develops the data, global transport and segmentation chapters. The
+chapters on conditional observables, social flight, stochastic modelling and route
+optimisation form the research programme; their results are not claimed here. The immediate
+priority is to consolidate Chapters~\ref{ch:global} and~\ref{ch:phases}, then undertake the
+solo--group comparison with the necessary observables conditioned on phase.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+    box/.style={draw=figblue,rounded corners=2pt,align=center,text width=11.6cm,
+                inner sep=7pt,font=\small},
+    future/.style={box,draw=gray,dashed},
+    >=Latex,node distance=6mm]
+    \node[box] (data) {\textbf{Chapter 2: trustworthy trajectories}\\
+      Recorder channels, cleaning, coverage and retained uncertainty};
+    \node[box,below=of data] (global) {\textbf{Chapter 3: global observables}\\
+      Scaling, distribution shape, memory and environmental geometry};
+    \node[box,below=of global] (phases) {\textbf{Chapter 4: flight phases}\\
+      Explicit segmentation model, diagnostic figures and independent validation};
+    \node[future,below=of phases] (conditional) {\textbf{Observables conditioned on phase; solo--group comparison}\\
+      Mechanisms within episodes, dependencies between episodes, social information};
+    \node[future,below=of conditional] (model) {\textbf{Stochastic model and Monte Carlo}\\
+      Joint reproduction of global and conditional observables on held-out data};
+    \node[future,below=of model] (routes) {\textbf{Thermal landscapes and route optimisation}\\
+      Lift availability, wind, altitude budget and possible terrain constraints};
+    \foreach \a/\b in {data/global,global/phases,phases/conditional,conditional/model,model/routes}
+      \draw[->,thick,gray] (\a)--(\b);
+  \end{tikzpicture}
+  \caption{Logical structure of the thesis. Solid boxes are developed in this document;
+  dashed boxes describe subsequent work. Model comparison must return to the measured
+  observables, not stop at a fitted trajectory or a single exponent.}
+  \label{fig:thesis-structure}
+\end{figure}
+
+Chapter~\ref{ch:dataset} follows the records from acquisition to retained trajectories,
+including the treatment of missing or inconsistent channels. Chapter~\ref{ch:global}
+then asks what can be learned without assigning phases. Chapter~\ref{ch:phases} introduces
+that assignment and identifies what must be checked before its labels can support physical
+claims. The two appendices state the spectral conventions and the geodetic
+transformation used by the measurements.
+
+\section{Chapter summary}
+The thesis asks which stochastic description can account for soaring trajectories while
+respecting the physical roles of lift, travel and environmental constraints. The route
+from observations to a model begins with reliable trajectories and global transport
+statistics, then uses validated flight phases to identify the mechanisms mixed by those
+statistics. Comparisons between solitary and interacting flights, followed by simulation
+and thermal-landscape modelling, extend this programme. Their conclusions remain future
+work: the present chapters establish the empirical measurements and validation needed
+to make those comparisons meaningful.

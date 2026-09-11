@@ -5,9 +5,9 @@ This chapter follows the data end to end: how the raw archive is acquired, verif
 kept reproducible (Sec.~\ref{sec:acquisition}); what the records contain and what the
 collection looks like (Secs.~\ref{sec:igcformat}--\ref{sec:dataquality}); and the
 pre-processing that turns a raw tracklog into the analysis-ready trajectory the transport
-analysis consumes (Sec.~\ref{sec:preproc})\flow{, closed by a first characterization of
-the cleaned dataset (Sec.~\ref{sec:prelim}) and a one-map summary of the pipeline
-(Sec.~\ref{sec:pipelinemap})}.
+analysis consumes (Sec.~\ref{sec:preproc}). The pipeline summary
+(Sec.~\ref{sec:pipelinemap}) brings these steps together; a characterization of the
+retained dataset closes the chapter (Sec.~\ref{sec:prelim}).
 
 \section{Data acquisition}
 \label{sec:acquisition}
@@ -48,19 +48,19 @@ command-line tools, one per discipline, sharing the same subcommands for fetchin
 downloading, cataloguing, and verifying. The design favours robustness for a
 long-running, large job: downloads are resumable and safe to interrupt, a response is
 accepted only once validated as real IGC content, and download requests are rate-limited
-so as not to load the server \impldetails{impl:acqpipeline}.
+so as not to load the server .
 
 \subsection{Reproducibility}
 
-The destination directory is not hard-coded: it is set per machine through an environment
-variable or a configuration file, of which the repository ships only a placeholder, so no
-machine-specific path is committed. Archiving the season
-XMLs verbatim keeps the full provenance \impldetails{impl:acqrepro}.
+The destination directory is selected through an environment variable or configuration
+file. The local configuration contains the working disk path; an environment override
+allows the same acquisition to run elsewhere. Archiving the season XMLs verbatim
+preserves the acquisition provenance.
 
 \subsection{Integrity}
 
 Because the data sit on an external drive, integrity is re-checked independently after
-download, rather than trusted at download time \impldetails{impl:acqintegrity}. Both
+download, rather than trusted at download time . Both
 FFVL collections have been verified in full: all \num{\StatParaDownloaded} paraglider and
 \num{\StatHangDownloaded} hang-glider downloaded tracklogs pass the same content check
 applied at download --- a readable file whose first record is an \texttt{A} header and which
@@ -99,18 +99,18 @@ flight-recorder identifier, \texttt{H} header fields (date, pilot, glider, datum
 \texttt{I} the declaration of optional extra fields, and \texttt{B} the GPS fixes that form
 the body of the file. A \texttt{B} record decodes to a UTC time, latitude and longitude on
 the WGS84 datum, a fix-validity flag, and \emph{two} altitudes in metres --- barometric
-(pressure) then GNSS. The flag concerns the \emph{GNSS} solution only: \texttt{V} marks a
-GNSS altitude drop-out, and since the analysis reads the GNSS altitude throughout
-(Sec.~\ref{sec:altchannel}) it certifies the adopted channel itself as degraded at that
-fix, a choice that matters because the vertical velocity derived from it feeds the phase
-segmentation. The latitude and longitude are unaffected either way, and the barometric
-altitude, where the logger carries a working pressure sensor, keeps a narrower job as an
-independent witness (Sec.~\ref{sec:fixlevel}).
+(pressure) then GNSS. The flag describes the GNSS solution: \texttt{A} denotes a three-dimensional fix,
+whereas \texttt{V} denotes either a two-dimensional fix or an absence of GNSS data
+\cite{fai_igc_spec}. Thus \texttt{V} invalidates the adopted GNSS altitude but does
+\emph{not} certify that the horizontal coordinates remain correct. The cleaning retains
+those coordinates provisionally and subjects them to the horizontal and frozen-lock
+checks below. A pressure reading in the same \texttt{B} record is a separate measurement;
+its numerical presence alone does not establish that the sensor is working.
 
 Decoding can succeed numerically on a corrupted byte that is not a legal encoding, so the
 parser also checks format validity at decode time (a valid time, valid coordinate fields, a
 valid hemisphere letter), dropping the record otherwise, on the same footing as a record of
-the wrong length \impldetails{impl:igcformat}. This is distinct from the
+the wrong length . This is distinct from the
 \emph{plausibility} checks of fix-level cleaning (Sec.~\ref{sec:fixlevel}), which target
 fixes that decode validly but are physically implausible given the rest of the trajectory.
 
@@ -172,12 +172,10 @@ statistics below. Both are regenerated from the archived XMLs on demand
 
 \begin{revblock}
 Soaring kinematics depend strongly on the aircraft, so the glider must be identifiable
-for any stratified analysis. Three categories exist, in increasing order of performance:
-\textbf{paragliders} (flexible canopy; slowest, glide ratio $\sim\!8$--$11$, tight turns),
-\textbf{hang gliders} (delta wing, flexible or rigid; faster, glide ratio $\sim\!10$--$15$),
-and \textbf{sailplanes} (rigid aircraft; fastest, glide ratio $\gtrsim\!25$) --- different
-enough in cruise speed, glide ratio and turn radius that the reference
-study~\cite{vilpellet2026} analyses each separately rather than pooling them.
+for any stratified analysis. The reference study distinguishes three aircraft families: paragliders with a flexible
+canopy, hang gliders with a framed flexible or rigid wing, and sailplanes with a rigid
+airframe. Their speed ranges, glide performance and turning geometry differ, which
+motivates separate analyses rather than a single pooled transport law~\cite{vilpellet2026}.
 
 The category is set by the \emph{data source}: the FFVL competition is split by discipline
 (Sec.~\ref{sec:acquisition}), so the present dataset spans both paragliders and hang
@@ -185,41 +183,45 @@ gliders, already enough for the cross-type comparison of~\cite{vilpellet2026}. S
 are collected by different portals and not yet in hand.
 \end{revblock}
 
-Within each discipline the flights can be further stratified by \emph{performance class},
-recorded in \texttt{aile\_class}; \rev{the two disciplines use different class systems,
-collected in Table~\ref{tab:aileclass}. Paragliders follow the EN/LTF certification
-ladder, which does track performance (higher classes fly faster and flatter) and is
-therefore the natural within-source stratification variable. The hang-glider scheme is
-\emph{not} a ladder: the FAI classes are defined by the method of control, so they
-stratify the fleet by design rather than by performance, and any ordering imposed on them
-is an assumption to be checked rather than a property of the scheme.}
+Within each discipline, the catalogue field \texttt{aile\_class} provides equipment
+groups (Table~\ref{tab:aileclass}). For paragliders it combines EN and older LTF labels,
+for example \enquote{C ou 2}; the analysis harmonizes these catalogue codes under the
+short labels EN A, B, C and D, with CCC and tandem/non-certified entries kept distinct.
+This is a grouping convention, not an independent reassessment of a wing's certificate.
 
-\flow{The two ladders are not documented on equal terms: the FAI classes come from a
-freely published Sporting Code, the EN classes from a paid CEN standard with no public
-authoritative text, so the EN entries of Table~\ref{tab:aileclass} are condensed from the
-closest openly available source rather than the published standard itself
-\impldetails{impl:glider}. Nothing in this thesis depends on the wording --- the class
-field is a stratification label, and what the analysis needs is that the labels are
-distinct and ordered, not what each one certifies.}
+The EN categories describe responses in prescribed flight-safety tests and the demands
+of recovery, as set out in the consulted 2012 final draft~\cite{fpren926_2_2012}. They do
+not define a measured ladder of cruise speed or glide ratio. Equipment class can be
+associated with performance and pilot selection, but those associations must be checked
+in the observations. The published 2013 standard and subsequent amendments were not
+compared here, so the table is not presented as a current certification specification.
+
+The FAI hang-glider classes principally distinguish design and control systems~\cite{fai_sc7_2024}.
+Our stratified comparisons require reproducible group membership; they do not assume
+that classes are equally spaced on a performance scale. Neither
+scheme measures an individual pilot's experience. Blank and placeholder entries remain
+unclassified, and a tandem designation alone does not establish whether that wing has
+an EN certificate.
+Chapter~\ref{ch:global} uses the paraglider classes to define two operational
+experience proxies, beginners (EN A/B) and experts (EN C/D/CCC), while retaining
+this distinction between equipment requirements and individual skill.
 
 \begin{table}[t]
 \centering\small
 \renewcommand{\arraystretch}{1.15}
 \caption{\rev{Class labels recorded in \texttt{aile\_class}, one system per discipline.
-The EN ladder is ordered by increasing demand on the pilot, and that ordering is all the
-stratification needs from it; the FAI classes are \emph{not} a ladder, being defined by
-the method of control. Sources: the FAI Sporting Code, Common
-Section~7~\cite{fai_sc7_2024} (\S\S1.2, 1.4.1) for the FAI classes and the sub-class
+EN labels summarize test-based recovery characteristics; FAI classes distinguish
+control and design. They are used as equipment groups, without assigning pilot ability. Sources: the FAI Sporting Code, Common
+Section~7~\cite{fai_sc7_2024} (\S1.4.1) for the FAI classes and the sub-class
 ceilings; the EN class
-descriptions are condensed from Table~1 of the standard, on the caveat explained in the
-text.}}
+descriptions are condensed from Table~1 of the consulted 2012 final draft~\cite{fpren926_2_2012}.}}
 \label{tab:aileclass}
 {\ifrevmode\color{revblue}\fi
 \begin{tabular}{@{}l p{8.9cm}@{}}
 \toprule
 \textbf{Class} & \textbf{Notes} \\
 \midrule
-\multicolumn{2}{@{}l}{\textbf{Paragliders --- EN/LTF ladder}}\\
+\multicolumn{2}{@{}l}{\textbf{Paragliders --- harmonized EN/LTF catalogue groups}}\\
 \addlinespace[2pt]
 EN\,A & maximum passive safety, extremely forgiving; any level of training \\
 EN\,B & good passive safety, forgiving; ceiling of the FAI \emph{Standard} sub-class \\
@@ -239,14 +241,6 @@ Rigide Class 5 & as Class~2, but in the roll axis only; no fairings \\
 \bottomrule
 \end{tabular}}
 \end{table}
-
-\rev{Two caveats bear on any use of \texttt{aile\_class}: it must be mapped onto one
-canonical label per discipline before it can serve as a stratum, since the field carries
-the FFVL's own code (\enquote{C ou 2}, \enquote{non homologuée}) rather than the EN/FAI
-label of Table~\ref{tab:aileclass}; the placeholder and a blank entry are left unclassified
-rather than guessed \impldetails{impl:glider}. And the class certifies the wing, not
-the pilot, which no processing can remove and which bounds what a class-stratified result
-can be taken to mean.}
 
 \section{Coverage and statistics}
 \label{sec:coverage}
@@ -274,6 +268,7 @@ handful of tracks each, while recent seasons contribute thousands of tracks for
 paragliders and several hundred for hang gliders.
 
 \input{generated/seasons_table_para}
+\Needspace{12\baselineskip}
 \input{generated/seasons_table_hang}
 
 \section{Data quality and caveats}
@@ -295,17 +290,19 @@ A few limitations are already known and will shape the analysis:
         ensemble statistic is computed.
   \item \textbf{Altitude channel.} A sizeable minority of loggers record no
         pressure altitude -- almost a third of paraglider and roughly a sixth of hang-glider
-        flights -- which fall back to the GNSS altitude, with the channel actually used
+        flights. GNSS altitude is used for every admitted flight, with the channel
         recorded per flight (Sec.~\ref{sec:altchannel}).
   \item \textbf{Glider metadata.} Flights are paragliders or hang gliders, tagged by source
         (Section~\ref{sec:glider}); the class field \texttt{aile\_class} must be normalised
         before it is used to stratify.
   \item \textbf{Incomplete dates.} Some historical entries carry the placeholder date
-        \texttt{0000-00-00}, written as a sentinel at acquisition; such flights are
-        discarded. The cut is negligible: \num{\StatCatParaPlaceholderDateCount} of
+        \texttt{0000-00-00}, written as a sentinel at acquisition. Such entries cannot
+        support a calendar-conditioned comparison until a date is recovered independently;
+        the relative-time preprocessing does not itself enforce this metadata exclusion.
+        The count is small: \num{\StatCatParaPlaceholderDateCount} of
         \num{\StatCatParaFlights} paraglider entries carry the sentinel
         (\StatCatParaPlaceholderDatePct\,\%), \num{\StatCatHangPlaceholderDateCount} of
-        \num{\StatCatHangFlights} hang-glider ones, and the worst-affected season loses
+        \num{\StatCatHangFlights} hang-glider ones, and the largest within-season fraction is
         only \StatCatParaPlaceholderWorstPct\,\% of its entries
         (\StatCatParaPlaceholderWorstSeason).
 \end{itemize}
@@ -324,10 +321,9 @@ time, geodetic latitude and longitude, and altitude. The pipeline then proceeds 
   \item enforce a uniform sampling interval within each flight (Sec.~\ref{sec:uniform});
   \item smooth and differentiate the trajectory (Sec.~\ref{sec:savgol}).
 \end{enumerate}
-The output is a tidy, analysis-ready representation written to three tables on the
-data disk: one carrying a row per fix, one a row per segment, one a row per flight
-\emph{attempted}. What each file holds and how the disk is organised is set out in
-Sec.~\ref{impl:onDisk}.
+The output consists of fix, segment and attempted-flight tables, accompanied by a
+table of suspect intervals retained for later sensitivity analysis. What each file holds and how the disk is organised is set out in
+Sec.~\ref{sec:pipelinemap}.
 
 Steps~(i)--(iv) act on the \emph{raw geographic} coordinates, since none of them
 needs a direction. A horizontal distance comes straight from $(\varphi,\lambda)$ through
@@ -335,45 +331,75 @@ the great-circle (haversine) formula of Eq.~\eqref{eq:haversine}; a speed is one
 distance over an elapsed time; an altitude is read as logged. The conversion~(v) to the
 metric East--North--Up frame
 (Sec.~\ref{sec:enu}) then runs on the cleaned, trimmed track, with the origin at the first
-fix that survives trimming, so the tangent-plane frame is built from good data. Steps
+fix that survives trimming. Its reliability remains subject to the cleaning and
+archive checks; passing them does not establish the true position. Steps
 (vi)--(vii) come last because they produce \emph{vector} quantities: 3D position,
 velocity and acceleration components, which need the Cartesian axes step~(v) provides.
 
 
 Every step below is governed by a handful of numerical thresholds. Each is stated where it
 is argued, and the whole set is gathered, with the symbols used here, in
-Table~\ref{tab:workingparams} at the close of the chapter, beside the map of the pipeline.
-All of them are \emph{working values}: fixed a priori, on physical scales rather than on
-the transport observables, and audited a posteriori on the fraction of data each rule
-removes (Table~\ref{tab:pipecensus}).
+Table~\ref{tab:workingparams} in the pipeline summary (Sec.~\ref{sec:pipelinemap}).
+All of them are \emph{working values}, specified independently of the transport
+exponents and audited through their removal fractions (Table~\ref{tab:pipecensus}).
+
+\paragraph{Status of the numerical snapshot.}
+\ifnum\StatSnapshotCurrent=1
+The census, transport measurements and phase analysis use the archive regenerated with
+pipeline version \StatSnapshotVersion. It applies the local paired-barometer requirement,
+the \SI{\PreprocMaxVSpeedMps}{\metre\per\second} vertical-speed threshold and the
+propagation of reconstructed altitude through derivative-estimation windows. The
+checks establish agreement with these numerical rules, not the absence of every recorder error.
+\else
+The numerical figures still use the earlier cleaned archive. They must be regenerated
+with the local paired-barometer requirement, the
+\SI{\PreprocMaxVSpeedMps}{\metre\per\second} vertical-speed threshold and the derivative
+reconstruction mask before they describe the methods below.
+\fi
+The witness audit below concerns the isolated version-2.0.1 correction.
+\input{generated/cleaning_witness_audit.tex}
 
 
 \subsection{Choice of altitude channel}
 \label{sec:altchannel}
 
-The analysis reads the \emph{GNSS} altitude for the vertical dynamics, for every flight,
-end to end. IGC loggers write two altitudes at every fix (Sec.~\ref{sec:igcformat}): a
-barometric one, referenced to the ICAO standard atmosphere, and a GNSS one, an
-ellipsoidal height on WGS84. A pipeline could pick between them per flight, adopting
-whichever is healthier; earlier drafts of this pipeline did exactly that. The choice made
-here is not to: one channel, for the whole population, so the vertical coordinate is the
-same physical quantity in every record. A per-flight choice leaves the population mixed,
-and any correlation between which sensor a flight carried and how it flew -- logger
-model, era, discipline, club -- would then enter the statistics as a selection effect
-that no downstream analysis could undo.
+The analysis uses the logged \emph{GNSS} altitude for every admitted flight. This
+avoids switching between pressure altitude and GNSS within the population, but it does
+not establish a common vertical datum. IGC-approved recorders specify ellipsoidal
+height; the published CIVL specification document for hang-gliding and paragliding
+recorders prescribes geoid-referenced GNSS altitude~\cite{fai_igc_spec,fai_civl_s7h_2024}.
+The published CIVL document contains draft annotations, and recorder compliance across
+this historical archive has not been established. The parser currently preserves the
+numerical field without resolving these conventions.
+Throughout the analysis, $z$ therefore means \emph{logged GNSS altitude}.
 
-\paragraph{The two channels agree at the median.}
-Figure~\ref{fig:altnoise} compares them on \num{3000} flights per discipline. Panel~(a)
+Pressure altitude also depends on atmospheric pressure and temperature. The channel
+choice is a consistent data-processing convention, not evidence that GNSS is always
+more accurate. A constant height offset cancels from increments; a spatially varying
+geoid correction or a changing sensor bias does not. Absolute-height comparisons need
+a recorder-datum audit before they can be interpreted geodetically.
+\paragraph{Comparing the barometric and GNSS channels.}
+The spectral comparison starts from \num{3000} raw flights sampled per discipline.
+It retains flights with at least 95\% pressure-altitude presence and a median cadence
+within \SI{0.25}{\second} of the pooled mode of median intervals rounded to seconds.
+Within each flight, both spectra
+use the same longest block of paired finite, nonzero readings with a valid GNSS flag.
+Duplicate or backward timestamps and gaps larger than 1.5 modal intervals break that
+block; the earliest block wins a tie in fix count. Each channel is then linearly
+resampled at the modal interval, with at least 256 raw fixes and 256 grid values required. Thus the
+comparison neither interpolates across missing-channel runs nor represents every
+sampled recorder. Appendix~\ref{app:psd} defines the spectral estimator.
+Figure~\ref{fig:altnoise} shows the resulting comparison. Panel~(a)
 shows one representative flight over a \SI{30}{\minute} window: the two raw channels
-track each other, offset by the gap between their reference surfaces. Panel~(b) is their
-difference, mean removed -- the offset is not constant but drifts by tens of metres
-already within this window, the barometric side of it traceable to the gap between the
-day's actual sea-level pressure and the ICAO reference of \SI{1013.25}{\hecto\pascal}.
+track each other with a varying offset. Panel~(b) is their
+difference after removing its mean. The remaining variation shows that a constant
+offset alone does not align these channels, even within this window. Such a change can include pressure and temperature effects, spatially varying
+reference-surface differences, and GNSS error; these traces alone do not separate them.
 Panel~(c) is the per-frequency \emph{median} Welch spectrum of each channel
 (Appendix~\ref{app:psd}), pooled over both disciplines with the \numrange{10}{90}
 percentile band across flights: at high frequency the two medians nearly coincide, both
-flattened by the same metre-resolution rounding the IGC format imposes on both channels.
-A typical flight loses nothing moving from barometric to GNSS.
+compatible with contributions from metre-resolution recording and sensor noise.
+Coincident median spectra do not establish equal accuracy on individual flights.
 
 \begin{figure}[htbp]
   \centering
@@ -385,65 +411,121 @@ A typical flight loses nothing moving from barometric to GNSS.
     the SSD (not versioned). Run it to render this figure.}}%
   }
   \caption{Barometric vs GNSS altitude noise. (a)~One representative flight over a
-  \SI{30}{\minute} window, the two raw channels on a shared axis. The vertical gap between
-  the curves is the offset between their reference surfaces (pressure vs.\ ellipsoidal).
-  (b)~Their difference, mean removed: the offset is not constant but drifts by tens of
-  metres already within this \SI{30}{\minute} window. (c)~Per-frequency \emph{median} Welch
+  \SI{30}{\minute} window, the two raw channels on a shared axis. Their separation combines reference-datum differences, atmospheric effects and sensor errors.
+  (b)~Their difference after removing its mean; the remaining variation is visible
+  within the \SI{30}{\minute} window. (c)~Per-frequency \emph{median} Welch
   spectrum of each channel (Appendix~\ref{app:psd}), pooled over the two disciplines, with
-  the \numrange{10}{90} percentile band across flights: the medians nearly coincide, robust
-  to the minority of flights whose raw channel carries an uncleaned spike, while the GNSS
-  band fans out towards the Nyquist frequency $f_{\mathrm{Nyq}}=1/(2\Delta t)$ (dotted).
-  (d)~Fraction of flights whose barometric channel is absent, per discipline.
-  \impldetails{impl:altchannel}}
+  the \numrange{10}{90} percentile band across flights. The medians are close at high
+  frequency; the bands show variation between recorded flights, not uncertainty on a
+  mean spectrum. The dotted line marks the Nyquist frequency $f_{\mathrm{Nyq}}=1/(2\Delta t)$.
+  (d)~Each flight's GNSS-presence fraction, per discipline, zoomed to \numrange{0.80}{1.0}
+  on a log flight count: nearly every flight sits at or near full presence, with a modest
+  population thinning out on approach to the \SI{\PreprocGnssPresentMinPct}{\percent}
+  admission cutoff (dotted). Below it a flight fails the adopted completeness criterion and is
+  excluded, without substitution from the barometer (Sec.~\ref{sec:altchannel}).
+  }
   \label{fig:altnoise}
 \end{figure}
 
-\paragraph{The spread is where they differ, and it is measured, not inferred.}
-An equal median does not bound the size of the GNSS band's high-frequency tail: a median
-is unmoved by anything short of half the population, so two channels can share one and
-still differ enormously in how many flights sit off it. Sizing the tail therefore reads
-each flight's own high-frequency floor directly, rather than eyeballing where the band in
-panel~(c) fans out. Of the \num{\StatAltNoisePsdSampleFlights} paired flights the panel
-is drawn from, \StatAltNoiseGnssExcessThreeXPct\,\% carry a GNSS floor above three times
+\paragraph{Variation between flights.}
+Similar medians can conceal different upper tails. We therefore measure each flight's
+median PSD in the \SIrange{0.35}{0.50}{\hertz} band and compare it with the median of
+these values across barometric records.
+Of the \num{\StatAltNoisePsdSampleFlights} paired flights contributing to the spectrum, \StatAltNoiseGnssExcessThreeXPct\,\% carry a GNSS floor above three times
 the barometric channel's typical one, and \StatAltNoiseGnssExcessTenXPct\,\% above ten
-times it -- a substantial minority, from receiver multipath on timescales of
-minutes~\cite{garciacrespillo2024}, but a minority all the same, and one now stated as a
-number rather than read off a picture.
+times it. Multipath is one possible GNSS error source
+\cite{garciacrespillo2024}; this comparison does not attribute the measured excess
+to a unique physical mechanism.
 
 \paragraph{Availability.}
 A flight is admitted only when its GNSS channel is both present -- covering at least
 \SI{\PreprocGnssPresentMinPct}{\percent} of its fixes -- and alive -- spanning at least
-\SI{\PreprocGnssMinRangeM}{\metre} -- since a dead sensor writes the whole channel as
-zero and a stuck one a constant (Sec.~\ref{sec:preproc}). Below either bound the flight
-has no vertical coordinate at all and is dropped: there is no second channel left to move
-it to. That happens to \StatScanParaNoGnssPct\,\% of paraglider and
-\StatScanHangNoGnssPct\,\% of hang-glider flights; only
-\StatScanParaNoAltitudePct\,\% and \StatScanHangNoAltitudePct\,\% lack \emph{both}
-channels outright. The few individual fixes with a missing value are dropped rather than
-back-filled from the barometer (\StatScanParaGnssMissFlightsPct\,\% of admitted
-paraglider flights, \StatScanHangGnssMissFlightsPct\,\% hang, miss any value at all, with
-a median of \StatScanParaGnssMissMedianFixes\ missing fixes among them against
-$\sim\!10^4$ in a typical track), the hole handled downstream like any other gap
-(Sec.~\ref{sec:uniform}).
+\SI{\PreprocGnssMinRangeM}{\metre} (Sec.~\ref{sec:preproc}). These operational
+criteria reject missing or nearly constant channels without identifying the underlying
+sensor failure; a genuine small altitude excursion can also fail the range criterion. Figure~\ref{fig:altnoise}d shows
+where the population actually sits against the presence cutoff: nearly every flight is at
+or near full presence, with only a thin population approaching it from below. A flight below either
+bound fails the adopted vertical-data quality requirement and is excluded from this
+analysis; this does not imply that every one of its coordinates is unusable. The presence criterion alone excludes \StatScanParaNoGnssPct\,\% of paraglider and
+\StatScanHangNoGnssPct\,\% of hang-glider flights. Both channels fall below their
+presence threshold in \StatScanParaNoAltitudePct\,\% and
+\StatScanHangNoAltitudePct\,\%, respectively; this is not a count of channels with
+every reading absent. Within an admitted flight, a fix with missing GNSS altitude keeps its horizontal
+coordinates. Only its altitude is marked missing; resampling reconstructs that channel
+and marks it \texttt{z\_reconstructed}. There is no substitution from the barometer.
+The affected-flight fractions are \StatScanParaGnssMissFlightsPct\,\% for paragliders and
+\StatScanHangGnssMissFlightsPct\,\% for hang gliders; the median number of missing
+altitudes among affected paraglider flights is \StatScanParaGnssMissMedianFixes.
 
-\paragraph{The barometer keeps a job.}
-Demoted from the analysis channel, the barometer is not discarded: a usable pressure
-sensor still witnesses the frozen-lock rule of Sec.~\ref{sec:fixlevel}, the one place a
-second, independent instrument is indispensable. A lost GNSS lock freezes the reported
-position while the pressure sensor, on a different physical principle, keeps recording a
-real climb -- and the adopted altitude cannot make that argument about itself, coming as
-it does from the very receiver whose lock is in doubt. Read there and nowhere else, the
-barometer enters no observable, so keeping it is not a return to a mixed vertical
-coordinate: \StatPipeParaBaroWitnessPct\,\% of kept paraglider flights and
-\StatPipeHangBaroWitnessPct\,\% of hang-glider ones carry this witness; the rest fall
-back to the recorder's own declarations, the weaker signature of Eq.~\eqref{eq:frozenlock}.
-It also matters little to the main subject of this thesis: the horizontal transport
-analysis uses no altitude at all, and every admitted flight is usable regardless of which
-channel, or how many, it carries.
+\paragraph{A witness must be available where it is used.}
+The pressure channel has a separate role: it can corroborate a suspected frozen GNSS
+position and an interior ground interval (Secs.~\ref{sec:fixlevel} and
+\ref{sec:trimming}). Its flight-level eligibility requires at least
+\SI{\PreprocBaroWitnessPresentMinPct}{\percent} nonzero finite readings and a range of at
+least \SI{\PreprocBaroWitnessMinRangeM}{\metre}. The corresponding archive fractions,
+\StatPipeParaBaroWitnessPct\,\% and \StatPipeHangBaroWitnessPct\,\%, describe eligibility,
+not coverage of every candidate interval.
 
+At fix $i$, define $b_i=1$ when a finite, nonzero pressure altitude accompanies the
+horizontal position in the same decoded record, and $b_i=0$ otherwise. For a candidate
+interval $I$, the barometric test is available only if
+\begin{equation}
+  B_I=B_{\mathrm{flight}}\prod_{i\in I}b_i=1.
+  \label{eq:baro-coverage}
+\end{equation}
+Before duplicate timestamps are merged, zero pressure values are converted to missing:
+a duplicate pair $\{0,1000\}$ supplies its one available \SI{1000}{\metre} reading,
+not an invented \SI{500}{\metre} average. If both are missing, the merged witness
+remains missing. This uses simultaneous readings, not interpolation across time.
+
+A globally usable barometer with even one missing reading inside $I$ cannot certify that
+interval: the barometric criterion abstains. The missing values are neither interpolated
+for this decision nor treated as zeros. The pairing needed here is \emph{position and
+pressure at the same timestamp}; requiring a valid GNSS altitude as well would remove
+the corroborating pressure record precisely when the GNSS altitude fails.
+
+Requiring both sensors on \emph{every flight before cleaning} would select a different
+population of recording devices and discard usable horizontal trajectories. Instead,
+GNSS-only flights remain eligible and the weaker recorder-declaration rule is stated
+explicitly below. A sensitivity analysis restricted to $B_I=1$ would test how much a
+result depends on this weaker evidence.
 
 \subsection{Fix-level cleaning}
 \label{sec:fixlevel}
+
+Cleaning separates evidence of corruption from the action taken on the trajectory.
+A horizontal defect changes which positions can be used; an altitude defect need not.
+The three cases in Fig.~\ref{fig:defect-schematic} organize this distinction:
+\begin{enumerate}
+  \item \textbf{Off-the-trend horizontal defect.} A position spike or an out-and-back
+        jump may receive a Hampel flag. Deletion depends independently on the
+        impossibility gate: the position is unreachable at the speed bound and removal
+        of its block permits a reachable rejoin. A flag alone never deletes a fix.
+  \item \textbf{On-the-trend defect.} Repeated or backward timestamps and frozen
+        positions can agree geometrically with their neighbours. They require time and
+        recorder checks. Duplicate timestamps are merged; frozen runs produce a
+        mandatory segment boundary.
+  \item \textbf{Vertical defect.} A missing or implausible altitude is invalidated
+        while its horizontal fix remains. Reconstruction is recorded separately from
+        horizontal interpolation, so later vertical analyses can identify it.
+\end{enumerate}
+A retained fix is not guaranteed correct. Slowly varying errors and plausible-looking
+corruption can escape every local test; smoothing does not prove that these errors are
+small. The operational aim is to remove positively identified defects while making
+removals, reconstruction and remaining uncertainty inspectable.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{generated/cleaning_defects_schematic}
+  \caption{Three synthetic defects and their distinct consequences. Red marks show
+  the suspect readings; blue shows the retained information. A horizontal spike is
+  deleted only after the speed/rejoin test; a repeated-position interval is cut and split;
+  an altitude spike leaves the horizontal fixes in place. Dashed lines show possible
+  reconstruction, performed later at resampling. These examples illustrate the rules
+  and do not estimate their accuracy on the archive. Repeated positions also require
+  the duration and witness conditions described in the text.}
+  \label{fig:defect-schematic}
+\end{figure}
 
 \paragraph{Geometry on the raw coordinates.}
 The cleaning runs on the raw geodetic coordinates $(\varphi_i,\lambda_i)$, before the
@@ -460,53 +542,20 @@ altitude channel, the vertical velocity $v_{z,i}=(h_{i+1}-h_i)/(t_{i+1}-t_i)$; t
 distance also
 yields the whole-flight \emph{path length} $L=\sum_i\Delta s_i$ and \emph{extent}
 $D=\max_i\Delta s(\mathrm{fix}_0,\mathrm{fix}_i)$. The spherical approximation is ample:
-replacing the WGS84 ellipsoid by a sphere perturbs an inter-fix distance by at most
-$\lesssim\SI{0.3}{\percent}$ (the flattening scale)\footnote{\rev{The ellipsoid's local
+replacing the WGS84 ellipsoid by a sphere perturbs an inter-fix distance by about
+$\SI{0.3}{\percent}$ at the mid-latitudes of the main study regions\footnote{\rev{The ellipsoid's local
 radius of curvature runs from the meridian value $M(\varphi)$ to the prime-vertical value
 $N(\varphi)$ (Eq.~\eqref{eq:geo-ps}), which the haversine formula replaces by the single
 radius $R_\oplus$. At $\varphi\approx45^\circ$, the latitude of the Alps sites that launch
 most of this archive (Sec.~\ref{sec:prelim}), $N(45^\circ)=\SI{6388.83}{\kilo\metre}$ and
 $M(45^\circ)=\SI{6367.38}{\kilo\metre}$ against $R_\oplus=\SI{6371}{\kilo\metre}$: a step is
-stretched by at most $\approx\SI{0.28}{\percent}$ running east--west and shortened by at
-most $\approx\SI{0.06}{\percent}$ running north--south, together the $\lesssim0.3\%$ above.
+shortened by approximately $\SI{0.28}{\percent}$ running east--west and stretched by
+approximately $\SI{0.06}{\percent}$ running north--south, together the $\lesssim0.3\%$ above.
 More generally the deviation is of order the flattening $f=1/298.257\approx\SI{0.34}{\percent}$
-at any latitude, from $\SI{-0.56}{\percent}$ at the equator to $\SI{+0.45}{\percent}$ at the
-poles. Derived in Appendix~\ref{app:geodesy}.}}, about
+at any latitude, up to $\SI{+0.56}{\percent}$ for a meridional step at the equator and
+$\SI{-0.45}{\percent}$ near the poles. Derived in Appendix~\ref{app:geodesy}.}}, about
 \SI{3}{\centi\metre} on a \SI{10}{\metre} step, far below the metre-scale noise of
 consumer GNSS receivers.
-
-
-\paragraph{Design principle.}
-Corrupt or physically impossible fixes must be removed without discarding the flight
-around them; an over-aggressive cleaning biases the result as much as dirty data would. A
-spurious fix that survives does so precisely because it did not disagree with its
-neighbours by more than the test's own threshold, so it carries at most that residual, a
-displacement the smoothing absorbs, whereas a genuine fix removed from a slow, localized
-phase (a search, a climb) erases a real trapping event that nothing downstream can
-restore. The cleaning therefore defaults to keeping the data: a fix is removed only on
-positive evidence of a defect, and no detector deletes a fix that still carries a usable
-horizontal position: a corrupt altitude is marked missing and restored at resampling
-(Sec.~\ref{sec:uniform}), a corrupt horizontal position is deleted outright.
-
-
-\paragraph{Three classes of defect.}
-Past the format-validity check made at decode time (Sec.~\ref{sec:igcformat}), a surviving
-fix can still be wrong in one of three ways, summarized in Table~\ref{tab:cleaning}:
-\begin{itemize}
-  \item \emph{Off the trend}: a position spike, or a jump out and back within one step.
-        The fix disagrees with its neighbours, so a robust local-outlier test, the
-        \emph{Hampel identifier}~\cite{hampel1974,daviesgather1993}, finds it.
-  \item \emph{On the trend}: a duplicated or backward timestamp, or a run of frozen
-        positions from a lost GNSS lock. The fix agrees with its neighbours, so its
-        residual is near zero and it escapes the outlier test; a structural rule catches
-        it instead.
-  \item \emph{Out of range}: an impossible altitude, or a climb/sink rate the
-        neighbourhood as a whole cannot support. The altitude gets an absolute band; the
-        vertical speed gets a \emph{local} test of its own, the median of $|v_z|$ over a
-        window (Eq.~\eqref{eq:vzlocal} below) -- not the Hampel identifier of $xy$, but
-        a local test all the same, and for the same reason: a single step is not enough
-        evidence, on either channel.
-\end{itemize}
 
 \begin{revblock}
 \paragraph{The Hampel identifier.}
@@ -524,8 +573,10 @@ fix is flagged when
   r_k > \max\!\big(k\,\sigma_k,\ \varepsilon_{\min}\big),
   \qquad \sigma_k = 1.4826\operatorname{MAD}_k,
 \end{equation}
-$\sigma_k$ the normalized MAD~\cite{rousseeuw1993}: a departure of more than $k$ robust
-standard deviations \emph{and} an absolute floor $\varepsilon_{\min}$ of a few times the
+$\sigma_k$ a robust local scale~\cite{rousseeuw1993}. The factor $1.4826$ is the
+usual one-dimensional Gaussian MAD normalization; for these two-dimensional radial
+residuals it is a scale convention, not an exact standard deviation or a calibrated
+false-alarm probability. The flag requires both a relative departure and an absolute floor $\varepsilon_{\min}$ of a few times the
 GPS noise. The working values are $k=\PreprocHampelK$, a half-window
 $w=\SI{\PreprocHampelWindowS}{\second}$ and
 $\varepsilon_{\min}=\SI{\PreprocHampelEpsM}{\metre}$, with the test evaluated only where
@@ -542,72 +593,240 @@ protection lies in the speed bound that does the deleting rather than in the fla
 \end{revblock}
 
 \begin{revblock}
-\paragraph{A local test on the vertical speed, not a Hampel test on $z$.}
-The vertical rule does not test the altitude's own local median: it tests the median of
-$|v_z|$, the speed \emph{between} fixes, over a centred window,
+\paragraph{What the median vertical-speed test measures.}
+Write the observed altitude as $h_i=z_i+\epsilon_i$. Even a smooth true trajectory
+produces noisy finite differences,
+\begin{equation}
+ v_{z,i}^{\mathrm{obs}}=\frac{h_{i+1}-h_i}{t_{i+1}-t_i}
+ =\overline v_{z,i}^{\mathrm{true}}+
+   \frac{\epsilon_{i+1}-\epsilon_i}{t_{i+1}-t_i}.
+ \label{eq:altitude-difference-noise}
+\end{equation}
+For independent errors of variance $\sigma_z^2$ at uniform cadence $\Delta t$, the noise
+term has variance $2\sigma_z^2/\Delta t^2$. This illustrative calculation explains why
+one large derivative at a short cadence is weak evidence of a defect; independence is
+not assumed for real GNSS noise.
+
+The sustained-excess statistic is
 \begin{equation}
 \label{eq:vzlocal}
-  \tilde v_j = \operatorname{med}\{\,|v_{z,i}| : |m_i - m_j| \le w_v\,\},
-  \qquad m_i = \tfrac{1}{2}(t_i+t_{i+1}),
+ \tilde v_j=\operatorname{med}\{ |v_{z,i}^{\mathrm{obs}}|:
+       |m_i-m_j|\le w_v,\ v_{z,i}^{\mathrm{obs}}\text{ finite}\},\qquad
+ m_i=\tfrac12(t_i+t_{i+1}),
 \end{equation}
-$m_i$ the midpoint of step $i$ and $w_v$ the window half-width. Fix $k$ is censored --
-its altitude set missing, never the fix itself -- when both the step into it and the
-step out of it are excessive, $\tilde v_{k-1}, \tilde v_k > |v_z|^{\max}$. Testing the
-\emph{median} rather than the step itself is what makes the rule immune to two failure
-modes at once: a wind gust that carries one step past the bound leaves the median where
-it was, since one large value out of a window does not move it, and so does an isolated
-sensor spike, two large steps of opposite sign. Only an excess carried by more than half
-the window moves the median, which is what makes it a statement about a \emph{sustained}
-climb or sink rather than about one sample.
+with $w_v=\SI{\PreprocVzWindowS}{\second}$. It measures the typical \emph{magnitude}
+of the local observed vertical increments, not a signed climb rate or a noise-free
+velocity. Each value belongs to a \emph{step}, located at its midpoint $m_i$;
+a record of $N$ fixes therefore supplies $N-1$ values. Figure~\ref{fig:vz-window}
+shows the calculation: select the midpoints within the window, take the absolute
+speeds, sort them, and read the middle value. For $2r+1$ finite values, the median
+exceeds a bound only if at least $r+1$ values do. For an even number, the median
+is the average of the two central values.
 
-That last point is not a nicety on this dataset: it is what makes reading $z$ from GNSS
-possible at all. A per-step test on the raw difference would fire on ordinary GNSS
-vertical noise -- a few metres of scatter at a 1~Hz cadence already produces occasional
-per-step $|v_z|$ past any climb/sink bound worth setting -- while the window median of
-the same noise sits far below it. The Hampel identifier of the horizontal channel is not
-reused here for the reason it was built: it flags a departure from a local \emph{median
-position}, and the departure is largest exactly at thermal entries and exits, the
-transitions the phase segmentation of Chapter~\ref{ch:phases} is built on. A median of
-speeds sees no such thing -- a thermal entry is one step of large $v_z$ inside a window
-of ordinary ones, not a window that is itself excessive throughout.
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[font=\small, >=Latex]
+    \node[anchor=west, font=\small\bfseries] at (0,4.55)
+      {(a) Select steps by their midpoint};
+    \begin{scope}[shift={(3.25,1.3)}, x=0.43cm, y=0.16cm]
+      \fill[figblue!8] (-5,0) rectangle (5,14.5);
+      \draw[figblue, dashed] (-5,0) -- (-5,14.5);
+      \draw[figblue, dashed] (5,0) -- (5,14.5);
+      \draw[->] (-7,0) -- (7,0);
+      \draw[->] (-7,0) -- (-7,15);
+      \foreach \y in {0,5,10} {
+        \draw (-7.15,\y) -- (-7,\y);
+        \node[anchor=east, font=\footnotesize] at (-7.2,\y) {\y};
+      }
+      \foreach \x/\height in {-6/4,6/4} {
+        \fill[black!18] (\x-0.38,0) rectangle (\x+0.38,\height);
+      }
+      \foreach \x/\height in {-4/2,-2/2,0/12,2/2,4/2} {
+        \fill[figblue!75] (\x-0.38,0) rectangle (\x+0.38,\height);
+        \node[above, font=\footnotesize] at (\x,\height) {\height};
+      }
+      \foreach \x in {-6,-4,-2,0,2,4,6} {
+        \draw (\x,0) -- (\x,-0.35);
+        \node[below, font=\footnotesize] at (\x,-0.35) {$\x$};
+      }
+      \node[above, text=figblue] at (0,14.6) {$|m_i-m_j|\leq 5\,\mathrm{s}$};
+    \end{scope}
+    \node[rotate=90] at (-0.5,2.4) {$|v_{z,i}^{\mathrm{obs}}|$ [m/s]};
+    \node at (3.25,0.45) {Midpoint relative to $m_j$ [s]};
+    \node[anchor=west, font=\small\bfseries] at (7.2,4.55)
+      {(b) Sort the five selected magnitudes};
+    \foreach \x/\value in {7.65/2,8.85/2,10.05/2,11.25/2,12.45/12} {
+      \node[draw=black!25, rounded corners=1pt, minimum width=0.85cm,
+            minimum height=0.7cm] at (\x,2.9) {$\value$};
+    }
+    \node[draw=figblue, fill=figblue!12, rounded corners=1pt,
+          minimum width=0.85cm, minimum height=0.7cm, very thick]
+          (middle) at (10.05,2.9) {$2$};
+    \node[text=figblue] (medianresult) at (10.05,1.8)
+      {$\tilde v_j=2\,\mathrm{m/s}$};
+    \draw[->, figblue] (medianresult) -- (middle);
+    \node[align=center, text width=6cm] at (10.05,0.8)
+      {The value $12$ enters the window,\\but does not determine its median.};
+  \end{tikzpicture}
+  \caption{How Eq.~\eqref{eq:vzlocal} is evaluated. This schematic uses
+  fixes every \SI{2}{\second} and a half-window of \SI{5}{\second}:
+  five step midpoints lie inside it. Grey bars are outside the window and are
+  excluded, regardless of their height. Missing or non-finite speeds are also
+  excluded. Taking absolute values makes an ascent and a descent of equal
+  magnitude contribute equally. These are illustrative values, not flight data.}
+  \label{fig:vz-window}
+\end{figure}
 
-A second rule sits beside the windowed one and the two are not redundant: an
-\emph{out-and-back} spike, an altitude the record jumps away from and back to within one
-step each way, both steps past the bound. Two opposite-signed steps out of a window
-cannot move that window's median, so the windowed rule is blind to this shape by
-construction; the out-and-back rule exists exactly to catch it. A sustained excess --
-where the whole neighbourhood, not one pair of steps, exceeds the bound -- is a genuine
-manoeuvre and is kept: a spiral dive holds real sink for many seconds running, and
-neither rule may censor it.
+With fewer than \PreprocVzMinWindowFixes\ finite steps, the implementation does
+not use the median. Writing $n_j$ for that count, the quantity used by the cleaning is
+\[
+ u_j=\begin{cases}
+       \tilde v_j, & n_j\geq\PreprocVzMinWindowFixes,\\
+       |v_{z,j}^{\mathrm{obs}}|, & n_j<\PreprocVzMinWindowFixes.
+     \end{cases}
+\]
+The second branch is the sparse-window fallback. It can occur at a slow recording
+cadence, near missing altitudes, or at the ends of a record. The sustained-excess
+rule marks the altitude of an interior fix $k$ as missing when
+\begin{equation}
+  u_{k-1}>v_z^{\max}\quad\text{and}\quad u_k>v_z^{\max},
+  \qquad v_z^{\max}=\SI{\PreprocMaxVSpeedMps}{\metre\per\second}.
+  \label{eq:vz-censor}
+\end{equation}
+Step $k-1$ arrives at fix $k$ and step $k$ leaves it. Their statistics must
+\emph{both} exceed the bound; equality does not trigger the rule
+(Fig.~\ref{fig:vz-decision}). When both windows are populated, this tests the
+surrounding speeds. It does not require either of the fix's own increments to
+exceed the bound. The windows share observations, so agreement is not independent
+confirmation, nor does it identify which altitude caused the excess.
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[font=\small, >=Latex]
+    \node[anchor=west, font=\small\bfseries] at (0,5.9)
+      {(a) Two windows meet at one decision};
+    % Times in seconds; only coordinate positions are scaled, not the text.
+    \begin{scope}[x=0.87cm]
+      \fill[black!4] (4,3.55) rectangle (12,5.25);
+      \draw[figblue, very thick] (2,5.1) -- (12,5.1);
+      \draw[figblue] (2,4.96) -- (2,5.24) (12,4.96) -- (12,5.24);
+      \node[above, text=figblue] at (7,5.16)
+        {Incoming window: $u_{k-1}=12\,\mathrm{m/s}$};
+      \foreach \t/\value in {3/12,5/12,7/2,9/2,11/12} {
+        \node[fill=white, inner sep=2pt, text=figblue] at (\t,5.1) {$\value$};
+      }
+      \draw[figred, very thick, dashed] (4,4.1) -- (14,4.1);
+      \draw[figred] (4,3.96) -- (4,4.24) (14,3.96) -- (14,4.24);
+      \node[above, text=figred] at (9,4.16)
+        {Outgoing window: $u_k=12\,\mathrm{m/s}$};
+      \foreach \t/\value in {5/12,7/2,9/2,11/12,13/12} {
+        \node[fill=white, inner sep=2pt, text=figred] at (\t,4.1) {$\value$};
+      }
+      \draw[figblue, densely dotted] (7,5.1) -- (7,2.9);
+      \draw[figred, densely dotted] (9,4.1) -- (9,2.9);
+      \draw[->, black!50] (0,2.9) -- (15,2.9) node[right] {$t$};
+      \foreach \t in {0,2,4,6,8,10,12,14} {
+        \fill[black!50] (\t,2.9) circle (1.7pt);
+        \node[below, font=\footnotesize] at (\t,2.78) {$\t$};
+      }
+      \draw[->, figblue, very thick] (6,2.9) -- (7.92,2.9);
+      \draw[->, figred, very thick, dashed] (8.08,2.9) -- (10,2.9);
+      \fill (8,2.9) circle (2.7pt);
+      \node[above] at (8,3.0) {fix $k$};
+      \node[font=\footnotesize, text=figblue, below] at (7,2.3) {step $k-1$};
+      \node[font=\footnotesize, text=figred, below] at (9,1.94) {step $k$};
+      \node[anchor=west, font=\footnotesize] at (0,2.1) {Time [s]};
+    \end{scope}
+    \node[anchor=west, font=\small\bfseries] at (0,1.45)
+      {(b) Apply the AND condition};
+    \node[anchor=north] at (6.6,1.15) {%
+      \renewcommand{\arraystretch}{1.12}%
+      \begin{tabular}{@{}cccl@{}}
+        \toprule
+        $u_{k-1}$ [m/s] & $u_k$ [m/s] & Both $>10\,\mathrm{m/s}$? & Result of this rule \\
+        \midrule
+        $2$ & $2$ & No & Keep altitude \\
+        $2$ & $12$ & No & Keep altitude \\
+        $12$ & $2$ & No & Keep altitude \\
+        $12$ & $12$ & Yes & Mark altitude missing \\
+        \bottomrule
+      \end{tabular}%
+    };
+  \end{tikzpicture}
+  \caption{How Eq.~\eqref{eq:vz-censor} assigns a window-based decision to a fix.
+  In this schematic, fixes are \SI{2}{\second} apart and both half-windows are
+  \SI{5}{\second}. The incoming window spans $[2,12]$ seconds and the outgoing
+  one $[4,14]$ seconds; the shaded interval is shared. Each window contains five
+  step midpoints; numbers on the bars are their speed magnitudes in m/s.
+  Both medians are \SI{12}{\metre\per\second}, even though the two steps touching
+  fix $k$ have magnitude \SI{2}{\metre\per\second}. The altitude is therefore
+  marked missing at a \SI{10}{\metre\per\second} bound: this is a test of the
+  neighbourhood, not proof that fix $k$ is corrupt. The table gives four example
+  decisions. Other tests can still invalidate a retained altitude; this rule
+  retains the timestamp and horizontal position in every case.}
+  \label{fig:vz-decision}
+\end{figure}
+
+Figure~\ref{fig:vertical-median} contrasts a change of climb rate, an isolated
+sensor spike on a low-speed background, and a sustained excessive interval. With
+sufficient window support, the isolated spike leaves the median low and needs a separate
+out-and-back test: both bounding steps exceed $v_z^{\max}$ and have opposite signs. Genuine sustained motion is retained only while it remains
+below the chosen threshold. A sustained observed excess above it is censored; whether
+it arose from noise or exceptionally strong physical motion cannot be decided from the
+median alone. Correlated noise, clustered errors and a long missing interval therefore
+remain relevant to phase segmentation.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{generated/vertical_median_explainer}
+  \caption{The median test at a one-second cadence, using the configured window and
+  speed threshold. Left: synthetic observed altitude. Right: absolute per-step speed
+  (grey), window median (blue), and the bound (dashed). A change between plausible
+  climb rates remains below the bound; an isolated spike barely affects the median
+  and is handled by the separate spike rule; a sustained excessive interval raises
+  the median. Red crosses mark altitudes invalidated by the actual implementation.}
+  \label{fig:vertical-median}
+\end{figure}
 
 \paragraph{An unreturned vertical step.}
-A third shape is neither of these: a single super-threshold step that is never undone (a
-barometric re-reference, or one corrupt record) matches neither the windowed rule, since
-one step does not move a window median, nor the out-and-back rule, since the record never
-comes back. It is detected and counted per flight, as \path{n_alt_level_shift}, so it is
-visible rather than silently present \impldetails{impl:fixlevel}; what to \emph{do} about
-it is left open, since the vertical channel feeds the phase segmentation of
-Chapter~\ref{ch:phases} rather than the horizontal transport measurement of
-Sec.~\ref{sec:obs-global}, so the choice belongs with that analysis. Its prevalence is
-re-measured with the rest of this pipeline stage after the change of channel and rule
-recorded here, rather than carried over from a count made under the old, barometric,
-per-step regime.
+A level jump can escape both tests: on a sufficiently low-speed background, one
+large step need not raise the window median, and no opposite-sign return triggers
+the spike rule. The counter \path{n_alt_level_shift} marks an isolated excessive step
+when none of the finite altitude readings among the next five fix positions returns
+within 30\% of its jump amplitude. This short horizon does not establish a permanent
+offset, and the count precedes later trimming and segment selection; some candidates
+also satisfy another altitude censoring rule.
 
-The absolute altitude band is placed on data, where its per-fix distribution of
-Fig.~\ref{fig:fixlevel} stops decaying, the same test the horizontal bound is placed
-by. The windowed vertical-speed bound is not: pooled over the archive, panel~(b)'s
-distribution decays smoothly from a few metres per second out past fifty with no
-plateau to read a cut off, because the window median is already robust to a single
-corrupt fix by construction and so has already suppressed the artifact population the
-horizontal method exists to separate. What remains is dominated by genuine dynamics --
-strong thermals, spiral dives, acro and SIV manoeuvres -- decaying into a tail that
-does not stop being physically explicable until it reaches values no manoeuvre
-produces. The bound is set on physical grounds instead: above the extreme-but-real
-envelope and orders of magnitude below where the tail becomes inexplicable
-\impldetails{impl:fixlevel}. The Hampel and frozen-lock parameters are working values
-fixed a priori (Table~\ref{tab:workingparams}), checked a posteriori on the fraction of
-fixes each rule removes (\emph{Completeness, the integrity gate, and validation}
-below).
+In the retained-flight metadata, 47,341 paraglider and 1,349 hang-glider records have at
+least one such candidate before those later steps. These counts cannot be interpreted
+as the number of flights with a surviving sensor defect. A targeted check of two
+high-count and two seeded positive-count records per discipline reproduced the counters
+and found candidate times within usable phase-feature windows in all eight examples.
+The quality masks therefore do not guarantee that this ambiguity has disappeared.
+Candidates are not automatically repaired: a persistent offset would affect absolute
+altitude and produce a transient after differentiation and smoothing, whereas an
+isolated large increment can also reflect real descent or ordinary measurement noise.
+A phase-level sensitivity comparison is still needed before claiming that these
+candidates have negligible influence.
+
+The vertical-speed threshold is placed at
+\SI{\PreprocMaxVSpeedMps}{\metre\per\second}, near the change from a steep decrease
+to a more slowly decaying tail in Fig.~\ref{fig:fixlevel}(b). Around
+\SIrange{9}{10}{\metre\per\second}, the paraglider density (blue) also begins to
+exceed the hang-glider density (red). These visual features motivate an empirical
+cleaning threshold: the transition is gradual, and neither the change of slope nor the
+crossing establishes a physical maximum or proves that every larger value is an error.
+Values in this tail are treated as candidate outliers by the two-window and spike
+rules; only the altitude is invalidated, never the horizontal fix.
+The full diagnostic sample has \SI{0.069}{\percent} of window medians above this
+threshold, compared with \SI{0.014}{\percent} above the previous
+\SI{30}{\metre\per\second} threshold. These are exceedance fractions, not removal
+rates. Inspection of real examples and sensitivity to the cut remain necessary,
+especially for extreme descents.
+The altitude and horizontal-speed bounds are also checked against the observed
+histograms. The Hampel and frozen-lock parameters are likewise working values
+(Table~\ref{tab:workingparams}); removal fractions quantify their impact, not their
+classification accuracy.
 \end{revblock}
 
 \begin{figure}[htbp]
@@ -620,168 +839,127 @@ below).
     SSD (not versioned). Run it to render this figure.}}%
   }
   \caption{Fix-level cleaning: auditing the absolute bounds. Per-fix distributions of the
-  quantities the absolute bounds test---bounds that serve both the out-of-range rule
-  and, through the $v_{xy}$ bound, the impossibility gate that deletes an off-the-trend
-  fix (Sec.~\ref{sec:fixlevel}) --
+  quantities the absolute bounds test---bounds that serve both the out-of-range rule on
+  the vertical channel and, through the $v_{xy}$ bound, the impossibility gate that
+  deletes an off-the-trend fix on the horizontal one (Sec.~\ref{sec:fixlevel}) --
   (a)~horizontal speed $v_{xy}$,
   (b)~the windowed GNSS $\operatorname{med}|v_z|$ of Eq.~\eqref{eq:vzlocal}, the quantity
   the bound of Table~\ref{tab:cleaning} actually acts on, (c)~GNSS altitude -- pooled over
   a large paraglider subsample and the complete hang-glider population, with the adopted
   bounds dashed
   (Table~\ref{tab:cleaning}); the $y$-axis is logarithmic so the sparse tail the bounds
-  act on is visible, panel~(b)'s $x$-axis is logarithmic too, since
-  $\operatorname{med}|v_z|$ spans several decades from level flight up to the cut, and
-  panel~(c)'s $x$-axis is extended to \SI{10000}{\metre} regardless of the sample or the
-  bound, the whole altitude any of these wings could plausibly reach. \rev{In panel~(a)
-  each discipline shows the flat plateau of
-  sustained speeds with no credible flight explanation that places its own bound:
-  \SIrange{45}{55}{\metre\per\second} for paragliders,
-  \SIrange{55}{70}{\metre\per\second} for hang gliders.}
+  act on is visible. All $x$-axes are linear, so the distance from ordinary speeds
+  to the threshold is directly readable. Panel~(b) emphasizes the interval through
+  \SI{60}{\metre\per\second}; its exceedance annotation includes the full sample.
+  The $x$-axis of panel~(c) is extended to \SI{10000}{\metre} regardless of the sample or the
+  bound. Panel~(a) spans \SIrange{0}{120}{\metre\per\second}. Histogram
+  densities use the full finite-sample denominator; the displayed tail is not renormalized.
   Binning choices and sample sizes:
-  \rev{paragraph \emph{Diagnostic sample} of Sec.~\ref{impl:fixlevel}
-  (p.~\pageref{impl:fixsample}). This figure audits the \emph{absolute} bounds only; the
+  \rev{paragraph \emph{Diagnostic sample} of Sec.~\ref{sec:fixlevel}
+  (p.~\pageref{sec:fixlevel}). This figure audits the \emph{absolute} bounds only; the
   Hampel and frozen-lock detectors have no per-fix distribution to read a threshold off,
-  and are validated instead by the removal-fraction sweep described below.}}
+  and require the example inspection and sensitivity assessment described below.
+  The annotated fractions count bound exceedances, not fixes actually removed: deletion
+  also depends on the rejoin rule and vertical invalidation on neighbouring windows.}}
   \label{fig:fixlevel}
 \end{figure}
 
 \begin{revblock}
 \paragraph{Removal policy.}
-A speed bound alone cannot attribute a defect, since the speed belongs to the segment
-\emph{between} two fixes: attribution comes from the bounded-removal test, the block whose
-removal restores the trend being the corrupt one, so an isolated spike is removed without
-touching its neighbours. What happens next depends on \emph{which} value is corrupt, by a
-single criterion: keep every genuine horizontal sample, never hide a hole in the
-horizontal record. In either case the corrupt value is simply discarded, with
-reconstruction deferred to the single resampling step (Sec.~\ref{sec:uniform}). A corrupt
-\emph{altitude} leaves the fix kept and only that channel marked missing, since the
-horizontal position and timestamp are intact and still sample the path; a corrupt
-\emph{horizontal position or time} deletes the whole fix, because keeping it with the
-position marked missing would hide the hole from the gap rule that decides whether to
-bridge or split (Sec.~\ref{sec:uniform}), and an invented straight line could then be laid
-across a full thermalling circle \impldetails{impl:fixlevel}. The IGC validity flag needs
-no rule of its own: a \texttt{V} flag certifies a degraded GNSS altitude
-(Sec.~\ref{sec:igcformat}), and since the adopted channel is GNSS on every flight
-(Sec.~\ref{sec:altchannel}) it always reduces to the corrupt-altitude case.
+A speed belongs to the step \emph{between} two fixes, so a bound exceedance alone
+does not identify the erroneous endpoint. The horizontal rule removes an unreachable
+block when its removal permits a rejoin within the bound. This convention uses the
+local geometry to assign the removal; it does not prove which recorded positions are
+wrong. What happens next depends on the channel that fails the rule, with
+reconstruction deferred to the single resampling step (Sec.~\ref{sec:uniform}). An altitude failure marks only that channel missing, retaining the horizontal
+position subject to its own tests. A rejected horizontal position or timestamp removes
+the whole fix, so the gap rule can decide whether to bridge the resulting hole or split
+the trajectory (Sec.~\ref{sec:uniform}). The same channel-specific convention is used
+for a \texttt{V} flag: GNSS altitude is invalidated, while horizontal coordinates remain
+subject to the geometric tests. This is an adopted treatment of the declaration, not
+evidence that those coordinates are accurate.
 
 \paragraph{An impossible step is a boundary, never flown path.}
-What must hold whatever the scan resolves is the invariant the rest of the pipeline leans
-on: \emph{no step between two surviving fixes may break the $v_{xy}$ bound}. Where a block
+After fix-level cleaning, any surviving pair whose inferred horizontal speed exceeds
+the bound is separated by a segment boundary. Where a block
 is kept because nothing could rejoin it, the step by which the track returns from it is
 itself impossible and, left alone, enters a segment as flown motion: a jump of tens of
 kilometres inside one second, in the archive. Such a step is a transition whose course is
 unknown, so it is made a segment boundary on the same footing as a long gap
 (Sec.~\ref{sec:uniform}), counted per flight as \path{n_boundaried}
-\impldetails{impl:fixlevel}.
+.
 \end{revblock}
 
-\rev{A corrupt first fix is a blind spot no bounded-removal test can close: the scan
-carries the last accepted fix as an anchor and never questions its own first one, and that
-fix becomes the origin of the local frame (Sec.~\ref{sec:enu}), so the error does not
-average out with record length: five paraglider flights left the first full-archive run
-some \SI{4500}{\kilo\metre} from their own origin, enough to raise the ensemble MSD by
-seven orders of magnitude at the shortest lags. Two attribution rules were tried and both
-failed, in opposite directions \impldetails{impl:fixlevel}, so the discontinuity is left as
-a discontinuity and the guarantee is taken one stage later: a record out of reach of its
-own first fix is refused whole (Sec.~\ref{sec:flightfilter}). The invariant
-Chapter~\ref{ch:global} rests on, $|\mathbf{r}(t)|\le v_{xy}^{\max}\,t$, holds either way,
-checked directly on the written tables (Sec.~\ref{impl:verify}).}
+\rev{The forward scan does not re-evaluate its initial anchor, so an erroneous first
+fix can survive this local procedure and displace the origin of the later Cartesian
+frame. A separate flight-level test therefore rejects a track containing a fix beyond
+the distance reachable from its first retained position
+(Sec.~\ref{sec:flightfilter}). The reach test acts on
+spherical distances before projection and smoothing, with a \SI{50}{\metre}
+tolerance. The written Cartesian trajectories undergo separate diagnostic checks
+(Sec.~\ref{sec:dataset-checks}); those operations do not preserve the reach inequality
+as an exact invariant.}
 
 \begin{revblock}
-\paragraph{Frozen-position runs (GNSS lock loss).}
-When the receiver loses its GNSS lock, many loggers repeat the last position for tens of
-seconds while the clock keeps running. Such a run passes every test above: horizontal
-speed zero, altitude in range, valid timestamps. Kept, it contaminates the tail of the
-waiting-time density $\psi(\tau)$ with a false long wait; cut too aggressively, it removes
-real trapping events (tight thermalling climbs, also slow and horizontally localized) from
-the same tail \impldetails{impl:fixlevel}. A run is therefore cut only when three
-independent signatures agree:
-\begin{enumerate}[label=(\roman*)]
-  \item \emph{Spatial diameter.} The run's bounding diameter, the largest great-circle
-        distance between any two of its fixes, stays below $\delta_{xy}$
-        \impldetails{impl:fixlevel}; a circling climb instead traces a disc of diameter
-        $2R\approx\SIrange{30}{100}{\metre}$, at least twice $\delta_{xy}$, and clears the
-        test on geometry alone.
-  \item \emph{An independent witness: the barometric altitude, where the flight
-        carries one.} A GNSS lock-loss freezes only the GNSS position; a horizontally
-        motionless run whose barometric altitude keeps changing at a plausible rate is a
-        tight climb, and is kept. This is the one place the barometer, demoted from the
-        analysis channel (Sec.~\ref{sec:altchannel}), is indispensable: the adopted GNSS
-        altitude comes from the very receiver whose lock is in doubt and cannot witness
-        against itself. Only a byte-identical coordinate repeat may overrule this
-        witness.
-  \item \emph{Recorder declarations.} A byte-identical repeat of the coordinate fields is
-        conclusive on its own: no moving receiver rewrites the same bits. The
-        \texttt{V} flag and a zeroed GNSS altitude are weaker, certifying a degraded GNSS
-        altitude rather than a frozen fix, and decide only where no barometric witness
-        exists.
-\end{enumerate}
-A run is classified as a loss of signal only when spatially collapsed, witnessed, and
-sufficiently long,
+\paragraph{Frozen-position runs and the evidence for GNSS lock loss.}
+A logger may repeat its last position after losing GNSS lock while timestamps continue.
+An unremoved run then resembles a period of spatial confinement. The detector uses
+three joint conditions,
 \begin{equation}
-\label{eq:frozenlock}
-\begin{gathered}
-  \underbrace{\operatorname{diam}(\mathrm{run})<\delta_{xy}}_{\text{(i) collapsed}}
-  \;\wedge\;
-  \underbrace{W}_{\text{witness (ii)/(iii)}}
-  \;\wedge\;
-  \underbrace{\Delta t_{\mathrm{run}}\geq\tau_{\mathrm{freeze}}}_{\text{duration}},
-  \\[4pt]
-  W=
-  \begin{cases}
-    |\Delta z_{\mathrm{baro}}|<\delta_z \,\vee\, \text{byte-identical} &
-      \text{usable barometric witness,}\\[2pt]
-    \texttt{V}/\text{zero-alt} \,\vee\, \text{byte-identical} &
-      \text{no such witness.}
-  \end{cases}
-\end{gathered}
+ \label{eq:frozenlock}
+ D_I<\delta_{xy},\qquad t_{\max I}-t_{\min I}\ge\tau_{\mathrm{freeze}},\qquad W_I=1,
 \end{equation}
-and is then marked as a gap and the trajectory \emph{split} there, never interpolated
-across, with segments keeping their parent's origin and clock (Sec.~\ref{sec:uniform}).
-The working values are $\delta_{xy}=\SI{\PreprocFrozenEpsM}{\metre}$,
-$\delta_z=\SI{\PreprocFrozenDeltaZM}{\metre}$ and
-$\tau_{\mathrm{freeze}}=\SI{\PreprocFrozenTauS}{\second}$, the last of them argued below.
+where $D_I$ is the great-circle diagonal of the latitude--longitude bounding box of
+candidate run $I$, evaluated after longitude unwrapping. This is the implemented
+extent proxy, not an exact all-pairs diameter. The working values are
+$\delta_{xy}=\SI{\PreprocFrozenEpsM}{\metre}$ and
+$\tau_{\mathrm{freeze}}=\SI{\PreprocFrozenTauS}{\second}$.
 
-A real thermalling climb fails the cut on two independent instruments at once: a circling
-wing turns at $R=v^2/(g\tan\phi)$ \impldetails{impl:fixlevel}, giving
-$2R\approx\SI{30}{\metre}$ for the tightest paraglider circles and
-$2R\gtrsim\SI{50}{\metre}$ for hang gliders, missing the diameter test~(i) by a factor of
-at least $2$--$3$; and a climb of order \SI{1}{\metre\per\second} sustained over
-$\tau_{\mathrm{freeze}}$ moves the barometer well past the
-flatness tolerance $\delta_z$. The duration threshold is set on the motion's own timescale,
-about two thermalling periods, so a run long enough to be cut spans at least two
-full circles of any genuine climb: where a barometric witness exists the rule is
-therefore conservative by construction, both margins having to fail at once, well outside their
-designed range \impldetails{impl:fixlevel}. Below $\tau_{\mathrm{freeze}}$ the rule
-deliberately abstains: a collapsed run and a genuine slow, localized stretch are not
-distinguishable by these signatures at durations of a few tens of seconds. The cost is
-bounded, since a kept short freeze lengthens one waiting time by at most
-$\tau_{\mathrm{freeze}}$, swept in the $\psi(\tau)$ sensitivity checks (Sec.~\ref{sec:trimming}).
-\end{revblock}
+Let $E_I$ denote exact equality of both coordinate fields throughout the run,
+$d_I$ the fraction of its fixes with a \texttt{V} flag or missing GNSS altitude, and
+$\Delta b_I$ the median pressure altitude of the final quarter minus that of the first
+quarter. With $B_I$ defined in Eq.~\eqref{eq:baro-coverage}, the witness is
+\begin{equation}
+ W_I=E_I\ \lor\
+ \begin{cases}
+  |\Delta b_I|<\delta_z, & B_I=1,\\
+  \mathrm{false}, & B_{\mathrm{flight}}=1,\ B_I=0,\\
+  d_I>1/2, & B_{\mathrm{flight}}=0,
+ \end{cases}
+ \qquad \delta_z=\SI{\PreprocFrozenDeltaZM}{\metre}.
+ \label{eq:frozen-witness}
+\end{equation}
+The middle branch is essential: incomplete local pressure coverage is not evidence
+of a flat trace. An exact coordinate repeat remains a separate signature even if the
+pressure channel is missing. Once the run is removed, the trajectory is always split
+there; no straight-line interpolation represents its unobserved path.
 
-\paragraph{Residual corner cases.}
-\begin{revblock}
-The frozen-lock rule weakens where the flight carries no usable barometric witness,
-since the adopted GNSS altitude cannot witness a suspected GNSS lock loss: it comes from
-the very receiver whose lock is in doubt. There the witness slot of Eq.~\eqref{eq:frozenlock}
-is filled by the recorder's declarations alone, the diameter and duration conditions
-unchanged \impldetails{impl:fixlevel}. Three error cases follow:
-\begin{itemize}
-  \item \emph{Wrongly cut}, with no barometric witness: a tight climb within
-        $\delta_{xy}$ whose fixes carry a \texttt{V} flag, with no barometer to defend
-        it.
-  \item \emph{Wrongly kept}, also with no barometric witness: an undeclared
-        \emph{jittering} freeze, re-estimated each second rather than repeated
-        byte-for-byte.
-  \item \emph{Kept at bounded cost}, where a barometric witness exists: a jittered
-        freeze under a climbing barometer. Motion during the run goes unrecorded (the
-        path length under-counted, a spurious wait inserted), while the displacement
-        across the run stays correct, the first position after re-acquisition being
-        exact again.
-\end{itemize}
-The first two are expected to be rare and cannot be counted directly, since a rule that
-fails does so silently; what measures the error rate instead is the injected-defect
-calibration below.
+These criteria support a practical detector, not a proof of lock loss. Equal quantized
+coordinates can also occur for a stationary receiver; with sparse raw sampling, a long
+span between a few fixes is not proof of continuous repetition throughout the interval. A small net pressure change can
+hide an up-and-down excursion, and a working barometer can continue climbing during a
+real horizontal GNSS freeze. Moreover, pressure and GNSS are physically distinct sensors
+but their recorded failures need not be statistically independent if the logger freezes
+both channels. The word \emph{witness} therefore means corroborating evidence.
+
+For scale, a coordinated turn in still air has
+\begin{equation}
+ R=\frac{v_{\mathrm{air}}^2}{g\tan\phi},\qquad
+ T_{\mathrm{turn}}=\frac{2\pi R}{v_{\mathrm{air}}}.
+ \label{eq:turn-radius-cleaning}
+\end{equation}
+At $v_{\mathrm{air}}=\SI{10}{\metre\per\second}$ and bank angle $\phi=35^\circ$,
+$2R\simeq\SI{29}{\metre}$ exceeds $\delta_{xy}$, while a sustained
+\SI{1}{\metre\per\second} climb changes pressure altitude far more than $\delta_z$.
+These are reference scales, not universal minimum diameters or guarantees for every
+wind, bank angle and recorder cadence.
+
+The remaining errors have clear directions. A small genuine manoeuvre can be cut if
+all signatures happen to agree; a jittering freeze can be kept without an adequate
+witness; a short freeze is deliberately kept below $\tau_{\mathrm{freeze}}$.
+A single missed short run has limited duration, but multiple missed runs can accumulate.
+Their rates cannot be inferred from the number the detector removes: independent
+inspection or labelled injections are required.
 \end{revblock}
 
 \begin{table}[htbp]
@@ -799,10 +977,12 @@ calibration below.
   itself is corrupt}}\\
 \hline
 Position spike, out-and-back jump
-  & \rev{impossibility gate: unreachable from the last accepted fix at the absolute
-  $v_{xy}$ bound (\num{\PreprocMaxHSpeedParaMps}/\SI{\PreprocMaxHSpeedHangMps}{\metre\per\second},
-  para/hang), and its block's removal lets the track rejoin. The Hampel
-  identifier~\cite{hampel1974,daviesgather1993} flags and attributes; it does not gate}
+  & \rev{two-stage: the Hampel identifier~\cite{daviesgather1993} only
+  \emph{flags} a candidate and attributes the anomaly count; what actually \emph{deletes}
+  is the impossibility gate alone --- unreachable from the last accepted fix at the
+  absolute $v_{xy}$ bound
+  (\num{\PreprocMaxHSpeedParaMps}/\SI{\PreprocMaxHSpeedHangMps}{\metre\per\second},
+  para/hang), \emph{and} its block's removal lets the track rejoin}
   & delete the fix; the short gap is bridged at resampling \\
 \hline
 Position discontinuity (re-acquisition offset)
@@ -823,40 +1003,33 @@ Duplicate timestamp & two or more fixes in one UTC second & merge to one (centro
 \hline
 Backward timestamp & time decreases (not a midnight roll-over) & delete the fix \\
 \hline
-Frozen-lock run & $\operatorname{diam}<\delta_{xy}$ for $\ge\tau_{\mathrm{freeze}}$, witnessed
-  (Eq.~\ref{eq:frozenlock}): baro.\ flat (where present) or byte-identical; \texttt{V}/zero-alt
+Frozen-lock run & $D_I<\delta_{xy}$ for $\ge\tau_{\mathrm{freeze}}$, witnessed
+  (Eqs.~\ref{eq:frozenlock}--\ref{eq:frozen-witness}): paired baro.\ with small net change or identical coordinates; \texttt{V}/zero-alt
   where no barometer witnesses & mark as gap, \emph{split} there \\
 \hline
-\multicolumn{3}{|l|}{\textbf{Out of range} --- \emph{\rev{horizontal position intact, only
-  the altitude value is impossible}}}\\
+\multicolumn{3}{|l|}{\textbf{Out of range} --- \emph{\rev{horizontal fix intact;
+  altitude unavailable or suspect}}}\\
 \hline
 Missing / out-of-band altitude, sustained $|v_z|$ excess, or $|v_z|$ spike
-  & \rev{altitude} channel absent, outside
-  $[\PreprocMinAltM,\PreprocMaxAltM]\,\si{\metre}$, windowed
-  $\operatorname{med}|v_z|>\SI{\PreprocMaxVSpeedMps}{\metre\per\second}$ on both bounding
-  steps (Eq.~\ref{eq:vzlocal}), or an out-and-back pair past it
+  & \rev{separate rules for each condition: \emph{missing}
+  --- altitude channel absent; \emph{out-of-band} --- outside
+  $[\PreprocMinAltM,\PreprocMaxAltM]\,\si{\metre}$, a fixed working band needing no
+  neighbour; \emph{sustained excess} --- both adjacent window statistics exceed
+  \SI{\PreprocMaxVSpeedMps}{\metre\per\second}, with the sparse-window fallback
+  (Eq.~\ref{eq:vz-censor}); \emph{spike} --- an out-and-back pair past that same bound}
   & drop the altitude only; the fix stays \\
 \hline
-\multicolumn{3}{|p{12.4cm}|}{\footnotesize\textbf{Invariant:} a usable horizontal
-  position is never discarded. A fix is deleted only when its \emph{own} \rev{horizontal}
-  position is corrupt
-  or invented (frozen lock); when only \rev{the altitude} is wrong, the fix is kept and that
-  channel is marked missing, to be restored at resampling (Sec.~\ref{sec:uniform}).}\\
+\multicolumn{3}{|p{12.4cm}|}{\footnotesize\textbf{Policy:} altitude-only invalidation
+  retains the timestamp and horizontal coordinates. Position and time rules may
+  remove complete fixes. These are operational decisions, not known sensor truth.
+  Altitude reconstruction occurs at resampling (Sec.~\ref{sec:uniform}).}\\
 \hline
 \end{tabular}
-\caption{Fix-level cleaning, grouped by how each defect presents; in the order of the
-table, the three groups map onto a robust local test, a structural rule, and a local or
-absolute bound. The speed and altitude bounds are audited on the per-fix distributions of
-Fig.~\ref{fig:fixlevel}; the robust-test and frozen-lock parameters ($k$, $w$,
-$\varepsilon_{\min}$, $\delta_{xy}$, $\delta_z$, $\tau_{\mathrm{freeze}}$) are working
-values, stated with the rules that use them and argued in Sec.~\ref{impl:fixlevel};
-Table~\ref{tab:workingparams} gathers them with the rest. The $v_{xy}$ bound is per-discipline because the
-speed envelopes differ (a \texttt{sailplanes} entry follows once that source is in). The
-altitude lower bound is $\SI{\PreprocMinAltM}{\metre}$, not $0$: the adopted altitude is
-GNSS, an ellipsoidal height, and the geoid runs tens of metres below the WGS84 ellipsoid
-over western Europe, so a genuine sea-level take-off can read a
-few tens of metres negative (Sec.~\ref{sec:altchannel}).
-\impldetails{impl:fixlevel}}
+\caption{Fix-level decisions by defect class. Horizontal flags, horizontal deletions,
+and altitude invalidations are distinct operations. The bounds are working values,
+audited in Fig.~\ref{fig:fixlevel} and collected in Table~\ref{tab:workingparams};
+operational details are in Sec.~\ref{sec:fixlevel}. No detector establishes that every
+retained fix is correct.}
 \label{tab:cleaning}
 \end{table}
 
@@ -865,21 +1038,32 @@ few tens of metres negative (Sec.~\ref{sec:altchannel}).
 The segmentation (Ch.~\ref{ch:phases}) needs a defined position and altitude at every time
 within a \emph{segment}, a maximal stretch between two splits, not everywhere;
 cleaning does not guarantee this fix by fix, and the guarantee is established one step
-later, at resampling (Sec.~\ref{sec:uniform}) \impldetails{impl:fixlevel}. Cleaning also
+later, at resampling (Sec.~\ref{sec:uniform}). Cleaning also
 counts how much it had to do over the airborne window (defects in a ground phase that
 trimming removes anyway must not condemn the flight): a flight whose cleaning removed or
 reconstructed more than \SI{\PreprocIntegrityMaxPct}{\percent} of its fixes is dropped
 whole.
 
-All detector parameters are validated by one procedure, run once the cleaning is built:
-the thresholds are frozen a priori, never tuned on the transport observables; the removal
-fraction of each rule is audited over the full archive, expected to touch only a small
-share of fixes; each threshold is swept around its working value and judged well placed
-when what it removes stays on a plateau rather than growing sharply
-\impldetails{impl:fixlevel}; and, since an audit of removals says nothing about what a
-rule misses, defects of known size are injected into clean tracks and scored on recovery
---- the only direct measurement of the error rates the firing counts cannot give
-\impldetails{impl:fixlevel}.
+Validation must distinguish three questions. Removal fractions measure how much the
+pipeline changes the data. Threshold sweeps measure sensitivity to working values.
+Neither measures false positives or false negatives. Those require inspected real
+intervals or known injected defects, with the limitation that injection tests establish
+performance only for the injected shapes and backgrounds. The synthetic regressions and
+the real examples below check explicit failure modes; a representative, independently
+labelled audit remains needed for an archive-wide error rate.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=.94\linewidth]{generated/cleaning_real_examples}
+  \caption{Short examples extracted from the interior of raw flight records and reprocessed
+  with the current cleaning implementation. Top: the horizontal coordinate projected
+  along the detected excursion direction, making the removed spike visible. Middle:
+  a collapsed-position interval; red marks are removed and the surviving sides split.
+  Bottom: GNSS altitude invalidation, with all horizontal fixes retained. Flight
+  identifiers and plotted raw values are saved with the figure. The examples document
+  detector decisions; no independent sensor truth is available for these intervals.}
+  \label{fig:cleaning-real}
+\end{figure}
 \end{revblock}
 
 \subsection{Trimming of ground phases}
@@ -897,122 +1081,127 @@ airborne segment is $[t_{\mathrm{on}},t_{\mathrm{off}}]$ with
   \qquad
   t_{\mathrm{off}}=\max\bigl\{t:\ v_{xy}>v_0\ \text{on}\ [t-T_0,\,t]\bigr\},
 \end{equation}
-the same sustained-speed rule read forward and time-reversed, so a wing soaring into wind
-at near-zero ground speed is not mistaken for having landed. A flight with no sustained
+the same sustained-speed rule read forward and time-reversed. Here $v_{xy}$ is the
+speed inferred on each observed step, not a continuously measured velocity.
+Interior slow periods
+do not define these outer boundaries, although slow flight at either end can be clipped. A flight with no sustained
 stretch at all is discarded.
 
-$T_0$ is set between two scales:
-\begin{itemize}
-  \item \emph{From below}, it must outlast a ground gust or GPS glitch: a few seconds.
-  \item \emph{From above}, it costs little when wrong: misfiring by at most $T_0$ at each
-        end against the \SI{\PreprocMinDurationMin}{\minute} minimum duration a retained
-        flight must reach \impldetails{impl:trimming}.
-\end{itemize}
-The one structural caveat is a slow phase sitting right at the start or end of the flight
-(a launch straight into ridge lift) being clipped along with the ground phase; the
-trimmed fraction is recorded per flight so the exposure can be bounded and the tail
-inspected directly \impldetails{impl:trimming}.
+The persistence time $T_0$ reduces sensitivity to brief speed excursions. It does
+not bound take-off or landing error by $T_0$: a sustained fast ground movement can be
+retained, while a long airborne interval below $v_0$ at either end can be removed.
+The trimmed fraction is recorded per flight, and such cases require direct inspection
+.
 
 \paragraph{Interior ground stints (mid-flight landings).}
 A mid-flight landing and relaunch recorded in one log would otherwise survive as an
 interior near-zero-speed stint and read downstream as a false long wait in the tail of
 $\psi(\tau)$. An interior-ground detector, built like the frozen-lock rule, cuts a stint
-only when two independent signatures agree:
+only when the horizontal and barometric conditions agree:
 \begin{itemize}
-  \item \emph{Sustained stillness.} $v_{xy}<v_0$ continuously for at least
-        $T_{\mathrm{ground}}=\SI{\PreprocInteriorGroundMin}{\minute}$, far beyond any
-        search phase.
-  \item \emph{A flat barometer.} Where the flight carries a usable barometric witness
-        (Sec.~\ref{sec:altchannel}), its detrended central span stays within
+  \item \emph{Sustained low speed.} Successive observed steps remain below $v_0$
+        for at least $T_{\mathrm{ground}}=\SI{\PreprocInteriorGroundMin}{\minute}$.
+        This working persistence threshold reduces cuts of short slow intervals;
+        it does not prove that a longer interval occurred on the ground.
+  \item \emph{A flat barometer.} With complete paired pressure coverage throughout
+        the candidate stint (Eq.~\ref{eq:baro-coverage}), its detrended central span stays within
         $\delta_z^{\mathrm{gr}}=\SI{\PreprocGroundFlatnessM}{\metre}$ over the whole
-        stint, the same independent-sensor argument as Eq.~\eqref{eq:frozenlock}: the
-        adopted GNSS altitude cannot itself supply this witness, its vertical noise
-        already of the order of $\delta_z^{\mathrm{gr}}$. The span is \emph{central}, not
-        a full range, because a full range grows without bound with the stint length on
-        noise alone and would fail a motionless pilot on a long stint while passing the
-        same pilot on a short one \impldetails{impl:trimming}.
+        stint. Specifically, an ordinary least-squares trend is removed and the
+        95th-minus-5th percentile span of the residuals is compared with this bound.
+        Pressure supplies a second measured channel; independence of recorder errors
+        is not assumed. The central span reduces sensitivity to isolated extremes,
+        although short excursions and finite-sample variability remain possible.
 \end{itemize}
-Where no barometric witness exists, the guard \emph{abstains} outright rather than fall
+The fitted pressure-altitude slope must also satisfy
+$|\widehat\beta|\le\delta_z/\tau_{\mathrm{freeze}}$: removing a linear trend alone
+would erase a steady real climb. Where the barometric witness is absent or locally
+incomplete, the guard \emph{abstains} outright rather than fall
 back to sustained stillness alone -- which is exactly the soaring-into-wind failure mode
 the second signature exists to prevent -- at the cost of never flagging a mid-flight
-landing on those flights \impldetails{impl:trimming}.
+landing on those flights .
 
 A cut stint is excised and the flight split there, exactly as at a long gap
 (Sec.~\ref{sec:uniform}). The flight-level cuts of Sec.~\ref{sec:flightfilter} are not
 re-applied to the individual segments, but to the \emph{parent} flight, its airborne
 duration and path length summed over its segments, since a segment is short because a
 gap happened to fall there, which says nothing about whether the flight is genuinely
-cross-country \impldetails{impl:uniform}. Trimming therefore runs before the flight-level
+cross-country. Trimming therefore runs before the flight-level
 cuts in the pipeline order (step~(iii) before step~(iv)), so a duration or path length is
 only meaningful once the ground phases are gone.
 
-Stints shorter than $T_{\mathrm{ground}}$ are not cut but \emph{flagged}: a wait with
-sustained $v_{xy}<v_0$ and a flat barometric trace is marked suspect whatever its length,
-and the $\psi(\tau)$ fits are re-run with and without the suspect waits as a sensitivity
-check, reported per discipline alongside the fits.
+Shorter intervals satisfying the same speed and barometric conditions are
+\emph{flagged} when their duration reaches
+\SI{\PreprocFrozenTauS}{\second}, the configured minimum passed to this stage
+. They remain in the trajectories. The stored flags
+support a future sensitivity analysis with and without these observations;
+that comparison has not yet been carried out.
 \end{revblock}
 
 \subsection{Flight-level filtering}
 \label{sec:flightfilter}
 \begin{revblock}
-After cleaning and trimming, some flights are still unfit for the ensemble analysis and
-are dropped whole. Too aggressive a cut biases the transport statistics --- a high minimum
-duration, for instance, preferentially keeps successful long flights and inflates the
-apparent MSD exponent at long lags --- so filtering uses a \emph{minimal-threshold
-strategy}: each threshold is set to the smallest value that still clears non-genuine
-flights (sled runs, tows, aborted or truncated logs), read off the full-archive
-distribution and retained-fraction curve of its own quantity (Fig.~\ref{fig:preproc}), on
-the stretch where that curve is flat --- where moving the cut changes almost nothing, the
-signature of removing junk rather than signal. Five track criteria gate a flight, plus a
-metadata stratifier; the two that sum over the flight (duration, path) accumulate
-\emph{within} a segment and never across a boundary, whether left by an earlier stage or an
-inter-fix gap wider than the resampling's own $g_{\max}$ (Sec.~\ref{sec:uniform}), so a
-flight is measured over the intervals it will actually be analysed over
-\impldetails{impl:flightfilter}.
+The following thresholds define the population analysed in Chapters~\ref{ch:global}
+and~\ref{ch:phases}. The retained-fraction curves in Fig.~\ref{fig:preproc} show
+how sensitive sample size is to each choice. A plateau does not establish that
+excluded records are defective or that selection is unbiased. Duration selection,
+for example, changes which flights can contribute at long lags and can therefore
+change the estimated scaling.
+
+The criteria act on the trimmed parent flight. Recorded duration $T_{\mathrm{rec}}$
+and path length $L$ sum only within contiguous blocks, excluding forced boundaries
+and gaps longer than $g_{\max}$ (Sec.~\ref{sec:uniform}). Elapsed span
+$T_{\mathrm{span}}=t_{\mathrm{last}}-t_{\mathrm{first}}$ includes those gaps
+.
 \begin{enumerate}[label=(\arabic*)]
-  \item \emph{Recorded duration} $T\geq\SI{\PreprocMinDurationMin}{\minute}$, with an
-        upper sanity bound $T\leq\SI{\PreprocMaxDurationH}{\hour}$ against loggers left
-        running past the flight: \num{\StatScanParaOverlongCount} paraglider
-        ``flights'' of \SIrange{\StatScanParaOverlongMinH}{\StatScanParaOverlongMaxH}{\hour}
-        (none among hang gliders), which would poison the long-lag analyses.
-  \item \emph{Flown path length} $L\geq\SI{\PreprocMinPathKm}{\kilo\metre}$, catching
-        \num{\StatScanParaShortPathCount} of \num{\StatScanParaLongEnoughCount} paraglider
-        and \num{\StatScanHangShortPathCount} of \num{\StatScanHangLongEnoughCount}
-        hang-glider flights above the duration floor --- order $10^{-3}$ of either
-        ensemble, duration already clearing tows and sled runs.
-  \item \emph{Altitude activity.} The adopted channel's whole-flight range must reach
-        \SI{\PreprocMinAltRangeM}{\metre}: a cross-country flight of at least
-        \SI{\PreprocMinDurationMin}{\minute} lives by climbing, so a record spanning less
-        was not soaring. The cut is cheap: moving it from \SI{75}{\metre} to
-        \SI{\PreprocMinAltRangeM}{\metre} changes the retained share by under two points
-        \impldetails{impl:flightfilter}. The cut, and its diagnostic in
+  \item \emph{Duration:} $T_{\mathrm{rec}}\geq\SI{\PreprocMinDurationMin}{\minute}$
+        and $T_{\mathrm{span}}\leq\SI{\PreprocMaxDurationH}{\hour}$. The upper bound
+        screens long recording sessions, including loggers left running after
+        landing. The raw census contains \num{\StatScanParaOverlongCount}
+        paraglider records spanning
+        \SIrange{\StatScanParaOverlongMinH}{\StatScanParaOverlongMaxH}{\hour},
+        and none among hang gliders. These raw counts are not post-trimming
+        removal counts.
+  \item \emph{Path length:} $L\geq\SI{\PreprocMinPathKm}{\kilo\metre}$ restricts
+        short-distance records. In the raw diagnostic population, among flights
+        above the duration floor, \num{\StatScanParaShortPathCount} of
+        \num{\StatScanParaLongEnoughCount} paraglider records and
+        \num{\StatScanHangShortPathCount} of \num{\StatScanHangLongEnoughCount}
+        hang-glider records fall below this path threshold. Neither duration nor
+        path length alone identifies a flight as soaring.
+  \item \emph{Altitude activity.} Where finite altitude is available, the adopted
+        channel's whole-flight range must reach
+        \SI{\PreprocMinAltRangeM}{\metre}. This selects appreciable vertical
+        excursion; soaring at nearly constant altitude can fail the cut. The
+        threshold is therefore a sample restriction, not a classifier of
+        soaring versus non-soaring. The cut, and its diagnostic in
         Fig.~\ref{fig:preproc}c,f, act on the adopted GNSS channel over the whole
-        population (Sec.~\ref{sec:altchannel}) \impldetails{impl:flightfilter}.
-  \item \emph{Plausibility.} The mean ground speed of the retained track, $L/T$, must not
-        exceed the discipline's own fix-level bound $v_{xy}^{\max}$ --- the weakest
-        statement that catches a log corrupt beyond fix-level repair. On the present
-        archive it removes no flight at all, a result rather than a redundancy: an
-        impossible step is now made a segment boundary before it can enter $L$, so what
-        such a record fails instead is the reach criterion below
-        \impldetails{impl:flightfilter}.
+        population (Sec.~\ref{sec:altchannel}) .
+  \item \emph{Mean speed:} $L/T_{\mathrm{rec}}\leq v_{xy}^{\max}$, with consistent
+        length and time units. If every included step already satisfies the same
+        bound, its duration-weighted mean does too. This is a consistency check
+        on the accumulated quantities, not independent evidence of data quality
+        .
   \item \emph{Reach.} No fix may lie further from the first than the bound could have
         carried it in the elapsed time, $\Delta s(\text{fix}_0,\text{fix}_i)\le
-        v_{xy}^{\max}\,t_i$ for every $i$ --- stated per fix, not as the whole-flight
+        v_{xy}^{\max}\,t_i+\varepsilon_{\mathrm{reach}}$, with
+        $\varepsilon_{\mathrm{reach}}=\SI{50}{\metre}$ and $t_i$ measured from the
+        first trimmed fix. The test acts before projection and smoothing, for every
+        $i$, not as the whole-flight
         extent against the whole duration, since that weaker form would license a fix
         \SI{100}{\kilo\metre} out ten seconds into the record on the grounds that the
         flight went on for three hours. This is what catches a corrupt first fix once its
         step is no longer summed into $L$ (Sec.~\ref{sec:fixlevel}): it removes
         \num{\StatPipeParaDropExtentOutOfReachOfTheFirstFix} paraglider and
         \num{\StatPipeHangDropExtentOutOfReachOfTheFirstFix} hang-glider flights, order
-        $10^{-3}$ of either ensemble, and is checked again on the written tables as the
-        invariant $|\mathbf{r}(t)|\le v_{xy}^{\max}t$ the whole of
-        Chapter~\ref{ch:global} assumes (Sec.~\ref{impl:verify}).
+        $10^{-3}$ of either ensemble in the stored snapshot. The written Cartesian
+        trajectories have separate checks with operational tolerances
+        (Sec.~\ref{sec:dataset-checks}).
   \item \emph{Glider class} (metadata). Flights whose \texttt{aile\_class} cannot be
         normalised (Sec.~\ref{sec:glider}) are dropped from class-resolved sub-analyses
         but kept in the pooled one; stratification by discipline is already possible.
 \end{enumerate}
 A further criterion, sampling regularity, is applied later, where a flight's time base is
-examined (Sec.~\ref{sec:uniform}) \impldetails{impl:flightfilter}.
+examined (Sec.~\ref{sec:uniform}).
 \end{revblock}
 
 \begin{figure}[htbp]
@@ -1024,18 +1213,16 @@ examined (Sec.~\ref{sec:uniform}) \impldetails{impl:flightfilter}.
     \texttt{scripts/reporting/ch2\_dataset/generate\_preproc\_figure.py} from the raw IGC tracks on the
     SSD (not versioned). Run it to render this figure.}}%
   }
-  \caption{Flight-level filtering diagnostics, per discipline. \rev{Top: distributions of
-  (a)~recorded flight duration, (b)~flown path length and (c)~whole-flight altitude range.
-  Bottom: the fraction of flights retained versus (d)~the duration cut, (e)~the path-length
-  cut and (f)~the altitude-range cut, each computed for \emph{that cut alone} (marginal,
-  not cascaded). Dashed lines mark the adopted cuts
-  ($T\geq\SI{\PreprocMinDurationMin}{\minute}$, $L\geq\SI{\PreprocMinPathKm}{\kilo\metre}$,
-  range $\geq\SI{\PreprocMinAltRangeM}{\metre}$). The duration and path cuts sit far out in
-  the tail. Panels (c) and (f) are drawn on the adopted GNSS channel, over the whole
-  population: the cached scan carries both channels' extremes, so no flight need be
-  excluded from the diagnostic for a reason unrelated to how it flew
-  (Sec.~\ref{sec:flightfilter}).}
-  \impldetails{impl:flightfilter}}
+  \caption{Raw flight-level diagnostics by discipline. Left column:
+  (a)~recorded duration, (c)~flown path length and (e)~GNSS altitude range. Right
+  column: retention under the corresponding single criterion, evaluated separately
+  on these raw summaries. Dashed lines mark the working thresholds
+  ($T\geq\SI{\PreprocMinDurationMin}{\minute}$,
+  $L\geq\SI{\PreprocMinPathKm}{\kilo\metre}$ and altitude range
+  $\geq\SI{\PreprocMinAltRangeM}{\metre}$). The altitude panels require the configured
+  minimum GNSS coverage. Histogram densities retain their full finite-sample
+  denominators when tails extend outside the displayed range. These marginal raw
+  diagnostics are not the retention fractions of the sequential cleaned-flight cuts.}
   \label{fig:preproc}
 \end{figure}
 
@@ -1160,11 +1347,19 @@ derived in Appendix~\ref{app:geodesy}: an orthogonal matrix of unit determinant,
 and angles are preserved and only the axes change. This ENU frame is the local Cartesian
 frame the whole analysis is carried out in ($E$ east, $N$ north, $U$ along the local
 vertical); the ECEF coordinates of Step~1 are only an intermediate representation, no
-observable is ever expressed in them. Over the spatial extent of a single flight the
-tangent-plane approximation is accurate to well below the GPS noise: it shortens a
-distance $d$ along the surface by $\approx d^3/(24R_\oplus^2)$, about \SI{1}{\centi\metre}
-at $d=\SI{20}{\kilo\metre}$ and \SI{13}{\centi\metre} at \SI{50}{\kilo\metre}
-(Appendix~\ref{app:geodesy}).
+observable is ever expressed in them. The rotation preserves the three-dimensional ECEF chord. Keeping only $(E,N)$
+projects that chord onto the tangent plane and introduces a different approximation.
+For a point at surface distance $d$ from the origin on a sphere,
+\begin{equation}
+ r_{EN}=R_\oplus\sin(d/R_\oplus),\qquad
+ d-r_{EN}=\frac{d^3}{6R_\oplus^2}+O(d^5/R_\oplus^4).
+ \label{eq:enu-projection-error}
+\end{equation}
+The horizontal shortening is about \SI{0.03}{\metre} at \SI{20}{\kilo\metre} and
+\SI{0.51}{\metre} at \SI{50}{\kilo\metre}; it reaches about \SI{33}{\metre} at
+\SI{200}{\kilo\metre}. The often-used $d^3/(24R_\oplus^2)$ expression instead compares
+an arc with its full three-dimensional chord. Neither estimate is a uniform error
+bound for every pair of fixes in a fixed frame.
 
 \begin{figure}[htbp]
   \centering
@@ -1349,121 +1544,146 @@ at $d=\SI{20}{\kilo\metre}$ and \SI{13}{\centi\metre} at \SI{50}{\kilo\metre}
   \label{fig:enu-rotation}
 \end{figure}
 
-\rev{The altitude $h$ entering this transform is the adopted channel of
-Sec.~\ref{sec:altchannel}. The horizontal coordinates are insensitive to that choice: $h$
-enters the horizontal ECEF components only through the radius factor $(N+h)$, so switching
-channel, which changes $h$ by at most $\sim\SI{100}{\metre}$ (Fig.~\ref{fig:altnoise}a),
-rescales them by a relative $\delta h/(N+h)\lesssim2\times10^{-5}$ --- under a metre across
-a \SI{50}{\kilo\metre} flight, below the GPS noise on those coordinates. For the vertical,
-the analysis does not use the rotation's $U$ component: it keeps the adopted altitude
-channel itself, $z(t)=h(t)$, at its measured value, the first fix's altitude \emph{not}
-subtracted. Nothing is gained by re-zeroing: every vertical quantity that matters
-downstream (the vertical velocity, the climb/sink discrimination of the segmentation)
-depends on increments, invariant to the reference, while the measured value preserves the
-absolute height, an observable in its own right (Sec.~\ref{sec:notation}).}
+The transform uses the logged GNSS altitude as its height input. Since the recorder's
+vertical datum is not yet harmonized, this is an approximation to ellipsoidal height.
+A height error $\delta h$ contributes a horizontal error of order
+$|\delta h|\sin(d/R_\oplus)\simeq |\delta h|d/R_\oplus$: for example,
+\SI{100}{\metre} at \SI{50}{\kilo\metre} gives about \SI{0.8}{\metre}. This is an
+illustrative scale, not an archive-wide upper bound.
+The vertical coordinate remains $z(t)=h_{\mathrm{GNSS}}(t)$ rather than the rotation's
+$U$ component, which also contains the curvature of the reference surface. The origin
+altitude is not subtracted; vertical velocities depend on increments, whereas absolute
+height retains the datum limitation stated in Sec.~\ref{sec:altchannel}.
 
 \subsection{Uniform sampling within a flight}
 \label{sec:uniform}
-\begin{revblock}
-The smoothing and differentiation below assume a \emph{uniform} sampling interval, so each
-surviving flight's time base is examined next. Loggers record at a fixed nominal rate ---
-paragliders mostly at \SI{1}{\second} (\StatScanParaDtOneSecPct\,\% of flights), hang
-gliders spread across several rates from \SIrange{1}{10}{\second} (Fig.~\ref{fig:sampling})
---- but the realised series can carry jitter and drop-outs. Each flight is kept at its
-\emph{native} rate, since the derivatives are read off the local polynomial the smoothing
-fits to each flight separately rather than by finite differences across flights
-(Sec.~\ref{sec:savgol}): what matters is uniformity \emph{within} a flight, not across
-flights.
 
-Per flight, with $\Delta t$ the median inter-fix interval, three cases arise. A
-\textbf{uniform} series (all intervals equal to tolerance) is used as is. A
-\textbf{mildly irregular} one --- isolated jitter or drop-outs, no gap beyond the split
-bound $g_{\max}$ and less than \SI{\PreprocMaxMissingPct}{\percent} of the grid missing
---- is resampled onto the uniform grid at its native $\Delta t$, interpolating across the
-small gaps only. One \textbf{broken by a long gap} --- native, or opened where cleaning
-removed a frozen-lock run or a position discontinuity, both sides genuine and only the
-transition unknown --- is not bridged, since interpolating across it would fabricate
-dynamics the smoothing could not tell from real motion: the flight is \emph{split} at the
-gap into independently analysed segments. The missing-fraction check runs \emph{per
-segment}, after splitting rather than among the flight-level cuts, since it needs the time
-base and the splits to exist first \impldetails{impl:uniform}: a segment exceeding
-\SI{\PreprocMaxMissingPct}{\percent} residual missing fraction is dropped alone, and the
-flight is lost only if no segment survives.
+The smoothing and derivative estimates in the next section require equally spaced
+observations. Each flight keeps its native interval,
+$\Delta t=\operatorname{median}_i(t_{i+1}-t_i)$: a flight recorded every second
+stays at one second, and a flight recorded every five seconds stays at five seconds.
+Figure~\ref{fig:sampling} shows these intervals in the archive.
 
-\paragraph{The split bound has two scales.}
-The relative part, $\PreprocMaxGapFactor\,\Delta t$, tolerates isolated dropped fixes in
-proportion to the cadence but alone would let a slow logger bridge holes approaching the
-thermalling period, letting an interpolated straight line replace a full circle. The
-absolute cap of \SI{\PreprocMaxGapS}{\second} is pinned by three constraints: at least
-twice the slowest common cadence, so a single missed fix never splits a flight; at most
-about two thirds of a thermalling period, so a bridged gap can never hide a full circle;
-and well below $\tau_{\mathrm{freeze}}$, for consistency with the frozen-lock rule. A floor
-at $2\,\Delta t$ keeps the first constraint true at every cadence, giving
-$g_{\max}=\min\big(\PreprocMaxGapFactor\,\Delta t,\,\max(\SI{\PreprocMaxGapS}{\second},\,2\,\Delta
-t)\big)$: the relative bound sets it at the dominant \SI{1}{\second} rate, the absolute cap
-from \SIrange{2}{10}{\second}, the floor above that \impldetails{impl:uniform}. On the
-census this leaves \StatScanParaGapSplitCombPct\,\% of paraglider and
-\StatScanHangGapSplitCombPct\,\% of hang-glider flights with at least one split, against
-\StatScanParaGapSplitRelPct\,\% and \StatScanHangGapSplitRelPct\,\% had the relative part
-acted alone; since a split censors the phase in progress, preferentially removing long
-phases from the duration distributions, the cap is treated as a working value and swept in
-the validation procedure of Sec.~\ref{sec:fixlevel} \impldetails{impl:uniform}. The bound
-is the same for every channel, altitude included: the interpolation error is set by the
-signal's curvature, not its speed, and a wide altitude gap would erase the climb--glide
-transitions that $v_z$, the segmentation's discriminant, exists to resolve
-\impldetails{impl:uniform}.
+\begin{figure}[!htbp]
+  \centering
+  \IfFileExists{generated/sampling_intervals.pdf}{%
+    \includegraphics[width=0.62\linewidth]{generated/sampling_intervals}%
+  }{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/ch2\_dataset/generate\_preproc\_figure.py} from the raw IGC tracks on the
+    SSD (not versioned). Run it to render this figure.}}%
+  }
+  \caption{Native sampling interval per flight, measured as the median inter-fix
+  time in the raw archive. Bars give the fraction of flights in one-second bins;
+  the last bin also includes intervals beyond \SI{11}{\second}. Paragliders concentrate
+  at \SI{1}{\second}, while hang gliders are spread across several cadences.
+  Resampling preserves each flight's native interval.}
+  \label{fig:sampling}
+\end{figure}
 
-\paragraph{Consequences of a split.}
-A split is bookkeeping rather than a new trajectory: the ENU conversion (step~v) runs
-before this step, so every fix already carries coordinates and elapsed time referred to
-the parent origin, and \textbf{a segment keeps its parent's origin and clock}. Ensemble
-quantities (the MSD, the propagator) need the position at a given elapsed time, not the
-path in between, so a split costs them nothing; quantities that \emph{accumulate along the
-path} (path length, phase duration, any time-averaged window) are always summed inside one
-segment, never across a gap. Three consequences follow: a phase truncated at a boundary is
-censored and excluded from the duration fits and $\psi(\tau)$ rather than counted as
-complete \impldetails{impl:uniform}; a segment starting at parent time $t_0>0$ is used as
-an observation window onto a process already $t_0$ old, not re-zeroed into a fresh flight,
-since re-zeroing would mix statistics of young and aged trajectories; and the flight-level
-cuts of Sec.~\ref{sec:flightfilter} are not re-applied to segments, which would bias
-against gaps concentrated in particular conditions, so a segment need only be long enough
-to carry the smoothing window, $T_{\mathrm{seg}}=\SI{\PreprocMinSegmentS}{\second}$
-(Table~\ref{tab:workingparams}).
+\paragraph{Fill a short gap; split at a long one.}
+For a gap $g=t_{i+1}-t_i$ between surviving fixes, interpolation is allowed when
+$g\le g_{\max}$, with
+\begin{equation}
+ g_{\max}=\min\!\left(
+   \PreprocMaxGapFactor\,\Delta t,\;
+   \max\!\left(\SI{\PreprocMaxGapS}{\second},\,2\Delta t\right)\right).
+ \label{eq:uniform-gap-bound}
+\end{equation}
+The relative limit scales with the recording interval; the
+\SI{\PreprocMaxGapS}{\second} cap limits the time reconstructed at common cadences.
+The $2\Delta t$ floor allows one missed fix even for slower loggers.
+Thus $g_{\max}=\SI{10}{\second}$ at $\Delta t=\SI{1}{\second}$, and
+$g_{\max}=\SI{20}{\second}$ at $\Delta t=\SI{5}{\second}$.
+A longer gap starts a new segment. Boundaries imposed by cleaning also force a split.
+The cap is a working choice: it limits interpolation without guaranteeing that all
+manoeuvres inside a short gap are resolved.
 
-\paragraph{Interpolation across short gaps.}
-What is filled is only the short holes, up to $g_{\max}$, inside a segment, per channel.
-The time base and a channel come apart in one place: $g_{\max}$ bounds the interval
-between two \emph{fixes}, not an interval over which a fix exists but carries no value ---
-the vertical channel can be absent while the horizontal record is perfect, so no time gap
-opens and no split is declared, and the linear fill spans the hole whatever its length.
-Such a hole does not split the flight, since the horizontal trajectory Chapter~\ref{ch:global}
-measures is intact across it; but the reconstruction must be visible, tracked by its own
-per-fix flag \texttt{z\_reconstructed} and per-segment share, distinct from
-\texttt{interpolated} (a statement about the time base alone) \impldetails{impl:uniform}.
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[x=1.15cm, y=1cm, font=\small]
+    \node[anchor=west] at (0,4.05)
+      {Local examples: $\Delta t=\SI{5}{\second}$, $g_{\max}=\SI{20}{\second}$};
+    \node[anchor=west] at (0,3.55) {(a) Short gap between fixes};
+    \draw[gray!55] (0,3.05) -- (12,3.05);
+    \foreach \x in {0,1,2,5,6,7,8,9,10,11,12}
+      \fill (\x,3.05) circle (1.7pt);
+    \foreach \x in {3,4}
+      \draw[figblue,fill=white,thick] (\x,3.05) circle (2.4pt);
+    \draw[<->,figblue] (2,3.28) -- (5,3.28);
+    \node[anchor=east,font=\scriptsize,text=figblue] at (12,3.55)
+      {\SI{15}{\second}: fill};
 
-The horizontal coordinates are interpolated by a monotone piecewise cubic (a
-shape-preserving Hermite interpolant, chosen so it cannot swing outside the range of the
-points it passes through, which an unconstrained spline could) and the adopted altitude
-linearly, an asymmetry that follows from what each channel is used for: the altitude is
-differentiated once more before it is read, so an interpolation artefact in $z$ propagates
-into a phase assignment where the same artefact in $E$ or $N$ is absorbed by the smoothing
-\impldetails{impl:uniform}. The linear error over a hole of width $g$ is bounded by
-$\max|\ddot z|\,g^2/8$ \impldetails{impl:uniform}; holes are bridged inside a phase far
-more often than across a transition, where the adopted altitude has a nearly constant
-slope, so the error stays at the metre scale even at the \SI{\PreprocMaxGapS}{\second} cap.
+    \node[anchor=west] at (0,2.25) {(b) Long gap between fixes};
+    \draw[gray!55] (0,1.75) -- (4,1.75);
+    \draw[gray!55] (10,1.75) -- (12,1.75);
+    \foreach \x in {0,1,2,3,4,10,11,12}
+      \fill (\x,1.75) circle (1.7pt);
+    \draw[<->,figred] (4,1.98) -- (10,1.98);
+    \node[anchor=east,font=\scriptsize,text=figred] at (12,2.25)
+      {\SI{30}{\second}: split};
+    \node[font=\scriptsize,text=figred] at (7,1.68) {no reconstructed path};
 
-The result is the completeness invariant promised at cleaning: within a retained segment,
-every grid time carries a defined $(E,N,z)$. Every filled point carries a flag ---
-\texttt{interpolated} where the time base had no fix, \texttt{z\_reconstructed} where a fix
-was there but its altitude was not --- so downstream statistics can distinguish measured
-from reconstructed samples, and a phase boundary the segmentation places inside a bridged
-stretch is censored exactly as at a split. The gap bound $g_{\max}$ is the
-sampling-regularity criterion of the flight-level filtering (Sec.~\ref{sec:flightfilter});
-Figure~\ref{fig:gaps} makes the fraction of flights it leaves whole auditable. One caveat
-carries downstream: a few observables, the turning angle above all, are intrinsically
-$\Delta t$-dependent by definition, so where such observables are compared across flights,
-the ensemble is stratified by rate or restricted to the dominant one.
-\end{revblock}
+    \node[anchor=west] at (0,0.95) {(c) Fixes present, altitude missing};
+    \draw[gray!55] (0,0.45) -- (12,0.45);
+    \foreach \x in {0,1,2,3,4,5,6,7,8,9,10,11,12}
+      \fill (\x,0.45) circle (1.7pt);
+    \foreach \x in {3,4,5,6,7,8}
+      \draw[figblue,thick] (\x-0.09,0.34) rectangle (\x+0.09,0.56);
+    \draw[<->,figblue] (2,0.68) -- (9,0.68);
+    \node[anchor=east,font=\scriptsize,text=figblue] at (12,0.95)
+      {\SI{35}{\second}: fill $z$ only};
+    \foreach \x/\tt in {0/0,2/10,4/20,6/30,8/40,10/50,12/60}
+      \node[below,font=\scriptsize] at (\x,0.22) {\tt};
+    \node[anchor=east,font=\scriptsize] at (12,-0.25) {time within excerpt [s]};
+    \fill (0,-0.65) circle (1.7pt);
+    \node[anchor=west,font=\scriptsize] at (0.2,-0.65) {retained fix};
+    \draw[figblue,fill=white,thick] (4,-0.65) circle (2.4pt);
+    \node[anchor=west,font=\scriptsize] at (4.2,-0.65) {time grid filled};
+    \fill (8,-0.65) circle (1.7pt);
+    \draw[figblue,thick] (7.91,-0.76) rectangle (8.09,-0.54);
+    \node[anchor=west,font=\scriptsize] at (8.2,-0.65) {altitude filled};
+  \end{tikzpicture}
+  \caption{Three local examples of resampling. Circles mark new grid times in a short
+  gap; a long gap leaves separate segments. Squares mark reconstructed altitude at
+  existing fixes. The third case has complete temporal coverage: the current rule
+  fills the altitude hole even when it exceeds $g_{\max}$.}
+  \label{fig:uniform-sampling-schematic}
+\end{figure}
+
+\paragraph{Reconstructing the coordinates.}
+Within segment $s$, the grid is $t_k^{(s)}=t_{\mathrm{start}}^{(s)}+k\Delta t$,
+ending at or before its last fix. An already uniform, complete series is unchanged.
+Otherwise, $E$ and $N$ are evaluated with a shape-preserving cubic interpolant
+(PCHIP)~\cite{fritsch1984}, and $z$ with linear interpolation. Linear filling avoids overshoot in altitude
+but can smooth away a climb--glide transition. Outside the first and last finite
+altitude readings, the implementation carries the nearest endpoint value.
+
+A missing altitude at an existing fix is treated separately
+(Fig.~\ref{fig:uniform-sampling-schematic}c). It opens no time gap, so the horizontal
+trajectory stays connected and the altitude is filled without a duration limit.
+The flag \texttt{interpolated} records grid times with no fix within $\Delta t/2$;
+\texttt{z\_reconstructed} additionally marks those whose nearest fix had no altitude.
+Smoothing propagates altitude reconstruction through the derivative windows into
+\texttt{z\_derivative\_reconstructed}. These flags allow the phase analysis to exclude
+unsupported vertical dynamics
+(Chapter~\ref{ch:phases}); numerical completeness alone does not establish accuracy.
+
+\paragraph{Which segments are retained.}
+A segment must span at least \SI{\PreprocMinSegmentS}{\second}, have at most
+\SI{\PreprocMaxMissingPct}{\percent} of its grid times flagged as
+\texttt{interpolated}, and yield finite values in all three coordinates.
+The temporal-coverage gate does not limit altitude-only reconstruction.
+A rejected segment leaves the other segments available; the parent's flight-level
+cuts are not reapplied.
+
+Segments retain the flight's spatial origin and elapsed time. Time-lagged displacement
+pairs and analysis windows are formed within segments. Splitting therefore changes the
+available coverage and can truncate flight phases; it must be accounted for when
+comparing observables. Figure~\ref{fig:gaps} describes gaps in the raw archive;
+observables that depend on the recording interval, such as
+fix-to-fix turning angles, require a common temporal scale or a comparison within
+cadence groups.
 
 \begin{figure}[htbp]
   \centering
@@ -1474,279 +1694,192 @@ the ensemble is stratified by rate or restricted to the dominant one.
     \texttt{scripts/reporting/ch2\_dataset/generate\_preproc\_figure.py} from the raw IGC tracks on the
     SSD (not versioned). Run it to render this figure.}}%
   }
-  \caption{\rev{The two sampling-regularity criteria and their retention curves, per
-  discipline.} Computed on the same full track scan
-  as Figure~\ref{fig:preproc}\rev{---every parsed flight, not only those passing the
-  flight-level cuts, because a cut must be audited on the population it acts on, before
-  \rev{its own effect hides part of the picture---what would hide it is the flight-level
-  cleaning applied first, not this cut.}}
-  \rev{(a)/(b)~Distributions of the two tested quantities: the largest single gap of the
-  flight and the missing fraction of a uniform grid at its native interval. The gap is
-  plotted in units of \emph{that flight's own} $g_{\max}$, not of $\Delta t$, so the
-  criterion actually in force sits at $1$ (dashed) for every flight; because $g_{\max}$ is
-  the two-scale bound and not a fixed multiple of $\Delta t$, a plot against $\Delta t$
-  alone would draw a cut that binds at no cadence but \SI{1}{\second}. The distribution is
-  discrete below the cut, since a gap is usually a run of wholly missed fixes and hence an
-  exact multiple of the native interval.
-  (c)/(d)~The fraction of flights each cut alone would retain as the threshold is moved:
-  \emph{marginal} curves, i.e.\ each cut applied by itself to the full population, not
-  after the other cuts. Both panels are recomputed once the fix-level and flight-level
-  stages run in full; the census behind them predates that pipeline.} \impldetails{impl:uniform}}
+  \caption{Sampling gaps in the raw archive, before cleaning and splitting.
+  (a)/(b): distributions of the largest gap relative to $g_{\max}$ and of the
+  missing fraction on a native-rate grid. (c)/(d): fractions of flights satisfying
+  each criterion separately as its threshold varies. These are diagnostics of
+  whole raw flights; the operational missing-fraction gate acts on segments after
+  splitting, so these curves are not final flight-retention rates.}
   \label{fig:gaps}
 \end{figure}
 
-\begin{figure}[htbp]
-  \centering
-  \IfFileExists{generated/sampling_intervals.pdf}{%
-    \includegraphics[width=0.62\linewidth]{generated/sampling_intervals}%
-  }{%
-    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/ch2\_dataset/generate\_preproc\_figure.py} from the raw IGC tracks on the
-    SSD (not versioned). Run it to render this figure.}}%
-  }
-  \caption{Native sampling interval $\Delta t$ (median inter-fix time) per flight, on the
-  full dataset per discipline. $\Delta t$ is in practice discrete -- it lands on an exact
-  whole second for nearly every flight (Sec.~\ref{impl:uniform}) -- so bins are one
-  second wide, centred on each integer; each bar is the fraction of flights at exactly
-  that rate. Paragliders concentrate at \SI{1}{\second}; hang gliders spread across
-  several rates, with a thin tail beyond \SI{11}{\second} (last bin, aggregated). \rev{A
-  thin tail is present in both disciplines; what differs is the bulk, with the
-  \SI{10}{\second} rate far commoner among hang gliders than among paragliders.} Each
-  flight keeps its own $\Delta t$ (Sec.~\ref{sec:savgol}). \impldetails{impl:uniform}}
-  \label{fig:sampling}
-\end{figure}
+
+
+\FloatBarrier
 
 \subsection{Smoothing and differentiation}
 \label{sec:savgol}
 
-The raw GNSS coordinate series is itself
-noisy, and since it feeds path length, displacement and the phase segmentation directly,
-the position needs denoising in its own right. Velocity and acceleration drive the
-kinematics and the segmentation too, but differencing the raw series to get them would amplify the same high-frequency noise. 
-A Savitzky--Golay
-filter~\cite{savitzky1964} meets both needs in one pass: fitting a low-order polynomial to
-a sliding window by least squares and reading off that polynomial, and its derivatives, at
-the window centre gives the smoothed position and its analytic velocity and acceleration
-from the same fit, one component at a time.\\\\
-
-In the window of $w$ samples centred on sample $i$, let
-$u=j-i$ be the integer offset of sample $j$ from the centre. The polynomial
+Position errors are amplified by differentiation. We estimate position, velocity and
+acceleration from the same local polynomial, fitted independently to $E$, $N$ and $z$
+within each retained segment. For $w=2m+1$ equally spaced samples around fix $i$, the
+Savitzky--Golay fit~\cite{savitzky1964} is
+\begin{align}
+ P_i(u)&=\sum_{k=0}^{p}a_k(i)u^k,\qquad u=-m,\ldots,m,\label{eq:savgol-poly}\\
+ \mathbf a(i)&=\underset{\mathbf a}{\arg\min}\,
+       \sum_{u=-m}^{m}[x_{i+u}-P_i(u)]^2.\label{eq:savgol-lsq}
+\end{align}
+Here $u$ is a sample offset. The physical quantities at the window centre are
 \begin{equation}
-  \label{eq:savgol-poly}
-  P(u) = \sum_{k=0}^{p} a_k\, u^k, \qquad u=-m,\ldots,m, \qquad w=2m+1,
+ \widehat x_i=a_0(i),\qquad
+ \widehat v_i=\frac{a_1(i)}{\Delta t},\qquad
+ \widehat a_i=\frac{2a_2(i)}{\Delta t^2}.
+ \label{eq:savgol-physical}
 \end{equation}
-is fitted by minimizing the squared residual over the window,
+
+\paragraph{The weights.}
+With $V_{u,k}=u^k$ and $\mathbf x_i=(x_{i-m},\ldots,x_{i+m})^\top$, the mathematical
+least-squares solution is
 \begin{equation}
-  \label{eq:savgol-lsq}
-  \sum_{u=-m}^{m}\Big(x_{i+u} - P(u)\Big)^2 .
+ \mathbf a(i)=(V^\top V)^{-1}V^\top\mathbf x_i.
+ \label{eq:savgol-solution}
 \end{equation}
-$u$ counts samples, not seconds: whatever $a_1$ and $a_2$ turn out to be, they are
-derivatives with respect to the sample count, not yet with respect to time.
-
-
-\paragraph{A fixed kernel} Eq.~\eqref{eq:savgol-lsq} is linear in the
-coefficients $a_k$, so it has a closed-form solution,
+The inverse is a formula for the weights, not a recommendation to form a matrix inverse
+numerically. The implementation uses SciPy's Savitzky--Golay coefficients. For fixed
+$(w,p)$, row $k$ defines weights $c_k(u)$ with
 \begin{equation}
-  \label{eq:savgol-solution}
-  \mathbf a = \big(V^{\top}V\big)^{-1}V^{\top}\mathbf x, \qquad V_{u,k}=u^k,
+ a_k(i)=\sum_{u=-m}^{m}c_k(u)x_{i+u}.
+ \label{eq:savgol-convolution}
 \end{equation}
-with $\mathbf x=(x_{i-m},\ldots,x_{i+m})^{\top}$. The fitted coefficients $\mathbf a$ still
-depend on the data in the window, through $\mathbf x$; what does not is $V$, built from
-the offsets $u$ alone, hence identical at every window position, and so is the weight
-matrix $(V^{\top}V)^{-1}V^{\top}$ it defines. Row $k$ of that matrix, $c_k(u)$, turns the
-data into $a_k$ by a fixed linear combination,
-\begin{equation}
-  \label{eq:savgol-convolution}
-  a_k(i) = \sum_{u=-m}^{m} c_k(u)\, x_{i+u},
-\end{equation}
-precomputed once for a given $(w,p)$ and applied unchanged as $i$ slides along the series:
-a convolution of the signal with a fixed kernel, never a fit repeated window by
-window~\cite{savitzky1964}. Each order $k$ has its \emph{own} kernel this way, a set of
-$w$ weights $\{c_k(u)\}_{u=-m}^{m}$, one number per offset, not a single number:
-\begin{itemize}
-  \item $c_0(u)$ reads off the \emph{smoothed value}, $a_0$;
-  \item $c_1(u)$ reads off the \emph{velocity}, $a_1$;
-  \item $2c_2(u)$ reads off the \emph{acceleration}, $2a_2$.
-\end{itemize}
-
-Table~\ref{tab:savgol-kernels} lists the three actual kernels the pipeline convolves
-with, at the working $(w,p)$; Fig.~\ref{fig:savgol}
-shows one such window's fit alongside the real filtered output, edge samples included.
-
-\begin{figure}[htbp]
-  \centering
-  \IfFileExists{generated/savgol_explainer.pdf}{%
-    \includegraphics[width=0.55\linewidth]{generated/savgol_explainer}%
-  }{%
-    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/ch2\_dataset/generate\_savgol\_figure.py}. Run it to render
-    this figure.}}%
-  }
-  \caption{The Savitzky--Golay filter as a local fit and as a fixed convolution, on
-  a synthetic series, $\sin(0.28\,j) + \varepsilon_j$ with i.i.d.\ Gaussian noise
-  $\varepsilon_j\sim\mathcal N(0,0.35^2)$ (dots). The highlighted window's own local
-  cubic fit (thick line), and the values it reads off at its centre, $a_0$ (ringed dot)
-  and the slope $a_1$ (dashed); the inset zooms on the centre, where the fit trades the
-  one raw sample $x_i$ (grey) for the smoothed $a_0$ (blue). Alongside it, the actual
-  filtered output run on the whole span exactly as the filter runs it on a flight
-  segment. The $m$ points nearest each edge (hollow squares) have no full window on one
-  side, so they are fitted on the nearest full window inside the span and evaluated
-  off-centre.}
-  \label{fig:savgol}
-\end{figure}
-
-
-Physical units follow by dividing by the flight's own
-$\Delta t$: $a_1/\Delta t$ is the velocity and $2a_2/\Delta t^2$ the acceleration.\\
-The window never crosses a
-segment boundary; near one it is fitted on the nearest full window inside the segment and
-evaluated off-centre, flagged the same way as an interpolated
-point \impldetails{impl:savgol}.
-
-\paragraph{Polynomial order.} $p=\PreprocSavgolOrder$ is the lowest order that works:
-\begin{itemize}
-  \item an acceleration needs curvature, so $p\geq2$;
-  \item one order more is needed for the velocity: on a symmetric window an even-order
-        term leaves the odd-order coefficients untouched, so the velocity of a $p=2$ fit
-        is identical to a straight-line fit's, and $p=3$ is the first order that
-        responds to the acceleration varying across the window.
-\end{itemize}
-
-\begin{revblock}
-\paragraph{The two hyperparameters.} Window length $w$ (odd, in samples) and polynomial
-order $p$ are fixed from the measured noise spectrum rather than by eye. From the
-ensemble Welch spectrum of the raw ENU components, the frequency $f_c$ of the knee
-where the dynamical signal meets the flat GPS noise floor gives a smoothing timescale,
-\begin{equation}
-  \label{eq:savgol-tauc}
-  \tau_c = 1/f_c,
-\end{equation}
-measured at $f_c\approx\SI{0.2}{\hertz}$ for every channel (Fig.~\ref{fig:savgol-spectrum}),
-hence $\tau_c=\SI{\PreprocSavgolTauCS}{\second}$. $w$ then follows two rules, whichever
-gives the larger window:
-\begin{equation}
-  \label{eq:savgol-window}
-  w = \max\Big(\big\lceil \tau_c/\Delta t\big\rceil_{\mathrm{odd}},\ \PreprocSavgolMinWindow\Big),
-\end{equation}
-the first rounding $\tau_c/\Delta t$ up to the nearest odd integer (odd, so the window
-has a centre sample), the second a floor at the smallest window a cubic fit
-meaningfully determines. At the dominant \SI{1}{\second} cadence the two terms agree
-($\tau_c/\Delta t=5$); at every slower cadence the floor wins and the window spans more
-than $\tau_c$. That
-costs little: a slower
-cadence samples closer to $f_c$ itself, so there is less noise band above it left to
-remove, and such flights are in any case excluded from $\Delta t$-sensitive observables
-by the rate stratification (Sec.~\ref{sec:uniform}).
-
-
-
-
-\paragraph{The vertical channel.} It is treated on the same footing as the horizontal.
-The three channels' knees coincide because the flat high-frequency floor of every
-channel comes from the IGC format's own rounding rather than from receiver noise:
-\SI{1}{\metre} for altitude, and for position the $1/1000$ arc-minute of the
-\texttt{DDMM.mmm} field, \SI{1.852}{\metre} north--south (one arc-minute of latitude is
-one nautical mile, by definition). What distinguishes the noisy GNSS minority is how
-high its floor sits, not where the knee is \impldetails{impl:savgol}.
-
-Fig.~\ref{fig:savgol-spectrum} makes this checkable rather than asserted, per
-discipline. Not the full archive, and only flights within \SI{0.25}{\second} of the
-dominant \SI{1}{\hertz} cadence, so every spectrum is on the same frequency grid: a
-seeded sample of those gave \StatSavgolSpecParaHorizN\ paraglider and
-\StatSavgolSpecHangHorizN\ hang-glider flights with a usable horizontal
-spectrum, \StatSavgolSpecParaBaroN\ and \StatSavgolSpecHangBaroN\ a barometric-vertical
-one, and \StatSavgolSpecParaGnssN\ and \StatSavgolSpecHangGnssN\ a GNSS-vertical one
-\impldetails{impl:savgol}. Within each discipline the three channels' knees collapse
-onto the same frequency, as just argued; across disciplines they land within a few
-hundredths of a hertz of each other despite paragliders and hang gliders flying at very
-different speeds and turn rates, which is what a floor set by the file format rather
-than by either discipline's own dynamics predicts.
-
-\begin{figure}[htbp]
-  \centering
-  \IfFileExists{generated/savgol_spectrum.pdf}{%
-    \includegraphics[width=\linewidth]{generated/savgol_spectrum}%
-  }{%
-    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/ch2\_dataset/generate\_savgol\_spectrum\_figure.py}. Run it
-    to render this figure.}}%
-  }
-  \caption{\rev{The ensemble Welch power spectral density of each channel, by
-  discipline: horizontal ($E$, $N$ pooled), barometric-vertical and GNSS-vertical.
-  Median over a seeded sample of up to \num{900} flights per discipline, restricted to
-  those within \SI{0.25}{\second} of the dominant \SI{1}{\hertz} cadence so every
-  spectrum shares one frequency grid; the usable count per channel is in its legend
-  entry. The dotted line is the knee frequency read
-  by eye off the curves, not fitted: \SI{0.20}{\hertz} for paragliders,
-  \SI{0.23}{\hertz} for hang gliders. Within a panel the three channels flatten into the
-  same floor at visibly the same frequency; paragliders and hang gliders fly at very
-  different speeds, yet the two panels' knees still land within a few hundredths of a
-  hertz of each other, the cross-check the main text draws on.}}
-  \label{fig:savgol-spectrum}
-\end{figure}
-
-\paragraph{Validation.} The choice is checked on a held-out sample against three
-criteria:
-\begin{itemize}
-  \item the residual spectrum (raw minus smoothed) is flat above $f_c$;
-  \item the smoothed kinematics stay within the physical bounds of
-        Table~\ref{tab:workingparams};
-  \item the result is stable when $w$ is changed by one step.
-\end{itemize}
-\impldetails{impl:savgol}.
-
-\paragraph{A fourth criterion, on the observable itself.}
-A fourth criterion is a property of what the filter is for: the smoothing must not remove
-the displacement the transport analysis is about to measure. The window is floored at
-\PreprocSavgolMinWindow\ samples, binding for every logger slower than \SI{1}{\hertz}, so
-in seconds the window is $\max(\tau_c,\,\PreprocSavgolMinWindow\,\Delta t)$. Measured on synthetic
-trajectories of known exponent ($\alpha=1.8$) and
-no measurement noise, the filtered MSD sits within \SI{2.3}{\percent} of the true one at a
-lag of two samples and within \SI{1}{\percent} from three samples upward: a cubic filter
-reproduces any locally cubic trajectory exactly, and a strongly correlated trajectory is
-locally close to cubic. What does move the short-lag MSD is measurement noise, in the
-opposite direction: independent noise of standard deviation $\sigma$ adds
-${\approx}2\sigma^2$ at every lag, and with $\sigma=\SI{3}{\metre}$ the measured-to-true
-ratio is $8.1$ at one sample, falling to $1.05$ at twelve and $1.003$ at sixty-four ---
-smoothing de-biases rather than erases it, and the floor it leaves,
-$2\sigma^2\approx\SI{18}{\metre\squared}$, sits orders of magnitude below the measured MSD
-everywhere in the fitted range \impldetails{impl:savgol}. The consequence is that the
-first decade of Fig.~\ref{fig:msd} is instrument, not transport, and the fit does not begin
-there; a second, related effect is that a flight answers a lag with its own nearest fix,
-so a logger slower than \SI{1}{\hertz} shows a short-lag staircase --- both effects die out
-well below the fit range.
-\end{revblock}
+This forward-offset convention is a correlation; convolution uses the reversed weights.
+For an odd derivative the reversal changes their signs. Table~\ref{tab:savgol-kernels}
+gives the forward-offset weights, before conversion to seconds.
 
 \begin{table}[htbp]
 \centering\small
-\renewcommand{\arraystretch}{1.3}
-\caption{\rev{The three kernels of Eq.~\eqref{eq:savgol-convolution} at the working
-window and order, $w=\PreprocSavgolMinWindow$, $p=\PreprocSavgolOrder$: exact,
-closed-form weights, fixed by $(w,p)$ alone and never touching the data or $\Delta t$.}}
+\renewcommand{\arraystretch}{1.4}
+\caption{Interior Savitzky--Golay weights for $w=5$, $p=3$. Velocity and acceleration
+weights must be divided by $\Delta t$ and $\Delta t^2$, respectively.}
 \label{tab:savgol-kernels}
-\begin{tabular}{@{}l r r r r r@{}}
+\begin{tabular}{@{}lrrrrr@{}}
 \toprule
-& \multicolumn{5}{c@{}}{offset $u$} \\
+& \multicolumn{5}{c}{sample offset $u$}\\
 \cmidrule(l){2-6}
-kernel & $-2$ & $-1$ & $0$ & $1$ & $2$ \\
+& $-2$ & $-1$ & $0$ & $1$ & $2$\\
 \midrule
-$c_0(u)$ (value) & $-\tfrac{3}{35}$ & $\tfrac{12}{35}$ & $\tfrac{17}{35}$
-  & $\tfrac{12}{35}$ & $-\tfrac{3}{35}$ \\[5pt]
-$c_1(u)$ (velocity) & $\tfrac{1}{12}$ & $-\tfrac{8}{12}$ & $0$
-  & $\tfrac{8}{12}$ & $-\tfrac{1}{12}$ \\[5pt]
-$2c_2(u)$ (acceleration) & $\tfrac{2}{7}$ & $-\tfrac{1}{7}$ & $-\tfrac{2}{7}$
-  & $-\tfrac{1}{7}$ & $\tfrac{2}{7}$ \\
+$c_0$ & $-3/35$ & $12/35$ & $17/35$ & $12/35$ & $-3/35$\\
+$c_1$ & $1/12$ & $-8/12$ & $0$ & $8/12$ & $-1/12$\\
+$2c_2$ & $2/7$ & $-1/7$ & $-2/7$ & $-1/7$ & $2/7$\\
 \bottomrule
 \end{tabular}
 \end{table}
+
+The order $p=\PreprocSavgolOrder$ allows nonzero acceleration and locally varying
+acceleration. A quadratic already estimates velocity and acceleration; a cubic is a
+modelling choice, not a mathematical necessity. On a symmetric window, adding a cubic
+term changes the first-derivative weights but leaves the value and second-derivative
+weights of the quadratic fit unchanged.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\linewidth]{generated/savgol_explainer}
+ \caption{A cubic fit to a synthetic signal. Left: one five-sample window, its fit and
+ the fitted value and slope at the centre. Right: the output of the implemented filter
+ over the same series; squares mark the two edge samples at each end. Synthetic values
+ are $\sin(0.28j)+\varepsilon_j$, with independent
+ $\varepsilon_j\sim\mathcal N(0,0.35^2)$.}
+ \label{fig:savgol}
+\end{figure}
+
+\paragraph{Window length and cadence.}
+A raw spectral diagnostic suggests a change in slope around \SI{0.2}{\hertz}
+(Fig.~\ref{fig:savgol-spectrum}). It motivates the working timescale
+\begin{equation}
+ \tau_c=1/f_c=\SI{\PreprocSavgolTauCS}{\second},\qquad
+ w=\max\!\left(\left\lceil\frac{\tau_c}{\Delta t}\right\rceil_{\mathrm{odd}},
+               \PreprocSavgolMinWindow\right).
+ \label{eq:savgol-window}
+\end{equation}
+\label{eq:savgol-tauc}
+Horizontal and vertical timescales are separate configuration entries, currently equal.
+The code converts this timescale to a \emph{number of samples}: the distance in time
+between the first and last sample of a window is $(w-1)\Delta t$. Thus $w=5$ spans
+\SI{4}{\second} at a \SI{1}{\second} cadence, and \SI{20}{\second} at a
+\SI{5}{\second} cadence. Slower recording therefore changes the physical smoothing
+scale and can remove motion that faster loggers resolve. Comparisons of short-time
+observables must control for cadence.
+
+The spectral knee is neither a fitted receiver-noise model nor the cutoff frequency
+of this filter. For the value weights, the interior frequency response is
+\begin{equation}
+ G(f)=\sum_{u=-m}^{m}c_0(u)e^{2\pi\mathrm{i}fu\Delta t},\qquad
+ S_{\widehat x}(f)=|G(f)|^2 S_x(f).
+ \label{eq:savgol-response}
+\end{equation}
+Its shape follows from the kernel (Fig.~\ref{fig:savgol-response}). Rounding a field to
+steps of size $q$ has variance $q^2/12$ only under a uniform-error approximation;
+a flat quantization spectrum additionally requires temporal independence. Similar
+high-frequency spectra do not establish those assumptions or identify the source of
+the observed knee.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\linewidth]{generated/savgol_spectrum}
+ \caption{Median raw Welch PSDs, by discipline and coordinate channel, on a seeded
+ sample of up to \num{900} flights per discipline. Spectra use recording intervals
+ near \SI{1}{\second}; legend counts give the usable flights. Horizontal coordinates
+ use a local equirectangular approximation before cleaning, and the curve pools both
+ component spectra from each admitted flight. Channel eligibility is assessed separately,
+ so the three medians need not represent identical flights or intervals. The vertical dotted
+ lines are visual reference frequencies, \SI{0.20}{\hertz} and \SI{0.23}{\hertz},
+ not estimates with an uncertainty interval. Recording precision, sensor error,
+ interpolation and real motion can all affect these spectra.}
+ \label{fig:savgol-spectrum}
+\end{figure}
+
+\paragraph{What smoothing changes in an MSD.}
+For an interior sample with independent, zero-mean measurement error of variance
+$\sigma^2$ per coordinate, the filtered error is
+$\eta_i=\sum_u c_0(u)\varepsilon_{i+u}$. Extending the weights by zero outside the
+window gives its covariance and its contribution to a one-coordinate MSD:
+\begin{align}
+ C_\eta(\ell)&=\sigma^2\sum_u c_0(u)c_0(u-\ell),\\
+ B(\ell)&=\mathbb E[(\eta_{i+\ell}-\eta_i)^2]
+       =2\sigma^2\!\left[\sum_u c_0(u)^2-\sum_u c_0(u)c_0(u-\ell)\right].
+ \label{eq:savgol-msd-noise}
+\end{align}
+For $w=5$, $p=3$, $\sum c_0^2=17/35$. At lags $\ell\ge5$ the noise contribution
+is therefore $34\sigma^2/35$ per coordinate, compared with $2\sigma^2$ before
+smoothing. A horizontal MSD adds the contributions of both coordinates. At shorter
+lags, overlapping windows correlate the errors, so the bias is lag dependent.
+These expressions require independent errors; they are not an empirical GNSS
+calibration. The filter also changes the true motion unless it is polynomial of degree
+at most $p$ on every relevant window. A Hurst exponent alone supplies no bound on that
+change.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\linewidth]{generated/savgol_response}
+ \caption{Exact effects of the five-sample cubic filter away from segment edges.
+ Left: power transmission $|G(f)|^2$ against normalized frequency $f\Delta t$.
+ Right: additive one-coordinate MSD from independent unit-variance measurement noise.
+ The remaining bias depends on lag and does not equal the unfiltered $2\sigma^2$.}
+ \label{fig:savgol-response}
+\end{figure}
+
+\paragraph{Edges and validation.}
+At either end of a segment, the filter fits the nearest full window and evaluates that
+polynomial inside its fitted interval. These are off-centre evaluations, not
+extrapolation beyond the observations. The first and last $m$ samples carry an
+\texttt{edge} flag because their weights and error variance differ from the interior.
+The filter can overshoot despite earlier cleaning, so speed bounds are not guaranteed
+by smoothing.
+
+The kernel identities and derivative units are checked in automated tests. Archive-level
+validation remains separate: after rebuilding the cleaned archive, compare the MSD and
+phase features at neighbouring odd window lengths, within each cadence class, and with
+edge and reconstructed samples excluded. A flat residual spectrum is not a sufficient
+criterion: even white input noise has residual PSD $|1-G(f)|^2S_\varepsilon(f)$.
+Until these comparisons are reported, the adopted window is a working choice rather
+than a certified optimum.
 
 \subsection{Notation}
 \label{sec:notation}
 Throughout:
 \begin{itemize}
   \item \textbf{Horizontal position.} $\mathbf{r}(t)=\big(x(t),y(t)\big)=\big(E(t),N(t)\big)$,
-        in this local frame. By construction each trajectory starts at the horizontal
-        origin, $\mathbf{r}(0)=\mathbf{0}$.
+        in this local frame. Before smoothing, the first trimmed fix defines
+        $\mathbf{r}(0)=\mathbf{0}$; the filtered output can differ slightly at this edge.
   \item \textbf{Vertical position.} $z(t)$, the adopted altitude channel
         (Sec.~\ref{sec:altchannel}). Unlike $\mathbf{r}$, it is \emph{not} re-zeroed: it
         is kept at its measured value, so the height at the start of free flight is
@@ -1765,254 +1898,11 @@ A terminological rule holds throughout the document: a bare \enquote{position} m
 $\mathbf{r}$, the horizontal one; a statement about the full three-dimensional point says
 \emph{3D position} explicitly.
 
-\section{Preliminary characterization}
-\label{sec:prelim}
-The point of this section is to establish the
-basic statistics of the retained ensemble. None of the checks below requires the
-phase segmentation, so all run as soon as the pipeline does.
-
-\paragraph{Trajectory statistics.}
-For each retained flight: airborne duration $T$, total horizontal path length, number of
-valid fixes and native sampling interval $\Delta t$. Their distributions
-(Fig.~\ref{fig:prelim-ensemble}) describe the dataset the results rest on, expose any
-outlier that survived the filtering, and, through $\Delta t$, fix the per-flight smoothing
-window (Sec.~\ref{sec:savgol}). Over the \num{\StatPrelimParaFlights} retained paraglider
-flights the median airborne duration is \SI{\StatPrelimParaMedianDurH}{\hour}
-(interquartile range \SIrange{\StatPrelimParaDurationIqrLowH}{\StatPrelimParaDurationIqrHighH}{\hour}),
-the median flown path \SI{\StatPrelimParaMedianPathKm}{\kilo\metre}
-(\SIrange{\StatPrelimParaPathIqrLowKm}{\StatPrelimParaPathIqrHighKm}{\kilo\metre}) and the
-median record \num{\StatPrelimParaMedianFixes} fixes;
-\SI{\StatPrelimParaOneHertzPct}{\percent} of them log at \SI{1}{\hertz}. The
-\num{\StatPrelimHangFlights} hang-glider flights are longer and faster---%
-\SI{\StatPrelimHangMedianDurH}{\hour} and \SI{\StatPrelimHangMedianPathKm}{\kilo\metre} in
-the median---and slower-logging, with a median $\Delta t$ of
-\SI{\StatPrelimHangMedianDtS}{\second} against \SI{\StatPrelimParaMedianDtS}{\second} and
-only \SI{\StatPrelimHangOneHertzPct}{\percent} at \SI{1}{\hertz}.
-
-Nothing in the retained ensemble is an outlier in the sense
-the filtering was meant to catch: the on-disk tables of the retained flights carry
-\num{\StatAuditParaNonFiniteFixes} non-finite coordinates and
-\num{\StatAuditParaNonMonotoneFlights} non-monotone clocks, and
-the fastest step between two \emph{measured} samples is
-\SI{\StatVerifyParaWorstMeasuredMs}{\metre\per\second} against the fix-level bound of
-\SI{45}{\metre\per\second}---an excess of under a tenth, on \num{\StatVerifyParaMeasuredStepsOver} steps out of
-$1.4\times10^{9}$, which Sec.~\ref{impl:obs-global} accounts for.
-
-One feature of panels~(a) and~(b) is worth reading correctly. Both are measured over what
-a flight keeps after resampling, not over the trimmed flight the cuts of
-Sec.~\ref{sec:flightfilter} were applied to. The two stop agreeing where the sparsity
-rule of Sec.~\ref{sec:uniform} takes most of a record: the flight is retained on its
-surviving segments, its duration and path become theirs alone, and it can land below cuts
-it did pass. That is the thin left tail below \SI{\PreprocMinDurationMin}{\minute} and
-\SI{\PreprocMinPathKm}{\kilo\metre}, \num{\StatPrelimParaBelowCutFlights} paraglider
-flights (\SI{\StatPrelimParaBelowCutPct}{\percent}) and
-\num{\StatPrelimHangBelowCutFlights} hang-glider ones. On the quantities the cuts did
-test, no retained flight is under either.
-
-\begin{figure}[htbp]
-  \centering
-  \IfFileExists{generated/prelim_ensemble.pdf}{%
-    \includegraphics[width=\linewidth]{generated/prelim_ensemble}%
-  }{%
-    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/ch2\_dataset/generate\_prelim\_figure.py} from the processed dataset on
-    the SSD (not versioned).}}%
-  }
-  \caption{The records the pipeline retains. (a)~Airborne duration, (b)~flown path
-  and (c)~native sampling interval $\Delta t$, per discipline, over the retained flights
-  rather than over every parsed flight---which is what distinguishes these from
-  Figs.~\ref{fig:gaps} and~\ref{fig:sampling}. Duration and path are measured over the
-  segments a flight keeps after resampling (Sec.~\ref{sec:uniform}), not over the trimmed
-  flight the cuts of Sec.~\ref{sec:flightfilter} tested, which is why a thin tail falls
-  below those cuts.}
-  \label{fig:prelim-ensemble}
-\end{figure}
-
-\paragraph{What the cascade costs, and whether it costs it evenly.}
-Table~\ref{tab:pipecensus} reads the discards as a cascade: end to end it leaves
-\SI{\StatDataParaRetainedPct}{\percent} of attempted paraglider flights standing against
-\SI{\StatDataHangRetainedPct}{\percent} of hang-glider ones.
-
-For paragliders one criterion carries the cost, the resampling sparsity rule:
-\StatDataParaWorstCutRemoved\ flights, \SI{\StatDataParaWorstCutPct}{\percent} of the 
-remaining flights yield no valid points post-resampling, which is \num{\StatDataParaWorstToSecondRatio}
-times the impact of the next filter, namely altitude activity below the floor (\SI{\StatDataParaSecondCutPct}{\percent}).
-Unlike the cuts of Sec.~\ref{sec:flightfilter},
-set by the minimal-threshold strategy against the retained-fraction curve, the missing-fraction
-and minimum-duration gates of Sec.~\ref{sec:uniform} are config defaults, not swept or
-derived, and the rule falls unevenly by native cadence: from
-\SI{\StatDataParaSparsityByCadenceMinPct}{\percent} to
-\SI{\StatDataParaSparsityByCadenceMaxPct}{\percent} across the six most common ones. Not by
-season: Fig.~\ref{fig:seasons}b plots the cascade's total retention rate, every criterion
-combined, but since the sparsity rule accounts for most of the paraglider loss its
-unevenness would show up there; it does not, staying between
-\SI{\StatDataParaRetentionMinBigPct}{\percent} and \SI{\StatDataParaRetentionMaxBigPct}{\percent}
-over the \num{\StatDataParaSeasonsBig} seasons carrying at least a thousand flights.
-
-For hang gliders the same criterion is again the largest,
-\SI{\StatDataHangWorstCutPct}{\percent} of those standing, but only
-\num{\StatDataHangWorstToSecondRatio} times the next cut, altitude activity again
-(\SI{\StatDataHangSecondCutPct}{\percent}), against \num{\StatDataParaWorstToSecondRatio}
-for paragliders: no single criterion dominates the hang-glider cascade the way the
-sparsity rule dominates the paraglider one.
-
-\begin{figure}[htbp]
-  \centering
-  \IfFileExists{generated/dataset_seasons.pdf}{%
-    \includegraphics[width=\linewidth]{generated/dataset_seasons}%
-  }{%
-    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/ch2\_dataset/generate\_dataset\_stats.py}.}}%
-  }
-  \caption{The archive season by season. (a)~Flights attempted and retained, on a
-  logarithmic scale: the ladder grows by three orders of magnitude over its life.
-  (b)~Retention rate and (c)~median airborne duration of the survivors; open markers are
-  seasons of fewer than \num{1000} flights. Retention is approximately flat across
-  the substantial seasons, which is what says the cascade does not discard one era of the
-  archive preferentially.}
-  \label{fig:seasons}
-\end{figure}
-
-\paragraph{Where the flights are.}
-The distribution of take-off sites is presented across three separate panels to account for
-the geographic coverage of the CFD: Figure~\ref{fig:prelim-map} displays these sites against
-coastline and national borders.
-\begin{itemize}
-  \item \textbf{Metropolitan France.} \SI{\StatPrelimParaMetroPct}{\percent} of retained
-        paraglider flights launch here, against \SI{\StatPrelimHangMetroPct}{\percent} of
-        hang-glider ones --- the hang gliders are slightly more domestic.
-  \item \textbf{La R\'eunion.} \SI{\StatPrelimParaReunionPct}{\percent}
-        (\num{\StatPrelimParaReunionFlights} flights), the one overseas department with a
-        substantial share.
-  \item \textbf{Elsewhere.} \SI{\StatPrelimParaElsewherePct}{\percent}
-        (\num{\StatPrelimParaElsewhereFlights} flights): the Canaries, Andalusia, the
-        Italian Alps, and further out Colombia, Nepal, India, South Africa and Brazil.
-\end{itemize}
-
-Within metropolitan France the ensemble does not sample the country evenly. It occupies
-\num{\StatPrelimParaSites} distinct take-off sites, where distinct sites are launches
-rounded to a hundredth of a degree ($\sim$\SI{1}{\kilo\meter}); by share of paraglider
-launches:
-\begin{itemize}
-  \item \textbf{Alps.} \SI{\StatPrelimParaGroupAlpsPct}{\percent}.
-  \item \textbf{Pyrenees.} \SI{\StatPrelimParaGroupPyreneesPct}{\percent}.
-  \item \textbf{Massif Central.} \SI{\StatPrelimParaGroupMassifCentralPct}{\percent}.
-  \item \textbf{Channel Coast.} \SI{\StatPrelimParaGroupChannelCoastPct}{\percent}: a box
-        over genuinely low-relief terrain (Normandy, Picardy, the coastal Nord), not one
-        carved out by excluding the other three.
-  \item \textbf{Outside the massifs.} \SI{\StatPrelimParaGroupOutsideMassifsPct}{\percent}:
-        everywhere else in metropolitan France, a residual defined by exclusion and not a
-        terrain claim.
-\end{itemize}
-These groups are longitude and latitude boxes, drawn
-on Fig.~\ref{fig:prelim-map}a and listed with their edges in the mirror of this section
-\impldetails{impl:prelim}.
-
-\begin{figure}[htbp]
-  \centering
-  \IfFileExists{generated/prelim_map.pdf}{%
-    \includegraphics[width=\linewidth]{generated/prelim_map}%
-  }{%
-    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/ch2\_dataset/generate\_prelim\_figure.py} from the processed dataset on
-    the SSD (not versioned).}}%
-  }
-  \caption{Take-off sites of the retained ensemble, on three frames, pooling both
-  disciplines throughout.
-  (a)~Metropolitan France, density on a \SI{0.15}{\degree} cell; the dashed boxes are the orographic groups used as strata in
-  Fig.~\ref{fig:strata-compat} (Sec.~\ref{sec:strata-compat}). (b)~La~R\'eunion, on a \SI{0.01}{\degree} cell, the one
-  overseas department with a substantial share. (c)~Everything else, one marker per
-  \SI{0.5}{\degree} cell with the area set by its count.}
-  \label{fig:prelim-map}
-\end{figure}
-
-\paragraph{Terrain at launch}
-A second, independent cut of the same sites: each retained launch is placed by its raw
-ground elevation into the four bands Hern\'{a}ndez-Aguayo, Cristelli \& Benzaquen
-\cite{hernandezaguayo2026} draw from Kapos et al.'s global mountain
-classification~\cite{kapos2000}: Plains ($z^{\mathrm{gnd}}<\SI{300}{\metre}$), Hills
-(\SIrange{300}{800}{\metre}), Low mountains (\SIrange{800}{1500}{\metre}), High mountains
-($z^{\mathrm{gnd}}\geq\SI{1500}{\metre}$), Fig.~\ref{fig:terrain-map}. Unlike their
-reanalysis-grid $z^{\mathrm{gnd}}$, this one is the raw IGC file's first fix, read before
-the pipeline's own cleaning trims the ground phase \impldetails{impl:prelim};
-\SI{\StatTerrainParaClassifiedPct}{\percent} of the retained paraglider ensemble
-classifies this way. By share of the classified flights: \SI{\StatTerrainParaPlainsPct}
-{\percent} Plains, \SI{\StatTerrainParaHillsPct}{\percent} Hills,
-\SI{\StatTerrainParaLowmountainsPct}{\percent} Low mountains and
-\SI{\StatTerrainParaHighmountainsPct}{\percent} High mountains.
-
-\begin{figure}[htbp]
-  \centering
-  \IfFileExists{generated/terrain_map.pdf}{%
-    \includegraphics[width=0.68\linewidth]{generated/terrain_map}%
-  }{%
-    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/ch2\_dataset/generate\_terrain\_figure.py} from the raw archive on
-    the SSD (not versioned).}}%
-  }
-  \caption{Take-off sites of the retained ensemble (both disciplines pooled), by raw
-  ground elevation at the first fix, on the elevation bands of
-  \cite{hernandezaguayo2026,kapos2000}. One marker per occupied
-  \SI{\StatTerrainCellDeg}{\degree} cell, coloured by its majority class and sized by the
-  logarithm of its flight count; crosses mark the \StatTerrainTopN\ busiest cells of each
-  class.}
-  \label{fig:terrain-map}
-\end{figure}
-
-\paragraph{Isotropy}
-The transport analysis would like to study the one-dimensional marginal of the propagator
-in place of the full two-dimensional density (Sec.~\ref{sec:obs-global}), a substantial
-simplification. The reduction is legitimate only if the process is isotropic, and isotropy
-cannot be assumed a priori here. It's important to highlight that a single flight could be
-strongly directed: a chosen route, the orography, the valley winds. Isotropy can therefore
-hold at best at the level of the \emph{ensemble}, and the check is run there.
-
-The primary test is the per-component variance ratio: for an isotropic process
-$\langle E(t)^2\rangle=\langle N(t)^2\rangle=\mathrm{MSD}(t)/2$ at every $t$, so the ratio
-$\langle E(t)^2\rangle/\langle N(t)^2\rangle$ should be identically $1$. The check is
-necessary, not sufficient: isotropy proper asks whether the conditional distributions
-$P(E(t)=x\mid\mathbf{r}_0,t_0)$ and $P(N(t)=x\mid\mathbf{r}_0,t_0)$ (here
-$\mathbf{r}_0=\mathbf{0}$ and $t_0=0$, take-off) coincide, of which equal variances are
-only one necessary consequence. Operationally the ratio screens whether that stronger
-comparison is worth pursuing at all: if the 10--90\% band intersects unity over a zone of
-lags, the two distributions could still coincide there; where it does not, the weaker
-condition already fails and isotropy is ruled out without needing the fuller comparison.
-Figure~\ref{fig:prelim-isotropy} shows it is not. The curve plotted is the median of a
-cluster bootstrap resampling (200 times) whole take-off-site-and-day groups, 
-with a 10--90\% band. Across all evaluated lags, the transport analysis shows that the paraglider 
-band remains bounded between \StatPrelimParaIsoRatioMin\ and \StatPrelimParaIsoRatioMax, 
-maintaining an approximately constant offset from unity without ever intersecting the unity line. 
-The hang gliders oscillate mildly instead: unlike the
-paragliders the ratio is not steady, swinging between values below unity and above it,
-from \StatPrelimHangIsoRatioMin\ to \StatPrelimHangIsoRatioMax.
-
-The consequence is operative. The process cannot be treated as isotropic, so the two
-marginals $P(E(t)=x\mid\mathbf{r}_0,t_0)$ and $P(N(t)=x\mid\mathbf{r}_0,t_0)$ are analysed \emph{separately} rather than merged
-into a single one-dimensional sample and read as a stand-in for the 2-D propagator. Both
-directions are studied on their own, alongside the modulus
-$|\mathbf{r}(t)|=\sqrt{E(t)^2+N(t)^2}$.
-
-\begin{figure}[htbp]
-  \centering
-  \IfFileExists{generated/prelim_isotropy.pdf}{%
-    \includegraphics[width=0.55\linewidth]{generated/prelim_isotropy}%
-  }{%
-    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
-    \texttt{scripts/reporting/ch2\_dataset/generate\_prelim\_figure.py} from the processed dataset on
-    the SSD (not versioned).}}%
-  }
-  \caption{The per-component variance ratio $\langle E^2\rangle/\langle N^2\rangle$
-  against elapsed time, median and
-  10--90\% band over a cluster bootstrap resampling take-off site and day
-  (\StatPrelimIsoBootResamples\ resamples): unity is isotropy, and across the decades of
-  lag explored neither band sustains a zone of overlap with unity. Where the two meet
-  at all, it is at isolated points, never over a range of lags.}
-  \label{fig:prelim-isotropy}
-\end{figure}
+\FloatBarrier
 
 % ---------------------------------------------------------------------------
 % Pipeline summary (July 2026 pass): the whole processing chain in one map,
-% closing the chapter. Thresholds are quoted through the \Preproc* macros that
+% following the pre-processing section. Thresholds use the \Preproc* macros that
 % scripts/reporting/ch2_dataset/generate_census_stats.py regenerates from
 % configs/preprocessing.yaml, so the summary cannot drift from the config.
 % ---------------------------------------------------------------------------
@@ -2020,11 +1910,11 @@ $|\mathbf{r}(t)|=\sqrt{E(t)^2+N(t)^2}$.
 \section{Pipeline summary}
 \label{sec:pipelinemap}
 
-Figure~\ref{fig:pipelinemap} closes the chapter with the whole processing chain in one
-map: every step the data undergo between the raw IGC tracks of Sec.~\ref{sec:igcformat}
-and the ensemble handed to the transport analysis, in the order the pipeline applies
-them. Each stage carries the level it acts at and its effect, and points back to the
-section where that choice is argued.
+Figure~\ref{fig:pipelinemap} gathers the processing steps of
+Sec.~\ref{sec:preproc} in the order they are applied, from raw IGC tracks to the
+retained trajectories. Each stage identifies the records it acts on, its effect and
+the section that explains it. Section~\ref{sec:prelim} then describes the resulting
+dataset.
 
 
 \begin{figure}[tbp]
@@ -2059,21 +1949,20 @@ section where that choice is argued.
 
     \node[stage, below=of raw] (alt) {\stghead{1}{Choice of altitude channel}{sec:altchannel}
       {\footnotesize GNSS for every flight, end to end; a flight failing the presence or
-       liveness test has no vertical coordinate and is dropped. The barometer, where
-       present and alive, survives only as the frozen-lock witness}%
+       range requirement is dropped. Locally complete eligible barometry can
+       corroborate frozen-position and interior-ground candidates}%
       };
     \node[stage, below=of alt] (fix) {\stghead{2}{Fix-level cleaning}{sec:fixlevel}
-      {\footnotesize deletes a fix no flown path could reach, marks a corrupt altitude
-       missing and keeps the fix; a flight repaired beyond the integrity gate is dropped
-       whole}%
+      {\footnotesize removes fixes under the horizontal reach/rejoin rules;
+       altitude failures invalidate that channel, while frozen-run cuts force a split}%
       };
     \node[stage, below=of fix] (trim) {\stghead{3}{Trimming of ground phases}{sec:trimming}
-      {\footnotesize cuts the ground records before take-off and after landing; an
-       interior landing is excised and the track split there}%
+      {\footnotesize selects outer boundaries by sustained speed; witnessed
+       interior slow intervals are excised and the track split there}%
       };
     \node[stage, below=of trim] (filt) {\stghead{4}{Flight-level filtering}{sec:flightfilter}
-      {\footnotesize drops whole flights outside the cross-country envelope: too short,
-       too localized, too long, or flat on the altitude channel}%
+      {\footnotesize checks the retained interval's reconstruction burden, then
+       duration, path length, altitude range, mean speed and reach from the origin}%
       };
     \node[stage, below=of filt] (enu) {\stghead{5}{Local Cartesian coordinates}{sec:enu}
       {\footnotesize maps $(\varphi,\lambda,h)$ to ENU about the first fix of the trimmed
@@ -2097,8 +1986,7 @@ section where that choice is argued.
       \draw[->, thick] (\a) -- (\b);
 
     \node[badge] at ($(alt.east)+(3mm,0)$)  {\textcolor{figblue}{per flight}};
-    \node[badge] at ($(fix.east)+(3mm,0)$)  {\textcolor{figred}{per fix}\\
-                                             \textcolor{figblue}{gate: per flight}};
+    \node[badge] at ($(fix.east)+(3mm,0)$)  {\textcolor{figred}{per fix}};
     \node[badge] at ($(trim.east)+(3mm,0)$) {\textcolor{figblue}{per flight}};
     \node[badge] at ($(filt.east)+(3mm,0)$) {\textcolor{figblue}{per flight}};
     \node[badge] at ($(enu.east)+(3mm,0)$)  {\textcolor{figblue}{per flight}};
@@ -2142,7 +2030,7 @@ Two decisions organise the chain.
         every parameter it adapts is read off the record it is acting on rather than off
         the archive around it. No flight's cleaning therefore depends on
         which other flights happen to be in the dataset. What is shared across flights
-        is only the thresholds of Table~\ref{tab:workingparams}, fixed a priori.
+        is the thresholds of Table~\ref{tab:workingparams}, held fixed for this run.
 \end{itemize}
 \begin{flowblock}
 \begin{revblock}
@@ -2157,14 +2045,13 @@ table reads in pipeline order and the counts do not add up to what each cut woul
 on its own (those are the \texttt{\textbackslash StatScan*} numbers quoted in
 Secs.~\ref{sec:flightfilter} and~\ref{sec:uniform}, measured on the raw population).
 
-Inside the retained flights the cleaning is light, which is what the design asked for:
-it deletes \StatPipeParaRemovedPct\,\% of paraglider fixes and
+Within the retained flights, cleaning deletes \StatPipeParaRemovedPct\,\% of paraglider fixes and
 \StatPipeHangRemovedPct\,\% of hang-glider ones, and invalidates an altitude on a further
 \StatPipeParaAltInvalidPct\,\% and \StatPipeHangAltInvalidPct\,\%. \rev{The local outlier test
 flags far more than is deleted, and by design: it never gates, so
 \StatPipeParaFlaggedKeptPct\,\% and \StatPipeHangFlaggedKeptPct\,\% of fixes are flagged
-and \emph{kept}. The flag is a per-fix record and a per-flight anomaly count, and what
-condemns a fix is the impossibility gate (Sec.~\ref{sec:fixlevel}).}
+and \emph{kept}. The flag records local disagreement, while the impossibility gate
+controls horizontal deletion (Sec.~\ref{sec:fixlevel}).}
 Resampling reconstructs \StatPipeParaInterpPct\,\% and \StatPipeHangInterpPct\,\% of grid
 points. A split is common but not the rule: \StatPipeParaSplitPct\,\% of retained
 paraglider flights and \StatPipeHangSplitPct\,\% of hang-glider ones carry at least one,
@@ -2177,18 +2064,14 @@ Sec.~\ref{sec:uniform} anticipated.
 \ifrevmode\color{revblue}\fi
 \renewcommand{\arraystretch}{1.15}
 \caption{\rev{The pre-processing cascade over the full archive, in the order the pipeline
-applies it. \emph{Standing} is how many flights had survived every earlier criterion when
-this one ran and \emph{share} is the removal as a fraction of those, not of the archive:
-a criterion late in the cascade tests a population the earlier ones have already thinned,
-so a percentage of the archive would understate it. Read this way one cut dominates, and
-it is not one the text argues a threshold for---%
-\StatDataParaWorstCutRemoved\ paraglider flights, \SI{\StatDataParaWorstCutPct}{\percent}
-of those still standing (\StatDataHangWorstCutRemoved\ hang-glider flights,
-\SI{\StatDataHangWorstCutPct}{\percent}), leave nothing behind after resampling. The marginal effect of
-each cut on the raw population is a different quantity and is what the
-\texttt{\textbackslash StatScan*} numbers of Secs.~\ref{sec:flightfilter}
-and~\ref{sec:uniform} report. Generated by \protect\path{generate_dataset_stats.py} from
-the \protect\path{flights_meta} table the pipeline itself writes.}}
+applies it. \emph{Standing} counts flights that survived earlier criteria;
+\emph{share} is the fraction removed from that remaining population. Resampling
+leaves no retained segment in \StatDataParaWorstCutRemoved\ paraglider flights
+(\SI{\StatDataParaWorstCutPct}{\percent} of those reaching that step) and
+\StatDataHangWorstCutRemoved\ hang-glider flights
+(\SI{\StatDataHangWorstCutPct}{\percent}). These conditional removal fractions
+differ from the separate raw-population diagnostics in Secs.~\ref{sec:flightfilter}
+and~\ref{sec:uniform}.}}
 \label{tab:pipecensus}
 \begin{tabular}{@{}l r r r r@{}}
 \toprule
@@ -2215,12 +2098,10 @@ the \protect\path{flights_meta} table the pipeline itself writes.}}
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:workingparams} gathers the thresholds themselves, by stage and with the
-symbols the chapter uses. 
+Table~\ref{tab:workingparams} lists the working thresholds and their symbols by stage.
 
-% Flush the pipeline map before the table opens: a longtable takes whole pages, and a
-% float deferred past it would land after the values it is supposed to introduce.
-\clearpage
+% Keep the pipeline map and census ahead of the parameter table.
+\FloatBarrier
 
 % A longtable, not a table float: the parameter list is taller than the text block, and a
 % float that cannot fit runs off the bottom of the page and overprints the folio instead of
@@ -2232,9 +2113,9 @@ symbols the chapter uses.
 \setlength{\LTcapwidth}{\textwidth}
 \begin{longtable}{|l|l|p{7.4cm}|}
 \caption{\rev{Working values of the pre-processing pipeline, by stage. Symbols are those
-used in the text; every value is generated from \texttt{configs/preprocessing.yaml}, and the
-per-parameter rationale is given in the section listed. Config keys and implementation
-notes: Sec.~\ref{impl:fixlevel} onward.}}
+used in the text; configured values are read from \texttt{configs/preprocessing.yaml}.
+The minimum smoothing window is fixed by the polynomial-order rule in
+Sec.~\ref{sec:savgol}. The listed sections explain each criterion.}}
 \label{tab:workingparams} \\
 \hline
 \textbf{Symbol} & \textbf{Value} & \textbf{What it controls} \\
@@ -2250,8 +2131,21 @@ notes: Sec.~\ref{impl:fixlevel} onward.}}
 \endfoot
 \hline
 \endlastfoot
-\multicolumn{3}{|l|}{\textbf{Fix-level cleaning} (Sec.~\ref{sec:fixlevel}) --- removes
-corrupt fixes, keeps every genuine one} \\
+\multicolumn{3}{|l|}{\textbf{Altitude admission} (Sec.~\ref{sec:altchannel})} \\
+\hline
+--- & \SI{\PreprocGnssPresentMinPct}{\percent} & minimum fraction of finite, nonzero
+GNSS readings; a flight below this completeness threshold is excluded \\
+\hline
+--- & \SI{\PreprocGnssMinRangeM}{\metre} & minimum GNSS range among finite, nonzero
+readings; a flight below it is excluded, without establishing a sensor failure \\
+\hline
+--- & \SI{\PreprocBaroWitnessPresentMinPct}{\percent} & minimum barometric presence for
+witness eligibility; each candidate also requires complete local support \\
+\hline
+--- & \SI{\PreprocBaroWitnessMinRangeM}{\metre} & minimum barometric range for the same
+witness eligibility \\
+\hline
+\multicolumn{3}{|l|}{\textbf{Fix-level cleaning} (Sec.~\ref{sec:fixlevel})} \\
 \hline
 $k$ & \PreprocHampelK & robust-$\sigma$ multiplier of the Hampel test, Eq.~\eqref{eq:hampel} \\
 \hline
@@ -2266,13 +2160,13 @@ $v_{xy}^{\max}$ & \SI{\PreprocMaxHSpeedParaMps}{\metre\per\second} (para),
 \SI{\PreprocMaxHSpeedHangMps}{\metre\per\second} (hang) & absolute inter-fix speed bound;
 \rev{the impossibility gate, on its own (Sec.~\ref{sec:fixlevel})} \\
 \hline
-$|v_z|^{\max}$ & \SI{\PreprocMaxVSpeedMps}{\metre\per\second} & climb/sink bound on the
-\emph{windowed} $\operatorname{med}|v_z|$ of Eq.~\eqref{eq:vzlocal}, not the raw per-step
-value \\
+$|v_z|^{\max}$ & \SI{\PreprocMaxVSpeedMps}{\metre\per\second} & cutoff for the two
+adjacent window statistics in Eq.~\eqref{eq:vz-censor}; also used by the
+out-and-back spike rule \\
 \hline
 $w_v$ & \SI{\PreprocVzWindowS}{\second} & half-width of that window \\
 \hline
---- & \PreprocVzMinWindowFixes\ fixes & smallest window population for which the median is
+--- & \PreprocVzMinWindowFixes\ finite steps & smallest window population for which the median is
 estimable; below it the per-step value stands in \\
 \hline
 $[h_{\min},h_{\max}]$ & $[\PreprocMinAltM,\PreprocMaxAltM]\,\si{\metre}$ &
@@ -2283,30 +2177,16 @@ must stay \\
 \hline
 $\delta_z$ & \SI{\PreprocFrozenDeltaZM}{\metre} & altitude flatness tolerance of the same rule \\
 \hline
-$\tau_{\mathrm{freeze}}$ & \SI{\PreprocFrozenTauS}{\second} & minimum duration of a run
-before it counts as frozen \\
-\hline
---- & \SI{\PreprocGnssPresentMinPct}{\percent} & smallest share of a flight's fixes
-carrying a non-zero GNSS altitude for the channel to be admitted (Sec.~\ref{sec:altchannel});
-below it the flight has no vertical coordinate and is dropped \\
-\hline
---- & \SI{\PreprocGnssMinRangeM}{\metre} & smallest whole-flight GNSS range below which the
-channel is treated as dead (Sec.~\ref{sec:altchannel}) \\
-\hline
---- & \SI{\PreprocBaroWitnessPresentMinPct}{\percent} & the same presence test, on the raw
-barometer, deciding only whether it can witness a frozen-lock run \\
-\hline
---- & \SI{\PreprocBaroWitnessMinRangeM}{\metre} & the same liveness test, for the same
-witness \\
+$\tau_{\mathrm{freeze}}$ & \SI{\PreprocFrozenTauS}{\second} & minimum duration before a run
+can be cut by the frozen-position rule \\
 \hline
 --- & \SI{\PreprocIntegrityMaxPct}{\percent} & share of fixes above which the cleaning is
 declared to have failed and the flight is dropped \\
 \hline
-\multicolumn{3}{|l|}{\textbf{Ground trimming} (Sec.~\ref{sec:trimming}) --- keeps only the
-airborne stretch} \\
+\multicolumn{3}{|l|}{\textbf{Ground trimming} (Sec.~\ref{sec:trimming})} \\
 \hline
-$v_0$ & \SI{\PreprocTakeoffSpeedMps}{\metre\per\second} & ground-speed threshold separating
-ground from flight \\
+$v_0$ & \SI{\PreprocTakeoffSpeedMps}{\metre\per\second} & ground-speed threshold used to
+identify take-off and landing candidates \\
 \hline
 $T_0$ & \SI{\PreprocSustainedS}{\second} & how long $v_{xy}>v_0$ must persist for take-off
 (and, time-reversed, landing) \\
@@ -2319,12 +2199,13 @@ interior ground stint before it is excised \\
 \multicolumn{3}{|l|}{\textbf{Flight-level filtering} (Sec.~\ref{sec:flightfilter}) ---
 discards whole flights that cannot support the statistics} \\
 \hline
---- & \SI{\PreprocMinDurationMin}{\minute} & minimum airborne duration \\
+--- & \SI{\PreprocMinDurationMin}{\minute} & minimum recorded airborne duration,
+accumulated within blocks \\
 \hline
 --- & \SI{\PreprocMinPathKm}{\kilo\metre} & minimum flown path length \\
 \hline
---- & \SI{\PreprocMaxDurationH}{\hour} & maximum duration, above which the record is not a
-single flight \\
+--- & \SI{\PreprocMaxDurationH}{\hour} & maximum elapsed span, including gaps;
+records above it are excluded \\
 \hline
 --- & \SI{\PreprocMinAltRangeM}{\metre} & minimum whole-flight altitude range \\
 \hline
@@ -2332,8 +2213,9 @@ single flight \\
 cleaned track; reuses the fix-level bound, read over a whole flight
 (Sec.~\ref{sec:flightfilter})} \\
 \hline
---- & $v_{xy}^{\max}$ (above) & \rev{reach bound: the extent of the flight may not exceed
-what that same speed would cover in its duration (Sec.~\ref{sec:flightfilter})} \\
+--- & $v_{xy}^{\max}$ (above) & reach bound applied at every fix:
+$d_i\le v_{xy}^{\max}(t_i-t_0)+\SI{50}{\metre}$,
+where $d_i$ is its distance from the first trimmed fix \\
 \hline
 \multicolumn{3}{|l|}{\textbf{Resampling} (Sec.~\ref{sec:uniform}) --- one uniform grid per
 flight, holes bridged or split} \\
@@ -2344,8 +2226,8 @@ longest gap that is interpolated instead of splitting the flight \\
 --- & \SI{\PreprocMaxMissingPct}{\percent} & largest share of grid points a retained
 \emph{segment} may have had to interpolate \\
 \hline
---- & \SI{\PreprocMinSegmentS}{\second} & shortest segment kept: below this a segment
-cannot carry the smoothing window \\
+--- & \SI{\PreprocMinSegmentS}{\second} & minimum retained segment duration;
+smoothing additionally requires enough grid samples for its window \\
 \hline
 \multicolumn{3}{|l|}{\textbf{Smoothing} (Sec.~\ref{sec:savgol}) --- Savitzky--Golay
 filter and its derivatives} \\
@@ -2353,16 +2235,13 @@ filter and its derivatives} \\
 $p$ & \PreprocSavgolOrder & polynomial order of the filter \\
 \hline
 $\tau_c$ & \SI{\PreprocSavgolTauCS}{\second} (horizontal),
-\SI{\PreprocSavgolTauCVertS}{\second} (vertical) & correlation time setting the window,
-separately for the horizontal and vertical axes. The two hold the same value because the
-spectral knees of $E$, $N$ and $z$ coincide (Sec.~\ref{sec:savgol}); the vertical key
-stays separate from the horizontal one on principle, not because the archive needs it to
-be \\
+\SI{\PreprocSavgolTauCVertS}{\second} (vertical) & working timescale setting the
+window through Eq.~\eqref{eq:savgol-window}; equal values are adopted for the two
+channels, without identifying a physical correlation time \\
 \hline
---- & \rev{\PreprocSavgolMinWindow\ samples} & \rev{floor on the window, one sample more
-than a cubic determines. It is this floor and not $\tau_c$ that fixes the smoothing scale
-for every logger slower than \SI{1}{\hertz}: in seconds the window is
-$\max(\tau_c,\,\PreprocSavgolMinWindow\,\Delta t)$} \\
+--- & \PreprocSavgolMinWindow\ samples & minimum odd window for the adopted cubic
+fit. The temporal span is $(w-1)\Delta t$, with $w$ given by
+Eq.~\eqref{eq:savgol-window} \\
 \end{longtable}
 \endgroup
 
@@ -2372,21 +2251,250 @@ $\max(\tau_c,\,\PreprocSavgolMinWindow\,\Delta t)$} \\
 \begin{revblock}
 \paragraph{The analysis ensemble, defined.}
 \label{par:ensemble}
-Everything downstream reads one object, and this is it. The \emph{analysis ensemble} is
+The \emph{analysis ensemble} is
 the set of trajectories written to \path{fixes.parquet}: one row per grid point of every
 \emph{retained} segment of every \emph{retained} flight, carrying the elapsed time $t$ in
 the parent clock and the local Cartesian coordinates $(E,N,z)$ with their first two
 derivatives. A flight is retained when it passes stages 1--4 of
-Figure~\ref{fig:pipelinemap} and at least one of its segments survives stage 6; a segment
-is retained when it is long enough and dense enough on its own uniform grid. That leaves
+Figure~\ref{fig:pipelinemap} and at least one of its segments survives resampling and
+smoothing. Each retained segment must support channel reconstruction, pass its duration
+and density criteria, and contain the required smoothing window. That leaves
 \num{\StatPipeParaKept} paraglider flights of \num{\StatPipeParaAttempted}
-(\SI{\StatPipeParaKeptPct}{\percent}) in \num{\StatMsdParaSegments} segments, and
+(\SI{\StatPipeParaKeptPct}{\percent}) and
 \num{\StatPipeHangKept} hang-glider flights of \num{\StatPipeHangAttempted}
-(\SI{\StatPipeHangKeptPct}{\percent}) in \num{\StatMsdHangSegments}. No consumer re-applies
-a retention rule: a flight or segment that should not be analysed has no rows to read.
+(\SI{\StatPipeHangKeptPct}{\percent}). Subsequent estimators draw their stated
+subsets from this archive, with additional requirements on cadence, segment length,
+lag support or reconstruction flags. Their contributing populations can therefore differ.
 Every segment keeps its parent's origin and clock, so a position is always measured from
 that flight's take-off and a time is always elapsed since it, whether or not the record is
 continuous up to that point. Section~\ref{sec:prelim} characterises this ensemble,
 Chapter~\ref{ch:global} analyses it, and \path{docs/guide/data-on-disk.md} states which
 columns each estimator reads and what a segment boundary means to it.
 \end{revblock}
+
+\FloatBarrier
+
+\section{Preliminary characterization}
+\label{sec:prelim}
+This section describes the retained flights: their duration, path length, recording
+interval and geographical coverage. These measurements require no phase segmentation.
+Directional differences and their relation to geography are examined with the transport
+observables in Sec.~\ref{sec:transport-anisotropy}.
+
+\paragraph{Trajectory statistics.}
+For each retained flight: airborne duration $T$, total horizontal path length, number of
+valid fixes and native sampling interval $\Delta t$. Their distributions
+(Fig.~\ref{fig:prelim-ensemble}) describe the dataset the results rest on and allow unusually large values to be
+inspected. The native interval $\Delta t$ determines the per-flight smoothing
+window (Sec.~\ref{sec:savgol}). Over the \num{\StatPrelimParaFlights} retained paraglider
+flights the median airborne duration is \SI{\StatPrelimParaMedianDurH}{\hour}
+(interquartile range \SIrange{\StatPrelimParaDurationIqrLowH}{\StatPrelimParaDurationIqrHighH}{\hour}),
+the median flown path \SI{\StatPrelimParaMedianPathKm}{\kilo\metre}
+(\SIrange{\StatPrelimParaPathIqrLowKm}{\StatPrelimParaPathIqrHighKm}{\kilo\metre}) and the
+median record \num{\StatPrelimParaMedianFixes} fixes;
+\SI{\StatPrelimParaOneHertzPct}{\percent} of them log at \SI{1}{\hertz}. The
+\num{\StatPrelimHangFlights} hang-glider flights have larger median duration and path length---%
+\SI{\StatPrelimHangMedianDurH}{\hour} and \SI{\StatPrelimHangMedianPathKm}{\kilo\metre} in
+the median---and slower-logging, with a median $\Delta t$ of
+\SI{\StatPrelimHangMedianDtS}{\second} against \SI{\StatPrelimParaMedianDtS}{\second} and
+only \SI{\StatPrelimHangOneHertzPct}{\percent} at \SI{1}{\hertz}.
+
+\label{sec:dataset-checks}
+The dataset audit counts \num{\StatAuditParaNonFiniteFixes} non-finite
+coordinates and \num{\StatAuditParaNonMonotoneFlights} non-monotone flight clocks in
+the paraglider audit. Its largest filtered interior step speed is
+\SI{\StatVerifyParaWorstMeasuredMs}{\metre\per\second}, with
+\num{\StatVerifyParaMeasuredStepsOver} interior steps above the working bound but
+below the verifier's gross-anomaly threshold. These checks identify structural
+failures and large kinematic anomalies. Finite coordinates and bounded speeds do not
+exclude plausible-looking recorder errors.
+\ifnum\StatSnapshotCurrent=0
+These counts await regeneration on the revised archive.
+\fi
+
+Panels~(a) and~(b) describe the segments retained after resampling. Their duration
+and path length can be smaller than those of the trimmed parent flight tested in
+Sec.~\ref{sec:flightfilter}, because short, sparse or unreconstructable segments
+can be discarded. The resulting distributions include
+\num{\StatPrelimParaBelowCutFlights} paraglider flights
+(\SI{\StatPrelimParaBelowCutPct}{\percent}) and
+\num{\StatPrelimHangBelowCutFlights} hang-glider flights below the original
+\SI{\PreprocMinDurationMin}{\minute} or
+\SI{\PreprocMinPathKm}{\kilo\metre} threshold. The parent-flight quantities
+passed those cuts; the cuts are not reapplied to the shorter retained trajectory.
+
+\begin{figure}[htbp]
+  \centering
+  \IfFileExists{generated/prelim_ensemble.pdf}{%
+    \includegraphics[width=\linewidth]{generated/prelim_ensemble}%
+  }{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/ch2\_dataset/generate\_prelim\_figure.py} from the processed dataset on
+    the SSD (not versioned).}}%
+  }
+  \caption{The records the pipeline retains. (a)~Airborne duration, (b)~flown path
+  and (c)~native sampling interval $\Delta t$, per discipline, over the retained flights
+  rather than over every parsed flight---which is what distinguishes these from
+  Figs.~\ref{fig:gaps} and~\ref{fig:sampling}. Duration and path are measured over the
+  segments a flight keeps after resampling (Sec.~\ref{sec:uniform}), not over the trimmed
+  flight the cuts of Sec.~\ref{sec:flightfilter} tested, which is why a thin tail falls
+  below those cuts.}
+  \label{fig:prelim-ensemble}
+\end{figure}
+
+\paragraph{Retention across recording intervals and seasons.}
+Table~\ref{tab:pipecensus} reads the discards as a cascade: end to end it leaves
+\SI{\StatDataParaRetainedPct}{\percent} of attempted paraglider flights standing against
+\SI{\StatDataHangRetainedPct}{\percent} of hang-glider ones.
+
+The largest paraglider loss occurs when no segment survives resampling:
+\StatDataParaWorstCutRemoved\ flights, or
+\SI{\StatDataParaWorstCutPct}{\percent} of those reaching that stage. This
+conditional fraction is \num{\StatDataParaWorstToSecondRatio} times the
+fraction removed by the altitude-range criterion
+(\SI{\StatDataParaSecondCutPct}{\percent}). The recorded reason combines
+segments that are too short, too sparse or cannot be reconstructed; it does not
+attribute every rejected flight to the missing-fraction threshold alone.
+
+Among flights with a recorded native-cadence estimate, the share with no surviving
+segment ranges across the six most common cadences from
+\SI{\StatDataParaSparsityByCadenceMinPct}{\percent} to
+\SI{\StatDataParaSparsityByCadenceMaxPct}{\percent}. The missing-fraction and
+minimum-segment-duration bounds remain working choices that require sensitivity
+checks. Figure~\ref{fig:seasons}b gives retention across all criteria, between
+\SI{\StatDataParaRetentionMinBigPct}{\percent} and
+\SI{\StatDataParaRetentionMaxBigPct}{\percent} over the
+\num{\StatDataParaSeasonsBig} seasons with at least a thousand flights.
+Similar aggregate rates can conceal changes in the cadence, region and pilot
+composition of the retained population.
+
+For hang gliders, loss of all segments is also the largest conditional fraction,
+\SI{\StatDataHangWorstCutPct}{\percent}, but is only
+\num{\StatDataHangWorstToSecondRatio} times that of the altitude-range cut
+(\SI{\StatDataHangSecondCutPct}{\percent}). Its separation from the other
+criteria is therefore smaller than in the paraglider archive.
+
+\begin{figure}[htbp]
+  \centering
+  \IfFileExists{generated/dataset_seasons.pdf}{%
+    \includegraphics[width=\linewidth]{generated/dataset_seasons}%
+  }{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/ch2\_dataset/generate\_dataset\_stats.py}.}}%
+  }
+  \caption{The archive season by season. (a)~Flights attempted and retained, on a
+  logarithmic scale: the ladder grows by three orders of magnitude over its life.
+  (b)~Retention rate and (c)~median airborne duration of the survivors; open markers are
+  seasons of fewer than \num{1000} flights. The aggregate retention rate is approximately flat across the larger seasons;
+  this does not establish equal selection within cadence or region groups.}
+  \label{fig:seasons}
+\end{figure}
+
+\paragraph{Where the flights are.}
+The distribution of take-off sites is presented across three separate panels to account for
+the geographic coverage of the CFD: Figure~\ref{fig:prelim-map} displays these sites against
+coastline and national borders.
+\begin{itemize}
+  \item \textbf{Metropolitan France.} \SI{\StatPrelimParaMetroPct}{\percent} of retained
+        paraglider flights launch here, against \SI{\StatPrelimHangMetroPct}{\percent} of
+        hang-glider ones --- the hang gliders are slightly more domestic.
+  \item \textbf{La R\'eunion.} \SI{\StatPrelimParaReunionPct}{\percent}
+        (\num{\StatPrelimParaReunionFlights} flights), the one overseas department with a
+        substantial share.
+  \item \textbf{Elsewhere.} \SI{\StatPrelimParaElsewherePct}{\percent}
+        (\num{\StatPrelimParaElsewhereFlights} flights): the Canaries, Andalusia, the
+        Italian Alps, and further out Colombia, Nepal, India, South Africa and Brazil.
+\end{itemize}
+
+Within metropolitan France the ensemble does not sample the country evenly. It occupies
+\num{\StatPrelimParaSites} distinct take-off sites, where distinct sites are launches
+rounded to a hundredth of a degree ($\sim$\SI{1}{\kilo\meter}); by share of paraglider
+launches:
+\begin{itemize}
+  \item \textbf{Alps.} \SI{\StatPrelimParaGroupAlpsPct}{\percent}.
+  \item \textbf{Pyrenees.} \SI{\StatPrelimParaGroupPyreneesPct}{\percent}.
+  \item \textbf{Massif Central.} \SI{\StatPrelimParaGroupMassifCentralPct}{\percent}.
+  \item \textbf{Channel Coast.} \SI{\StatPrelimParaGroupChannelCoastPct}{\percent}: a box
+        over low-relief terrain (Normandy, Picardy, the coastal Nord), not one
+        carved out by excluding the other three.
+  \item \textbf{Outside the massifs.} \SI{\StatPrelimParaGroupOutsideMassifsPct}{\percent}:
+        everywhere else in metropolitan France, a residual defined by exclusion and not a
+        terrain claim.
+\end{itemize}
+These groups are longitude and latitude boxes, drawn
+on Fig.~\ref{fig:prelim-map}a; membership is assigned from the first recorded position.
+
+\begin{figure}[htbp]
+  \centering
+  \IfFileExists{generated/prelim_map.pdf}{%
+    \includegraphics[width=\linewidth]{generated/prelim_map}%
+  }{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/ch2\_dataset/generate\_prelim\_figure.py} from the processed dataset on
+    the SSD (not versioned).}}%
+  }
+  \caption{Take-off sites of the retained ensemble, on three frames, pooling both
+  disciplines throughout.
+  (a)~Metropolitan France, density on a \SI{0.15}{\degree} cell; the dashed boxes are the orographic groups used as strata in
+  Fig.~\ref{fig:regional-pca} (Sec.~\ref{sec:transport-anisotropy}). (b)~La~R\'eunion, on a \SI{0.01}{\degree} cell, the one
+  overseas department with a substantial share. (c)~Everything else, one marker per
+  \SI{0.5}{\degree} cell with the area set by its count.}
+  \label{fig:prelim-map}
+\end{figure}
+
+\paragraph{Altitude at the beginning of the record.}
+Figure~\ref{fig:terrain-map} groups flights by the altitude of their first raw fix,
+using the bands $<\SI{300}{\metre}$, \SIrange{300}{800}{\metre},
+\SIrange{800}{1500}{\metre} and $\ge\SI{1500}{\metre}$ adopted in the regional
+classification of Hern\'{a}ndez-Aguayo, Cristelli and Benzaquen
+\cite{hernandezaguayo2026}. These altitude bands are a simplification, not the full
+mountain classification of Kapos et al.~\cite{kapos2000}.
+The present altitude is a recorder measurement before trimming, not a terrain-model
+elevation: the logger can start away from launch, already airborne, or with an
+unsettled sensor. GNSS is preferred, with a pressure-altitude fallback in this
+exploratory map only. The historical terrain names in its legend identify the bands;
+they do not establish local relief, slope or mountain geometry. Datum and atmospheric
+offsets can also move a fix across a band boundary.
+\SI{\StatTerrainParaClassifiedPct}{\percent} of the retained paraglider ensemble
+classifies this way. By share of the classified flights: \SI{\StatTerrainParaPlainsPct}
+{\percent} Plains, \SI{\StatTerrainParaHillsPct}{\percent} Hills,
+\SI{\StatTerrainParaLowmountainsPct}{\percent} Low mountains and
+\SI{\StatTerrainParaHighmountainsPct}{\percent} High mountains.
+
+\begin{figure}[htbp]
+  \centering
+  \IfFileExists{generated/terrain_map.pdf}{%
+    \includegraphics[width=\linewidth]{generated/terrain_map}%
+  }{%
+    \fbox{\parbox{0.8\linewidth}{\centering\small Figure generated locally by
+    \texttt{scripts/reporting/ch2\_dataset/generate\_terrain\_figure.py} from the raw archive on
+    the SSD (not versioned).}}%
+  }
+  \caption{First recorded positions of the retained ensemble (both disciplines pooled),
+  grouped by logged altitude using the elevation bands of \cite{hernandezaguayo2026}.
+  These are approximate launch-altitude groups, not measured terrain classes. One marker per occupied
+  \SI{\StatTerrainCellDeg}{\degree} cell, coloured by its majority class and sized by the
+  logarithm of its flight count; crosses mark the \StatTerrainTopN\ busiest cells of each
+  class.}
+  \label{fig:terrain-map}
+\end{figure}
+
+\FloatBarrier
+
+\section{Chapter summary}
+
+The recorder archive has been converted into trajectories with explicit temporal support,
+local horizontal coordinates and traceable quality decisions. Cleaning separates isolated
+position defects, repeated-position runs and sustained recording failures; it uses a
+barometric witness only where that channel is available over the interval being tested.
+The 10-m/s windowed vertical-speed bound is an operational selection criterion, not a
+measured physical ceiling for every soaring flight.
+
+Gaps, reconstructed altitude and derivative support remain visible in the retained data.
+Uniform sampling makes within-segment lag statistics possible. The masks exclude flagged
+reconstruction and derivative support from phase assignment, although an unflagged
+recording defect can still affect the features.
+The geographical and temporal composition of the archive also remains heterogeneous.
+Chapter~\ref{ch:global} therefore treats weighting, lag support and environmental
+conditioning as part of the definition of each observable, rather than as incidental
+details of its calculation.

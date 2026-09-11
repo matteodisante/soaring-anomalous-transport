@@ -1,57 +1,68 @@
 \chapter{Power spectral density and Welch's method}
 \label{app:psd}
 
-This appendix explains the tool used in Chapter~\ref{ch:dataset} to compare the two
-altitude channels of an IGC file, namely the \emph{power spectral density} (PSD) estimated
-with \emph{Welch's method}~\cite{welch1967}. No prior familiarity with spectral
-estimation is assumed.
+The spectra in Chapter~\ref{ch:dataset} compare fluctuations in recorded altitude.
+They contain both flight dynamics and measurement error. A spectral estimate does
+not separate those contributions without further assumptions.
 
-\section*{The power spectral density}
+\section{From covariance to a spectrum}
 
-Consider a signal sampled at a fixed rate, here an altitude series $z_n=z(n\,\Delta t)$,
-$n=0,\dots,N-1$, with sampling interval $\Delta t$ (so the sampling frequency is
-$f_s=1/\Delta t$). Any such finite signal can be written as a sum of sinusoids of different
-frequencies (its discrete Fourier transform). The \textbf{power spectral density} describes how the power (the variance) of the signal
-is distributed across frequencies. A slow drift puts its power at low frequency; rapid jitter puts its power at
-high frequency. Formally the PSD $S(f)$ is the Fourier transform of the autocovariance of
-the signal, and it is normalised so that the total area under it equals the variance of the
-signal,
+Let $x_n=z_n-\mathbb E[z_n]$ be a real, uniformly sampled, second-order stationary
+process, with sampling interval $\Delta t=1/f_s$ and covariance
+$C_k=\mathbb E[x_nx_{n+k}]$. When the covariance is summable, its two-sided spectral
+density is
 \begin{equation}
-  \int_0^{f_s/2} S(f)\,\mathrm{d}f \;=\; \operatorname{Var}(z),
+ S_2(f)=\Delta t\sum_{k=-\infty}^{\infty}C_k
+              e^{-2\pi i f k\Delta t},\qquad |f|\leq f_s/2.
 \end{equation}
-with units of (metres)$^2$ per hertz. The upper limit $f_s/2$ is the \emph{Nyquist
-frequency}: a series sampled every $\Delta t$ cannot resolve anything faster than one
-oscillation per two samples. This separates a slowly drifting but locally clean channel
-(power concentrated at low $f$) from one with a high-frequency noise floor (power that
-stays large up to the Nyquist frequency).
+For real signals $S_2$ is even. The one-sided density doubles the positive-frequency
+contribution, giving
+\begin{equation}
+ \int_0^{f_s/2} S_1(f)\,df=C_0=\operatorname{Var}(x_n).
+ \label{eq:psd-variance}
+\end{equation}
+Its units are $\mathrm{m^2\,Hz^{-1}}$ for an altitude signal. The Nyquist frequency
+$f_s/2$ limits distinguishable sampled frequencies: physical motion above that
+frequency may be aliased into the observed band.
 
-\section*{The periodogram}
+A full flight altitude series need not be stationary. Equation~\eqref{eq:psd-variance}
+therefore gives the stationary reference interpretation; it is not a claim that
+the variance of an entire climbing and descending flight equals the integral of
+its detrended Welch estimate. Here the spectrum is a finite-record diagnostic,
+computed after detrending shorter windows.
 
-The naive estimator of $S(f)$ is the \textbf{periodogram}: take the discrete Fourier
-transform $\hat z(f)=\sum_n z_n\,e^{-2\pi i f n\Delta t}$ and form $|\hat z(f)|^2$
-(suitably normalised). It is asymptotically unbiased but \emph{not consistent}: its
-variance does not shrink as the record gets longer, because a longer signal gives more
-frequency points, each as noisy as before. Plotted directly it is a spiky curve, too
-noisy for a reliable comparison of two channels.
+\section{The estimator used here}
 
-\section*{Welch's method}
+For window $j$ of length $L$, subtract its least-squares linear trend and denote the
+residuals by $y_{j,n}$. With a periodic Hann taper $w_n$, define
+\begin{equation}
+ I_j(f_k)=\frac{\left|\sum_{n=0}^{L-1}w_n y_{j,n}
+                    e^{-2\pi i kn/L}\right|^2}
+                   {f_s\sum_{n=0}^{L-1}w_n^2},\qquad f_k=kf_s/L.
+\end{equation}
+This is the two-sided normalisation. For a one-sided estimate, positive bins are
+doubled except for the Nyquist bin when $L$ is even; the zero-frequency bin is
+also left unchanged. Welch's estimate averages the resulting periodograms over
+$K$ overlapping windows~\cite{welch1967}:
+\begin{equation}
+ \widehat S_1(f_k)=\frac1K\sum_{j=1}^{K}I_{j,1}(f_k).
+ \label{eq:welch-estimator}
+\end{equation}
+The implementation uses $L=256$, half-window overlap, linear detrending and the
+arithmetic mean within each flight. The frequency spacing is $f_s/L$; tapering
+broadens the effective resolution. Details of the eligible intervals and the
+separate aggregation across flights are given in \nameref{sec:altchannel}.
 
-Welch's method turns the noisy periodogram into a usable estimate by \emph{averaging}. It
-proceeds in three steps:
-\begin{enumerate}[label=(\roman*)]
-  \item \textbf{Segment.} Split the record into several shorter, overlapping segments.
-  \item \textbf{Window.} Multiply each segment by a smooth taper (a Hann window) that falls
-        to zero at its ends. This suppresses the spurious high-frequency power (\emph{spectral
-        leakage}) that an abrupt segment boundary would otherwise inject.
-  \item \textbf{Average.} Compute the periodogram of each windowed segment and average them.
-\end{enumerate}
-Averaging $K$ segments cuts the variance of the estimate by roughly a factor $K$, at the
-cost of coarser frequency resolution (set by the segment length rather than the whole
-record). The result is a smooth PSD estimate whose \emph{level} can be compared meaningfully
-between two signals; it is the standard, robust spectral estimator. Each segment is
-typically detrended before transforming (e.g.\ by removing a linear fit), so that the
-estimate reflects the fluctuations about the trend, where the sensor noise lives, rather
-than the trend itself \impldetails{impl:altchannel}.
+An individual periodogram has substantial sampling variability. Under suitable
+stationarity and weak-dependence conditions, averaging independent windows reduces
+its variance approximately by $K$. Overlapping windows are correlated, so their
+effective number is smaller. Increasing $L$ improves frequency resolution but
+leaves fewer windows to average; keeping $L$ fixed also retains smoothing bias
+as the record grows. The mean Welch estimator is not, by itself, resistant to
+arbitrarily large outliers.
 
-The spectra of the two altitude channels, and the choice of channel they motivate, are
-discussed in Sec.~\ref{sec:altchannel}; this appendix covers only the method.
+Linear detrending suppresses slow variation within each window; it does not remove
+all physical motion or isolate sensor noise. Likewise, a high-frequency plateau
+can be compatible with measurement noise without uniquely identifying its cause.
+Comparisons between GNSS and barometric spectra must account for missing-channel
+selection, sampling, interpolation and the response of any subsequent filter.
