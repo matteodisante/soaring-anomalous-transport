@@ -1,0 +1,149 @@
+"""Apply an audited documentation-only correction without changing cleaning algorithms."""
+import ast, copy, hashlib, json, shutil
+from datetime import datetime, UTC
+from pathlib import Path
+from soaring.reporting import DISCIPLINES
+from soaring.reporting.snapshot import current_cleaning, validate_snapshot, write_json
+
+root=Path.cwd();path=root/'src/soaring/analysis/preproc/cleaning.py'
+before=path.read_text();old_definition=current_cleaning(root)
+archives={name:g.derived_dir() for name,g in DISCIPLINES.items()}
+old_manifests={name:validate_snapshot(d,old_definition) for name,d in archives.items()}
+class StripDocstrings(ast.NodeTransformer):
+ def _strip(self,node):
+  self.generic_visit(node)
+  if node.body and isinstance(node.body[0],ast.Expr) and isinstance(node.body[0].value,ast.Constant) and isinstance(node.body[0].value.value,str):node.body.pop(0)
+  return node
+ visit_Module=_strip
+ visit_FunctionDef=_strip
+ visit_AsyncFunctionDef=_strip
+ visit_ClassDef=_strip
+
+def executable(text):return ast.dump(StripDocstrings().visit(ast.parse(text)),include_attributes=False)
+def replace_doc(text,name,new):
+ tree=ast.parse(text);node=tree if name is None else next(n for n in ast.walk(tree) if isinstance(n,(ast.FunctionDef,ast.AsyncFunctionDef)) and n.name==name)
+ doc=node.body[0];assert isinstance(doc,ast.Expr) and isinstance(doc.value,ast.Constant) and isinstance(doc.value.value,str)
+ lines=text.splitlines(keepends=True);indent='' if name is None else ' '*4
+ lines[doc.lineno-1:doc.end_lineno]=[indent+'"""'+new.replace('\n','\n'+indent)+'"""\n']
+ return ''.join(lines)
+text=replace_doc(before,None,'''Fix-level cleaning before projection, resampling and smoothing.
+
+Position and time rules remove selected fixes; altitude rules invalidate only that
+channel. These are operational decisions, not a guarantee that every removed fix
+is erroneous or every retained fix is correct. Slowly varying errors can survive,
+and interpolation cannot reconstruct unobserved manoeuvres.
+
+After timestamp handling, Hampel residuals identify and attribute candidates, while
+the horizontal impossibility/rejoin gate controls deletion independently of the
+flag. Collapsed or exactly repeated coordinate runs are tested for duration and
+witness support. Removed frozen-run intervals force segment boundaries. Altitude
+uses absolute bounds, adjacent windowed speed tests and isolated return-spike rules.
+
+Distances here are spherical great-circle approximations on raw geodetic
+coordinates. The later ENU transform and smoothing define different coordinates,
+so a speed bound enforced here is not a bound on every smoothed output step.
+The integrity gate is called after trimming and measures reconstruction burden
+over the retained airborne interval, without estimating a true defect rate.''')
+text=replace_doc(text,'unwrap_longitude','''Place longitude on a continuous branch before componentwise calculations.
+
+Medians, bounding boxes and duplicate-time centroids must not average values just
+below +180 degrees with values just above -180 degrees as if they were far apart.
+Unwrapping avoids that coordinate discontinuity; trigonometric distance and ENU
+calculations remain periodic. Stored longitude is wrapped again at the end.
+
+Args:
+    lon_deg: Longitude in degrees.
+
+Returns:
+    A continuous branch, possibly outside [-180, 180].''')
+text=replace_doc(text,'hampel_flags','''Identify local horizontal-position residuals; do not delete fixes.
+
+At each fix, compute the componentwise median latitude/longitude in the inclusive
+physical-time window +/- w and the great-circle residual r_k from that median.
+The local scale is 1.4826 times the median of neighbouring residuals r_j, each of
+which was formed around its own local median. Flag r_k above the greater of
+k times this scale and the configured metre floor, only if enough fixes exist.
+
+The factor is the conventional scalar Gaussian MAD normalization; it does not
+make this radial, correlated residual an exactly calibrated Gaussian statistic.
+The flag attributes a candidate. The independent impossibility/rejoin gate makes
+the horizontal deletion decision, and no median is substituted for a position.''')
+text=replace_doc(text,'_frozen_runs','''Detect candidate repeated-position intervals with joint operational criteria.
+
+Candidates are exact runs of repeated decoded coordinates and greedy intervals
+whose bounding-box diameter stays below the configured distance. They must last
+at least frozen_tau_s and pass _is_witnessed. Those criteria are not statistically
+independent and do not prove the receiver's internal lock state. Slow or quantized
+physical motion and shared recorder failures remain possible confounders.
+
+Exact coordinate repetition is accepted as a witness by the current policy.
+Otherwise a flight with an eligible barometer needs a finite reading at every
+candidate fix and a small difference between its first/last-quarter medians;
+missing local support causes abstention. Without an eligible barometer, a majority
+of GNSS-invalid or missing-altitude declarations supplies the fallback witness.
+The barometer comparison measures net change, not the absence of interior motion.
+
+Returns:
+    Deletion mask and split-before mask. Every removed block ends in a forced
+    boundary at its next surviving fix, preventing interpolation across that block.''')
+text=replace_doc(text,'_identical_runs','''Find inclusive runs of exactly equal decoded latitude/longitude values.
+
+This is equality without a distance tolerance, not a comparison of whole raw IGC
+records. Coordinate quantization can produce equal values during physical motion.
+The frozen-run policy additionally requires the configured minimum duration.''')
+text=replace_doc(text,'_collapsed_runs','''Find greedy candidate intervals with bounding-box diameter below delta_xy.
+
+A trailing-window bounding-box prefilter limits the exact scan to potentially
+collapsed stretches. Such geometry identifies candidates; it does not establish
+that a slow, spatially confined interval is a recorder defect.''')
+text=replace_doc(text,'_is_witnessed','''Evaluate the configured witness for one candidate interval.
+
+Exact decoded coordinate repetition passes directly. Otherwise a barometer deemed
+eligible at flight level must also be finite at every candidate fix; the first
+and last quarter medians are compared. This is a net-change test. No missing
+barometric reading is interpolated. If no eligible barometer exists, the fallback
+requires a majority of invalid-GNSS or missing-altitude declarations.
+
+Args:
+    lat: Decoded latitudes over the run.
+    lon: Decoded longitudes over the run.
+    alt: Adopted GNSS altitude, with unavailable values represented by NaN.
+    baro: Raw pressure-altitude readings, NaN where absent.
+    valid: Recorder A/V flags.
+    fix_level: Operational thresholds.
+    baro_witness: Flight-level barometer eligibility; not local coverage.''')
+text=text.replace('# Rescales the median absolute deviation into an estimate of a Gaussian standard\n# deviation (thesis, Eq. eq:hampel).', '# Conventional scalar Gaussian MAD normalization; radial local residuals do not\n# inherit an exact Gaussian standard-deviation interpretation (Eq. eq:hampel).')
+text=text.replace('    # Two families of candidate run, because the byte-identical signature has to be\n    # tested on the stretch that actually is byte-identical: a greedy collapsed run\n    # reaches one fix past the freeze -- the wing has not yet moved delta_xy away -- and\n    # that one fix would break an exact-equality test that is meant to be conclusive.', '    # Exact-repeat candidates are tracked separately: a greedy collapsed interval\n    # can include a nearby nonidentical fix and would then fail the equality test.')
+text=text.replace('        # Exact equality and no tolerance: a tolerance would turn the one conclusive\n        # signature into the jittering-freeze case it exists to exclude.', '        # This branch uses exact equality, with no tolerance. It is a configured\n        # decision rule, not proof that physical motion was impossible.')
+text=text.replace('A frozen-lock run leaves the position on either side genuine;', 'A removed frozen-lock run leaves observed positions on either side;')
+# Correct an output-stage guarantee in the boundary helper's docstring, without touching its body.
+text=text.replace('The invariant the rest of the pipeline leans on: *no step between two fixes that\n    reach the analysis may break the absolute speed bound*.', 'Before projection and smoothing, each surviving raw-geodetic step above the\n    configured absolute speed bound must become a segment boundary.')
+assert executable(before)==executable(text), 'Executable AST changed: no manifest may be updated'
+review=root/'revisions'/'cleaner-documentation-2026-09-10';review.mkdir(exist_ok=False)
+(review/'cleaning-before.py.txt').write_text(before)
+(review/'cleaning-after.py.txt').write_text(text)
+shutil.copyfile(__file__,review/'audit-script.py.txt')
+for name,d in archives.items():
+ shutil.copyfile(d/'run_manifest.json',review/f'{name.replace(" ","_")}-executed-manifest.json')
+path.write_text(text)
+new_definition=current_cleaning(root)
+a=copy.deepcopy(old_definition);b=copy.deepcopy(new_definition);a.pop('source_sha256');b.pop('source_sha256');assert a==b
+proof={'kind':'documentation-only-source-review','created_utc':datetime.now(UTC).isoformat(),
+       'file':str(path.relative_to(root)),'before_sha256':hashlib.sha256(before.encode()).hexdigest(),
+       'after_sha256':hashlib.sha256(text.encode()).hexdigest(),
+       'executable_ast_sha256':hashlib.sha256(executable(before).encode()).hexdigest(),
+       'executable_ast_identical':True,'method':'Compare complete ASTs after removing only module/function/class docstrings; comments are non-AST tokens. No executable statements changed.',
+       'executed_cleaning':old_definition,'documentation_equivalent_cleaning':new_definition}
+write_json(review/'proof.json',proof)
+proof_hash=hashlib.sha256((review/'proof.json').read_bytes()).hexdigest()
+for name,d in archives.items():
+ # The original execution definition and manifest are preserved explicitly. The
+ # current definition changes only documentation, established by the AST check.
+ old=old_manifests[name]
+ new=copy.deepcopy(old);new['executed_cleaning']=copy.deepcopy(old['cleaning'])
+ new['cleaning']=new_definition
+ new['documentation_review']={'proof':str(review/'proof.json'),'sha256':proof_hash,
+                             'original_manifest':str(review/f'{name.replace(" ","_")}-executed-manifest.json')}
+ write_json(d/'run_manifest.json',new)
+ validate_snapshot(d,new_definition)
+print('Documentation corrected; executable AST identical; original execution manifests and proof preserved:',review)

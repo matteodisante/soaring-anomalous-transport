@@ -1,0 +1,57 @@
+# Three-state continuous-emission HMM for the flight-phase analysis.  Times are
+# physical times rather than sample counts: the source archive has several native
+# logging cadences, whereas one transition matrix must describe one common interval.
+decision_step_s: 10.0
+feature_window_s: 30.0
+max_native_dt_s: 10.0
+min_horizontal_speed_mps: 1.0
+
+states: [transition, search, climb]
+covariance_type: full
+random_seed: 20260909
+n_restarts: 10
+n_iter: 200
+tol: 0.001
+min_covar: 0.001
+# Restarts are statistically independent.  Eight workers use all CPU cores of the
+# analysis machine; joblib memory-maps the shared observation matrix and limits each
+# worker's nested BLAS threads to avoid oversubscription.
+n_jobs: 8
+implementation: scaling
+
+# Assigned at the flight level, never at the fix level.  A manual test annotation
+# consequently never shares a trajectory with the unsupervised fitting population.
+split:
+  train: 0.70
+  validation: 0.15
+  test: 0.15
+
+# hmmlearn keeps its fitting matrix in memory. Selection is deterministic and made from
+# whole, contiguous feature sequences; a source block above either cap is excluded from
+# the fitting sample rather than split at an artificial HMM transition.
+max_fit_flights: 1000
+# One million correlated 10-s observations are already far above what a 3-state,
+# 4-dimensional HMM needs, while keeping ten full-covariance restarts practical.
+max_fit_observations: 1000000
+# Longer than the longest retained flight at the 10-s decision cadence.  This avoids
+# biasing the fit toward flights shorter than two hours while retaining a hard guard
+# against malformed sequences.
+max_sequence_observations: 6000
+bootstrap_replicates: 1000
+
+# Soft decoding assumptions, not validated behavioural measurements. Existing saved
+# artifacts without this block retain their fitted matrix; the viewer explicitly
+# applies this policy to its on-demand decoding. Use apply --sequence-prior for a
+# separate archive export with identical decoding and persisted provenance.
+sequence_prior:
+  weight: 0.75
+  mean_dwell_s: 120.0
+  forward_probability: 0.95
+  allow_search_skip: true
+  search_mean_dwell_s: 20.0
+
+# The fitted climb component has a nearly singular coherence distribution at 1.
+# Decode its exact 3D Gaussian marginal (vertical speed, horizontal speed, turn
+# rate), integrating out coherence rather than requiring near-perfect circles.
+# The original 4D fit and its parameters remain available for comparison.
+marginalize_turn_coherence: true

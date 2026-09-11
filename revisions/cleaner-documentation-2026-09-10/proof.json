@@ -1,0 +1,132 @@
+{
+  "after_sha256": "a52aee31189229b84287e53f2acba725abb10c83ab3208fc65a80b527ca5688e",
+  "all_other_cleaning_source_bytes_unchanged": true,
+  "before_sha256": "2a3acc88671d750990c49d77a4011680d009d8eee590b9273f00b39e9cf18987",
+  "created_utc": "2026-09-10T21:53:36.482703+00:00",
+  "documentation_equivalent_cleaning": {
+    "configuration": {
+      "alt_channel": {
+        "baro_witness_min_range_m": 30.0,
+        "baro_witness_present_min": 0.95,
+        "gnss_min_range_m": 30.0,
+        "gnss_present_min": 0.95
+      },
+      "fix": {
+        "frozen_delta_z_m": 5.0,
+        "frozen_eps_m": 15.0,
+        "frozen_tau_s": 60.0,
+        "hampel_eps_min_m": 15.0,
+        "hampel_k": 5.0,
+        "hampel_min_window_fixes": 5,
+        "hampel_window_s": 20.0,
+        "integrity_max_fraction": 0.1,
+        "max_altitude_m": 6000.0,
+        "max_horizontal_speed_mps": {
+          "hang gliders": 55.0,
+          "paragliders": 45.0
+        },
+        "max_vertical_speed_mps": 10.0,
+        "min_altitude_m": -100.0,
+        "vz_min_window_fixes": 5,
+        "vz_window_s": 5.0
+      },
+      "flight": {
+        "max_duration_s": 57600.0,
+        "min_alt_range_m": 600.0,
+        "min_duration_s": 2400.0,
+        "min_path_km": 20.0
+      },
+      "sampling": {
+        "max_gap_factor": 10.0,
+        "max_gap_seconds": 20.0,
+        "max_missing_fraction": 0.1,
+        "min_segment_duration_s": 90.0
+      },
+      "savgol": {
+        "polyorder": 3,
+        "tau_c_horizontal_s": 5.0,
+        "tau_c_vertical_s": 5.0
+      },
+      "trimming": {
+        "ground_flatness_m": 5.0,
+        "interior_ground_s": 600.0,
+        "sustained_s": 30.0,
+        "takeoff_speed_mps": 5.0
+      }
+    },
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "pyarrow": "24.0.0",
+      "scipy": "1.18.0"
+    },
+    "pipeline_version": "2.2.0",
+    "source_sha256": "a9e91e2d1034836ee4bf3d0bdbf646beeca5d8c6da20149d5601be50131043c0"
+  },
+  "executable_ast_identical": true,
+  "executable_ast_sha256": "498bf98fbf7e9f842518ec0da683a04fe3ab5dbc361a192ec1c4aba54e772a17",
+  "executed_cleaning": {
+    "configuration": {
+      "alt_channel": {
+        "baro_witness_min_range_m": 30.0,
+        "baro_witness_present_min": 0.95,
+        "gnss_min_range_m": 30.0,
+        "gnss_present_min": 0.95
+      },
+      "fix": {
+        "frozen_delta_z_m": 5.0,
+        "frozen_eps_m": 15.0,
+        "frozen_tau_s": 60.0,
+        "hampel_eps_min_m": 15.0,
+        "hampel_k": 5.0,
+        "hampel_min_window_fixes": 5,
+        "hampel_window_s": 20.0,
+        "integrity_max_fraction": 0.1,
+        "max_altitude_m": 6000.0,
+        "max_horizontal_speed_mps": {
+          "hang gliders": 55.0,
+          "paragliders": 45.0
+        },
+        "max_vertical_speed_mps": 10.0,
+        "min_altitude_m": -100.0,
+        "vz_min_window_fixes": 5,
+        "vz_window_s": 5.0
+      },
+      "flight": {
+        "max_duration_s": 57600.0,
+        "min_alt_range_m": 600.0,
+        "min_duration_s": 2400.0,
+        "min_path_km": 20.0
+      },
+      "sampling": {
+        "max_gap_factor": 10.0,
+        "max_gap_seconds": 20.0,
+        "max_missing_fraction": 0.1,
+        "min_segment_duration_s": 90.0
+      },
+      "savgol": {
+        "polyorder": 3,
+        "tau_c_horizontal_s": 5.0,
+        "tau_c_vertical_s": 5.0
+      },
+      "trimming": {
+        "ground_flatness_m": 5.0,
+        "interior_ground_s": 600.0,
+        "sustained_s": 30.0,
+        "takeoff_speed_mps": 5.0
+      }
+    },
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "pyarrow": "24.0.0",
+      "scipy": "1.18.0"
+    },
+    "pipeline_version": "2.2.0",
+    "source_sha256": "339322197a69b5c65fa514a0c751f63a8266f8f283a566685b7c442e3d157311"
+  },
+  "file": "src/soaring/analysis/preproc/cleaning.py",
+  "kind": "documentation-only-source-review",
+  "method": "Compare complete ASTs after removing only module/function/class docstrings; comments are non-AST tokens. No executable statements changed.",
+  "reconstructed_original_source_sha256": "339322197a69b5c65fa514a0c751f63a8266f8f283a566685b7c442e3d157311"
+}

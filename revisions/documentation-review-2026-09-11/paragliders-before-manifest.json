@@ -1,0 +1,162 @@
+{
+  "attempted_files": 186052,
+  "cleaning": {
+    "configuration": {
+      "alt_channel": {
+        "baro_witness_min_range_m": 30.0,
+        "baro_witness_present_min": 0.95,
+        "gnss_min_range_m": 30.0,
+        "gnss_present_min": 0.95
+      },
+      "fix": {
+        "frozen_delta_z_m": 5.0,
+        "frozen_eps_m": 15.0,
+        "frozen_tau_s": 60.0,
+        "hampel_eps_min_m": 15.0,
+        "hampel_k": 5.0,
+        "hampel_min_window_fixes": 5,
+        "hampel_window_s": 20.0,
+        "integrity_max_fraction": 0.1,
+        "max_altitude_m": 6000.0,
+        "max_horizontal_speed_mps": {
+          "hang gliders": 55.0,
+          "paragliders": 45.0
+        },
+        "max_vertical_speed_mps": 10.0,
+        "min_altitude_m": -100.0,
+        "vz_min_window_fixes": 5,
+        "vz_window_s": 5.0
+      },
+      "flight": {
+        "max_duration_s": 57600.0,
+        "min_alt_range_m": 600.0,
+        "min_duration_s": 2400.0,
+        "min_path_km": 20.0
+      },
+      "sampling": {
+        "max_gap_factor": 10.0,
+        "max_gap_seconds": 20.0,
+        "max_missing_fraction": 0.1,
+        "min_segment_duration_s": 90.0
+      },
+      "savgol": {
+        "polyorder": 3,
+        "tau_c_horizontal_s": 5.0,
+        "tau_c_vertical_s": 5.0
+      },
+      "trimming": {
+        "ground_flatness_m": 5.0,
+        "interior_ground_s": 600.0,
+        "sustained_s": 30.0,
+        "takeoff_speed_mps": 5.0
+      }
+    },
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "pyarrow": "24.0.0",
+      "scipy": "1.18.0"
+    },
+    "pipeline_version": "2.2.0",
+    "source_sha256": "a9e91e2d1034836ee4bf3d0bdbf646beeca5d8c6da20149d5601be50131043c0"
+  },
+  "completed_utc": "2026-09-10T21:14:25.413794+00:00",
+  "discipline": "paragliders",
+  "documentation_review": {
+    "original_manifest": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/cleaner-documentation-2026-09-10/paragliders-executed-manifest.json",
+    "proof": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/cleaner-documentation-2026-09-10/proof.json",
+    "sha256": "064752b0b26b719c4352188eabfff0ef285a5e8abd20c37eaa78a126afd0b3d9"
+  },
+  "executed_cleaning": {
+    "configuration": {
+      "alt_channel": {
+        "baro_witness_min_range_m": 30.0,
+        "baro_witness_present_min": 0.95,
+        "gnss_min_range_m": 30.0,
+        "gnss_present_min": 0.95
+      },
+      "fix": {
+        "frozen_delta_z_m": 5.0,
+        "frozen_eps_m": 15.0,
+        "frozen_tau_s": 60.0,
+        "hampel_eps_min_m": 15.0,
+        "hampel_k": 5.0,
+        "hampel_min_window_fixes": 5,
+        "hampel_window_s": 20.0,
+        "integrity_max_fraction": 0.1,
+        "max_altitude_m": 6000.0,
+        "max_horizontal_speed_mps": {
+          "hang gliders": 55.0,
+          "paragliders": 45.0
+        },
+        "max_vertical_speed_mps": 10.0,
+        "min_altitude_m": -100.0,
+        "vz_min_window_fixes": 5,
+        "vz_window_s": 5.0
+      },
+      "flight": {
+        "max_duration_s": 57600.0,
+        "min_alt_range_m": 600.0,
+        "min_duration_s": 2400.0,
+        "min_path_km": 20.0
+      },
+      "sampling": {
+        "max_gap_factor": 10.0,
+        "max_gap_seconds": 20.0,
+        "max_missing_fraction": 0.1,
+        "min_segment_duration_s": 90.0
+      },
+      "savgol": {
+        "polyorder": 3,
+        "tau_c_horizontal_s": 5.0,
+        "tau_c_vertical_s": 5.0
+      },
+      "trimming": {
+        "ground_flatness_m": 5.0,
+        "interior_ground_s": 600.0,
+        "sustained_s": 30.0,
+        "takeoff_speed_mps": 5.0
+      }
+    },
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "pyarrow": "24.0.0",
+      "scipy": "1.18.0"
+    },
+    "pipeline_version": "2.2.0",
+    "source_sha256": "339322197a69b5c65fa514a0c751f63a8266f8f283a566685b7c442e3d157311"
+  },
+  "limit": 0,
+  "retained_flights": 156305,
+  "run_id": "1c8597f1-e955-4dd0-b899-81fad898c377",
+  "seed": 20260803,
+  "started_utc": "2026-09-10T20:13:08.896070+00:00",
+  "status": "complete",
+  "tables": {
+    "fixes.parquet": {
+      "bytes": 43404126783,
+      "footer_sha256": "6da14b0982240a853feec018df41fef1ca313bc799ad214014f7d90a47080ee9",
+      "mtime_ns": 1789074824660000000,
+      "rows": 1370352162
+    },
+    "flights_meta.parquet": {
+      "bytes": 13463428,
+      "footer_sha256": "94aa2c8a99259b351b5a0b889039e4ee0e2ddf480d627931faede5e296670082",
+      "mtime_ns": 1789074828260000000,
+      "rows": 186052
+    },
+    "segments.parquet": {
+      "bytes": 4867911,
+      "footer_sha256": "594261bd5e244f9a0d042e9e8c91b9398d428e00bcba7adb4bc02d8a58e9826f",
+      "mtime_ns": 1789074865270000000,
+      "rows": 281439
+    },
+    "suspect_intervals.parquet": {
+      "bytes": 8417,
+      "footer_sha256": "0f2c847469f9cdb0827d588666009af284f086c9a7f7946e867e7b833e28ddb6",
+      "mtime_ns": 1789074865380000000,
+      "rows": 499
+    }
+  }
+}

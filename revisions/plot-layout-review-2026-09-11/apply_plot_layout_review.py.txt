@@ -1,0 +1,72 @@
+"""Publish the proved layout corrections only after the numerical rebuild completes."""
+import ast,copy,hashlib,json,runpy,shutil
+from pathlib import Path
+from datetime import UTC,datetime
+from soaring.reporting import DISCIPLINES
+from soaring.reporting.snapshot import current_cleaning,validate_snapshot,write_json
+
+ROOT=Path('/Users/matteodisante/local_master_thesis/soaring-anomalous-transport')
+RUN=Path('/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4')
+PREP=Path('/tmp/plot-layout-review')
+EVIDENCE=ROOT/'revisions/plot-layout-review-2026-09-11'
+sha=lambda b:hashlib.sha256(b).hexdigest()
+def main():
+ path=RUN/'manifest.json';execution=json.loads(path.read_text());prepared=json.loads((PREP/'manifest.json').read_text())
+ assert execution['status']=='complete' and execution['pdf_sha256']
+ assert not EVIDENCE.exists()
+ driver=runpy.run_path(str(ROOT/'scripts/rebuild_thesis.py'))
+ assert driver['numerical_source_hash'](ROOT)==execution['numerical_source_sha256']
+ assert sha((ROOT/'thesis/main.pdf').read_bytes())==execution['pdf_sha256']
+ definition=current_cleaning(ROOT)
+ assert {name:validate_snapshot(g.derived_dir(),definition) for name,g in DISCIPLINES.items()}==execution['datasets']
+ for name,record in execution['outputs'].items():assert sha((ROOT/'thesis/generated'/name).read_bytes())==record['sha256'],name
+ for name,record in prepared['files'].items():
+  before=(ROOT/name).read_bytes();after=(PREP/'after'/name).read_bytes()
+  assert sha(before)==record['before_sha256'];assert sha(after)==record['after_sha256']
+  trees=[ast.parse(x) for x in [before,after]]
+  for tree in trees:
+   for n in tree.body:
+    if isinstance(n,ast.FunctionDef) and n.name in record['changed_drawing_functions']:n.body=[ast.Pass()]
+  assert ast.dump(trees[0],include_attributes=False)==ast.dump(trees[1],include_attributes=False)
+ for name,record in prepared['outputs'].items():
+  assert sha((ROOT/'thesis/generated'/name).read_bytes())==record['before_sha256']
+  assert sha((PREP/'after/rendered'/name).read_bytes())==record['after_sha256']
+ EVIDENCE.mkdir()
+ shutil.copyfile(path,EVIDENCE/'before-manifest.json')
+ for local in ['prepare_plot_layout_review.py','finalize_plot_layout_proof.py','apply_plot_layout_review.py']:
+  shutil.copyfile(Path('/tmp')/local,EVIDENCE/(local+'.txt'))
+ for local in ['capture-before.json','capture-after.json','manifest.json']:
+  shutil.copyfile(PREP/local,EVIDENCE/local)
+ original=RUN/'figures-before-layout-review';original.mkdir()
+ for name in prepared['files']:
+  tag=name.replace('/','__');shutil.copyfile(ROOT/name,EVIDENCE/(tag+'.before.txt'))
+  shutil.copyfile(PREP/'after'/name,EVIDENCE/(tag+'.after.txt'))
+  shutil.copyfile(PREP/'after'/name,ROOT/name)
+ for name in prepared['outputs']:
+  shutil.copyfile(ROOT/'thesis/generated'/name,original/name)
+  shutil.copyfile(PREP/'after/rendered'/name,ROOT/'thesis/generated'/name)
+ for name,record in execution['outputs'].items():
+  if name not in prepared['outputs']:assert sha((ROOT/'thesis/generated'/name).read_bytes())==record['sha256']
+ reconstructed=hashlib.sha256()
+ for source in sorted(set([*ROOT.glob('src/**/*.py'),*ROOT.glob('scripts/**/*.py'),*ROOT.glob('configs/*.yaml'),ROOT/'uv.lock'])):
+  relative=source.relative_to(ROOT).as_posix();reconstructed.update(relative.encode()+b'\0')
+  reconstructed.update((PREP/'before'/relative).read_bytes() if relative in prepared['files'] else source.read_bytes())
+ assert reconstructed.hexdigest()==execution['numerical_source_sha256']
+ assert current_cleaning(ROOT)==definition
+ new_hash=driver['numerical_source_hash'](ROOT)
+ proof={**prepared,'kind':'presentation-only-layout-review','created_utc':datetime.now(UTC).isoformat(),
+  'before_numerical_source_sha256':execution['numerical_source_sha256'],'after_numerical_source_sha256':new_hash,
+  'numeric_outputs':'All numerical arrays, JSON reports, tables and macros retain their bytes. The code_sha256 in ch3_revision.json records its numerical execution; this proof records the subsequent drawing-only changes.'}
+ write_json(EVIDENCE/'proof.json',proof)
+ reference={'proof':str(EVIDENCE/'proof.json'),'sha256':sha((EVIDENCE/'proof.json').read_bytes())}
+ updated=copy.deepcopy(execution);updated.setdefault('executed_numerical_source_sha256',execution['numerical_source_sha256'])
+ updated['numerical_source_sha256']=new_hash
+ updated.setdefault('presentation_review_history',[]).append(copy.deepcopy(updated.get('presentation_review')))
+ updated['presentation_review']=reference;updated['pdf_requires_manuscript_review']=True
+ for name,record in prepared['outputs'].items():
+  # Ancillary generated PDFs may not be direct manuscript dependencies.
+  if name in updated['outputs']:
+   updated['outputs'][name]['sha256']=record['after_sha256'];updated['outputs'][name]['presentation_review']=reference
+ write_json(path,updated)
+ print('Reviewed figure layouts applied; all numerical outputs unchanged. Compile and review manuscript next.')
+if __name__=='__main__':main()

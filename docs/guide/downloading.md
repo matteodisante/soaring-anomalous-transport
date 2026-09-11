@@ -5,10 +5,9 @@ Two CLI tools share the same interface: `soaring-para` (paragliders) and `soarin
 
 ## First: set `data_root` (required)
 
-`data_root` is where the raw data is written and **must point to the external disk**. Both
-config files carry a real path — the author's disk — because several things run with no
-environment at all, the pre-commit hook among them, and a placeholder there makes them
-resolve nothing and exit quietly. On any other machine, override it.
+`data_root` is where the raw data is written. This project keeps the full archives on
+the external SSD. Both configuration files contain the author's actual disk paths;
+on another machine, override them to point to the intended mounted archive.
 
 The recommended way is the environment variable — it always overrides the config file:
 
@@ -25,13 +24,14 @@ Alternatively, edit `data_root` in the corresponding config file:
 or [`configs/delta_download.yaml`](https://github.com/matteodisante/soaring-anomalous-transport).
 Either way, make sure the **external disk is mounted** first.
 
-!!! warning "If `data_root` is not set, the CLI stops immediately with a clear message"
-    Every command checks `data_root` at startup. If it points to an **unmounted** disk,
-    to a disk that was **renamed**, or to a placeholder, the command aborts right away
-    with an explanation and the fix — *before* any download or write.
+!!! note "The destination check tests the parent directory"
+    Configuration loading requires `data_root`. At startup, the CLI then checks that
+    its parent directory exists, before initializing the download. The archive root
+    itself can be created later. With the configured SSD layout, a disconnected disk
+    normally leaves that parent absent and the command stops with an explanation.
 
-    This is safe by design: the macOS mount point `/Volumes` is not user-writable, so a
-    wrong path can never cause a silent download to the wrong place.
+    Parent existence does not establish writability or that an existing location is
+    the intended archive. Confirm the configured location before starting a download.
 
 ## The commands
 
@@ -87,4 +87,4 @@ uv run soaring-para clean    # or soaring-delta clean
 | Paragliders (`soaring-para`) | ~186,000 | ~342 KB | ~65 GB |
 | Hang gliders (`soaring-delta`) | ~6,750 | ~200 KB | ~1–2 GB |
 
-Implementation details: `soaring.acquisition.ffvl.download` (see [API Reference](../reference.md)).
+Download code: `soaring.acquisition.ffvl.download` (see [API Reference](../reference.md)).

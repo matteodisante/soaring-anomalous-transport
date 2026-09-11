@@ -1,0 +1,155 @@
+"""Align one spectrum palette after the completed rebuild, preserving numerical evidence."""
+import ast
+import copy
+import hashlib
+import json
+import runpy
+import shutil
+from datetime import UTC, datetime
+from pathlib import Path
+
+import numpy as np
+from soaring.reporting import DISCIPLINES
+from soaring.reporting.snapshot import current_cleaning, validate_snapshot, write_json
+
+ROOT = Path('/Users/matteodisante/local_master_thesis/soaring-anomalous-transport')
+RUN = Path('/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4')
+SCRIPT = ROOT/'scripts/reporting/ch2_dataset/generate_savgol_spectrum_figure.py'
+EVIDENCE = ROOT/'revisions/spectrum-palette-review-2026-09-11'
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+def normalized_ast(text):
+    tree = ast.parse(text)
+    matches = [n for n in tree.body if isinstance(n,ast.Assign)
+               and any(isinstance(t,ast.Name) and t.id=='_CHANNEL_COLOR' for t in n.targets)]
+    assert len(matches)==1
+    colours = ast.literal_eval(matches[0].value)
+    assert set(colours)=={'horizontal','vertical_baro','vertical_gnss'}
+    from matplotlib.colors import is_color_like
+    assert all(is_color_like(value) for value in colours.values())
+    matches[0].value = ast.Constant(value='AUDITED_PRESENTATION_PALETTE')
+    # The single palette lookup must remain a colour argument of an axes loglog call.
+    parents = {child:node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
+    loads = [node for node in ast.walk(tree) if isinstance(node,ast.Name)
+             and node.id=='_CHANNEL_COLOR' and isinstance(node.ctx,ast.Load)]
+    assert len(loads)==1
+    sub = parents[loads[0]]; kw = parents[sub]; call = parents[kw]
+    assert isinstance(sub,ast.Subscript) and isinstance(kw,ast.keyword) and kw.arg=='color'
+    assert isinstance(call,ast.Call) and isinstance(call.func,ast.Attribute) and call.func.attr=='loglog'
+    return ast.dump(tree,include_attributes=False), colours
+
+def render_and_capture():
+    module = runpy.run_path(str(SCRIPT))
+    namespace = module['main'].__globals__
+    original = namespace['_make_figure']
+    captured = []
+    def capture(data):
+        fig = original(data)
+        for ax in fig.axes:
+            captured.append({
+                'title':ax.get_title(), 'xlabel':ax.get_xlabel(), 'ylabel':ax.get_ylabel(),
+                'xscale':ax.get_xscale(), 'yscale':ax.get_yscale(),
+                'xlim':list(ax.get_xlim()), 'ylim':list(ax.get_ylim()),
+                'lines':[{'x':np.asarray(line.get_xdata()).tolist(),
+                          'y':np.asarray(line.get_ydata()).tolist(),
+                          'label':line.get_label(), 'linewidth':line.get_linewidth(),
+                          'linestyle':line.get_linestyle()} for line in ax.lines],
+            })
+        return fig
+    namespace['_make_figure'] = capture
+    assert module['main']([])==0
+    import matplotlib.pyplot as plt
+    plt.close('all')
+    return captured
+
+def main():
+    path = RUN/'manifest.json'
+    before_manifest = json.loads(path.read_text())
+    assert before_manifest['status']=='complete' and before_manifest['pdf_sha256']
+    assert not EVIDENCE.exists()
+    driver = runpy.run_path(str(ROOT/'scripts/rebuild_thesis.py'))
+    assert driver['numerical_source_hash'](ROOT)==before_manifest['numerical_source_sha256']
+    definition = current_cleaning(ROOT)
+    assert {name:validate_snapshot(disc.derived_dir(),definition)
+            for name,disc in DISCIPLINES.items()}==before_manifest['datasets']
+    output_paths = {name:ROOT/'thesis/generated'/name for name in before_manifest['outputs']}
+    for name,output in output_paths.items():
+        assert sha(output.read_bytes())==before_manifest['outputs'][name]['sha256'],name
+    original_pdf_hash = sha((ROOT/'thesis/main.pdf').read_bytes())
+    assert original_pdf_hash==before_manifest['pdf_sha256']
+    caches = {name:disc.derived_dir()/'savgol_psd_sample.npz' for name,disc in DISCIPLINES.items()}
+    cache_hashes = {name:sha(cache.read_bytes()) for name,cache in caches.items()}
+    before = SCRIPT.read_text()
+    old='''_CHANNEL_COLOR = {
+    "horizontal": "#3477A8",
+    "vertical_baro": "#B5482A",
+    "vertical_gnss": "#3d8c54",
+}'''
+    new='''_CHANNEL_COLOR = {
+    "horizontal": "#6A3D9A",
+    "vertical_baro": "#3477A8",
+    "vertical_gnss": "#B5482A",
+}'''
+    assert before.count(old)==1
+    after=before.replace(old,new)
+    ast_before,colours_before=normalized_ast(before)
+    ast_after,colours_after=normalized_ast(after)
+    assert ast_before==ast_after
+    EVIDENCE.mkdir()
+    shutil.copyfile(path,EVIDENCE/'before-manifest.json')
+    shutil.copyfile(__file__,EVIDENCE/'audit-script.py.txt')
+    (EVIDENCE/'reporter-before.py.txt').write_text(before)
+    (EVIDENCE/'reporter-after.py.txt').write_text(after)
+    shutil.copyfile(output_paths['savgol_spectrum.pdf'],RUN/'savgol-spectrum-before-palette-review.pdf')
+    original_plot=render_and_capture()
+    # A baseline rerender must retain all numerical fragments and the same old PDF.
+    for name,output in output_paths.items():
+        assert sha(output.read_bytes())==before_manifest['outputs'][name]['sha256'],name
+    SCRIPT.write_text(after)
+    reviewed_plot=render_and_capture()
+    assert original_plot==reviewed_plot, 'Plotted data, axes, labels or line styles changed'
+    for name,output in output_paths.items():
+        if name!='savgol_spectrum.pdf':
+            assert sha(output.read_bytes())==before_manifest['outputs'][name]['sha256'],name
+    assert {name:sha(cache.read_bytes()) for name,cache in caches.items()}==cache_hashes
+    assert current_cleaning(ROOT)==definition
+    assert sha((ROOT/'thesis/main.pdf').read_bytes())==original_pdf_hash
+    new_hash=driver['numerical_source_hash'](ROOT)
+    reconstructed=hashlib.sha256()
+    for source in sorted(set([*ROOT.glob('src/**/*.py'),*ROOT.glob('scripts/**/*.py'),
+                              *ROOT.glob('configs/*.yaml'),ROOT/'uv.lock'])):
+        relative=source.relative_to(ROOT).as_posix()
+        reconstructed.update(relative.encode()+b'\0')
+        reconstructed.update(before.encode() if source==SCRIPT else source.read_bytes())
+    assert reconstructed.hexdigest()==before_manifest['numerical_source_sha256']
+    proof={
+        'kind':'presentation-only-palette-review','created_utc':datetime.now(UTC).isoformat(),
+        'run_id':before_manifest['run_id'], 'file':str(SCRIPT.relative_to(ROOT)),
+        'before_source_sha256':sha(before.encode()),'after_source_sha256':sha(after.encode()),
+        'before_numerical_source_sha256':before_manifest['numerical_source_sha256'],
+        'after_numerical_source_sha256':new_hash,
+        'before_colours':colours_before,'after_colours':colours_after,
+        'normalized_ast_sha256':sha(ast_before.encode()),
+        'unchanged_plot_geometry_and_data_sha256':sha(json.dumps(original_plot,sort_keys=True).encode()),
+        'cache_sha256':cache_hashes,
+        'before_pdf_sha256':before_manifest['outputs']['savgol_spectrum.pdf']['sha256'],
+        'after_pdf_sha256':sha(output_paths['savgol_spectrum.pdf'].read_bytes()),
+        'scope':'Only the three channel colours changed. Cached spectra, plotted x/y values, axes, labels, line widths/styles and all numerical fragments are identical. The whole source hash is reconstructed with the saved original reporter; no other file changed during this palette review.',
+    }
+    write_json(EVIDENCE/'proof.json',proof)
+    write_json(EVIDENCE/'plotted-data.json',{'axes':original_plot})
+    reference={'proof':str(EVIDENCE/'proof.json'),'sha256':sha((EVIDENCE/'proof.json').read_bytes())}
+    updated=copy.deepcopy(before_manifest)
+    updated.setdefault('executed_numerical_source_sha256',before_manifest['numerical_source_sha256'])
+    updated['numerical_source_sha256']=new_hash
+    updated['outputs']['savgol_spectrum.pdf']['sha256']=proof['after_pdf_sha256']
+    updated['outputs']['savgol_spectrum.pdf']['presentation_review']=reference
+    updated['presentation_review']=reference
+    updated['pdf_requires_manuscript_review']=True
+    write_json(path,updated)
+    print('Spectrum palette aligned; numerical spectra unchanged. Compile the final manuscript next.')
+
+if __name__=='__main__':
+    main()

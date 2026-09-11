@@ -1,0 +1,13 @@
+{
+  "before_numerical_source_sha256": "fcea53a74222c1f0f6caac89e4ec4ac3730bd89c1119209f1024d04e041e3c69",
+  "source": "scripts/reporting/checks/generate_provenance.py",
+  "before_source_sha256": "ad567358b4ab7b003d044650cee7863b15dbe34068c4e5318fdbf275ab3e050a",
+  "run_id": "20260910T221820Z-05d36ab4",
+  "kind": "documentation-dependency-index-correction",
+  "status": "applied locally; source-manifest reconciliation pending SSD",
+  "after_numerical_source_sha256": "4ed63b3d8105ec8471128550af03edac907846d5ac3be6fea6bf9217044d1b49",
+  "after_source_sha256": "771d885a32624d2194d9d7a5b8dced4d084a072b5a2efb550806a5b0d1ee5462",
+  "output": "docs/guide/provenance.md",
+  "output_sha256": "aba19e247c106a915515b0b9d5072c19a746fa60786acc1dcd7e5fe7dd5d2c58",
+  "scope": "Static provenance index now follows literal generated-TeX inputs, strips comments and excludes macro definitions from uses. It correctly records the Chapter 4 generated table dependency on StatSeg macros. No dataset, observable, numerical table or figure changes. Naming families from distinct defining files retain separate producer rows."
+}

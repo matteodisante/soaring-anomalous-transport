@@ -1,0 +1,103 @@
+"""Review local phase PDFs and a documentation correction without touching the SSD."""
+from pathlib import Path
+import ast, hashlib, json, re, shutil, subprocess, zlib
+from collections import Counter
+from datetime import UTC, datetime
+import numpy as np
+ROOT = Path.cwd()
+PREP = Path('/tmp/phase-label-layout')
+EVIDENCE = ROOT/'revisions/final-local-presentation-2026-09-11'
+sha = lambda b: hashlib.sha256(b).hexdigest()
+
+def numerical_hash():
+    h=hashlib.sha256()
+    for p in sorted(set([*ROOT.glob('src/**/*.py'),*ROOT.glob('scripts/**/*.py'),*ROOT.glob('configs/*.yaml'),ROOT/'uv.lock'])):
+        h.update(p.relative_to(ROOT).as_posix().encode()+b'\0');h.update(p.read_bytes())
+    return h.hexdigest()
+
+def stream(p):
+    b=p.read_bytes();m=re.search(rb'/Contents (\d+) 0 R',b);assert m
+    obj=re.search(rb'(?m)^'+m[1]+rb' 0 obj\b(.*?)endobj',b,re.S)[1]
+    raw=re.search(rb'stream\r?\n(.*?)\r?\nendstream',obj,re.S)[1]
+    return zlib.decompress(raw).decode('latin1')
+
+number=r'[-+]?(?:\d*\.)?\d+'
+clip=re.compile(r'q\s+('+number+r')\s+('+number+r')\s+('+number+r')\s+('+number+r')\s+re W n(.*?)(?=Q)',re.S)
+vertex=re.compile(r'('+number+r')\s+('+number+r')\s+([ml])\b')
+
+def curves(s):
+    out=[]
+    for x,y,w,h,body in clip.findall(s):
+        x,y,w,h=map(float,(x,y,w,h))
+        vertices=[(op,(float(xx)-x)/w,(float(yy)-y)/h) for xx,yy,op in vertex.findall(body)]
+        # These line and phase-band drawings contain no Bezier paths.
+        assert not re.search(r'\d\s+[cvy]\b',body)
+        if vertices:out.append(vertices)
+    return out
+
+def text_words(p):
+    return Counter(b''.join(subprocess.check_output(['pdftotext',str(p),'-']).split()))
+
+sources={}
+name='src/soaring/analysis/segmentation/figures.py'
+a=(ROOT/name).read_bytes();b=(PREP/'after'/name).read_bytes()
+assert a==(PREP/'before'/name).read_bytes()
+assert b==a.replace(b'"axes.labelsize": 10.5',b'"axes.labelsize": 9.0')
+sources[name]=(a,b,'Only the axes.labelsize constant changes from 10.5 to 9 points.')
+name='scripts/reporting/checks/check_generated_macros.py';a=(ROOT/name).read_bytes();t=a.decode();start=t.index('r"""');end=t.index('"""',start+4)+3
+replacement=r'''r"""Check generated macro names used by the manuscript.
+
+Definitions in ``thesis/generated/*.tex`` are compared with uses of the ``Stat``
+and ``Preproc`` families in the other thesis sources. Undefined names and invalid
+control-sequence names fail the check; unused definitions are reported separately.
+The scan also flags numerical literals for editorial inspection.
+
+This is a name-consistency check. It does not evaluate numerical values, follow
+LaTeX's input graph or ensure that every empirical statement uses a macro. Tables
+and standard numerical summaries are generated; prose interpreting curves must be
+reviewed against the corresponding saved products. Compilation separately checks
+that the definitions are available where LaTeX uses them.
+
+Usage::
+
+    python scripts/reporting/checks/check_generated_macros.py [--quiet]
+"""'''
+b=(t[:start]+replacement+t[end:]).encode()
+trees=[ast.parse(v) for v in (a,b)]
+for tree in trees:tree.body=tree.body[1:]
+assert ast.dump(trees[0],include_attributes=False)==ast.dump(trees[1],include_attributes=False)
+sources[name]=(a,b,'Module docstring only; executable AST unchanged.')
+outputs={};captures={}
+for p in sorted((PREP/'before/rendered').glob('*.pdf')):
+    old=ROOT/'thesis/generated'/p.name;new=PREP/'after/rendered'/p.name
+    sa,sb,sc=map(stream,(p,new,old));ca,cb,cc=map(curves,(sa,sb,sc))
+    assert ca==cb and len(ca)==len(cc)
+    error=0.
+    for aa,dd in zip(ca,cc,strict=True):
+        assert [v[0] for v in aa]==[v[0] for v in dd]
+        error=max(error,float(np.max(np.abs(np.array([v[1:] for v in aa])-np.array([v[1:] for v in dd])))))
+    assert error<2e-8
+    assert text_words(p)==text_words(new)==text_words(old)
+    # Outside text groups, every command in the same-backend baseline and font
+    # revision is identical. Remove only q / text transform / BT...ET / Q blocks.
+    remove_text=lambda s:re.sub(r'\bq\s+(?:[-+0-9.eE ]+\s+cm\s+)?BT\b.*?\bET\s+Q\b','',s,flags=re.S)
+    assert remove_text(sa)==remove_text(sb),p.name
+    captures[p.name]={'baseline':ca,'revised':cb,'canonical_normalized':cc}
+    outputs[p.name]={'before_sha256':sha(old.read_bytes()),'after_sha256':sha(new.read_bytes()),'same_backend_baseline_sha256':sha(p.read_bytes()),'clipped_paths':len(ca),'vertices':sum(map(len,ca)),'canonical_normalized_max_error':error}
+
+assert not EVIDENCE.exists();EVIDENCE.mkdir()
+old_hash=numerical_hash();all_generated={p.name:sha(p.read_bytes()) for p in (ROOT/'thesis/generated').iterdir() if p.is_file()}
+for name,(a,b,_) in sources.items():
+    for tag,value in [('before',a),('after',b)]:
+        p=EVIDENCE/tag/(name+'.txt');p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(value)
+    (ROOT/name).write_bytes(b)
+for name in outputs:
+    p=EVIDENCE/'original-figures'/name;p.parent.mkdir(exist_ok=True);shutil.copyfile(ROOT/'thesis/generated'/name,p)
+    shutil.copyfile(PREP/'after/rendered'/name,ROOT/'thesis/generated'/name)
+for name,digest in all_generated.items():
+    if name not in outputs:assert sha((ROOT/'thesis/generated'/name).read_bytes())==digest,name
+(EVIDENCE/'curve-comparison.json').write_text(json.dumps(captures)+'\n')
+proof={'run_id':'20260910T221820Z-05d36ab4','created_utc':datetime.now(UTC).isoformat(),'kind':'local-presentation-and-documentation-review','status':'applied locally; parent run manifest reconciliation requires SSD','before_numerical_source_sha256':old_hash,'after_numerical_source_sha256':numerical_hash(),'files':{n:{'before_sha256':sha(a),'after_sha256':sha(b),'scope':scope} for n,(a,b,scope) in sources.items()},'outputs':outputs,'unchanged_generated_outputs':{n:d for n,d in all_generated.items() if n not in outputs},'scope':'Only axis-label font size changes in phase drawing; the macro checker receives a documentation correction. Same-backend phase renderings have byte-identical non-text drawing commands and identical extracted character counts (word order changes when overlapping labels are separated). Their baseline differs from the executed PDF page height by 0.01 inch; every clipped line/band vertex agrees after normalization to its axes within 2e-8 (PDF coordinate rounding). Original execution PDF reproduction is NOT claimed byte for byte. Numerical tables, JSON reports, curves and algorithms are unchanged.'}
+(EVIDENCE/'proof.json').write_text(json.dumps(proof,indent=2)+'\n')
+shutil.copyfile(__file__,EVIDENCE/'review-script.py.txt')
+print('Applied four phase PDFs and two source revisions. Exact non-text drawing identity passed; dataset not accessed.')

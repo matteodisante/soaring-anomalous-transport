@@ -1,0 +1,215 @@
+{
+  "paragliders": {
+    "counts": {
+      "fewer_than_two_fixes": 27,
+      "no_usable_altitude_channel": 697,
+      "no_sustained_flight": 197,
+      "cleaning_rebuilt_too_much": 550,
+      "duration_below_minimum": 2084,
+      "duration_above_maximum": 3,
+      "path_below_minimum": 173,
+      "altitude_range_below_minimum": 4899,
+      "mean_ground_speed_above_the_fix_level_bound": 0,
+      "extent_out_of_reach_of_the_first_fix": 217,
+      "no_native_cadence": 0,
+      "no_segment_survived": 20899,
+      "shorter_than_smoothing_window": 1
+    },
+    "attempted": 186052,
+    "kept": 156305,
+    "cascade": [
+      {
+        "stage": "parse",
+        "reason": "fewer_than_two_fixes",
+        "label": "unreadable track",
+        "standing": 186052,
+        "removed": 27,
+        "share_of_standing": 0.01451207189387913,
+        "remaining": 186025
+      },
+      {
+        "stage": "altitude channel",
+        "reason": "no_usable_altitude_channel",
+        "label": "no usable GNSS altitude",
+        "standing": 186025,
+        "removed": 697,
+        "share_of_standing": 0.3746808224700981,
+        "remaining": 185328
+      },
+      {
+        "stage": "trimming",
+        "reason": "no_sustained_flight",
+        "label": "never airborne",
+        "standing": 185328,
+        "removed": 197,
+        "share_of_standing": 0.10629802296468963,
+        "remaining": 185131
+      },
+      {
+        "stage": "cleaning",
+        "reason": "cleaning_rebuilt_too_much",
+        "label": "integrity gate",
+        "standing": 185131,
+        "removed": 550,
+        "share_of_standing": 0.29708692763502603,
+        "remaining": 184581
+      },
+      {
+        "stage": "flight filter",
+        "reason": "duration_below_minimum",
+        "label": "shorter than the duration cut",
+        "standing": 184581,
+        "removed": 2084,
+        "share_of_standing": 1.1290436177071312,
+        "remaining": 182497
+      },
+      {
+        "stage": "flight filter",
+        "reason": "duration_above_maximum",
+        "label": "longer than the duration cut",
+        "standing": 182497,
+        "removed": 3,
+        "share_of_standing": 0.0016438626388378987,
+        "remaining": 182494
+      },
+      {
+        "stage": "flight filter",
+        "reason": "path_below_minimum",
+        "label": "path below the floor",
+        "standing": 182494,
+        "removed": 173,
+        "share_of_standing": 0.0947976371825923,
+        "remaining": 182321
+      },
+      {
+        "stage": "flight filter",
+        "reason": "altitude_range_below_minimum",
+        "label": "altitude activity below the floor",
+        "standing": 182321,
+        "removed": 4899,
+        "share_of_standing": 2.687019048820487,
+        "remaining": 177422
+      },
+      {
+        "stage": "flight filter",
+        "reason": "extent_out_of_reach_of_the_first_fix",
+        "label": "out of reach of its own first fix",
+        "standing": 177422,
+        "removed": 217,
+        "share_of_standing": 0.12230726741892212,
+        "remaining": 177205
+      },
+      {
+        "stage": "resampling",
+        "reason": "no_segment_survived",
+        "label": "no segment survived resampling",
+        "standing": 177205,
+        "removed": 20899,
+        "share_of_standing": 11.793685279760728,
+        "remaining": 156306
+      },
+      {
+        "stage": "smoothing",
+        "reason": "shorter_than_smoothing_window",
+        "label": "no segment carries the smoothing window",
+        "standing": 156306,
+        "removed": 1,
+        "share_of_standing": 0.0006397707061789055,
+        "remaining": 156305
+      }
+    ]
+  },
+  "hang gliders": {
+    "counts": {
+      "fewer_than_two_fixes": 0,
+      "no_usable_altitude_channel": 135,
+      "no_sustained_flight": 1,
+      "cleaning_rebuilt_too_much": 53,
+      "duration_below_minimum": 79,
+      "duration_above_maximum": 0,
+      "path_below_minimum": 1,
+      "altitude_range_below_minimum": 155,
+      "mean_ground_speed_above_the_fix_level_bound": 0,
+      "extent_out_of_reach_of_the_first_fix": 5,
+      "no_native_cadence": 0,
+      "no_segment_survived": 194,
+      "shorter_than_smoothing_window": 0
+    },
+    "attempted": 6716,
+    "kept": 6093,
+    "cascade": [
+      {
+        "stage": "altitude channel",
+        "reason": "no_usable_altitude_channel",
+        "label": "no usable GNSS altitude",
+        "standing": 6716,
+        "removed": 135,
+        "share_of_standing": 2.0101250744490766,
+        "remaining": 6581
+      },
+      {
+        "stage": "trimming",
+        "reason": "no_sustained_flight",
+        "label": "never airborne",
+        "standing": 6581,
+        "removed": 1,
+        "share_of_standing": 0.0151952590791673,
+        "remaining": 6580
+      },
+      {
+        "stage": "cleaning",
+        "reason": "cleaning_rebuilt_too_much",
+        "label": "integrity gate",
+        "standing": 6580,
+        "removed": 53,
+        "share_of_standing": 0.8054711246200608,
+        "remaining": 6527
+      },
+      {
+        "stage": "flight filter",
+        "reason": "duration_below_minimum",
+        "label": "shorter than the duration cut",
+        "standing": 6527,
+        "removed": 79,
+        "share_of_standing": 1.2103569787038455,
+        "remaining": 6448
+      },
+      {
+        "stage": "flight filter",
+        "reason": "path_below_minimum",
+        "label": "path below the floor",
+        "standing": 6448,
+        "removed": 1,
+        "share_of_standing": 0.015508684863523574,
+        "remaining": 6447
+      },
+      {
+        "stage": "flight filter",
+        "reason": "altitude_range_below_minimum",
+        "label": "altitude activity below the floor",
+        "standing": 6447,
+        "removed": 155,
+        "share_of_standing": 2.404219016596867,
+        "remaining": 6292
+      },
+      {
+        "stage": "flight filter",
+        "reason": "extent_out_of_reach_of_the_first_fix",
+        "label": "out of reach of its own first fix",
+        "standing": 6292,
+        "removed": 5,
+        "share_of_standing": 0.07946598855689765,
+        "remaining": 6287
+      },
+      {
+        "stage": "resampling",
+        "reason": "no_segment_survived",
+        "label": "no segment survived resampling",
+        "standing": 6287,
+        "removed": 194,
+        "share_of_standing": 3.0857324638142196,
+        "remaining": 6093
+      }
+    ]
+  }
+}

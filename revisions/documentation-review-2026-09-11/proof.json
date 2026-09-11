@@ -1,0 +1,188 @@
+{
+  "before_cleaning": {
+    "configuration": {
+      "alt_channel": {
+        "baro_witness_min_range_m": 30.0,
+        "baro_witness_present_min": 0.95,
+        "gnss_min_range_m": 30.0,
+        "gnss_present_min": 0.95
+      },
+      "fix": {
+        "frozen_delta_z_m": 5.0,
+        "frozen_eps_m": 15.0,
+        "frozen_tau_s": 60.0,
+        "hampel_eps_min_m": 15.0,
+        "hampel_k": 5.0,
+        "hampel_min_window_fixes": 5,
+        "hampel_window_s": 20.0,
+        "integrity_max_fraction": 0.1,
+        "max_altitude_m": 6000.0,
+        "max_horizontal_speed_mps": {
+          "hang gliders": 55.0,
+          "paragliders": 45.0
+        },
+        "max_vertical_speed_mps": 10.0,
+        "min_altitude_m": -100.0,
+        "vz_min_window_fixes": 5,
+        "vz_window_s": 5.0
+      },
+      "flight": {
+        "max_duration_s": 57600.0,
+        "min_alt_range_m": 600.0,
+        "min_duration_s": 2400.0,
+        "min_path_km": 20.0
+      },
+      "sampling": {
+        "max_gap_factor": 10.0,
+        "max_gap_seconds": 20.0,
+        "max_missing_fraction": 0.1,
+        "min_segment_duration_s": 90.0
+      },
+      "savgol": {
+        "polyorder": 3,
+        "tau_c_horizontal_s": 5.0,
+        "tau_c_vertical_s": 5.0
+      },
+      "trimming": {
+        "ground_flatness_m": 5.0,
+        "interior_ground_s": 600.0,
+        "sustained_s": 30.0,
+        "takeoff_speed_mps": 5.0
+      }
+    },
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "pyarrow": "24.0.0",
+      "scipy": "1.18.0"
+    },
+    "pipeline_version": "2.2.0",
+    "source_sha256": "a9e91e2d1034836ee4bf3d0bdbf646beeca5d8c6da20149d5601be50131043c0"
+  },
+  "created_utc": "2026-09-11T06:24:16.208514+00:00",
+  "documentation_equivalent_cleaning": {
+    "configuration": {
+      "alt_channel": {
+        "baro_witness_min_range_m": 30.0,
+        "baro_witness_present_min": 0.95,
+        "gnss_min_range_m": 30.0,
+        "gnss_present_min": 0.95
+      },
+      "fix": {
+        "frozen_delta_z_m": 5.0,
+        "frozen_eps_m": 15.0,
+        "frozen_tau_s": 60.0,
+        "hampel_eps_min_m": 15.0,
+        "hampel_k": 5.0,
+        "hampel_min_window_fixes": 5,
+        "hampel_window_s": 20.0,
+        "integrity_max_fraction": 0.1,
+        "max_altitude_m": 6000.0,
+        "max_horizontal_speed_mps": {
+          "hang gliders": 55.0,
+          "paragliders": 45.0
+        },
+        "max_vertical_speed_mps": 10.0,
+        "min_altitude_m": -100.0,
+        "vz_min_window_fixes": 5,
+        "vz_window_s": 5.0
+      },
+      "flight": {
+        "max_duration_s": 57600.0,
+        "min_alt_range_m": 600.0,
+        "min_duration_s": 2400.0,
+        "min_path_km": 20.0
+      },
+      "sampling": {
+        "max_gap_factor": 10.0,
+        "max_gap_seconds": 20.0,
+        "max_missing_fraction": 0.1,
+        "min_segment_duration_s": 90.0
+      },
+      "savgol": {
+        "polyorder": 3,
+        "tau_c_horizontal_s": 5.0,
+        "tau_c_vertical_s": 5.0
+      },
+      "trimming": {
+        "ground_flatness_m": 5.0,
+        "interior_ground_s": 600.0,
+        "sustained_s": 30.0,
+        "takeoff_speed_mps": 5.0
+      }
+    },
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "pyarrow": "24.0.0",
+      "scipy": "1.18.0"
+    },
+    "pipeline_version": "2.2.0",
+    "source_sha256": "adaa0618fa4adb4992e99fece528ba6163bceb442740d3982a581c2a3344d02e"
+  },
+  "documentation_equivalent_numerical_source_sha256": "ba45347ad9ca7fe6bc88f2f2af2effcdd2819afd5b887e1e7a2d638a0c9d8545",
+  "executed_numerical_source_sha256": "65150e2530ebda5251f21594e5ba37f9220351aa6c45894aa5e6e9da8b485cd2",
+  "files": {
+    "configs/segmentation.yaml": {
+      "after_sha256": "530666a2846040ee3bdc6b3151e6103a767cacf0ce83769140159d0563580bbc",
+      "before_sha256": "39ce905eb39e046b2cb49b16147ff4b29aa0e35e2876ab370f0739dbf3fa28b6",
+      "parsed_yaml_sha256": "f48905f2bbbd72e95008143c11dcfc22578864489bb8d94192af21cabe578d86"
+    },
+    "scripts/reporting/ch2_dataset/generate_alt_offset_stats.py": {
+      "after_sha256": "291503c95eb09208168cf1b3151f0c0e49dcf714ae4606c3006e7d2a18a0c1c1",
+      "before_sha256": "5e7210d90d687f10d4b79ff757d82a2b35d526d28542bca05ca9b845a66b21c2",
+      "executable_ast_sha256": "94e5eef80d6dc64c27ff4a5ab379b2fae74638957cf325ba86bbef41f24a1b86"
+    },
+    "scripts/reporting/ch2_dataset/generate_savgol_spectrum_figure.py": {
+      "after_sha256": "63c4544d25865309f97d1e18f98b9aa4164e401444c3346ae54c6e6e2da0b630",
+      "before_sha256": "ab1fabf48ed3b3885678bf45a0b7ec11711571180dd5192016cca2662ba5b34c",
+      "executable_ast_sha256": "a7dbbc4e060496551a41a0aa772a14b94f1257b819136376b8dc585b7b6371e4"
+    },
+    "scripts/reporting/ch3_global_transport/measure_msd.py": {
+      "after_sha256": "fa4fbf17606a33209e1b31d4fb896d2a84758546d05e7a15c1c323a7e065a991",
+      "before_sha256": "c7db4f018a1d87514099cbd82d74d668f4782e7bc553387ec52c24f4ddce2644",
+      "executable_ast_sha256": "ace2b3d016daba9d969dcbc63e64f22d9a884499e6a33a5de19bbb53ab949aec"
+    },
+    "scripts/reporting/checks/generate_provenance.py": {
+      "after_sha256": "ad567358b4ab7b003d044650cee7863b15dbe34068c4e5318fdbf275ab3e050a",
+      "before_sha256": "b2d4f76204b2623dc8363362a1cde0f626fc1b6e8dab652fdc36a96e23f12692",
+      "executable_ast_sha256": "cda054a411f1d6cb63e2ad2e5991a89f4c5f8d57978fbf2b6f3d5e7ed39c9f4f"
+    },
+    "src/soaring/acquisition/ffvl/cli.py": {
+      "after_sha256": "b39e6cf67c53546486a2ee1e43fd080544950c77d739636063cbfa0cc4b9d4eb",
+      "before_sha256": "22f674d0b8c6a718fe5c72d62c9fd216fce749db45df96f56a045c04c7569b4e",
+      "executable_ast_sha256": "2f6a8f6e43d577a8a242f07cab58b79252c2c000a5b75ce8d47f20e14d6b79b5"
+    },
+    "src/soaring/analysis/alt_offset.py": {
+      "after_sha256": "ffff813a75e2cd3b5dc1c3ae2c6ac9d8b78e0ec70ac7434bad477f1ab5882e61",
+      "before_sha256": "e3163cacd806e9e47e7b37c6a99453e0cfb75374cd2c5d2c0b953a71251afc51",
+      "executable_ast_sha256": "582af577fa6623616fee42a2ffbbb182790bb11e35d1c049b62369ed547bfb12"
+    },
+    "src/soaring/analysis/altitude_noise.py": {
+      "after_sha256": "42c4fde8d14654e52b9e46c0cacb760cd1f0e9d6396ac191c01607ac19aa929d",
+      "before_sha256": "c5e8a8cfc359b1c233a8db992daea8789160e8ccea796001d2d1fc0ce10ab7fd",
+      "executable_ast_sha256": "0b3c2df47fc6ed0927312980ec2eaee44ae1954edc6ecbc8558f557b8f2159a2"
+    },
+    "src/soaring/analysis/preproc/cleaning.py": {
+      "after_sha256": "b8fd3111ee36219f9f88a27aca37d9325f852c32d629f45927fa735af3e34451",
+      "before_sha256": "a52aee31189229b84287e53f2acba725abb10c83ab3208fc65a80b527ca5688e",
+      "executable_ast_sha256": "498bf98fbf7e9f842518ec0da683a04fe3ab5dbc361a192ec1c4aba54e772a17"
+    },
+    "src/soaring/analysis/preproc/enu.py": {
+      "after_sha256": "10adc2118f5356ca1e10fe54fa581675bc0f030890d7cb2ee977b286e6ba945f",
+      "before_sha256": "53393965f29c7731f0c1fae548388af8a1dbf8a8ea053a1a3312e8b0f28d4369",
+      "executable_ast_sha256": "3e7c63d766f79ec8707124229ab79206350ca45433606a39781d4e272f7dfea4"
+    },
+    "src/soaring/analysis/preproc/pipeline.py": {
+      "after_sha256": "49b23fddb542a4b7e3bbbb77a93142989492e24572a86b5a1a389ab7f437f8dc",
+      "before_sha256": "cf15ca6007464154db056336ef62cb64c45d02e04b64a24ef4a546621b4da97f",
+      "executable_ast_sha256": "3c541e799750824017d57a43d7c3f2d5a6838b1f090e37bef6f7627f1fc363cc"
+    }
+  },
+  "kind": "documentation-only-source-review",
+  "method": "Identical complete executable Python ASTs after stripping only module/function/class docstrings; identical parsed YAML values for configuration comments. Reconstructed complete original numerical-source hash checks every unchanged source and configuration byte. Numerical code does not introspect these docstrings or YAML comments.",
+  "numerical_run_id": "20260910T221820Z-05d36ab4",
+  "original_manifest_sha256": "6b95a9d61c4aa82135b4a0641afeb27c825e5bc244be9f3ae85441dd80582e1e",
+  "reconstructed_original_numerical_source_sha256": "65150e2530ebda5251f21594e5ba37f9220351aa6c45894aa5e6e9da8b485cd2",
+  "scope": "Comments/docstrings/blank-line whitespace only. No computation, model, input table, generated output or PDF regenerated by this review."
+}

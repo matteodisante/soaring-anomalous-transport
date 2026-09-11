@@ -1,0 +1,1294 @@
+{
+  "annotation_dir": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/annotations/phase_labeling/20260910T221820Z-05d36ab4",
+  "cleaning": {
+    "configuration": {
+      "alt_channel": {
+        "baro_witness_min_range_m": 30.0,
+        "baro_witness_present_min": 0.95,
+        "gnss_min_range_m": 30.0,
+        "gnss_present_min": 0.95
+      },
+      "fix": {
+        "frozen_delta_z_m": 5.0,
+        "frozen_eps_m": 15.0,
+        "frozen_tau_s": 60.0,
+        "hampel_eps_min_m": 15.0,
+        "hampel_k": 5.0,
+        "hampel_min_window_fixes": 5,
+        "hampel_window_s": 20.0,
+        "integrity_max_fraction": 0.1,
+        "max_altitude_m": 6000.0,
+        "max_horizontal_speed_mps": {
+          "hang gliders": 55.0,
+          "paragliders": 45.0
+        },
+        "max_vertical_speed_mps": 10.0,
+        "min_altitude_m": -100.0,
+        "vz_min_window_fixes": 5,
+        "vz_window_s": 5.0
+      },
+      "flight": {
+        "max_duration_s": 57600.0,
+        "min_alt_range_m": 600.0,
+        "min_duration_s": 2400.0,
+        "min_path_km": 20.0
+      },
+      "sampling": {
+        "max_gap_factor": 10.0,
+        "max_gap_seconds": 20.0,
+        "max_missing_fraction": 0.1,
+        "min_segment_duration_s": 90.0
+      },
+      "savgol": {
+        "polyorder": 3,
+        "tau_c_horizontal_s": 5.0,
+        "tau_c_vertical_s": 5.0
+      },
+      "trimming": {
+        "ground_flatness_m": 5.0,
+        "interior_ground_s": 600.0,
+        "sustained_s": 30.0,
+        "takeoff_speed_mps": 5.0
+      }
+    },
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "pyarrow": "24.0.0",
+      "scipy": "1.18.0"
+    },
+    "pipeline_version": "2.2.0",
+    "source_sha256": "adaa0618fa4adb4992e99fece528ba6163bceb442740d3982a581c2a3344d02e"
+  },
+  "completed_utc": "2026-09-11T00:41:37.930798+00:00",
+  "datasets": {
+    "hang gliders": {
+      "attempted_files": 6716,
+      "cleaning": {
+        "configuration": {
+          "alt_channel": {
+            "baro_witness_min_range_m": 30.0,
+            "baro_witness_present_min": 0.95,
+            "gnss_min_range_m": 30.0,
+            "gnss_present_min": 0.95
+          },
+          "fix": {
+            "frozen_delta_z_m": 5.0,
+            "frozen_eps_m": 15.0,
+            "frozen_tau_s": 60.0,
+            "hampel_eps_min_m": 15.0,
+            "hampel_k": 5.0,
+            "hampel_min_window_fixes": 5,
+            "hampel_window_s": 20.0,
+            "integrity_max_fraction": 0.1,
+            "max_altitude_m": 6000.0,
+            "max_horizontal_speed_mps": {
+              "hang gliders": 55.0,
+              "paragliders": 45.0
+            },
+            "max_vertical_speed_mps": 10.0,
+            "min_altitude_m": -100.0,
+            "vz_min_window_fixes": 5,
+            "vz_window_s": 5.0
+          },
+          "flight": {
+            "max_duration_s": 57600.0,
+            "min_alt_range_m": 600.0,
+            "min_duration_s": 2400.0,
+            "min_path_km": 20.0
+          },
+          "sampling": {
+            "max_gap_factor": 10.0,
+            "max_gap_seconds": 20.0,
+            "max_missing_fraction": 0.1,
+            "min_segment_duration_s": 90.0
+          },
+          "savgol": {
+            "polyorder": 3,
+            "tau_c_horizontal_s": 5.0,
+            "tau_c_vertical_s": 5.0
+          },
+          "trimming": {
+            "ground_flatness_m": 5.0,
+            "interior_ground_s": 600.0,
+            "sustained_s": 30.0,
+            "takeoff_speed_mps": 5.0
+          }
+        },
+        "packages": {
+          "numpy": "2.5.0",
+          "pandas": "3.0.3",
+          "pyarrow": "24.0.0",
+          "scipy": "1.18.0"
+        },
+        "pipeline_version": "2.2.0",
+        "source_sha256": "adaa0618fa4adb4992e99fece528ba6163bceb442740d3982a581c2a3344d02e"
+      },
+      "completed_utc": "2026-09-10T21:16:44.130744+00:00",
+      "discipline": "hang gliders",
+      "documentation_review": {
+        "proof": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/documentation-review-2026-09-11/proof.json",
+        "sha256": "700834e400f3890794c88549df2070ad25f7409bfb1af1c91c58d1795ba2182a"
+      },
+      "documentation_review_history": [
+        {
+          "original_manifest": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/cleaner-documentation-2026-09-10/hang_gliders-executed-manifest.json",
+          "proof": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/cleaner-documentation-2026-09-10/proof.json",
+          "sha256": "064752b0b26b719c4352188eabfff0ef285a5e8abd20c37eaa78a126afd0b3d9"
+        }
+      ],
+      "executed_cleaning": {
+        "configuration": {
+          "alt_channel": {
+            "baro_witness_min_range_m": 30.0,
+            "baro_witness_present_min": 0.95,
+            "gnss_min_range_m": 30.0,
+            "gnss_present_min": 0.95
+          },
+          "fix": {
+            "frozen_delta_z_m": 5.0,
+            "frozen_eps_m": 15.0,
+            "frozen_tau_s": 60.0,
+            "hampel_eps_min_m": 15.0,
+            "hampel_k": 5.0,
+            "hampel_min_window_fixes": 5,
+            "hampel_window_s": 20.0,
+            "integrity_max_fraction": 0.1,
+            "max_altitude_m": 6000.0,
+            "max_horizontal_speed_mps": {
+              "hang gliders": 55.0,
+              "paragliders": 45.0
+            },
+            "max_vertical_speed_mps": 10.0,
+            "min_altitude_m": -100.0,
+            "vz_min_window_fixes": 5,
+            "vz_window_s": 5.0
+          },
+          "flight": {
+            "max_duration_s": 57600.0,
+            "min_alt_range_m": 600.0,
+            "min_duration_s": 2400.0,
+            "min_path_km": 20.0
+          },
+          "sampling": {
+            "max_gap_factor": 10.0,
+            "max_gap_seconds": 20.0,
+            "max_missing_fraction": 0.1,
+            "min_segment_duration_s": 90.0
+          },
+          "savgol": {
+            "polyorder": 3,
+            "tau_c_horizontal_s": 5.0,
+            "tau_c_vertical_s": 5.0
+          },
+          "trimming": {
+            "ground_flatness_m": 5.0,
+            "interior_ground_s": 600.0,
+            "sustained_s": 30.0,
+            "takeoff_speed_mps": 5.0
+          }
+        },
+        "packages": {
+          "numpy": "2.5.0",
+          "pandas": "3.0.3",
+          "pyarrow": "24.0.0",
+          "scipy": "1.18.0"
+        },
+        "pipeline_version": "2.2.0",
+        "source_sha256": "339322197a69b5c65fa514a0c751f63a8266f8f283a566685b7c442e3d157311"
+      },
+      "limit": 0,
+      "retained_flights": 6093,
+      "run_id": "5ab9d7ad-dd76-44af-bd5f-7ba97d1865cf",
+      "seed": 20260803,
+      "started_utc": "2026-09-10T21:14:30.104294+00:00",
+      "status": "complete",
+      "tables": {
+        "fixes.parquet": {
+          "bytes": 1145581762,
+          "footer_sha256": "f198e0166379ea7c355abe1b216f5e38dc65a206887833604ab809f388031eab",
+          "mtime_ns": 1789075003670000000,
+          "rows": 34588180
+        },
+        "flights_meta.parquet": {
+          "bytes": 592805,
+          "footer_sha256": "a2565f54175521b1132d680061554cddd31a519589e204e7933131307452526e",
+          "mtime_ns": 1789075003750000000,
+          "rows": 6716
+        },
+        "segments.parquet": {
+          "bytes": 212123,
+          "footer_sha256": "bef41ee7e2b91effc074d9c2f0bbc9656aa5af2771658bc4f036672e99c88a06",
+          "mtime_ns": 1789075004110000000,
+          "rows": 9559
+        },
+        "suspect_intervals.parquet": {
+          "bytes": 3366,
+          "footer_sha256": "dfe242554f72fbeb61820cd26e286157c365d151708c44154efd9c75a9375644",
+          "mtime_ns": 1789075004110000000,
+          "rows": 5
+        }
+      }
+    },
+    "paragliders": {
+      "attempted_files": 186052,
+      "cleaning": {
+        "configuration": {
+          "alt_channel": {
+            "baro_witness_min_range_m": 30.0,
+            "baro_witness_present_min": 0.95,
+            "gnss_min_range_m": 30.0,
+            "gnss_present_min": 0.95
+          },
+          "fix": {
+            "frozen_delta_z_m": 5.0,
+            "frozen_eps_m": 15.0,
+            "frozen_tau_s": 60.0,
+            "hampel_eps_min_m": 15.0,
+            "hampel_k": 5.0,
+            "hampel_min_window_fixes": 5,
+            "hampel_window_s": 20.0,
+            "integrity_max_fraction": 0.1,
+            "max_altitude_m": 6000.0,
+            "max_horizontal_speed_mps": {
+              "hang gliders": 55.0,
+              "paragliders": 45.0
+            },
+            "max_vertical_speed_mps": 10.0,
+            "min_altitude_m": -100.0,
+            "vz_min_window_fixes": 5,
+            "vz_window_s": 5.0
+          },
+          "flight": {
+            "max_duration_s": 57600.0,
+            "min_alt_range_m": 600.0,
+            "min_duration_s": 2400.0,
+            "min_path_km": 20.0
+          },
+          "sampling": {
+            "max_gap_factor": 10.0,
+            "max_gap_seconds": 20.0,
+            "max_missing_fraction": 0.1,
+            "min_segment_duration_s": 90.0
+          },
+          "savgol": {
+            "polyorder": 3,
+            "tau_c_horizontal_s": 5.0,
+            "tau_c_vertical_s": 5.0
+          },
+          "trimming": {
+            "ground_flatness_m": 5.0,
+            "interior_ground_s": 600.0,
+            "sustained_s": 30.0,
+            "takeoff_speed_mps": 5.0
+          }
+        },
+        "packages": {
+          "numpy": "2.5.0",
+          "pandas": "3.0.3",
+          "pyarrow": "24.0.0",
+          "scipy": "1.18.0"
+        },
+        "pipeline_version": "2.2.0",
+        "source_sha256": "adaa0618fa4adb4992e99fece528ba6163bceb442740d3982a581c2a3344d02e"
+      },
+      "completed_utc": "2026-09-10T21:14:25.413794+00:00",
+      "discipline": "paragliders",
+      "documentation_review": {
+        "proof": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/documentation-review-2026-09-11/proof.json",
+        "sha256": "700834e400f3890794c88549df2070ad25f7409bfb1af1c91c58d1795ba2182a"
+      },
+      "documentation_review_history": [
+        {
+          "original_manifest": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/cleaner-documentation-2026-09-10/paragliders-executed-manifest.json",
+          "proof": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/cleaner-documentation-2026-09-10/proof.json",
+          "sha256": "064752b0b26b719c4352188eabfff0ef285a5e8abd20c37eaa78a126afd0b3d9"
+        }
+      ],
+      "executed_cleaning": {
+        "configuration": {
+          "alt_channel": {
+            "baro_witness_min_range_m": 30.0,
+            "baro_witness_present_min": 0.95,
+            "gnss_min_range_m": 30.0,
+            "gnss_present_min": 0.95
+          },
+          "fix": {
+            "frozen_delta_z_m": 5.0,
+            "frozen_eps_m": 15.0,
+            "frozen_tau_s": 60.0,
+            "hampel_eps_min_m": 15.0,
+            "hampel_k": 5.0,
+            "hampel_min_window_fixes": 5,
+            "hampel_window_s": 20.0,
+            "integrity_max_fraction": 0.1,
+            "max_altitude_m": 6000.0,
+            "max_horizontal_speed_mps": {
+              "hang gliders": 55.0,
+              "paragliders": 45.0
+            },
+            "max_vertical_speed_mps": 10.0,
+            "min_altitude_m": -100.0,
+            "vz_min_window_fixes": 5,
+            "vz_window_s": 5.0
+          },
+          "flight": {
+            "max_duration_s": 57600.0,
+            "min_alt_range_m": 600.0,
+            "min_duration_s": 2400.0,
+            "min_path_km": 20.0
+          },
+          "sampling": {
+            "max_gap_factor": 10.0,
+            "max_gap_seconds": 20.0,
+            "max_missing_fraction": 0.1,
+            "min_segment_duration_s": 90.0
+          },
+          "savgol": {
+            "polyorder": 3,
+            "tau_c_horizontal_s": 5.0,
+            "tau_c_vertical_s": 5.0
+          },
+          "trimming": {
+            "ground_flatness_m": 5.0,
+            "interior_ground_s": 600.0,
+            "sustained_s": 30.0,
+            "takeoff_speed_mps": 5.0
+          }
+        },
+        "packages": {
+          "numpy": "2.5.0",
+          "pandas": "3.0.3",
+          "pyarrow": "24.0.0",
+          "scipy": "1.18.0"
+        },
+        "pipeline_version": "2.2.0",
+        "source_sha256": "339322197a69b5c65fa514a0c751f63a8266f8f283a566685b7c442e3d157311"
+      },
+      "limit": 0,
+      "retained_flights": 156305,
+      "run_id": "1c8597f1-e955-4dd0-b899-81fad898c377",
+      "seed": 20260803,
+      "started_utc": "2026-09-10T20:13:08.896070+00:00",
+      "status": "complete",
+      "tables": {
+        "fixes.parquet": {
+          "bytes": 43404126783,
+          "footer_sha256": "6da14b0982240a853feec018df41fef1ca313bc799ad214014f7d90a47080ee9",
+          "mtime_ns": 1789074824660000000,
+          "rows": 1370352162
+        },
+        "flights_meta.parquet": {
+          "bytes": 13463428,
+          "footer_sha256": "94aa2c8a99259b351b5a0b889039e4ee0e2ddf480d627931faede5e296670082",
+          "mtime_ns": 1789074828260000000,
+          "rows": 186052
+        },
+        "segments.parquet": {
+          "bytes": 4867911,
+          "footer_sha256": "594261bd5e244f9a0d042e9e8c91b9398d428e00bcba7adb4bc02d8a58e9826f",
+          "mtime_ns": 1789074865270000000,
+          "rows": 281439
+        },
+        "suspect_intervals.parquet": {
+          "bytes": 8417,
+          "footer_sha256": "0f2c847469f9cdb0827d588666009af284f086c9a7f7946e867e7b833e28ddb6",
+          "mtime_ns": 1789074865380000000,
+          "rows": 499
+        }
+      }
+    }
+  },
+  "documentation_equivalent_source_sha256": "eb992e56e100b5f127a81f6833f280454a1abd6f5d17deb82d5ce2a8ddcfbe36",
+  "documentation_review": {
+    "original_manifest": "/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/numerical-execution-manifest.json",
+    "proof": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/documentation-review-2026-09-11/proof.json",
+    "sha256": "700834e400f3890794c88549df2070ad25f7409bfb1af1c91c58d1795ba2182a"
+  },
+  "executed_cleaning": {
+    "configuration": {
+      "alt_channel": {
+        "baro_witness_min_range_m": 30.0,
+        "baro_witness_present_min": 0.95,
+        "gnss_min_range_m": 30.0,
+        "gnss_present_min": 0.95
+      },
+      "fix": {
+        "frozen_delta_z_m": 5.0,
+        "frozen_eps_m": 15.0,
+        "frozen_tau_s": 60.0,
+        "hampel_eps_min_m": 15.0,
+        "hampel_k": 5.0,
+        "hampel_min_window_fixes": 5,
+        "hampel_window_s": 20.0,
+        "integrity_max_fraction": 0.1,
+        "max_altitude_m": 6000.0,
+        "max_horizontal_speed_mps": {
+          "hang gliders": 55.0,
+          "paragliders": 45.0
+        },
+        "max_vertical_speed_mps": 10.0,
+        "min_altitude_m": -100.0,
+        "vz_min_window_fixes": 5,
+        "vz_window_s": 5.0
+      },
+      "flight": {
+        "max_duration_s": 57600.0,
+        "min_alt_range_m": 600.0,
+        "min_duration_s": 2400.0,
+        "min_path_km": 20.0
+      },
+      "sampling": {
+        "max_gap_factor": 10.0,
+        "max_gap_seconds": 20.0,
+        "max_missing_fraction": 0.1,
+        "min_segment_duration_s": 90.0
+      },
+      "savgol": {
+        "polyorder": 3,
+        "tau_c_horizontal_s": 5.0,
+        "tau_c_vertical_s": 5.0
+      },
+      "trimming": {
+        "ground_flatness_m": 5.0,
+        "interior_ground_s": 600.0,
+        "sustained_s": 30.0,
+        "takeoff_speed_mps": 5.0
+      }
+    },
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "pyarrow": "24.0.0",
+      "scipy": "1.18.0"
+    },
+    "pipeline_version": "2.2.0",
+    "source_sha256": "a9e91e2d1034836ee4bf3d0bdbf646beeca5d8c6da20149d5601be50131043c0"
+  },
+  "executed_numerical_source_sha256": "65150e2530ebda5251f21594e5ba37f9220351aa6c45894aa5e6e9da8b485cd2",
+  "executed_pdf_sha256": "64477030dc7cf4ad0adce916f6168ae4e4711f87083876dc5c8c2581456578a8",
+  "manuscript_review": {
+    "input_manifest": "/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/manifest-before-table-proofread.json",
+    "input_manifest_sha256": "e246e674b4f8a5313e5d1f1914e6eaa1c34e2749f2a34194515ba6ad41d68e73",
+    "record": "/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/manuscript-review.json",
+    "sha256": "9d9821c6ac2a66b510991234e4728bbf51b2eb6119d5e450f93927738dda06c1"
+  },
+  "numerical_source_sha256": "4ed63b3d8105ec8471128550af03edac907846d5ac3be6fea6bf9217044d1b49",
+  "outputs": {
+    "alt_offset.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_alt_offset_stats.py",
+      "sha256": "4def80522b10ae1ccfd19c2386901488c9fdf587ff85a4a6485109cbe7ba99b8"
+    },
+    "altitude_noise.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_altitude_noise_figure.py",
+      "sha256": "c933341754ca033b1c1fd429d1bece906bdca43f790ea38d0a9ff18e42d5fcca"
+    },
+    "altitude_noise.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_altitude_noise_figure.py",
+      "sha256": "ce20649b1e535b18857874c5f53447c9ca09f611ad7d6a82be5be1539e03ad1e"
+    },
+    "audit.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/audit_msd_report.py",
+      "sha256": "273cbdffef7427fe5a5773297e8d3dfc535e195ce27138d7996dabe15c9f38c5"
+    },
+    "census.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_census_stats.py",
+      "sha256": "b074570942e98efa14c5bb6807a73015877347153b28256195322d7dc1ec4029"
+    },
+    "ch3_duration.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_duration_equipment.py",
+      "sha256": "962752379e2a352750729ce14ba1297385215438380c9ed7a2ef32767ed4bdcd"
+    },
+    "ch3_duration_composition.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_duration_equipment.py",
+      "sha256": "8bc572b1d2ce4f3b551e5e16ef31d1f5ec73fe80d9eec213e0f47a72b3431fe2"
+    },
+    "ch3_duration_equipment.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_duration_equipment.py",
+      "sha256": "a3f5d10dd5228083d7dc99e05254b28d6a7d2ea4c167b3ceb70956b51b77b2f7"
+    },
+    "ch3_models.pdf": {
+      "historical_control": false,
+      "presentation_review": {
+        "proof": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/plot-layout-review-2026-09-11/proof.json",
+        "sha256": "2df79ec41ffee906ff0f95a702db7a10f332cdcba8e853e38f1ad2127e23f9c0"
+      },
+      "producer": "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py",
+      "sha256": "d53d804bd63f19c5843d2e96b7027149f20556baa7d07a0a8efa2b70fa9427b6"
+    },
+    "ch3_pca.pdf": {
+      "historical_control": false,
+      "presentation_review": {
+        "proof": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/plot-layout-review-2026-09-11/proof.json",
+        "sha256": "2df79ec41ffee906ff0f95a702db7a10f332cdcba8e853e38f1ad2127e23f9c0"
+      },
+      "producer": "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py",
+      "sha256": "5c9835e6f35d46273c3e6f3ccebe5ffc425fb46aab4f8fcbbe80811068100312"
+    },
+    "ch3_quantile_control.pdf": {
+      "historical_control": false,
+      "presentation_review": {
+        "proof": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/plot-layout-review-2026-09-11/proof.json",
+        "sha256": "2df79ec41ffee906ff0f95a702db7a10f332cdcba8e853e38f1ad2127e23f9c0"
+      },
+      "producer": "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py",
+      "sha256": "eabaa9de493eb2f1d356b68bd04778d5a5b7cbd1e178205f3b96a20c7c6eda9f"
+    },
+    "ch3_quantiles.pdf": {
+      "historical_control": false,
+      "presentation_review": {
+        "proof": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/plot-layout-review-2026-09-11/proof.json",
+        "sha256": "2df79ec41ffee906ff0f95a702db7a10f332cdcba8e853e38f1ad2127e23f9c0"
+      },
+      "producer": "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py",
+      "sha256": "10c63bbc53b27786fe17747148741c074c57bb438ce49135caadcaf417f165dd"
+    },
+    "ch3_revision.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py",
+      "sha256": "196c46ac08d00ba332943bd7ee74f42d348a0c0c46e4d70fee3fd3da4448970c"
+    },
+    "ch3_scaling.pdf": {
+      "historical_control": false,
+      "presentation_review": {
+        "proof": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/plot-layout-review-2026-09-11/proof.json",
+        "sha256": "2df79ec41ffee906ff0f95a702db7a10f332cdcba8e853e38f1ad2127e23f9c0"
+      },
+      "producer": "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py",
+      "sha256": "82ac99efa775b13663ad77f922253817f3bdabf7a946094d61d33e2a64675c18"
+    },
+    "ch3_velocity_memory.pdf": {
+      "historical_control": false,
+      "presentation_review": {
+        "proof": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/plot-layout-review-2026-09-11/proof.json",
+        "sha256": "2df79ec41ffee906ff0f95a702db7a10f332cdcba8e853e38f1ad2127e23f9c0"
+      },
+      "producer": "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py",
+      "sha256": "49c6690989a3cdb754d5f1b0150695b0efc801e683724f66649e1cb3f5134faa"
+    },
+    "cleaning_defects_schematic.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_cleaning_explainers.py",
+      "sha256": "c83559296daf6adb7ebe230a8b973b10d5c64ce05ae3c003aaa25c8c0302725f"
+    },
+    "cleaning_real_examples.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_cleaning_examples.py",
+      "sha256": "52fe904d1b1377980e021efbbf7fb3682a4bcf4d345374f28373a063576cccbe"
+    },
+    "cleaning_witness_audit.tex": {
+      "historical_control": true,
+      "producer": "scripts/reporting/ch2_dataset/audit_witness_coverage.py",
+      "sha256": "5a73a2f929b9dfcbb486831f89be539483051778d28d6f6ff668fec3f87d3b4a"
+    },
+    "closed_loop_schematic.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_scaling_schematics.py",
+      "sha256": "555d05fddf892a1a3d07a6275c63cdd62ac7394084b922335250ca62045c5119"
+    },
+    "dataset_seasons.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_dataset_stats.py",
+      "sha256": "56f70a6752f7cc730d954404af1e29161316c0565a8b06bcfe39a9f48cc5cab7"
+    },
+    "dataset_stats.tex": {
+      "historical_control": false,
+      "postprocessing_review": {
+        "proof": "/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/offline-review-reconciliation.json",
+        "sha256": "5ed8d61392af393316986d11fcb44a359fcb640d3ed6149745377d58ab4980eb"
+      },
+      "producer": "scripts/reporting/ch2_dataset/generate_dataset_stats.py",
+      "sha256": "b1045f99c803210ba4f04ff9028ab7a91211b94beb116f771178bf14cc30baa9"
+    },
+    "duration_equipment.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_duration_equipment.py",
+      "sha256": "36be3ea45a8a012b42ecb680537ec16bc5bc2e83245ba907f13311d0d57666a3"
+    },
+    "duration_equipment_table.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_duration_equipment.py",
+      "sha256": "9abc7e6ed39dd336c98c496cfd234c2d41e115a592e076ec2acd760c94c5e2f6"
+    },
+    "fixlevel_diagnostics.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_preproc_figure.py",
+      "sha256": "7713d0fccf42e85dc5f99a7c71597fdcb1e87cafa070cd542e2386e30ea4f378"
+    },
+    "gap_diagnostics.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_preproc_figure.py",
+      "sha256": "b29eb7d741a8b252cb8bd699cb3c2059ea1f8ecadb423d94cfba236519c4bf25"
+    },
+    "kinematic_isotropy.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py",
+      "sha256": "5dd9594ae82a3424dc3d1fb3b13fdf9f9948aebd47c2ab20c633835d7da7f092"
+    },
+    "kinematic_isotropy_terrain.pdf": {
+      "historical_control": false,
+      "presentation_review": {
+        "proof": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/plot-layout-review-2026-09-11/proof.json",
+        "sha256": "2df79ec41ffee906ff0f95a702db7a10f332cdcba8e853e38f1ad2127e23f9c0"
+      },
+      "producer": "scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py",
+      "sha256": "2d86e25a7e7b8a93ac612532a92394a6b9b0de3a138d959d9235d21c15492a38"
+    },
+    "kinematic_isotropy_terrain_level.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py",
+      "sha256": "8aa6088c6cdf14b5026f185ea7a83c82f8d821278141cebf9b0acfbd12b6040e"
+    },
+    "moment_spectrum_schematic.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_scaling_schematics.py",
+      "sha256": "12df34bd6e8a6127b62086696c8823ce75ec881c53b2db361bba1fb54f8f72f6"
+    },
+    "msd.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_msd_figure.py",
+      "sha256": "7112af990ee800fbfa1c6d5f9b8d4cf8cc6538a894b89f8de6b2fcf0111241b3"
+    },
+    "msd.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_msd_figure.py",
+      "sha256": "dcffbe7ef7c0c8a74cfa5b5b123d564294e491d0fc1b80792c03466400962468"
+    },
+    "pipeline_census.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_pipeline_census.py",
+      "sha256": "cdc24078a98101dcdcfbda492d5eb3b6079930e52a9ccb6ca335d5525daf14a6"
+    },
+    "prelim.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_prelim_figure.py",
+      "sha256": "9234e2b60cb0242f1248b27fa0a1b245d28449f31d86d34bbaf4f0c94beab3be"
+    },
+    "prelim_ensemble.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_prelim_figure.py",
+      "sha256": "7fa9af8773c35e30837f8ffd7367d892b2f848c41798210a55079655ccfa9307"
+    },
+    "prelim_isotropy.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_prelim_figure.py",
+      "sha256": "8de9869d0f920bb06c715eba64236388927032179f0cc840ad7a75d101f27377"
+    },
+    "prelim_map.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_prelim_figure.py",
+      "sha256": "80ba886c5e93a950ee11836f9b517b7973a04e2fe438db23bc7e990fbef868dd"
+    },
+    "preproc_diagnostics.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_preproc_figure.py",
+      "sha256": "50cc12720f940252ae89180979774feec434bc85953fbe1a8ac10d77e76b4579"
+    },
+    "quantile_scaling_schematic.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_scaling_schematics.py",
+      "sha256": "1430a8bc590e0f76e42be04ae0ce27b1fd59486cab2bfa8a42b2015609002ae0"
+    },
+    "sampling_intervals.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_preproc_figure.py",
+      "sha256": "95bab791e33a9eda88bf123d226ecac0cbd15992d107a937531cd718f6ec36ea"
+    },
+    "savgol_explainer.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_savgol_figure.py",
+      "sha256": "292fec254901e7c01266401efb9a6048edca691d7e8f258fd1c8df6a0240fe95"
+    },
+    "savgol_response.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_savgol_figure.py",
+      "sha256": "5b97aa672b7cc9cecd57335a1c00a4d905c9ac2742990a8fd04090ee60109212"
+    },
+    "savgol_spectrum.pdf": {
+      "historical_control": false,
+      "presentation_review": {
+        "proof": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/spectrum-palette-review-2026-09-11/proof.json",
+        "sha256": "87b0b8f41fd6997f2bbabbf53f73784969e62277ee777f56afa93e1add079ca4"
+      },
+      "producer": "scripts/reporting/ch2_dataset/generate_savgol_spectrum_figure.py",
+      "sha256": "b89884d169e597a808cfc2ee18e01f67f83c86157ca2b37ced7d39aa7cb8359e"
+    },
+    "savgol_spectrum_stats.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_savgol_spectrum_figure.py",
+      "sha256": "4d1f4969912ab6fd805087befa98596006614f1119ed6c56be47fb1fd42d471b"
+    },
+    "seasons_table_hang.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_stats.py",
+      "sha256": "396c19f85bdd95525c7c1dc9733b2a4dabe617ba6636c1a76fda1f026ad87616"
+    },
+    "seasons_table_para.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_stats.py",
+      "sha256": "309324e30bd09f7b06a8fccf16d7dcc33e4fc4a8863329ff884e2eef5377a688"
+    },
+    "segmentation.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch4_flight_phases/generate_segmentation_report.py",
+      "sha256": "90ea5f716a294f8836ac7a3a087ddb6db2e694e54c8d2919c08a8fc1612a5dc0"
+    },
+    "segmentation_audit_table.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch4_flight_phases/generate_decoder_audit.py",
+      "sha256": "6b50a41a1e00ec4331062d43fd32a2ef4a794885f3834f4553ced572a04ae4b8"
+    },
+    "segmentation_audit_values.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch4_flight_phases/generate_decoder_audit.py",
+      "sha256": "98f7c96e5feb3cefbc8eb7b5b1accfca8e560ea4aebeb9fef95c59e28c9bac16"
+    },
+    "segmentation_coverage.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch4_flight_phases/generate_decoder_audit.py",
+      "sha256": "2be68d44368bb42293ce1ff352e42f95f511fa90768f3dc07d0e020981d04027"
+    },
+    "segmentation_current_example_hang.pdf": {
+      "historical_control": false,
+      "postprocessing_review": {
+        "proof": "/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/offline-review-reconciliation.json",
+        "sha256": "5ed8d61392af393316986d11fcb44a359fcb640d3ed6149745377d58ab4980eb"
+      },
+      "producer": "scripts/reporting/ch4_flight_phases/generate_decoder_audit.py",
+      "sha256": "a108f37f6ea2d3330ba0dd9305388c9b7c0d965d296dbc0bf041039083c1dc98"
+    },
+    "segmentation_current_example_para.pdf": {
+      "historical_control": false,
+      "postprocessing_review": {
+        "proof": "/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/offline-review-reconciliation.json",
+        "sha256": "5ed8d61392af393316986d11fcb44a359fcb640d3ed6149745377d58ab4980eb"
+      },
+      "producer": "scripts/reporting/ch4_flight_phases/generate_decoder_audit.py",
+      "sha256": "efb1a7cf17574554703245886e8a543c89a70c97e668ea804355fbfa92c9278f"
+    },
+    "segmentation_decoder_ablation.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch4_flight_phases/generate_decoder_audit.py",
+      "sha256": "3dc16a4d5f57aec7a51b75e58f5a154a95d98a429091b2eb84f96487265ed099"
+    },
+    "segmentation_decoding_transitions.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch4_flight_phases/generate_decoder_audit.py",
+      "sha256": "35a179e4599a3f9516aa424ac79e4f146b592f3cb7567e54157ba52f941c0525"
+    },
+    "segmentation_fit_table.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch4_flight_phases/generate_segmentation_report.py",
+      "sha256": "bf528f6ae412ef4f6751a77e5d763b5b14d938c300fcc5dcfbae2350e14196a0"
+    },
+    "snapshot_status.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/checks/generate_snapshot_status.py",
+      "sha256": "5029fc1437d444209145634703148eb27e681eda7bc17e5e7a957270300b284b"
+    },
+    "stats.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_stats.py",
+      "sha256": "f6f730be7a9dd57e4a23aa8b5a058343b4d5d21608ae3a3957703d293e26ce2a"
+    },
+    "terrain.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_terrain_figure.py",
+      "sha256": "898ce6a643bb6ef726137f49f38f4c19f23e7580183eb472bdfcf81aa2064cde"
+    },
+    "terrain_map.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_terrain_figure.py",
+      "sha256": "b320e22f6085ec591e9dfeaa2b75dbe02f395e3faabbea14ef6c5daadaa04065"
+    },
+    "verify.tex": {
+      "historical_control": false,
+      "producer": "scripts/verify_dataset.py",
+      "sha256": "40aac2b750a4054206e7b62cebe1b0570a127dce409a2c4c87cfd610f1a1a2d6"
+    },
+    "vertical_median_explainer.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_cleaning_explainers.py",
+      "sha256": "b0efe570166d01ff00236b777711f5690aa1381f87983ef5852ebdc2beb070f3"
+    }
+  },
+  "pdf_requires_manuscript_review": false,
+  "pdf_sha256": "d82bb86e686cd0b578624d65a48fbe25821534a9f604323309d0b34766c510ce",
+  "postprocessing_review": {
+    "proof": "/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/offline-review-reconciliation.json",
+    "sha256": "5ed8d61392af393316986d11fcb44a359fcb640d3ed6149745377d58ab4980eb"
+  },
+  "presentation_review": {
+    "proof": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/plot-layout-review-2026-09-11/proof.json",
+    "sha256": "2df79ec41ffee906ff0f95a702db7a10f332cdcba8e853e38f1ad2127e23f9c0"
+  },
+  "presentation_review_history": [
+    {
+      "proof": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/spectrum-palette-review-2026-09-11/proof.json",
+      "sha256": "87b0b8f41fd6997f2bbabbf53f73784969e62277ee777f56afa93e1add079ca4"
+    }
+  ],
+  "resources": {
+    "full_speed": true,
+    "max_workers": 8,
+    "native_threads": 1,
+    "nice": 0
+  },
+  "run_id": "20260910T221820Z-05d36ab4",
+  "source_sha256": "c2c782be28575ff4388cfbe4b47b011975cb19fa84a510df15621b67f98aa01b",
+  "stages": [
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/verify_dataset.py"
+      ],
+      "elapsed_seconds": 451.67479276657104,
+      "id": "verify",
+      "started_unix": 1789078700.215625,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/check_reproducible.py",
+        "--sample",
+        "250"
+      ],
+      "elapsed_seconds": 143.47219109535217,
+      "id": "reproduce",
+      "started_unix": 1789079151.980748,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_stats.py"
+      ],
+      "elapsed_seconds": 0.28125977516174316,
+      "id": "acquisition",
+      "started_unix": 1789079295.528186,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_preproc_figure.py",
+        "--rescan"
+      ],
+      "elapsed_seconds": 1230.4830720424652,
+      "id": "raw_diagnostics",
+      "started_unix": 1789079295.846443,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_census_stats.py"
+      ],
+      "elapsed_seconds": 1.5880036354064941,
+      "id": "raw_census",
+      "started_unix": 1789080526.4819672,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_pipeline_census.py"
+      ],
+      "elapsed_seconds": 0.5780332088470459,
+      "id": "pipeline_census",
+      "started_unix": 1789080528.105726,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_dataset_stats.py"
+      ],
+      "elapsed_seconds": 2.509248971939087,
+      "id": "dataset",
+      "started_unix": 1789080528.723702,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_altitude_noise_figure.py",
+        "--rescan"
+      ],
+      "elapsed_seconds": 204.08286023139954,
+      "id": "altitude_noise",
+      "started_unix": 1789080531.269055,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_alt_offset_stats.py",
+        "--rescan"
+      ],
+      "elapsed_seconds": 123.3995749950409,
+      "id": "altitude_offsets",
+      "started_unix": 1789080735.400268,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_alt_offset_figure.py"
+      ],
+      "elapsed_seconds": 1.82157301902771,
+      "id": "altitude_offset_figure",
+      "started_unix": 1789080858.880097,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_savgol_figure.py"
+      ],
+      "elapsed_seconds": 2.0312681198120117,
+      "id": "smoothing",
+      "started_unix": 1789080860.737705,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_savgol_spectrum_figure.py",
+        "--rescan"
+      ],
+      "elapsed_seconds": 46.369174003601074,
+      "id": "smoothing_spectrum",
+      "started_unix": 1789080862.805682,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_cleaning_explainers.py"
+      ],
+      "elapsed_seconds": 1.5369341373443604,
+      "id": "cleaning_schematics",
+      "started_unix": 1789080909.220095,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_cleaning_examples.py"
+      ],
+      "elapsed_seconds": 4.856803894042969,
+      "id": "cleaning_examples",
+      "started_unix": 1789080910.793922,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_terrain_figure.py"
+      ],
+      "elapsed_seconds": 345.19371008872986,
+      "id": "terrain",
+      "started_unix": 1789080915.685639,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch3_global_transport/measure_msd.py",
+        "--out",
+        "/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/arrays"
+      ],
+      "elapsed_seconds": 2650.5790038108826,
+      "id": "msd_measure",
+      "started_unix": 1789081261.0061262,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch3_global_transport/generate_msd_figure.py",
+        "--audit-dir",
+        "/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/arrays"
+      ],
+      "elapsed_seconds": 66.04667019844055,
+      "id": "msd_figure",
+      "started_unix": 1789083911.6703098,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch3_global_transport/generate_duration_equipment.py",
+        "--audit-dir",
+        "/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/arrays"
+      ],
+      "elapsed_seconds": 3.5291271209716797,
+      "id": "duration_equipment",
+      "started_unix": 1789083977.783484,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch3_global_transport/audit_msd.py",
+        "--out",
+        "/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/arrays"
+      ],
+      "elapsed_seconds": 272.01934695243835,
+      "id": "msd_audit_measure",
+      "started_unix": 1789083981.35203,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch3_global_transport/audit_msd_report.py",
+        "--audit-dir",
+        "/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/arrays"
+      ],
+      "elapsed_seconds": 4.496490001678467,
+      "id": "msd_audit_report",
+      "started_unix": 1789084253.449813,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_prelim_figure.py",
+        "--audit-dir",
+        "/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/arrays"
+      ],
+      "elapsed_seconds": 8.51322865486145,
+      "id": "preliminary",
+      "started_unix": 1789084257.9830441,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py",
+        "--audit-dir",
+        "/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/arrays"
+      ],
+      "elapsed_seconds": 35.50562405586243,
+      "id": "kinematics",
+      "started_unix": 1789084266.541436,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py",
+        "--audit-dir",
+        "/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/arrays"
+      ],
+      "elapsed_seconds": 25.78862500190735,
+      "id": "transport_subset",
+      "started_unix": 1789084302.127105,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch3_global_transport/generate_scaling_schematics.py"
+      ],
+      "elapsed_seconds": 2.382996082305908,
+      "id": "scaling_schematics",
+      "started_unix": 1789084327.969913,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/segment_flights.py",
+        "train",
+        "--discipline",
+        "paragliders",
+        "--config",
+        "configs/segmentation.yaml"
+      ],
+      "elapsed_seconds": 570.8262000083923,
+      "id": "para_train",
+      "started_unix": 1789084330.390857,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/segment_flights.py",
+        "apply",
+        "--discipline",
+        "paragliders",
+        "--config",
+        "configs/segmentation.yaml"
+      ],
+      "elapsed_seconds": 2070.926083803177,
+      "id": "para_apply",
+      "started_unix": 1789084901.295671,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/segment_flights.py",
+        "coverage",
+        "--discipline",
+        "paragliders",
+        "--config",
+        "configs/segmentation.yaml"
+      ],
+      "elapsed_seconds": 37.960952043533325,
+      "id": "para_coverage",
+      "started_unix": 1789086972.321873,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/segment_flights.py",
+        "train",
+        "--discipline",
+        "hang gliders",
+        "--config",
+        "configs/segmentation.yaml"
+      ],
+      "elapsed_seconds": 126.1577501296997,
+      "id": "hang_train",
+      "started_unix": 1789087010.320441,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/segment_flights.py",
+        "apply",
+        "--discipline",
+        "hang gliders",
+        "--config",
+        "configs/segmentation.yaml"
+      ],
+      "elapsed_seconds": 79.14007592201233,
+      "id": "hang_apply",
+      "started_unix": 1789087136.55475,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/segment_flights.py",
+        "coverage",
+        "--discipline",
+        "hang gliders",
+        "--config",
+        "configs/segmentation.yaml"
+      ],
+      "elapsed_seconds": 3.135599136352539,
+      "id": "hang_coverage",
+      "started_unix": 1789087215.778272,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch4_flight_phases/generate_segmentation_report.py",
+        "--config",
+        "configs/segmentation.yaml"
+      ],
+      "elapsed_seconds": 4.049104928970337,
+      "id": "segmentation_report",
+      "started_unix": 1789087218.949578,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch4_flight_phases/generate_decoder_audit.py",
+        "--config",
+        "configs/segmentation.yaml"
+      ],
+      "elapsed_seconds": 5.001134157180786,
+      "id": "segmentation_audit",
+      "started_unix": 1789087223.034195,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch4_flight_phases/prepare_annotation_pack.py",
+        "--output-dir",
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/annotations/phase_labeling/20260910T221820Z-05d36ab4"
+      ],
+      "elapsed_seconds": 16.056117057800293,
+      "id": "annotations",
+      "started_unix": 1789087228.074208,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/tools/write_ssd_readme.py"
+      ],
+      "elapsed_seconds": 37.04745101928711,
+      "id": "ssd_inventory",
+      "started_unix": 1789087244.172443,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/checks/generate_snapshot_status.py",
+        "--audit-dir",
+        "/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/arrays"
+      ],
+      "elapsed_seconds": 0.4682939052581787,
+      "id": "snapshot_status",
+      "started_unix": 1789087281.275736,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/checks/check_generated_macros.py"
+      ],
+      "elapsed_seconds": 0.2947509288787842,
+      "id": "macros",
+      "started_unix": 1789087281.78062,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/checks/generate_provenance.py"
+      ],
+      "elapsed_seconds": 0.1224520206451416,
+      "id": "provenance",
+      "started_unix": 1789087282.112444,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "latexmk",
+        "-pdf",
+        "-halt-on-error",
+        "-interaction=nonstopmode",
+        "-cd",
+        "thesis/main.tex"
+      ],
+      "elapsed_seconds": 15.49663782119751,
+      "id": "latex",
+      "started_unix": 1789087282.333833,
+      "status": "complete"
+    }
+  ],
+  "status": "complete"
+}

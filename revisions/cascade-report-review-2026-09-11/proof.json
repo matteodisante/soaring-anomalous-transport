@@ -1,0 +1,40 @@
+{
+  "source": "scripts/reporting/ch2_dataset/generate_dataset_stats.py",
+  "source_sha256": "7589db751bc71b75c46020f882c789dde0ca1cfe265693492cb3aaff41dca045",
+  "before_numerical_source_sha256": "22a54d4c3882902131d6e828bcf7bb5115524329cd3b1972e0992a22a4a613eb",
+  "input_pipeline_census_sha256": "cdc24078a98101dcdcfbda492d5eb3b6079930e52a9ccb6ca335d5525daf14a6",
+  "run_id": "20260910T221820Z-05d36ab4",
+  "kind": "numerical-report-correction",
+  "status": "recomputed locally from independently generated counts; direct SSD metadata reconciliation pending",
+  "after_numerical_source_sha256": "fcea53a74222c1f0f6caac89e4ec4ac3730bd89c1119209f1024d04e041e3c69",
+  "after_source_sha256": "257749d95d54b9dffb7a8d0f1ab5cfea96ed35c132a0ea67ed3ec2b15b7d316a",
+  "before_output_sha256": "12649e8f30610c9df1c2d3bc2acb53ceb5e35fc398b369c2b3e1a958be2cb2b7",
+  "after_output_sha256": "b1045f99c803210ba4f04ff9028ab7a91211b94beb116f771178bf14cc30baa9",
+  "changed_macros": {
+    "DataCascadeParaRows": {
+      "before": "%\nunreadable track & 186{,}052 & 27 & 0.01 & 186{,}025 \\\\\nnever airborne & 186{,}025 & 197 & 0.11 & 185{,}828 \\\\\nintegrity gate & 185{,}828 & 550 & 0.30 & 185{,}278 \\\\\nshorter than the duration cut & 185{,}278 & 2{,}084 & 1.12 & 183{,}194 \\\\\nlonger than the duration cut & 183{,}194 & 3 & 0.00 & 183{,}191 \\\\\npath below the floor & 183{,}191 & 173 & 0.09 & 183{,}018 \\\\\naltitude activity below the floor & 183{,}018 & 4{,}899 & 2.68 & 178{,}119 \\\\\nout of reach of its own first fix & 178{,}119 & 217 & 0.12 & 177{,}902 \\\\\nno segment survived resampling & 177{,}902 & 20{,}899 & 11.75 & 157{,}003 \\\\\nno segment carries the smoothing window & 157{,}003 & 1 & 0.00 & 157{,}002 \\\\",
+      "after": "%\nunreadable track & 186{,}052 & 27 & 0.01 & 186{,}025 \\\\\nno usable GNSS altitude & 186{,}025 & 697 & 0.37 & 185{,}328 \\\\\nnever airborne & 185{,}328 & 197 & 0.11 & 185{,}131 \\\\\nintegrity gate & 185{,}131 & 550 & 0.30 & 184{,}581 \\\\\nshorter than the duration cut & 184{,}581 & 2{,}084 & 1.13 & 182{,}497 \\\\\nlonger than the duration cut & 182{,}497 & 3 & 0.00 & 182{,}494 \\\\\npath below the floor & 182{,}494 & 173 & 0.09 & 182{,}321 \\\\\naltitude activity below the floor & 182{,}321 & 4{,}899 & 2.69 & 177{,}422 \\\\\nout of reach of its own first fix & 177{,}422 & 217 & 0.12 & 177{,}205 \\\\\nno segment survived resampling & 177{,}205 & 20{,}899 & 11.79 & 156{,}306 \\\\\nno segment carries the smoothing window & 156{,}306 & 1 & 0.00 & 156{,}305 \\\\"
+    },
+    "StatDataParaWorstCutPct": {
+      "before": "11.7",
+      "after": "11.8"
+    },
+    "StatDataParaCriteria": {
+      "before": "10",
+      "after": "11"
+    },
+    "DataCascadeHangRows": {
+      "before": "%\nnever airborne & 6{,}716 & 1 & 0.01 & 6{,}715 \\\\\nintegrity gate & 6{,}715 & 53 & 0.79 & 6{,}662 \\\\\nshorter than the duration cut & 6{,}662 & 79 & 1.19 & 6{,}583 \\\\\npath below the floor & 6{,}583 & 1 & 0.02 & 6{,}582 \\\\\naltitude activity below the floor & 6{,}582 & 155 & 2.35 & 6{,}427 \\\\\nout of reach of its own first fix & 6{,}427 & 5 & 0.08 & 6{,}422 \\\\\nno segment survived resampling & 6{,}422 & 194 & 3.02 & 6{,}228 \\\\",
+      "after": "%\nno usable GNSS altitude & 6{,}716 & 135 & 2.01 & 6{,}581 \\\\\nnever airborne & 6{,}581 & 1 & 0.02 & 6{,}580 \\\\\nintegrity gate & 6{,}580 & 53 & 0.81 & 6{,}527 \\\\\nshorter than the duration cut & 6{,}527 & 79 & 1.21 & 6{,}448 \\\\\npath below the floor & 6{,}448 & 1 & 0.02 & 6{,}447 \\\\\naltitude activity below the floor & 6{,}447 & 155 & 2.40 & 6{,}292 \\\\\nout of reach of its own first fix & 6{,}292 & 5 & 0.08 & 6{,}287 \\\\\nno segment survived resampling & 6{,}287 & 194 & 3.09 & 6{,}093 \\\\"
+    },
+    "StatDataHangWorstCutPct": {
+      "before": "3.0",
+      "after": "3.1"
+    },
+    "StatDataHangCriteria": {
+      "before": "7",
+      "after": "8"
+    }
+  },
+  "scope": "Adds 697 para and 135 hang altitude-channel rejections previously omitted from the displayed cascade, correcting later denominators. Counts are taken from the independent completed pipeline_census report. No cleaned trajectory, transport measurement or phase result changes. This is a numerical report correction, not a documentation-only equivalence."
+}

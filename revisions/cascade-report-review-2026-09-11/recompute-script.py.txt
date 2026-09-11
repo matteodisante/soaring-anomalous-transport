@@ -1,0 +1,53 @@
+"""Recompute the cascade from existing independent rejection totals, without SSD I/O."""
+from pathlib import Path
+import hashlib,json,re,runpy,shutil
+import pandas as pd
+ROOT=Path.cwd();E=ROOT/'revisions/cascade-report-review-2026-09-11'
+report=runpy.run_path(str(ROOT/'scripts/reporting/ch2_dataset/generate_dataset_stats.py'))
+source=(ROOT/'thesis/generated/pipeline_census.tex').read_text()
+counts={k:int(v) for k,v in re.findall(r'\\newcommand\{\\(StatPipe\w+)\}\{(\d+)\}',source)}
+path=ROOT/'thesis/generated/dataset_stats.tex';before=path.read_text()
+# Read nested TeX braces so thousands separators and multiline rows remain intact.
+def spans(text):
+    result={}
+    for m in re.finditer(r'\\newcommand\{\\(\w+)\}\{',text):
+        depth=1;i=m.end()
+        while depth:
+            depth+=(text[i]=='{')-(text[i]=='}');i+=1
+        result[m[1]]=(m.end(),i-1)
+    return result
+changes={};records={}
+for disc,tag in [('paragliders','Para'),('hang gliders','Hang')]:
+    assert counts['StatPipe'+tag+'DropPipelineRaised']==0
+    reasons=[];input_counts={}
+    for reason,_,_ in report['CASCADE']:
+        suffix=''.join(s.capitalize() for s in reason.split('_'))
+        n=counts['StatPipe'+tag+'Drop'+suffix];input_counts[reason]=n;reasons.extend([reason]*n)
+    kept=counts['StatPipe'+tag+'Kept'];reasons.extend([None]*kept)
+    assert len(reasons)==counts['StatPipe'+tag+'Attempted']
+    meta=pd.DataFrame({'drop_reason':reasons});new=report['macros'](disc,meta)
+    table=report['cascade'](meta);assert int(table.remaining.iloc[-1])==kept
+    # The independent census includes altitude rejection; the former report did not.
+    assert input_counts['no_usable_altitude_channel']==(697 if tag=='Para' else 135)
+    records[disc]={'counts':input_counts,'attempted':len(meta),'kept':kept,'cascade':table.to_dict('records')}
+    changes.update(new)
+positions=spans(before);after=before
+for name,value in sorted(changes.items(),key=lambda x:positions[x[0]][0],reverse=True):
+    a,b=positions[name];after=after[:a]+str(value)+after[b:]
+changed={name:{'before':before[a:b],'after':str(changes[name])} for name,(a,b) in positions.items() if name in changes and before[a:b]!=str(changes[name])}
+# All unselected macros retain their exact values.
+post=spans(after)
+for name,(a,b) in positions.items():
+    if name not in changes:
+        c,d=post[name];assert before[a:b]==after[c:d]
+path.write_text(after)
+(E/'counts-and-recomputed-cascade.json').write_text(json.dumps(records,indent=2)+'\n')
+sha=lambda b:hashlib.sha256(b).hexdigest()
+h=hashlib.sha256()
+for p in sorted(set([*ROOT.glob('src/**/*.py'),*ROOT.glob('scripts/**/*.py'),*ROOT.glob('configs/*.yaml'),ROOT/'uv.lock'])):h.update(p.relative_to(ROOT).as_posix().encode()+b'\0');h.update(p.read_bytes())
+record=json.loads((E/'before.json').read_text());record.update(run_id='20260910T221820Z-05d36ab4',kind='numerical-report-correction',status='recomputed locally from independently generated counts; direct SSD metadata reconciliation pending',after_numerical_source_sha256=h.hexdigest(),after_source_sha256=sha((ROOT/record['source']).read_bytes()),before_output_sha256=sha(before.encode()),after_output_sha256=sha(after.encode()),changed_macros=changed,scope='Adds 697 para and 135 hang altitude-channel rejections previously omitted from the displayed cascade, correcting later denominators. Counts are taken from the independent completed pipeline_census report. No cleaned trajectory, transport measurement or phase result changes. This is a numerical report correction, not a documentation-only equivalence.')
+(E/'proof.json').write_text(json.dumps(record,indent=2)+'\n')
+shutil.copyfile(ROOT/record['source'],E/'generate_dataset_stats.py.after.txt');shutil.copyfile(path,E/'dataset_stats.tex.after.txt');shutil.copyfile(__file__,E/'recompute-script.py.txt')
+print('Corrected',len(changed),'macros from independent saved counts; para and hang cascades reconcile exactly.')
+for name in changed:
+ if not name.startswith('DataCascade'): print(name,changed[name])

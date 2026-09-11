@@ -1,0 +1,149 @@
+"""Apply the prepared documentation-only correction after the full rebuild completes.
+
+This one-off audit preserves the execution manifest and code identities. It never
+marks an unfinished run complete or changes a numerical value, parameter or table.
+"""
+import ast
+import copy
+import hashlib
+import json
+import runpy
+import shutil
+from datetime import UTC, datetime
+from pathlib import Path
+import yaml
+
+from soaring.reporting import DISCIPLINES
+from soaring.reporting.snapshot import current_cleaning, source_hash, validate_snapshot, write_json
+
+ROOT = Path('/Users/matteodisante/local_master_thesis/soaring-anomalous-transport')
+RUN = Path('/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4')
+PREP = Path('/tmp/final-source-documentation')
+EVIDENCE = ROOT/'revisions/documentation-review-2026-09-11'
+
+class StripDocstrings(ast.NodeTransformer):
+    def strip(self, node):
+        self.generic_visit(node)
+        if (node.body and isinstance(node.body[0], ast.Expr)
+                and isinstance(node.body[0].value, ast.Constant)
+                and isinstance(node.body[0].value.value, str)):
+            node.body.pop(0)
+        return node
+    visit_Module = strip
+    visit_FunctionDef = strip
+    visit_AsyncFunctionDef = strip
+    visit_ClassDef = strip
+
+def executable(text):
+    return ast.dump(StripDocstrings().visit(ast.parse(text)), include_attributes=False)
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+def main():
+    manifest_path = RUN/'manifest.json'
+    execution = json.loads(manifest_path.read_text())
+    assert execution['status'] == 'complete' and execution['pdf_sha256'], 'Rebuild must finish first'
+    assert not EVIDENCE.exists(), 'Review already exists; do not overwrite evidence'
+    driver = runpy.run_path(str(ROOT/'scripts/rebuild_thesis.py'))
+    assert driver['numerical_source_hash'](ROOT) == execution['numerical_source_sha256']
+    assert driver['numerical_source_hash'](RUN/'source-snapshot') == execution['numerical_source_sha256']
+    expected = json.loads((PREP/'manifest.json').read_text())
+    before_definition = current_cleaning(ROOT)
+    assert before_definition == execution['cleaning']
+    archives = {key: disc.derived_dir() for key, disc in DISCIPLINES.items()}
+    before_datasets = {key: validate_snapshot(path, before_definition) for key, path in archives.items()}
+    assert before_datasets == execution['datasets']
+    for name, record in execution['outputs'].items():
+        assert sha((ROOT/'thesis/generated'/name).read_bytes()) == record['sha256'], name
+    assert sha((ROOT/'thesis/main.pdf').read_bytes()) == execution['pdf_sha256']
+    for name, record in expected.items():
+        before = (ROOT/name).read_bytes()
+        after = (PREP/'after'/name).read_bytes()
+        assert before == (PREP/'before'/name).read_bytes()
+        assert sha(before) == record['before_sha256']
+        assert sha(after) == record['after_sha256']
+        if name.endswith('.py'):
+            assert executable(before.decode()) == executable(after.decode()), name
+            assert sha(executable(before.decode()).encode()) == record['executable_ast_sha256']
+        else:
+            assert name.endswith('.yaml')
+            assert yaml.safe_load(before) == yaml.safe_load(after), name
+            assert sha(json.dumps(yaml.safe_load(before),sort_keys=True).encode()) == record['parsed_yaml_sha256']
+
+    # Preserve the exact execution records before changing any current definition.
+    EVIDENCE.mkdir()
+    original = RUN/'numerical-execution-manifest.json'
+    assert not original.exists()
+    shutil.copyfile(manifest_path, original)
+    shutil.copyfile(manifest_path, EVIDENCE/'numerical-execution-manifest.json')
+    shutil.copyfile(__file__, EVIDENCE/'audit-script.py.txt')
+    for key, directory in archives.items():
+        shutil.copyfile(directory/'run_manifest.json', EVIDENCE/(key.replace(' ','_')+'-before-manifest.json'))
+    for name in expected:
+        tag = name.replace('/', '__')
+        shutil.copyfile(PREP/'before'/name, EVIDENCE/(tag+'.before.txt'))
+        shutil.copyfile(PREP/'after'/name, EVIDENCE/(tag+'.after.txt'))
+        (ROOT/name).write_bytes((PREP/'after'/name).read_bytes())
+
+    after_definition = current_cleaning(ROOT)
+    a, b = copy.deepcopy(before_definition), copy.deepcopy(after_definition)
+    a.pop('source_sha256'); b.pop('source_sha256')
+    assert a == b, 'Parameters or package versions changed'
+    changed = {}
+    paths = sorted(set([*ROOT.glob('src/**/*.py'), *ROOT.glob('scripts/**/*.py'),
+                        *ROOT.glob('configs/*.yaml'), ROOT/'uv.lock']))
+    reconstructed = hashlib.sha256()
+    for path in paths:
+        relative = path.relative_to(ROOT).as_posix()
+        now = path.read_bytes()
+        old = (RUN/'source-snapshot'/relative).read_bytes()
+        if now != old:
+            assert relative in expected, relative
+            changed[relative] = expected[relative]
+        reconstructed.update(relative.encode()+b'\0')
+        reconstructed.update((PREP/'before'/relative).read_bytes() if relative in expected else now)
+    assert set(changed) == set(expected)
+    assert reconstructed.hexdigest() == execution['numerical_source_sha256']
+    new_numerical_hash = driver['numerical_source_hash'](ROOT)
+    proof = {
+        'kind': 'documentation-only-source-review',
+        'created_utc': datetime.now(UTC).isoformat(),
+        'numerical_run_id': execution['run_id'],
+        'original_manifest_sha256': sha(original.read_bytes()),
+        'executed_numerical_source_sha256': execution['numerical_source_sha256'],
+        'documentation_equivalent_numerical_source_sha256': new_numerical_hash,
+        'reconstructed_original_numerical_source_sha256': reconstructed.hexdigest(),
+        'before_cleaning': before_definition,
+        'documentation_equivalent_cleaning': after_definition,
+        'files': changed,
+        'method': 'Identical complete executable Python ASTs after stripping only module/function/class docstrings; identical parsed YAML values for configuration comments. Reconstructed complete original numerical-source hash checks every unchanged source and configuration byte. Numerical code does not introspect these docstrings or YAML comments.',
+        'scope': 'Comments/docstrings/blank-line whitespace only. No computation, model, input table, generated output or PDF regenerated by this review.',
+    }
+    write_json(EVIDENCE/'proof.json', proof)
+    reference = {'proof': str(EVIDENCE/'proof.json'), 'sha256': sha((EVIDENCE/'proof.json').read_bytes())}
+    for key, directory in archives.items():
+        updated = copy.deepcopy(before_datasets[key])
+        updated.setdefault('executed_cleaning', copy.deepcopy(updated['cleaning']))
+        updated.setdefault('documentation_review_history', []).append(copy.deepcopy(updated.get('documentation_review')))
+        updated['cleaning'] = after_definition
+        updated['documentation_review'] = reference
+        write_json(directory/'run_manifest.json', updated)
+        validate_snapshot(directory, after_definition)
+    updated_run = copy.deepcopy(execution)
+    updated_run['executed_numerical_source_sha256'] = execution['numerical_source_sha256']
+    updated_run['numerical_source_sha256'] = new_numerical_hash
+    updated_run['executed_cleaning'] = execution['cleaning']
+    updated_run['cleaning'] = after_definition
+    updated_run['datasets'] = {key: validate_snapshot(path, after_definition) for key,path in archives.items()}
+    updated_run['documentation_review'] = {**reference, 'original_manifest': str(original)}
+    updated_run['documentation_equivalent_source_sha256'] = source_hash(ROOT)
+    for name, record in execution['outputs'].items():
+        assert sha((ROOT/'thesis/generated'/name).read_bytes()) == record['sha256']
+    assert sha((ROOT/'thesis/main.pdf').read_bytes()) == execution['pdf_sha256']
+    write_json(manifest_path, updated_run)
+    print('Documentation updated; original execution preserved:', original)
+    print('Equivalence proof:', EVIDENCE/'proof.json')
+
+if __name__ == '__main__':
+    main()

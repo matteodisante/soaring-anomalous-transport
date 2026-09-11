@@ -1,0 +1,414 @@
+"""Descriptive differences between raw barometric and GNSS altitude fields.
+
+Per-flight summaries measure the median offset, its height slope, spread and drift
+inside the central part of each record. The current cleaner adopts eligible GNSS
+altitude throughout and uses barometric measurements as witnesses; these diagnostics
+do not justify mixing the two altitude channels.
+
+A pressure-altitude model supplies a conditional temperature-equivalent conversion
+of the offset slope. Unknown recorder datums, sensor biases, atmospheric variation
+and correlated errors prevent identifying temperature from this slope alone.
+Similarly, site/day comparisons describe conditional scatter but do not isolate
+weather and instrument effects: flights within a group need not share conditions.
+
+The offset analysis excludes nearly equal fields and absolute median offsets of
+at least 1000 m by operational cuts. Passing these cuts does not establish sensor
+independence or accuracy, and failing them does not identify the cause of a defect.
+Numerical methods are separate from the reporting and plotting entry points.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Iterable
+from concurrent.futures import ProcessPoolExecutor
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+import numpy as np
+import pandas as pd
+
+if TYPE_CHECKING:
+    from numpy.typing import ArrayLike
+
+from .altitude_noise import BARO_BORDERLINE_MARGIN, BARO_PRESENT_MIN
+from .igc import parse_igc
+
+# --- the standard atmosphere, as the altimeter uses it -------------------------------
+#: Specific gas constant for dry air, J/(kg K).
+R_DRY = 287.0528
+#: Standard gravity, m/s^2.
+G0 = 9.80665
+#: ICAO sea-level temperature, K.
+ISA_T0 = 288.15
+#: Standard sea-level pressure for the model conversion, hPa. Individual recorder
+#: conventions are not inferred from this constant.
+ISA_P0 = 1013.25
+#: ICAO tropospheric lapse rate, K/m.
+ISA_LAPSE = 0.0065
+
+# --- what counts as a measurable flight ----------------------------------------------
+#: Fewer fixes than this and the per-flight statistics are not worth forming.
+MIN_FIX = 300
+#: A channel is "present" on a flight when it carries a non-zero altitude on at least
+#: this share of the fixes. This raw diagnostic uses BARO_PRESENT_MIN; current
+#: cleaning admission and local witness coverage are separate criteria.
+PRESENT_MIN = BARO_PRESENT_MIN
+#: Fraction of elapsed record duration excluded at each end. This fixed trim reduces
+#: exposure to endpoints; it neither detects take-off/landing nor identifies settling.
+EDGE_TRIM = 0.10
+#: Fraction of the window at each end used for the drift statistic (median of the last
+#: block minus median of the first), which is the part of the offset that a difference
+#: does *not* remove.
+TAIL_FRAC = 0.20
+#: Minimum pressure-altitude span for estimating the offset slope. Either ascent or
+#: descent can provide this span; the cut does not remove errors in the GNSS regressor.
+SLOPE_MIN_RANGE_M = 300.0
+#: A flight whose two channels have equal decoded numeric values on more than this share of the window
+#: is excluded as a suspected duplicate-field record; agreement alone is not proof.
+DUPLICATE_MIN_FRAC = 0.99
+#: Operational absolute-offset cut for this descriptive analysis, not a proved
+#: maximum atmospheric or datum contribution.
+PLAUSIBLE_MAX_M = 1000.0
+#: Fixed altitude band the cross-discipline comparison is read in, m. The offset grows
+#: with height for several possible reasons, so comparing disciplines that fly at
+#: different altitudes means comparing them inside one band.
+FIXED_BAND_M = (1500.0, 2000.0)
+
+#: Columns of the per-flight table :func:`scan_offsets` returns.
+COLUMNS = [
+    "flight_id",
+    "season",
+    "n_fix",
+    "baro_frac",
+    "gnss_frac",
+    "both",
+    "n_win",
+    "dur_s",
+    "med_offset",
+    "iqr_offset",
+    "drift",
+    "slope",
+    "frac_equal",
+    "alt_med",
+    "alt_range",
+    "lat",
+    "lon",
+    "logger",
+]
+
+
+def scale_height_m(temperature_k: float = ISA_T0) -> float:
+    """Isothermal scale height :math:`H = R_d T/g`.
+
+    Args:
+        temperature_k: Mean virtual temperature of the layer, K.
+
+    Returns:
+        The scale height in metres (about 8.4 km at the standard sea-level
+        temperature).
+    """
+    return R_DRY * temperature_k / G0
+
+
+def metres_per_hpa(
+    temperature_k: float = ISA_T0, pressure_hpa: float = ISA_P0
+) -> float:
+    """Local hydrostatic altitude sensitivity H/p, in metres per hectopascal.
+
+    For a small pressure perturbation, dh = -H dp/p. The returned magnitude is evaluated
+    at the supplied pressure and temperature; it is not independent of flight altitude.
+    At the default standard sea-level values it is about 8.3 m/hPa.
+    """
+    return scale_height_m(temperature_k) / pressure_hpa
+
+
+def isa_mean_temperature_k(altitude_m: float) -> float:
+    """Arithmetic mean ISA temperature over a layer ending at altitude_m.
+
+    For the linear tropospheric lapse profile, this is the temperature at half the
+    height. It is a layer approximation for the slope diagnostic, not a retrieved
+    atmospheric temperature or an exact hypsometric mean.
+    """
+    return ISA_T0 - ISA_LAPSE * altitude_m / 2.0
+
+
+def temperature_departure_k(slope: float, altitude_m: float) -> float:
+    """Temperature-equivalent offset slope under a linearized pressure-altitude model.
+
+    Returns -slope * T_ISA_mean, where slope is d(baro - gnss)/dh in m/m. Positive
+    values correspond to the warm-air interpretation of an altimeter under-reading.
+    This conversion assumes the offset slope comes from temperature; recorder datums,
+    scale errors and other correlated effects can also produce it. It is therefore
+    a conditional equivalent in kelvin, not an independent meteorological estimate.
+    """
+    return -slope * isa_mean_temperature_k(altitude_m)
+
+
+def sigma_mad(values: ArrayLike) -> float:
+    """Median absolute deviation multiplied by the Gaussian consistency factor 1.4826.
+
+    Non-finite entries are dropped and fewer than three finite entries return NaN.
+    For non-Gaussian populations this remains a resistant scale statistic; it need not
+    equal their standard deviation.
+    """
+    x = np.asarray(values, dtype=float)
+    x = x[np.isfinite(x)]
+    if x.size < 3:
+        return float("nan")
+    return float(1.4826 * np.median(np.abs(x - np.median(x))))
+
+
+def _logger_id(path: Path) -> str:
+    """Read up to 40 characters of the IGC A record preceding the first fix.
+
+    This declaration can contain manufacturer and recorder identity. The function
+    retains the text as a grouping label; it does not independently identify a model
+    or verify a physical recorder. Missing declarations return an empty string.
+    """
+    try:
+        with path.open("rb") as handle:
+            for raw in handle:
+                line = raw.decode("latin-1", "replace").strip()
+                if line.startswith("A"):
+                    return line[:40]
+                if line.startswith("B"):
+                    break  # fixes have started: this file declares no recorder
+    except OSError:
+        pass
+    return ""
+
+
+def measure_flight(path: str | Path) -> dict | None:
+    """The per-flight offset statistics for one IGC file.
+
+    Every flight with enough fixes returns a row, including the ones that carry only one
+    channel: they are the denominator of the availability fractions, and of the check
+    GNSS-presence comparison among records with low barometric availability.
+
+    Args:
+        path: The ``.igc`` file.
+
+    Returns:
+        A row of :data:`COLUMNS`, or ``None`` if the file has fewer than
+        :data:`MIN_FIX` fixes or cannot be parsed. Rows for flights without both
+        channels carry ``both=False`` and leave the offset fields missing.
+    """
+    path = Path(path)
+    try:
+        fixes = parse_igc(path)
+    except (OSError, ValueError):
+        return None
+    if len(fixes) < MIN_FIX:
+        return None
+
+    t = fixes["t"].to_numpy()
+    baro = fixes["baro_alt"].to_numpy()
+    gnss = fixes["gnss_alt"].to_numpy()
+    has_baro = np.isfinite(baro) & (baro != 0.0)
+    has_gnss = np.isfinite(gnss) & (gnss != 0.0)
+
+    row: dict = dict.fromkeys(COLUMNS, np.nan)
+    row.update(
+        flight_id=path.stem.split("_")[-1],
+        season=path.parent.name,
+        n_fix=len(fixes),
+        baro_frac=float(has_baro.mean()),
+        gnss_frac=float(has_gnss.mean()),
+        both=False,
+        logger="",
+    )
+    if row["baro_frac"] < PRESENT_MIN or row["gnss_frac"] < PRESENT_MIN:
+        return row
+    row["both"] = True
+
+    span = t[-1] - t[0]
+    if span <= 0:
+        return row
+    window = (
+        (t >= t[0] + EDGE_TRIM * span)
+        & (t <= t[-1] - EDGE_TRIM * span)
+        & has_baro
+        & has_gnss
+    )
+    if int(window.sum()) < MIN_FIX // 3:
+        return row
+
+    t_w, baro_w, gnss_w = t[window], baro[window], gnss[window]
+    offset = baro_w - gnss_w
+    tail = max(1, int(TAIL_FRAC * offset.size))
+    row.update(
+        n_win=int(window.sum()),
+        dur_s=float(t_w[-1] - t_w[0]),
+        med_offset=float(np.median(offset)),
+        iqr_offset=float(np.subtract(*np.percentile(offset, [75, 25]))),
+        drift=float(np.median(offset[-tail:]) - np.median(offset[:tail])),
+        frac_equal=float(np.mean(baro_w == gnss_w)),
+        alt_med=float(np.median(baro_w)),
+        alt_range=float(np.ptp(baro_w)),
+        lat=float(np.median(fixes["lat"].to_numpy()[window])),
+        lon=float(np.median(fixes["lon"].to_numpy()[window])),
+        logger=_logger_id(path),
+    )
+    # Regress the channel difference on GNSS altitude when the pressure-altitude
+    # span is sufficient. This descriptive slope does not identify temperature:
+    # GNSS error enters both the predictor and the response with opposite signs.
+    if row["alt_range"] >= SLOPE_MIN_RANGE_M:
+        design = np.vstack([gnss_w, np.ones_like(gnss_w)]).T
+        row["slope"] = float(np.linalg.lstsq(design, offset, rcond=None)[0][0])
+    return row
+
+
+def _measure_str(path_str: str) -> dict | None:
+    """Worker wrapper: a top-level function taking a picklable argument."""
+    return measure_flight(path_str)
+
+
+def scan_offsets(paths: Iterable[str | Path], *, n_jobs: int = 1) -> pd.DataFrame:
+    """Measure a set of IGC files, in parallel.
+
+    Args:
+        paths: The ``.igc`` files to measure.
+        n_jobs: Worker processes; ``1`` runs in this one, which is what the tests use.
+
+    Returns:
+        One row per usable file, with the columns of :data:`COLUMNS`. Files too short
+        or too broken to parse are absent, so the row count is not the file count.
+    """
+    items = [str(p) for p in paths]
+    if n_jobs <= 1:
+        rows = [row for row in map(_measure_str, items) if row is not None]
+    else:
+        with ProcessPoolExecutor(max_workers=n_jobs) as pool:
+            rows = [
+                row
+                for row in pool.map(_measure_str, items, chunksize=16)
+                if row is not None
+            ]
+    return pd.DataFrame(rows, columns=COLUMNS)
+
+
+def independent(table: pd.DataFrame) -> pd.Series:
+    """Mask raw records admitted to the paired-altitude offset diagnostic.
+
+    Requires both fields, a measured median offset, equality fraction at most
+    DUPLICATE_MIN_FRAC and absolute median offset below PLAUSIBLE_MAX_M. The historical
+    name does not assert statistical independence of the sensors or flights.
+    """
+    return (
+        table["both"].fillna(False).astype(bool)
+        & table["med_offset"].notna()
+        & (table["frac_equal"] <= DUPLICATE_MIN_FRAC)
+        & (table["med_offset"].abs() < PLAUSIBLE_MAX_M)
+    )
+
+
+def group_scatter(
+    table: pd.DataFrame,
+    keys: list[str],
+    *,
+    min_flights: int = 3,
+    min_loggers: int = 1,
+) -> pd.DataFrame:
+    """Count records and distinct logger labels, and describe within-group offset spread.
+
+    Groups are defined by the supplied keys, usually site or site/date. Only groups
+    meeting min_flights and min_loggers are retained. Returned columns are n, n_loggers,
+    sigma (Gaussian-scaled MAD) and span (full range). Site/date grouping reduces some
+    heterogeneity but does not separate weather from instrument contributions.
+    """
+    rows = []
+    for _, block in table.dropna(subset=keys).groupby(keys, sort=True):
+        n_loggers = int(block["logger"].nunique())
+        if len(block) < min_flights or n_loggers < min_loggers:
+            continue
+        rows.append(
+            {
+                "n": len(block),
+                "n_loggers": n_loggers,
+                "sigma": sigma_mad(block["med_offset"]),
+                "span": float(np.ptp(block["med_offset"].to_numpy())),
+            }
+        )
+    return pd.DataFrame(rows, columns=["n", "n_loggers", "sigma", "span"])
+
+
+def fallback_completeness(table: pd.DataFrame) -> tuple[int, int]:
+    """GNSS presence among raw flights below the diagnostic barometric presence cut.
+
+    The historical function name refers to a channel-selection diagnostic. The current
+    cleaner always adopts eligible GNSS altitude and assesses the barometer separately
+    as a witness. Here, ``complete`` means meeting ``PRESENT_MIN``, not a value at every
+    fix. These raw-census counts do not describe post-cleaning channel completeness.
+
+    Args:
+        table: A :func:`scan_offsets` table, over the whole sample and not only the
+            two-channel flights.
+
+    Returns:
+        ``(complete, fallback)``: the number of barometric-absent flights whose GNSS
+        channel covers at least :data:`PRESENT_MIN` of their fixes, and the number of
+        barometric-absent flights.
+    """
+    fallback = table["baro_frac"] < PRESENT_MIN
+    complete = fallback & (table["gnss_frac"] >= PRESENT_MIN)
+    return int(complete.sum()), int(fallback.sum())
+
+
+def borderline_gnss_advantage(table: pd.DataFrame) -> tuple[int, int]:
+    """Compare altitude-field presence fractions near the diagnostic barometric cut.
+
+    Within [PRESENT_MIN - BARO_BORDERLINE_MARGIN, PRESENT_MIN), return the number whose
+    GNSS presence fraction is at least the barometric fraction, and the total number.
+    Presence does not imply accuracy; the current cleaner's GNSS admission criteria
+    are applied separately.
+    """
+    frac = table["baro_frac"]
+    band = (frac >= PRESENT_MIN - BARO_BORDERLINE_MARGIN) & (frac < PRESENT_MIN)
+    better = band & (table["gnss_frac"] >= frac)
+    return int(better.sum()), int(band.sum())
+
+
+def recorder_make(logger: pd.Series) -> pd.Series:
+    """Group recorded logger labels by their first four characters.
+
+    For an IGC A record these normally comprise A and the three-character manufacturer
+    code. The remaining identity declaration is retained elsewhere as a grouping label;
+    neither grouping independently verifies a physical recorder or its model. Shared or
+    inconsistent declarations can therefore affect counts of distinct logger labels.
+
+    Args:
+        logger: The logger column of a scan_offsets table.
+
+    Returns:
+        Four-character prefix, empty where no recorder was declared."""
+    return logger.fillna("").str.slice(0, 4)
+
+
+def between_group_spread(
+    table: pd.DataFrame, key: str, *, min_flights: int = 50
+) -> tuple[int, float, float]:
+    """Describe the spread of group medians for the recorded offset.
+
+    Groups with fewer than min_flights observations are omitted. When grouping by a
+    recorder declaration, differences can combine equipment, site, period and selection
+    effects. Such effects may reinforce or cancel each other; the descriptive spread
+    neither identifies nor bounds the instrument contribution.
+
+    Args:
+        table: Per-flight offset table after the operational admission cuts.
+        key: Column defining the groups, such as make or logger.
+        min_flights: Minimum number of nonmissing offsets per group.
+
+    Returns:
+        Number of admitted groups, Gaussian-scaled MAD of their median offsets, and
+        full range of those medians. Fewer than two groups gives missing spread and
+        range; exactly two groups still gives missing MAD under sigma_mad's rule."""
+    medians = (
+        table.dropna(subset=[key, "med_offset"])
+        .groupby(key)["med_offset"]
+        .agg(["median", "size"])
+    )
+    medians = medians[medians["size"] >= min_flights]["median"]
+    if len(medians) < 2:
+        return len(medians), float("nan"), float("nan")
+    return len(medians), sigma_mad(medians), float(np.ptp(medians.to_numpy()))

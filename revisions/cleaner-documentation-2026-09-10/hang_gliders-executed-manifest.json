@@ -1,0 +1,97 @@
+{
+  "attempted_files": 6716,
+  "cleaning": {
+    "configuration": {
+      "alt_channel": {
+        "baro_witness_min_range_m": 30.0,
+        "baro_witness_present_min": 0.95,
+        "gnss_min_range_m": 30.0,
+        "gnss_present_min": 0.95
+      },
+      "fix": {
+        "frozen_delta_z_m": 5.0,
+        "frozen_eps_m": 15.0,
+        "frozen_tau_s": 60.0,
+        "hampel_eps_min_m": 15.0,
+        "hampel_k": 5.0,
+        "hampel_min_window_fixes": 5,
+        "hampel_window_s": 20.0,
+        "integrity_max_fraction": 0.1,
+        "max_altitude_m": 6000.0,
+        "max_horizontal_speed_mps": {
+          "hang gliders": 55.0,
+          "paragliders": 45.0
+        },
+        "max_vertical_speed_mps": 10.0,
+        "min_altitude_m": -100.0,
+        "vz_min_window_fixes": 5,
+        "vz_window_s": 5.0
+      },
+      "flight": {
+        "max_duration_s": 57600.0,
+        "min_alt_range_m": 600.0,
+        "min_duration_s": 2400.0,
+        "min_path_km": 20.0
+      },
+      "sampling": {
+        "max_gap_factor": 10.0,
+        "max_gap_seconds": 20.0,
+        "max_missing_fraction": 0.1,
+        "min_segment_duration_s": 90.0
+      },
+      "savgol": {
+        "polyorder": 3,
+        "tau_c_horizontal_s": 5.0,
+        "tau_c_vertical_s": 5.0
+      },
+      "trimming": {
+        "ground_flatness_m": 5.0,
+        "interior_ground_s": 600.0,
+        "sustained_s": 30.0,
+        "takeoff_speed_mps": 5.0
+      }
+    },
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "pyarrow": "24.0.0",
+      "scipy": "1.18.0"
+    },
+    "pipeline_version": "2.2.0",
+    "source_sha256": "339322197a69b5c65fa514a0c751f63a8266f8f283a566685b7c442e3d157311"
+  },
+  "completed_utc": "2026-09-10T21:16:44.130744+00:00",
+  "discipline": "hang gliders",
+  "limit": 0,
+  "retained_flights": 6093,
+  "run_id": "5ab9d7ad-dd76-44af-bd5f-7ba97d1865cf",
+  "seed": 20260803,
+  "started_utc": "2026-09-10T21:14:30.104294+00:00",
+  "status": "complete",
+  "tables": {
+    "fixes.parquet": {
+      "bytes": 1145581762,
+      "footer_sha256": "f198e0166379ea7c355abe1b216f5e38dc65a206887833604ab809f388031eab",
+      "mtime_ns": 1789075003670000000,
+      "rows": 34588180
+    },
+    "flights_meta.parquet": {
+      "bytes": 592805,
+      "footer_sha256": "a2565f54175521b1132d680061554cddd31a519589e204e7933131307452526e",
+      "mtime_ns": 1789075003750000000,
+      "rows": 6716
+    },
+    "segments.parquet": {
+      "bytes": 212123,
+      "footer_sha256": "bef41ee7e2b91effc074d9c2f0bbc9656aa5af2771658bc4f036672e99c88a06",
+      "mtime_ns": 1789075004110000000,
+      "rows": 9559
+    },
+    "suspect_intervals.parquet": {
+      "bytes": 3366,
+      "footer_sha256": "dfe242554f72fbeb61820cd26e286157c365d151708c44154efd9c75a9375644",
+      "mtime_ns": 1789075004110000000,
+      "rows": 5
+    }
+  }
+}

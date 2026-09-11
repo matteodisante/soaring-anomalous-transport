@@ -1,734 +1,166 @@
-# What is on the SSD
+# Data on the SSD
 
-Every byte of data lives on the external disk, never in the repository. This page is the
-map: what each directory holds, what each file is, and — for every table — its shape, its
-dtypes and its first rows, as you would see them if you opened it yourself.
+Raw flight recordings and large processed tables live on the external SSD. The
+repository keeps small season summaries, map geometry, numerical reports and annotation
+packs. The disk's root `README.md` is generated from its actual directory entries,
+file sizes and Parquet metadata by `scripts/reporting/tools/write_ssd_readme.py`.
+It is refreshed by the combined rebuild. This page describes the schema and conventions;
+it does not preserve obsolete example counts from an earlier cleaning run.
 
-Those views are not typed out here. They are the output of
-`scripts/reporting/tools/show_dataset.py`, which reads the real files and prints them, so the
-page can be refreshed after any run and cannot drift from the disk:
+## Roots and identity
+
+| Discipline | Default root | Environment override | Stored `source` |
+|---|---|---|---|
+| Paragliders | `/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc` | `SOARING_PARA_DATA_ROOT` | `paraglider` |
+| Hang gliders | `/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc` | `SOARING_DELTA_DATA_ROOT` | `hangglider` |
+
+Defaults come from `configs/para_download.yaml` and `configs/delta_download.yaml`.
+A flight is identified by `(source, flight_id)`, not by `flight_id` across disciplines.
+A segment adds `segment_id`; a fix adds elapsed time `t`.
+
+```text
+<data_root>/
+  raw/igc/<season>/             original IGC tracks
+  raw/raw_xml/                 original season XML exports
+  catalog/                     catalogue and season index
+  derived/
+    fixes.parquet
+    flights_meta.parquet
+    segments.parquet
+    suspect_intervals.parquet
+    run_manifest.json
+    segmentation/              fitted models and phase products
+    ...                        raw diagnostic caches
+  logs/                        acquisition logs
+```
+
+The shared `derived-audit/` directory sits alongside the two discipline roots. Its
+`runs/<run-id>/arrays/` files are inputs to report generators. Each run also carries
+logs and `manifest.json`; older standalone arrays must not be mixed with a new run.
+
+## The four cleaned tables
+
+| Table | Row represents | Role |
+|---|---|---|
+| `fixes.parquet` | A grid time in a retained segment | Position, derivatives and quality flags |
+| `flights_meta.parquet` | An attempted flight, retained or rejected | Decisions, counters, origin and processing parameters |
+| `segments.parquet` | A segment considered for retention | Segment coverage, disposition and boundaries |
+| `suspect_intervals.parquet` | A flagged slow/flat interval | Intervals reserved for a future sensitivity analysis |
+
+A rejected flight remains in `flights_meta`. A rejected segment remains in `segments`
+when the pipeline reached that stage. Stages not reached leave their metadata null.
+A missing table is not evidence that its count is zero: all four are required, including
+an empty `suspect_intervals` table.
+
+### `fixes.parquet`: 19 columns
+
+| Columns | Meaning and units |
+|---|---|
+| `source`, `flight_id`, `segment_id` | Flight and segment identity |
+| `t` | Seconds from the trimmed flight origin; retained across segment boundaries |
+| `E`, `N` | Smoothed local east and north position, metres |
+| `z` | Smoothed adopted GNSS altitude, metres; not re-zeroed |
+| `v_E`, `v_N`, `v_z` | First derivatives, m/s |
+| `a_E`, `a_N`, `a_z` | Second derivatives, m/s² |
+| `interpolated` | No surviving horizontal fix within half a native interval of this grid time |
+| `z_reconstructed` | Interpolated grid time or a nearest surviving fix with missing altitude |
+| `z_derivative_reconstructed` | The vertical polynomial fit uses at least one altitude marked reconstructed |
+| `edge` | Off-centre polynomial evaluation near a segment end |
+| `hampel_flagged` | Nearest-fix diagnostic position flag; it does not itself delete a fix |
+| `alt_invalidated` | Nearest-fix altitude invalidation during cleaning |
+
+The ten time/kinematic columns are stored as float32. A uniform grid is defined within
+each segment at that flight's estimated native interval; it is not one common cadence
+for the whole archive. Do not compare fix-to-fix turns between cadences as though their
+time separations were equal.
+
+`E,N` use the first trimmed fix as the coordinate origin before smoothing. Smoothing
+can move that first retained value slightly away from zero. `z` keeps the numerical
+recorder altitude. Recorder geoid/ellipsoid conventions have not been harmonised;
+absolute altitude is therefore not a common geodetic datum established by this pipeline.
+
+### Flight and segment metadata
+
+`FlightRecord` in `soaring.analysis.preproc.pipeline` defines the per-flight fields.
+Values are nullable when a flight stopped before reaching the relevant stage; counter
+names identify different operations and must not be summed as disjoint removed fixes.
+
+| Fields | Meaning |
+|---|---|
+| `source`, `flight_id`, `pipeline_version` | Flight identity and cleaning version |
+| `drop_stage`, `drop_reason`, `error_detail` | First stopping condition, or null for a retained flight; exception detail when processing failed |
+| `gnss_present_frac`, `gnss_range_m` | Raw GNSS altitude availability and range |
+| `baro_witness`, `baro_present_frac`, `baro_range_m` | Flight-level barometric availability summary; local witness decisions still require complete local support |
+| `n_alt_missing_raw` | Altitudes missing before cleaning |
+| `n_fix_raw`, `n_fix_clean` | Fix counts before and after fix-level cleaning |
+| `n_merged_duplicates`, `n_removed_backward` | Duplicate-time merges and backward-time deletions |
+| `n_removed_spike`, `n_removed_frozen` | Horizontal spike/block and frozen-position deletions |
+| `n_alt_out_of_band`, `n_alt_vz_sustained`, `n_alt_vz_spike` | Altitudes censored by the altitude-band, sustained-speed and spike rules |
+| `n_flagged_kept`, `n_vz_runs`, `n_alt_level_shift` | Retained Hampel flags, excessive vertical-speed runs and unresolved level shifts |
+| `split_jump_max_m`, `n_boundaried`, `integrity_fraction` | Largest forced-boundary jump, boundary count and fix-cleaning integrity fraction |
+| `ground_phase_start_s`, `ground_phase_end_s`, `trimmed_fraction` | Ground-trimming endpoints and removed fraction |
+| `n_interior_excised`, `n_suspect_stints` | Excised interior-ground fixes and saved shorter suspect intervals |
+| `duration_flight_s`, `path_km`, `alt_range_m`, `extent_km` | Flight-level duration, path length, altitude range and horizontal extent before resampling |
+| `lat0`, `lon0`, `alt0` | Coordinate origin from the first trimmed fix |
+| `dt_native_s`, `g_max_s` | Inferred native interval and gap-splitting bound |
+| `n_segments`, `n_segments_kept` | Segments formed and surviving segment-level gates |
+| `frac_interpolated`, `frac_z_reconstructed`, `z_gap_max_s` | Horizontal and altitude reconstruction fractions and largest altitude gap |
+| `was_resampled` | Whether uniform-grid resampling was applied |
+| `savgol_order`, `savgol_window_horiz`, `savgol_window_vert` | Polynomial order and horizontal/vertical smoothing lengths, in fixes |
+
+`duration_flight_s` measures the recorded duration used at the flight-level gate,
+excluding gaps and mandatory boundaries. The retained-segment duration measured by a
+later transport report can differ after segment rejection. The upper flight-duration
+gate uses elapsed span, including gaps. Use the estimator's stated duration convention.
+
+Suspect intervals carry `source`, `flight_id`, `t_start` and `t_end` in the flight clock.
+Their proposed waiting-time sensitivity analysis is not currently implemented. They
+must not be described as an already measured waiting-time distribution.
+
+## Run state and safe reading
+
+An active or interrupted cleaning leaves `derived/.run_incomplete`. Do not treat the
+four tables as a complete archive while it exists. `run_manifest.json` records the
+cleaning configuration, source fingerprint, dependency versions and table identities.
+These identities use file size, modification time, row count and Parquet-footer hash;
+they are not hashes of every trajectory value. The combined workflow additionally
+reprocesses a seeded retained-flight sample.
+
+The `.preprocess.lock` file supports advisory locking. Its presence alone does not
+mean the lock is held; the operating system tracks that state. See the
+[rebuild guide](rebuilding.md) for failure recovery.
+
+Stream trajectories. Parquet row groups can divide a flight:
+
+```python
+from soaring.analysis.derived import stream_flights
+
+for flight in stream_flights(root / "derived" / "fixes.parquet",
+                             ["segment_id", "t", "E", "N"]):
+    for segment_id, segment in flight.groupby("segment_id", sort=False):
+        ...  # form time-lagged increments within this segment
+```
+
+To inspect current shapes, types and example rows without loading the full table:
 
 ```bash
-SOARING_DELTA_DATA_ROOT=... uv run python scripts/reporting/tools/show_dataset.py \
-    --discipline "hang gliders"
+uv run python scripts/reporting/tools/show_dataset.py --discipline "hang gliders"
 ```
 
-The pilot name and pilot URL of the catalog are the one thing the script does not print:
-a public listing is still not something to reproduce in a repository page, so those two
-fields show what kind of value they hold instead of the value.
-
-The repo keeps only the small versioned `data/<discipline>/seasons_index.csv`, a copy of
-the season summary used to regenerate the thesis tables without the disk mounted.
-
-### `suspect_intervals.parquet`
-
-Slow-and-flat stints too short to excise, one row per stint: `source`, `flight_id`,
-`t_start`, `t_end` in the re-zeroed clock. Stage (iii) produces them so the ψ(τ) fits can
-be re-run with and without them as a sensitivity check. Written even when empty.
-
-> **The views below are from pipeline 2.0.0.** The nine blocks that `show_dataset.py`
-> produces reproduce byte for byte against the archive as it stands, checked rather than
-> assumed; the others — the directory tree, the `.igc` and XML excerpts, a log extract —
-> are quoted from their own sources. Re-run `show_dataset.py` after the next full pass and
-> paste its output over the generated ones. The page is only worth what its freshness is.
-
-## The two roots
-
-One root per discipline, each self-contained and identically laid out. They are found
-through environment variables, so no path is ever hard-coded:
-
-| discipline | environment variable | root |
-|---|---|---|
-| paragliders | `SOARING_PARA_DATA_ROOT` | `/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc` |
-| hang gliders | `SOARING_DELTA_DATA_ROOT` | `/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc` |
-
-The directory names on disk (`paragliders/`, `hang_gliders/`) are *not* the values of the
-`source` column in the tables (`paraglider`, `hangglider`). That is deliberate — a
-directory is a place, a source is a label — and the mapping lives in
-`scripts/preprocess.py`.
-
-## Layout
-
-```
-<data_root>/
-├── raw/                     immutable: what the acquisition downloaded
-│   ├── igc/<season>/        the track files, one directory per season
-│   └── raw_xml/<year>.xml   the season listings, as served
-├── catalog/                 tables derived from the listings (metadata only)
-│   ├── catalog.csv          one row per flight the CFD lists
-│   └── seasons_index.csv    one row per season
-├── logs/                    what the acquisition did, and what it failed to do
-│   ├── download.log
-│   └── failures.csv
-└── derived/                 everything the analysis produces
-    ├── track_scan.parquet   the census scan cache (pre-cleaning diagnostics)
-    ├── alt_offset_scan.parquet  the baro-vs-GNSS offset sample (Sec. 2.6)
-    ├── fixlevel_scan.parquet    the fix-level diagnostic sample (fig:fixlevel)
-    ├── psd_sample.npz           the altitude-noise PSD ensemble (fig:altnoise)
-    ├── savgol_psd_sample.npz    the Savitzky-Golay spectrum sample (fig:savgol-spectrum)
-    ├── fixes.parquet        the processed trajectories
-    ├── segments.parquet     one row per segment
-    └── flights_meta.parquet one row per flight attempted
-```
-
-Three maturity levels, and the boundary between them is a rule: **`raw/` is never
-modified**, `catalog/` is regenerable from `raw/`, and `derived/` is regenerable from
-both. Deleting `derived/` costs computation, never data.
-
-## `raw/igc/` — the tracks
-
-186,052 paraglider files over 27 seasons, 6,716 hang-glider files over 24. One directory
-per season, named `<start>-<end>`:
-
-```
-raw/igc/1999-2000/   raw/igc/2000-2001/   ...   raw/igc/2023-2024/   raw/igc/2025-2026/
-```
-
-File names are `<date>_<flight_id>.igc`, the date as the CFD declares it and the
-`flight_id` as its primary key (`soaring.acquisition.ffvl.naming`). The date can be a
-placeholder — `2000-00-00_20150770.igc` is a real file — which is why nothing downstream
-parses the date out of the name.
-
-A file is plain IGC text: an `H` header block, then one `B` record per fix.
-
-```
-AXSR
-HFDTE010923
-HFFXA035
-HFPLTPILOTINCHARGE:Margaux
-HFGTYGLIDERTYPE:NKN
-HFDTM100GPSDATUM:WGS-84
-...
-B0545152107904S05518180EA006400078612-016010
-B0545162107906S05518177EA006390078512-014010
-```
-
-Only the `B` records are read (`soaring.analysis.igc.parse_igc`), at the fixed character
-positions the FAI standard defines: time `[1:7]`, latitude `[7:15]`, longitude `[15:24]`,
-the `A`/`V` validity flag `[24]`, barometric altitude `[25:30]`, GNSS altitude `[30:35]`.
-The trailing digits are logger-specific `I`-record extensions and are ignored.
-
-Parsing one file gives this — the table every later stage starts from:
-
-```
-fixes (in memory, one track)   shape = 3,261 rows x 6 columns
-
-dtypes:
-  t                     float64
-  lat                   float64
-  lon                   float64
-  valid                 bool
-  baro_alt              float64
-  gnss_alt              float64
-
-head(4):
-   t     lat      lon  valid  baro_alt  gnss_alt
- 0.0 44.2977 5.763400   True    1260.0    1353.0
-30.0 44.2977 5.763400   True    1260.0    1353.0
-60.0 44.2977 5.763400   True    1259.0    1352.0
-90.0 44.2977 5.763417   True    1260.0    1352.0
-```
-
-`t` is seconds elapsed from the first fix, with the UTC midnight roll-over unwrapped and
-any backward step *left in place*: that is a defect for the cleaning to remove, not for
-the parser to hide. `baro_alt` and `gnss_alt` are `0` where the logger writes no such
-channel, which is how a GNSS-only flight announces itself. The four rows above are a
-hang glider still on the ground: 30 s cadence, the position unchanged to the fourth
-decimal.
-
-## `raw/raw_xml/` — the season listings as served
-
-One file per season year, `1999.xml` … `2025.xml`, kept exactly as the site returned it.
-They are the provenance of `catalog.csv`: if a catalog field is ever in doubt, the answer
-is in the XML.
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<ffvldata url="https://parapente.ffvl.fr/cfd/liste/2019" comment="generated from www.ffvl.fr" ...>
-<cfdflightlist nb_flights="10966">
-<flight ...
-```
-
-## `catalog/catalog.csv` — one row per listed flight
-
-87 MB for paragliders, 3.6 MB for hang gliders. 23 columns
-(`soaring.acquisition.ffvl.catalog.CATALOG_COLUMNS`), regenerable with `build-catalog`:
-
-```
-catalog/catalog.csv   shape = 9,259 rows x 23 columns
-
-dtypes:
-  flight_id             int64
-  season                str
-  season_year           int64
-  date                  str
-  pilot                 str
-  flight_type           str
-  distance_km           float64
-  points                float64
-  duration_s            float64
-  speed                 float64
-  takeoff               str
-  landing               str
-  dept                  str
-  club                  str
-  wing                  str
-  wing_class            str
-  flight_link           str
-  igc_link              str
-  tracklog_id           float64
-  pilot_link            str
-  local_path            str
-  downloaded            bool
-  file_size             int64
-
-head(4), columns 1-12:
- flight_id    season  season_year       date                  pilot  flight_type  distance_km  points  duration_s  speed                takeoff                 landing
-       573 2001-2002         2001 2002-03-10           <pilot name> Aller-Retour         36.0    46.8         NaN    NaN SANT HILAIRE DU TOUVET                  Lumbin
-       574 2001-2002         2001 2002-03-23 <anonymised at source>   Dist libre        220.0   220.0         NaN    NaN          SAINT SULPICE            Casteljaloux
-       575 2001-2002         2001 2002-03-17           <pilot name>   Dist libre         30.0    30.0         NaN    NaN          COL DE BLEINE Attérissage Saint André
-       576 2001-2002         2001 2002-03-17           <pilot name>   Dist libre         31.0    31.0         NaN    NaN         LES MONEDIERES          Lac le Chammet
-
-head(4), columns 13-23:
-dept                                 club    wing        wing_class                             flight_link igc_link  tracklog_id  pilot_link local_path  downloaded  file_size
- NaN GRENOBLE CHARTREUSE VOL LIBRE (GCVL)    Atos    Rigide Class 5 https://delta.ffvl.fr/cfd/liste/vol/573      NaN          NaN <pilot URL>        NaN       False          0
- NaN                                  NaN  Atos V    Rigide Class 5 https://delta.ffvl.fr/cfd/liste/vol/574      NaN          NaN <pilot URL>        NaN       False          0
- NaN           DELTA CLUB DU BAR SUR LOUP Topless     Delta Class 1 https://delta.ffvl.fr/cfd/liste/vol/575      NaN          NaN <pilot URL>        NaN       False          0
- NaN                                  NaN   Astir Delta Class Sport https://delta.ffvl.fr/cfd/liste/vol/576      NaN          NaN <pilot URL>        NaN       False          0
-```
-
-**This is metadata, and it can be wrong.** It is a coarse pre-filter and a provenance
-source, never the basis of a scientific cut — every number the thesis quotes about
-trajectories comes from the tracks themselves. Its known quirks: placeholder dates
-(`0000-00-00`, `2000-00-00`), `duration_s = 0.0` where the hang-glider file leaves the
-field blank, `dept` carrying non-French sentinels (`0`, `999`), `wing_class` not
-comparable across the two disciplines, and `local_path` still naming an older disk
-(`HDD_DISANTE`) for the rows downloaded before the move — which is why the pipeline
-locates files by walking `raw/igc/` rather than by trusting that column.
-
-## `catalog/seasons_index.csv` — one row per season
-
-The download ledger. Also committed to the repo, so the thesis season tables build
-without the disk:
-
-```
-catalog/seasons_index.csv   shape = 25 rows x 7 columns
-
-dtypes:
-  season_year           int64
-  season                str
-  list_url              str
-  xml_url               str
-  n_flights             int64
-  n_with_igc            int64
-  n_downloaded          int64
-
-head(4):
- season_year    season                             list_url                                    xml_url  n_flights  n_with_igc  n_downloaded
-        2001 2001-2002 https://delta.ffvl.fr/cfd/liste/2001 https://delta.ffvl.fr/cfd/liste/2001?xml=1        248           0             0
-        2002 2002-2003 https://delta.ffvl.fr/cfd/liste/2002 https://delta.ffvl.fr/cfd/liste/2002?xml=1        281           6             6
-        2003 2003-2004 https://delta.ffvl.fr/cfd/liste/2003 https://delta.ffvl.fr/cfd/liste/2003?xml=1        256          28            25
-        2004 2004-2005 https://delta.ffvl.fr/cfd/liste/2004 https://delta.ffvl.fr/cfd/liste/2004?xml=1        244          35            25
-```
-
-`n_flights` is what the season listed, `n_with_igc` how many carried a track link,
-`n_downloaded` how many were fetched. The three differ, and the gaps are the subject of
-the coverage discussion in the thesis.
-
-## `logs/`
-
-`download.log` is the acquisition's own record, appended across runs — including the day
-the data root moved:
-
-```
-2026-06-26 17:51:22,827 INFO data_root = /Volumes/SSD_DISANTE/ffvl_cfd_igc
-2026-07-05 19:02:30,135 INFO data_root = /Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc
-```
-
-`failures.csv` is the retry registry: one row per flight whose track could not be
-fetched, with the reason — a Cloudflare challenge, or a response that was not an IGC at
-all.
-
-```
-logs/failures.csv   shape = 30 rows x 4 columns
-
-dtypes:
-  flight_id             int64
-  season                str
-  igc_link              str
-  error                 str
-
-head(2):
- flight_id    season                                                                                         igc_link                                       error
-      1152 2003-2004           https://delta.ffvl.fr/sites/parapente.ffvl.fr/files/igcfiles/-igcfile-51598-196818.igc invalid content (does not look like an IGC)
-      1140 2003-2004 https://delta.ffvl.fr/sites/parapente.ffvl.fr/files/igcfiles/2004-04-25-igcfile-89740-196631.igc invalid content (does not look like an IGC)
-```
-
-## `derived/track_scan.parquet` — the census cache
-
-One row per *readable* parsed flight, sixteen scalar columns, produced by
-`track_stats`/`load_or_scan_tracks`. It exists to decouple the cost of reading the
-archive (hours, once) from the cost of asking it a question (instant), and every
-`\StatScan*` macro in the thesis is a query against it.
-
-```
-6,716 rows in 1 row groups, 0.4 MB on disk, SNAPPY
-
-derived/track_scan.parquet   shape = 6,716 rows x 16 columns
-
-dtypes:
-  duration_s            float64
-  n_fix                 int64
-  path_km               float64
-  extent_km             float64
-  dt_s                  float64
-  max_gap_ratio         float64
-  missing_fraction      float64
-  baro_present_frac     float64
-  gnss_present_frac     float64
-  max_vxy_mps           float64
-  max_vz_mps            float64
-  max_vz_gnss_mps       float64
-  baro_alt_min_m        float64
-  baro_alt_max_m        float64
-  gnss_alt_min_m        float64
-  gnss_alt_max_m        float64
-
-head(4), columns 1-7:
- duration_s  n_fix    path_km  extent_km  dt_s  max_gap_ratio  missing_fraction
-     1740.0    349   9.963398   2.288345   5.0       1.000000          0.000000
-    20996.0   2099 283.732285  62.048893  10.0       1.300000          0.000762
-    15066.0    730 145.955185  36.239109  21.0       5.142857          0.000000
-    18102.0   1802 237.710438  74.587096  10.0       5.000000          0.005080
-
-head(4), columns 8-16:
- baro_present_frac  gnss_present_frac  max_vxy_mps  max_vz_mps  max_vz_gnss_mps  baro_alt_min_m  baro_alt_max_m  gnss_alt_min_m  gnss_alt_max_m
-               0.0                0.0    56.496301         0.0              0.0             0.0             0.0             0.0             0.0
-               1.0                1.0    28.861290         5.9              8.3          1059.0          3036.0          1141.0          3037.0
-               0.0                0.0    22.413217         0.0              0.0             0.0             0.0             0.0             0.0
-               1.0                1.0    28.669268         5.0              6.9          1458.0          3782.0          1421.0          3855.0
-```
-
-Row 1 of that head is a flight with neither channel usable (`baro_present_frac =
-gnss_present_frac = 0`, so every altitude column is zero and means nothing); row 3 is a
-21 s logger whose largest gap is five times its own cadence. Both are exactly the
-populations the pre-processing cuts have to be audited against. `max_vz_gnss_mps` is the
-GNSS-channel counterpart of `max_vz_mps` (barometric): the same per-step
-`|Δaltitude|/Δt` maximum over the raw track, computed on `gnss_alt` instead of
-`baro_alt`, for the same audit whichever channel a flight ends up analysed on
-(`sec:altchannel`).
-
-Two things to know before using it. It carries **no `flight_id`**: rows are in
-`sorted(rglob("*.igc"))` order and are identified positionally, which is enough for
-distributions and not enough for a join — a limitation, not a design. And it is
-**pre-cleaning**: it describes parsed tracks, not processed ones, which is exactly what a
-diagnostic that justifies a cut has to do (a cut is audited on the population it acts on).
-For post-pipeline numbers, use `flights_meta.parquet` below.
-
-## `derived/alt_offset_scan.parquet` — the altitude-offset sample
-
-One row per measurable flight of a seeded sample, produced by
-`soaring.analysis.alt_offset.scan_offsets` and driven by
-`generate_alt_offset_stats.py`. It exists for the same reason as the census cache above,
-and for one it does not share: no other cache carries the **GNSS** altitude, so the
-barometric-against-GNSS comparison of thesis Sec. 2.6 has to parse the raw archive itself.
-Rows for flights carrying only one channel are kept (`both = False`, the offset columns
-missing): they are the denominator of the availability fractions, and of the check that a
-flight falling back to GNSS lands on a complete channel.
-
-```
-6,677 rows, 0.4 MB on disk (hang gliders; 19,964 rows for the paraglider sample)
-
-dtypes:
-  flight_id    str        season       str        n_fix        int64
-  baro_frac    float64    gnss_frac    float64    both         bool
-  n_win        float64    dur_s        float64    med_offset   float64
-  iqr_offset   float64    drift        float64    slope        float64
-  frac_equal   float64    alt_med      float64    alt_range    float64
-  lat          float64    lon          float64    logger       str
-
-head(4), selected columns:
- flight_id     season  n_fix  baro_frac  gnss_frac   both  med_offset     slope  logger
-       830  2002-2003    349        0.0        0.0  False         NaN       NaN
-       975  2002-2003   2099        1.0        1.0   True       -33.0  0.000654  ABRA00968
-      1032  2002-2003    730        0.0        0.0  False         NaN       NaN
-      1037  2002-2003   1802        1.0        1.0   True       -57.5 -0.049668  ABRA00145
-```
-
-`med_offset` is the median of `baro_alt - gnss_alt` over the in-flight window, `slope` its
-least-squares slope against height (the day's departure from the standard temperature
-profile, once inverted), `frac_equal` the share of the window where the two fields are
-byte-identical (a flight above 0.99 has one sensor written into two columns), and `logger`
-the recorder's `A` record, whose first four characters are the manufacturer code.
-
-## `derived/fixlevel_scan.parquet` — the fix-level diagnostic sample
-
-Every value the three panels of `fig:fixlevel` histogram, pooled over a seeded sample of
-flights (`FIXLEVEL_SAMPLE_PER_DISCIPLINE`, 15,000 -- already the full raw population for
-the smaller hang-glider archive), produced by
-`soaring.analysis.census.load_or_scan_fixlevel`. It exists for the same reason as the
-census cache above: sampling and parsing that many files off the external disk is what
-made a cold run of `generate_preproc_figure.py` slow, not drawing the histograms.
-
-**Long form, not one column per quantity.** `v_xy`, `v_z`, `v_z_local` and `altitude`
-are not the same length -- one is per-fix, the others per consecutive-step, and a flight
-with no usable GNSS channel contributes to `v_xy` but not the other three (thesis,
-sec:altchannel) -- so they cannot share the columns of one wide table. Every pooled value
-from every quantity is instead one row, tagged by a `quantity` column that is an `int8`
-**code**, not the name itself: 0/1/2/3 for `v_xy`/`v_z`/`v_z_local`/`altitude` in that
-order (`soaring.analysis.census._FIXLEVEL_QUANTITIES`). That is not cosmetic -- an
-earlier version of this cache spelled the name out as a string, and at this row count
-(hundreds of millions) `pandas`/`pyarrow` materialize a string column as one Python `str`
-object per row: ~9 GB in memory and ~80 s to split one discipline's rows back out by
-quantity, against ~1 s and a few hundred MB for the equivalent `int8` column.
-
-```
-508,170,274 rows, 871.8 MB on disk (paragliders; 150,920,967 rows, 274.8 MB for hang
-gliders)
-
-derived/fixlevel_scan.parquet   shape = 508,170,274 rows x 2 columns
-
-dtypes:
-  quantity   int8
-  value      float32
-
-per-quantity row counts (paragliders):
-  v_xy         126,724,738
-  v_z          126,494,460
-  v_z_local    126,494,460
-  altitude     128,456,616
-```
-
-To read one quantity back out: `values[codes == i]` for `i` its position in
-`_FIXLEVEL_QUANTITIES` -- exactly what `load_or_scan_fixlevel` does, and what a reader
-reconstructing this by hand should do too, rather than filtering on a re-spelled string.
-
-## `derived/psd_sample.npz` — the altitude-noise PSD ensemble
-
-Panels (a)-(c) of `fig:altnoise`: every sampled flight's Welch PSD, on the two channels
-the noise comparison needs (`baro`, `gnss`), plus the one representative flight the
-figure draws a window of -- produced by
-`soaring.analysis.altitude_noise.load_or_collect_psd`. Unlike the fix-level sample
-above, every flight's spectrum shares one frequency grid (`NPERSEG = 256` -> 129 bins),
-so this is fixed-width and a plain 2-D array per channel is the natural format, the same
-choice Chapter 3 makes for its own per-flight stacks
-(`derived-audit/audit_positions_*.npz`) -- not a Parquet table at all.
-
-```
-psd_sample.npz (paragliders):
-  freqs           shape=(129,)          the shared Welch frequency grid
-  baro            shape=(1638, 129)     one row per qualifying flight
-  gnss            shape=(1638, 129)     the same flights, GNSS channel
-  target_dt       shape=()              the modal sampling period the PSD is measured at
-  repr_t          shape=(36871,)        representative flight: recorded-clock time
-  repr_baro_alt   shape=(36871,)        representative flight: barometric altitude
-  repr_gnss_alt   shape=(36871,)        representative flight: GNSS altitude
-
-psd_sample.npz (hang gliders):
-  baro/gnss shape=(727, 129); repr_* all shape=(0,) -- this pair's one representative
-  flight (the qualifying flight with the most fixes, across BOTH disciplines together)
-  came from the paraglider sample, so the hang-glider file carries none of its own.
-```
-
-A discipline's cache holds `repr_*` only when *it* is the one holding the pair's
-representative flight -- `len(t)` is compared across every qualifying flight of every
-discipline, exactly as `soaring.analysis.altitude_noise._collect_psd` does it, so caching
-per discipline cannot change which flight wins. `load_or_collect_psd` refuses a partial
-cache: if either discipline's file is missing, both are recomputed together, since
-`target_dt` is chosen jointly across the combined sample and a cache rebuilt for only one
-discipline could disagree with the other about which frequency grid the ensemble lives
-on.
-
-## `derived/savgol_psd_sample.npz` — the Savitzky-Golay spectrum sample
-
-The three-channel ensemble PSD `fig:savgol-spectrum` draws (horizontal E/N pooled,
-barometric-vertical, GNSS-vertical), produced by `_load_or_collect` in
-`generate_savgol_spectrum_figure.py`. Same fixed-width reasoning as the cache above, and
-a separate sample and cache from it: this figure pools **whichever** vertical channel a
-flight's barometric presence selects (never both), on a smaller sample
-(`N_SAMPLE = 900`) chosen for a different purpose -- checking the three channels' noise
-knees coincide, not sizing a noisy minority.
-
-```
-savgol_psd_sample.npz (paragliders):
-  freqs            shape=(129,)
-  horizontal       shape=(1270, 129)   two rows (E, N) per flight -> 635 flights
-  vertical_baro    shape=(500, 129)
-  vertical_gnss    shape=(135, 129)
-
-savgol_psd_sample.npz (hang gliders):
-  horizontal       shape=(546, 129)    273 flights
-  vertical_baro    shape=(219, 129)
-  vertical_gnss    shape=(54, 129)
-```
-
-## `derived/fixes.parquet` — the trajectories
-
-The output of the pipeline, and the largest artefact by three orders of magnitude:
-**43.7 GB and 1.37 × 10⁹ rows** for paragliders, 1.2 GB and 3.5 × 10⁷ for hang gliders.
-One row per **grid point** of every retained segment, keyed `(source, flight_id,
-segment_id)`:
-
-```
-34,590,779 rows in 43 row groups, 1,158.5 MB on disk, ZSTD
-
-derived/fixes.parquet   shape = 34,590,779 rows x 18 columns
-
-dtypes:
-  source                str
-  flight_id             str
-  segment_id            int16
-  t                     float32
-  E                     float32
-  N                     float32
-  z                     float32
-  v_E                   float32
-  v_N                   float32
-  v_z                   float32
-  a_E                   float32
-  a_N                   float32
-  a_z                   float32
-  interpolated          bool
-  z_reconstructed       bool
-  edge                  bool
-  hampel_flagged        bool
-  alt_invalidated       bool
-
-head(4), columns 1-9:
-    source flight_id  segment_id    t          E           N           z       v_E       v_N
-hangglider       975           0  0.0  -2.644101   -4.948254 1526.071411 13.275309  1.215101
-hangglider       975           0 10.0 111.173767  -33.921551 1522.714233  9.778828 -5.975578
-hangglider       975           0 20.0 198.743713 -103.776161 1522.428589  8.025725 -6.961162
-hangglider       975           0 30.0 279.223663 -138.913269 1523.742798  7.008469 -2.623722
-
-head(4), columns 10-18:
-      v_z       a_E       a_N       a_z  interpolated  z_reconstructed  edge  hampel_flagged  alt_invalidated
--0.539286 -0.436817 -1.029323  0.045714         False            False  True           False            False
--0.157143 -0.262479 -0.408813  0.030714         False            False  True           False            False
- 0.075000 -0.088141  0.211696  0.015714         False            False False           False            False
- 0.191667  0.072793  0.463081 -0.001429         False            False False            True            False
-```
-
-Zstd, ~33 bytes per row, written in batches of 400 flights, streamed by analyses rather
-than loaded (43 GB).
-
-**A row group is not a batch.** The writer hands pyarrow 400 flights at a time; pyarrow
-then splits what it is handed into row groups of its own default size — which is why the
-header above says 43 row groups for an archive written in 16 batches. So a flight *can*
-straddle a boundary, and a reader that iterates row groups and groups by `flight_id` sees
-it as two flights. Read this file through
-[`soaring.analysis.derived.stream_flights`](../reference.md#analysisderived),
-never with `read_row_group` directly: it holds back the last flight of each row group and
-prepends it to the next, so it always yields whole flights.
-
-| column | dtype | meaning |
-|---|---|---|
-| `source` | string | `paraglider` / `hangglider` / `sailplane`; a new source is a new value, never a new column |
-| `flight_id` | string | with `source`, the primary key of a flight |
-| `segment_id` | int16 | 0-based within the flight; a split at a long gap or an excised run increments it |
-| `t` | float32 | s, elapsed flight time. **Zero at the first fix of free flight of the parent** — a segment keeps the parent's clock and never restarts at zero |
-| `E`, `N` | float32 | m, local ENU east and north, **smoothed**; the origin is the parent's first airborne fix |
-| `z` | float32 | m, the adopted altitude channel at its measured value, smoothed; never re-zeroed |
-| `v_E`, `v_N`, `v_z` | float32 | m/s, the first derivative of the same Savitzky–Golay fit |
-| `a_E`, `a_N`, `a_z` | float32 | m/s², its second derivative |
-| `interpolated` | bool | **the time base** had no fix within half a step of this grid point, so `(E, N, z)` were all reconstructed at resampling |
-| `z_reconstructed` | bool | this grid point's **altitude** did not come from a measured one — either because `interpolated` is set, or because the fix it came from carried no altitude (the logger wrote none, or the cleaning removed it). A hole in the vertical opens no time gap, so it forces no split and `interpolated` stays False: exclude on *this* flag for any vertical analysis. Its per-flight companions in `flights_meta` are `frac_z_reconstructed` and `z_gap_max_s`, the longest unbroken run in seconds |
-| `edge` | bool | within a half-window of a segment boundary, where the filter is evaluated off-centre and carries more variance |
-| `hampel_flagged` | bool | the fix was off its local trend; recorded, not acted on |
-| `alt_invalidated` | bool | the cleaning removed this altitude (as opposed to the logger never writing one) |
-
-Nothing that is pure algebra of these is stored: `|v|`, the heading, the curvature, the
-turn radius, the glide ratio are computed at analysis time.
-
-Two properties hold by construction and are checked by `scripts/verify_dataset.py`: no
-`nan` anywhere in the kinematics, and no step *inside* a segment exceeding the fix-level
-speed bound.
-
-### From this table to the MSD
-
-The handoff the transport analysis actually makes, stated once so that nothing downstream
-has to infer it.
-
-**Which rows.** Every row of `fixes.parquet`. The table already contains only retained
-segments of retained flights — a dropped segment has no rows here, and the retention
-decisions are recorded in `segments.parquet` and `flights_meta.parquet`, not re-applied at
-read time. So "the analysis ensemble" is exactly "the flights that appear in
-`fixes.parquet`", 156,449 paragliders and 6,102 hang gliders.
-
-**Which columns.** `t`, `E`, `N` for both estimators, plus `segment_id` to know where a
-segment ends. Nothing else: `z`, the velocities and the accelerations belong to the
-phase segmentation, and the boolean flags are read only by `verify_dataset.py`.
-
-**How they are read.** Through `soaring.analysis.derived.stream_flights`, one whole flight
-at a time — *never* by iterating Parquet row groups. A row group is a unit of storage and
-cuts across flights; the direct reading counted 0.7 % of flights twice and truncated the
-longest segments, which are exactly the ones the long-lag end of the time-averaged curve
-rests on.
-
-**What `segment_id` means to each estimator.** They differ, and the difference is
-deliberate:
-
-- The **ensemble MSD** concatenates every retained segment of a flight in the parent clock
-  and treats the result as one record. A segment keeps its parent's origin and clock, so
-  `|r(t)|²` is always the squared displacement from that flight's take-off at elapsed
-  time `t`, whether or not the record is continuous up to `t`. A lag falling inside a gap
-  is answered by neither side, because the split bound makes every gap wider than the
-  half-step coverage tolerance.
-- The **time-averaged MSD** runs strictly *within* one segment and never across the gap
-  that ends it, since the trajectory across that gap is unknown.
-
-**Consequences to keep in mind.** A flight whose first segment did not survive resampling
-starts its record at `t > 0` (1.4 % of paragliders, 11.6 % of hang gliders); its positions
-are still measured from its own take-off, it simply does not answer the earlier lags. And
-a boundary at a *re-acquisition offset* rather than at a gap puts an unknown constant into
-the absolute position, which enters the ensemble MSD and cancels out of the time-averaged
-one — bounded by `verify_dataset.py` at 0.026 % of paraglider flights (41 of 156,449) and
-0.38 % of hang-glider ones (23 of 6,102); the higher hang-glider share tracks their
-slower, gappier cadence, the same population `\StatScan*GapSplit*` already shows splitting
-more often.
-
-## `derived/segments.parquet` — one row per segment
-
-Every segment the splitting produced, **retained or not**, with the reason for each
-drop:
-
-```
-12,892 rows in 1 row groups, 0.2 MB on disk, ZSTD
-
-derived/segments.parquet   shape = 12,892 rows x 13 columns
-
-dtypes:
-  source                str
-  flight_id             str
-  segment_id            int64
-  t_start               float64
-  t_end                 float64
-  n_fix                 int64
-  n_fix_raw             int64
-  frac_interpolated     float64
-  frac_z_reconstructed  float64
-  censored_start        bool
-  censored_end          bool
-  kept                  bool
-  drop_reason           string
-
-head(4):
-    source flight_id  segment_id  t_start   t_end  n_fix  n_fix_raw  frac_interpolated  frac_z_reconstructed  censored_start  censored_end  kept                       drop_reason
-hangglider       975           0      0.0 20640.0   2065       2064           0.001453              0.013075           False         False  True                              <NA>
-hangglider      1037           0      0.0 17660.0   1767       1766           0.000000              0.002264           False         False  True                              <NA>
-hangglider      1121           0      0.0  7566.0   2523       2522           0.001585              0.003567           False         False  True                              <NA>
-hangglider      1158           0      0.0     0.0      0          1                NaN                   NaN           False          True False shorter_than_min_segment_duration
-```
-
-`n_fix` counts the rows the segment contributed to `fixes` (zero when dropped) against
-`n_fix_raw`, its measured fixes. `censored_start`/`censored_end` are `True` only at a
-boundary a *split* created: the flight's own first and last boundary truncate the phase in
-progress too, but they are a different thing, and are told apart by these being `False`.
-`segment_id` is assigned at split time and stays stable, so a gap in the numbering is
-itself the record of a drop.
-
-## `derived/flights_meta.parquet` — one row per flight *attempted*
-
-Including the ones the pipeline dropped: the census of what was removed is as much a
-result as what was kept. 50 columns, which read down rather than across — one retained
-flight beside one the altitude-channel gate rejected:
-
-```
-6,716 rows x 50 columns (6,102 retained, 614 dropped)
-
-                     a retained flight               a dropped one
-source                      hangglider                  hangglider
-flight_id                          975                         830
-pipeline_version                 2.0.0                       2.0.0
-drop_stage                         NaN                 alt_channel
-drop_reason                        NaN  no_usable_altitude_channel
-error_detail                      None                        None
-gnss_present_frac                  1.0                         0.0
-gnss_range_m                    1896.0                         0.0
-baro_witness                      True                       False
-baro_present_frac                  1.0                         0.0
-baro_range_m                    1977.0                         0.0
-n_alt_missing_raw                    0                         349
-n_fix_raw                         2099                         349
-n_fix_clean                     2069.0                         NaN
-n_merged_duplicates                0.0                         NaN
-n_removed_backward                 0.0                         NaN
-n_removed_spike                    0.0                         NaN
-n_removed_frozen                  30.0                         NaN
-n_alt_out_of_band                  0.0                         NaN
-n_alt_vz_sustained                 0.0                         NaN
-n_alt_vz_spike                     0.0                         NaN
-n_flagged_kept                    40.0                         NaN
-n_vz_runs                          0.0                         NaN
-n_alt_level_shift                  0.0                         NaN
-split_jump_max_m                   0.0                         NaN
-n_boundaried                       0.0                         NaN
-integrity_fraction            0.013081                         NaN
-ground_phase_start_s             300.0                         NaN
-ground_phase_end_s             20945.0                         NaN
-trimmed_fraction              0.002464                         NaN
-n_interior_excised                 0.0                         NaN
-n_suspect_stints                   0.0                         NaN
-duration_flight_s              20645.0                         NaN
-path_km                     283.408578                         NaN
-alt_range_m                     1895.0                         NaN
-extent_km                    62.132928                         NaN
-lat0                         43.812717                         NaN
-lon0                          6.809883                         NaN
-alt0                            1526.0                         NaN
-dt_native_s                       10.0                         NaN
-g_max_s                           20.0                         NaN
-n_segments                         1.0                         NaN
-n_segments_kept                    1.0                         NaN
-frac_interpolated             0.001453                         NaN
-frac_z_reconstructed          0.013075                         NaN
-z_gap_max_s                       30.0                         NaN
-was_resampled                     True                        None
-savgol_order                       3.0                         NaN
-savgol_window_horiz                5.0                         NaN
-savgol_window_vert                 5.0                         NaN
-```
-
-Every column is filled by the stage named in the left margin below, and a dropped flight
-keeps everything the stages *before* the verdict had already measured, nothing more.
-Flight 830 above is the earliest a flight can be lost: no GNSS altitude
-(`gnss_present_frac = 0`) and no barometer either (`baro_present_frac = 0`), so
-`n_alt_missing_raw` is its full fix count and it is dropped at the gate in stage (i),
-before cleaning, trimming or the flight filter ever run — which is why every later
-column reads `NaN` for it rather than a measured zero, duration included.
-
-| group | columns |
-|---|---|
-| identity | `source`, `flight_id`, `pipeline_version` |
-| verdict | `drop_stage`, `drop_reason` (both null when the flight is retained), `error_detail` (set only when `drop_reason` is `pipeline_raised`: the exception text, so the offending file can be found — the reason itself is a fixed string the census can count) |
-| (i) altitude channel | `gnss_present_frac`, `gnss_range_m` (the adopted channel, gated: a flight failing either is dropped, since there is no second channel to fall back to), `baro_witness`, `baro_present_frac`, `baro_range_m` (the barometer, kept as the frozen-lock witness and nothing else — it enters no observable, see `sec:altchannel`), `n_alt_missing_raw` |
-| (ii) cleaning | `n_fix_raw`, `n_fix_clean`, `n_merged_duplicates`, `n_removed_backward`, `n_removed_spike`, `n_removed_frozen`, `n_alt_out_of_band`, `n_alt_vz_sustained` (fixes censored by the windowed vertical-speed rule: the median of `|v_z|` over the window is past the bound on both adjacent steps), `n_alt_vz_spike` (fixes censored by the isolated out-and-back rule, which the windowed one is blind to by construction), `n_flagged_kept`, `n_vz_runs` (how many *distinct* stretches the windowed rule censored, so a reader can tell one long event from a scatter of short ones), `n_alt_level_shift` (unreturned vertical steps: neither sustained nor out-and-back, so censored by nothing — counted so they are auditable, see `sec:fixlevel`), `n_boundaried`, `split_jump_max_m` (the largest displacement across a boundary this stage declared: excising a frozen run leaves both sides genuine, splitting at a re-acquisition offset does not, so everything after it carries an unknown constant that enters the *ensemble* MSD and not the time-averaged one — reported so the effect can be bounded and excluded on, never acted upon), `integrity_fraction` |
-| (iii) trimming | `ground_phase_start_s`, `ground_phase_end_s`, `trimmed_fraction`, `n_interior_excised`, `n_suspect_stints` |
-| (iv) flight filter | `duration_flight_s`, `path_km`, `alt_range_m`, `extent_km` |
-| (v) local frame | `lat0`, `lon0`, `alt0` |
-| (vi) resampling | `dt_native_s`, `g_max_s`, `n_segments`, `n_segments_kept`, `frac_interpolated`, `frac_z_reconstructed`, `z_gap_max_s`, `was_resampled` |
-| (vii) smoothing | `savgol_order`, `savgol_window_horiz`, `savgol_window_vert` |
-
-`ground_phase_start_s` / `ground_phase_end_s` are in the **recorded** clock, the one the
-IGC file carries, because the integrity gate has to count its removals inside that window;
-every other time is in the re-zeroed flight clock.
-
-`pipeline_version` is what tells two runs apart. It is bumped whenever a stage changes
-what it produces, so a table written by an older pipeline can be recognised rather than
-silently mixed with a newer one.
-
-## Regenerating any of it
-
-| artefact | command | cost |
-|---|---|---|
-| `raw/`, `catalog/`, `logs/` | `soaring-para` / `soaring-delta` (acquisition CLI) | days, network-bound |
-| `derived/track_scan.parquet` | delete it; `generate_preproc_figure.py` rebuilds it | tens of minutes |
-| `derived/alt_offset_scan.parquet` | `generate_alt_offset_stats.py --rescan` | ~2 min for both archives, 8 workers |
-| `derived/fixlevel_scan.parquet` | delete it; `generate_preproc_figure.py` rebuilds it | ~10 min for both archives, 8 workers |
-| `derived/psd_sample.npz` | `generate_altitude_noise_figure.py --rescan` | ~3 min for both archives |
-| `derived/savgol_psd_sample.npz` | `generate_savgol_spectrum_figure.py --rescan` | ~1 min for both archives |
-| `derived/{fixes,segments,flights_meta}.parquet` | `scripts/preprocess.py` | ~110 min for both archives, 8 workers |
-| the thesis figures and macros | `generate_*.py` in `scripts/reporting/` | a couple seconds to ~10 min, warm; up to ~30 min cold (first run after a cache is deleted) |
-
-`scripts/verify_dataset.py` checks the processed tables against the invariants Chapter 2
-claims for them, and exits non-zero if one fails.
+## Diagnostics, segmentation and human labels
+
+Raw caches include `track_scan.parquet`, `fixlevel_scan.parquet`,
+`alt_offset_scan.parquet`, `psd_sample.npz` and `savgol_psd_sample.npz` when their
+reports have run. Cache presence does not establish freshness. The complete rebuild
+rescans raw diagnostics and creates separate transport arrays. PSD cache version 2 uses
+paired uninterrupted altitude intervals where both channels are compared.
+
+The `segmentation/` products are written by `segment_flights.py train`, `apply` and
+`coverage`. They require their own model/configuration provenance; preprocessing alone
+does not update them. Their schemas and missing-feature rules are in the
+[segmentation guide](flight-phase-segmentation.md).
+
+Manual labels and packs under `annotations/phase_labeling/` in the repository are
+separate research inputs. Preserve them. A new complete rebuild creates a new pack;
+it does not overwrite an earlier annotation session or turn model predictions into
+human reference labels.

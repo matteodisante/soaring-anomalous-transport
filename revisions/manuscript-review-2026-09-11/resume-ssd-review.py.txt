@@ -1,0 +1,91 @@
+"""Finish the recorded local review against the mounted, unchanged data archive.
+
+Prepared while offline. Do not run until the author reconnects SSD_DISANTE.
+This script rechecks source chains and all recorded outputs before changing a run
+record, then independently regenerates the corrected dataset report from metadata.
+"""
+from pathlib import Path
+from datetime import UTC, datetime
+import copy, hashlib, json, runpy, shutil, subprocess, sys
+ROOT=Path('/Users/matteodisante/local_master_thesis/soaring-anomalous-transport')
+RUN=Path('/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4')
+sha=lambda b:hashlib.sha256(b).hexdigest()
+read=lambda p:json.loads(p.read_text())
+
+def write(p,j):
+    tmp=p.with_name(p.name+'.tmp');tmp.write_text(json.dumps(j,indent=2,sort_keys=True)+'\n');tmp.replace(p)
+
+def main():
+    if not Path('/Volumes/SSD_DISANTE').is_mount():
+        raise SystemExit('SSD_DISANTE is not mounted; no file was changed.')
+    sys.path.insert(0,str(ROOT/'src'))
+    from soaring.reporting import DISCIPLINES
+    from soaring.reporting.snapshot import current_cleaning,validate_snapshot
+    stage=ROOT/'revisions'
+    d1=stage/'final-local-presentation-2026-09-11';p1=read(d1/'proof.json')
+    d2=stage/'cascade-report-review-2026-09-11';p2=read(d2/'proof.json')
+    d3=stage/'provenance-index-review-2026-09-11';p3=read(d3/'proof.json')
+    manifest_path=RUN/'manifest.json';original=manifest_path.read_bytes();m=json.loads(original)
+    assert m['status']=='complete' and m['run_id']==p1['run_id']
+    assert m['numerical_source_sha256']==p1['before_numerical_source_sha256']
+    assert p1['after_numerical_source_sha256']==p2['before_numerical_source_sha256']
+    assert p2['after_numerical_source_sha256']==p3['before_numerical_source_sha256']
+    prior={}
+    for name,record in p1['files'].items():
+        old=(d1/'before'/(name+'.txt')).read_bytes();assert sha(old)==record['before_sha256']
+        assert sha((ROOT/name).read_bytes())==record['after_sha256'];prior[name]=old
+    for directory,proof,filename in [(d2,p2,'generate_dataset_stats.py'),(d3,p3,'generate_provenance.py')]:
+        old=(directory/(filename+'.before.txt')).read_bytes()
+        assert sha(old)==proof.get('before_source_sha256',proof.get('source_sha256'))
+        assert sha((ROOT/proof['source']).read_bytes())==proof['after_source_sha256'];prior[proof['source']]=old
+    current=hashlib.sha256();reconstructed=hashlib.sha256()
+    for source in sorted(set([*ROOT.glob('src/**/*.py'),*ROOT.glob('scripts/**/*.py'),*ROOT.glob('configs/*.yaml'),ROOT/'uv.lock'])):
+        name=source.relative_to(ROOT).as_posix();data=source.read_bytes()
+        for h,value in [(current,data),(reconstructed,prior.get(name,data))]:h.update(name.encode()+b'\0');h.update(value)
+    assert current.hexdigest()==p3['after_numerical_source_sha256']
+    assert reconstructed.hexdigest()==m['numerical_source_sha256']
+    updates={name:record['after_sha256'] for name,record in p1['outputs'].items()}
+    updates['dataset_stats.tex']=p2['after_output_sha256']
+    for name,record in m['outputs'].items():
+        if name in p1['outputs']:assert record['sha256']==p1['outputs'][name]['before_sha256']
+        if name=='dataset_stats.tex':assert record['sha256']==p2['before_output_sha256']
+        assert sha((ROOT/'thesis/generated'/name).read_bytes())==updates.get(name,record['sha256']),name
+    cleaning=current_cleaning(ROOT)
+    snapshots={name:validate_snapshot(g.derived_dir(),cleaning) for name,g in DISCIPLINES.items()}
+    assert snapshots==m['datasets']
+    # Only this report needs numerical regeneration; its raw rejection counts
+    # already exist, and no cleaned fix or downstream transport/phase value changed.
+    seasons=sha((ROOT/'thesis/generated/dataset_seasons.pdf').read_bytes())
+    with (RUN/'cascade-report-review.log').open('wb') as log:
+        subprocess.run([sys.executable,'scripts/reporting/ch2_dataset/generate_dataset_stats.py'],cwd=ROOT,stdout=log,stderr=subprocess.STDOUT,check=True)
+    assert sha((ROOT/'thesis/generated/dataset_stats.tex').read_bytes())==p2['after_output_sha256']
+    assert sha((ROOT/'thesis/generated/dataset_seasons.pdf').read_bytes())==seasons
+    assert {name:validate_snapshot(g.derived_dir(),cleaning) for name,g in DISCIPLINES.items()}==snapshots
+    for name,record in m['outputs'].items():assert sha((ROOT/'thesis/generated'/name).read_bytes())==updates.get(name,record['sha256']),name
+    proof={'run_id':m['run_id'],'reviewed_utc':datetime.now(UTC).isoformat(),'before_manifest_sha256':sha(original),'before_numerical_source_sha256':m['numerical_source_sha256'],'after_numerical_source_sha256':current.hexdigest(),'reviews':[{'path':str(d/'proof.json'),'sha256':sha((d/'proof.json').read_bytes())} for d in [d1,d2,d3]],'scope':'Local presentation and provenance-index corrections reconciled. Corrected dataset cascade independently regenerated from unchanged SSD flight metadata and matches the offline result byte for byte; seasonal figure unchanged. All other outputs and cleaned dataset identities verified.'}
+    target=RUN/'offline-review-reconciliation.json';assert not target.exists()
+    (RUN/'manifest-before-offline-review.json').write_bytes(original)
+    write(target,proof);ref={'proof':str(target),'sha256':sha(target.read_bytes())}
+    new=copy.deepcopy(m);new['numerical_source_sha256']=current.hexdigest();new['postprocessing_review']=ref;new['pdf_requires_manuscript_review']=True
+    for name,value in updates.items():
+        if name in new['outputs']:new['outputs'][name].update(sha256=value,postprocessing_review=ref)
+    write(manifest_path,new)
+    # Keep the original numerical execution PDF before review_thesis compiles
+    # the authored revision. The local backup predates every authored edit.
+    backup=ROOT/'revisions/manuscript-review-2026-09-11/numerical-execution.pdf'
+    assert sha(backup.read_bytes())==m['pdf_sha256']
+    original_pdf=RUN/'thesis-before-review.pdf'
+    if original_pdf.exists():assert sha(original_pdf.read_bytes())==m['pdf_sha256']
+    else:shutil.copyfile(backup,original_pdf)
+    input_manifest=RUN/'manifest-before-final-pdf-review.json';shutil.copyfile(manifest_path,input_manifest)
+    subprocess.run([sys.executable,'scripts/review_thesis.py','--run',str(RUN)],cwd=ROOT,check=True)
+    reviewed=read(RUN/'manuscript-review.json');assert reviewed['numerical_manifest_sha256']==sha(input_manifest.read_bytes())
+    final=read(manifest_path);final.setdefault('executed_pdf_sha256',m['pdf_sha256']);final['pdf_sha256']=reviewed['pdf_sha256'];final['pdf_requires_manuscript_review']=False
+    final['manuscript_review']={'record':str(RUN/'manuscript-review.json'),'sha256':sha((RUN/'manuscript-review.json').read_bytes()),'input_manifest':str(input_manifest),'input_manifest_sha256':sha(input_manifest.read_bytes())}
+    write(manifest_path,final)
+    shutil.copyfile(target,ROOT/'revisions/manuscript-review-2026-09-11/offline-review-reconciliation.json')
+    shutil.copyfile(manifest_path,ROOT/'revisions/manuscript-review-2026-09-11/final-run-manifest.json')
+    shutil.copyfile(RUN/'manuscript-review.json',ROOT/'revisions/manuscript-review-2026-09-11/ssd-manuscript-review.json')
+    print('SSD reconciliation and PDF review recorded. Next: final invariant audits, annotation provenance, SSD README, documentation status and logical commits.')
+
+if __name__=='__main__':main()

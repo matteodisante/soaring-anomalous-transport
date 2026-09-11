@@ -1,0 +1,10 @@
+# Review snapshots are identified by content hashes; preserve their exact bytes.
+revisions/**/*.txt -text
+revisions/**/*.json -text
+
+# These historical inputs contain original whitespace covered by their checksums.
+# Current source files and authored documentation retain normal whitespace checks.
+revisions/cleaner-documentation-2026-09-10/cleaning-after.py.txt -whitespace
+revisions/documentation-review-2026-09-11/src__soaring__analysis__preproc__cleaning.py.before.txt -whitespace
+revisions/manuscript-review-2026-09-11/before/thesis/sections/03-dataset.tex.txt -whitespace
+revisions/manuscript-review-2026-09-11/ssd-readme-final.md -text -whitespace

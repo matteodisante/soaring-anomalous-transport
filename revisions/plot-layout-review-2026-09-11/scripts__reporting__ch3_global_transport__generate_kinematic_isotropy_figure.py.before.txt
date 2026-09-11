@@ -1,0 +1,425 @@
+#!/usr/bin/env python3
+r"""Directional second moments of position, velocity and acceleration since launch.
+
+Curves are the observed, uncentred east/north ratios on paired finite support.
+Bands are pointwise 10–90% percentiles of 200 site/date cluster bootstrap draws.
+Geographical labels refer to take-off boxes. Equipment classes are not pilot skill.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "scripts" / "reporting" / "ch2_dataset"))
+
+import generate_prelim_figure as prelim  # noqa: E402
+
+from soaring.reporting import DISCIPLINES, write_macros  # noqa: E402
+from soaring.reporting.glider_class import (  # noqa: E402
+    EQUIPMENT_CLASSES,
+    EQUIPMENT_LABELS,
+    EQUIPMENT_TAGS,
+    equipment_group,
+)
+from soaring.reporting.style import (  # noqa: E402
+    EQUIPMENT_COLORS,
+    PDF_METADATA,
+    REGION_COLORS,
+    TEXT_WIDTH_IN,
+    paper_style,
+)
+
+OUT_DISCIPLINE = ROOT / "thesis" / "generated" / "kinematic_isotropy_discipline.pdf"
+OUT_TERRAIN = ROOT / "thesis" / "generated" / "kinematic_isotropy_terrain.pdf"
+# Existing filenames are retained so that external figure links remain usable.
+OUT_LEVEL = ROOT / "thesis" / "generated" / "kinematic_isotropy_level.pdf"
+OUT_TERRAIN_LEVEL = (
+    ROOT / "thesis" / "generated" / "kinematic_isotropy_terrain_level.pdf"
+)
+OUT_FLAT_LEVEL = ROOT / "thesis" / "generated" / "kinematic_isotropy_flat_level.pdf"
+OUT_TEX = ROOT / "thesis" / "generated" / "kinematic_isotropy.tex"
+OUT_JSON = ROOT / "thesis" / "generated" / "kinematic_isotropy.json"
+GENERATED_OUTPUTS = (
+    "kinematic_isotropy_discipline.pdf",
+    "kinematic_isotropy_terrain.pdf",
+    "kinematic_isotropy_level.pdf",
+    "kinematic_isotropy_terrain_level.pdf",
+    "kinematic_isotropy_flat_level.pdf",
+    "kinematic_isotropy.tex",
+    "kinematic_isotropy.json",
+)
+TIME_MIN_S, TIME_MAX_S = 10.0, 10_000.0
+QUANTITIES = [
+    ("position", "east", "north", r"$\langle E^2\rangle/\langle N^2\rangle$"),
+    ("velocity", "veast", "vnorth", r"$\langle v_E^2\rangle/\langle v_N^2\rangle$"),
+    ("acceleration", "aeast", "anorth", r"$\langle a_E^2\rangle/\langle a_N^2\rangle$"),
+]
+TERRAIN_GROUPS = ["Alps", "Pyrenees", "Channel Coast"]
+# These are descriptive take-off regions, not verified terrain polygons or controls
+# matched on meteorology. In particular, a low-altitude launch does not prove low relief.
+FLAT_REGIONS = {
+    "Channel Coast": {"lon": (-1.8, 2.0), "lat": (48.3, 51.2)},
+    "Poitou-Charente": {"lon": (-2.0, 1.5), "lat": (44.5, 47.8)},
+    "Champagne-Lorraine": {"lon": (2.1, 6.2), "lat": (48.0, 50.6)},
+}
+
+
+def flat_region(lat, lon):
+    lat, lon = np.asarray(lat), np.asarray(lon)
+    labels = np.full(lat.shape, "", dtype=object)
+    for name, box in FLAT_REGIONS.items():
+        hit = (
+            (lon >= box["lon"][0])
+            & (lon <= box["lon"][1])
+            & (lat >= box["lat"][0])
+            & (lat <= box["lat"][1])
+        )
+        labels[hit] = name
+    return labels
+
+
+def _band(ax, data, mask, ekey, nkey, color, label):
+    if mask.sum() < prelim.ISO_MIN_FLIGHTS:
+        return
+    times = data["lags"]
+    window = (times >= TIME_MIN_S) & (times <= TIME_MAX_S)
+    times = times[window]
+    east, north = data[ekey][mask][:, window], data[nkey][mask][:, window]
+    frame = data["flights"].loc[mask]
+    lo, point, hi = prelim.iso_ratio_band(east, north, frame)
+    valid = np.isfinite(point) & (point > 0)
+    if not valid.any():
+        return
+    count, _ = prelim.iso_support(east, north, frame)
+    nmin, nmax = int(count[valid].min()), int(count[valid].max())
+    ax.fill_between(times, lo, hi, where=valid, color=color, alpha=0.22, lw=0)
+    ax.plot(
+        times,
+        np.where(valid, point, np.nan),
+        color=color,
+        label=f"{label} ("
+        + (f"{nmin:,}" if nmin == nmax else f"{nmin:,}–{nmax:,}")
+        + ")",
+    )
+
+
+def _finish(ax, title, ylabel):
+    from matplotlib.ticker import MaxNLocator
+
+    ax.set(
+        xscale="log",
+        yscale="linear",
+        xlim=(TIME_MIN_S, TIME_MAX_S),
+        xlabel="Elapsed time $t$ (s)",
+        ylabel=ylabel,
+        title=title,
+    )
+    ax.axhline(1, color=".35", lw=0.8, ls="--", zorder=1)
+    ax.yaxis.set_major_locator(MaxNLocator(nbins=5))
+    ax.grid(visible=False)
+    ax.tick_params(labelsize=7.5)
+    ax.xaxis.label.set_size(8)
+    ax.yaxis.label.set_size(8)
+    ax.title.set_size(8.5)
+    if ax.get_legend_handles_labels()[0]:
+        ax.legend(
+            fontsize=6.7,
+            frameon=True,
+            facecolor="white",
+            edgecolor="none",
+            framealpha=0.9,
+        )
+    else:
+        ax.text(
+            0.5,
+            0.5,
+            "Insufficient paired coverage",
+            transform=ax.transAxes,
+            ha="center",
+            va="center",
+            fontsize=9,
+        )
+
+
+def draw_by_discipline(loaded):
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(1, 3, figsize=(TEXT_WIDTH_IN, 2.8), layout="constrained")
+    for i, (ax, (quantity, ekey, nkey, ylabel)) in enumerate(
+        zip(axes, QUANTITIES, strict=True)
+    ):
+        for discipline, data in loaded.items():
+            _band(
+                ax,
+                data,
+                np.ones(len(data["flights"]), dtype=bool),
+                ekey,
+                nkey,
+                DISCIPLINES[discipline].color,
+                discipline,
+            )
+        _finish(ax, f"({chr(97 + i)}) {quantity}", ylabel)
+    return fig
+
+
+def draw_by_terrain(loaded):
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(1, 3, figsize=(TEXT_WIDTH_IN, 2.8), layout="constrained")
+    data = loaded["paragliders"]
+    for i, (ax, (quantity, ekey, nkey, ylabel)) in enumerate(
+        zip(axes, QUANTITIES, strict=True)
+    ):
+        for name in TERRAIN_GROUPS:
+            _band(
+                ax,
+                data,
+                (data["flights"]["group"] == name).to_numpy(),
+                ekey,
+                nkey,
+                REGION_COLORS[name],
+                "Channel coast" if name == "Channel Coast" else name,
+            )
+        _finish(ax, f"({chr(97 + i)}) {quantity}", ylabel)
+    return fig
+
+
+def draw_by_level(loaded):
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(1, 3, figsize=(TEXT_WIDTH_IN, 2.8), layout="constrained")
+    data = loaded["paragliders"]
+    for i, (ax, (quantity, ekey, nkey, ylabel)) in enumerate(
+        zip(axes, QUANTITIES, strict=True)
+    ):
+        for name, color in EQUIPMENT_COLORS.items():
+            _band(
+                ax,
+                data,
+                (data["flights"]["equipment"] == name).to_numpy(),
+                ekey,
+                nkey,
+                color,
+                EQUIPMENT_LABELS[name],
+            )
+        _finish(ax, f"({chr(97 + i)}) {quantity}", ylabel)
+    return fig
+
+
+def _draw_equipment_regions(loaded, regions, column):
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(
+        len(regions),
+        2,
+        figsize=(TEXT_WIDTH_IN, 7.8),
+        sharex=True,
+        layout="constrained",
+    )
+    data = loaded["paragliders"]
+    frame = data["flights"]
+    for row, region in enumerate(regions):
+        for col, (quantity, ekey, nkey, ylabel) in enumerate(QUANTITIES[:2]):
+            for name, color in EQUIPMENT_COLORS.items():
+                mask = (
+                    (frame[column] == region) & (frame["equipment"] == name)
+                ).to_numpy()
+                _band(
+                    axes[row, col],
+                    data,
+                    mask,
+                    ekey,
+                    nkey,
+                    color,
+                    EQUIPMENT_LABELS[name],
+                )
+            _finish(
+                axes[row, col],
+                f"({chr(97 + 2 * row + col)}) {region}: {quantity}",
+                ylabel,
+            )
+    for ax in axes[:-1].flat:
+        ax.set_xlabel("")
+    return fig
+
+
+def draw_by_terrain_level(loaded):
+    return _draw_equipment_regions(loaded, TERRAIN_GROUPS, "group")
+
+
+def draw_by_flat_level(loaded):
+    return _draw_equipment_regions(loaded, list(FLAT_REGIONS), "flat_group")
+
+
+def summaries(loaded):
+    """Per-time ratios and support for every plotted group, with deterministic labels."""
+    rows = []
+    for discipline, data in loaded.items():
+        frame = data["flights"]
+        selections = [
+            (
+                "discipline",
+                discipline,
+                np.ones(len(frame), dtype=bool),
+                DISCIPLINES[discipline].tag,
+            )
+        ]
+        if discipline == "paragliders":
+            for region in TERRAIN_GROUPS:
+                region_mask = (frame["group"] == region).to_numpy()
+                selections.append(
+                    ("region", region, region_mask, "Terrain" + region.replace(" ", ""))
+                )
+                for name in EQUIPMENT_CLASSES:
+                    selections.append(
+                        (
+                            "region_equipment",
+                            f"{region} / {name}",
+                            region_mask & (frame["equipment"] == name).to_numpy(),
+                            "Terrain"
+                            + region.replace(" ", "")
+                            + "Equipment"
+                            + EQUIPMENT_TAGS[name],
+                        )
+                    )
+            for name in EQUIPMENT_CLASSES:
+                selections.append(
+                    (
+                        "equipment",
+                        name,
+                        (frame["equipment"] == name).to_numpy(),
+                        "Equipment" + EQUIPMENT_TAGS[name],
+                    )
+                )
+        for grouping, name, mask, tag in selections:
+            if not mask.any():
+                continue
+            for quantity, ekey, nkey, _ in QUANTITIES:
+                times = data["lags"]
+                window = (times >= TIME_MIN_S) & (times <= TIME_MAX_S)
+                east, north = data[ekey][mask][:, window], data[nkey][mask][:, window]
+                subset = frame.loc[mask]
+                keys = (
+                    subset[["date", "takeoff"]]
+                    .astype("string")
+                    .apply(lambda c: c.str.strip())
+                )
+                unknown = (
+                    (keys.isna() | keys.eq("").fillna(False)).any(axis=1).to_numpy()
+                )
+                paired = np.isfinite(east) & np.isfinite(north)
+                ratio = prelim.directional_ratio(east, north, subset)
+                counts, groups = prelim.iso_support(east, north, subset)
+                finite = np.isfinite(ratio)
+                if not finite.any():
+                    continue
+                rows.append(
+                    {
+                        "discipline": discipline,
+                        "grouping": grouping,
+                        "group": name,
+                        "tag": tag,
+                        "quantity": quantity,
+                        "flights": int(mask.sum()),
+                        "time_s": times[window].tolist(),
+                        "ratio": [float(x) if np.isfinite(x) else None for x in ratio],
+                        "n_flights": counts.tolist(),
+                        "n_clusters": groups.tolist(),
+                        "flights_missing_cluster_key": int(unknown.sum()),
+                        "n_missing_cluster_key": np.sum(
+                            paired & unknown[:, None], axis=0
+                        ).tolist(),
+                        "median": float(np.median(ratio[finite])),
+                        "min": float(ratio[finite].min()),
+                        "max": float(ratio[finite].max()),
+                    }
+                )
+    return rows
+
+
+def macros(rows):
+    values = {
+        "StatKinFitMinS": f"{TIME_MIN_S:.0f}",
+        "StatKinFitMaxS": f"{TIME_MAX_S:.0f}",
+        "StatKinMinFlights": str(prelim.ISO_MIN_FLIGHTS),
+        "StatKinMinClusters": str(prelim.ISO_MIN_CLUSTERS),
+    }
+    for row in rows:
+        tag = row["tag"]
+        values[f"StatKin{tag}Flights"] = str(row["flights"])
+        for statistic in ("median", "min", "max"):
+            values[
+                f"StatKin{tag}{row['quantity'].capitalize()}{statistic.capitalize()}"
+            ] = f"{row[statistic]:.2f}"
+    return values
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--audit-dir", type=Path, required=True)
+    parser.add_argument("--terrain-only", action="store_true")
+    args = parser.parse_args()
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    paper_style()
+    loaded = {}
+    for discipline in DISCIPLINES:
+        data = prelim.load(discipline, args.audit_dir)
+        if data is None:
+            raise FileNotFoundError(f"Missing current audit for {discipline}")
+        if any(key not in data for _, e, n, _ in QUANTITIES for key in (e, n)):
+            raise ValueError("Missing kinematics: rerun audit_msd.py")
+        if discipline == "paragliders":
+            frame = data["flights"]
+            data["flights"] = frame.assign(
+                equipment=equipment_group(frame["wing_class"]),
+                flat_group=flat_region(frame["lat0"], frame["lon0"]),
+            )
+        loaded[discipline] = data
+    outputs = [(draw_by_terrain, OUT_TERRAIN)]
+    if not args.terrain_only:
+        outputs += [
+            (draw_by_discipline, OUT_DISCIPLINE),
+            (draw_by_level, OUT_LEVEL),
+            (draw_by_terrain_level, OUT_TERRAIN_LEVEL),
+            (draw_by_flat_level, OUT_FLAT_LEVEL),
+        ]
+    OUT_TEX.parent.mkdir(parents=True, exist_ok=True)
+    for draw, path in outputs:
+        figure = draw(loaded)
+        figure.savefig(path, metadata=PDF_METADATA)
+        plt.close(figure)
+        print(f"wrote {path.name}", flush=True)
+    rows = summaries(loaded)
+    OUT_JSON.write_text(
+        json.dumps(
+            {
+                "rows": rows,
+                "time_range_s": [TIME_MIN_S, TIME_MAX_S],
+                "min_flights": prelim.ISO_MIN_FLIGHTS,
+                "min_clusters": prelim.ISO_MIN_CLUSTERS,
+            },
+            indent=2,
+        )
+        + "\n"
+    )
+    write_macros(
+        OUT_TEX,
+        macros(rows),
+        generator="scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py",
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

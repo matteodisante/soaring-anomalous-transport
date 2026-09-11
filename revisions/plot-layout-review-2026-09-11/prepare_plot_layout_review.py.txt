@@ -1,0 +1,131 @@
+"""Prepare and preview layout-only corrections using the completed numerical caches.
+
+All sources and rendered files stay outside the repository until the full rebuild ends.
+"""
+import ast,hashlib,json,pickle,runpy
+from pathlib import Path
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
+import numpy as np
+
+ROOT=Path('/Users/matteodisante/local_master_thesis/soaring-anomalous-transport')
+RUN=Path('/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4')
+DEST=Path('/tmp/plot-layout-review')
+DEST.mkdir(exist_ok=True)
+KIN='scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py'
+REV='scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py'
+records={}
+
+def sha(data): return hashlib.sha256(data).hexdigest()
+def module(name,source):
+ ns={'__name__':'layout_review_module','__file__':str(ROOT/name)}
+ exec(compile(source,str(ROOT/name),'exec'),ns)
+ return ns
+
+def capture(fig):
+ """Data-space values and styles, independent of panel geometry and text position."""
+ result=[]
+ for ax in fig.axes:
+  result.append({
+   'title':ax.get_title(),'ylabel':ax.get_ylabel(),'xscale':ax.get_xscale(),'yscale':ax.get_yscale(),
+   'xlim':list(ax.get_xlim()),'ylim':list(ax.get_ylim()),
+   'lines':[{'x':np.asarray(l.get_xdata()).tolist(),'y':np.asarray(l.get_ydata()).tolist(),
+    'color':l.get_color(),'label':l.get_label(),'style':l.get_linestyle(),'width':l.get_linewidth(),
+    'marker':l.get_marker()} for l in ax.lines],
+   'collections':[{'paths':[p.vertices.tolist() for p in c.get_paths()],
+     'offsets':c.get_offsets().tolist(),'facecolor':c.get_facecolor().tolist(),
+     'edgecolor':c.get_edgecolor().tolist()} for c in ax.collections],
+   'patches':[{'type':type(p).__name__,'path':p.get_path().vertices.tolist(),
+     'center':list(p.center) if hasattr(p,'center') else None,
+     'width':getattr(p,'width',None),'height':getattr(p,'height',None),
+     'angle':getattr(p,'angle',None),'label':p.get_label()} for p in ax.patches],
+   'annotations':[t.get_text() for t in ax.texts],
+  })
+ return result
+
+kin_before=(ROOT/KIN).read_text()
+kin_after=kin_before.replace('fig, axes = plt.subplots(1, 3, figsize=(TEXT_WIDTH_IN, 2.8), layout="constrained")',
+ 'fig, axes = plt.subplots(3, 1, figsize=(TEXT_WIDTH_IN, 5.6), sharex=True, layout="constrained")')
+assert kin_after!=kin_before and kin_before.count('fig, axes = plt.subplots(1, 3, figsize=(TEXT_WIDTH_IN, 2.8), layout="constrained")')==3
+# These three functions end in return fig; the six-panel equipment figures remain unchanged.
+for fn in ['draw_by_discipline','draw_by_terrain','draw_by_level']:
+ tree=ast.parse(kin_after); node=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name==fn)
+ lines=kin_after.splitlines(keepends=True); index=node.end_lineno-1
+ assert lines[index].strip()=='return fig'
+ lines[index:index]=['    for ax in axes[:-1]:\n','        ax.set_xlabel("")\n']
+ kin_after=''.join(lines)
+rev_before=(ROOT/REV).read_text()
+rev_after=rev_before.replace('''    """Render at the thesis text width: every label is at least nine points."""''',
+ '''    """Render at thesis text width with the shared scientific figure style."""''')
+old='''        fig.savefig(OUT / filename, metadata=PDF_META)'''
+new='''        # Include every label in the PDF even when backend text extents differ.
+        fig.canvas.draw()
+        fig.savefig(OUT / filename, metadata=PDF_META, bbox_inches="tight", pad_inches=0.05)'''
+assert rev_after.count(old)==1
+rev_after=rev_after.replace(old,new)
+
+for name,before,after in [(KIN,kin_before,kin_after),(REV,rev_before,rev_after)]:
+ for label,source in [('before',before),('after',after)]:
+  path=DEST/label/name; path.parent.mkdir(parents=True,exist_ok=True); path.write_text(source)
+ # Only specified drawing functions may differ; all estimators/caches/summary code identical.
+ before_tree,after_tree=ast.parse(before),ast.parse(after)
+ allowed={'draw_by_discipline','draw_by_terrain','draw_by_level'} if name==KIN else {'draw'}
+ for tree in [before_tree,after_tree]:
+  for n in tree.body:
+   if isinstance(n,ast.FunctionDef) and n.name in allowed: n.body=[ast.Pass()]
+ assert ast.dump(before_tree,include_attributes=False)==ast.dump(after_tree,include_attributes=False)
+ records[name]={'before_sha256':sha(before.encode()),'after_sha256':sha(after.encode()),
+                'changed_drawing_functions':sorted(allowed),
+                'unchanged_numerical_ast_sha256':sha(ast.dump(before_tree,include_attributes=False).encode())}
+
+# Read the frozen caches, then reuse the identical data for both layouts.
+k=module(KIN,kin_before)
+loaded={}
+for discipline in k['DISCIPLINES']:
+ d=k['prelim'].load(discipline,RUN/'arrays')
+ if discipline=='paragliders':
+  f=d['flights'];d['flights']=f.assign(equipment=k['equipment_group'](f['wing_class']),
+     flat_group=k['flat_region'](f['lat0'],f['lon0']))
+ loaded[discipline]=d
+with (RUN/'arrays/ch3_revision_sample.pkl').open('rb') as f: cache=pickle.load(f)
+# Summaries and selected observations are exactly those saved by the current numerical stage.
+r=module(REV,rev_before)
+measured=cache['measured']
+for d in measured.values():
+ f=d['frame'];classes=f.task.map(r['declared_task_class']);f['closed']=classes=='closed';f['task_known']=classes!='unknown'
+summaries={name:r['summarize'](d) for name,d in measured.items()}
+all_captured={}
+original_save=Figure.savefig
+for label,ksource,rsource in [('before',kin_before,rev_before),('after',kin_after,rev_after)]:
+ out=DEST/label/'rendered';out.mkdir(exist_ok=True)
+ captured={}
+ def save(fig,path,*args,**kwargs):
+  filename=Path(path).name;captured[filename]=capture(fig)
+  return original_save(fig,out/filename,*args,**kwargs)
+ Figure.savefig=save
+ k=module(KIN,ksource);k['paper_style']()
+ for fn,filename in [('draw_by_terrain','kinematic_isotropy_terrain.pdf'),
+                     ('draw_by_discipline','kinematic_isotropy_discipline.pdf'),
+                     ('draw_by_level','kinematic_isotropy_level.pdf')]:
+  fig=k[fn](loaded);fig.savefig(filename,metadata=k['PDF_METADATA']);plt.close(fig)
+ r=module(REV,rsource);r['draw'](measured,summaries)
+ Figure.savefig=original_save
+ all_captured[label]=captured
+# JSON equality handles NaN in saved line paths consistently.
+before_json=json.dumps(all_captured['before'],sort_keys=True)
+after_json=json.dumps(all_captured['after'],sort_keys=True)
+(DEST/'capture-before.json').write_text(before_json+'\n')
+(DEST/'capture-after.json').write_text(after_json+'\n')
+assert before_json==after_json,'A data-space figure value or style changed; inspect capture-before/after.json'
+(DEST/'plotted-data.json').write_text(before_json+'\n')
+outputs={}
+for filename in all_captured['before']:
+ a=(DEST/'before/rendered'/filename).read_bytes();b=(DEST/'after/rendered'/filename).read_bytes()
+ canonical=(ROOT/'thesis/generated'/filename).read_bytes()
+ assert a==canonical,('baseline rendering differs',filename)
+ outputs[filename]={'before_sha256':sha(a),'after_sha256':sha(b)}
+(DEST/'manifest.json').write_text(json.dumps({'files':records,'outputs':outputs,
+ 'unchanged_plot_data_sha256':sha(before_json.encode()),'run_id':RUN.name},indent=2)+'\n')
+print('Prepared and checked layouts; unchanged data in',len(outputs),'figures:',DEST)

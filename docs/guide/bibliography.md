@@ -1,110 +1,141 @@
-# Bibliography — verification & local archive
+# Bibliography: evidence and local inventory
 
-Every work cited in the thesis is tracked here: whether its full text is archived
-locally, where it was downloaded from, and — when it is not archived — why not.
-The bibliographic metadata of **every** entry has been cross-checked against an
-authoritative source (Crossref, arXiv, or the issuing body itself), never taken
-from memory or from a secondary citation.
+Initial audit: **10 September 2026**; additional original-source checks: **11 September 2026**. The machine-readable record is
+`revisions/bibliography-audit-2026-09-10.json`; it preserves the registry responses,
+primary URLs, the fields actually checked and local-file hashes. A metadata match
+establishes the identity of a work. Whether that work supports a statement is a
+separate check, recorded in the chapter audit reports under `revisions/`.
 
-!!! note "The local archive is not in the repository"
-    The full texts live in **`thesis/references/`**, one file per BibTeX key
-    (`<bibkey>.pdf`, plus `.html` for web-only resources). That folder is
-    **gitignored and never pushed**: the PDFs are copyrighted material archived
-    for personal study, so the repository carries only this inventory. Anyone
-    rebuilding the archive can do so from the *Downloaded from* column below.
+## Corrections from this review
 
-*Last verified: 2026-08-02.*
+- The DOI record for Dempster, Laird and Rubin (1977) identifies the article on
+  **pages 1–22**. The former 1–38 range included discussion without saying so.
+- Both 2026 arXiv papers have arXiv-issued DOIs. Their entries now identify the
+  inspected versions: Vilpellet v1, Hernández-Aguayo v2.
+- García Crespillo et al. (2024) has DOI **10.33012/2024.19499**, pages 301–306,
+  confirmed by the [Institute of Navigation](https://www.ion.org/publications/abstract.cfm?articleID=19499).
+- The Navipedia coordinate-conversion page credits three named authors and the
+  year 2011. The bibliography now records them. Welch's name is expanded to Peter D.
+- The IGC-approved recorder specification and the CIVL document use different
+  altitude conventions. Their scope is stated; neither proves a common datum
+  across every historical logger. The CIVL file retains draft annotations.
+- The 2012 EN document is a final draft with editing marks. Its Table 1 was checked;
+  the published 2013 text and subsequent amendments were not compared.
+- The local MS5611 document puts the quoted specification table on **page 1**;
+  its ±2.5 mbar condition requires an autozero. A specification for one sensor is
+  not an accuracy estimate for the recorder population.
 
-## Status of the cited works
+The previous inventory incorrectly marked several existing PDFs as absent and
+made unsupported claims that no lawful accessible copy existed. Those statements
+have been removed. Existing copies are inventoried below without inventing their
+acquisition history. A local file is not proof that its original download URL or
+licence was recorded.
 
-The **DOI** column gives the persistent identifier of each work (resolve at
-`https://doi.org/<DOI>`); entries without a DOI — standards and web resources — are
-marked as such and carry their canonical URL in the *Downloaded from* column instead.
+## Scope of source checking
 
-| BibTeX key | Reference | DOI | Metadata verified against | Local file | Downloaded from |
-|---|---|---|---|---|---|
-| `metzler2000` | Metzler & Klafter, *The random walk's guide to anomalous diffusion*, Phys. Rep. **339**(1), 1–77 (2000) | [`10.1016/S0370-1573(00)00070-3`](https://doi.org/10.1016/S0370-1573(00)00070-3) | Crossref — title, authors, journal, volume, pages, year all match | **not archived** — see below | — |
-| `zaburdaev2015` | Zaburdaev, Denisov & Klafter, *Lévy walks*, Rev. Mod. Phys. **87**(2), 483–530 (2015) | [`10.1103/RevModPhys.87.483`](https://doi.org/10.1103/RevModPhys.87.483) | arXiv abstract page, whose `journal-ref` field carries the published coordinates (Rev. Mod. Phys. 87, 483, 2015) | `zaburdaev2015_arxiv.pdf` (50 pp — the **arXiv preprint**, the published APS version is paywalled) | [arxiv.org/abs/1410.5100](https://arxiv.org/abs/1410.5100) |
-| `vilpellet2026` | Vilpellet, Darmon & Benzaquen, *From Random Walks to Thermal Rides: Universal Anomalous Transport in Soaring Flights*, arXiv:2601.01293 (2026) — the reference study | — (arXiv preprint, no DOI) | arXiv abstract page — title, all three authors, category (`cond-mat.stat-mech`), submission date (3 Jan 2026) all match | `vilpellet2026.pdf` (11 pp, v1) | [arxiv.org/abs/2601.01293](https://arxiv.org/abs/2601.01293) |
-| `reddy2016` | Reddy, Celani, Sejnowski & Vergassola, *Learning to soar in turbulent environments*, PNAS **113**(33), E4877–E4884 (2016) | [`10.1073/pnas.1606075113`](https://doi.org/10.1073/pnas.1606075113) | Crossref (title/authors/journal/volume/issue/year) **and** Europe PMC (`pageInfo: E4877-84`, PMC4995969) — the E-page range is absent from Crossref, so it was confirmed on PMC | `reddy2016.pdf` (8 pp — PMC free full text, PNAS papers become free 6 months after publication) | [europepmc.org/articles/PMC4995969](https://europepmc.org/articles/PMC4995969) |
-| `fai_igc_spec` | FAI / International Gliding Commission, *Technical Specification for IGC-approved GNSS Flight Recorders*, Second Edition with Amendment 8, effective 1 Feb 2023 | — (standard, no DOI) | The document's own title page (downloaded and inspected: 71 pp; contains the B-record definition and the "V ⇒ GNSS altitude `00000`" rule the thesis relies on) | `fai_igc_spec.pdf` (71 pp) | [fai.org — full spec, with AL8](https://www.fai.org/sites/default/files/igc_fr_specification_with_al8_2023-2-1_0.pdf) |
-| `esa_navipedia_ellipsoidal_cartesian` | ESA Navipedia, *Ellipsoidal and Cartesian Coordinates Conversion* (web page — the geodetic-to-ECEF transform of the thesis) | — (web page, no DOI) | The page itself (a maintained ESA resource, cited as a web reference) | `esa_navipedia_ellipsoidal_cartesian.html` (snapshot, 2026-07-07) | [gssc.esa.int/navipedia](https://gssc.esa.int/navipedia/index.php/Ellipsoidal_and_Cartesian_Coordinates_Conversion) |
-| `nga_wgs84` | National Geospatial-Intelligence Agency, *Department of Defense World Geodetic System 1984* (NGA.STND.0036, Version 1.0.0, 8 July 2014) — the WGS84 datum and ellipsoid parameters ($a=6378137.0$ m, $1/f=298.257223563$) of the ENU/geodesy section | — (standard, no DOI) | The document itself (downloaded from the issuing body, NGA: 207 pp; the defining constants $a=6378137.0$ m and $1/f=298.257223563$ are those the thesis uses in the geodetic-to-ECEF transform) | `wgs84_nga_std.pdf` (207 pp) | [earth-info.nga.mil (official NGA download)](https://earth-info.nga.mil/php/download.php?file=coord-wgs84) |
-| `savitzky1964` | Savitzky & Golay, *Smoothing and Differentiation of Data by Simplified Least Squares Procedures*, Anal. Chem. **36**(8), 1627–1639 (1964) — the Savitzky–Golay filter of the smoothing/differentiation step | [`10.1021/ac60214a047`](https://doi.org/10.1021/ac60214a047) | Crossref — title, authors, journal, volume, issue, pages, year all match | **not archived** — no legal open copy (1964 ACS journal, paywalled, pre-arXiv) | — |
-| `welch1967` | Welch, *The use of fast Fourier transform for the estimation of power spectra…*, IEEE Trans. Audio Electroacoust. **15**(2), 70–73 (1967) — Welch's method (PSD appendix) | [`10.1109/TAU.1967.1161901`](https://doi.org/10.1109/TAU.1967.1161901) | Crossref — title, author, journal, volume, issue, pages, year all match | **not archived** — no legal open copy (1967 IEEE journal, paywalled, pre-arXiv) | — |
-| `hampel1974` | Hampel, *The Influence Curve and its Role in Robust Estimation*, J. Am. Stat. Assoc. **69**(346), 383–393 (1974) — the Hampel identifier (robust local-outlier test) | [`10.1080/01621459.1974.10482962`](https://doi.org/10.1080/01621459.1974.10482962) | Crossref — title, author, journal, volume, issue, pages, year all match | **not archived** — no legal open copy (JASA, paywalled) | — |
-| `rousseeuw1993` | Rousseeuw & Croux, *Alternatives to the Median Absolute Deviation*, J. Am. Stat. Assoc. **88**(424), 1273–1283 (1993) — the MAD scale factor 1.4826 for a Gaussian-consistent robust spread | [`10.1080/01621459.1993.10476408`](https://doi.org/10.1080/01621459.1993.10476408) | Crossref — title, authors, journal, volume, issue, pages, year all match | **not archived** — no legal open copy (JASA, paywalled) | — |
-| `clauset2009` | Clauset, Shalizi & Newman, *Power-Law Distributions in Empirical Data*, SIAM Rev. **51**(4), 661–703 (2009) — maximum-likelihood power-law tail fitting with goodness-of-fit (transport analysis) | [`10.1137/070710111`](https://doi.org/10.1137/070710111) | Crossref — title, authors, journal, volume, issue, pages, year all match; arXiv `journal-ref` confirms "SIAM Review 51, 661-703 (2009)" | `clauset2009.pdf` (arXiv preprint v2; abstract states the ML-fit + KS goodness-of-fit method the thesis cites) | [arxiv.org/abs/0706.1062](https://arxiv.org/abs/0706.1062) |
-| `he2008` | He, Burov, Metzler & Barkai, *Random Time-Scale Invariant Diffusion and Transport Coefficients*, Phys. Rev. Lett. **101**(5), 058101 (2008) — weak ergodicity breaking / TA-MSD (Appendix A, CTRW) | [`10.1103/PhysRevLett.101.058101`](https://doi.org/10.1103/PhysRevLett.101.058101) | Crossref — title, authors, journal, volume, issue, article no., year all match; arXiv `journal-ref` confirms "Phys. Rev. Lett. 101, 058101 (2008)" | `he2008.pdf` (arXiv preprint v1; derives the distribution of the random TA-MSD δ² for CTRW — the Mittag-Leffler / non-self-averaging result the thesis cites) | [arxiv.org/abs/0807.4793](https://arxiv.org/abs/0807.4793) |
-| `rabiner1989` | Rabiner, *A Tutorial on Hidden Markov Models and Selected Applications in Speech Recognition*, Proc. IEEE **77**(2), 257–286 (1989) — the canonical HMM tutorial (segmentation) | [`10.1109/5.18626`](https://doi.org/10.1109/5.18626) | Crossref — title, author, journal, volume, issue, pages, year all match | **not archived** — no legal open copy (1989 IEEE journal, paywalled, pre-arXiv) | — |
-| `redner2001` | Redner, *A Guide to First-Passage Processes*, Cambridge University Press (2001) — the standard monograph for first-passage / first-exit times | [`10.1017/CBO9780511606014`](https://doi.org/10.1017/CBO9780511606014) | Crossref (monograph record) — title, author, publisher, year, ISBNs all match | **not archived** — no legal open copy (Cambridge University Press book, paywalled) | — |
-| `mantegna1995` | Mantegna & Stanley, *Scaling behaviour in the dynamics of an economic index*, Nature **376**(6535), 46–49 (1995) — the return-probability route to the Lévy index | [`10.1038/376046a0`](https://doi.org/10.1038/376046a0) | Crossref — title, authors, journal, volume, issue, pages, year all match | **not archived** — no legal open copy (1995 Nature, paywalled, pre-arXiv) | — |
-| `viswanathan1999` | Viswanathan, Buldyrev, Havlin, da Luz, Raposo & Stanley, *Optimizing the success of random searches*, Nature **401**(6756), 911–914 (1999) — cited for optimal **random-search strategies**, not for measured animal movement (the topic was corrected in the Aug 2026 pass) | [`10.1038/44831`](https://doi.org/10.1038/44831) | Crossref — title, first author, journal, volume, pages, year all match | **not archived** — paywalled (Nature, 1999) | — |
-| `bouchaud1990` | Bouchaud & Georges, *Anomalous diffusion in disordered media: statistical mechanisms, models and physical applications*, Phys. Rep. **195**(4–5), 127–293 (1990) | [`10.1016/0370-1573(90)90099-N`](https://doi.org/10.1016/0370-1573\(90\)90099-N) | Crossref — title, authors, journal, volume, pages, year all match | **not archived** — paywalled (Elsevier, 1990) | — |
-| `solomon1993` | Solomon, Weeks & Swinney, *Observation of anomalous diffusion and Lévy flights in a two-dimensional rotating flow*, Phys. Rev. Lett. **71**(24), 3975–3978 (1993) | [`10.1103/PhysRevLett.71.3975`](https://doi.org/10.1103/PhysRevLett.71.3975) | Crossref — title, authors, journal, volume, pages, year all match | **not archived** — paywalled (APS, 1993) | — |
-| `daviesgather1993` | Davies & Gather, *The Identification of Multiple Outliers*, J. Am. Stat. Assoc. **88**(423), 782–792 (1993) — the outlier-identifier theory behind the Hampel test | [`10.1080/01621459.1993.10476339`](https://doi.org/10.1080/01621459.1993.10476339) | Crossref — title, authors, journal, volume, pages, year all match | **not archived** — paywalled (Taylor & Francis, 1993) | — |
-| `gps_sps_ps_2020` | US Department of Defense, *GPS Standard Positioning Service Performance Standard*, 5th Edition (April 2020) — source of the horizontal/vertical accuracy asymmetry quoted in `sec:altchannel` | — (standard, no DOI) | The document itself (downloaded and inspected: **Table 3.8-3** commits to ≤ 8 m 95 % horizontal and ≤ 13 m 95 % vertical, global average; ≤ 15 m / ≤ 33 m worst site) | `gps_sps_ps_2020.pdf` | [gps.gov — 2020 SPS performance standard](https://www.gps.gov/technical/ps/2020-SPS-performance-standard.pdf) |
-| `ms5611_datasheet` | Measurement Specialties (MEAS Switzerland), *MS5611-01BA03 Barometric Pressure Sensor, with stainless steel cap*, datasheet DA5611-01BA03_011 (ECN 1742, 26 Oct 2012) — source of the barometric-sensor accuracy band quoted in `sec:altchannel` | — (datasheet, no DOI) | The document itself (downloaded and read, 20 pp: the specification table on p. 2 gives ±1.5 mbar at 25 °C/750 mbar, an error band of ±2.5 mbar over −20 to +85 °C, a full-accuracy range of 450–1100 mbar, and 10 cm of altitude resolution). ⚠️ Retrieved from a **third-party mirror**: TE Connectivity, which acquired MEAS in 2014, serves the current revision only through a document-delivery endpoint that refuses non-browser clients. The archived copy is the 2012 MEAS issue, and whether the later TE revision B3 changed the table is **unchecked**. Verified 2026-09-03 | `ms5611_datasheet.pdf` (20 pp) | [hpinfotech.ro — mirror of DA5611-01BA03_011](http://www.hpinfotech.ro/MS5611-01BA03.pdf) |
-| `garciacrespillo2024` | García Crespillo, Oliva González & Caizzone (DLR), *Airborne Time-Correlated GNSS Multipath Error Modeling of Carrier-phase Smoothed Code*, Proc. ION ITM 2024 — source for code multipath being **time-correlated** (first-order Gauss–Markov, ~300 s constant), not white between epochs | — (conference paper, no DOI located) | The paper itself (downloaded from the DLR institutional repository and read: the Introduction states that the snapshot avionics models "lack information about the stochastic temporal behavior of the error", and the FOGMP fit gives a 300 s time-correlation constant) | `garciacrespillo2024.pdf` | [elib.dlr.de/203356](https://elib.dlr.de/203356/1/2024_GarciaCrespillo_ITM_AirborneMultipath.pdf) |
-| `fpren926_2_2012` | CEN/TC 136/WG 6, *Paragliding equipment — Paragliders — Part 2*, **final draft** FprEN 926-2 (doc. N 0054, 2012) — source of the EN class descriptions in Table 2.2 | — (standard draft, no DOI) | The draft itself (downloaded and read: **Table 1**, "Description of the paraglider classes", gives the A–D flight-characteristic and pilot-skill wording quoted in condensed form). ⚠️ **This is the draft, not the published EN 926-2:2013**, which is a copyrighted CEN standard sold by the national bodies (AFNOR/DIN/BSI, a few hundred euro) and therefore not quotable here. The thesis states the distinction; whether Table 1 changed between draft and publication is **unchecked** | `fpren926_2_2012.pdf` | [xcmag.com — CEN working-group draft](http://www.xcmag.com/wp-content/uploads/2012/08/DraftEN926-2.pdf) |
-| `sklearn_haversine` | scikit-learn, *`sklearn.metrics.pairwise.haversine_distances`* (API reference) — cited as the statement of the great-circle formula used for inter-fix distances | — (web page, no DOI) | The page itself (the formula it documents is the one in Eq. 2.1) | `sklearn_haversine.html` (snapshot, 2026-08-02) | [scikit-learn.org — haversine_distances](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.pairwise.haversine_distances.html) |
+The chapter reports document the checks of stochastic scaling, moment spectra,
+Gaussian/non-Gaussian diagnostics, HMM assumptions, filtering and coordinate
+transforms. Formulae were also derived or checked against implementation where
+appropriate. Software-dependent statements identify **hmmlearn 0.3.3** and
+**SciPy 1.18.0**. The hmmlearn stopping flag and covariance update were checked
+against installed source, not inferred from their parameter names.
 
-**Not archived, and why.** `metzler2000` is published by Elsevier behind a
-subscription and has **no arXiv version** (checked against the arXiv API by exact
-title, 2026-07-07), so there is no legal open copy to archive. Retrieve it through
-university access ([ScienceDirect](https://doi.org/10.1016/S0370-1573(00)00070-3))
-and drop it into `thesis/references/metzler2000.pdf`; then update this table.
+The 2021 [corrigendum to McClintock et al.](https://doi.org/10.1111/ele.13709)
+concerns example observation matrices for capture–recapture/coexistence models;
+those examples are not used in this Gaussian flight HMM. The audit does not
+reinterpret a publisher's later website-migration date as the original publication
+year of classic papers.
 
-The same holds for the methodological classics `savitzky1964` (Anal. Chem., 1964),
-`welch1967` (IEEE Trans., 1967), `hampel1974` and `rousseeuw1993` (both JASA),
-`rabiner1989` (Proc. IEEE, 1989), `mantegna1995` (Nature, 1995) and the monograph
-`redner2001` (Cambridge University Press): each predates or sits outside the open-access
-ecosystem and has no legal free copy. Their metadata are verified against Crossref (every
-field matched), and each DOI resolves to the correct work, but the full texts are
-paywalled and therefore not archived; retrieve them through university access at the DOIs
-above if a copy is needed locally. In contrast `clauset2009` and `he2008` are archived
-from their author-hosted arXiv versions, whose `journal-ref` fields carry the published
-coordinates.
+The original Baum et al. (1970) publisher endpoint remained inaccessible. A reproduction
+of the original article was inspected: its header confirms the identity, and pp. 164–168
+support the historical HMM likelihood and iterative estimation attribution. The modern
+multivariate recursions were also checked against the local Rabiner tutorial (Sections
+II–IV). This is recorded separately from a successful publisher retrieval. The original
+Kapos et al. chapter was subsequently recovered as author-uploaded manuscript text:
+its title page and Methods/Results were inspected, including the slope and relief
+criteria absent from an altitude-only classification. The downloadable PDF remained
+unavailable. Mardia's publisher metadata and first original pages were checked; the
+full original kurtosis section was not retrieved, and that limitation is retained in
+the record rather than described as a full-text verification.
 
-## A correction this audit produced
+The Hampel identifier is attributed specifically to Davies and Gather (1993), Example
+2.2, rather than treating Hampel's influence-function paper as the source of the entire
+GPS-cleaning procedure. The physical gate and its numerical thresholds are choices of
+this analysis.
 
-The `fai_igc_spec` entry originally pointed at
-`igc_fr_specification_2021_al7_2022-1-31.pdf` on fai.org. Downloaded and
-inspected, that file turned out to be **only the two-page Amendment List 7**
-(the 2022 list of edits), *not* the specification — while the thesis cites the
-entry precisely for what the specification defines (the fixed character
-positions of the `B` record, the `A`/`V` validity flag, the two altitude
-channels). The entry now points at the **full Second Edition with Amendment 8**
-(71 pages, effective 1 February 2023), which was downloaded, and whose title
-page and B-record sections were checked against every claim the thesis
-attributes to it. The old two-page file is kept in the local archive as
-`fai_igc_spec_AL7_amendment_only.pdf`, as a record of the discrepancy.
 
-## Verification protocol
+The final manuscript also cites three methods whose originals were inspected:
 
-A citation enters `thesis/references.bib` only after all of the following, and
-this page records the evidence:
+- Efron (1979), pp. 1–3, introduces resampling from the empirical distribution.
+  Whole-flight or site/day resampling still requires a defensible sampling-unit
+  assumption; the citation does not calibrate the present bands.
+- Fritsch and Butland (1984), p. 301, Eq. (5), gives the local monotone cubic
+  slope construction used by PCHIP. The weighted harmonic slope was checked
+  against the installed SciPy source; its endpoint scheme is documented separately.
+- Taylor, p. 207, Eqs. (15)–(18), relates stationary velocity correlation to
+  displacement variance. The thesis sums the coordinate relations and exchanges
+  the integration order. The publisher and registry identify **1922**; the often-used
+  1921 filename and the 1920 reading date in the scan do not replace that issue date.
 
-1. **Metadata from an authoritative registry, never from memory.** Crossref
-   (`api.crossref.org/works/<DOI>`) for anything with a DOI; the arXiv abstract
-   page for e-prints; the issuing body's own site for standards. Title, full
-   author list, journal, volume, pages and year must all match the entry.
-2. **The artifact is obtained and opened.** The PDF (or page snapshot) is
-   downloaded into `thesis/references/` under the BibTeX key, and its content
-   checked against what the thesis actually attributes to it — the FAI case
-   above is exactly the failure mode this step catches.
-3. **Only legal copies.** Where the published version is paywalled, the archive
-   holds the author's own open version (arXiv, PubMed Central) and the table
-   says so explicitly; a paper with no legal open copy is simply marked *not
-   archived* with the reason. Never a random third-party copy.
-4. **Peer-reviewed journals, established review series, recognized standards
-   bodies, or major textbooks only.** Web resources are acceptable only where
-   they are the natural reference for the fact cited (e.g. Navipedia for a
-   coordinate transform) and are archived as dated snapshots.
-5. **Provenance is recorded here** — the exact URL each file came from, and the
-   date of the last verification pass.
+## Inventory
 
-The same protocol governs any future enrichment of the bibliography: candidate
-references are located, verified per points 1–4, and only then cited in the
-text — a reference that cannot be verified is not used, however plausible it
-looks.
+“Registry” means publisher-deposited Crossref metadata were retrieved. “Primary”
+means a publisher, author or issuing-body record/document was inspected; exact
+field limitations are in the JSON record. “Local” denotes an inspected local
+manufacturer document. Files below are under `thesis/references/`, an ignored
+local directory. A dash means no matching copy was present at the audit date.
+
+| Key | Source | Check | Used in current manuscript | Local file |
+|---|---|---|---|---|
+| `metzler2000` | [record](https://doi.org/10.1016/S0370-1573(00)00070-3) | Registry | yes | `metzler2000.pdf` |
+| `tejedor2010` | [record](https://arxiv.org/abs/0910.1194) | Primary | yes | `tejedor2010_arxiv.pdf` |
+| `schulz2013` | [record](https://doi.org/10.1088/1751-8113/46/47/475001) | Registry | yes | `schulz2013_arxiv.pdf` |
+| `zaburdaev2015` | [record](https://arxiv.org/abs/1410.5100) | Primary | yes | `zaburdaev2015_arxiv.pdf` |
+| `viswanathan1999` | [record](https://doi.org/10.1038/44831) | Registry | no | `—` |
+| `bouchaud1990` | [record](https://www.sciencedirect.com/science/article/pii/037015739090099N) | Primary | no | `—` |
+| `solomon1993` | [record](https://doi.org/10.1103/PhysRevLett.71.3975) | Registry | no | `—` |
+| `vilpellet2026` | [record](https://arxiv.org/abs/2601.01293) | Primary | yes | `vilpellet2026.pdf` |
+| `reddy2016` | [record](https://doi.org/10.1073/pnas.1606075113) | Registry | yes | `reddy2016.pdf` |
+| `fai_igc_spec` | [record](https://www.fai.org/sites/default/files/igc_fr_specification_with_al8_2023-2-1_0.pdf) | Primary | yes | `fai_igc_spec.pdf` |
+| `esa_navipedia_ellipsoidal_cartesian` | [record](https://gssc.esa.int/navipedia/index.php/Ellipsoidal_and_Cartesian_Coordinates_Conversion) | Primary | yes | `esa_navipedia_ellipsoidal_cartesian.html` |
+| `nga_wgs84` | [record](https://earth-info.nga.mil/php/download.php?file=coord-wgs84) | Primary | yes | `wgs84_nga_std.pdf` |
+| `gps_sps_ps_2020` | [record](https://archive.gps.gov/technical/ps/2020-SPS-performance-standard.pdf) | Primary document | no | `—` |
+| `garciacrespillo2024` | [record](https://www.ion.org/publications/abstract.cfm?articleID=19499) | Primary | yes | `—` |
+| `fpren926_2_2012` | [record](https://xcmag.com/wp-content/uploads/2012/08/DraftEN926-2.pdf) | Primary document | yes | `—` |
+| `sklearn_haversine` | [record](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.pairwise.haversine_distances.html) | Primary document | yes | `—` |
+| `savitzky1964` | [record](https://doi.org/10.1021/ac60214a047) | Registry | yes | `savitzky1964.pdf` |
+| `welch1967` | [record](https://research.ibm.com/publications/the-use-of-fast-fourier-transform-for-the-estimation-of-power-spectra-a-method-based-on-time-averaging-over-short-modified-periodograms) | Primary | yes | `welch1967.pdf` |
+| `hampel1974` | [record](https://www.tandfonline.com/doi/abs/10.1080/01621459.1974.10482962) | Primary | no | `hampel1974.pdf` |
+| `rousseeuw1993` | [record](https://doi.org/10.1080/01621459.1993.10476408) | Registry | yes | `rousseeuw1993.pdf` |
+| `clauset2009` | [record](https://doi.org/10.1137/070710111) | Registry | no | `clauset2009.pdf` |
+| `mardia1970` | [record](https://doi.org/10.1093/biomet/57.3.519) | Registry | yes | `—` |
+| `he2008` | [record](https://doi.org/10.1103/PhysRevLett.101.058101) | Registry | no | `he2008.pdf` |
+| `rabiner1989` | [record](https://web.ece.ucsb.edu/Faculty/Rabiner/ece259/publications.html) | Primary | yes | `A_tutorial_on_hidden_Markov_models_and_selected_applications_in_speech_recognition.pdf` |
+| `baum1970` | [record](https://doi.org/10.1214/aoms/1177697196) | Original reproduction | yes | `—` |
+| `dempster1977` | [record](https://academic.oup.com/jrsssb/article/39/1/1/7027539) | Primary | yes | `—` |
+| `viterbi1967` | [record](https://cris.technion.ac.il/en/publications/error-bounds-for-convolutional-codes-and-an-asymptotically-optimu/) | Primary | yes | `—` |
+| `langrock2012` | [record](https://esajournals.onlinelibrary.wiley.com/doi/10.1890/11-2241.1) | Primary | yes | `—` |
+| `mcclintock2020` | [record](https://onlinelibrary.wiley.com/doi/abs/10.1111/ele.13610) | Primary | yes | `—` |
+| `redner2001` | [record](https://www.cambridge.org/core/books/guide-to-firstpassage-processes/errata/80029DC0ABF4B98C29A79D996167D6EC) | Primary | no | `—` |
+| `mantegna1995` | [record](https://www.nature.com/articles/376046a0) | Primary | no | `mantegna1995.pdf` |
+| `daviesgather1993` | [record](https://www.tandfonline.com/doi/abs/10.1080/01621459.1993.10476339) | Primary | yes | `—` |
+| `fai_sc7_2024` | [record](https://fai.org/sites/default/files/civl/documents/sporting_code_s7_-_common_2024_v3.pdf) | Primary | yes | `—` |
+| `hernandezaguayo2026` | [record](https://arxiv.org/abs/2608.00241) | Primary | yes | `—` |
+| `kapos2000` | [author manuscript](https://www.researchgate.net/publication/306151877_Developing_a_map_of_the_world%27s_mountain_forests_Forests_in_sustainable_mountain_development_a_state_of_knowledge_report_for_2000) | Author manuscript | yes | `—` |
+| `ms5611_datasheet` | local / unresolved | Local document | no | `ms5611_datasheet.pdf` |
+| `mandelbrot1968` | [record](https://epubs.siam.org/doi/abs/10.1137/1010093) | Primary | yes | `—` |
+| `rebenshtok2014` | [record](https://arxiv.org/abs/1408.4479) | Primary | yes | `—` |
+| `fai_civl_s7h_2024` | [record](https://fai.org/sites/default/files/civl/documents/sporting_code_s7_h_-_civl_flight_recorder_specification_2024.pdf) | Primary | yes | `—` |
+| `hmmlearn033` | [record](https://hmmlearn.readthedocs.io/en/0.3.3/api.html) | Primary | yes | `—` |
+| `scipy_savgol_filter` | [record](https://docs.scipy.org/doc/scipy-1.18.0/reference/generated/scipy.signal.savgol_filter.html) | Primary | no | `—` |
+| `efron1979` | [record](https://doi.org/10.1214/aos/1176344552) | Registry + original | yes | `efron1979.pdf` |
+| `fritsch1984` | [record](https://doi.org/10.1137/0905021) | Registry + original | yes | `fritsch1984.pdf` |
+| `taylor1922` | [record](https://doi.org/10.1112/plms/s2-20.1.196) | Registry + original | yes | `taylor1922.pdf` |
+
+The old two-page `fai_igc_spec_AL7_amendment_only.pdf` is retained separately as an
+amendment-only historical file. It is not the full specification cited in the thesis.
+
+For later changes, verify the specific version, record what was actually opened,
+and distinguish a formula's assumptions from its applicability to these data.
+Unreachable originals remain identified as such; metadata or a secondary citation
+must not be described as a full-text check.

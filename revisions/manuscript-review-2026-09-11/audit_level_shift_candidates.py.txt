@@ -1,0 +1,61 @@
+"""Bounded diagnostic of candidate counters, not a new cleaning rule or accuracy test."""
+from pathlib import Path
+import hashlib,json,sys
+import numpy as np,pandas as pd
+sys.path.insert(0,str(Path.cwd()/'scripts'))
+from preprocess import _process_one
+from soaring.reporting import DISCIPLINES
+from soaring.analysis.preproc import cleaning
+from soaring.analysis.segmentation.features import build_feature_frame,valid_feature_mask
+from soaring.analysis.segmentation.config import load_segmentation_config
+
+summary=json.load(open('/tmp/retained-flight-level-shift-candidates.json'))
+original=cleaning._clean_altitude
+captured={}
+def capture(t,alt,fix_level):
+ result=original(t,alt,fix_level)
+ v=cleaning.step_vz(t,alt);excess=np.abs(v)>fix_level.max_vertical_speed_mps
+ isolated=excess.copy()
+ if len(excess)>1:
+  isolated[:-1]&=~excess[1:];isolated[1:]&=~excess[:-1]
+ events=[]
+ for i in np.flatnonzero(isolated):
+  jump=abs(alt[i+1]-alt[i]);w=alt[i+1:min(i+6,len(alt))];w=w[np.isfinite(w)]
+  if not len(w) or np.min(abs(w-alt[i]))>.3*jump:
+   events.append({'t':float(t[i+1]),'jump_m':float(alt[i+1]-alt[i]),
+    'dt_s':float(t[i+1]-t[i]),'altitude_rule_flags_endpoint':bool(result[0][i+1] or result[1][i+1] or result[2][i+1])})
+ assert len(events)==result[-1]
+ captured['events']=events
+ return result
+cleaning._clean_altitude=capture
+config=load_segmentation_config('configs/segmentation.yaml')
+rows=[]
+for discipline,g in DISCIPLINES.items():
+ meta=pd.read_parquet(g.derived_dir()/'flights_meta.parquet')
+ meta.flight_id=meta.flight_id.astype(str)
+ selected=[x['flight_id'] for x in summary[discipline]['largest'][:2]]
+ candidates=meta.loc[meta.drop_reason.isna() & (meta.n_alt_level_shift>0) & ~meta.flight_id.isin(selected)]
+ selected+=candidates.sample(n=2,random_state=20260911).flight_id.tolist()
+ paths={p.stem.split('_')[-1]:p for p in g.config().igc_dir.rglob('*.igc') if p.stem.split('_')[-1] in selected}
+ for fid in selected:
+  path=paths[fid];m,fixes,segments,_=_process_one((str(path),g.source,discipline));assert fixes is not None
+  events=captured['events'];assert len(events)==int(meta.set_index('flight_id').loc[fid,'n_alt_level_shift'])
+  observations=pd.concat([build_feature_frame(s,config) for _,s in fixes.groupby('segment_id')],ignore_index=True)
+  valid=valid_feature_mask(observations);centres=observations.t.to_numpy()
+  covered=[]
+  for e in events:
+   t=e['t']-m['ground_phase_start_s']
+   # Temporal association only. A candidate can already have been censored or can be real motion.
+   near=(abs(centres-t)<=config.feature_window_s/2)
+   if np.any(near & valid): covered.append(e)
+  rows.append({'discipline':discipline,'flight_id':fid,'selection':'largest count' if fid in selected[:2] else 'seeded positive-count example',
+   'raw_path':str(path),'raw_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),
+   'candidate_count':len(events),'candidate_endpoint_already_altitude_flagged':sum(e['altitude_rule_flags_endpoint'] for e in events),
+   'candidate_times_near_usable_feature_centres':len(covered),
+   'usable_feature_count':int(valid.sum()),'max_abs_usable_mean_vz':float(abs(observations.loc[valid,'mean_v_z']).max()) if valid.any() else None,
+   'jump_abs_quantiles_m':np.quantile([abs(e['jump_m']) for e in events],[.5,.9,1]).tolist(),
+   'candidate_intervals_s':np.unique([e['dt_s'] for e in events]).tolist(),
+   'fraction_z_reconstructed':float(fixes.z_reconstructed.mean())})
+  print(rows[-1],flush=True)
+report={'run_id':'20260910T221820Z-05d36ab4','rows':rows,'scope':'Eight purposively/seeded selected retained flights, recomputed with current frozen cleaner. Candidate counting reproduced. Temporal association with usable feature centres does not establish a surviving altitude defect, causality or archive-wide prevalence. No data products modified.'}
+Path('/tmp/level-shift-candidate-audit.json').write_text(json.dumps(report,indent=2)+'\n')

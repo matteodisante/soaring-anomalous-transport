@@ -1,0 +1,34 @@
+{
+  "verified_utc": "2026-09-11T08:15:13.251721+00:00",
+  "run_id": "20260910T221820Z-05d36ab4",
+  "status": "computational and manuscript review complete; independent human phase validation is future work",
+  "checks": {
+    "completed_stages": 38,
+    "unit_and_integration_tests_passed": 824,
+    "test_warnings": 24,
+    "warning_origin": "hmmlearn: NumPy shape-assignment deprecation",
+    "duration_result_checks": 47,
+    "transport_result_checks": 186,
+    "segmentation_result_checks": 25,
+    "all_recorded_outputs_match": true,
+    "both_dataset_identities_match": true,
+    "annotation_pack_and_mounted_sources_match": true,
+    "cascade_recomputed_from_ssd_metadata": true
+  },
+  "pdf": {
+    "sha256": "d82bb86e686cd0b578624d65a48fbe25821534a9f604323309d0b34766c510ce",
+    "pages": 101,
+    "source_sha256": "d8dd6e0d79dbcb9e272f0610213ab0254240d05979492afd3da579d70a7ba3ac",
+    "visual_review": "Whole manuscript screened across local revisions; changed figure layouts and final parameter-table pages rechecked at print scale. No overfull boxes, undefined references, missing characters or clipped figure labels found."
+  },
+  "run_manifest_sha256": "328aa0a5b80c44afb40094f8d0d358a622a03a38020ae94b633d00a95b731893",
+  "manuscript_review_sha256": "9d9821c6ac2a66b510991234e4728bbf51b2eb6119d5e450f93927738dda06c1",
+  "ssd_readme_sha256": "1ba7d259bdad57fbf423ddb8629dc30e98d71496f7915185b8d057c6be153a6e",
+  "limitations": [
+    "Table identities use size, modification time and Parquet-footer SHA256, not a full-file hash.",
+    "Raw-record reproduction checked 250 retained flights per discipline at stored precision.",
+    "Statistical process comparisons remain descriptive, without finite-record rejection calibration.",
+    "Phase accuracy requires independent labels; the selected HMM restart has a negative final likelihood gain.",
+    "GNSS datum harmonization and sensitivity to retained vertical level-shift candidates remain open scientific limitations."
+  ]
+}

@@ -1,304 +1,183 @@
-# The global-transport measurement
+# Global transport
 
-What is measured on the retained ensemble *without* segmenting a flight into its phases:
-seven estimator modules under `soaring.analysis.observables/`, the clustered bootstrap in
-`soaring.analysis.stats`, five streaming passes over the fix table and six reductions that
-turn their output into the figures and macros of the thesis chapter **Global transport**.
+Chapter 3 measures transport before phase segmentation: displacement moments and
+quantiles, a constant-velocity control, geographical anisotropy and velocity memory.
+The revised chapter is `thesis/sections/04-global-transport.tex` (printed Chapter 3).
+The scientific programme and sequencing are recorded in [the thesis roadmap](../thesis-roadmap.md).
 
-This page is the map of that code, in the same sense that
-[the pipeline guide](preprocessing-pipeline.md) is the map of the pre-processing code.
-Two things deliberately live elsewhere:
+## Current numerical products
 
-- **The reasoning** — why an estimator was chosen, why a measurement was withdrawn — is in
-  the thesis, chapter *Global transport* (`ch:global`), with the implementation detail in
-  appendix `impl:global`.
-- **The numbers** — every exponent and every count — are generated macros in
-  `thesis/generated/`, listed by owner in
-  [Where each number comes from](provenance.md).
+The September 2026 revision distinguishes archive estimates from a bounded diagnostic subset:
 
-On any disagreement the thesis is normative and this page is the one to correct.
-
-!!! note "File names are one ahead of chapter numbers"
-    `sections/02-data-acquisition.tex` is `\input` inside `03-dataset.tex` as its opening
-    section, so the printed chapters are one behind the filenames.
-
-    | file | printed as |
-    |---|---|
-    | `sections/03-dataset.tex` | Chapter 2, *The dataset* |
-    | `sections/04-global-transport.tex` | **Chapter 3, *Global transport*** — this page |
-    | `sections/05-flight-phases.tex` | Chapter 4, *Flight phases* |
-
-## What this establishes, and what it cannot
-
-Without segmentation the ensemble answers questions about a **class** of transport: how far
-a wing gets in a given time, how that growth is distributed across the increment
-distribution, how long the motion remembers its heading, and how many distinct scaling
-regimes the answer needs. It cannot answer which flight behaviour produces any of it —
-every quantity here mixes climbing, gliding and searching into one number. That separation
-is Chapter 4 and does not exist yet.
-
-Two constraints from the preliminary characterisation (`sec:prelim`) hold throughout the
-code, not just the prose:
-
-1. **The horizontal components are anisotropic.** The ratio of their mean squares never
-   touches unity, so the two marginals are measured separately and a pooled
-   one-dimensional marginal never substitutes for the two-dimensional propagator.
-2. **The discipline is heterogeneous.** Wing class and orographic group are relevant
-   strata; season is not. Every exponent is reported by stratum as well as pooled, and the
-   two disciplines are never pooled into each other.
-
-Both are enforced by the estimators taking a component axis and by the reductions
-stratifying, rather than by a convention anyone has to remember.
-
-## The observable inventory
-
-One row per section of the chapter. The **pass** streams `fixes.parquet` and writes an
-intermediate array; the **reduction** reads that array and writes the macros and the
-figure. Steps are the numbered steps of `scripts/regenerate.sh`.
-
-| chapter section | estimator module | pass | reduction | macros |
-|---|---|---|---|---|
-| `sec:obs-global` — displacement from take-off | `observables.transport` | `measure_msd.py` (3), `audit_msd.py` (6) | `generate_msd_figure.py` (4), `audit_msd_report.py` (7) | `\StatMsd*`, `\StatAudit*` |
-| `sec:variations` — the filtered variation | `observables.variations` | `measure_variations.py` (10) | `generate_transport_figure.py` (11) | `\StatVar*` |
-| `sec:transport-measure` — the uncertainty on the exponent | `stats.bootstrap`, `observables.regimes` | — (reads step 10) | `generate_transport_figure.py` (11) | `\StatVar*` |
-| `sec:transport-propagator` — the exponent from the quantiles | `observables.propagator` | `measure_propagator.py` (14) | `generate_propagator_figure.py` (14) | `\StatProp*` |
-| `sec:transport-axisroutes` — the exponent, split by component | `observables.transport`, `observables.variations` | — (reads steps 3, 10) | `generate_msd_figure.py` (4), `generate_transport_figure.py` (11) | `\StatMsd*`, `\StatMsdTa*`, `\StatVar*` |
-| `sec:transport-shape` — not a Lévy walk | `observables.moments` | `measure_shape.py` (12) | `generate_shape_figure.py` (13) | `\StatShape*` |
-| `sec:transport-gaussian` — the propagator is not Gaussian | `observables.moments` | `measure_shape.py` (12) | `generate_shape_figure.py` (13) | `\StatShape*` |
-| `sec:transport-memory` — the memory of the heading | `observables.persistence` | `measure_shape.py` (12), `measure_circling.py` (16) | `generate_shape_figure.py` (13) | `\StatShape*`, `\StatCircling*` |
-| `sec:transport-kinematics` — speed and vertical velocity | `observables.propagator` (`KinematicAccumulator`) | `measure_propagator.py` (14) | `generate_propagator_figure.py` (14) | `\StatKin*` |
-| — the edge-sample effect | `observables.transport` | `measure_edge_effect.py` (15) | same script | `\StatEdge*` |
-
-`observables.synthetic` appears in no row because it measures nothing on the archive: it
-generates the processes the other seven are validated against (see
-[The nulls](#the-nulls-and-what-each-one-rules-out)).
-
-### Which estimator the chapter actually quotes
-
-Not the one it starts from. The headline exponent is $\alpha_2$ from
-`variations.filtered_variation` at filter order 2, and the reason is structural rather
-than a preference:
-
-- **The ensemble MSD about take-off was withdrawn.** Every flight shares an origin, and a
-  residual per-flight course adds $|v_d|^2\Delta^2$ to it, so the curve turns ballistic at
-  long lags whatever the motion does. What it yields is a *timescale* — where the
-  population leaves its launch area — not an exponent. `audit_msd.py` still runs, because
-  measuring the size of that contamination is what licenses withdrawing it — including, per
-  component, whether that contamination is itself isotropic (`sec:transport-axisroutes`).
-- **The filtered variation never estimates a drift.** A finite difference of order $p$
-  annihilates any polynomial of degree $p-1$ identically. The order scan is the useful
-  part: $\hat H_1 - \hat H_2$ is how much of the apparent exponent was course, and
-  $\hat H_2 = \hat H_3$ certifies nothing polynomial is left.
-- **The propagator quantiles are the independent check.** The median absolute increment is
-  an order statistic, not a moment, so a heavy tail does not move it; and reading the same
-  slope at the 25th, 50th, 75th and 90th percentiles *tests* self-similarity instead of
-  assuming it. Nothing else here can.
-
-Everything above the first bullet works on **within-segment increments**, never on
-displacement from take-off.
-
-## The lag grids and the fit windows
-
-Stated once here; each is a constant at the top of the script named.
-
-| grid | range | points | set by |
-|---|---|---|---|
-| MSD / audit | 1 s – 43 200 s | 90, geometric | `audit_msd.py`, `measure_msd.py` |
-| filtered variation | 60 s – 20 000 s | 36, geometric | `measure_variations.py` |
-| moment spectrum, VACF | 60 s – 8000 s | 24, geometric | `measure_shape.py` |
-| propagator histograms | 30 s – 4000 s | 20, geometric | `measure_propagator.py` |
-| circling VACF | 1 s – 60 s, every integer lag | 60 | `measure_circling.py` |
-| edge effect | 1 s – 600 s | 40, geometric | `measure_edge_effect.py` |
-
-**The fit window is 60–2000 s** — `FIT_RANGE_S` in `generate_transport_figure.py` and
-`generate_propagator_figure.py`, `TRANSPORT_RANGE_S` in `generate_shape_figure.py`. Both
-ends are physical, not statistical, and neither widens with more data:
-
-- **Below 60 s** the trajectory has been smoothed over a window whose floor is five
-  samples and which therefore scales with the logger's cadence, so nothing below it is
-  read as motion.
-- **Above 2000 s** the declared task governs the displacement — the local slope separates
-  closed from open courses — and a soaring day ends, so the upper cutoff follows from the
-  system rather than the method.
-
-A quantity sensitive to the far tail is *quoted* over this window and *drawn* beyond it, so
-the reader sees what was excluded.
-
-The MSD grid runs far wider than the fit window on purpose: `coverage_limited_range` in
-`observables.transport` narrows it per discipline from the number of flights still
-contributing at each lag, so a fit is never made on lags carried by a handful of records.
-
-## Why the passes are separate from the reductions
-
-A pass streams `fixes.parquet` end to end. The paraglider table is 1.36 × 10⁹ rows and
-43.4 GB, so a pass costs minutes to hours; a reduction reads a few tens of megabytes and
-costs seconds. Keeping them apart is what makes a **stratification a row selection rather
-than another traversal** — `generate_transport_figure.py` splits by cadence, wing class,
-season and declared task without touching the fix table, because `measure_variations.py`
-kept one curve per flight per filter order rather than an average over flights.
-
-The same split is why `generate_prelim_figure.py` can produce a stratified MSD from
-`audit_msd.py`'s per-flight positions instead of a second 43 GB scan.
-
-Where the intermediate arrays go, what each one holds, and how big it is: see
-[The scripts](scripts.md#where-the-intermediate-arrays-go). They are analysis products,
-not thesis products — reproducible by re-running the pass, and deliberately outside the
-repository.
-
-## The nulls, and what each one rules out
-
-`observables.synthetic` generates trajectories whose transport is known in advance, on a
-uniform grid in metres shaped `(n, 2)`, so a synthetic flight reaches an estimator through
-exactly the code path a real one takes.
-
-| process | what it tests | pinned by |
+| Product | Source | Scope |
 |---|---|---|
-| `brownian` | the null: an estimator that does not return $\alpha = 1$ here is wrong, and everything else it says is uninterpretable | `test_synthetic.py` |
-| `fractional_brownian` | correlated Gaussian motion at a set exponent — the competing hypothesis to a Lévy walk, and the process the detrending bias is measured against | `test_synthetic.py`, `test_variations.py` |
-| `levy_walk` | the hypothesis the thesis was framed around: the process whose moment spectrum bends and whose front is ballistic | `test_synthetic.py`, `test_moments.py` |
-| `persistent_walk` | the confound: superposed over a spread of persistence times it manufactures a power law out of ordinary diffusion | `test_synthetic.py`, `test_propagator.py`, `test_variations.py` |
-| `with_drift` | that a residual course is what turns an ensemble estimator ballistic | `test_variations.py` |
+| `msd.pdf` | archive `msd_curve.csv` and `generate_msd_figure.py` | descriptive launch average and equal-segment time average |
+| `kinematic_isotropy_terrain.pdf` | archive regional kinematics cache | paired uncentred E/N second-moment ratios at 10–10,000 s since launch |
+| `ch3_scaling.pdf` | `generate_revision_diagnostics.py` | equal-flight V1/V2, local slopes, open/closed tasks, support |
+| `ch3_quantiles.pdf`, `ch3_quantile_control.pdf` | same fresh subset | quantiles; fixed flight, weight and origin controls |
+| `ch3_models.pdf` | same fresh subset | pooled moment spectrum and centred Mardia excess |
+| `ch3_velocity_memory.pdf` | same fresh subset | positive coarse VACF on log–log axes, with signed companion panels |
+| `ch3_pca.pdf` | same fresh subset | centred regional displacement covariance, eigenvalue ratio and axis |
+| `ch3_duration.pdf`, `ch3_duration_equipment.pdf`, `ch3_duration_composition.pdf` | full archive identified segment TAMSDs | equal-flight duration cohorts, EN strata and fixed class proportions |
+| `duration_equipment.tex`, `_table.tex`, `.json` | same archive duration report | slopes, support, cohort counts and mixture controls |
+| `ch3_revision.tex`, `.json` | same fresh subset | generated values, flight IDs, source metadata, support and code provenance |
 
-`regimes.spurious_breakpoints` is the same idea one level up: it runs the breakpoint
-selection on surrogates built from a single power law plus noise and reports how often it
-manufactures a break. Without that number, finding a knee establishes nothing. The noise
-model comes from the estimator's *sampling* error — a clustered bootstrap over flights —
-and never from the residuals about a straight line, which would be circular whenever the
-curve is genuinely bent.
+The complete rebuild regenerates these products from the current verified cleaning
+snapshot. Its manifest records source and table identities. Earlier generated products
+must not be treated as current merely because their filenames match. See the
+[rebuild guide](rebuilding.md).
 
-## The uncertainty
+The equipment comparison is `kinematic_isotropy_terrain_level.pdf`: beginners (EN A/B)
+and experts (EN C/D/CCC) within each named take-off region. These two groups are
+operational proxies based on the experience required by the wing, not independent
+measurements of individual pilot skill. Experienced pilots can fly A/B wings, and a
+group difference includes equipment effects. Tandem/non-certified and unknown classes
+are excluded. All kinematic
+curves use observed paired component ratios with pointwise 10–90% site/date bootstrap
+bands; 30-flight and 10-cluster display minima do not guarantee precision. Legend
+counts give minimum and maximum flight support along the displayed curve. Machine-readable
+ratios, coverage and counts of contributing flights with missing cluster keys are saved
+in `kinematic_isotropy.json`. Missing site/date keys become singleton groups; those bands
+cannot account for shared exposure that the metadata do not identify.
 
-`stats.bootstrap` exists because the archive holds 155 788 paraglider flights and nothing
-like 155 788 independent measurements of the atmosphere. Two wings launched from one site
-on one day flew the same air: the same convective strength, the same wind, the same cloud
-base, often the same thermals in the same order.
+## The 10–10,000 second measurement
 
-- **The resampling unit is the cluster, not the flight.** Resampling flights returns an
-  error bar one to two orders of magnitude too small — the difference between an exponent
-  that discriminates between models and one that does not.
-- **Which cluster is a measurement, not a preference.** `intraclass_correlation` reports
-  how much of the variance sits between groups at each candidate level — flight, day,
-  site, day and site together, pilot, season — and the level to resample at is the coarsest
-  one that still carries most of it.
-- **A curve of $n$ lags is not $n$ independent points.** Every lag averages the same
-  flights. `sampling_covariance` supplies the lag-to-lag covariance, and
-  `regimes.effective_dof` converts it into the number of degrees of freedom a fit may
-  actually spend — which is what makes "two regimes" a measurement rather than an artefact
-  of counting.
+The new reporter reads 24 seeded paraglider row groups and 12 hang-glider groups,
+selecting at most 40 complete flights per group and their longest continuous segments.
+It admits native cadence at most 10 s and places positions on a 10 s grid. Row-group
+boundary exclusion, caps and longest-segment selection can alter the population. It is
+an exploratory subset, not a probability-weighted archive estimate. The manifest records
+the exact selection and source metadata.
 
-Both the clustered and the naive error are emitted (`\StatVar*Err` beside
-`\StatVar*ErrNaive`) so the gap between them stays visible in the record rather than being
-asserted in the prose.
+Fits use actual supported lags from 10 to 10,000 s. The lower end can retain smoothing
+influence; the upper end has fewer contributing flights and windows. A fixed cohort of
+segments at least 20,000 s long controls changing flight membership for both V1 and V2.
+Its duration selection remains a limitation. No calibrated confidence intervals are
+claimed for the new subset plots.
 
-## What the measurement returns
+## Estimands and interpretation
 
-Read against the code rather than summarised from the chapter, the ensemble over the fit
-window is:
+- **Archive TAMSD:** average every admissible starting fix within a segment, then give
+  each admitted segment equal weight; segments with fewer than eight fixes are omitted.
+  Several segments from one flight contribute separately.
+  Requested lags are rounded to each segment's native grid; exact values may differ by
+  half that grid step. The archive count and percentile band concern segments.
+- **V1/V2:** average within each selected flight, then equally across flights. V2 is
+  exactly invariant to constant velocity. Under finite-variance stationary-increment
+  self-similarity with positive variance scale and `0 < H < 1`, it scales as `tau^(2H)`.
+  At `H = 1` its prefactor vanishes, leaving no logarithmic slope to fit. A generic smooth
+  curved trajectory does not satisfy that interpretation. Differences between fitted exponents are not additive
+  drift contributions.
+- **Quantiles and moments:** pool non-overlapping plain-increment windows, weighting
+  longer segments by their window count. This differs from equal-flight V1. Under a
+  common scale family, every quantile exponent agrees and quantile ratios remain fixed.
+  The exponent ordering must be checked against the selected fit interval; it is not assumed in advance.
+- **Mardia excess:** centre the vectors and use their full covariance. Nonzero excess
+  challenges a single Gaussian law but may arise from conditional Gaussian mixtures.
+  A trace-based mixture subtraction is not a within-flight kurtosis identity.
+- **Archive kinematics:** position, velocity and acceleration curves use raw component
+  second moments, not variances: `E[u^2] = Var(u) + E[u]^2`. All use elapsed time since
+  launch, not within-flight lag. Differentiation does not separate wind from terrain.
+- **Regional PCA:** a rotation does not change radial distances, remove wind or eliminate
+  temporal dependence. Equal covariance eigenvalues alone do not establish isotropy.
+  Whitening changes the physical metric and is only a diagnostic transformation.
+- **Velocity memory:** velocities averaged over 10, 60 and 300 s, centred per segment;
+  normalised segment correlations are equally averaged. Retain signs, require at least
+  20 flights and show only separation at least the averaging width and at most
+  `h * floor(n_velocity_blocks / 4)`. The mean of normalised correlations differs from
+  a normalised covariance pooled over flights.
+  A finite observed curve cannot establish non-integrability at infinity.
+- **Duration:** combine all eligible segment TAMSDs within each flight using their
+  admissible-origin counts, then give flights equal weight. Legend counts are distinct
+  flights. Groups are nested. Their amplitude differences do not justify claiming independence
+  from total duration; the figure does not measure an ergodic limit.
 
-- **Super-diffusive**, at an exponent the two disciplines agree on within their
-  uncertainties — which is not guaranteed, since they differ in speed and in glide ratio.
-- **Monofractal.** The moment spectrum $\nu(q)$ is straight across the range of $q$ read:
-  no Lévy knee, so it is **not the Lévy walk this thesis was framed around**.
-- **Not Gaussian** either — but the non-Gaussianity is a *between-flight amplitude spread*,
-  not a heavy tail within one record. Against a matched Gaussian null both disciplines sit
-  *below* it, which is sub-Gaussian per flight. One exponent governing every moment states
-  how the increment distribution scales and nothing about its shape.
-- **Directionally persistent**, with a velocity memory whose tail is non-integrable — which
-  is what reconciles a fast-decaying $C(\tau)$ with correlated increments.
-- **Never isotropic**, in amplitude *and* in exponent: $H$ differs between the east and
-  north components, on the quantile route and, in the same direction, on the time average
-  and both filtered-variation orders (`sec:transport-axisroutes`).
+## Model comparison
 
-Two cautions the code makes explicit and a reader of the figures might not:
+The chapter confronts explicit predictions of homogeneous Brownian motion, constant
+drift plus Brownian motion, homogeneous fractional Brownian motion, exponential velocity
+persistence and the standard unbiased renewal Lévy walk in its superdiffusive regime.
+For the latter, with duration-density tail `t^(-1-beta)` and `1<beta<2`, the asymptotic
+moment spectrum has branches `q/beta` below `q=beta` and `q+1-beta` above it.
+A near-linear empirical spectrum challenges that benchmark, not every Lévy-walk variant.
+Candidate-specific finite-record simulations remain necessary for formal rejection.
 
-!!! warning "The ensemble MSD is a crossover, not a power law"
-    Its shape is set by the geometry of the launch site — displacement from take-off
-    crosses over where the population leaves its launch area. The exponent the thesis
-    reports comes from the within-segment filtered variation, and the ensemble curve is
-    kept as the measurement of that contamination.
-
-!!! warning "Scaling inside the window is approximate"
-    $H$ falls from the bulk of the increment distribution to its flank, and the exponent
-    moves when the fitted range is halved by more than the sampling error. The window
-    carries a budget for one exponent, not for a count of regimes.
-
-## What is deferred to segmentation
-
-Chapter 4 inherits a class of transport and five constraints on how it may be decomposed —
-they are stated in `sec:transport-verdict` and are the reason several obvious analyses are
-not in this repository yet. The one worth repeating here, because it is the easiest to
-assume by accident:
-
-**Correlations between legs are untested, not established.** Whether successive glide
-directions, leg lengths, waiting times, or the cross terms between them are correlated can
-only be tested once the segmentation exists. Nothing in this code says that a glide points
-at the next thermal, and no figure or docstring should be written as though it did.
-
-## Reproducing it
-
-Steps 3–16 of `scripts/regenerate.sh`, which is also the only correct order — its header
-says why for each. Both data roots must be exported whichever discipline is asked for,
-because the generated `.tex` files carry both and a partial one breaks the build. Set
-`AUDIT_DIR` to somewhere that survives a reboot — the default is a temp directory that
-does not:
-
-```bash
-export SOARING_PARA_DATA_ROOT=/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc
-export SOARING_DELTA_DATA_ROOT=/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc
-export AUDIT_DIR=/Volumes/SSD_DISANTE/derived-audit
-
-scripts/regenerate.sh --no-build      # everything, stopping before latexmk
-```
-
-Every pass below writes one `<name>_<discipline>.npz` (or `.parquet`) per discipline into
-`AUDIT_DIR` and every reduction only reads it, so once a pass has run, changing a fit
-range, a bootstrap count or a figure's styling and re-running only its reduction costs
-seconds rather than the pass again. Nothing here skips a pass automatically because its
-output already exists — re-running one you do not need is a choice, not a requirement,
-but skipping one you do need silently reads a stale array, so re-run a pass explicitly
-whenever the *computation* changes, not only when its output is missing.
-
-To re-run one measurement, run its pass and then its reduction, in that order, with a
-shared `--out` / `--audit-dir` — pointed at the persistent directory, not the temp-dir
-default, unless the run is genuinely a one-off:
+## Reproduction
 
 ```bash
-AUDIT_DIR=/Volumes/SSD_DISANTE/derived-audit
-
-uv run python scripts/reporting/ch3_global_transport/measure_variations.py --out "$AUDIT_DIR"
-uv run python scripts/reporting/ch3_global_transport/generate_transport_figure.py --audit-dir "$AUDIT_DIR"
-```
-
-`generate_msd_figure.py` (Sec. 3.1's opening measurement, and Sec. 3.5's ensemble/
-time-averaged rows) is the one estimator with no dedicated pass name of its own to
-remember: it is `measure_msd.py` that streams the archive, this script that reduces what
-it wrote.
-
-```bash
-uv run python scripts/reporting/ch3_global_transport/measure_msd.py --out "$AUDIT_DIR"
-uv run python scripts/reporting/ch3_global_transport/generate_msd_figure.py --audit-dir "$AUDIT_DIR"
-```
-
-Every generator that reaches one discipline of two **refuses to write** rather than
-emitting a half file: a truncated `.tex` makes the thesis fail to build on the macros the
-absent discipline owns, and a truncated *figure* fails silently, losing a curve while the
-build succeeds. The refusal names the cause — an unset environment variable, an unmounted
-disk, a missing pass — because those have different fixes. `--allow-partial` overrides it
-when a one-discipline run is what you want.
-
-Both `configs/*_download.yaml` carry a real `data_root`, so a run on the author's machine
-needs no environment at all; the variables above override it anywhere else. A config left
-on a placeholder is one of the causes the refusal names, since it is indistinguishable from
-a mounted disk until it is looked for.
-
-Finally, and before any build:
-
-```bash
+uv run python scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py --audit-dir /Volumes/SSD_DISANTE/derived-audit
+uv run python scripts/reporting/ch3_global_transport/generate_scaling_schematics.py
 uv run python scripts/reporting/checks/check_generated_macros.py
 ```
 
-Every macro the thesis quotes must exist by then. An undefined one inside `\SI{}` is a
-*fatal* LaTeX error diagnosed from a symptom that names the wrong line, which is why the
-check runs first and its failure is the useful message. Since the reporting scripts moved
-onto `soaring.reporting.write_macros`, a name LaTeX cannot parse is refused at the point
-the generator writes it, rather than surviving to this check.
+The first command accesses the external source snapshot; use its manifest to reproduce
+an exact selection. `--reuse` reuses the subset calculation cache only under the reporter's
+source and estimator checks and recalculates summaries and figures. Its versioned
+cache now fingerprints fixes, metadata, task inputs, selected sampling parameters,
+measurement code, lags, moments and averaging widths. A source or estimator change
+requires rerunning without `--reuse`; changes confined to rendering do not. The second command generates
+analytical schematics, not synthetic flight-data evidence.
+
+Additional current figures can be redrawn from retained caches with:
+
+```bash
+uv run python scripts/reporting/ch3_global_transport/generate_msd_figure.py --redraw
+uv run python scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py --audit-dir /Volumes/SSD_DISANTE/derived-audit --terrain-only
+```
+
+These redraws do not update source trajectories or recompute the archive MSD. The legacy
+FFT MSD now subtracts the coordinate origin before evaluating squared terms and sets
+zero lag exactly to zero; each new archive measurement incorporates this numerical fix.
+Its estimator remains an equal-segment average.
+
+The former duplicate variation, shape and propagator reporting paths have been retired.
+The current wide-range reporter reads task declarations directly from the catalogue;
+it does not require an obsolete observable cache. Reusable estimators and their
+regression tests remain in the library. The current decoder provenance is specified
+in the [phase guide](flight-phase-segmentation.md).
+
+## Duration and equipment controls
+
+`measure_msd.py` writes a one-to-one `msd_segments_<slug>.parquet` identity table for
+the stored segment TAMSD rows. `generate_duration_equipment.py` combines segment
+curves with their admissible-origin counts within each flight, then gives contributing
+flights equal weight. Eligible segments have at least eight fixes and native cadence
+at most 10 s; retained
+flight duration sums all cleaned segment spans and excludes acquisition gaps.
+
+All-duration curves cover supported lags from 10 to 10,000 s. Nested 1, 2 and 4 hour
+cohorts stop at half their threshold, avoiding the part where the reference population
+is forced to become the same by lag eligibility. The two experience proxies are
+beginners (EN A/B) and experts (EN C/D/CCC), using the same mapping and colours as
+the anisotropy figures. Neither label is an individually measured skill category. Every
+curve requires 30 flights per lag, with flight counts beside its legend label.
+
+Unconditional equipment slopes use a common supported range within 10–10,000 s.
+The eight group/duration cells use a common range ending no later than 1,800 s;
+these secondary slopes cannot be compared as if fitted over the full main interval.
+The JSON and TeX report the actual lag endpoints and logarithmic residuals. These are
+descriptive fits, without calibrated sampling confidence intervals.
+
+Fixed composition uses the all-duration proportions of the two experience proxies at
+every lag and duration threshold. Both adjusted and unadjusted ratios exclude unknown
+or other equipment. The comparison can describe a mixture contribution, but cannot
+identify pilot skill, weather effects or independence from duration.
+
+## Fixed-population quantiles
+
+All percentiles at a given lag refer to one distribution. They are not classes of
+flights, and a flight can change its rank without changing the sampling population.
+The quantile reporter compares the available pooled sample with (1) fixed segments
+lasting at least 20,000 s but pooled windows, (2) the same flights with equal flight
+weights, and (3) the same flights and every 10-s starting time eligible at the maximum
+10,000-s lag. The last convention keeps the identities, origins and weights unchanged
+at every lag. Within a flight, each origin has equal weight; each flight then has the
+same total weight. These windows overlap and must not be treated as independent.
+
+Quantiles use the inverse weighted empirical CDF, without interpolation. Comparison
+slopes use identical positive supported lags across all conventions, coordinates and
+percentiles. Counts, fixed-flight indexes into the saved sample, origin counts, actual
+fit lags and slopes are recorded in `ch3_revision.json`. The selected long flights
+are not representative of shorter flights. Persistence of unequal quantile slopes
+after these controls is descriptive shape change in this population; nonstationarity,
+finite trajectories and uncertainty still preclude a general model-class rejection.

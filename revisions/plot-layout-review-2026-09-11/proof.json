@@ -1,0 +1,83 @@
+{
+  "after_numerical_source_sha256": "fd318ff7bfca8ad5814fcd208edec06a5d13ccc4bed4b23614629b94257c36ec",
+  "automatic_axis_limit_roundoff": [
+    {
+      "after": [
+        0.6110913677260545,
+        1.0185194586797115
+      ],
+      "axis": 0,
+      "before": [
+        0.6110913677260545,
+        1.0185194586797117
+      ],
+      "figure": "kinematic_isotropy_level.pdf",
+      "key": "ylim"
+    }
+  ],
+  "before_numerical_source_sha256": "18e4c6022a43ef01491df2af847cd1e7a0594872612bcda94d6fc6f2120b7e82",
+  "created_utc": "2026-09-11T06:25:11.155384+00:00",
+  "files": {
+    "scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py": {
+      "after_sha256": "d6c613777bd240891614165b6c634b52bfc744b5b9ab334e62ab03fd404305a4",
+      "before_sha256": "79816cad6d06525089e1254b96c1b3c8b40280650eef54999dfec082852f7fba",
+      "changed_drawing_functions": [
+        "draw_by_discipline",
+        "draw_by_terrain",
+        "draw_by_level"
+      ],
+      "unchanged_numerical_ast_sha256": "e75a7a451580cf317ebd3dc99660943821ec60364cfb85d4ac0e90cef6ab1bb6"
+    },
+    "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py": {
+      "after_sha256": "f44403f8f2892e31cd163930d77393e0196f2ce4f54a2a02bfc5843bf0f94768",
+      "before_sha256": "5a468c0b1ac58651bdbf906128c05f966b24151c71664a6167ba30dce1d77259",
+      "changed_drawing_functions": [
+        "draw"
+      ],
+      "unchanged_numerical_ast_sha256": "3614d082065a87d355525a2973a59f715aad9f9538520e4cc5404e0f7c89fff7"
+    }
+  },
+  "kind": "presentation-only-layout-review",
+  "numeric_outputs": "All numerical arrays, JSON reports, tables and macros retain their bytes. The code_sha256 in ch3_revision.json records its numerical execution; this proof records the subsequent drawing-only changes.",
+  "outputs": {
+    "ch3_models.pdf": {
+      "after_sha256": "d53d804bd63f19c5843d2e96b7027149f20556baa7d07a0a8efa2b70fa9427b6",
+      "before_sha256": "92170699ef8ea18e0185cbeeb252a61ae3a31beaa924842c75e3c615af66de8a"
+    },
+    "ch3_pca.pdf": {
+      "after_sha256": "5c9835e6f35d46273c3e6f3ccebe5ffc425fb46aab4f8fcbbe80811068100312",
+      "before_sha256": "404bd9f031935237433d5c3e64a8327394affe69e8ed35abe3e6ae1abf4699ea"
+    },
+    "ch3_quantile_control.pdf": {
+      "after_sha256": "eabaa9de493eb2f1d356b68bd04778d5a5b7cbd1e178205f3b96a20c7c6eda9f",
+      "before_sha256": "9176a78253a9afd91b74ebfb816bd9f465a6b2ca4eefa656209f2ffe33fab4e0"
+    },
+    "ch3_quantiles.pdf": {
+      "after_sha256": "10c63bbc53b27786fe17747148741c074c57bb438ce49135caadcaf417f165dd",
+      "before_sha256": "567611a59a1bbde00ea390e60694ecdb1f821b254b654d7c42dc328556b1f89d"
+    },
+    "ch3_scaling.pdf": {
+      "after_sha256": "82ac99efa775b13663ad77f922253817f3bdabf7a946094d61d33e2a64675c18",
+      "before_sha256": "7ad82fe1abf05e764d5eb9482fee4d3682620e7626ad1b88907d9bdb1b5e0316"
+    },
+    "ch3_velocity_memory.pdf": {
+      "after_sha256": "49c6690989a3cdb754d5f1b0150695b0efc801e683724f66649e1cb3f5134faa",
+      "before_sha256": "1a9dd8b430503118c68439364ec50f4a657eb24375f580946a99d508b46dbe2b"
+    },
+    "kinematic_isotropy_discipline.pdf": {
+      "after_sha256": "993d8ccd6f99647d3bb6ca5e79e7f9ab6682080120ffd3f48ea4e35025258bb5",
+      "before_sha256": "c4a02385c41412f7a1ce5a01931bb04aee5ed6a7e8b9d9ae82a4e8eb3a665ef7"
+    },
+    "kinematic_isotropy_level.pdf": {
+      "after_sha256": "6f74a2560e9ad63dc1c16c09faaed6301408ebbee321f68b285f5816aec3a98a",
+      "before_sha256": "cc2dffacd5dedf1fa563c81b9c988993a64f0623b9047dd4e06a00a99d5fff1d"
+    },
+    "kinematic_isotropy_terrain.pdf": {
+      "after_sha256": "2d86e25a7e7b8a93ac612532a92394a6b9b0de3a138d959d9235d21c15492a38",
+      "before_sha256": "1afebbc111312f669116e9fb32f27b89893fece28c9ade1ba59536a3bbf7ee5e"
+    }
+  },
+  "run_id": "20260910T221820Z-05d36ab4",
+  "scope": "Exact identity of data-space curves, bands, ellipse parameters, styles and labels; automatic axis limits agree within 1e-12 (one 2e-16 difference). Baseline PDFs reproduce current execution byte for byte. Numerical source AST is unchanged outside the listed drawing functions. Changes: three wide stacked panels for kinematics, hide repeated upper-row x labels, and include full label bounds in diagnostic PDFs.",
+  "unchanged_plot_data_sha256": "3a8d1a889e4b1a3adb759890f0bb8c49bac216c5e8cdc610fc8982c1a869a3b5"
+}
