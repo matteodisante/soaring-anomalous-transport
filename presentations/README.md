@@ -1,7 +1,9 @@
 # Presentazioni dei capitoli 2 e 3
 
 Queste presentazioni raccontano la tesi revisionata il 12 settembre 2026, con
-cleaning 2.3.0 e risultati del run completo `20260912T133040Z-073601cb`.
+cleaning 2.3.0 e risultati del run completo `20260912T133040Z-073601cb`, con
+PCA regionale calcolata a 10, 100, 1000 e 10.000 s e documentata nella revisione
+`regional-pca-lags-2026-09-12`.
 Sono capitoli da discutere con i supervisors, senza durata prestabilita.
 Le domande scientifiche accompagnano i risultati; i confronti tra versioni
 precedenti della pipeline non fanno parte delle slide.
@@ -39,7 +41,8 @@ non attribuisce causalmente le differenze a vento o abilità.
 
 La preparazione richiede prima una revisione completata della tesi. Il
 [source manifest](source-manifest.json) registra hash di tesi, sorgenti numerici,
-input e cleaning. Tutti i dati di risultato provengono da quel run. I due report
+input e cleaning. Il registro collega il run completo all'aggiornamento mirato
+della PCA; gli altri risultati sono invariati. I due report
 completi sono conservati in `data/*.json.gz`: compressione senza perdita, nessun
 sottocampionamento o troncamento del report. I manifest delle figure distinguono
 copie, ritagli vettoriali e ridisegno degli array già calcolati.
@@ -53,7 +56,7 @@ python3 presentations/build.py all --notes
 Per rigenerare gli asset dal manoscritto revisionato nella stessa checkout:
 
 ```bash
-uv run --no-project --with pypdf python presentations/prepare_assets.py
+uv run --no-project --with pypdf python presentations/prepare_assets.py --pca-update revisions/regional-pca-lags-2026-09-12
 uv run --no-project --with pypdf python presentations/crop_chapter_panels.py
 .venv/bin/python presentations/render_figures.py
 .venv/bin/python presentations/render_chapter3_panels.py

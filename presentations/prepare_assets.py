@@ -73,6 +73,8 @@ def main() -> None:
     """Require the completed manuscript review before freezing any slide results."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run", type=Path, default=REPO / "revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T133040Z-073601cb")
+    parser.add_argument("--pca-update", type=Path,
+                        help="reviewed focused PCA update layered on the completed full run")
     args = parser.parse_args()
     run = args.run.resolve()
     review_path = run / "review-inputs/manuscript-review.json"
@@ -80,6 +82,28 @@ def main() -> None:
     release = json.loads((run / "review-inputs/manifest.json").read_text())
     if release["status"] != "complete" or any(s["status"] != "complete" for s in release["stages"]):
         raise ValueError("All numerical and thesis stages must be complete")
+    baseline_run_id = release["run_id"]
+    pca_update = None
+    if args.pca_update:
+        update_dir = args.pca_update.resolve()
+        update_path = update_dir / "numerical-update.json"
+        pca_update = json.loads(update_path.read_text())
+        review_path = update_dir / "manuscript-review.json"
+        review = json.loads(review_path.read_text())
+        if (pca_update["status"] != "complete" or review["status"] != "complete"
+                or pca_update["baseline_run_id"] != baseline_run_id
+                or pca_update["baseline_manifest_sha256"] != digest(run / "review-inputs/manifest.json")
+                or review["numerical_update_sha256"] != digest(update_path)
+                or set(pca_update["outputs"]) != {"ch3_pca.pdf", "ch3_revision.tex", "ch3_revision.json"}
+                or not pca_update["all_non_pca_report_values_unchanged"]):
+            raise ValueError("The focused PCA update is not linked to this completed run and review")
+        release["outputs"].update(pca_update["outputs"])
+        release["run_id"] = pca_update["run_id"]
+        if review["generated_outputs"] != {n: r["sha256"] for n, r in release["outputs"].items()}:
+            raise ValueError("The manuscript review refers to different generated inputs")
+        for name, expected in review["source_files"].items():
+            if digest(REPO / name) != expected:
+                raise ValueError(f"Reviewed source changed: {name}")
     if digest(REPO / "thesis/main.pdf") != review["pdf_sha256"]:
         raise ValueError("The canonical thesis is not the reviewed PDF")
     assets, data = ROOT / "assets", ROOT / "data"
@@ -88,6 +112,7 @@ def main() -> None:
     manifest = {
         "created_utc": datetime.now(UTC).isoformat(),
         "numerical_run_id": release["run_id"],
+        "baseline_numerical_run_id": baseline_run_id,
         "cleaning_version": release["cleaning"]["pipeline_version"],
         "cleaning_source_sha256": release["cleaning"]["source_sha256"],
         "reviewed_thesis": review,
@@ -113,6 +138,9 @@ def main() -> None:
     archived = json.loads((archive / "manifest.json").read_text())
     for name, record in archived["reports"].items():
         source = archive / record["archive_name"]
+        if pca_update and name == "ch3_revision.json":
+            record = pca_update["compressed_report"]
+            source = update_dir / record["archive_name"]
         raw = gzip.decompress(source.read_bytes())
         if hashlib.sha256(raw).hexdigest() != release["outputs"][name]["sha256"] or digest(source) != record["gzip_sha256"]:
             raise ValueError(f"The complete compressed report is not verified: {name}")
@@ -188,6 +216,9 @@ def main() -> None:
     ]:
         manifest["inputs"][name] = digest(REPO / name)
     manifest["script_sha256"] = digest(Path(__file__))
+    if pca_update:
+        manifest["numerical_update_sha256"] = digest(update_path)
+        manifest["numerical_lineage"] = "Regional PCA from the focused exact-lag update; all other measurements from the completed full-archive run."
     (ROOT / "source-manifest.json").write_text(
         json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
     )

@@ -53,7 +53,6 @@ from soaring.analysis.observables.archive_diagnostics import (  # noqa: E402
     collect_archive,
     load_measurement,
     measure_archive,
-    region_geometry,
     save_measurement,
 )
 from soaring.analysis.observables.global_diagnostics import (  # noqa: E402
@@ -67,7 +66,12 @@ from soaring.analysis.observables.global_diagnostics import (  # noqa: E402
 from soaring.analysis.observables.persistence import (  # noqa: E402
     velocity_autocorrelation,
 )
+from soaring.analysis.observables.regional_pca import (  # noqa: E402
+    PCA_LAGS_S,
+    regional_pca,
+)
 from soaring.reporting import DISCIPLINES, write_macros  # noqa: E402
+from soaring.reporting.regional_pca import pca_figure, pca_macros  # noqa: E402
 
 OUT = ROOT / "thesis" / "generated"
 LAGS = np.unique(np.round(np.geomspace(1, 1000, 35)).astype(int)) * 10
@@ -488,42 +492,12 @@ def summarize(m):
             "n_last": int(np.isfinite(v[select, 0, -1]).sum()),
             "median_closure": float(f.loc[select, "closure_ratio"].median()),
         }
-    for name in REGIONS:
-        for target in (10, 100, 1000, 10000):
-            j = int(np.argmin(abs(LAGS - target)))
-            who = m["owners"][j]
-            if "_frames" in m:
-                n_flights, geometry = region_geometry(
-                    m["vectors"][j], who, f.region.to_numpy() == name
-                )
-            else:
-                selection = f.region.to_numpy()[who] == name
-                n_flights = len(np.unique(who[selection]))
-                geometry = (
-                    covariance_geometry(m["vectors"][j][selection])
-                    if n_flights >= 8
-                    else {}
-                )
-            if n_flights < 8:
-                continue
-            if geometry:
-                out["pca"].append(
-                    {
-                        "region": name,
-                        "lag_s": int(LAGS[j]),
-                        "n_flights": n_flights,
-                        **{
-                            k: geometry[k]
-                            for k in (
-                                "ratio",
-                                "angle_deg",
-                                "correlation",
-                                "covariance",
-                                "mean",
-                            )
-                        },
-                    }
-                )
+    if "_frames" not in m:
+        raise ValueError(
+            "Exact regional PCA requires coordinates; "
+            "rerun old sample caches without --reuse"
+        )
+    out["pca"] = regional_pca(m["_frames"], REGIONS)
     for scale in SCALES:
         index = min(600 // scale, len(m["coarse"][scale]) - 1)
         out[f"vacf_{scale}s_at_600s"] = float(m["coarse"][scale][index])
@@ -534,7 +508,6 @@ def draw(measured, summaries):
     """Render at thesis text width with the shared scientific figure style."""
     import matplotlib.pyplot as plt
     from matplotlib.lines import Line2D
-    from matplotlib.patches import Ellipse
 
     paper_style()
     plt.rcParams.update(
@@ -814,65 +787,7 @@ def draw(measured, summaries):
         )
     finish(fig, "ch3_velocity_memory.pdf")
 
-    fig, axes = plt.subplots(3, 2, figsize=(6.1, 7.6), layout="constrained")
-    para = summaries["paragliders"]["pca"]
-    for row, name in enumerate(REGIONS):
-        rows = [r for r in para if r["region"] == name]
-        for r, color in zip(rows, colors, strict=False):
-            values = np.linalg.eigvalsh(r["covariance"])
-            scale = np.sqrt(values.sum())
-            axes[row, 0].add_patch(
-                Ellipse(
-                    (0, 0),
-                    2 * np.sqrt(values[-1]) / scale,
-                    2 * np.sqrt(values[0]) / scale,
-                    angle=r["angle_deg"],
-                    fill=False,
-                    color=color,
-                    lw=1.6,
-                    label=f"{r['lag_s']} s; N={r['n_flights']}",
-                )
-            )
-        axes[row, 0].set(
-            title=name,
-            xlabel="East / centred RMS radius",
-            ylabel="North / centred RMS radius",
-            xlim=(-1.1, 1.1),
-            ylim=(-1.1, 1.1),
-            aspect="equal",
-            xticks=(-1, 0, 1),
-            yticks=(-1, 0, 1),
-        )
-        axes[row, 0].axhline(0, color=".8", lw=0.6)
-        axes[row, 0].axvline(0, color=".8", lw=0.6)
-        axes[row, 1].semilogx(
-            [r["lag_s"] for r in rows], [r["ratio"] for r in rows], "-", color=".45"
-        )
-        for r, color in zip(rows, colors, strict=False):
-            axes[row, 1].plot(r["lag_s"], r["ratio"], "o", color=color, ms=5)
-            axes[row, 1].annotate(
-                f"{r['angle_deg']:.0f}°",
-                (r["lag_s"], r["ratio"]),
-                xytext=(0, 8),
-                textcoords="offset points",
-                ha="center",
-                fontsize=9,
-            )
-        axes[row, 1].set(
-            xlabel=r"Lag $\tau$ [s]", ylabel=r"$\lambda_1/\lambda_2$", xlim=(6, 17000)
-        )
-        axes[row, 1].set_ylim(1, max([r["ratio"] for r in rows], default=1) * 1.35)
-        handles, labels = axes[row, 0].get_legend_handles_labels()
-        axes[row, 1].legend(
-            handles,
-            labels,
-            loc="upper center",
-            bbox_to_anchor=(0.5, -0.3),
-            frameon=False,
-            ncol=2,
-            columnspacing=0.8,
-        )
-    finish(fig, "ch3_pca.pdf")
+    finish(pca_figure(summaries["paragliders"]["pca"], REGIONS), "ch3_pca.pdf")
 
 
 def jsonable(value):
@@ -977,6 +892,7 @@ def main():
                     g, args.audit_dir, count, args.per_group, 20260910
                 )
                 measured[discipline] = measure(frames)
+                measured[discipline]["_frames"] = frames
             else:
                 directory = args.audit_dir / f"ch3-full-{g.slug}"
                 frames, provenance[discipline] = collect_archive(
@@ -1077,13 +993,6 @@ def main():
             macros[f"StatRev{g.tag}Vacf{label}AtSixHundred"] = (
                 f"{s[f'vacf_{scale}s_at_600s']:.3f}"
             )
-        for row in s["pca"]:
-            if row["lag_s"] != 1070:
-                continue
-            prefix = f"StatRev{g.tag}Pca{row['region'].replace(' ', '')}"
-            macros[prefix + "Flights"] = str(row["n_flights"])
-            macros[prefix + "Ratio"] = f"{row['ratio']:.2f}"
-            macros[prefix + "Angle"] = f"{row['angle_deg']:.1f}"
         macros[f"StatRev{g.tag}DurationReferenceLagS"] = str(
             s["duration_cohorts"][0]["reference_lag_s"]
         )
@@ -1110,6 +1019,7 @@ def main():
                 stream,
                 protocol=5,
             )
+    macros.update(pca_macros(summaries, DISCIPLINES))
     OUT.mkdir(exist_ok=True)
     draw(measured, summaries)
     write_report(
@@ -1125,6 +1035,7 @@ def main():
     report = {
         "requested_range_s": [10, 10000],
         "q": Q,
+        "regional_pca_lags_s": PCA_LAGS_S,
         "method": __doc__ if not args.sample else inspect.getdoc(sample_flights),
         "provenance": provenance,
         "measurement_contract": contract,
@@ -1135,6 +1046,8 @@ def main():
                 Path(__file__),
                 ROOT / "src/soaring/analysis/observables/global_diagnostics.py",
                 ROOT / "src/soaring/analysis/observables/persistence.py",
+                ROOT / "src/soaring/analysis/observables/regional_pca.py",
+                ROOT / "src/soaring/reporting/regional_pca.py",
             )
         },
     }

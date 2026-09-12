@@ -22,7 +22,7 @@ weighting and lag-support conventions:
 | `ch3_joint_para.pdf`, `ch3_joint_hang.pdf` | same fixed long-flight cohort | signed East–North distributions on shared bins after one scalar rescaling |
 | `ch3_models.pdf` | same full eligible archive | pooled moment spectrum and centred Mardia excess |
 | `ch3_velocity_memory.pdf` | same full eligible archive | positive coarse VACF on log–log axes, with signed companion panels |
-| `ch3_pca.pdf` | same full eligible archive | centred regional displacement covariance, eigenvalue ratio and axis |
+| `ch3_pca.pdf` | same full eligible archive | centred regional displacement covariance, eigenvalue ratio and axis at exactly 10, 100, 1000 and 10,000 s |
 | `ch3_duration.pdf`, `ch3_duration_equipment.pdf`, `ch3_duration_composition.pdf` | full archive identified segment TAMSDs | equal-flight duration cohorts, EN strata and fixed class proportions |
 | `duration_equipment.tex`, `_table.tex`, `.json` | same archive duration report | slopes, support, cohort counts and mixture controls |
 | `ch3_revision.tex`, `.json` | same full eligible archive | generated values, flight IDs, source metadata, support and code provenance |
@@ -31,6 +31,21 @@ The complete rebuild regenerates these products from the current verified cleani
 snapshot. Its manifest records source and table identities. Earlier generated products
 must not be treated as current merely because their filenames match. See the
 [rebuild guide](rebuilding.md).
+
+Regional PCA evaluates the four decade lags directly from the existing 10-s
+coordinates. It does not round them onto the geometric lag grid used for the
+other diagnostics. All supported, nonoverlapping origins within each segment
+are pooled with equal origin weight; increments cannot cross a segment boundary.
+All eligible flights contribute at each lag where they have support. The eight-flight
+display minimum is not a precision guarantee, and changing flight support can
+contribute to changes in the covariance geometry. The regional table uses 1000 s;
+the duration-cohort diagnostic retains its separate reference on its own lag grid.
+Every supported PCA lag has an ellipse, ratio marker, axis annotation and flight count.
+
+The focused correction and its data/source identities are recorded in
+`revisions/regional-pca-lags-2026-09-12/numerical-update.json`. It recomputes only
+regional covariances and preserves the completed cleaning and all other Chapter 3
+measurements. The original run manifests remain immutable.
 
 The equipment comparison is `kinematic_isotropy_terrain_level.pdf`: beginners (EN A/B)
 and experts (EN C/D/CCC) within each named take-off region. These two groups are

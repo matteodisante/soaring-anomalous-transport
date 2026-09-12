@@ -103,7 +103,7 @@ def main() -> None:
               "presentation_sources": {p.name: digest(p) for p in
                   sorted(ROOT.glob("*.py")) + [ROOT / "theme.tex", ROOT / "chapter2.tex", ROOT / "chapter3.tex"]},
               "scope": "Complete chapter decks use the reviewed current results. All referenced figure and numerical inputs match their manifests; full reports retain all bytes in gzip; four PDFs compile without LaTeX warnings or overfull boxes.",
-              "visual_review": "All 133 slides inspected in contact sheets; marginal, joint and regional plots checked. Long titles shortened and vertical example pairs re-laid out; revised pages and speaker-note layout inspected separately."}
+              "visual_review": "The complete 133-slide layout was reviewed at the full-run delivery. The regional PCA update was then checked on all three affected Chapter 3 slides and their speaker-note pages; four exact decade lags, full supported-flight counts and matching thesis colours were verified."}
     (ROOT / "validation.json").write_text(json.dumps(result, indent=2) + "\n")
     print(f"Verified four chapter PDFs, {len(assets)} figure assets and complete report bytes.")
 

@@ -99,6 +99,9 @@ COMPONENT_COLORS = {
 # Displacement quantiles: an ordered probability level, so an ordered ramp.
 QUANTILE_COLORS = {0.25: "#482878", 0.50: "#31688E", 0.75: "#26828E", 0.90: "#35A779"}
 
+# Regional PCA: one stable colour per physical lag, including the longest lag.
+PCA_LAG_COLORS = {10: "#482878", 100: "#31688E", 1000: "#26828E", 10000: "#35A779"}
+
 # Ordered series that are nested rather than categorical -- successive sampling
 # controls, or the parts of one stacked total. A ramp says "more of the same
 # quantity" where a categorical set would wrongly suggest unrelated groups.
@@ -118,6 +121,7 @@ PALETTE_FAMILIES = {
     "channel": CHANNEL_COLORS,
     "component": COMPONENT_COLORS,
     "quantile": QUANTILE_COLORS,
+    "pca_lag": PCA_LAG_COLORS,
     "sampling_control": dict(enumerate(CONTROL_COLORS)),
     "lag": dict(enumerate(LAG_COLORS)),
 }

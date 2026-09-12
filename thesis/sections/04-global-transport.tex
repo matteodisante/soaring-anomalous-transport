@@ -980,7 +980,11 @@ $\lambda_1/\lambda_2$ measures anisotropy of the covariance. An axis becomes poo
 determined when the eigenvalues are close. Covariances pool all supported
 baseline increment origins within each take-off box, so flights with more
 origins receive more weight. They use the eligible regional archive, independently
-of the fixed long-flight cohort. At least eight flights are required; this
+of the fixed long-flight cohort. The four lags are exactly 10, 100, 1000 and
+10000~s, evaluated directly on the 10-s coordinate grid. Increment origins are
+spaced by the lag within each segment; no increment crosses a segment boundary.
+Each lag uses every flight with supported increments, so the contributing
+population can shrink as the lag increases. At least eight flights are required; this
 display condition supplies neither an uncertainty interval nor a precision guarantee.
 
 \begin{figure}[htbp]
@@ -990,13 +994,16 @@ display condition supplies neither an uncertainty interval nor a precision guara
   centred before diagonalisation. The principal direction is an axis modulo
   $180^\circ$ and its interpretation depends on the separation of the two eigenvalues.
   Region counts and lag dependence delimit the evidence. These measurements describe
-  displacement geometry and do not identify wind. Ellipses show the 10, 90 and
-1070-s covariances after trace normalisation; the eigenvalue-ratio curve also
-includes 10000 s. Normalisation removes their amplitude differences.}
+  displacement geometry and do not identify wind. Ellipses and matching coloured
+  markers show all four lags: 10, 100, 1000 and 10000~s. Ellipses are normalised
+  by the square root of the covariance trace, removing amplitude differences.
+  Legends give contributing-flight counts at each lag; angle labels accompany
+  the eigenvalue ratios. Changes across lags can also reflect changes in this population.}
   \label{fig:regional-pca}
 \end{figure}
 
-At \SI{\StatRevParaDurationReferenceLagS}{\second}, the regional comparison is
+\noindent\begin{minipage}{\linewidth}
+At \SI{\StatRevParaPcaReferenceLagS}{\second}, the regional comparison is
 \begin{center}
 \begin{tabular}{@{}lrrr@{}}
 \toprule
@@ -1008,6 +1015,7 @@ Channel coast & \num{\StatRevParaPcaChannelCoastFlights} & \StatRevParaPcaChanne
 \bottomrule
 \end{tabular}
 \end{center}
+\end{minipage}\par\medskip
 Angles run counterclockwise from east. The Pyrenean axis lies closer to
 east--west; its eigenvalue ratio increases towards long lags as support falls,
 leaving both route geometry and selection as possible contributors. The coastal

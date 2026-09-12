@@ -9,6 +9,7 @@ import argparse
 import gzip
 import hashlib
 import json
+import sys
 from pathlib import Path
 
 import matplotlib
@@ -16,6 +17,9 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 import numpy as np
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
+from soaring.reporting.style import PCA_LAG_COLORS
 
 NAMES = {'paragliders': 'Paragliders', 'hang gliders': 'Hang gliders'}
 TAGS = {'paragliders': 'para', 'hang gliders': 'hang'}
@@ -212,7 +216,9 @@ def render(data, out):
     for region, tag in [('Alps', 'alps'), ('Pyrenees', 'pyrenees'), ('Channel Coast', 'coast')]:
         rows = [r for r in overview['results']['paragliders']['pca'] if r['region'] == region]
         fig, axs = axes()
-        for row, color in zip(rows, LAG_COLORS, strict=False):
+        fig.set_size_inches(7.6, 3.5)
+        for row in rows:
+            color = PCA_LAG_COLORS[row['lag_s']]
             covariance = np.asarray(row['covariance'])
             eigenvalues, eigenvectors = np.linalg.eigh(covariance/np.trace(covariance))
             ellipse = eigenvectors @ np.diag(np.sqrt(eigenvalues)) @ circle
@@ -226,7 +232,9 @@ def render(data, out):
         axs[1].semilogx([r['lag_s'] for r in rows], [r['ratio'] for r in rows], color='.55', zorder=0)
         axs[1].set(xlabel=r'Lag $\tau$ [s]', ylabel=r'$\lambda_1/\lambda_2$',
                    ylim=(1, max(r['ratio'] for r in rows)*1.3), xlim=(6, 17000))
-        axs[0].legend(frameon=False, fontsize=8, loc='lower left')
+        handles, labels = axs[0].get_legend_handles_labels()
+        fig.legend(handles, labels, frameon=False, fontsize=11,
+                   loc='outside lower center', ncol=2)
         save(fig, f'supervisor-pca-{tag}')
 
     manifest = {
@@ -237,7 +245,7 @@ def render(data, out):
             'Joint plots keep all six lags, original bins, overflow accounting and shared discipline colour scale.',
             'Median-normalized displays use recorded 1st--99th quantile ranks, not an interpolated claim about the tails.',
             'Logarithmic marginal panels show positive values; any point mass at zero is reported separately. Median panels show all positive recorded dense quantiles instead of fixing x limits at 0.01--10.',
-            'PCA panels display all four reported lags; only three ellipses were drawn in the original multi-panel figure.',
+            'PCA panels show exactly 10, 100, 1000 and 10000 s, with contributing-flight counts and the same lag colours as the thesis.',
             'Confidence segments use the exact saved percentile endpoints; they are not simultaneous intervals.',
         ],
     }

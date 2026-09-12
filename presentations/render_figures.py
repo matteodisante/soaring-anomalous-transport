@@ -141,7 +141,7 @@ def main():
         row = next(
             r
             for r in results["paragliders"]["pca"]
-            if r["region"] == region and r["lag_s"] == 1070
+            if r["region"] == region and r["lag_s"] == 1000
         )
         covariance = np.array(row["covariance"])
         eigenvalues, eigenvectors = np.linalg.eigh(covariance / np.trace(covariance))

@@ -1,10 +1,10 @@
 {
   "operation": "Redraw saved full-report arrays; no trajectory reads, new fits or resampling",
   "inputs": {
-    "ch3_revision.json.gz": "f946b70221e4ee051c717b1cc42ac214c634b6846312573a6d0817c8066cf132",
+    "ch3_revision.json.gz": "49bd443739e2f7bd60ba696d27e96b1a191ab776105a4ed36f0eb80100840163",
     "ch3_self_similarity.json.gz": "07239748528fd6acc721c7dbd8da1ea1908e10b29e60bd5b5dcaf54e7f16d1b0"
   },
-  "script_sha256": "3cbb7670967cea8c34f8b56fe5eb80662205bc0466e726ee2a89081f2ee1c7d6",
+  "script_sha256": "1c8d10cfa476ca9a67d0a6242603898e6a8cbb7440384123d6c5dbd03996e813",
   "outputs": {
     "supervisor-population-controls.pdf": "0177306e34e87e589f34e88483eafd0137392fa9af91b39f23886cbc4cfc5887",
     "supervisor-range-sensitivity.pdf": "6f7ed56c2ad23ac8e5adbe69a8e4b86c618caae3bcdd7c67a21ac9c5947176c4",
@@ -27,15 +27,15 @@
     "supervisor-joint-hang-1.pdf": "bcf29584357ffeb99156d72dae135d50aad11247df65d7c526c27a9613460078",
     "supervisor-joint-hang-2.pdf": "c34537ea1173be57d9e53d934bdb8c33c0dd838436bf79c527cc79b572018eef",
     "supervisor-joint-hang-3.pdf": "6baf5699c16b9a4283a55f7c7158e0bc9276eb9ce380218ef4a52ed3f20fe1ed",
-    "supervisor-pca-alps.pdf": "f30604f803c8e75ea32b242f1d4dae9f02c2b08de7a88b44ff42f349fdf45fc6",
-    "supervisor-pca-pyrenees.pdf": "d3c0d8a7d4073bad6817093e1fc75c625f4b7101980da6b46662e2ca706848c2",
-    "supervisor-pca-coast.pdf": "14b85111023efca2ff4374ad78a532b3a758ec9911c93b2824215e0c1aa7e1a6"
+    "supervisor-pca-alps.pdf": "7201fafe461e169a5e0835059697e04ed748638a474c446c1ebb2fe1517eaa9a",
+    "supervisor-pca-pyrenees.pdf": "cd0a7f61654be86e89d4bf8af02cb38669796c4187509fc8e9744d38d4d5eb23",
+    "supervisor-pca-coast.pdf": "2f14bb2ff1c989df6c380f5aba36f549de9aedbd51e5f144884c6ba954f16874"
   },
   "notes": [
     "Joint plots keep all six lags, original bins, overflow accounting and shared discipline colour scale.",
     "Median-normalized displays use recorded 1st--99th quantile ranks, not an interpolated claim about the tails.",
     "Logarithmic marginal panels show positive values; any point mass at zero is reported separately. Median panels show all positive recorded dense quantiles instead of fixing x limits at 0.01--10.",
-    "PCA panels display all four reported lags; only three ellipses were drawn in the original multi-panel figure.",
+    "PCA panels show exactly 10, 100, 1000 and 10000 s, with contributing-flight counts and the same lag colours as the thesis.",
     "Confidence segments use the exact saved percentile endpoints; they are not simultaneous intervals."
   ]
 }

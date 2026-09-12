@@ -155,6 +155,16 @@ outputs and execution manifest; it cannot establish equivalence by merely replac
 a hash. The September 11 palette and layout proofs under `revisions/` document these
 specific exceptions. They do not authorize relabelling results after an algorithm change.
 
+The September 12 regional PCA follow-up has its own numerical record at
+`revisions/regional-pca-lags-2026-09-12/numerical-update.json`. It verifies the
+full-archive coordinate stores by SHA-256, computes centred regional covariances
+at exactly 10, 100, 1000 and 10,000 s, and rebuilds the PCA figure and reference
+table. Shared 10-s and 10,000-s results are checked against the original run.
+Every non-PCA report value and the other 74 generated inputs remain unchanged.
+Its separate manuscript review records that lineage; it does not claim a new
+execution of cleaning, distribution fits or bootstrap calculations. A future
+complete rebuild uses the same exact-lag PCA implementation directly.
+
 The final September 11 review also corrected an omitted altitude-admission row in
 the rejection cascade. That was a numerical report error, not a plotting-only edit.
 The report was regenerated from unchanged flight metadata and checked against an

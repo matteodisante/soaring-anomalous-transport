@@ -1,0 +1,225 @@
+{
+  "status": "complete",
+  "completed_utc": "2026-09-12T16:03:31.905335+00:00",
+  "run_id": "regional-pca-lags-2026-09-12",
+  "baseline_manifest": "revisions/vertical-gap-split-2026-09-11/release/manifest.json",
+  "baseline_manifest_sha256": "46cd5abd009ae4a46bdc526f987c33f47d569b125f833b4c916b9d9cf0068186",
+  "baseline_run_id": "20260912T133040Z-073601cb",
+  "cleaning": {
+    "configuration": {
+      "alt_channel": {
+        "baro_witness_min_range_m": 30.0,
+        "baro_witness_present_min": 0.95,
+        "gnss_min_range_m": 30.0,
+        "gnss_present_min": 0.95
+      },
+      "fix": {
+        "frozen_delta_z_m": 5.0,
+        "frozen_eps_m": 15.0,
+        "frozen_tau_s": 60.0,
+        "hampel_eps_min_m": 15.0,
+        "hampel_k": 5.0,
+        "hampel_min_window_fixes": 5,
+        "hampel_window_s": 20.0,
+        "integrity_max_fraction": 0.1,
+        "max_altitude_m": 6000.0,
+        "max_horizontal_speed_mps": {
+          "hang gliders": 55.0,
+          "paragliders": 45.0
+        },
+        "max_vertical_speed_mps": 10.0,
+        "min_altitude_m": -100.0,
+        "vz_min_window_fixes": 5,
+        "vz_window_s": 5.0
+      },
+      "flight": {
+        "max_duration_s": 57600.0,
+        "min_alt_range_m": 600.0,
+        "min_duration_s": 2400.0,
+        "min_path_km": 20.0
+      },
+      "sampling": {
+        "max_gap_factor": 10.0,
+        "max_gap_seconds": 20.0,
+        "max_missing_fraction": 0.1,
+        "min_segment_duration_s": 90.0
+      },
+      "savgol": {
+        "polyorder": 3,
+        "tau_c_horizontal_s": 5.0,
+        "tau_c_vertical_s": 5.0
+      },
+      "trimming": {
+        "ground_flatness_m": 5.0,
+        "interior_ground_s": 600.0,
+        "sustained_s": 30.0,
+        "takeoff_speed_mps": 5.0
+      }
+    },
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "pyarrow": "24.0.0",
+      "scipy": "1.18.0"
+    },
+    "pipeline_version": "2.3.0",
+    "source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85"
+  },
+  "operation": {
+    "kind": "regional PCA only; all other measurements inherited",
+    "baseline_run_id": "20260912T133040Z-073601cb",
+    "baseline_report_sha256": "f42d68c83f5cef4069001492d888a9c36848a17f95452562b1cbfe6c925124a0",
+    "lags_s": [
+      10,
+      100,
+      1000,
+      10000
+    ],
+    "grid_s": 10,
+    "reference_lag_s": 1000,
+    "estimator": "centred pooled-origin population covariance; within-segment nonoverlapping increments; all eligible flights",
+    "sources": {
+      "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py": "fd0d757cd7f6b352a0270d0a00fca678eecfee0d5cd48a799e872e3eef16f8e8",
+      "src/soaring/analysis/observables/regional_pca.py": "0af6acec64ec9776e35665717c1f51fd63482d50ffbc59ab19215deb162f47ea",
+      "src/soaring/analysis/observables/segment_support.py": "eb8885df6c17233bb032a55fcdb85355e54a9a76759683ae6c0c32b82cac11a8",
+      "src/soaring/analysis/observables/archive_diagnostics.py": "a3bb7656e3ffe9313ff4699e0aa883c6df521aff447d0b00ae2e5cc6a220f0bd",
+      "src/soaring/reporting/regional_pca.py": "49b56d51083e7234f6a6724777596a4d6583a8ac8d0612b6d2e167805ef3e43a",
+      "src/soaring/reporting/style.py": "313f731be76f476cfef3edd0db63a5a14adc749cfb521e38be6dde5010823ac8",
+      "revisions/regional-pca-lags-2026-09-12/update_pca.py": "9ed4d9f5aa98b8f8c1d6a311f0945d284dcfb42797303a7e302154f7fc552b0f"
+    },
+    "inherited_code_provenance": "The report's code_sha256 and measurement_contract identify the inherited non-PCA measurements. This record identifies the separately recomputed PCA."
+  },
+  "coordinate_inputs": {
+    "revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/flights.json": {
+      "sha256": "c852bcc8983984759e617fe31f8cce4b54363e74ac861a779d8d14c01fc382d7",
+      "bytes": 53490769,
+      "mtime_ns": 1789170740780000000
+    },
+    "revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/positions.bin": {
+      "sha256": "b629d97af20624a13b46cfee67d15afea13d965f6773161db08b77698ab2ffc5",
+      "bytes": 2746615440,
+      "mtime_ns": 1789170740220000000
+    },
+    "revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/flights.json": {
+      "sha256": "489a7e6d57de1290a87358c56291b7ebb5d495cca8288f505d0cde21162599e7",
+      "bytes": 2085624,
+      "mtime_ns": 1789172327290000000
+    },
+    "revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/positions.bin": {
+      "sha256": "34f94e30a3e51610be838f785aee2f253fda2c7eef0488a835747d04f41b98cb",
+      "bytes": 116826144,
+      "mtime_ns": 1789172327270000000
+    }
+  },
+  "measurement_seconds": {
+    "paragliders": 21.38708195797517,
+    "hang gliders": 0.4790252090024296
+  },
+  "shared_lag_validation": {
+    "paragliders": [
+      {
+        "region": "Alps",
+        "lag_s": 10,
+        "n_flights": 91006,
+        "axis_difference_deg": 1.2505552149377763e-12,
+        "covariance_max_absolute_difference": 6.366462912410498e-11
+      },
+      {
+        "region": "Alps",
+        "lag_s": 10000,
+        "n_flights": 46336,
+        "axis_difference_deg": 0.0,
+        "covariance_max_absolute_difference": 5.602836608886719e-06
+      },
+      {
+        "region": "Pyrenees",
+        "lag_s": 10,
+        "n_flights": 12269,
+        "axis_difference_deg": 1.7053025658242404e-13,
+        "covariance_max_absolute_difference": 1.77351466845721e-11
+      },
+      {
+        "region": "Pyrenees",
+        "lag_s": 10000,
+        "n_flights": 4331,
+        "axis_difference_deg": 0.0,
+        "covariance_max_absolute_difference": 4.76837158203125e-07
+      },
+      {
+        "region": "Channel Coast",
+        "lag_s": 10,
+        "n_flights": 4914,
+        "axis_difference_deg": 4.263256414560601e-13,
+        "covariance_max_absolute_difference": 2.546585164964199e-11
+      },
+      {
+        "region": "Channel Coast",
+        "lag_s": 10000,
+        "n_flights": 1680,
+        "axis_difference_deg": 5.684341886080802e-14,
+        "covariance_max_absolute_difference": 3.337860107421875e-06
+      }
+    ],
+    "hang gliders": [
+      {
+        "region": "Alps",
+        "lag_s": 10,
+        "n_flights": 4540,
+        "axis_difference_deg": 2.842170943040401e-14,
+        "covariance_max_absolute_difference": 2.3646862246096134e-11
+      },
+      {
+        "region": "Alps",
+        "lag_s": 10000,
+        "n_flights": 2652,
+        "axis_difference_deg": 5.684341886080802e-14,
+        "covariance_max_absolute_difference": 4.0531158447265625e-06
+      },
+      {
+        "region": "Pyrenees",
+        "lag_s": 10,
+        "n_flights": 181,
+        "axis_difference_deg": 8.526512829121202e-14,
+        "covariance_max_absolute_difference": 5.4569682106375694e-12
+      },
+      {
+        "region": "Pyrenees",
+        "lag_s": 10000,
+        "n_flights": 67,
+        "axis_difference_deg": 0.0,
+        "covariance_max_absolute_difference": 1.1920928955078125e-07
+      },
+      {
+        "region": "Channel Coast",
+        "lag_s": 10,
+        "n_flights": 26,
+        "axis_difference_deg": 5.684341886080802e-14,
+        "covariance_max_absolute_difference": 3.637978807091713e-12
+      }
+    ]
+  },
+  "all_non_pca_report_values_unchanged": true,
+  "inherited_outputs_verified": 74,
+  "outputs": {
+    "ch3_pca.pdf": {
+      "sha256": "3501a6e7b783d6deec93d946f7a0a97f5897d3c2593437f24750b34ba5929bab",
+      "historical_control": false
+    },
+    "ch3_revision.json": {
+      "sha256": "a3d87d85cd843d04c8c2239f000e6bfde190ee385eead536579fc7af941c593c",
+      "historical_control": false
+    },
+    "ch3_revision.tex": {
+      "sha256": "5dce292b605bbce23b189c018e5fb341ae70902153142b7de3960a9797224068",
+      "historical_control": false
+    }
+  },
+  "compressed_report": {
+    "archive_name": "ch3_revision.json.gz",
+    "raw_sha256": "a3d87d85cd843d04c8c2239f000e6bfde190ee385eead536579fc7af941c593c",
+    "raw_size_bytes": 104598701,
+    "gzip_sha256": "49bd443739e2f7bd60ba696d27e96b1a191ab776105a4ed36f0eb80100840163",
+    "gzip_size_bytes": 6561979
+  },
+  "elapsed_seconds": 38.52136391599197
+}
