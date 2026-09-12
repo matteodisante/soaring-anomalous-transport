@@ -1,0 +1,189 @@
+{
+  "status": "complete",
+  "verified_utc": "2026-09-12T23:04:05.800560+00:00",
+  "reviewed_delivery_commit": "72ccc6874b44ce25c78149b32a7126134fab42b1",
+  "commits": [
+    "72ccc6874b44ce25c78149b32a7126134fab42b1 Present the coastal wind comparison at mean flight altitude",
+    "023275ecc3458249834e5aa4923f4505c87ee382 Evaluate coastal ERA5 wind at the PCA population's mean flight altitude"
+  ],
+  "cleaning_version": "2.3.0",
+  "cleaning_source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85",
+  "numerical_update_sha256": "472a7a1de21a0474f8ece7abb01dd26c96db05b0aaaae8039c3ab35c410e3801",
+  "manuscript_review_sha256": "e3838606b9dfc94447b1761d2a145440e94410445b9778ee617e4851c9b32ad2",
+  "presentation_validation_sha256": "cf4f321c90b64b923acf3cc5713e3189d92e5296ec3933677370ce43e2fbfee8",
+  "git_correspondence": {
+    "verified_identities": 294,
+    "complete_reports_in_git_gzip": [
+      {
+        "output": "thesis/generated/ch3_revision.json",
+        "git_archive": "presentations/data/ch3_revision.json.gz",
+        "raw_sha256": "a3d87d85cd843d04c8c2239f000e6bfde190ee385eead536579fc7af941c593c"
+      },
+      {
+        "output": "thesis/generated/ch3_self_similarity.json",
+        "git_archive": "presentations/data/ch3_self_similarity.json.gz",
+        "raw_sha256": "345113af9bec605331e42288b95e0311586007c2276b2919e7d228b339d7febf"
+      },
+      {
+        "output": "thesis/generated/ch3_grouped_tamsd.json",
+        "git_archive": "presentations/data/ch3_grouped_tamsd.json.gz",
+        "raw_sha256": "7eeaf1004af31c7f9f282c2c2aaee171cdcbc2f6fd0fbdd1afd7f2905c8a61f2"
+      }
+    ],
+    "method": "Each reviewed source, output, external input and delivered PDF matches its worktree SHA-256 and the recorded Git commit; ignored full JSON reports match all decompressed bytes of committed gzip archives."
+  },
+  "validation": {
+    "focused_tests_passed": 11,
+    "independent_scalar_profile_checks": 500,
+    "unchanged_parent_generated_outputs": 94,
+    "current_generated_outputs": 98,
+    "thesis_pages": 132,
+    "chapter2_slides": 58,
+    "chapter3_slides": 101,
+    "verified_figure_assets": 111,
+    "latex_unresolved_warnings_or_overfull_boxes": 0,
+    "provenance_problems": 0,
+    "strict_documentation_build": "passed",
+    "visual_review": "Thesis wind pages and slides 68--72 with notes checked; final gravity constant formatting verified."
+  },
+  "external_data_mirror": {
+    "revisions/channel-wind-flight-altitude-2026-09-13/README.md": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-flight-altitude-2026-09-13/README.md",
+      "sha256": "47247806833e8b6f4c23faa688bc2ef6f0c3ab22dd2837419d810f118ea603e4",
+      "bytes": 10288
+    },
+    "revisions/channel-wind-flight-altitude-2026-09-13/pressure-wind.npz": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-flight-altitude-2026-09-13/pressure-wind.npz",
+      "sha256": "02ac1e7e074c0a9d267fc0db894ba7e15ad28d5815f64625859fc519ee570b74",
+      "bytes": 32216992
+    },
+    "revisions/channel-wind-flight-altitude-2026-09-13/pressure-input-manifest.json": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-flight-altitude-2026-09-13/pressure-input-manifest.json",
+      "sha256": "6629c49126bf01df6940811e66a0b7dc4820a0ea6c7f12084f101a3b98ac55a0",
+      "bytes": 6074
+    },
+    "revisions/channel-wind-flight-altitude-2026-09-13/flight-altitude.json": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-flight-altitude-2026-09-13/flight-altitude.json",
+      "sha256": "172754510ff7bd5aff96c9ca02715549f7adaf949c24820cb1f02f493669d5c0",
+      "bytes": 327242
+    },
+    "revisions/channel-wind-flight-altitude-2026-09-13/fetch_pressure_wind.py": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-flight-altitude-2026-09-13/fetch_pressure_wind.py",
+      "sha256": "d5f0ae752337b8a23ac48d0c702af05e51fc5f7f5cb8c5e0018a61d4464f42ff",
+      "bytes": 5050
+    }
+  },
+  "inherited_external_mirrors": {
+    "revisions/channel-wind-2026-09-12/cell-0.json.gz": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-2026-09-12/cell-0.json.gz",
+      "sha256": "4321ee0cd9e0d356c055238ab2b4d2e5575c3dfd5a69847a4ecb07be4bdc2f24"
+    },
+    "revisions/channel-wind-2026-09-12/cell-1.json.gz": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-2026-09-12/cell-1.json.gz",
+      "sha256": "af112d6f066eeae22499dadd9174b908fa4b13ff45d3cff84098936b0a1bcb51"
+    },
+    "revisions/channel-wind-2026-09-12/cell-2.json.gz": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-2026-09-12/cell-2.json.gz",
+      "sha256": "5c066f932e032ddd599763e2d61e2f5acc7b9d3314f9b37477bad67890d3fb5b"
+    },
+    "revisions/channel-wind-2026-09-12/cell-3.json.gz": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-2026-09-12/cell-3.json.gz",
+      "sha256": "c086919673d26ab97bb55d972b4d064a456d26586804e316ba35d45c8062a582"
+    },
+    "revisions/channel-wind-2026-09-12/cell-4.json.gz": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-2026-09-12/cell-4.json.gz",
+      "sha256": "1293bc33a84fa5b18e5d23ee4a37290bd32185aca217b36b5a84b7ae26854870"
+    },
+    "revisions/channel-wind-2026-09-12/cell-5.json.gz": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-2026-09-12/cell-5.json.gz",
+      "sha256": "4a206fac1391bc446ae6b19a89e9e61f00b1cd13da5390b4d242467d81c0b4c4"
+    },
+    "revisions/channel-wind-2026-09-12/cell-6.json.gz": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-2026-09-12/cell-6.json.gz",
+      "sha256": "4e17c2836f6a251147764e16d6ea8b7bb60152b92a78e77cb69ad2b20ac0126e"
+    },
+    "revisions/channel-wind-2026-09-12/cell-7.json.gz": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-2026-09-12/cell-7.json.gz",
+      "sha256": "6fcdac7578dfe323c22d150d5675a675f252c2a7133211864871d5193d409a10"
+    },
+    "revisions/channel-wind-2026-09-12/cell-8.json.gz": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-2026-09-12/cell-8.json.gz",
+      "sha256": "87833b2cf8622ee85be4308bb2619990e04c2539a8516a1fa19f9afc8d4ed896"
+    },
+    "revisions/channel-wind-2026-09-12/check_temporal_sampling.py": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-2026-09-12/check_temporal_sampling.py",
+      "sha256": "d1d29de80a11617c873ef7bf7346210df7dd714cb40deef4fb7e17a9994a43b6"
+    },
+    "revisions/channel-wind-2026-09-12/fetch_wind.py": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-2026-09-12/fetch_wind.py",
+      "sha256": "e572cfa6c37d091f08639a4dcff77fa8139cc4a6baa2acafd27b11905a37ef47"
+    },
+    "revisions/channel-wind-2026-09-12/input-manifest.json": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-2026-09-12/input-manifest.json",
+      "sha256": "de0013cb9ff503418aa560d6e4f9beb193292edfed3963bfa86701e5b24deebf"
+    },
+    "revisions/channel-wind-2026-09-12/sampling-check.json": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-2026-09-12/sampling-check.json",
+      "sha256": "81653e2f9364b2b6ccf3cf08405a690885aeb432f9e5d90ba8349ae6127d2c21"
+    }
+  },
+  "ssd_release": {
+    "thesis/main.pdf": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/releases/channel-wind-flight-altitude-2026-09-13/thesis.pdf",
+      "sha256": "c78205db992e9c7576f70aa814613dc5d3c0f6ed778b014063cc725439199af1",
+      "bytes": 5490277
+    },
+    "presentations/chapter2.pdf": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/releases/channel-wind-flight-altitude-2026-09-13/chapter2.pdf",
+      "sha256": "b321e39d2f5328a523949d55a493be93bfc1fd01c60feff1c93e4d2506d5942b",
+      "bytes": 2736889
+    },
+    "presentations/chapter2-notes.pdf": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/releases/channel-wind-flight-altitude-2026-09-13/chapter2-notes.pdf",
+      "sha256": "d1a2ee467d7638316ec57c76b531310f489a194e5c2ab7125b700b0c8d4ab78e",
+      "bytes": 2758255
+    },
+    "presentations/chapter3.pdf": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/releases/channel-wind-flight-altitude-2026-09-13/chapter3.pdf",
+      "sha256": "4f30669e741f881cffcd63411b9c4282b26cf48468ff1d34f5a28b2fc4c5db58",
+      "bytes": 3478558
+    },
+    "presentations/chapter3-notes.pdf": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/releases/channel-wind-flight-altitude-2026-09-13/chapter3-notes.pdf",
+      "sha256": "8fd37966563fce1eb4c60e6c2bb04ab5226c30b3b396916f1776cc6700537f13",
+      "bytes": 3522380
+    },
+    "presentations/source-manifest.json": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/releases/channel-wind-flight-altitude-2026-09-13/source-manifest.json",
+      "sha256": "adf87b9c20cb0a27f616f8003387c43fb63dd16ae66f8de03e59ed16dcf830af",
+      "bytes": 88666
+    },
+    "presentations/validation.json": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/releases/channel-wind-flight-altitude-2026-09-13/validation.json",
+      "sha256": "cf4f321c90b64b923acf3cc5713e3189d92e5296ec3933677370ce43e2fbfee8",
+      "bytes": 35881
+    },
+    "revisions/channel-wind-flight-altitude-2026-09-13/README.md": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/releases/channel-wind-flight-altitude-2026-09-13/README.md",
+      "sha256": "47247806833e8b6f4c23faa688bc2ef6f0c3ab22dd2837419d810f118ea603e4",
+      "bytes": 10288
+    },
+    "revisions/channel-wind-flight-altitude-2026-09-13/manuscript-review.json": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/releases/channel-wind-flight-altitude-2026-09-13/manuscript-review.json",
+      "sha256": "e3838606b9dfc94447b1761d2a145440e94410445b9778ee617e4851c9b32ad2",
+      "bytes": 31303
+    },
+    "revisions/channel-wind-flight-altitude-2026-09-13/numerical-update.json": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/releases/channel-wind-flight-altitude-2026-09-13/numerical-update.json",
+      "sha256": "472a7a1de21a0474f8ece7abb01dd26c96db05b0aaaae8039c3ab35c410e3801",
+      "bytes": 15642
+    },
+    "revisions/channel-wind-flight-altitude-2026-09-13/numerical-audit.json": {
+      "ssd_path": "/Volumes/SSD_DISANTE/derived-audit/releases/channel-wind-flight-altitude-2026-09-13/numerical-audit.json",
+      "sha256": "a823fcb3ff53183132304c23491f3c1d66a43473b0fbab149ec130e34a6b50d7",
+      "bytes": 424
+    }
+  },
+  "ssd_free_bytes": 15434907648,
+  "storage_note": "All selected hourly pressure-level observations are preserved losslessly (32,216,992 bytes), with the previous surface inputs retained. No flight dataset or previous archive was deleted."
+}
