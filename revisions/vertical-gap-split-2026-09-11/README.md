@@ -60,8 +60,8 @@ combined rebuild `20260911T160003Z-b26eb528` failed on SSD disconnection. Standa
 cleaning subsequently completed on both archives. The first downstream run stopped
 at a source-identity guard after concurrent manuscript edits. The downstream run `20260911T213634Z-7b7367f1`, under
 `/Volumes/SSD_DISANTE/derived-audit/runs/`, stopped on another SSD disconnection
-during stage 24 after 23 completed stages. Its final completion and manuscript
-review remain pending; the recovery procedure below preserves the completed work. An isolated continuation attempt correctly refused to run while
+during stage 24 after 23 completed stages. That attempt did not reach final compilation; the completed continuation identified
+above preserves and finishes its work. An isolated continuation attempt correctly refused to run while
 this pipeline held the rebuild lock. See `work-in-progress.md` for coordination.
 The rebuild includes local cleaning/documentation changes already present when this
 task began; before/after archive differences are not an isolated causal estimate of
@@ -95,7 +95,7 @@ was started without `--clean` against stable numerical/manuscript sources. This 
 redoes every requested stage; it avoids tying the expensive cleaning pass to
 concurrent chapter edits.
 
-## Full Chapter 3 and joint-law review (in progress)
+## Full Chapter 3 implementation and initial verification
 
 The default 10–10000 s reporter now streams all eligible flights and every eligible
 segment, including flights crossing storage row groups. Full pools are backed by
@@ -143,7 +143,7 @@ The final strict MkDocs build also passed after the flag-run clarification.
 proposed equipment/wind/terrain explanation and records its mathematical and
 observational limitations. It is the input for both the thesis discussion and the
 supervisor slides; its conditional statements are not claims that the new regional
-plots have already confirmed the old pattern. The planned Chapter 3 revision
+plots have already confirmed the old pattern. The completed Chapter 3 revision
 separates distributional rescaling from regional/environment/equipment comparisons.
 The two blocks must distinguish increment lag, time since takeoff, weighting and
 centering.
@@ -165,8 +165,8 @@ After the relevant fresh stages complete, run:
 
 Both reject stale or unfinished inputs. The regional extraction is descriptive,
 not a significance test. Final numerical reconciliation, chapter reorganization,
-complete Chapter 2/3 supervisor decks, reviewed compilation and local commits remain
-pending until the full numerical recovery finishes. The supplementary trimming
+complete Chapter 2/3 supervisor decks and reviewed compilation subsequently
+completed; the three delivery commits are recorded in `completion.json`. The supplementary trimming
 census has completed and reproduced both caches and all three generated outputs
 exactly; see `trimming-refresh.json`.
 
@@ -222,3 +222,21 @@ segmented increments, truncated/appended pools, a finite cross-gap increment,
 non-finite coordinates, corrupt owners/segment metadata, incomplete stores, changed
 staged bytes and redirected links. These tests do not certify the SSD; the real
 preparation and full structural verification remain required.
+
+## Final delivery and commits
+
+The numerical implementation, reviewed thesis and complete current presentations
+are committed locally. `committed-release-audit.json` verifies 136 source files,
+77 generated results and the reviewed PDF directly from Git.
+`committed-presentations-audit.json` checks every committed presentation file
+against the validated delivery. Unrelated viewer changes remain uncommitted.
+No push was performed. `completion.json` collects document identities and checks.
+
+`work-files/archive.tar.gz` preserves the intermediate draft sources and raw logs
+without changing their bytes; its manifest records every member hash. These are
+historical working materials. Current thesis and slide sources live in `thesis/`
+and `presentations/`.
+
+A byte-verified copy of the final PDFs and review records is on the SSD under
+`derived-audit/releases/20260912T133040Z-073601cb/`; see `ssd-delivery-copy.json`.
+No SSD files were deleted during the space inspection.

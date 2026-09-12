@@ -1,0 +1,63 @@
+{
+  "completed_utc": "2026-09-12T15:38:57.661358+00:00",
+  "status": "complete",
+  "numerical_run_id": "20260912T133040Z-073601cb",
+  "all_stages_complete": 39,
+  "thesis": {
+    "path": "thesis/main.pdf",
+    "pages": 116,
+    "sha256": "a9127a892460ff1078c5c0c8de3fcd5e66be3f5c93e838cefc1903a4071c9860"
+  },
+  "presentations": {
+    "chapter2.pdf": {
+      "pages": 58,
+      "sha256": "315a03b1fcf60ca03b9ad830297f50ef4b7c0cf878a16bb122d10ab4440ec355",
+      "bytes": 2736908,
+      "speaker_notes": false
+    },
+    "chapter2-notes.pdf": {
+      "pages": 58,
+      "sha256": "d12c1e69d826a78ffbce019657b39e9aabf4bb9681e41d601e6deaae3000a66f",
+      "bytes": 2758267,
+      "speaker_notes": true
+    },
+    "chapter3.pdf": {
+      "pages": 75,
+      "sha256": "57d6516a204dfe35dc34b89244430b9142b4937cbd57c8e83283a9222bacac7b",
+      "bytes": 2094098,
+      "speaker_notes": false
+    },
+    "chapter3-notes.pdf": {
+      "pages": 75,
+      "sha256": "2fe1c1571e1f114fb6d285aac6a6785d78f3809c22906231763aab5045129504",
+      "bytes": 2125790,
+      "speaker_notes": true
+    }
+  },
+  "delivery_commits": [
+    "a644de98020916cfaae5a9edcc9cc4031971a954 Split long altitude gaps and measure full-archive transport laws",
+    "78dd6ba9a96e040122b09822a5d9d3e350d3e239 Publish the reviewed full-data thesis and reproducibility records",
+    "677986209227faf081355afefd16b61a6627e3d2 Replace supervisor slides with complete current chapter decks"
+  ],
+  "checks": {
+    "tests_passed": 870,
+    "static_provenance_problems": 0,
+    "strict_docs_build": "passed",
+    "reviewed_thesis_source_and_results": "passed",
+    "presentations_visual_and_hash_review": "passed",
+    "committed_numerical_source_results_and_pdf": "136 source files and 77 outputs verified",
+    "committed_presentation_files": "all verified"
+  },
+  "ssd": {
+    "delivery_copy": "/Volumes/SSD_DISANTE/derived-audit/releases/20260912T133040Z-073601cb",
+    "inspection_candidates_gib": 4.92,
+    "files_deleted": 0,
+    "protected_linked_arrays_gib": 10.47
+  },
+  "scope_limits": [
+    "Full archive at each supported lag; fixed long-flight cohort is an additional population control.",
+    "Independent physical validation and calibrated stochastic-model rejection remain research questions.",
+    "Seven unrelated viewer source/test changes are preserved outside the delivery commits.",
+    "Local commits only; no push."
+  ]
+}

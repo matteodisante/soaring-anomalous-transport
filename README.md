@@ -121,7 +121,7 @@ The [pipeline guide](https://matteodisante.github.io/soaring-anomalous-transport
 [Generated provenance](https://matteodisante.github.io/soaring-anomalous-transport/guide/provenance/) maps manuscript inputs to their producers;
 [the bibliography audit](https://matteodisante.github.io/soaring-anomalous-transport/guide/bibliography/) records source verification and its limits.
 
-The roadmap requires no action. The current [manual annotation pack](annotations/phase_labeling/20260912T133040Z-073601cb/README.md) is ready; follow
+The roadmap requires no action. The current [manual annotation pack](annotations/phase_labeling/20260912T133040Z-073601cb/annotation_pack.pdf) is ready; follow
 [the annotation instructions](annotations/phase_labeling/README.md).
 Keep the final test split separate from model tuning.
 

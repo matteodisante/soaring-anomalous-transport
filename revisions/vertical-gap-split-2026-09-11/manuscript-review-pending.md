@@ -1,16 +1,16 @@
-# Current checkpoint — 12 September 2026
+# Delivery complete — 12 September 2026
 
-All 39 numerical stages and the final thesis review completed. The canonical
-116-page thesis PDF matches the reviewed SHA-256. Reconciliation back to the
-working checkout completed; no numerical rerun is required. Four unrelated viewer
-source files and three viewer tests remain user changes and must stay out of commits.
+All 39 numerical stages, reviewed 116-page thesis, complete current chapter decks
+(58/75 slides plus notes), visual checks, 870-test suite, static provenance and
+strict documentation build completed. The delivered scientific source and thesis
+match their run/review hashes in Git; every presentation file matches its verified
+working copy. See completion.json and both committed-*-audit.json records.
 
-Presentations have been assembled only after thesis completion: Chapter 2 has
-58 slides, Chapter 3 has 75, both compiled with notes. Visual review, presentation/provenance validation and the strict documentation
-build passed. Remaining: delivery commits and the committed-release audit. The only slide numerical input is the current full run.
+The three main local commits are recorded in completion.json. The final verification
+commit adds the audit and delivery records. No push or SSD deletion was performed.
+Seven unrelated viewer source/test files remain user changes. The SSD has a
+byte-verified document copy under derived-audit/releases/20260912T133040Z-073601cb/.
 
-SSD inspection completed without deletions: 4.92 GiB of candidates, 10.47 GiB of
-live linked arrays protected. See ssd-space-review.md and its SHA-256 evidence.
-
-Do not rerun the one-shot manuscript or draft assembly helpers. Do not change
-scientific code or thesis sources after review without another identified review.
+No additional numerical rerun, manuscript review or slide assembly remains required
+for this delivery. Remaining questions in the chapters/slides are scientific research
+questions, not uncompleted requested implementation.
