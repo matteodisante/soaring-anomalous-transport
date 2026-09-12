@@ -196,6 +196,8 @@
 \input{generated/msd}
 \input{generated/altitude_noise}
 \input{generated/pipeline_census}
+% Takeoff/landing trim-split medians and interior-excision counts.
+\input{generated/trim}
 \input{generated/verify}
 \input{generated/audit}
 \input{generated/prelim}
@@ -207,6 +209,7 @@
 \IfFileExists{generated/kinematic_isotropy.tex}{\input{generated/kinematic_isotropy}}{}
 % Fresh, explicitly sampled 10--10000 s revision diagnostics and provenance.
 \input{generated/ch3_revision}
+\input{generated/ch3_self_similarity_values}
 \input{generated/duration_equipment}
 \input{generated/snapshot_status}
 % Fitting and decoding counts used by the generated Chapter 4 tables.
@@ -262,9 +265,11 @@ segmentation and a programme of mathematical modelling and Monte Carlo validatio
 
 The data chapter documents recorder channels, cleaning and the limits of the retained
 trajectories. Global transport is then examined through displacement moments and quantiles,
-constant-velocity controls, regional anisotropy and velocity memory at several temporal
-resolutions. A fresh subset analysis over 10--10,000 seconds shows why effective exponents,
-changes of distribution shape and finite observation windows must be distinguished.
+constant-velocity controls, signed joint distributions, regional anisotropy and velocity
+memory at several temporal resolutions. The analysis uses the full eligible archive
+over 10--10,000 seconds, with a fixed long-flight population controlling comparisons
+across lags. Effective exponents, changes of distribution shape and finite observation
+windows must be distinguished.
 Principal-axis analysis describes regional geometry without identifying wind or removing
 environmental effects. Competing stochastic models are assessed through explicit
 predictions, with the scope of each exclusion stated.
@@ -281,7 +286,10 @@ construct and simulate a physically constrained stochastic model, and investigat
 landscapes and route optimisation.
 \end{abstract}
 
+\begingroup
+\small
 \tableofcontents
+\endgroup
 
 \clearpage
 \pagenumbering{arabic}
@@ -290,8 +298,13 @@ landscapes and route optimisation.
 % 04-global-transport is Chapter 3, and 05-flight-phases is Chapter 4.
 % Acquisition is described in the dataset chapter itself.
 \input{sections/01-introduction}
+% Separate successive arguments visually in the two methods/results chapters.
+\begingroup
+\raggedbottom
+\setlength{\parskip}{4pt plus 1pt minus 1pt}
 \input{sections/03-dataset}
 \input{sections/04-global-transport}
+\endgroup
 \input{sections/05-flight-phases}
 
 \bibliographystyle{unsrt}
@@ -312,8 +325,8 @@ landscapes and route optimisation.
 \begin{flowblock}
 \begin{center}
 \begin{minipage}{0.78\textwidth}
-The appendices supply the spectral and geodetic definitions used in Chapter~2.
-They are numbered 2.A and 2.B in their order of first citation.
+Appendices 2.A and 2.B supply the spectral and geodetic definitions used in Chapter~2.
+Appendix 3.A gives the squared-displacement distributions supporting Chapter~3.
 \end{minipage}
 \end{center}
 \end{flowblock}
@@ -321,5 +334,9 @@ They are numbered 2.A and 2.B in their order of first citation.
 \newpage
 \input{appendices/B-psd}
 \input{appendices/geodesy}
+\renewcommand{\thechapter}{3.\Alph{chapter}}
+\renewcommand{\theHchapter}{3.\Alph{chapter}}
+\setcounter{chapter}{0}
+\input{appendices/C-displacement-squares}
 
 \end{document}

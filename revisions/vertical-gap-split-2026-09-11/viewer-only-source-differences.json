@@ -1,0 +1,41 @@
+{
+  "differences": {
+    "src/soaring/viewer/catalog_index.py": {
+      "executed_sha256": "a0863093b11dca2e3cb2c1a905e8520eac5b8e865bc31ba4635f9c8053ccdd0e",
+      "working_sha256": "be853b632d60df845c7334d8b541e6e11321c332c1d183c2082f2a15908ca30a"
+    },
+    "src/soaring/viewer/geography.py": {
+      "executed_sha256": "88752efe1cc542c43be6ca32b0df3c351dc240655de8f7fd2b75ce9990f9032d",
+      "working_sha256": "c3e28fb375d903e0f2187b727a54dbe4c3c0defd5998755e0422893cf0f5dff2"
+    },
+    "src/soaring/viewer/widgets/flight_picker.py": {
+      "executed_sha256": "61cc83f8d564469527171e14e9884746d2d8cadb4b67fc4a013e039b48f425a6",
+      "working_sha256": "1b71643a8ff4855776668344d6d97f54e2c20aaf99b1eb8cca9ccd77b37084ef"
+    },
+    "src/soaring/viewer/widgets/map_view.py": {
+      "executed_sha256": "28242878af8d41784a0777a132ec9412442f5ad90535add0d5b74f44a8de180e",
+      "working_sha256": "2a49a2c747fffe2979b38e3e0c67c2db05117f7913db301affe1f613152c1cc2"
+    }
+  },
+  "all_other_guarded_files_identical": true,
+  "geography_existing_ast_statements_unchanged": true,
+  "geography_additional_bindings": [
+    "REGIONS",
+    "TERRAIN_BANDS",
+    "TERRAIN_ORDER",
+    "classify_region",
+    "classify_terrain"
+  ],
+  "reporting_viewer_imports": [
+    {
+      "file": "scripts/reporting/ch2_dataset/generate_terrain_figure.py",
+      "module": "soaring.viewer.geography",
+      "names": [
+        "FRANCE_EXTENT",
+        "draw_land",
+        "load_basemap"
+      ]
+    }
+  ],
+  "scope": "The added UI classifiers are not read by the unchanged terrain-rendering definitions. All cleaning, analysis, reporting scripts, configuration, lockfile and manuscript bytes match the executed snapshot."
+}

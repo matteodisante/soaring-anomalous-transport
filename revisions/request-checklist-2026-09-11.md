@@ -6,7 +6,29 @@ una modifica presente nei sorgenti, non certifica che la relativa figura sia gi�
 stata rigenerata o che l'interpretazione empirica sia conclusa. Le verifiche scientifiche
 e numeriche sono documentate negli audit dei capitoli e nell'audit di correttezza.
 
-## Stato corrente
+## Consegna attuale — 12 settembre 2026
+
+Il cleaning 2.3.0 è completo su entrambi gli archivi. Tutti i 39 stadi dei risultati
+e la revisione finale della tesi sono completati, con identità dei dati e dei
+sorgenti verificate. Il documento aggiornato contiene 116 pagine; il capitolo 3
+usa tutti i voli eleggibili e aggiunge controlli a popolazione fissa e leggi
+congiunte firmate. La discussione regionale include l'ipotesi proposta e le sue
+criticità matematiche e osservative.
+
+Le presentazioni complete sono state assemblate dopo la chiusura della tesi,
+come richiesto: 58 slide per il capitolo 2 e 75 per il capitolo 3, con note e
+domande per i supervisors. Descrivono esclusivamente metodi e risultati attuali.
+I record di consegna, validazione e commit sono nel
+[registro della revisione verticale](vertical-gap-split-2026-09-11/README.md).
+
+La richiesta sullo spazio SSD è stata affrontata con un inventario e un confronto
+SHA-256: circa 4,92 GiB candidati, nessuna cancellazione eseguita. Sono esclusi
+gli array ancora collegati al run corrente.
+
+Le questioni di validazione fisica e confronto statistico calibrato elencate
+sotto restano obiettivi di ricerca, non calcoli già dimostrati dalla ricostruzione.
+
+## Stato del precedente ciclo di revisione
 
 Cleaning, rebuild, passata di revisione del manoscritto e riconciliazione con il run SSD
 sono completati. Il traguardo scientifico dei capitoli 3 e 4 semi-definitivi resta

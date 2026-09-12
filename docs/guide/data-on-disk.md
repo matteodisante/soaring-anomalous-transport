@@ -37,6 +37,11 @@ A segment adds `segment_id`; a fix adds elapsed time `t`.
 The shared `derived-audit/` directory sits alongside the two discipline roots. Its
 `runs/<run-id>/arrays/` files are inputs to report generators. Each run also carries
 logs and `manifest.json`; older standalone arrays must not be mixed with a new run.
+After an SSD interruption, a validated recovery may keep its manifest, logs and
+some backing arrays on the internal disk. The September 2026 recovery is recorded
+under `revisions/vertical-gap-split-2026-09-11/recovery-runs/`; its manifests identify
+the exact parent stages and every reused path. This recovery directory is not
+interchangeable with either the SSD's general audit directory or another run's arrays.
 
 ## The four cleaned tables
 
@@ -104,7 +109,7 @@ names identify different operations and must not be summed as disjoint removed f
 | `lat0`, `lon0`, `alt0` | Coordinate origin from the first trimmed fix |
 | `dt_native_s`, `g_max_s` | Inferred native interval and gap-splitting bound |
 | `n_segments`, `n_segments_kept` | Segments formed and surviving segment-level gates |
-| `frac_interpolated`, `frac_z_reconstructed`, `z_gap_max_s` | Horizontal and altitude reconstruction fractions and largest altitude gap |
+| `frac_interpolated`, `frac_z_reconstructed`, `z_gap_max_s` | Time-grid and altitude reconstruction fractions and longest retained run of flagged altitude (not the duration of excluded gaps) |
 | `was_resampled` | Whether uniform-grid resampling was applied |
 | `savgol_order`, `savgol_window_horiz`, `savgol_window_vert` | Polynomial order and horizontal/vertical smoothing lengths, in fixes |
 
@@ -164,3 +169,23 @@ Manual labels and packs under `annotations/phase_labeling/` in the repository ar
 separate research inputs. Preserve them. A new complete rebuild creates a new pack;
 it does not overwrite an earlier annotation session or turn model predictions into
 human reference labels.
+
+## Vertical support from pipeline 2.3.0
+
+The temporal gap bound also limits separation between consecutive finite altitude
+readings. Long vertical holes and missing-altitude endpoints are excluded from the
+full trajectory before resampling, even when horizontal fixes exist. The segment table
+retains these unsupported intervals as rejected candidates with
+`channel_not_reconstructable`; neighbouring supported candidates pass the usual gates.
+Their censoring flags, original clock and spatial origin are preserved. Consequently,
+`n_segments` includes rejected unsupported intervals as well as supported candidates;
+use `n_segments_kept` for the retained count. Rebuild all derived products after this
+change; existing raw IGC recordings and human annotations remain unchanged.
+
+
+`z_gap_max_s` measures runs of the nearest-fix reconstruction **flag on the output
+grid**, not the longest interval between finite source readings. With irregular
+timestamps, valid readings between grid nodes can support consecutive short bridges
+without clearing the flag at an intervening node. A flagged run can therefore exceed
+`g_max_s` even though every actual interpolation span respects it. The gap-splitting
+rule uses finite source times; the flag-run counter is not a substitute for that check.

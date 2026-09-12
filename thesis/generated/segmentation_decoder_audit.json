@@ -69,46 +69,46 @@
     "hang gliders": {
       "archive_decoder_matches_current": true,
       "archive_feature_support": "includes propagated SG reconstruction support",
-      "climb_coherence_mean": 0.9999996499233448,
-      "climb_coherence_sd": 6.043454158665021e-05,
+      "climb_coherence_mean": 0.9999996458323708,
+      "climb_coherence_sd": 6.043981835922001e-05,
       "coverage": {
-        "cleaned_duration_s": 73381272.0,
+        "cleaned_duration_s": 73340052.0,
         "decisions_by_reason": {
-          "classified": 6902785,
-          "feature_edge": 24257,
-          "quality_masked": 378148
+          "classified": 6902801,
+          "feature_edge": 27331,
+          "quality_masked": 371502
         },
         "directory": "/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc/derived/segmentation",
-        "n_cleaned_fixes": 34588180,
-        "n_cleaned_segments": 6796,
-        "n_decision_points": 7305190,
+        "n_cleaned_fixes": 34567535,
+        "n_cleaned_segments": 7662,
+        "n_decision_points": 7301634,
         "seconds_by_reason": {
-          "classified": 69027850.0,
-          "feature_edge": 192874.0,
-          "outside_decision_cells": 3658.0,
-          "quality_masked": 3781480.0,
-          "skipped_native_cadence": 375410.0
+          "classified": 69028010.0,
+          "feature_edge": 217569.0,
+          "outside_decision_cells": 4263.0,
+          "quality_masked": 3715020.0,
+          "skipped_native_cadence": 375190.0
         },
         "sequence_prior_weight": 0.75,
-        "unclassified_decision_percent": 5.508480956689696,
-        "unclassified_duration_percent": 5.9326063467528884
+        "unclassified_decision_percent": 5.462243108871247,
+        "unclassified_duration_percent": 5.879518601922999
       },
       "current_full_archive_export_exists": true,
       "decoding_transition_matrix": [
         [
-          0.9320871122676275,
-          0.03771572027687997,
-          0.0301971674554925
+          0.9320562273422657,
+          0.037717691311134324,
+          0.030226081346600004
         ],
         [
-          0.04151137449199813,
-          0.6583177251118397,
-          0.3001709003961621
+          0.04156357055834188,
+          0.6582015166391975,
+          0.3002349128024606
         ],
         [
-          0.0686233982827422,
-          0.022187419721352738,
-          0.909189181995905
+          0.06865299602180644,
+          0.02217518746554378,
+          0.9091718165126498
         ]
       ],
       "example": {
@@ -131,77 +131,77 @@
         "stored_archive_path_reproduced": true
       },
       "fit_observations": 1000000,
-      "fit_sequences": 8784,
+      "fit_sequences": 8775,
       "fitted_transition_matrix": [
         [
-          0.9320871122676275,
-          0.04899354950896118,
-          0.018919338223411283
+          0.9320562273422657,
+          0.04895510625793573,
+          0.0189886663997985
         ],
         [
-          0.06259729099531239,
-          0.8136789213094584,
-          0.12372378769522936
+          0.06283669363095845,
+          0.8132140874188893,
+          0.12394921895015207
         ],
         [
-          0.0213067622949452,
-          0.1020697536094046,
-          0.8766234840956503
+          0.021408324358736817,
+          0.1020376534786339,
+          0.8765540221626293
         ]
       ],
-      "model_metadata_sha256": "78b7410ff5bdb557ab01bf598089de016488a3d8a2acb7105a6dc215fc360de7",
-      "model_pickle_sha256": "47cae8ef8b51a6b1f489b3d0f4308899ec850d387673b579f884bf9342420ca4",
+      "model_metadata_sha256": "feb646e34375618f6872f932ff4fae61382c170f228d0f79985a7d473c59a80d",
+      "model_pickle_sha256": "023feb40e040658b183c26bc7c2313193378cdab64bb73531c56b5ee47d97358",
       "selected_restart_diagnostics": {
         "iteration_cap": 200,
         "iterations": 25,
-        "last_log_likelihood_gain": -0.25260159955359995,
-        "minimum_covariance_eigenvalue": 2.9571688045237182e-08,
+        "last_log_likelihood_gain": -2.1476433388888836,
+        "minimum_covariance_eigenvalue": 2.957690470298188e-08,
         "nonnegative_gain_below_tolerance": false
       }
     },
     "paragliders": {
       "archive_decoder_matches_current": true,
       "archive_feature_support": "includes propagated SG reconstruction support",
-      "climb_coherence_mean": 0.9999985562447008,
-      "climb_coherence_sd": 8.886847959602694e-05,
+      "climb_coherence_mean": 0.9999985591062384,
+      "climb_coherence_sd": 8.888221489284398e-05,
       "coverage": {
-        "cleaned_duration_s": 1730039680.5,
+        "cleaned_duration_s": 1729380446.5,
         "decisions_by_reason": {
-          "classified": 158685342,
-          "feature_edge": 621459,
-          "quality_masked": 12414234
+          "classified": 158685133,
+          "feature_edge": 672012,
+          "quality_masked": 12306320
         },
         "directory": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/segmentation",
-        "n_cleaned_fixes": 1370352162,
-        "n_cleaned_segments": 179843,
-        "n_decision_points": 171721035,
+        "n_cleaned_fixes": 1369807970,
+        "n_cleaned_segments": 194208,
+        "n_decision_points": 171663465,
         "seconds_by_reason": {
-          "classified": 1586853420.0,
-          "feature_edge": 5025828.0,
-          "outside_decision_cells": 148882.5,
-          "quality_masked": 124142340.0,
-          "skipped_native_cadence": 13869210.0
+          "classified": 1586851330.0,
+          "feature_edge": 5435425.0,
+          "outside_decision_cells": 161871.5,
+          "quality_masked": 123063200.0,
+          "skipped_native_cadence": 13868620.0
         },
         "sequence_prior_weight": 0.75,
-        "unclassified_decision_percent": 7.591203372376599,
-        "unclassified_duration_percent": 8.276472621634761
+        "unclassified_decision_percent": 7.560334401964914,
+        "unclassified_duration_percent": 8.241628774539286
       },
       "current_full_archive_export_exists": true,
       "decoding_transition_matrix": [
         [
-          0.9396164747361204,
-          0.037218109072230006,
-          0.023165416191649572
+          0.9396449919484398,
+          0.0371987724611317,
+          0.02315623559042854
         ],
         [
-          0.04839480724701505,
-          0.6656582845291013,
-          0.2859469082238837
+          0.04837370711054087,
+          0.6656462597287196,
+          0.2859800331607395
         ],
         [
-          0.0744088522686867,
-          0.028832836819115366,
-          0.8967583109121979
+          0.07441432987802829,
+          0.02883236330968655,
+          0.8967533068122852
         ]
       ],
       "example": {
@@ -223,32 +223,32 @@
         "split": "validation",
         "stored_archive_path_reproduced": true
       },
-      "fit_observations": 953078,
-      "fit_sequences": 11604,
+      "fit_observations": 952274,
+      "fit_sequences": 11598,
       "fitted_transition_matrix": [
         [
-          0.9396164747361204,
-          0.05829714839310077,
-          0.0020863768707789243
+          0.9396449919484398,
+          0.05826257776718647,
+          0.002092430284373797
         ],
         [
-          0.06733317190550349,
-          0.8430411589785045,
-          0.08962566911599192
+          0.06731090337917255,
+          0.8429930597769782,
+          0.08969603684384923
         ],
         [
-          0.0056948954508116555,
-          0.16740510478836632,
-          0.8268999997608221
+          0.005708103059873998,
+          0.16741191357895524,
+          0.8268799833611709
         ]
       ],
-      "model_metadata_sha256": "1d34cc662390731ebed3332b06a00aef5fbcbf040f459ef6e4f579cbd87e1018",
-      "model_pickle_sha256": "1288aac874454fcd133a81a3032f6fa31a66317ca18695ecf9d815a97d1399b8",
+      "model_metadata_sha256": "30b081eacdc9cb7b3023d6740d49ec4f75cc05ddf08c7703ff5d860b957cce4d",
+      "model_pickle_sha256": "9aba9f25936919247744efc3931cfd9b365e918615b089e851520e0139424324",
       "selected_restart_diagnostics": {
         "iteration_cap": 200,
-        "iterations": 68,
-        "last_log_likelihood_gain": -0.22311651101335883,
-        "minimum_covariance_eigenvalue": 5.519889234477456e-08,
+        "iterations": 72,
+        "last_log_likelihood_gain": -0.07546729082241654,
+        "minimum_covariance_eigenvalue": 5.520597272757941e-08,
         "nonnegative_gain_below_tolerance": false
       }
     }

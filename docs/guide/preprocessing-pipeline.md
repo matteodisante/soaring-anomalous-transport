@@ -54,7 +54,13 @@ by the impossibility gate: see ADR-0001 in `docs/adr/`.
 
 The impossibility gate uses the discipline's speed bound, 45 m/s for paragliders and
 55 m/s for hang gliders. A candidate position block is removed when it is unreachable
-from the last accepted fix and its removal permits a reachable rejoin. Steps still
+from the last accepted fix and its removal permits a reachable rejoin. Reachability is
+measured on the chord from that fix, which stays put while the block is open, so the
+test relaxes as time passes. A block may stay open for at most `hampel_window_s`, which
+the implementation reuses as that cap. When nothing rejoins inside it, nothing is
+deleted: the first fix of the block is marked as a segment boundary and the scan
+re-anchors after it. A displacement past `max_speed * hampel_window_s`, about 900 m for
+paragliders, can never be rejoined and always takes that branch. Steps still
 above the bound after the detectors create mandatory boundaries. Later interpolation
 and smoothing need not preserve that inequality, which the verifier therefore checks
 again on the written coordinates.
@@ -125,17 +131,28 @@ coordinate is the adopted altitude, not the rotation's `U`, and is not re-zeroed
 The ECEF calculation uses recorded GNSS altitude as an approximate ellipsoidal height;
 the unresolved datum is discussed in the geodesy appendix.
 
-For native interval `Δt`, the gap bound is `max(10 Δt, 20 s)`. Longer gaps and mandatory
-boundaries split segments. PCHIP interpolates horizontal coordinates and linear
-interpolation fills altitude. Missing altitude at an existing horizontal fix does not
-open a time gap and has no duration limit for filling; endpoint values extend beyond
-the first and last finite altitude within a segment. Its quality flags must therefore
-be used by vertical-dynamics analyses.
+For native interval `Δt`, the gap bound is
+`g_max = min(10 Δt, max(20 s, 2 Δt))`. It applies both to gaps between surviving
+fixes and to elapsed time between consecutive finite altitude readings. A gap exactly
+at the bound may be interpolated; a longer gap splits the full trajectory. Explicit
+cleaning boundaries always split. PCHIP interpolates horizontal coordinates and linear
+interpolation fills short altitude holes, retaining the reconstruction flags.
+
+For a long vertical hole, the first segment ends at the last valid altitude before the
+hole and the second starts at the first valid altitude after it. Intermediate fixes
+are excluded even when their horizontal positions are available. Missing altitude
+before the first or after the last finite reading is also excluded; no constant
+endpoint extension is used. This applies to raw missingness and cleaning invalidations.
+Excluded intervals remain in `segments.parquet` as incomplete, rejected candidates.
 
 A retained segment spans at least 90 s, has at most 0.1 of its grid times marked
-`interpolated`, and has finite coordinates. These coverage criteria do not bound
-altitude-only reconstruction. Segments keep the parent's clock and origin; flight gates
-are not reapplied after individual segment rejection.
+`interpolated`, and has finite coordinates. The coverage fraction is still a time-grid
+criterion; the altitude-gap bound acts separately before interpolation. Segments keep
+the parent's clock and origin; flight gates are not reapplied after individual segment
+rejection. Boundaries introduced by vertical exclusion carry censoring flags just like
+other splits. This prevents long artificial vertical paths at the cost of horizontal
+coverage and possibly truncated phases; the short-gap cap is not an accuracy guarantee.
+
 
 Savitzky–Golay fitting uses a cubic polynomial and configured five-second target windows,
 converted to admissible odd sample counts. A window of `w` samples spans `(w-1) Δt`.
@@ -158,6 +175,19 @@ The complete rebuild rescans these caches. PSD comparisons use paired uninterrup
 intervals where both altitude channels are required; selection and cache version are
 recorded. Noise attribution remains conditional on a measurement model.
 
+The paired altitude PSD does not use the cleaned or Savitzky–Golay-smoothed altitude.
+It uses raw readings after selecting finite, nonzero paired support and valid GNSS
+flags, followed by linear resampling and Welch linear detrending. Restricting support
+can substantially reduce the upper spectral tail compared with resampling an entire
+trace that contains invalid readings or gaps. That reduction is a diagnostic-selection
+effect, not evidence that the physical GNSS noise decreased. Similar median spectra
+also do not imply identical between-flight tails.
+
+The separate `trim_scan.parquet` cache is not source-versioned. Force
+`generate_trimming_figure.py --rescan` when adoption, fix-level cleaning or trimming
+rules change. The September 2026 audit reran this census and verified that both caches
+and all three trimming products matched the cached stage byte for byte.
+
 ## Output schema
 
 ### `fixes` (one row per fix)
@@ -179,8 +209,8 @@ is `pipeline.FIX_TABLE_COLUMNS` and this table is checked against it by
 | `v_E`, `v_N`, `v_z` | float32 | velocity (`deriv=1`) |
 | `a_E`, `a_N`, `a_z` | float32 | acceleration (`deriv=2`) |
 | `interpolated` | bool | the **time base** had no fix within half a step, so all three channels were reconstructed at resampling |
-| `z_reconstructed` | bool | this grid point's **altitude** did not come from a measured one — either `interpolated`, or the fix it came from carried no altitude. A vertical hole opens no time gap, so it forces no split and `interpolated` stays False: preserve this original mask; vertical derivatives must use `z_derivative_reconstructed` |
-| `z_derivative_reconstructed` | bool | the vertical Savitzky–Golay fit uses at least one reconstructed input altitude; includes edge-window support, stays within a segment (pipeline 2.2.0) |
+| `z_reconstructed` | bool | this grid point's **altitude** did not come from a measured one — either `interpolated`, or the fix it came from carried no altitude. A short altitude-only hole leaves `interpolated` False; long holes split before resampling: preserve this original mask; vertical derivatives must use `z_derivative_reconstructed` |
+| `z_derivative_reconstructed` | bool | the vertical Savitzky–Golay fit uses at least one reconstructed input altitude; includes edge-window support and stays within a segment (introduced in 2.2.0; retained in 2.3.0) |
 | `edge` | bool | within a half-window of a segment boundary, where the Savitzky–Golay polynomial is evaluated off-centre and so has different weights and generally different variance (thesis `sec:savgol`) |
 | `hampel_flagged` | bool | the local-outlier test flagged this fix; recorded, never a gate (thesis `sec:fixlevel`) |
 | `alt_invalidated` | bool | the **cleaning** removed this altitude, as opposed to the logger never writing one |

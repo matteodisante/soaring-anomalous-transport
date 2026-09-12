@@ -1,0 +1,24 @@
+{
+  "operation": "Preserve complete full-archive JSON bytes in deterministic gzip files.\n\nExecute only after the run and its expanded review-input manifest are complete.\nThe canonical generated JSON files remain untouched. This avoids committing huge\nduplicate archive indexes while retaining every value and flight identity.\n",
+  "numerical_run": "revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T133040Z-073601cb",
+  "numerical_source_sha256": "dea64e843864abd8316c1fa9442fe2e721213720ab200edb887621748000cdee",
+  "review_input_manifest": "revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T133040Z-073601cb/review-inputs/manifest.json",
+  "review_input_manifest_sha256": "46cd5abd009ae4a46bdc526f987c33f47d569b125f833b4c916b9d9cf0068186",
+  "script_sha256": "85c0ef8c9e40cb5f0aee4722b78e36745dec883a32373e1384dfcd6062b13161",
+  "reports": {
+    "ch3_revision.json": {
+      "raw_sha256": "f42d68c83f5cef4069001492d888a9c36848a17f95452562b1cbfe6c925124a0",
+      "raw_size_bytes": 104596274,
+      "gzip_sha256": "f946b70221e4ee051c717b1cc42ac214c634b6846312573a6d0817c8066cf132",
+      "gzip_size_bytes": 6561031,
+      "archive_name": "ch3_revision.json.gz"
+    },
+    "ch3_self_similarity.json": {
+      "raw_sha256": "345113af9bec605331e42288b95e0311586007c2276b2919e7d228b339d7febf",
+      "raw_size_bytes": 115880593,
+      "gzip_sha256": "07239748528fd6acc721c7dbd8da1ea1908e10b29e60bd5b5dcaf54e7f16d1b0",
+      "gzip_size_bytes": 6891214,
+      "archive_name": "ch3_self_similarity.json.gz"
+    }
+  }
+}

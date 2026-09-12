@@ -1,0 +1,57 @@
+{
+  "paragliders": {
+    "attempted": 186052,
+    "retained": 156406,
+    "segments_kept": 194208,
+    "fixes_kept": 1369807970,
+    "z_gap_max_s": 176.0,
+    "reconstructed_runs_above_60s": 10,
+    "pipeline_versions": [
+      "2.3.0"
+    ],
+    "flag_runs_above_threshold": 4,
+    "exceedance_flights_checked_from_raw": [
+      "20051967",
+      "20120143",
+      "20125152",
+      "20320588"
+    ],
+    "true_support_violations_in_checked_flights": 0,
+    "incomplete_candidates": 29407,
+    "cleaning_source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85",
+    "witness_20171597": {
+      "segments": [
+        {
+          "segment_id": 0,
+          "min": 0.0,
+          "max": 6805.0,
+          "count": 6806
+        },
+        {
+          "segment_id": 2,
+          "min": 7450.0,
+          "max": 10703.0,
+          "count": 3254
+        }
+      ],
+      "z_gap_max_s": 1.0,
+      "formerly_reconstructed_interval_absent": true
+    }
+  },
+  "hang gliders": {
+    "attempted": 6716,
+    "retained": 6094,
+    "segments_kept": 7662,
+    "fixes_kept": 34567535,
+    "z_gap_max_s": 20.0,
+    "reconstructed_runs_above_60s": 0,
+    "pipeline_versions": [
+      "2.3.0"
+    ],
+    "flag_runs_above_threshold": 0,
+    "exceedance_flights_checked_from_raw": [],
+    "true_support_violations_in_checked_flights": 0,
+    "incomplete_candidates": 1637,
+    "cleaning_source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85"
+  }
+}

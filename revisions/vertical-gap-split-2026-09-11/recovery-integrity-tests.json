@@ -1,0 +1,12 @@
+{
+  "checked_utc": "2026-09-12T10:47:22.867344+00:00",
+  "status": "passed",
+  "cases": 10,
+  "elapsed_seconds": 0.87,
+  "command": ".venv/bin/python -m pytest -q revisions/vertical-gap-split-2026-09-11/test_recovery_integrity.py",
+  "scope": "Local fault injection only; real SSD preparation and complete archive verification remain required.",
+  "sha256": {
+    "resume_after_ssd_disconnect.py": "56eea61ba5ad43fa47e8e33fd561f5d693fa05652a4a58765c0a94fca07e8abf",
+    "test_recovery_integrity.py": "febf905e753970ef1211d2714fef497a78b23dee61510d798547059778b2b34b"
+  }
+}

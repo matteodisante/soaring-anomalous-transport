@@ -1,0 +1,70 @@
+{
+  "run_id": "20260912T104500Z-5cfc4e8c",
+  "scope": "Read-only summary of the identified full-archive collector metadata; no increment or path recomputation",
+  "disciplines": {
+    "para": {
+      "flights": 155085,
+      "multiple_eligible_segments": 12348,
+      "closure_above_one": 181,
+      "closure_above_one_single_segment": 0,
+      "zero_closure": 0,
+      "maximum_closure": 42.122054589752935,
+      "highest_examples": [
+        {
+          "flight_id": "20246245",
+          "closure_ratio": 42.122054589752935,
+          "segments": 2,
+          "task": "Dist 3 pts"
+        },
+        {
+          "flight_id": "20223881",
+          "closure_ratio": 16.555409959014902,
+          "segments": 2,
+          "task": "Dist 2 pts"
+        },
+        {
+          "flight_id": "20314480",
+          "closure_ratio": 15.56363205509026,
+          "segments": 2,
+          "task": "Dist 3 pts"
+        },
+        {
+          "flight_id": "20308131",
+          "closure_ratio": 14.526204574530581,
+          "segments": 2,
+          "task": "Dist 3 pts"
+        },
+        {
+          "flight_id": "20260760",
+          "closure_ratio": 12.179810803322678,
+          "segments": 4,
+          "task": "Dist 3 pts"
+        }
+      ],
+      "metadata_sha256": "c852bcc8983984759e617fe31f8cce4b54363e74ac861a779d8d14c01fc382d7"
+    },
+    "hang": {
+      "flights": 6060,
+      "multiple_eligible_segments": 533,
+      "closure_above_one": 2,
+      "closure_above_one_single_segment": 0,
+      "zero_closure": 0,
+      "maximum_closure": 5.745912590831829,
+      "highest_examples": [
+        {
+          "flight_id": "3152",
+          "closure_ratio": 5.745912590831829,
+          "segments": 11,
+          "task": "Dist libre"
+        },
+        {
+          "flight_id": "20308818",
+          "closure_ratio": 2.072805447225373,
+          "segments": 4,
+          "task": "triangle"
+        }
+      ],
+      "metadata_sha256": "489a7e6d57de1290a87358c56291b7ebb5d495cca8288f505d0cde21162599e7"
+    }
+  }
+}

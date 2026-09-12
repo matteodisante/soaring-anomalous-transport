@@ -1,0 +1,214 @@
+{
+  "scope": "Second editorial pass on chapters 2 and 3: mathematical conditions, comparison tables, paragraph spacing and figure placement. No numerical source changes.",
+  "created_utc": "2026-09-11T21:38:04.504388+00:00",
+  "pdf": {
+    "file": "thesis-prose-review.pdf",
+    "pages": 110,
+    "sha256": "c8c1285505238a26c6bf62cb3123a5153e6db27da92f3517fe131475fa8a81ec",
+    "copied_to": "thesis/main.pdf"
+  },
+  "numerical_snapshot": {
+    "version": "2.2.0",
+    "full_rebuild_complete": false,
+    "review_only_overrides": [
+      "Title-page review note",
+      "StatSnapshotCurrent=0 after loading frozen snapshot status"
+    ],
+    "frozen_input_copy": "/var/folders/j5/c4x_f8yj2677rf4jd7hkcf0m0000gn/T/thesis-layout-abktnxjd/review-build",
+    "joint_figures_provenance": "../joint-proof.json"
+  },
+  "sources": {
+    "03-dataset.tex": "1c26b8dc630d6ad228fbfa7721eb4024aa08e7cb1da8c928d3b13189108aa744",
+    "04-global-transport.tex": "6b72d1ad0c364f18697ab4a288762716adc28fc044901223e9c15c86c31227f8"
+  },
+  "main_source_sha256": "d8f45656b03a79b609d7d9a23ebe2913739bcc33c6b5365dafccb84cf98240db",
+  "main_review_sha256": "fd1438e91e1a970dfbac07c9ee433c2c0f39659f4ddd40ca2777647e43384354",
+  "checks": {
+    "build": "latexmk completed successfully",
+    "undefined_references": false,
+    "overfull_boxes": false,
+    "git_diff_check": "passed",
+    "preservation": {
+      "03-dataset.tex": {
+        "labels": {
+          "preserved": true,
+          "added": [
+            "eq:flight-reach",
+            "eq:raw-track-geometry"
+          ]
+        },
+        "citations": {
+          "preserved": true,
+          "added": []
+        },
+        "inputs": {
+          "preserved": true,
+          "added": []
+        },
+        "figures": {
+          "preserved": true,
+          "added": []
+        },
+        "numerical_macro_names": {
+          "preserved": true,
+          "added": []
+        }
+      },
+      "04-global-transport.tex": {
+        "labels": {
+          "preserved": true,
+          "added": []
+        },
+        "citations": {
+          "preserved": true,
+          "added": []
+        },
+        "inputs": {
+          "preserved": true,
+          "added": []
+        },
+        "figures": {
+          "preserved": true,
+          "added": []
+        },
+        "numerical_macro_names": {
+          "preserved": true,
+          "added": []
+        }
+      }
+    },
+    "visually_inspected_physical_pages_initial": [
+      10,
+      15,
+      19,
+      24,
+      28,
+      29,
+      43,
+      44,
+      51,
+      53,
+      56,
+      64,
+      74,
+      78,
+      79
+    ],
+    "visually_inspected_after_final_layout": [
+      19,
+      28,
+      44
+    ]
+  },
+  "texcount": {
+    "body_before_second_pass": 12915,
+    "body_after_second_pass": 11325,
+    "headings_and_captions_after": 3596
+  },
+  "review_generated_inputs_sha256": {
+    "generated/alt_offset.tex": "4def80522b10ae1ccfd19c2386901488c9fdf587ff85a4a6485109cbe7ba99b8",
+    "generated/alt_offset_hist.pdf": "e1e241116958fdb2ac824ecaa37b3013bf15353f45440072436d2695aacb6943",
+    "generated/altitude_noise.pdf": "1b3d013b2257c48fb22a836b60ec0a4beaa0aae74b6d5b34615c230be3afea3a",
+    "generated/altitude_noise.tex": "ce20649b1e535b18857874c5f53447c9ca09f611ad7d6a82be5be1539e03ad1e",
+    "generated/audit.tex": "273cbdffef7427fe5a5773297e8d3dfc535e195ce27138d7996dabe15c9f38c5",
+    "generated/census.tex": "b074570942e98efa14c5bb6807a73015877347153b28256195322d7dc1ec4029",
+    "generated/ch3_absolute_laws_hang.pdf": "b5ce1034f3d48da6e1d0bec5b8a400d76402f26fb1f55b6d299d338c827b3f85",
+    "generated/ch3_absolute_laws_para.pdf": "d465391aec67ef21b2130d44a74d56ed7175b14d6959de920460e02b424e2126",
+    "generated/ch3_duration.pdf": "962752379e2a352750729ce14ba1297385215438380c9ed7a2ef32767ed4bdcd",
+    "generated/ch3_duration_composition.pdf": "ef2129c61e032a41432c7ec4aa12ea8f80227428f0e5ecf2272da701f68ec741",
+    "generated/ch3_duration_equipment.pdf": "5b44fbe1631713296547a71610eb791fe6ea046eba935753ca1ee8b9de4e1725",
+    "generated/ch3_fixed_exponents.pdf": "f5801fcc38f72dbbd7bf2a9110c6012a83bd63e684a2fbb2672c2102c8c28ca6",
+    "generated/ch3_fixed_quantiles.pdf": "ab24eafd6fe15d777edf6fb2692069a8d907ee16d2565dc22eafd3355fdbf99a",
+    "generated/ch3_joint_hang.pdf": "39baf0463b6d56f83e6090942588cc28efa4a3cc657280388ca5efbf29071e03",
+    "generated/ch3_joint_para.pdf": "69ac9917094392113f7a87ed69477097fab6c612f54376a636d4bcd0dec0e1af",
+    "generated/ch3_models.pdf": "d53d804bd63f19c5843d2e96b7027149f20556baa7d07a0a8efa2b70fa9427b6",
+    "generated/ch3_pca.pdf": "888d1e15d73078cac6b751ea4439fb4d77f3bd2cca58554905bc9ce52dc970f6",
+    "generated/ch3_quantile_control.pdf": "0db98c922eedd074045b0c0166090cbd64f5d995495deecff4b15f08dfbc7f79",
+    "generated/ch3_quantiles.pdf": "7a797807e800ba1632224ae7e96ce268ba2daf28d048a91d580c92c43e664ab3",
+    "generated/ch3_revision.json": "6f43b410464206b150ececaf95a92113bf063f4f0782c209649a94f47f1a67f7",
+    "generated/ch3_revision.tex": "196c46ac08d00ba332943bd7ee74f42d348a0c0c46e4d70fee3fd3da4448970c",
+    "generated/ch3_scaling.pdf": "82ac99efa775b13663ad77f922253817f3bdabf7a946094d61d33e2a64675c18",
+    "generated/ch3_self_similarity.json": "6c9af4015cbafdbc46334147fe8644ed1c229b9fd039fe15f04e52dfef2c3f52",
+    "generated/ch3_self_similarity_collapse.tex": "a242837f0d6eecc59637bef33d57ba809c2855eb7d4b24ad7a3cd939e334f627",
+    "generated/ch3_self_similarity_ranges.tex": "e988ad407deccb03a822239971d0fdf54ed1999fef50eabf53d2b4745401fb3e",
+    "generated/ch3_self_similarity_table.tex": "c59e67ec0eb90ee230a5de3aded31e7b13fea11ab2da43b9aa7f34775f0f9f56",
+    "generated/ch3_self_similarity_values.tex": "ebf4c04171c1e7679f61cc0865f48845e4c2415aae3539a14ce0f1678b3709a9",
+    "generated/ch3_squared_laws_hang.pdf": "5c94e774a1cb23760ec22dad3393a05bebef36b0d8b007823adb8293fc5fbbd4",
+    "generated/ch3_squared_laws_para.pdf": "39df61cb68ee4e5b8c19d354a9e917c60e8466a57705ecb2c9f7219022c8c7d9",
+    "generated/ch3_velocity_memory.pdf": "17b7154c121670e681f72a7850bbcb7d48c8b865f0091f9856485261e5761987",
+    "generated/cleaning_defects_schematic.pdf": "37708d7d0b4a226991213268ebff1fb9d5576a6eb31bb12e5c7e4657459e9475",
+    "generated/cleaning_real_examples.json": "8a0b58dd442a5cd30785368d2275f8d91473edf6b9517792a0074137a82a1096",
+    "generated/cleaning_real_examples.pdf": "49612dd385d90136dc01f41fde3dad8934e2de864c02d8b7c6e95d98e7b1c180",
+    "generated/cleaning_witness_audit.json": "91d4f2f2dbabd6c72b739f6abe0f642642f6f03ea74a18ad2311ed0ea3a81d63",
+    "generated/cleaning_witness_audit.tex": "5a73a2f929b9dfcbb486831f89be539483051778d28d6f6ff668fec3f87d3b4a",
+    "generated/closed_loop_schematic.pdf": "49ac81e59ed558c44c79b0b082e99d02bb44af254cbd0354db6744128120247b",
+    "generated/dataset_seasons.pdf": "56f70a6752f7cc730d954404af1e29161316c0565a8b06bcfe39a9f48cc5cab7",
+    "generated/dataset_stats.tex": "b1045f99c803210ba4f04ff9028ab7a91211b94beb116f771178bf14cc30baa9",
+    "generated/duration_equipment.json": "19c6d11a2f736fd7f4cce37efe0a0680c0767370e6afd0288bfaef1f280165cb",
+    "generated/duration_equipment.tex": "36be3ea45a8a012b42ecb680537ec16bc5bc2e83245ba907f13311d0d57666a3",
+    "generated/duration_equipment_table.tex": "9abc7e6ed39dd336c98c496cfd234c2d41e115a592e076ec2acd760c94c5e2f6",
+    "generated/fixlevel_diagnostics.pdf": "57c0f97325f61931d2f7a68206316809422bd35dc9e601577b28abde51256dba",
+    "generated/gap_diagnostics.pdf": "3e60a40596767b3f2ff98664c4f3f115e9e6ebc44fb5b89a00749d03eec2efd0",
+    "generated/horizontal_gate_explainer.pdf": "91d5a3da3b05b65a7a268b6846ca2181713a4714f9b2cac3d6f8f1d6fba073d1",
+    "generated/kinematic_isotropy.json": "71021839cb1687a5f2a7450cbdd17be40e2e50cb342be30ebc2c88b4a196708e",
+    "generated/kinematic_isotropy.tex": "5dd9594ae82a3424dc3d1fb3b13fdf9f9948aebd47c2ab20c633835d7da7f092",
+    "generated/kinematic_isotropy_discipline.pdf": "993d8ccd6f99647d3bb6ca5e79e7f9ab6682080120ffd3f48ea4e35025258bb5",
+    "generated/kinematic_isotropy_flat_level.pdf": "190520f9ed707eddeabbfd0438bfeb74d91e6a9506d9ab4c283f7e298ef5019f",
+    "generated/kinematic_isotropy_level.pdf": "b3adad73fcc4c4ce2b6ccb2c2544efbb47c5b5785fed37e2e2fe1e28fc67df05",
+    "generated/kinematic_isotropy_terrain.pdf": "1dda92699d9e8f02fb0134ae2466674b882e805b606327bb6988dc30e06fb1a3",
+    "generated/kinematic_isotropy_terrain_level.pdf": "8b9adf7071a7aac82edd9561d1c3932219b036057325fc3c3142347f32c1889a",
+    "generated/moment_spectrum_schematic.pdf": "717152dd5c25a4bb924510a68fa4e51077e37b7a377015dd5175e1771aba723a",
+    "generated/msd.pdf": "7112af990ee800fbfa1c6d5f9b8d4cf8cc6538a894b89f8de6b2fcf0111241b3",
+    "generated/msd.tex": "dcffbe7ef7c0c8a74cfa5b5b123d564294e491d0fc1b80792c03466400962468",
+    "generated/msd_curve.csv": "fd96ba20fd3dabaa8dc5e62db79b7dddd255478d34c24e4d3f025fc577357aa7",
+    "generated/msd_duration.pdf.png": "331fb8b226cacccd7f1d33188f04fca33bd7103b51f6c26aa9a8982de1d585b8",
+    "generated/pipeline_census.tex": "cdc24078a98101dcdcfbda492d5eb3b6079930e52a9ccb6ca335d5525daf14a6",
+    "generated/prelim.tex": "9234e2b60cb0242f1248b27fa0a1b245d28449f31d86d34bbaf4f0c94beab3be",
+    "generated/prelim_ensemble.pdf": "7fa9af8773c35e30837f8ffd7367d892b2f848c41798210a55079655ccfa9307",
+    "generated/prelim_isotropy.pdf": "8de9869d0f920bb06c715eba64236388927032179f0cc840ad7a75d101f27377",
+    "generated/prelim_map.pdf": "624ec2549a7c119af4ca8627a98589adff5fcffe8476fca4e5afb4c92ea4c4ef",
+    "generated/preproc_diagnostics.pdf": "0d367b7456ad9855314a0de65bb2594807f2954c58302469055b55c754e35e53",
+    "generated/quantile_scaling_schematic.pdf": "0f0a5e87699d797d8f9497db3f7fbf597d7b19b2292de024c81ecab6c146aa70",
+    "generated/sampling_intervals.pdf": "cc9afbea1a8a34ac6ccc200344b0416ee9686d337445864db83d8e50ddc1a708",
+    "generated/savgol_explainer.pdf": "4f4e9adb1d2faac4ce82bb00f3e2685b38e84c6cfbf083b94513971a3205521e",
+    "generated/savgol_response.pdf": "941d67885f952aa50c05dddbafade47795ef4ccc88d75a741ef72e7c8b726626",
+    "generated/savgol_spectrum.pdf": "51fb82e66bd0f4a97552a6092dee752af34d307ffbda92bf884bbda9dc2a8c37",
+    "generated/savgol_spectrum_stats.tex": "4d1f4969912ab6fd805087befa98596006614f1119ed6c56be47fb1fd42d471b",
+    "generated/seasons_table_hang.tex": "396c19f85bdd95525c7c1dc9733b2a4dabe617ba6636c1a76fda1f026ad87616",
+    "generated/seasons_table_para.tex": "309324e30bd09f7b06a8fccf16d7dcc33e4fc4a8863329ff884e2eef5377a688",
+    "generated/segmentation.tex": "90ea5f716a294f8836ac7a3a087ddb6db2e694e54c8d2919c08a8fc1612a5dc0",
+    "generated/segmentation_audit_table.tex": "6b50a41a1e00ec4331062d43fd32a2ef4a794885f3834f4553ced572a04ae4b8",
+    "generated/segmentation_audit_values.tex": "98f7c96e5feb3cefbc8eb7b5b1accfca8e560ea4aebeb9fef95c59e28c9bac16",
+    "generated/segmentation_coverage.pdf": "c984474161e30e4171e0af3f51687553cd35b9635c3a98a96c13f5cdeade3bac",
+    "generated/segmentation_current_example_hang.pdf": "15b4f5b951dcd93337ea1006103cf86ec2b1616c593f480dda7e59f5e5c2a372",
+    "generated/segmentation_current_example_para.pdf": "df2240dd4a5fde7c7656f99c61bb40bfa9b30962eba542228122db24b360a0f2",
+    "generated/segmentation_current_model_hang.pdf": "6aad2aeffca3c9f63b58776d6e4bf04fc7835eb37c2fb9e7790d93a34f32b5ca",
+    "generated/segmentation_current_model_para.pdf": "77cb157f185310dff018271fe4779cfb32d656579e5d7cafe1bf1e942028e7bf",
+    "generated/segmentation_decoder_ablation.pdf": "ab9130ef6a2c123ec2b0bb57ec3fe161c693da780c745f923d0805bd6e932522",
+    "generated/segmentation_decoder_audit.json": "ccec11d790a0653cc716506d36286329d9ab2fa04fb063d5dc09d11a02f079cc",
+    "generated/segmentation_decoding_transitions.pdf": "cc0a62dea163afc5675825432f969d15d88da55000d54bbfdba735d80d6dee66",
+    "generated/segmentation_example_hang.pdf": "4970bd9466d0f4ecb2e4e8176fef89d03045fc503c6d1137c867cce290784e85",
+    "generated/segmentation_example_para.pdf": "166e1ab679c67db271727de6eb4209c028a3fc67629847b80dcf4fb62bc3deb2",
+    "generated/segmentation_fit_table.tex": "bf528f6ae412ef4f6751a77e5d763b5b14d938c300fcc5dcfbae2350e14196a0",
+    "generated/segmentation_model_hang.pdf": "67ababd7a025b6a0f041e63adfdf45a813e65c9f106a5cc3eea836e3c796a5de",
+    "generated/segmentation_model_para.pdf": "af10e7f1741f7e2c615bae64505120216b4810bc8d7c36d229aaa75d48c7bcdc",
+    "generated/snapshot_status.tex": "5029fc1437d444209145634703148eb27e681eda7bc17e5e7a957270300b284b",
+    "generated/stats.tex": "f6f730be7a9dd57e4a23aa8b5a058343b4d5d21608ae3a3957703d293e26ce2a",
+    "generated/strata_compat.pdf": "d3afc1100180c331cdcc5fdd04ad1527d90649200cf2c5ba41d732932185cb60",
+    "generated/terrain.tex": "898ce6a643bb6ef726137f49f38f4c19f23e7580183eb472bdfcf81aa2064cde",
+    "generated/terrain_map.pdf": "b320e22f6085ec591e9dfeaa2b75dbe02f395e3faabbea14ef6c5daadaa04065",
+    "generated/trim.tex": "4b06146f61d0935c3fb14648f6dc109b19b5584dc8d905c6a0343a00e3fa936a",
+    "generated/trim_interior_excisions.pdf": "3c1b246a257406cdd1d1cfa546a9055425be38cb1c3cc1c66e7687c37a57243f",
+    "generated/trim_split_seconds.pdf": "b7d70b987341db5ddf0acc108fce80f7f0384e6741f0ba835efc6e39023c472b",
+    "generated/verify.tex": "80d310eed0f6fae9282d5354703447ce0b3d4761f3d85f2702c1263e60e813a4",
+    "generated/vertical_median_explainer.pdf": "237d5432c3774397db870d91403bad0a760bc7c7b7791b3d904d6bb977c7e82a"
+  },
+  "previous_main_pdf_sha256": "89a93bb3def936c8f88dccbeb0577639fbcca8d137f9c712f8beebd60047e0dd",
+  "resumed_rebuild": [
+    {
+      "id": "20260911T213634Z-7b7367f1",
+      "status": "running",
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/manifest.json"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "checked_utc": "2026-09-11T22:14:21.402370+00:00",
+  "basis": "Completed pipeline 2.3.0 segment and flight metadata; counts to cross-check against full coordinate collection",
+  "criterion": "native cadence <=10 s; at least one retained segment >=20000 s on 10 s grid",
+  "results": {
+    "paragliders": {
+      "cleaned_retained_flights": 156406,
+      "eligible_flights": 155085,
+      "eligible_segments": 190762,
+      "fixed_long_flights": 14360,
+      "fixed_common_origins": 21739115,
+      "grid_positions": 171663465,
+      "excluded_coarse_segments": 3446
+    },
+    "hang gliders": {
+      "cleaned_retained_flights": 6094,
+      "eligible_flights": 6060,
+      "eligible_segments": 7620,
+      "fixed_long_flights": 563,
+      "fixed_common_origins": 791712,
+      "grid_positions": 7301634,
+      "excluded_coarse_segments": 42
+    }
+  }
+}

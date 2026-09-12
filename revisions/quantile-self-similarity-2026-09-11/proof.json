@@ -1,0 +1,102 @@
+{
+  "analysis_snapshot": {
+    "kind": "completed saved snapshot; not a claim about a running rebuild",
+    "manifest": "/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/manifest.json",
+    "run_id": "20260910T221820Z-05d36ab4",
+    "cache": {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/arrays/ch3_revision_sample.pkl",
+      "bytes": 127059737,
+      "mtime_ns": 1789120071390000000
+    },
+    "cache_sha256": "e66a3b8599cda988947c18c2a32726aefce238241d0ed2e21503bc0d6f32e5c1",
+    "pipeline_versions": [
+      "2.2.0"
+    ]
+  },
+  "measurement_sha256": "1644ca844949be825a2b895715a9bd2a9bfff476ef1160bed900309cdfd47031",
+  "checks": {
+    "tests": "58 passed",
+    "ruff": "passed on new modules and tests",
+    "provenance": "93 files, 1108 macros, 0 problems",
+    "latex": "latexmk successful; no undefined references or overfull boxes; pre-existing page.1 duplicate destination remains",
+    "diff_check": "passed"
+  },
+  "files": {
+    "src/soaring/analysis/observables/self_similarity.py": {
+      "bytes": 11829,
+      "sha256": "7530d4e05225896ec4727dbaf307eb4632f55a56684e2d3a59960dd08f11048e"
+    },
+    "src/soaring/reporting/self_similarity.py": {
+      "bytes": 14208,
+      "sha256": "0176f5fe1c4073c54372630d235baba5669e71ba8a403262fd99ef8947f6a776"
+    },
+    "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py": {
+      "bytes": 40758,
+      "sha256": "3184736fc26c0692b630cb12b593d637d197c4d3a13aba9916d0a66abef07f8d"
+    },
+    "tests/analysis/observables/test_self_similarity.py": {
+      "bytes": 4485,
+      "sha256": "ca02acfc4030bcbb60089705baebfe52b4c3cc38dc3d1bdb0ee47f1f150a0a4f"
+    },
+    "thesis/sections/04-global-transport.tex": {
+      "bytes": 85802,
+      "sha256": "1e79286d281c6248adc874cbd5b3bcabadb52b8aaf898079dc2e15db11e5289b"
+    },
+    "thesis/appendices/C-displacement-squares.tex": {
+      "bytes": 1242,
+      "sha256": "bf4c6285a3cd93e556d1716e619faf813c8e419b804461fd9aa91fd157819629"
+    },
+    "thesis/main.pdf": {
+      "bytes": 4386892,
+      "sha256": "89a93bb3def936c8f88dccbeb0577639fbcca8d137f9c712f8beebd60047e0dd"
+    },
+    "thesis/generated/ch3_self_similarity_collapse.tex": {
+      "bytes": 517,
+      "sha256": "a242837f0d6eecc59637bef33d57ba809c2855eb7d4b24ad7a3cd939e334f627"
+    },
+    "thesis/generated/ch3_self_similarity_ranges.tex": {
+      "bytes": 513,
+      "sha256": "e988ad407deccb03a822239971d0fdf54ed1999fef50eabf53d2b4745401fb3e"
+    },
+    "thesis/generated/ch3_self_similarity_values.tex": {
+      "bytes": 2274,
+      "sha256": "ebf4c04171c1e7679f61cc0865f48845e4c2415aae3539a14ce0f1678b3709a9"
+    },
+    "thesis/generated/ch3_self_similarity.json": {
+      "bytes": 1300790,
+      "sha256": "6c9af4015cbafdbc46334147fe8644ed1c229b9fd039fe15f04e52dfef2c3f52"
+    },
+    "thesis/generated/ch3_self_similarity_table.tex": {
+      "bytes": 569,
+      "sha256": "c59e67ec0eb90ee230a5de3aded31e7b13fea11ab2da43b9aa7f34775f0f9f56"
+    },
+    "thesis/generated/ch3_squared_laws_para.pdf": {
+      "bytes": 60372,
+      "sha256": "39df61cb68ee4e5b8c19d354a9e917c60e8466a57705ecb2c9f7219022c8c7d9"
+    },
+    "thesis/generated/ch3_absolute_laws_hang.pdf": {
+      "bytes": 72518,
+      "sha256": "b5ce1034f3d48da6e1d0bec5b8a400d76402f26fb1f55b6d299d338c827b3f85"
+    },
+    "thesis/generated/ch3_squared_laws_hang.pdf": {
+      "bytes": 57707,
+      "sha256": "5c94e774a1cb23760ec22dad3393a05bebef36b0d8b007823adb8293fc5fbbd4"
+    },
+    "thesis/generated/ch3_absolute_laws_para.pdf": {
+      "bytes": 75566,
+      "sha256": "d465391aec67ef21b2130d44a74d56ed7175b14d6959de920460e02b424e2126"
+    },
+    "thesis/generated/ch3_fixed_quantiles.pdf": {
+      "bytes": 78367,
+      "sha256": "ab24eafd6fe15d777edf6fb2692069a8d907ee16d2565dc22eafd3355fdbf99a"
+    },
+    "thesis/generated/ch3_fixed_exponents.pdf": {
+      "bytes": 50189,
+      "sha256": "f5801fcc38f72dbbd7bf2a9110c6012a83bd63e684a2fbb2672c2102c8c28ca6"
+    },
+    "thesis/generated/ch3_quantile_control.pdf": {
+      "bytes": 70402,
+      "sha256": "0db98c922eedd074045b0c0166090cbd64f5d995495deecff4b15f08dfbc7f79"
+    }
+  }
+}

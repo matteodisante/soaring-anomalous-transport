@@ -52,7 +52,7 @@ These scripts are under `scripts/reporting/ch2_dataset/`.
 | `generate_alt_offset_stats.py` | Seeded raw-flight sample and height-reference controls | Offset values and scan cache |
 | `generate_alt_offset_figure.py` | Offset cache | Offset figure |
 | `generate_savgol_figure.py` | Configured smoothing kernels | Filter-response illustrations |
-| `generate_savgol_spectrum_figure.py` | Seeded raw trajectories; `--rescan` | Before/after spectra and sample counts |
+| `generate_savgol_spectrum_figure.py` | Seeded raw trajectories; `--rescan` | Raw coordinate spectra and sample counts |
 | `generate_cleaning_explainers.py` | Synthetic defects and configured altitude rules | Defect and median-speed schematics |
 | `generate_cleaning_examples.py` | Actual raw tracks and the current cleaner | Three empirical defect examples with provenance |
 | `generate_terrain_figure.py` | Take-off positions and elevation data | Terrain map and coverage values |
@@ -73,14 +73,15 @@ These scripts are under `scripts/reporting/ch3_global_transport/`.
 | `audit_msd.py` | Streams the archive and keeps flight identities and per-time position/velocity/acceleration samples | `audit_positions_<slug>.npz`, `audit_flights_<slug>.parquet` |
 | `audit_msd_report.py` | Reduces the audit arrays | `audit.tex` |
 | `generate_kinematic_isotropy_figure.py` | Paired component ratios by discipline, region and EN equipment class | Five kinematic figures, values and per-time support in JSON |
-| `generate_revision_diagnostics.py` | Seeded bounded sample of complete flights, metadata and task declarations read directly from the catalogue | Six empirical `ch3_*.pdf` figures, values, JSON and an estimator-checked measurement cache |
+| `generate_revision_diagnostics.py` | All eligible flights and segments; disk-backed arrays and bounded parallel workers; `--sample` is development only | Transport, component/radial and signed joint-law figures, values, JSON and a checked cache |
 | `generate_scaling_schematics.py` | Analytical scaling examples | Quantile, closed-loop and Lévy-walk moment-spectrum schematics |
 
 `<slug>` is `para` or `hang`. Measurements take `--out`; array reductions take
-`--audit-dir`. The wide-range subset report computes variation, quantiles, moments,
+`--audit-dir`. The common-grid archive report computes variation, quantiles, moments,
 centred multivariate kurtosis, regional PCA and velocity correlations on 10, 60 and
-300 second averaging scales. Its selection is exploratory, with flight IDs and support
-recorded explicitly. It is not an estimate based on all retained flights. The old duplicate
+300 second averaging scales. It uses every segment admitted by its cadence and lag-support requirements, with
+flight IDs and exclusions recorded explicitly. Fixed-population controls retain all
+eligible long flights and common within-segment origins. The old duplicate
 report paths and their unused figures have been removed; reusable observable estimators
 and their numerical regression tests remain in the library.
 

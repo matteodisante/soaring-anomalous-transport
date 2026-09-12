@@ -1,0 +1,2887 @@
+{
+  "cleaning": {
+    "configuration": {
+      "alt_channel": {
+        "baro_witness_min_range_m": 30.0,
+        "baro_witness_present_min": 0.95,
+        "gnss_min_range_m": 30.0,
+        "gnss_present_min": 0.95
+      },
+      "fix": {
+        "frozen_delta_z_m": 5.0,
+        "frozen_eps_m": 15.0,
+        "frozen_tau_s": 60.0,
+        "hampel_eps_min_m": 15.0,
+        "hampel_k": 5.0,
+        "hampel_min_window_fixes": 5,
+        "hampel_window_s": 20.0,
+        "integrity_max_fraction": 0.1,
+        "max_altitude_m": 6000.0,
+        "max_horizontal_speed_mps": {
+          "hang gliders": 55.0,
+          "paragliders": 45.0
+        },
+        "max_vertical_speed_mps": 10.0,
+        "min_altitude_m": -100.0,
+        "vz_min_window_fixes": 5,
+        "vz_window_s": 5.0
+      },
+      "flight": {
+        "max_duration_s": 57600.0,
+        "min_alt_range_m": 600.0,
+        "min_duration_s": 2400.0,
+        "min_path_km": 20.0
+      },
+      "sampling": {
+        "max_gap_factor": 10.0,
+        "max_gap_seconds": 20.0,
+        "max_missing_fraction": 0.1,
+        "min_segment_duration_s": 90.0
+      },
+      "savgol": {
+        "polyorder": 3,
+        "tau_c_horizontal_s": 5.0,
+        "tau_c_vertical_s": 5.0
+      },
+      "trimming": {
+        "ground_flatness_m": 5.0,
+        "interior_ground_s": 600.0,
+        "sustained_s": 30.0,
+        "takeoff_speed_mps": 5.0
+      }
+    },
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "pyarrow": "24.0.0",
+      "scipy": "1.18.0"
+    },
+    "pipeline_version": "2.3.0",
+    "source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85"
+  },
+  "datasets": {
+    "hang gliders": {
+      "attempted_files": 6716,
+      "cleaning": {
+        "configuration": {
+          "alt_channel": {
+            "baro_witness_min_range_m": 30.0,
+            "baro_witness_present_min": 0.95,
+            "gnss_min_range_m": 30.0,
+            "gnss_present_min": 0.95
+          },
+          "fix": {
+            "frozen_delta_z_m": 5.0,
+            "frozen_eps_m": 15.0,
+            "frozen_tau_s": 60.0,
+            "hampel_eps_min_m": 15.0,
+            "hampel_k": 5.0,
+            "hampel_min_window_fixes": 5,
+            "hampel_window_s": 20.0,
+            "integrity_max_fraction": 0.1,
+            "max_altitude_m": 6000.0,
+            "max_horizontal_speed_mps": {
+              "hang gliders": 55.0,
+              "paragliders": 45.0
+            },
+            "max_vertical_speed_mps": 10.0,
+            "min_altitude_m": -100.0,
+            "vz_min_window_fixes": 5,
+            "vz_window_s": 5.0
+          },
+          "flight": {
+            "max_duration_s": 57600.0,
+            "min_alt_range_m": 600.0,
+            "min_duration_s": 2400.0,
+            "min_path_km": 20.0
+          },
+          "sampling": {
+            "max_gap_factor": 10.0,
+            "max_gap_seconds": 20.0,
+            "max_missing_fraction": 0.1,
+            "min_segment_duration_s": 90.0
+          },
+          "savgol": {
+            "polyorder": 3,
+            "tau_c_horizontal_s": 5.0,
+            "tau_c_vertical_s": 5.0
+          },
+          "trimming": {
+            "ground_flatness_m": 5.0,
+            "interior_ground_s": 600.0,
+            "sustained_s": 30.0,
+            "takeoff_speed_mps": 5.0
+          }
+        },
+        "packages": {
+          "numpy": "2.5.0",
+          "pandas": "3.0.3",
+          "pyarrow": "24.0.0",
+          "scipy": "1.18.0"
+        },
+        "pipeline_version": "2.3.0",
+        "source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85"
+      },
+      "completed_utc": "2026-09-11T20:43:15.077098+00:00",
+      "discipline": "hang gliders",
+      "limit": 0,
+      "retained_flights": 6094,
+      "run_id": "d49745c0-5316-48fb-b529-03d6c6861e86",
+      "seed": 20260803,
+      "started_utc": "2026-09-11T20:40:18.685461+00:00",
+      "status": "complete",
+      "tables": {
+        "fixes.parquet": {
+          "bytes": 1145119236,
+          "footer_sha256": "047cbf367ed30a62505edbd055e7769e8493927eca25232517dc351992f7e6b9",
+          "mtime_ns": 1789159394600000000,
+          "rows": 34567535
+        },
+        "flights_meta.parquet": {
+          "bytes": 592328,
+          "footer_sha256": "28562f5d15ff9a5daab16e9d0cec6044e1dedd5b28a2cef290a23616431770d8",
+          "mtime_ns": 1789159394710000000,
+          "rows": 6716
+        },
+        "segments.parquet": {
+          "bytes": 259635,
+          "footer_sha256": "cc9a292bd97f03572fa5075c1971e70ebea0d64b41b69ec799b027ad9ad0e354",
+          "mtime_ns": 1789159395050000000,
+          "rows": 12515
+        },
+        "suspect_intervals.parquet": {
+          "bytes": 3366,
+          "footer_sha256": "dfe242554f72fbeb61820cd26e286157c365d151708c44154efd9c75a9375644",
+          "mtime_ns": 1789159395050000000,
+          "rows": 5
+        }
+      }
+    },
+    "paragliders": {
+      "attempted_files": 186052,
+      "cleaning": {
+        "configuration": {
+          "alt_channel": {
+            "baro_witness_min_range_m": 30.0,
+            "baro_witness_present_min": 0.95,
+            "gnss_min_range_m": 30.0,
+            "gnss_present_min": 0.95
+          },
+          "fix": {
+            "frozen_delta_z_m": 5.0,
+            "frozen_eps_m": 15.0,
+            "frozen_tau_s": 60.0,
+            "hampel_eps_min_m": 15.0,
+            "hampel_k": 5.0,
+            "hampel_min_window_fixes": 5,
+            "hampel_window_s": 20.0,
+            "integrity_max_fraction": 0.1,
+            "max_altitude_m": 6000.0,
+            "max_horizontal_speed_mps": {
+              "hang gliders": 55.0,
+              "paragliders": 45.0
+            },
+            "max_vertical_speed_mps": 10.0,
+            "min_altitude_m": -100.0,
+            "vz_min_window_fixes": 5,
+            "vz_window_s": 5.0
+          },
+          "flight": {
+            "max_duration_s": 57600.0,
+            "min_alt_range_m": 600.0,
+            "min_duration_s": 2400.0,
+            "min_path_km": 20.0
+          },
+          "sampling": {
+            "max_gap_factor": 10.0,
+            "max_gap_seconds": 20.0,
+            "max_missing_fraction": 0.1,
+            "min_segment_duration_s": 90.0
+          },
+          "savgol": {
+            "polyorder": 3,
+            "tau_c_horizontal_s": 5.0,
+            "tau_c_vertical_s": 5.0
+          },
+          "trimming": {
+            "ground_flatness_m": 5.0,
+            "interior_ground_s": 600.0,
+            "sustained_s": 30.0,
+            "takeoff_speed_mps": 5.0
+          }
+        },
+        "packages": {
+          "numpy": "2.5.0",
+          "pandas": "3.0.3",
+          "pyarrow": "24.0.0",
+          "scipy": "1.18.0"
+        },
+        "pipeline_version": "2.3.0",
+        "source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85"
+      },
+      "completed_utc": "2026-09-11T20:40:12.674340+00:00",
+      "discipline": "paragliders",
+      "limit": 0,
+      "retained_flights": 156406,
+      "run_id": "5cbc434e-c472-468e-bcdc-c58bd9e42e0c",
+      "seed": 20260803,
+      "started_utc": "2026-09-11T19:25:37.811625+00:00",
+      "status": "complete",
+      "tables": {
+        "fixes.parquet": {
+          "bytes": 43385490898,
+          "footer_sha256": "efc8e7660c4564138bcd2be3261d1f5146a6e14b2151fe2c784650f42aaafef7",
+          "mtime_ns": 1789159104580000000,
+          "rows": 1369807970
+        },
+        "flights_meta.parquet": {
+          "bytes": 13474270,
+          "footer_sha256": "67f8227e92ace7d927fac2db074ebe437a1f458348fb78fd35fb42d9cf55329f",
+          "mtime_ns": 1789159117260000000,
+          "rows": 186052
+        },
+        "segments.parquet": {
+          "bytes": 5461073,
+          "footer_sha256": "cf75538b57090c17ae2d40ba81b9e5079a0b5b43a0e74a353598a976c0941136",
+          "mtime_ns": 1789159212440000000,
+          "rows": 335924
+        },
+        "suspect_intervals.parquet": {
+          "bytes": 8480,
+          "footer_sha256": "9f7f25a9148562c685c0fab28332ba85a90a1771ba5befaa02a8d393a4c8824a",
+          "mtime_ns": 1789159212630000000,
+          "rows": 508
+        }
+      }
+    }
+  },
+  "error": "ValueError: Source changed",
+  "failure_record_sha256": "7400b3931c796232e2e44f28369834ebd40d867b2055b329cc590a735d1cbd33",
+  "numerical_source_sha256": "dea64e843864abd8316c1fa9442fe2e721213720ab200edb887621748000cdee",
+  "orchestrator_sha256": "56eea61ba5ad43fa47e8e33fd561f5d693fa05652a4a58765c0a94fca07e8abf",
+  "original_cache_sha256": "b0fa58db492a9b2b153acd1048017743e0db8635523e3a1332a9499a4db31555",
+  "parent_manifest_after_interruption_sha256": "0331a5e7059c5fb862eab6553259d8592372fcc96124c37b5d9391ba543e3e61",
+  "parent_manifest_sha256": "5cb285e8657d778a5b6cedd166f5a53053a67e5f597cff017f96b8a84c744e66",
+  "parent_run": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+  "preserved_logs": [
+    {
+      "bytes": 1338,
+      "sha256": "01ce25b3f89ffb322ce839dcabac8007603071b517ab8a7a4fcafcb573b33bee",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/01-verify.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/01-verify.log"
+    },
+    {
+      "bytes": 194,
+      "sha256": "5e61ef9cbd561bfcd659e69e424df2c516bf86c0936cc9bb50d4d7ba9eb97842",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/02-reproduce.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/02-reproduce.log"
+    },
+    {
+      "bytes": 79,
+      "sha256": "e3a7b9307e8e7d2e4544c168ea5f4e789a971ac5985649493014fd2be58baa94",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/03-acquisition.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/03-acquisition.log"
+    },
+    {
+      "bytes": 1211,
+      "sha256": "c8574016c0e6fb8106e30829499da28946a5cdec6417a5a7777926d788957656",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/04-raw_diagnostics.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/04-raw_diagnostics.log"
+    },
+    {
+      "bytes": 129,
+      "sha256": "5c7d54ef7bf33649b3a4dff222f2f8f1d25ce6f119281c2fe896b1a3b8fa60e4",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/05-raw_census.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/05-raw_census.log"
+    },
+    {
+      "bytes": 116,
+      "sha256": "08614e3b02841fab3bef4fd6eb319288f67dd72ed5b770256a405954dee55c2d",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/06-pipeline_census.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/06-pipeline_census.log"
+    },
+    {
+      "bytes": 2246,
+      "sha256": "ab6d952e902860845b4835cbe497177071896ff6301bd6b360615e4026c9d5d3",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/07-dataset.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/07-dataset.log"
+    },
+    {
+      "bytes": 831,
+      "sha256": "868343b6c6871fb926c5f2d31489aa450cbc4858615abe735d368a02d37928d8",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/08-altitude_noise.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/08-altitude_noise.log"
+    },
+    {
+      "bytes": 476,
+      "sha256": "bba9d30579eb63f4bec63396058a4d847493081a6204aca8150eb759b4218616",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/09-altitude_offsets.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/09-altitude_offsets.log"
+    },
+    {
+      "bytes": 149,
+      "sha256": "fa0fab03c1b9a85d52ffe360522312125bb98eff22dbceabbe01b278ff6b87b6",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/10-altitude_offset_figure.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/10-altitude_offset_figure.log"
+    },
+    {
+      "bytes": 60,
+      "sha256": "b5f8a253098c0ffa1e32ffa8877f07cee9ced107c07db5366a63a97cc3a4cc46",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/11-smoothing.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/11-smoothing.log"
+    },
+    {
+      "bytes": 401,
+      "sha256": "982bda71eda2bb9d38ae13eaaf132bb061108a2da457a035a043b1d2adfa2d1d",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/12-smoothing_spectrum.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/12-smoothing_spectrum.log"
+    },
+    {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/13-cleaning_schematics.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/13-cleaning_schematics.log"
+    },
+    {
+      "bytes": 158,
+      "sha256": "bcadd9ac9a90bf458e5836364a1ab622f1af2251900cfe5a1c4a3bcd4511559a",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/14-cleaning_examples.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/14-cleaning_examples.log"
+    },
+    {
+      "bytes": 601,
+      "sha256": "d13a046d84ac0403a6315600bdb5f3912e866c003d981062765d6b1e32e82808",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/15-trimming.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/15-trimming.log"
+    },
+    {
+      "bytes": 845,
+      "sha256": "5eb4fde432c30e55cd148b3481137b3e8b0303b1e9d567b36350a6da488ab8fa",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/16-terrain.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/16-terrain.log"
+    },
+    {
+      "bytes": 445,
+      "sha256": "5127dfd4fb1787579c585446b3fe70fab58470aba5462abb4788784779a5ac4c",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/17-msd_measure.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/17-msd_measure.log"
+    },
+    {
+      "bytes": 2053,
+      "sha256": "5aa4d1d02c99a094c1cfd85b6cba2795a4ba08c7cf5498450c7b3fdf2236d0a6",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/18-msd_figure.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/18-msd_figure.log"
+    },
+    {
+      "bytes": 73,
+      "sha256": "4fed085c36c0b7baf0ae1d49ff72499fde2ba3c1489470f3c9839d6895df1a19",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/19-duration_equipment.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/19-duration_equipment.log"
+    },
+    {
+      "bytes": 413,
+      "sha256": "38d6c0dbe2ab0b7fd02575d54cbd14f50fee82b3a2ceac4481383de1b1a713ed",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/20-msd_audit_measure.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/20-msd_audit_measure.log"
+    },
+    {
+      "bytes": 8635,
+      "sha256": "b11171f041d077c6b7c3666e6803466d5f5079c77d175395d74885ba72dea811",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/21-msd_audit_report.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/21-msd_audit_report.log"
+    },
+    {
+      "bytes": 6388,
+      "sha256": "92cf1f1fff609ea6e9a0a661537630eaefbbebd3b6acbf5a5dd33d2031c89929",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/22-preliminary.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/22-preliminary.log"
+    },
+    {
+      "bytes": 195,
+      "sha256": "c4ec57a57e4086b0476d8da7535ed7f337398b32a08659dfe30a7984f443b0f1",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/23-kinematics.log",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/23-kinematics.log"
+    }
+  ],
+  "resources": {
+    "full_speed": true,
+    "max_workers": 8,
+    "native_threads": 1,
+    "nice": 0
+  },
+  "reused_outputs": {
+    "altitude_noise.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_altitude_noise_figure.py",
+      "sha256": "1b3d013b2257c48fb22a836b60ec0a4beaa0aae74b6d5b34615c230be3afea3a"
+    },
+    "altitude_noise.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_altitude_noise_figure.py",
+      "sha256": "ce20649b1e535b18857874c5f53447c9ca09f611ad7d6a82be5be1539e03ad1e"
+    },
+    "audit.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/audit_msd_report.py",
+      "sha256": "415391cccb08739f437b9ac66c1dc158ec34e48af00abfeca0bd3a01381664f2"
+    },
+    "census.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_census_stats.py",
+      "sha256": "b074570942e98efa14c5bb6807a73015877347153b28256195322d7dc1ec4029"
+    },
+    "ch3_duration.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_duration_equipment.py",
+      "sha256": "bf07d7d91e6c54773e3ec1ee8c4c82b6eb9adcea5f236db3944397ada5c00355"
+    },
+    "ch3_duration_composition.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_duration_equipment.py",
+      "sha256": "40f3ffbf97551ea7b113c51bb3970a55a528c7b4999e603a28b0af6af7b6972a"
+    },
+    "ch3_duration_equipment.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_duration_equipment.py",
+      "sha256": "375070c91bd77bbe9818d9385a7a0ce647e86c808880a355d85776c7ea3309d9"
+    },
+    "cleaning_defects_schematic.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_cleaning_explainers.py",
+      "sha256": "37708d7d0b4a226991213268ebff1fb9d5576a6eb31bb12e5c7e4657459e9475"
+    },
+    "cleaning_real_examples.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_cleaning_examples.py",
+      "sha256": "49612dd385d90136dc01f41fde3dad8934e2de864c02d8b7c6e95d98e7b1c180"
+    },
+    "dataset_seasons.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_dataset_stats.py",
+      "sha256": "b22b47b4b7c48e33e5a03df016ee26f60619ca80c7526feb432c92a0a69e537e"
+    },
+    "dataset_stats.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_dataset_stats.py",
+      "sha256": "37c1225cb29bab89728d936d19108a4aa2df6e0987d05a5974e8b04b7eb85ac2"
+    },
+    "duration_equipment.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_duration_equipment.py",
+      "sha256": "1b58d61b137a00aef082c6c40c77da9231930133f7cf30e14e31e835fc85138d"
+    },
+    "duration_equipment_table.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_duration_equipment.py",
+      "sha256": "9b6ac088595a023f01f7ee4f67048b56545439d7473cfdfbae220c09c14fa6d2"
+    },
+    "fixlevel_diagnostics.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_preproc_figure.py",
+      "sha256": "57c0f97325f61931d2f7a68206316809422bd35dc9e601577b28abde51256dba"
+    },
+    "gap_diagnostics.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_preproc_figure.py",
+      "sha256": "3e60a40596767b3f2ff98664c4f3f115e9e6ebc44fb5b89a00749d03eec2efd0"
+    },
+    "horizontal_gate_explainer.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_cleaning_explainers.py",
+      "sha256": "91d5a3da3b05b65a7a268b6846ca2181713a4714f9b2cac3d6f8f1d6fba073d1"
+    },
+    "kinematic_isotropy.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py",
+      "sha256": "42bc2831e7eaca48f5c9281bad48195f395dc422387f9b2db1e4bf96951f2d3a"
+    },
+    "kinematic_isotropy_terrain.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py",
+      "sha256": "d2a6ae12b2bb456eaf214219b6a4609776178773402273b7b8fd684c0bf5ce10"
+    },
+    "kinematic_isotropy_terrain_level.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py",
+      "sha256": "9c7feef8651b1de4b6853438c646fd02b97827740fe95fec00064eabe9d34f7e"
+    },
+    "msd.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_msd_figure.py",
+      "sha256": "d305f4455492145d8673513408db50ebbb133e92d8be93f11affe74ca3d225b1"
+    },
+    "msd.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch3_global_transport/generate_msd_figure.py",
+      "sha256": "5e10b91714e8876786d11072cf07c7a5a0a9486e0565ecb6812ffd99a60f14d2"
+    },
+    "pipeline_census.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_pipeline_census.py",
+      "sha256": "f9c8b2ebe673f87ebe3d1095889d43fb75104ed9bcd3fd5c7ce00b7c04c00b53"
+    },
+    "prelim.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_prelim_figure.py",
+      "sha256": "90a266f7f46b2bac542a8fb3036d09b03cf74e36723b34c6ceaacf2d52b3a739"
+    },
+    "prelim_ensemble.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_prelim_figure.py",
+      "sha256": "fa8ac48de4d9399d4fa742d2b07d618f694f1a7083a3f7f5db17ad136105e595"
+    },
+    "prelim_isotropy.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_prelim_figure.py",
+      "sha256": "a082d326a9dda2f422e7431ed0f0f85776d4155de0c478bed4ccdfe4039c3ed8"
+    },
+    "prelim_map.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_prelim_figure.py",
+      "sha256": "613b2aba08e011190913ff255d7267ce04f0ec8e3e59891ec918bb12cc7120ce"
+    },
+    "preproc_diagnostics.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_preproc_figure.py",
+      "sha256": "0d367b7456ad9855314a0de65bb2594807f2954c58302469055b55c754e35e53"
+    },
+    "sampling_intervals.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_preproc_figure.py",
+      "sha256": "cc9afbea1a8a34ac6ccc200344b0416ee9686d337445864db83d8e50ddc1a708"
+    },
+    "savgol_explainer.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_savgol_figure.py",
+      "sha256": "e3d896eb81d48268cb43ad7192d22e64d5fdfed57995c89c4bfec3525540f7dd"
+    },
+    "savgol_response.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_savgol_figure.py",
+      "sha256": "bd00f208dbf4fbe893d1dbad2419649e59ad736e6777183ee7aa2c673811fac9"
+    },
+    "savgol_spectrum.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_savgol_spectrum_figure.py",
+      "sha256": "51fb82e66bd0f4a97552a6092dee752af34d307ffbda92bf884bbda9dc2a8c37"
+    },
+    "seasons_table_hang.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_stats.py",
+      "sha256": "396c19f85bdd95525c7c1dc9733b2a4dabe617ba6636c1a76fda1f026ad87616"
+    },
+    "seasons_table_para.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_stats.py",
+      "sha256": "309324e30bd09f7b06a8fccf16d7dcc33e4fc4a8863329ff884e2eef5377a688"
+    },
+    "stats.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_stats.py",
+      "sha256": "f6f730be7a9dd57e4a23aa8b5a058343b4d5d21608ae3a3957703d293e26ce2a"
+    },
+    "terrain.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_terrain_figure.py",
+      "sha256": "6fd45b1bfc0b60bf82590ee7c6b33100516a6112d39ca2b7a7b9a07960a3f879"
+    },
+    "terrain_map.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_terrain_figure.py",
+      "sha256": "0f9bf537afd513171832c4a978cbf3e81a685630d0ce20ac387e4b4e9d990a14"
+    },
+    "trim.tex": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_trimming_figure.py",
+      "sha256": "4b06146f61d0935c3fb14648f6dc109b19b5584dc8d905c6a0343a00e3fa936a"
+    },
+    "trim_interior_excisions.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_trimming_figure.py",
+      "sha256": "3c1b246a257406cdd1d1cfa546a9055425be38cb1c3cc1c66e7687c37a57243f"
+    },
+    "trim_split_seconds.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_trimming_figure.py",
+      "sha256": "b7d70b987341db5ddf0acc108fce80f7f0384e6741f0ba835efc6e39023c472b"
+    },
+    "verify.tex": {
+      "historical_control": false,
+      "producer": "scripts/verify_dataset.py",
+      "sha256": "80d310eed0f6fae9282d5354703447ce0b3d4761f3d85f2702c1263e60e813a4"
+    },
+    "vertical_median_explainer.pdf": {
+      "historical_control": false,
+      "producer": "scripts/reporting/ch2_dataset/generate_cleaning_explainers.py",
+      "sha256": "237d5432c3774397db870d91403bad0a760bc7c7b7791b3d904d6bb977c7e82a"
+    }
+  },
+  "run_dir": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c",
+  "run_id": "20260912T104500Z-5cfc4e8c",
+  "source_root": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport",
+  "source_sha256": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+  "staged_cache_sha256": "fbb3bd020f1c92143957812c8a89d7bb056f60af1cee59e046ecfdc0d228c07d",
+  "staged_inputs": [
+    {
+      "bytes": 235036039,
+      "sha256": "cac5bc62db2b4893f53fc6574ea834deeefa46072cdfe708f7e1c7dd026c9508",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/msd_para.npz",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/msd_para.npz"
+    },
+    {
+      "bytes": 4096,
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/._msd_para.npz",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/._msd_para.npz"
+    },
+    {
+      "bytes": 2013379,
+      "sha256": "374a04aeacadcb4622ba25bceb9ba6a736efda7a5578ded307d26bb5ef9e964d",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/msd_segments_para.parquet",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/msd_segments_para.parquet"
+    },
+    {
+      "bytes": 4096,
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/._msd_segments_para.parquet",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/._msd_segments_para.parquet"
+    },
+    {
+      "bytes": 8556480,
+      "sha256": "689607ffcb6da6c15c668895c2e653db0934b2461deb28354e988282e917b179",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/msd_hang.npz",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/msd_hang.npz"
+    },
+    {
+      "bytes": 4096,
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/._msd_hang.npz",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/._msd_hang.npz"
+    },
+    {
+      "bytes": 118834,
+      "sha256": "0c0bdaf68f167feb88a6bda564d3c2958b2dfe58447df274677965e5ce34208c",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/msd_segments_hang.parquet",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/msd_segments_hang.parquet"
+    },
+    {
+      "bytes": 4096,
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/._msd_segments_hang.parquet",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/._msd_segments_hang.parquet"
+    },
+    {
+      "bytes": 222270353,
+      "sha256": "68b852d104dd563597a7ad35b21d445960018ace1e144bda312a7fe0cb92e4fe",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/audit_positions_para.npz",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/audit_positions_para.npz"
+    },
+    {
+      "bytes": 4096,
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/._audit_positions_para.npz",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/._audit_positions_para.npz"
+    },
+    {
+      "bytes": 15117397,
+      "sha256": "727f3c39cbd8de466f17b3e355459eba6e79be7c26ae830674949e9decc31a7e",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/audit_flights_para.parquet",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/audit_flights_para.parquet"
+    },
+    {
+      "bytes": 4096,
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/._audit_flights_para.parquet",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/._audit_flights_para.parquet"
+    },
+    {
+      "bytes": 8144248,
+      "sha256": "01b9feb651842aace9a618ffb87217461890e4e71d76a8808e701553319af559",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/audit_positions_hang.npz",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/audit_positions_hang.npz"
+    },
+    {
+      "bytes": 4096,
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/._audit_positions_hang.npz",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/._audit_positions_hang.npz"
+    },
+    {
+      "bytes": 632941,
+      "sha256": "6b13de0fb508898ab17455c7b5ef8d216022dc0f5f7df1b2628242494274a786",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/audit_flights_hang.parquet",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/audit_flights_hang.parquet"
+    },
+    {
+      "bytes": 4096,
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/._audit_flights_hang.parquet",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/._audit_flights_hang.parquet"
+    },
+    {
+      "bytes": 2746615440,
+      "sha256": "b629d97af20624a13b46cfee67d15afea13d965f6773161db08b77698ab2ffc5",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/positions.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/positions.bin"
+    },
+    {
+      "bytes": 53490769,
+      "sha256": "c852bcc8983984759e617fe31f8cce4b54363e74ac861a779d8d14c01fc382d7",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/flights.json",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/flights.json"
+    },
+    {
+      "bytes": 98701461,
+      "sha256": "3777d9dc97666c230cd7b02782a9eff688399ce8d944876e0180f37b30d0e106",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/measurement.pkl",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/measurement.pkl"
+    },
+    {
+      "bytes": 279,
+      "sha256": "89b861e8a954bb41221594b54245becf494de9d9ead983c897f738995d78bc13",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/counts.json",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/counts.json"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-0.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-0.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-1.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-1.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-10.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-10.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-11.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-11.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-12.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-12.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-13.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-13.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-14.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-14.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-15.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-15.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-16.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-16.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-17.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-17.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-18.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-18.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-19.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-19.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-2.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-2.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-20.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-20.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-21.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-21.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-22.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-22.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-23.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-23.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-24.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-24.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-25.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-25.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-26.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-26.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-27.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-27.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-28.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-28.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-29.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-29.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-3.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-3.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-30.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-30.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-4.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-4.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-5.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-5.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-6.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-6.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-7.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-7.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-8.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-8.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._owners-9.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._owners-9.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._positions.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._positions.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-0.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-0.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-1.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-1.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-10.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-10.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-11.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-11.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-12.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-12.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-13.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-13.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-14.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-14.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-15.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-15.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-16.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-16.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-17.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-17.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-18.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-18.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-19.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-19.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-2.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-2.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-20.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-20.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-21.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-21.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-22.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-22.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-23.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-23.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-24.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-24.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-25.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-25.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-26.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-26.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-27.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-27.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-28.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-28.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-29.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-29.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-3.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-3.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-30.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-30.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-4.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-4.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-5.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-5.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-6.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-6.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-7.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-7.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-8.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-8.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/._vectors-9.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/._vectors-9.bin"
+    },
+    {
+      "bytes": 685890812,
+      "operation": "read-only input link",
+      "sha256": "68ababb0144ba9c13eb9e459a82c09f5378ef171be7fb7b68d480a0c6ef72e6f",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-0.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-0.bin"
+    },
+    {
+      "bytes": 342756528,
+      "operation": "read-only input link",
+      "sha256": "04c88b93aef8a2ebaab154d473d32e88d9192ace6e03b8f8f118fffea3b420c7",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-1.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-1.bin"
+    },
+    {
+      "bytes": 39984224,
+      "operation": "read-only input link",
+      "sha256": "55fad1837c962fe79e18ba219aa95b9b7f558abd8a5d704ccd2904ad38724b5f",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-10.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-10.bin"
+    },
+    {
+      "bytes": 32296324,
+      "operation": "read-only input link",
+      "sha256": "77a5ee752cb747d8e10a0a3ccd769165d6e74c348b7cf4c100595a54de4188be",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-11.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-11.bin"
+    },
+    {
+      "bytes": 26013052,
+      "operation": "read-only input link",
+      "sha256": "8817ddedc77f3f5868d1180051d6e9b5c2737994a9e571fddc8f26da4055df6a",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-12.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-12.bin"
+    },
+    {
+      "bytes": 21062600,
+      "operation": "read-only input link",
+      "sha256": "491ba083fefdeaf848ee01ac7e7ef5ca057c631f8bb2849b6754accf72578ee0",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-13.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-13.bin"
+    },
+    {
+      "bytes": 17215908,
+      "operation": "read-only input link",
+      "sha256": "fe910807acea5237d32e2677e6c77670c66d959bdff57c06cb50b72d8aa22bf6",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-14.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-14.bin"
+    },
+    {
+      "bytes": 14222836,
+      "operation": "read-only input link",
+      "sha256": "7c11275f7324eae91421a34e91dac8bce52ed2c66b50f21e1999dd82d4033bc3",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-15.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-15.bin"
+    },
+    {
+      "bytes": 11455620,
+      "operation": "read-only input link",
+      "sha256": "5de13d5c51707fbf5b9b56c4c9d2a751490cd0e3b7fbccc7bdb302823faf95dc",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-16.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-16.bin"
+    },
+    {
+      "bytes": 9291060,
+      "operation": "read-only input link",
+      "sha256": "56720d4ab5f133e80ff406e009b00fa8f96d9c3424973af4d71cc52eab5a2a1e",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-17.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-17.bin"
+    },
+    {
+      "bytes": 7516024,
+      "operation": "read-only input link",
+      "sha256": "ee7d92391e7c395419970fe0f61006d1f256d7653360816ef9905d2a23c4169f",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-18.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-18.bin"
+    },
+    {
+      "bytes": 6045068,
+      "operation": "read-only input link",
+      "sha256": "96845a813a9053834eae898af86d5f7acee97753f1ce33d1dab773f90bd4ed23",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-19.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-19.bin"
+    },
+    {
+      "bytes": 228378428,
+      "operation": "read-only input link",
+      "sha256": "e94604ff117661fd6bf395fa5eb21328510f525eb996f43c1af159ac7048322b",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-2.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-2.bin"
+    },
+    {
+      "bytes": 4872020,
+      "operation": "read-only input link",
+      "sha256": "fa30c9cc48cfa38b234823c80698819c744a9ca3de3c1d776a328dcc1137e233",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-20.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-20.bin"
+    },
+    {
+      "bytes": 3898788,
+      "operation": "read-only input link",
+      "sha256": "e4e798b26eb06562d957f4e418053c115edb4ce800a4bc789f9c3d28ec0c0ecf",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-21.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-21.bin"
+    },
+    {
+      "bytes": 3123940,
+      "operation": "read-only input link",
+      "sha256": "a32f13dca2ee6ce972199438f10fd0b1b1287ff2112195a40d057dad335217a8",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-22.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-22.bin"
+    },
+    {
+      "bytes": 2493464,
+      "operation": "read-only input link",
+      "sha256": "85e157fdd4f27a5b98dcb4f6194c791aaba17a27d479a0f8f0f16da7de67a13a",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-23.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-23.bin"
+    },
+    {
+      "bytes": 1968256,
+      "operation": "read-only input link",
+      "sha256": "c44b07b32475a7458eca5c99034245bbb150a2f46c9f00664f9aec37e1b986d8",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-24.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-24.bin"
+    },
+    {
+      "bytes": 1548992,
+      "operation": "read-only input link",
+      "sha256": "4234ad784206345f816068e1113b5da5f61d528ef3d60091f6df501bf93c10b6",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-25.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-25.bin"
+    },
+    {
+      "bytes": 1200744,
+      "operation": "read-only input link",
+      "sha256": "49cd7f5a0b8470f16702d14558e798876426c98e545d80d21d2e1251ea0af1a7",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-26.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-26.bin"
+    },
+    {
+      "bytes": 916324,
+      "operation": "read-only input link",
+      "sha256": "f3a00ce369525d92bf59df0f57e5c64d0e189e8fc93e2699644634b8826d2341",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-27.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-27.bin"
+    },
+    {
+      "bytes": 683732,
+      "operation": "read-only input link",
+      "sha256": "84b54f05d258dfcd31f142a1c739366914c83cf73d419a7dbd9970a8b1ea2f34",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-28.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-28.bin"
+    },
+    {
+      "bytes": 493492,
+      "operation": "read-only input link",
+      "sha256": "313951febd7b74455bf50dbfcba8c97916109ea36001cd83ab337a77fce78d03",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-29.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-29.bin"
+    },
+    {
+      "bytes": 171187644,
+      "operation": "read-only input link",
+      "sha256": "745f902a56e6af42e482df444b949f66134263179124f66f18aaa738c3095c42",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-3.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-3.bin"
+    },
+    {
+      "bytes": 339988,
+      "operation": "read-only input link",
+      "sha256": "501ce8ca10e2c614ecce2f05b50aaf2164f23f1ad47947caa8f5f2e167635a89",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-30.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-30.bin"
+    },
+    {
+      "bytes": 136872816,
+      "operation": "read-only input link",
+      "sha256": "2f1e8c3dc01d8d93df93eddc166b5aeeffe23f4b824def4a53b3802f022cadcd",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-4.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-4.bin"
+    },
+    {
+      "bytes": 113997736,
+      "operation": "read-only input link",
+      "sha256": "410fbdde8c993dfdf059c159ede025dda021dc6042096199db19b21035ac404f",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-5.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-5.bin"
+    },
+    {
+      "bytes": 85403052,
+      "operation": "read-only input link",
+      "sha256": "660be8ad76ba969677cb7141f73d01346f11e80405f922dda3e718ae1ea41ed4",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-6.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-6.bin"
+    },
+    {
+      "bytes": 75872992,
+      "operation": "read-only input link",
+      "sha256": "dbe31acbe317a2558a18bb1559a0495b3f63d8607c6a3b6ae332df986fab0727",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-7.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-7.bin"
+    },
+    {
+      "bytes": 62006916,
+      "operation": "read-only input link",
+      "sha256": "677fd500d1aec3da71c724ad5e231d1a2f4f9b1d591d5e8b355ec198f3e271af",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-8.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-8.bin"
+    },
+    {
+      "bytes": 48636412,
+      "operation": "read-only input link",
+      "sha256": "51352e889ca3b7ef017f2c074969ee551447231833b5ff5d0b0ffbbb18a27534",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-9.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/owners-9.bin"
+    },
+    {
+      "bytes": 2743563248,
+      "operation": "read-only input link",
+      "sha256": "7d3ba604b94398a01af11a9b35caba462c866c384b2d8149724fb6ce0df3757e",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-0.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-0.bin"
+    },
+    {
+      "bytes": 1371026112,
+      "operation": "read-only input link",
+      "sha256": "22a3349784fe34cc4e2df043f85a966977a1f8bfd5898b70d9a88aa6ce65b00c",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-1.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-1.bin"
+    },
+    {
+      "bytes": 159936896,
+      "operation": "read-only input link",
+      "sha256": "651a2ddfe0fb10032b17ed619ca73c43e72afa0b104f925e227faf93b67d73fb",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-10.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-10.bin"
+    },
+    {
+      "bytes": 129185296,
+      "operation": "read-only input link",
+      "sha256": "d374c67fb4166f64e6c4af8057779360d975190040e45574c8b7d6178445a438",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-11.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-11.bin"
+    },
+    {
+      "bytes": 104052208,
+      "operation": "read-only input link",
+      "sha256": "f702d2f2ee290a1a0bede4d0b6054289ba0023853b387f3c734b35652c3767b9",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-12.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-12.bin"
+    },
+    {
+      "bytes": 84250400,
+      "operation": "read-only input link",
+      "sha256": "be5eb6ae3d4cfe93c0160706674fc0b6028873ab692028a659af74c3da6722b4",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-13.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-13.bin"
+    },
+    {
+      "bytes": 68863632,
+      "operation": "read-only input link",
+      "sha256": "510445bf74e474cb21366021420269982cf9035073992a89f0901291e6fae60c",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-14.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-14.bin"
+    },
+    {
+      "bytes": 56891344,
+      "operation": "read-only input link",
+      "sha256": "d25a5c29ac7015921fd27ecfae8adc5ccf383e76a0e43ac25b9603635c593fc9",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-15.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-15.bin"
+    },
+    {
+      "bytes": 45822480,
+      "operation": "read-only input link",
+      "sha256": "a694132c320d16759c312dc27679aff47086380e5995230e345553a639235dbe",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-16.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-16.bin"
+    },
+    {
+      "bytes": 37164240,
+      "operation": "read-only input link",
+      "sha256": "1804476374c36e53da9e75733a662efd84eca93c053b21c8d6be7c0b4e84c2da",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-17.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-17.bin"
+    },
+    {
+      "bytes": 30064096,
+      "operation": "read-only input link",
+      "sha256": "32bc4334b3a952c120cb91d81912454ff1008f972c7e1d70894482ba5f1e6cb0",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-18.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-18.bin"
+    },
+    {
+      "bytes": 24180272,
+      "operation": "read-only input link",
+      "sha256": "b1f9252c25b9a3fd3dfa7520583a912ee7c45a416f21202ef8409b5912abce25",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-19.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-19.bin"
+    },
+    {
+      "bytes": 913513712,
+      "operation": "read-only input link",
+      "sha256": "b74eafd0bdcde89df98f5f59cacb62bb6426145fc8190c5036237914ef026c2a",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-2.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-2.bin"
+    },
+    {
+      "bytes": 19488080,
+      "operation": "read-only input link",
+      "sha256": "ddeb9f78cbcdaeae3859d9fbd9e0f8e9d432ac751e53c95623c109b1ed648e2e",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-20.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-20.bin"
+    },
+    {
+      "bytes": 15595152,
+      "operation": "read-only input link",
+      "sha256": "b486a9fcfa8f96ff4f09e67d6f291ae1ab1bd16965085c497d2ba2928307eacf",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-21.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-21.bin"
+    },
+    {
+      "bytes": 12495760,
+      "operation": "read-only input link",
+      "sha256": "8eea73c7def55828ac7c66b788fe089c31c58d4ea577bc9d1c374b4b1057f261",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-22.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-22.bin"
+    },
+    {
+      "bytes": 9973856,
+      "operation": "read-only input link",
+      "sha256": "cd7f937be80b3223adcb6af65dad69680a290f37996a2b12bcea742a16934fe5",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-23.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-23.bin"
+    },
+    {
+      "bytes": 7873024,
+      "operation": "read-only input link",
+      "sha256": "a88bced315b9b5c40fa9bc591aa0d0836736bae641e66c0a9a2e840cb84d0b7b",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-24.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-24.bin"
+    },
+    {
+      "bytes": 6195968,
+      "operation": "read-only input link",
+      "sha256": "1ed055b177dafe4b6d533aa88e72cbc9ace2fab901138f0fcd55d0fdf782d8a7",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-25.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-25.bin"
+    },
+    {
+      "bytes": 4802976,
+      "operation": "read-only input link",
+      "sha256": "d0fccea758141fc741cd33fc063b5560a508b5943b36733ebbc2e6383f5369bc",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-26.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-26.bin"
+    },
+    {
+      "bytes": 3665296,
+      "operation": "read-only input link",
+      "sha256": "46fb389ba833dceaff0a76c6c4f9fbb5c75017ec016a6fc1d7ec5497e96325be",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-27.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-27.bin"
+    },
+    {
+      "bytes": 2734928,
+      "operation": "read-only input link",
+      "sha256": "16878e6114782a99fd2d87f2836297beaa008ec83273cc16cf233bb6b3e4f47f",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-28.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-28.bin"
+    },
+    {
+      "bytes": 1973968,
+      "operation": "read-only input link",
+      "sha256": "42c26292868ed98291861dccd5ea2156d1b5b51b8adb481568bcd85b62a3dc7e",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-29.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-29.bin"
+    },
+    {
+      "bytes": 684750576,
+      "operation": "read-only input link",
+      "sha256": "904fbc0dfa540d5731ff61e316068dbc2cf1af33f29f9bf1b3b30af810bf8806",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-3.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-3.bin"
+    },
+    {
+      "bytes": 1359952,
+      "operation": "read-only input link",
+      "sha256": "3e92accf387924c50b3678cb695884429e879800aa46fb84daf32e46d9e5c04c",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-30.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-30.bin"
+    },
+    {
+      "bytes": 547491264,
+      "operation": "read-only input link",
+      "sha256": "ffbf1a009ca7fb1ee9a50f91e431de42fc8acb24b3fb76ad34b2503b55b4baa2",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-4.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-4.bin"
+    },
+    {
+      "bytes": 455990944,
+      "operation": "read-only input link",
+      "sha256": "5174a7555912c619cd6c506d21d4eb97069434101fc359233d7b867d3279fc41",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-5.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-5.bin"
+    },
+    {
+      "bytes": 341612208,
+      "operation": "read-only input link",
+      "sha256": "0c463535aa4c6605179d7ed277c6656cd331ea5f0bd76111963a5a4d148db45e",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-6.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-6.bin"
+    },
+    {
+      "bytes": 303491968,
+      "operation": "read-only input link",
+      "sha256": "a82de9bc22812be3a136906e261db3384ec1a5146468c4cb68c557d302bbeeb4",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-7.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-7.bin"
+    },
+    {
+      "bytes": 248027664,
+      "operation": "read-only input link",
+      "sha256": "0c62115ca03b54c37d4b0398090b4166e34db7ab1408cbf835bb2cfaf580f084",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-8.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-8.bin"
+    },
+    {
+      "bytes": 194545648,
+      "operation": "read-only input link",
+      "sha256": "7fc70059618ac469a3189e9be7fc45f65d75fd799df63e0db1ba11d3889018cd",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-9.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-para/vectors-9.bin"
+    },
+    {
+      "bytes": 116826144,
+      "sha256": "34f94e30a3e51610be838f785aee2f253fda2c7eef0488a835747d04f41b98cb",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/positions.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/positions.bin"
+    },
+    {
+      "bytes": 2085624,
+      "sha256": "489a7e6d57de1290a87358c56291b7ebb5d495cca8288f505d0cde21162599e7",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/flights.json",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/flights.json"
+    },
+    {
+      "bytes": 3895321,
+      "sha256": "f7c22a408728a5bfb2defe6663182e4369c5a4bcb9de477d651375792947ad61",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/measurement.pkl",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/measurement.pkl"
+    },
+    {
+      "bytes": 237,
+      "sha256": "c4b595d51c1d826d11092ef16137a6ce1cb2b53c3ec8553ebb1ac1583325ec2f",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/counts.json",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/counts.json"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-0.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-0.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-1.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-1.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-10.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-10.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-11.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-11.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-12.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-12.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-13.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-13.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-14.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-14.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-15.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-15.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-16.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-16.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-17.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-17.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-18.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-18.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-19.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-19.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-2.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-2.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-20.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-20.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-21.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-21.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-22.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-22.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-23.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-23.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-24.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-24.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-25.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-25.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-26.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-26.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-27.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-27.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-28.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-28.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-29.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-29.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-3.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-3.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-30.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-30.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-4.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-4.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-5.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-5.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-6.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-6.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-7.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-7.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-8.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-8.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._owners-9.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._owners-9.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._positions.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._positions.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-0.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-0.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-1.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-1.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-10.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-10.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-11.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-11.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-12.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-12.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-13.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-13.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-14.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-14.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-15.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-15.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-16.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-16.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-17.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-17.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-18.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-18.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-19.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-19.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-2.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-2.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-20.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-20.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-21.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-21.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-22.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-22.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-23.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-23.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-24.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-24.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-25.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-25.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-26.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-26.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-27.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-27.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-28.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-28.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-29.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-29.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-3.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-3.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-30.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-30.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-4.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-4.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-5.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-5.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-6.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-6.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-7.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-7.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-8.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-8.bin"
+    },
+    {
+      "bytes": 4096,
+      "operation": "read-only input link",
+      "sha256": "95ad619f7d2b8fd8840ebe5f34bf29e57055302adc3240e1f25ac6446bea0015",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/._vectors-9.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/._vectors-9.bin"
+    },
+    {
+      "bytes": 29176056,
+      "operation": "read-only input link",
+      "sha256": "1c22c2a82f4ad6d415cf4e803682e3ad1ee642769efe11810e6b3e8b60c4c6e7",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-0.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-0.bin"
+    },
+    {
+      "bytes": 14580276,
+      "operation": "read-only input link",
+      "sha256": "e4e1ea864813e8c4e461db5fcb4cb29c9dab067fb54aa1507ae55e0397baebd1",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-1.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-1.bin"
+    },
+    {
+      "bytes": 1701780,
+      "operation": "read-only input link",
+      "sha256": "4c79837f053b5023e3fb29e6f81902c5c3549f8d25bc4940278c75324b594089",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-10.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-10.bin"
+    },
+    {
+      "bytes": 1374728,
+      "operation": "read-only input link",
+      "sha256": "c95abbf6d22137aec7e9c4916fe555bc5b4c8f7dc727a822647c1bd58c7ade56",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-11.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-11.bin"
+    },
+    {
+      "bytes": 1107504,
+      "operation": "read-only input link",
+      "sha256": "09dc6e97977539e08d6fd157b008ca5f6485beba8b7ca8d1d384ecb0b89799ed",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-12.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-12.bin"
+    },
+    {
+      "bytes": 896924,
+      "operation": "read-only input link",
+      "sha256": "fb7202bc36ede924ee0224b294f2c091eacde87d6372b9bb71fe77c8a544d89e",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-13.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-13.bin"
+    },
+    {
+      "bytes": 733268,
+      "operation": "read-only input link",
+      "sha256": "1a03f51e2a5f6420d0fc50d88672851377113552159a69452fc70e17c6b782d0",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-14.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-14.bin"
+    },
+    {
+      "bytes": 605944,
+      "operation": "read-only input link",
+      "sha256": "eaaa1ee0f477f26863680c7aad7b61c44de9fc9c9e3e07601d8ca4d90c06dab3",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-15.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-15.bin"
+    },
+    {
+      "bytes": 488248,
+      "operation": "read-only input link",
+      "sha256": "318d551380df473158cfacbf0d5a0549189bcd83139b86c7914470d0f91b2504",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-16.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-16.bin"
+    },
+    {
+      "bytes": 396144,
+      "operation": "read-only input link",
+      "sha256": "27d1d8aa847fd53dfd798b0b2e075a04499af5fb1ccfb1a059d389017cb4954d",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-17.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-17.bin"
+    },
+    {
+      "bytes": 320716,
+      "operation": "read-only input link",
+      "sha256": "5921603c1e467a6d8666906d20ab20c21d0ca6f831f8b63f35c501c75b2985b8",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-18.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-18.bin"
+    },
+    {
+      "bytes": 258172,
+      "operation": "read-only input link",
+      "sha256": "28a26e709f69d308bc90921578d47e49667f53de1b29f38a13615a5e353d6a12",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-19.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-19.bin"
+    },
+    {
+      "bytes": 9715448,
+      "operation": "read-only input link",
+      "sha256": "1cce077ff67301097209001e2970ef466a4deb876b9208fede02326639f15bdb",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-2.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-2.bin"
+    },
+    {
+      "bytes": 208312,
+      "operation": "read-only input link",
+      "sha256": "f4dab5e967e55ace364c4ccc4f807a1fdf88731a7ef20432d782142f07a3691a",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-20.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-20.bin"
+    },
+    {
+      "bytes": 166668,
+      "operation": "read-only input link",
+      "sha256": "51d2a86e2075fbd401b28c2a4ec272668a2986e40ed82126282e3f9416270f6a",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-21.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-21.bin"
+    },
+    {
+      "bytes": 133844,
+      "operation": "read-only input link",
+      "sha256": "496101e9fed1e15ba538af32b763e7b7ab4306a27c8521a4c1977e0e4f99e64d",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-22.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-22.bin"
+    },
+    {
+      "bytes": 107092,
+      "operation": "read-only input link",
+      "sha256": "4f3d260fc1f3f8e6b8112b245fcd45a9ed4d3bec6746d48a065d45599af03785",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-23.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-23.bin"
+    },
+    {
+      "bytes": 84740,
+      "operation": "read-only input link",
+      "sha256": "57fad8b7e2253e8342552d32d9a69fd0f1a99e2bf41213c6e1477221e8113d12",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-24.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-24.bin"
+    },
+    {
+      "bytes": 66912,
+      "operation": "read-only input link",
+      "sha256": "178e6b936f274b4f8e835a4f83c90d6e9e6c2eb0802c2ba07754f020403bfce6",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-25.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-25.bin"
+    },
+    {
+      "bytes": 51916,
+      "operation": "read-only input link",
+      "sha256": "923f9db9bd9588cb243fed18652955d6c5ff70cceec210c76a2d6cd8a7552aea",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-26.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-26.bin"
+    },
+    {
+      "bytes": 40068,
+      "operation": "read-only input link",
+      "sha256": "4b29fa7c04f18b73d80677a4fc9fd95bcaf02ab3059568ee406ec7ece2255666",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-27.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-27.bin"
+    },
+    {
+      "bytes": 30380,
+      "operation": "read-only input link",
+      "sha256": "b60124349cb8bfaec2ffd76da7cd69aa8278c22acf15704c6e8062ed996ff237",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-28.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-28.bin"
+    },
+    {
+      "bytes": 22208,
+      "operation": "read-only input link",
+      "sha256": "32b00d116afa04c04ff56b4a4386c37fb57e6d5fe42166ca8dcd06a02890c887",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-29.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-29.bin"
+    },
+    {
+      "bytes": 7282688,
+      "operation": "read-only input link",
+      "sha256": "8ea2d68c90c0a1fe9572b698d7e8316aae880dbc82ecd860f599a3fe06644172",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-3.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-3.bin"
+    },
+    {
+      "bytes": 15680,
+      "operation": "read-only input link",
+      "sha256": "8e064ec7f1527c86be93e47a127bf141e65ffef5366e551e0ee239f72627e07d",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-30.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-30.bin"
+    },
+    {
+      "bytes": 5823200,
+      "operation": "read-only input link",
+      "sha256": "3936631f315347e9a351568da54b6bbae95538659d793c876f37694c977c1383",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-4.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-4.bin"
+    },
+    {
+      "bytes": 4849948,
+      "operation": "read-only input link",
+      "sha256": "512ead1cd2c4ad9d9ba687216c31845a09c7c635451e35edfb2b6b2b0884f8bf",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-5.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-5.bin"
+    },
+    {
+      "bytes": 3633744,
+      "operation": "read-only input link",
+      "sha256": "d5b4e8bf611e6b89d981b93ff372a4b5815fad90624eb38777cd2276e30fee8c",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-6.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-6.bin"
+    },
+    {
+      "bytes": 3228520,
+      "operation": "read-only input link",
+      "sha256": "d04b122e0ff3f1dd6076dc1c3dab8e13baba091c134bd45b634e1223cf133754",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-7.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-7.bin"
+    },
+    {
+      "bytes": 2638432,
+      "operation": "read-only input link",
+      "sha256": "213b329086607be3ca380f055b0b13d2154c48ebcafde07d6bcdbb17e12163f3",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-8.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-8.bin"
+    },
+    {
+      "bytes": 2069736,
+      "operation": "read-only input link",
+      "sha256": "a1e69ff19edf76eb13e16050ddaa100f64b5267c5e1a37edfb3aa51337b2daeb",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-9.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/owners-9.bin"
+    },
+    {
+      "bytes": 116704224,
+      "operation": "read-only input link",
+      "sha256": "d94375663d7bd4b6273d96202462912de9414e0ecbfaaeabefac17a6cb239282",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-0.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-0.bin"
+    },
+    {
+      "bytes": 58321104,
+      "operation": "read-only input link",
+      "sha256": "6a370458ac258e78a856c47b5a77d50877f065fa044ee27fe191831514ca5372",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-1.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-1.bin"
+    },
+    {
+      "bytes": 6807120,
+      "operation": "read-only input link",
+      "sha256": "76bd92417e20d5b777a3f3e981e29b28e409020bc091612b2cd856fc719e5135",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-10.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-10.bin"
+    },
+    {
+      "bytes": 5498912,
+      "operation": "read-only input link",
+      "sha256": "0baf9857a43cf7b0264eb4e0e24e48dd5ac3ab9d685aeb869d0dcefae4f99861",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-11.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-11.bin"
+    },
+    {
+      "bytes": 4430016,
+      "operation": "read-only input link",
+      "sha256": "5ef2a334970b817040c791a101a79626e747629400ded81d9568c7ba08b21296",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-12.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-12.bin"
+    },
+    {
+      "bytes": 3587696,
+      "operation": "read-only input link",
+      "sha256": "1e1aa8bc62bec0caacd7fd2e386002e02f0a582bf9572df99700f40ae545cc13",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-13.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-13.bin"
+    },
+    {
+      "bytes": 2933072,
+      "operation": "read-only input link",
+      "sha256": "3b0e62ecaaf858c56a7136546cafc52c2b9f602bc7050dc51fb8a37e08f9fa0a",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-14.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-14.bin"
+    },
+    {
+      "bytes": 2423776,
+      "operation": "read-only input link",
+      "sha256": "bd234012d31a920ed82066623e03e9adb3a36dbcd6e81748900a402b5f0d7189",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-15.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-15.bin"
+    },
+    {
+      "bytes": 1952992,
+      "operation": "read-only input link",
+      "sha256": "a2289257195d62de74ee91712cfba202b67de6c848a53353cd65b9aea4447f10",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-16.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-16.bin"
+    },
+    {
+      "bytes": 1584576,
+      "operation": "read-only input link",
+      "sha256": "226568d600cc9e013ac3b7786877ef20d040a71e26f5e28d7e7f614dfd351323",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-17.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-17.bin"
+    },
+    {
+      "bytes": 1282864,
+      "operation": "read-only input link",
+      "sha256": "e245754fc112dff03faddf188026eae45a1812cf555899f3d052f772cfb1f058",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-18.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-18.bin"
+    },
+    {
+      "bytes": 1032688,
+      "operation": "read-only input link",
+      "sha256": "535c12b6fe4216ed86873604f6f594c950993b057b0af9474661f7f12b5b6b13",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-19.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-19.bin"
+    },
+    {
+      "bytes": 38861792,
+      "operation": "read-only input link",
+      "sha256": "ec04be889867c9a6858dd99f3bb2e2df5af187dc654a1d8876e7bfd1e56088b1",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-2.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-2.bin"
+    },
+    {
+      "bytes": 833248,
+      "operation": "read-only input link",
+      "sha256": "f9df6d2b9c410f9b8cae7f5ecb789c70ae2d7b908c7b81a921f70cbb98a20ce9",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-20.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-20.bin"
+    },
+    {
+      "bytes": 666672,
+      "operation": "read-only input link",
+      "sha256": "785b4e4f40f26e0097a27c74d2a3c6fc5ab15b96d6f43c614e0fb0108015bb35",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-21.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-21.bin"
+    },
+    {
+      "bytes": 535376,
+      "operation": "read-only input link",
+      "sha256": "851dfb4db94be64ebc5c595a7c0daa5dfabbce5b414029a72027eecec1044ab4",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-22.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-22.bin"
+    },
+    {
+      "bytes": 428368,
+      "operation": "read-only input link",
+      "sha256": "c8dc6d4c20e12f0d87a1675e8b1e7f86f3b3e47740e0ee80376b905fb142ff7f",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-23.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-23.bin"
+    },
+    {
+      "bytes": 338960,
+      "operation": "read-only input link",
+      "sha256": "72ff6b1eb6ac2d381e54fd3601ecd4ac01ff1fe8b20e384fb8f50f9e96acdddc",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-24.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-24.bin"
+    },
+    {
+      "bytes": 267648,
+      "operation": "read-only input link",
+      "sha256": "138dee261130b93543001f470ce1936e6f97c8b1eb58213df3a042da672a31be",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-25.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-25.bin"
+    },
+    {
+      "bytes": 207664,
+      "operation": "read-only input link",
+      "sha256": "4f9ddf733aaefd5214c3db2c8cb417390ec36e701947d4cbfd4759526b49ccba",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-26.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-26.bin"
+    },
+    {
+      "bytes": 160272,
+      "operation": "read-only input link",
+      "sha256": "c75ba70aecb432b4ce83e53734cdb69640b504907f0dc7bf8d63e6bfbbec7bef",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-27.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-27.bin"
+    },
+    {
+      "bytes": 121520,
+      "operation": "read-only input link",
+      "sha256": "3e58777a56ad436483bbd0e99ab5a099e51231a287d98b2bef533f2639def1e6",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-28.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-28.bin"
+    },
+    {
+      "bytes": 88832,
+      "operation": "read-only input link",
+      "sha256": "ad1cfb852c9d966f8dd2a4183fd9baea943bfffafffd4053a6b3c49eca112af2",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-29.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-29.bin"
+    },
+    {
+      "bytes": 29130752,
+      "operation": "read-only input link",
+      "sha256": "0cb2f69c7dd257a9cd5446c71b729cf38eef0fb8c21a09eed48498ed3203ddeb",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-3.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-3.bin"
+    },
+    {
+      "bytes": 62720,
+      "operation": "read-only input link",
+      "sha256": "ba3c301448f03f3f7e9389a09a2c7e3a310d3f1efdeda779bf4ff978a3402c2b",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-30.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-30.bin"
+    },
+    {
+      "bytes": 23292800,
+      "operation": "read-only input link",
+      "sha256": "ab7c1849aa737f47a783d7482c3e064016407cb0737641af5b2ad813e197c3cb",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-4.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-4.bin"
+    },
+    {
+      "bytes": 19399792,
+      "operation": "read-only input link",
+      "sha256": "014b2452921dda355bd594df5f614fb1483e305896a879ba2b28835581048ad5",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-5.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-5.bin"
+    },
+    {
+      "bytes": 14534976,
+      "operation": "read-only input link",
+      "sha256": "b7f09b450890a8c8c5616cfed6821feea961c803bbfc74640e6c50e7b22fc023",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-6.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-6.bin"
+    },
+    {
+      "bytes": 12914080,
+      "operation": "read-only input link",
+      "sha256": "a363167b37590cadcd958a8c45f50760752bada783f41cb1e4ce883b9598b0e3",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-7.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-7.bin"
+    },
+    {
+      "bytes": 10553728,
+      "operation": "read-only input link",
+      "sha256": "a74445edea9d48f2b8ce2a737aceacb3cca480fe0c9044af2bb79478c38c170f",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-8.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-8.bin"
+    },
+    {
+      "bytes": 8278944,
+      "operation": "read-only input link",
+      "sha256": "ce804a4478459dc7b0cb89bd975e14e7c79a46136893e647d9666f27492285b4",
+      "source": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-9.bin",
+      "target": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T104500Z-5cfc4e8c/arrays/ch3-full-hang/vectors-9.bin"
+    }
+  ],
+  "stages": [
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/verify_dataset.py"
+      ],
+      "elapsed_seconds": 596.1945557594299,
+      "id": "verify",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789162594.668662,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/check_reproducible.py",
+        "--sample",
+        "250"
+      ],
+      "elapsed_seconds": 177.70844197273254,
+      "id": "reproduce",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789163190.948501,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_stats.py"
+      ],
+      "elapsed_seconds": 0.3253777027130127,
+      "id": "acquisition",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789163368.7445052,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_preproc_figure.py",
+        "--rescan"
+      ],
+      "elapsed_seconds": 2012.8087210655212,
+      "id": "raw_diagnostics",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789163369.104527,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_census_stats.py"
+      ],
+      "elapsed_seconds": 2.1529431343078613,
+      "id": "raw_census",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789165382.148725,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_pipeline_census.py"
+      ],
+      "elapsed_seconds": 0.7224581241607666,
+      "id": "pipeline_census",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789165384.3462908,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_dataset_stats.py"
+      ],
+      "elapsed_seconds": 3.493767023086548,
+      "id": "dataset",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789165385.108633,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_altitude_noise_figure.py",
+        "--rescan"
+      ],
+      "elapsed_seconds": 245.09490585327148,
+      "id": "altitude_noise",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789165388.6505961,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_alt_offset_stats.py",
+        "--rescan"
+      ],
+      "elapsed_seconds": 227.44899582862854,
+      "id": "altitude_offsets",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789165633.837285,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_alt_offset_figure.py"
+      ],
+      "elapsed_seconds": 2.5894837379455566,
+      "id": "altitude_offset_figure",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789165861.3910232,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_savgol_figure.py"
+      ],
+      "elapsed_seconds": 2.8955907821655273,
+      "id": "smoothing",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789165864.053656,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_savgol_spectrum_figure.py",
+        "--rescan"
+      ],
+      "elapsed_seconds": 62.66117000579834,
+      "id": "smoothing_spectrum",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789165867.011853,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_cleaning_explainers.py"
+      ],
+      "elapsed_seconds": 3.7298331260681152,
+      "id": "cleaning_schematics",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789165929.775949,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_cleaning_examples.py"
+      ],
+      "elapsed_seconds": 6.865103244781494,
+      "id": "cleaning_examples",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789165933.550624,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_trimming_figure.py"
+      ],
+      "elapsed_seconds": 1.7500920295715332,
+      "id": "trimming",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789165940.464916,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_terrain_figure.py"
+      ],
+      "elapsed_seconds": 333.35541582107544,
+      "id": "terrain",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789165942.2555132,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch3_global_transport/measure_msd.py",
+        "--out",
+        "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays"
+      ],
+      "elapsed_seconds": 3422.6600029468536,
+      "id": "msd_measure",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789166275.778923,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch3_global_transport/generate_msd_figure.py",
+        "--audit-dir",
+        "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays"
+      ],
+      "elapsed_seconds": 122.94901776313782,
+      "id": "msd_figure",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789169698.600474,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch3_global_transport/generate_duration_equipment.py",
+        "--audit-dir",
+        "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays"
+      ],
+      "elapsed_seconds": 8.87951111793518,
+      "id": "duration_equipment",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789169821.812526,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch3_global_transport/audit_msd.py",
+        "--out",
+        "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays"
+      ],
+      "elapsed_seconds": 620.989422082901,
+      "id": "msd_audit_measure",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789169830.800693,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch3_global_transport/audit_msd_report.py",
+        "--audit-dir",
+        "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays"
+      ],
+      "elapsed_seconds": 4.695788145065308,
+      "id": "msd_audit_report",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789170451.8482409,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch2_dataset/generate_prelim_figure.py",
+        "--audit-dir",
+        "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays"
+      ],
+      "elapsed_seconds": 9.506653785705566,
+      "id": "preliminary",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789170456.5808551,
+      "status": "complete"
+    },
+    {
+      "command": [
+        "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+        "scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py",
+        "--audit-dir",
+        "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays"
+      ],
+      "elapsed_seconds": 41.2021861076355,
+      "id": "kinematics",
+      "reused_from": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+      "source_sha256_at_execution": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+      "started_unix": 1789170466.155138,
+      "status": "complete"
+    }
+  ],
+  "status": "failed",
+  "store_checks": {
+    "hang gliders": {
+      "all_pools_finite_and_owner_order_valid": true,
+      "flights": 6060,
+      "oracle_flight_indexes": [
+        0,
+        116,
+        252,
+        504,
+        757,
+        1009,
+        1262,
+        1514,
+        1767,
+        2019,
+        2272,
+        2524,
+        2777,
+        3029,
+        3281,
+        3534,
+        3786,
+        4039,
+        4291,
+        4544,
+        4796,
+        5049,
+        5301,
+        5554,
+        5806,
+        6059
+      ],
+      "positions": 7301634
+    },
+    "paragliders": {
+      "all_pools_finite_and_owner_order_valid": true,
+      "flights": 155085,
+      "oracle_flight_indexes": [
+        0,
+        6461,
+        12923,
+        19385,
+        25847,
+        32309,
+        38771,
+        45232,
+        51694,
+        58156,
+        64618,
+        71080,
+        77542,
+        84003,
+        90465,
+        96927,
+        103389,
+        109851,
+        116313,
+        122774,
+        129236,
+        135698,
+        142160,
+        148622,
+        153444,
+        155084
+      ],
+      "positions": 171663465
+    }
+  }
+}

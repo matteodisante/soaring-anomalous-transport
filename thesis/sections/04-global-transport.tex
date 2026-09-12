@@ -1,88 +1,129 @@
 \chapter{Global transport}
 \label{ch:global}
 
-Whole flights combine circling, gliding and the search for lift, whose accumulated effect
-appears in the displacement statistics. These statistics constrain any model of the motion: how far a glider moves over a
-given time, how variable that distance is, which directions it favours and how long its
-velocity remains correlated. We measure these properties before assigning phase labels,
-then compare them with predictions of candidate stochastic processes.
-Chapter~\ref{ch:phases} examines how the motion decomposes into individual behaviours.
+Circling, gliding and searching for lift combine into the displacement of a whole
+flight. We measure its growth, variability, preferred directions and velocity memory,
+then compare these observations with stochastic models. The analysis precedes the
+phase labels introduced in Chapter~\ref{ch:phases}.
 
 The archive contains \num{\StatMsdParaFlights} paraglider and
 \num{\StatMsdHangFlights} hang-glider flights in the retained transport snapshot. A
-reproducible diagnostic subset is used for measurements spanning
+complete scan of the cleaned archive supplies measurements spanning
 \SIrange{10}{10000}{\second}, including regional principal axes and velocity correlations
-at several resolutions. Subset results and archive-wide descriptions are identified
-separately.
+at several resolutions. All retained segments meeting the common-grid cadence and
+lag-support requirements enter; there is no cap on the number of flights.
 \ifnum\StatSnapshotCurrent=0
 The numerical results await regeneration on the archive cleaned with the criteria
 of Chapter~\ref{ch:dataset}.
 \fi
 
+\begin{table}[htbp]
+\centering\small
+\caption{Population support in this chapter. The common-grid analysis includes every
+eligible flight. The fixed long-flight population supplies an additional control
+with identical flights and origins across lags (Sec.~\ref{sec:quantile-population}).}
+\label{tab:chapter3-populations}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Population} & \textbf{Paragliders} & \textbf{Hang gliders}\\
+\midrule
+Retained cleaned archive & \num{\StatMsdParaFlights} & \num{\StatMsdHangFlights}\\
+Eligible on the 10-s grid & \num{\StatRevParaFlights} & \num{\StatRevHangFlights}\\
+Fixed long-flight control & \num{\StatRevParaQuantileFixedFlights} & \num{\StatRevHangQuantileFixedFlights}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The chapter first defines displacement growth and drift-removing variations.
+Quantiles then test scalar rescaling, with a fixed-population control, before the
+component and joint laws address vector scaling and dependence. A separate section
+examines regional geometry and equipment contrasts. Duration and equipment
+composition then check how the observed growth depends on the selected flights.
+With those population effects established, moment spectra and velocity memory
+provide further constraints for the model comparison.
+
 \FloatBarrier
-\section{The measured displacement and its time scales}
+\section{Displacement and time scales}
 \label{sec:estimator}
 \label{sec:obs-global}
 
-Let $\mathbf r_f(t)=(E_f(t),N_f(t))$ denote the horizontal position of flight $f$ in its
-local east--north frame. A displacement is
+Let $\mathbf r_f(t)=(E_f(t),N_f(t))$ be the horizontal position of flight $f$.
+Its retained segments form the set $\mathcal S_f$, with $fs$ denoting segment $s$
+of flight $f$.
+
+A displacement is
 \begin{equation}
   \mathbf X_f(t,\tau)=\mathbf r_f(t+\tau)-\mathbf r_f(t),
   \qquad R_f(t,\tau)=|\mathbf X_f(t,\tau)|.
   \label{eq:displacement-global}
 \end{equation}
-East and north are two coordinates; east and west are opposite signs of the same
-coordinate. The radial displacement $R$ combines both coordinates and is not a third
-independent component.
 
-For a continuous segment of duration $T_f$, the time-averaged MSD is
+For segment $fs$, of duration $T_{fs}$, the time-averaged MSD is
 \begin{equation}
-  \overline{\delta_f^2}(\tau)
-    =\frac{1}{T_f-\tau}\int_0^{T_f-\tau}R_f(t,\tau)^2\,\mathrm dt.
+  \overline{\delta_{fs}^2}(\tau)
+    =\frac{1}{T_{fs}-\tau}\int_0^{T_{fs}-\tau}R_f(t,\tau)^2\,\mathrm dt,
+  \qquad 0<\tau<T_{fs},
   \label{eq:ta-msd}
 \end{equation}
+with $t$ measured from the start of that segment.
 Only windows lying entirely within a retained segment are admitted, so an increment never
-crosses a data gap. For flights with several segments, combining the segment sums and their
-numbers of admissible windows gives a flight-level mean; averaging further over the
-population requires a choice of weights:
+crosses a data gap. Let $n_{fs}(\tau)$ count the admissible windows of segment $fs$ and
+$n_f(\tau)=\sum_{s\in\mathcal S_f}n_{fs}(\tau)$ their total over the flight. Combining a
+flight's segment sums with those counts gives the flight-level mean
+\begin{equation}
+  \overline{\delta_f^2}(\tau)
+   =\frac{\sum_{s\in\mathcal S_f}n_{fs}(\tau)\,\overline{\delta_{fs}^2}(\tau)}{n_f(\tau)},
+  \label{eq:flight-msd}
+\end{equation}
+a window-count-weighted average of the segment TA-MSDs contributing to that flight.
+Averaging further over the population requires a choice of weights:
 \begin{equation}
   M_2^{\mathrm{flight}}(\tau)
-   =\frac{1}{N_f(\tau)}\sum_f\overline{\delta_f^2}(\tau),
+   =\frac{1}{N_{\mathrm{fl}}(\tau)}\sum_f\overline{\delta_f^2}(\tau),
   \qquad
   M_2^{\mathrm{window}}(\tau)
-   =\frac{\sum_f n_f(\tau)\overline{\delta_f^2}(\tau)}{\sum_f n_f(\tau)}.
+   =\frac{\sum_f n_f(\tau)\overline{\delta_f^2}(\tau)}{\sum_f n_f(\tau)},
   \label{eq:weights-global}
 \end{equation}
+where $N_{\mathrm{fl}}(\tau)$ is the number of flights with at least one admissible window.
 The first gives each contributing flight equal weight, whereas the second gives each
 admissible window equal weight and consequently weights longer flights more strongly.
 Both averages still combine flights made under different meteorological and geographical
 conditions.
 
-The archive time average in Figure~\ref{fig:msd} uses a third convention: it gives each
-contributing \emph{segment} equal weight. A flight split into several segments can
-therefore contribute several times. Segments with fewer than eight fixes are omitted
-from this measurement. Within an admitted segment, all admissible starting fixes enter
-the mean. The diagnostic subset used later keeps one segment per flight and uses starting
-times $0,\tau,2\tau,\ldots$; its first-difference windows do not overlap. Its $V_1$ and
-$V_2$ curves give each flight equal weight, whereas the baseline quantiles and higher moments pool
-windows. Section~\ref{sec:quantile-population} adds quantile controls with fixed flights,
-weights and origins. In discrete time, a segment of $n$ fixes at interval $\Delta t$ contributes
+Figure~\ref{fig:msd} uses a third convention, equal weight per segment:
 \begin{equation}
- \widehat{\delta^2}(k\Delta t)
- =\frac{1}{n-k}\sum_{j=0}^{n-k-1}|\mathbf r_{j+k}-\mathbf r_j|^2,
- \qquad 1\le k<n.
+ M_2^{\mathrm{segment}}(\tau)=\frac1{N_{\mathrm{seg}}(\tau)}
+ \sum_f\sum_{s\in\mathcal S_f}\overline{\delta_{fs}^2}(\tau).
+ \label{eq:segment-msd}
+\end{equation}
+Only segments with at least eight fixes and support at $\tau$ enter. A split flight
+can contribute several segments.
+
+In discrete time, a segment $fs$ of $N_{fs}$ fixes
+$\mathbf r_0,\ldots,\mathbf r_{N_{fs}-1}$ at interval $\Delta t_{fs}$ contributes
+\begin{equation}
+ \widehat{\delta_{fs}^2}(k\Delta t_{fs})
+ =\frac{1}{N_{fs}-k}\sum_{j=0}^{N_{fs}-k-1}|\mathbf r_{j+k}-\mathbf r_j|^2,
+ \qquad 1\le k<N_{fs}.
  \label{eq:discrete-tamsd}
 \end{equation}
-The subset is evaluated on a \SI{10}{\second} grid; flights whose native interval
-exceeds that value are excluded. Each admitted flight contributes its longest retained
-segment. Its sampling design is therefore distinct from a uniform draw of all flights.
+The common-grid diagnostics below use a \SI{10}{\second} grid, excluding segments with
+slower native cadence or fewer than two grid points. Starting times are
+$0,\tau,2\tau,\ldots$ within each segment, giving non-overlapping first differences.
+Segment sums and origin counts are combined within flights. The duration analysis
+in Sec.~\ref{sec:duration-check} instead uses the native-grid segment TA-MSDs,
+with its own support and weighting stated there.
 
-For completeness, Figure~\ref{fig:msd}a retains the launch-synchronised average
+The second moments
+$V_1$ and $V_2$ then receive equal flight weights; baseline quantiles and higher
+moments pool windows. Section~\ref{sec:quantile-population} fixes flights, weights
+and origins to control their change with lag.
+
+Figure~\ref{fig:msd}a also gives the launch-synchronised average,
 $\mathrm{MSD}_{\mathrm{launch}}(t)=\langle|\mathbf r_f(t)-\mathbf r_f(0)|^2\rangle_f$.
-Its difference from the time average is unsurprising: these flights occur in different
-locations, seasons and years, and are not established to be independent realisations of
-one common law. It is a descriptive archive average, without a process exponent inferred
-from it.
+Flights occur in different places, seasons and years; this curve describes the
+archive without assigning it a common process exponent.
 
 \begin{figure}[htbp]
   \centering
@@ -97,7 +138,7 @@ from it.
   \label{fig:msd}
 \end{figure}
 
-\subsection{Growth over ten seconds to ten thousand seconds}
+\subsection{Effective and local growth exponents}
 \label{sec:exponent}
 \label{sec:transport-measure}
 
@@ -108,31 +149,22 @@ $Y(\tau)$ we distinguish its fitted slope and its local slope,
   \qquad b_{\mathrm{loc}}(\tau)=\frac{\mathrm d\log Y}{\mathrm d\log\tau},
   \label{eq:effective-slope}
 \end{equation}
-Logarithms of an observable refer to its numerical value in the stated units,
-equivalently $\log(Y/Y_0)$ for a fixed reference $Y_0$ with the same dimensions.
-Here $\tau_0=\SI{1}{\second}$; changing reference units alters the intercept, not $b$.
-The subset and duration reports fit ordinary least squares in $\log_{10}Y$, giving
-each admitted lag equal weight regardless of its number of contributing windows.
-A fit over three decades
-provides a compact description of the curve, but if the local slope changes substantially,
-that single value is an \emph{effective exponent} rather than evidence of an exact power law.
+Here logarithms use the stated units, equivalently $\log(Y/Y_0)$, and
+$\tau_0=\SI{1}{\second}$. The common-grid and duration reports fit ordinary least
+squares in $\log_{10}Y$, with equal weight per admitted lag. A changing local slope
+makes $b$ an effective summary of that interval.
 
-At the lower end, the native cadence and smoothing window can affect the displacement;
-\SI{10}{\second} is not automatically outside that influence for every recorder.
-At the upper end, a flight must be long enough to contribute, and the number of windows
-per flight decreases. Coverage, local slopes and the open--closed split accompany the fit; any
-comparison restricted to longer flights describes that selected population.
+Cadence and smoothing can still affect the \SI{10}{\second} end; only long flights
+contribute near \SI{10000}{\second}. Coverage and local slopes accompany each fit.
+Changing the fitting interval measures sensitivity to curvature and selection.
 
-Sampling uncertainty and sensitivity to the analysis interval require separate treatment.
-Repeated windows from one flight, and flights from the same site and day, can share
-information; a final interval estimate should therefore resample whole site--day groups
-with their complete curves. This applies bootstrap resampling~\cite{efron1979} at the
-cluster level, conditional on treating those clusters as exchangeable. Changing the fitted interval instead tests sensitivity to curvature,
-smoothing and selection. That sensitivity is reported separately from sampling uncertainty;
-adding it to a standard error does not create a confidence interval. The present subset
-plots are descriptive measurements, not calibrated hypothesis tests.
+Sampling uncertainty needs a separate calculation. Windows from one flight, and
+flights sharing a site and day, may be dependent. Resampling whole site--day groups
+with their complete curves applies the bootstrap~\cite{efron1979} at that level,
+assuming exchangeable groups. The baseline curves and slopes below are descriptive;
+where intervals are reported, their resampling unit and assumptions are stated.
 
-\subsection{What a second difference removes}
+\subsection{Removing a constant velocity}
 \label{sec:variations}
 
 A constant velocity contributes a quadratic term to an uncentred MSD. If
@@ -168,12 +200,9 @@ $2\mathbb E[\mathbf I_1\cdot\mathbf I_2]=K[(2\tau)^{2H}-2\tau^{2H}]$, hence
   V_2(\tau)=K\bigl(4-2^{2H}\bigr)\tau^{2H}.
   \label{eq:variation-hurst}
 \end{equation}
-For $K>0$ and $0<H<1$, the prefactor is positive, so half the slope of $V_2$
-estimates $H$ under these assumptions. At $H=1$ the second difference vanishes in
-mean square and its logarithmic slope is undefined. Fractional Brownian motion with
-$0<H<1$ is one example~\cite{mandelbrot1968}. The prefactor follows by
-expanding the square of the difference of adjacent increments; it is not an additional
-fit parameter that changes the exponent.
+For $K>0$ and $0<H<1$, half the slope of $V_2$ estimates $H$ under these
+assumptions; fractional Brownian motion is one example~\cite{mandelbrot1968}.
+At $H=1$, the prefactor vanishes and the logarithmic slope is undefined.
 
 On a smooth curved trajectory,
 $A_2\mathbf r=\ddot{\mathbf r}\,\tau^2+O(\tau^3)$, so $V_2\propto\tau^4$ at sufficiently
@@ -186,29 +215,27 @@ $b_1-b_2$ is not a measured fraction of transport due to wind or course geometry
   \centering
   \includegraphics[width=\linewidth]{generated/ch3_scaling}
   \caption{Displacement and constant-velocity control over
-  \SIrange{10}{10000}{\second} in the diagnostic subset. The figure separates the second
+  \SIrange{10}{10000}{\second} in the eligible archive. The figure separates the second
   moments from their local slopes and the declared open and closed tasks. Coverage is
   shown explicitly; the support of a second difference is smaller because it spans
-  $2\tau$. Slopes refer to this interval and this subset.}
+  $2\tau$. Slopes refer to this interval and this eligible population.}
   \label{fig:transport}
 \end{figure}
 
-Table~\ref{tab:orderscan} reports the effective slopes. Both disciplines have $b_1>1$
-on this interval. However, selecting the same long segments at every lag shifts the
-estimate. This comparison reveals sensitivity to the selected population, but does not
-separate changing lag membership from the different behaviour of longer flights. At
-\SI{10000}{\second}, plain increments retain \num{\StatRevParaLastFlights} paraglider
-flights and \num{\StatRevHangLastFlights} hang-glider flights, supplying only
-\num{\StatRevParaLastWindows} and \num{\StatRevHangLastWindows} non-overlapping windows;
-second differences retain \num{\StatRevParaLastOrderTwoFlights} and
-\num{\StatRevHangLastOrderTwoFlights} flights. A three-decade interval therefore does
-not provide equally strong information at both ends.
+Both disciplines have $b_1>1$ (Table~\ref{tab:orderscan}). Restricting the analysis
+to flights with a segment of at least \SI{20000}{\second} shifts the slopes:
+the result depends on the selected population. At \SI{10000}{\second}, plain
+increments retain \num{\StatRevParaLastFlights} paraglider and
+\num{\StatRevHangLastFlights} hang-glider flights, with
+\num{\StatRevParaLastWindows} and \num{\StatRevHangLastWindows} non-overlapping
+windows. Second differences retain only \num{\StatRevParaLastOrderTwoFlights}
+and \num{\StatRevHangLastOrderTwoFlights} flights because they span $2\tau$.
 
 \begin{table}[htbp]
 \centering\small
 \renewcommand{\arraystretch}{1.15}
 \caption{Effective equal-flight slopes on \SIrange{10}{10000}{\second}.
-The fixed cohort contains selected segments of at least \SI{20000}{\second}.
+The fixed cohort contains flights with at least one segment of \SI{20000}{\second}.
 These are descriptive slopes without calibrated confidence intervals.}
 \label{tab:orderscan}
 \begin{tabular}{@{}llrrr@{}}
@@ -223,13 +250,12 @@ hang glider & all selected & \StatRevHangFlights & \StatRevHangAlphaOne & \StatR
 \end{tabular}
 \end{table}
 
-Values of $b_2$ close to or above two cannot be read directly as a
-stationary-increment Hurst exponent near or above one.
-Equation~\eqref{eq:variation-hurst} becomes degenerate at $H=1$. The observed curvature,
-short-scale smoothness and changing support must be resolved before the constant-drift
-control can yield an intrinsic $H$.
+The measured $b_2$ values near or above two, together with the curvature in
+Fig.~\ref{fig:transport}, prevent a direct interpretation as $2H$ for a
+stationary-increment process. The control removes constant velocity but does
+not yield an intrinsic Hurst exponent here.
 
-\subsection{Open and closed flights: geometry survives detrending}
+\subsection{Open and closed routes}
 \label{sec:strata-compat}
 
 A declared closed task rewards return towards the starting region. An open task allows
@@ -252,12 +278,10 @@ closure, a turn, or a spatially varying forcing.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\linewidth]{generated/closed_loop_schematic}
-  \caption{Exact geometrical illustration, without flight data. A straight course and a
-  circle have the same speed. The circular path is continued periodically when
-  evaluating second differences. Its displacement vanishes after one period;
-  its second difference is also sensitive to the return. Therefore a change of slope
-  need not indicate a change of stochastic process, and second differencing does not
-  neutralise a closed task.}
+  \caption{Analytical straight and circular paths at the
+same speed. The circle is continued periodically to evaluate second differences.
+Both $V_1$ and $V_2$ vanish after a complete period: constant-velocity removal
+preserves the effect of route closure.}
   \label{fig:closed-loop-schematic}
 \end{figure}
 
@@ -272,31 +296,44 @@ $b_1$ values are respectively \StatRevParaOpenAlphaOne\ versus
 different route geometry affecting the two observables differently; it is not a
 quantitative decomposition into drift and fluctuations.
 
-A complementary geometrical descriptor is the closure ratio
+A complementary descriptor compares net displacement with the path actually
+observed on the common grid. Let $t_f^-$ and $t_f^+$ be the first and last retained
+grid times, and let $L_f^{\rm obs}$ sum only the within-segment chords:
 \begin{equation}
-  \chi_f=\frac{|\mathbf r_f(T_f)-\mathbf r_f(0)|}
-                 {\int_0^{T_f}|\dot{\mathbf r}_f(t)|\,\mathrm dt}\in[0,1].
-  \label{eq:closure-ratio}
+ L_f^{\rm obs}=\sum_{s\in\mathcal S_f}\sum_{j=0}^{N_{fs}-2}
+       |\mathbf r_{fs,j+1}-\mathbf r_{fs,j}|,\qquad
+ \chi_f^{\rm obs}=\frac{|\mathbf r_f(t_f^+)-\mathbf r_f(t_f^-)|}
+                         {L_f^{\rm obs}},\quad L_f^{\rm obs}>0.
+ \label{eq:closure-ratio}
 \end{equation}
-In the subset, median $\chi_f$ is \StatRevParaOpenClosure\ for open paraglider tasks
-and \StatRevParaClosedClosure\ for closed ones; hang-glider medians are
-\StatRevHangOpenClosure\ and \StatRevHangClosedClosure. The geometric contrast therefore
-survives checking the actual paths, while the nonzero open-task medians remain far below
-the value one of a straight flight.
+For one uninterrupted observed path, the triangle inequality gives
+$0\le\chi_f^{\rm obs}\le1$. Across separated segments, the denominator omits
+unobserved travel while the numerator spans it, so this bound need not hold.
+Reacquisition offsets can also affect the endpoint displacement. The full collector
+contains \num{181} paraglider and two hang-glider values above one, all among
+flights with multiple eligible segments. This is an observed-path descriptor,
+not a reconstruction of the complete distance flown.
 
-The ratio is defined for a continuous observed trajectory of positive path length:
-small $\chi_f$ indicates little net
-progress relative to distance travelled, not necessarily a declared closed task. Comparing
-both descriptors, matching duration and region, and studying $\tau/T_f$ as well as
-physical lag would separate task geometry from changing composition more sharply. The
-current task split is evidence of an association; it does not isolate a causal effect of
-the scoring rule.
+In the eligible archive, median $\chi_f^{\rm obs}$ is
+\StatRevParaOpenClosure\ for open paraglider tasks and
+\StatRevParaClosedClosure\ for closed ones; hang-glider medians are
+\StatRevHangOpenClosure\ and \StatRevHangClosedClosure. These medians describe
+the endpoint geometry of retained observations, with the gap limitation above.
+Restricting to flights with one eligible observed segment gives closely similar
+open/closed medians: 0.364/0.027 in paragliders and 0.177/0.026 in hang gliders.
+This sensitivity check preserves the descriptive ordering; one eligible segment
+need not cover the complete original flight. For an uninterrupted observed path,
+small $\chi_f^{\rm obs}$ means little net progress relative to its length.
+None of the increment statistics crosses a segment boundary.
+
+Matching task groups by duration and region, and comparing both physical lag and
+$\tau/T_f$, would help separate route geometry from population composition.
 
 \FloatBarrier
-\section{What the displacement quantiles reveal}
+\section{Quantiles and self-similarity}
 \label{sec:transport-propagator}
 
-\subsection{From self-similarity to a measurable prediction}
+\subsection{The scaling prediction}
 
 For an $H$-self-similar process starting at the origin,
 $(\mathbf r(ct_1),\ldots,\mathbf r(ct_n))\overset d=
@@ -331,17 +368,15 @@ Equation~\eqref{eq:increment-scaling} implies
   \quad\hbox{when }0<Q_p(\tau_0)<\infty.
   \label{eq:quantile-hurst}
 \end{equation}
-The median probes typical displacement; the lower quartile probes relatively small
-displacements; the upper quartile and 90th percentile probe progressively larger ones.
-They use ranks rather than powers of distance, complementing the moments without
-requiring a fourth moment. They remain sensitive to sampling, flight composition and
-finite support. Equality of several quantile slopes is necessary for the scaling form,
-but does not prove self-similarity of the full process.
+The four probabilities $p=.25,.50,.75,.90$ describe small, typical and larger
+displacements. Quantiles use ranks, complementing moments without requiring a finite
+fourth moment. Common quantile slopes are necessary for the proposed one-lag scaling
+law; they do not establish self-similarity across several times.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\linewidth]{generated/ch3_quantiles}
-  \caption{Displacement quantiles in the diagnostic subset over
+  \caption{Displacement quantiles in the eligible archive over
   \SIrange{10}{10000}{\second}, with east and north treated separately from radial
   displacement. Exponents at individual probability levels and ratios of radial quantiles
   test whether one scale factor suffices. A common exponent would preserve the quantile
@@ -350,18 +385,14 @@ but does not prove self-similarity of the full process.
   \label{fig:propagator}
 \end{figure}
 
-\subsection{Keeping the population fixed across lags}
+\subsection{A fixed population across lags}
 \label{sec:quantile-population}
 
-At a given lag, all probability levels refer to the same empirical distribution.
-The 25th percentile is not an average over a class of slow flights, nor is the 90th
-percentile an average over fast flights. Different flights can supply observations
-near those ranks, and their rank order can change with lag. This is compatible with
-studying a distribution; it does not track individual objects moving from one quantile
-to another.
+At each lag, all percentiles belong to the same displacement distribution.
+They do not label fixed groups of slow or fast flights. A separate sampling effect
+arises when that distribution draws on different flights or weights at different lags.
 
-A separate problem arises when the distribution itself changes because its sampling
-population changes. If flight $f$ supplies $n_f(\tau)$ admissible increments, pooling
+If flight $f$ supplies $n_f(\tau)$ admissible increments, pooling
 them defines
 \begin{equation}
  \widehat F_\tau^{\rm pool}(x)
@@ -371,11 +402,10 @@ them defines
                    \mathbf1\{R_{fk}(\tau)\le x\}.
  \label{eq:quantile-mixture}
 \end{equation}
-Both membership $\mathcal F_\tau$ and weights can depend on lag: a short flight eventually
-contributes nothing, while the number of non-overlapping windows decreases differently
-between flights. Quantiles are nonlinear functionals of a distribution, so changing
-these weights can change $H_p$ even when every flight follows its own unchanged scaling
-law. Their effects cannot be removed by averaging the individual quantiles.
+As lag grows, short flights disappear and window counts change. Both membership
+$\mathcal F_\tau$ and mixture weights therefore vary. Quantiles depend nonlinearly
+on these weights: averaging flight-specific quantiles would give a different
+quantity. Figure~\ref{fig:quantile-selection} illustrates the resulting bias.
 
 \begin{figure}[tb]
  \centering
@@ -425,16 +455,32 @@ law. Their effects cannot be removed by averaging the individual quantiles.
  \label{fig:quantile-selection}
 \end{figure}
 
-\Needspace{9\baselineskip}
-We therefore compare four sampling conventions in Fig.~\ref{fig:quantile-control}:
-\begin{enumerate}[beginpenalty=10000,midpenalty=10000]
- \item All available flights, with the original pooled-window weights.
- \item A fixed cohort of segments at least \SI{20000}{\second} long, retaining pooled weights.
- \item The same fixed flights, giving each flight equal weight at every lag.
- \item The same flights and equal weights, now using the same starting times at every lag.
-\end{enumerate}
+Figure~\ref{fig:quantile-control} changes one sampling choice at a time:
+\begin{center}
+\begin{tabular}{@{}llll@{}}
+\toprule
+ & \textbf{Flights} & \textbf{Weight} & \textbf{Origins across lags} \\
+\midrule
+1 & All available & Equal per window & Changing \\
+2 & Fixed cohort & Equal per window & Changing \\
+3 & Fixed cohort & Equal per flight & Changing \\
+4 & Fixed cohort & Equal per flight & Fixed \\
+\bottomrule
+\end{tabular}
+\end{center}
+The fixed cohort requires at least one retained segment of
+\SI{20000}{\second} per flight. This is an additional population control;
+the changing-pool analysis uses every eligible flight at each supported lag.
+The \SI{20000}{\second} threshold is an operational choice, not the minimum
+duration mathematically required to observe a \SI{10000}{\second} increment.
+It supplies at least \num{1001} common 10-s origins in one qualifying segment.
+Other eligible segments of these same flights also contribute when they support
+the required interval. The cohort therefore fixes flights, not only their longest
+segments, and its conclusions remain conditional on long flights.
+
 For the last convention, let $\tau_{\max}=\SI{10000}{\second}$ and keep every starting
-time $t_{fk}$ on the 10-s grid satisfying $t_{fk}+\tau_{\max}\le T_f$. Then
+time $t_{fk}$ on the 10-s grid whose complete interval
+$[t_{fk},t_{fk}+\tau_{\max}]$ lies within one retained segment. Then
 \begin{equation}
  \widehat F_\tau^{\rm fixed}(x)
  =\frac1{|\mathcal F_*|}\sum_{f\in\mathcal F_*}\frac1{n_f^*}
@@ -442,14 +488,12 @@ time $t_{fk}$ on the 10-s grid satisfying $t_{fk}+\tau_{\max}\le T_f$. Then
  \widehat Q_p(\tau)=\inf\{x:\widehat F_\tau(x)\ge p\}.
  \label{eq:quantile-fixed-population}
 \end{equation}
-The set of flights, origins and their weights are now independent of $\tau$, and the
-same weighted observations define every percentile. All four conventions use this
-inverse empirical-CDF definition without interpolation between order statistics.
-The common origins overlap at most lags, which preserves the population but does not
-make increments independent. The third convention isolates flight weights; the fourth
-also controls which part of each flight supplies the starting observations.
+Flights, origins and weights are now independent of $\tau$. All four conventions
+use inverse empirical CDFs without interpolation between order statistics. The common
+origins overlap at most lags; they preserve the sampled population without making
+its increments independent.
 
-\begin{figure}[tb]
+\begin{figure}[!htbp]
  \centering
  \includegraphics[width=\linewidth]{generated/ch3_quantile_control}
  \caption{Controls for population changes in the quantile analysis. Top: radial quantile
@@ -487,24 +531,18 @@ Percentile & Changing pool & Fixed population & Changing pool & Fixed population
 \end{tabular}
 \end{table}
 
-The controls change the result substantially. In the changing paraglider pool the
-90th-percentile slope exceeds the lower-quartile slope, whereas all three fixed-cohort
-conventions give the reverse ordering. Equalising flight weights has a smaller effect
-than selecting that cohort, and fixing origins changes the estimates again. For the
-fully controlled population, $H_{0.25}=\StatRevParaQuantileControlledLower$ and
-$H_{0.90}=\StatRevParaQuantileControlledNinetieth$ in paragliders; the corresponding
-hang-glider values are \StatRevHangQuantileControlledLower\ and
-\StatRevHangQuantileControlledNinetieth. The ordering is not strictly decreasing across
-all four ranks: the 90th-percentile estimate lies above the 75th in both disciplines.
+\FloatBarrier
+Fixing the paraglider cohort reverses the ordering of the 25th- and 90th-percentile
+slopes (Table~\ref{tab:quantileH}). Equalising weights has a smaller effect; fixing
+origins changes the estimates again. Even after all controls, the four slopes are
+not strictly ordered: $H_{.90}>H_{.75}$ in both disciplines.
 
-This contrast cannot arise from flights entering or leaving the fully controlled
-sample, or from their weights changing with lag. It remains a result for long selected
-flights, however, and can include changes of phase along those flights, route geometry,
-environmental heterogeneity and sampling uncertainty. The cohort requires a continuous
-segment of at least about five and a half hours; it cannot represent short flights.
-Neither the many overlapping origins nor a common fit interval removes that selection.
+The remaining contrast cannot come from changing membership or weights with lag.
+It can reflect phase changes, route geometry, environment and sampling uncertainty
+within the selected long flights. The roughly five-and-a-half-hour segment
+requirement limits this conclusion to that population.
 
-\subsection{How quantile growth changes relative spread}
+\subsection{Relative spread}
 
 The interpretation of an ordering such as $H_{0.25}>H_{0.90}$ follows directly from
 \begin{equation}
@@ -519,23 +557,19 @@ Both quantiles may increase in absolute distance. The lower one increases faster
 For example, a slope difference of $-0.10$ maintained over a tenfold increase of lag
 multiplies the ratio by $10^{-0.10}\simeq0.79$.
 
-A fitted slope requires a different reading from this local derivative. On a common
-lag set, ordinary least squares is linear in the logarithmic observations, so the fitted
-slope of $\log(Q_{0.90}/Q_{0.25})$ equals the difference between the two fitted quantile
-slopes. Its sign does not require the ratio to be monotone. Indeed, in the fully
-controlled curves the ratio rises from about 1.94 to 4.48 in paragliders and from 2.23
-to 5.89 in hang gliders between \SI{10}{\second} and \SI{80}{\second}, then declines
-towards a minimum around \SI{2000}{\second}. At \SI{10000}{\second} it is about 3.03
-and 2.65, respectively, above its initial value. The negative fitted slope therefore
-summarizes the long declining part after the early maximum; it is not evidence of
-monotonic narrowing over all three decades. The ratio curves convey this evolution
-more faithfully than a single number $H_p$.
+On a common lag grid, the fitted slope of $\log(Q_{.90}/Q_{.25})$ also equals
+the difference of the fitted quantile slopes, by linearity of least squares.
+Its sign need not imply monotonic change. In the controlled population, the
+paraglider ratio rises from 1.97 at \SI{10}{\second} to a sampled maximum of
+4.20 at \SI{90}{\second}; the hang-glider ratio rises from 2.27 to 5.52 at
+\SI{80}{\second}. After these early maxima, the ratios fall to local minima of
+2.23 at \SI{2410}{\second} and 2.32 at \SI{1970}{\second}, respectively.
+They then rise to 3.01 and 2.60 at \SI{10000}{\second}. The negative fitted
+contrast summarises this curved evolution; it does not describe a monotone
+narrowing over the full interval.
 
-This is not a statement that the left tail becomes flatter. Quantiles describe cumulative
-probability, whereas local flattening concerns a probability density and requires more
-information. Nor does the 90th percentile represent the whole distribution: ten per cent
-of increments exceed it. Finally, even with fixed flights and origins, the observations occupying a given rank
-can change; a small displacement at one lag is not being followed as an individual object.
+This ratio measures relative quantile spread, leaving the outer 10\% and local
+density shape unspecified. Observations can also change rank with lag.
 
 \begin{figure}[htbp]
   \centering
@@ -548,26 +582,343 @@ can change; a small displacement at one lag is not being followed as an individu
   \label{fig:quantile-schematic}
 \end{figure}
 
-If $H_p$ changes with $p$ in the controlled population, fitting a common $H$ to collapse
-the curves hides some change of distribution shape over that interval. A nearly straight moment spectrum can coexist with this failure: moments
-integrate across the distribution and need not resolve changes at specific probability
-levels. Neither observation licenses calling the process exactly monofractal. The useful
-model target is the measured family $Q_p(\tau)$, including its departures from common
-scaling.
+Rank-dependent growth in the controlled population challenges a common rescaling
+exponent. A nearly linear moment spectrum can coexist with it, because moments
+integrate over the distribution. A model must reproduce the quantile curves and
+their shape changes as well as their average growth.
 
 \FloatBarrier
-\section{Anisotropy, dependence and the environment}
+\section{Vector scaling and dependence}
+\label{sec:transport-vector-scaling}
+
+The radial quantiles describe displacement magnitude. We now ask whether the
+same rescaling describes the signed east--north vector, including its dependence
+structure. The population and origin controls of
+Sec.~\ref{sec:quantile-population} remain fixed throughout this comparison.
+An anisotropic distribution can obey a common scalar rescaling; isotropy is not
+an assumption of the test.
+
+\subsection{Testing east, north and radial scaling}
+\label{sec:component-self-similarity}
+
+The absolute east and north components and the radius change shape over
+\SIrange{10}{10000}{\second}, even in the fixed population. To interpret their
+comparison, first consider two ways marginal scaling can fail to determine vector
+scaling.
+
+Component exponents can differ. For centred independent Gaussian components with
+variances $a\tau^{2H_E}$ and $b\tau^{2H_N}$,
+\begin{equation}
+  \mathbb E R^2=a\tau^{2H_E}+b\tau^{2H_N},\qquad
+  \frac12\frac{\mathrm d\log\mathbb E R^2}{\mathrm d\log\tau}
+   =\frac{H_Ea\tau^{2H_E}+H_Nb\tau^{2H_N}}
+          {a\tau^{2H_E}+b\tau^{2H_N}}.
+  \label{eq:anisotropic-exponents}
+\end{equation}
+Each Gaussian marginal scales exactly, yet the radial effective exponent varies
+with lag. No cross-correlation is needed.
+
+Equal marginal exponents also leave component dependence undetermined. For example,
+the equiprobable pairs
+\begin{equation}
+ \{(1,2),(-1,-2)\}\qquad\text{and}\qquad
+ \{(1,-2),(-1,2)\}
+ \label{eq:joint-law-counterexample}
+\end{equation}
+have identical signed marginals and radius $\sqrt5$, but opposite cross-covariance.
+Thus even matching both marginals and the radial law does not establish a common
+joint law. The Cram\'er--Wold characterization uses all signed linear projections
+\cite{fraiman2022}. Conversely, scalar scaling of the joint vector always implies
+radial scaling, including for anisotropic laws. Operator self-similarity, with a
+matrix exponent, is a broader hypothesis~\cite{didier2011}.
+
+\paragraph{Paired component and radial quantiles.}
+On the fixed observations of Sec.~\ref{sec:quantile-population}, compare
+\begin{equation}
+ Y_E=|X_E|,\qquad Y_N=|X_N|,\qquad
+ Y_R=R=\sqrt{X_E^2+X_N^2}.
+ \label{eq:positive-displacements}
+\end{equation}
+These are magnitudes of displacement over a lag. Absolute values discard direction;
+$R$ measures the distance between the endpoints, rather than the path flown between
+them.
+
+Every curve uses fixed flights and 10-s origins, equal total weight per flight,
+and no drift subtraction. The four probabilities give twelve slopes $H_{j,p}$
+per discipline, for $j\in\{E,N,R\}$. The population contains
+\StatRevParaQuantileFixedFlights\ paraglider and
+\StatRevHangQuantileFixedFlights\ hang-glider flights from the retained snapshot
+(cleaning version \StatSnapshotVersion).
+
+\begin{figure}[p]
+ \centering
+ \includegraphics[width=\linewidth]{generated/ch3_fixed_quantiles}
+ \caption{Four quantiles for each absolute component and the radius in the fully
+ controlled population. Solid curves are empirical weighted quantiles; dashed lines
+ are their separate log--log fits over \SIrange{10}{10000}{\second}. Columns distinguish
+ disciplines and rows distinguish quantities. A visibly curved quantile can have a
+ well-defined regression slope without following a single power law.}
+ \label{fig:fixed-component-quantiles}
+\end{figure}
+
+\begin{table}[tb]
+ \centering\small
+ \caption{Separate effective quantile exponents over \SIrange{10}{10000}{\second},
+ using fixed flights, origins and weights. The exponents refer to magnitudes in metres;
+ the corresponding squared-displacement slopes are exactly twice these values.}
+ \label{tab:fixed-component-exponents}
+ \input{generated/ch3_self_similarity_table}
+\end{table}
+
+We bootstrap whole flights with replacement 400 times. Each resample keeps all
+origins of a flight together, using its multiplicity at every lag and for all three
+quantities. Recomputed mixture quantiles preserve the pairing in contrasts such as
+$H_{N,p}-H_{E,p}$ and $H_{j,.90}-H_{j,.25}$.
+The pointwise 95\% percentile intervals assume independent flights within this
+fixed population. Shared site--day dependence and simultaneous coverage are not
+accounted for.
+
+\begin{figure}[!htbp]
+ \centering
+ \includegraphics[width=\linewidth]{generated/ch3_fixed_exponents}
+ \caption{Top: the twelve separate magnitude exponents per discipline, with pointwise
+ 95\% whole-flight bootstrap intervals. Small horizontal offsets distinguish quantities
+ at the same percentile. Bottom: the corresponding ratios $Q_{.90}/Q_{.25}$ for east,
+ north and radius. Ratio changes test distribution shape without choosing a rescaling
+ exponent. All curves use the fixed population; interval assumptions are stated in the text.}
+ \label{fig:fixed-component-exponents}
+\end{figure}
+
+\FloatBarrier
+The lower-quartile slope exceeds the 90th-percentile slope for east, north and
+radius in both disciplines. Two paired contrasts summarize the differences:
+\begin{center}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Contrast} & \textbf{Paragliders} & \textbf{Hang gliders} \\
+\midrule
+$H_{R,.90}-H_{R,.25}$ & \StatSSParaRadialRankDifference & \StatSSHangRadialRankDifference \\
+95\% interval & $[\StatSSParaRadialRankDifferenceLow,\StatSSParaRadialRankDifferenceHigh]$
+ & $[\StatSSHangRadialRankDifferenceLow,\StatSSHangRadialRankDifferenceHigh]$ \\
+\addlinespace
+$H_{N,.50}-H_{E,.50}$ & \StatSSParaNorthEastMedian & \StatSSHangNorthEastMedian \\
+95\% interval & $[\StatSSParaNorthEastMedianLow,\StatSSParaNorthEastMedianHigh]$
+ & $[\StatSSHangNorthEastMedianLow,\StatSSHangNorthEastMedianHigh]$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+Intervals are conditional on the fixed population and the independence assumption
+above. Figure~\ref{fig:fixed-component-exponents} shows the non-monotone spread ratios.
+
+In both disciplines, north--east contrasts are positive at all four ranks,
+with their paired pointwise intervals excluding zero. The radial rank contrasts
+are negative, also with intervals excluding zero. These comparisons support
+rank- and direction-dependent effective growth within the fixed long-flight
+population under the stated resampling assumptions. They do not establish a
+single power law at each rank. The radial median slope lies below both component
+median slopes: different observations can occupy the component and radial ranks.
+
+\subsection{Distribution collapse}
+To test a scale family, fit one exponent $H_{j,*}$ per quantity, shared by all
+four ranks, with separate intercepts $b_{j,p}$, by minimising
+\begin{equation}
+ \sum_{p\in\{.25,.50,.75,.90\}}\sum_{\tau\in\mathcal L}
+ \left[\log\!\frac{Q_{j,p}(\tau)}{1\,\mathrm m}
+       -b_{j,p}-H_{j,*}\log\!\frac{\tau}{\tau_0}\right]^2,
+ \qquad \tau_0=\SI{1000}{\second}.
+ \label{eq:common-quantile-fit}
+\end{equation}
+Ranks and lags have equal weight. On the common grid, $H_{j,*}$ is the mean
+of the four separate slopes. The reference time fixes the intercept without
+changing the exponent.
+
+With $a_j(\tau)=(\tau/\tau_0)^{H_{j,*}}$, a density collapse plots
+\begin{equation}
+ u=y/a_j(\tau),\qquad a_j(\tau)\,p_{Y_j}(a_j(\tau)u;\tau).
+ \label{eq:measured-density-collapse}
+\end{equation}
+The fitted exponent rescales both axes at every lag, without tuning the histogram
+overlay. Densities use probability mass divided by bin width over the full positive
+support; any exact zero is stored separately as an atom. Quantiles and empirical-CDF
+distances use the observations directly, independently of binning.
+
+The full positive support can approach numerical zero. Summing all bins that
+intersect $[0,\SI{1}{\milli\metre})$, together with the zero atom, bounds the
+probability in that interval below $3\times10^{-5}$ in every displayed law.
+Very narrow bins can therefore have a high density while carrying little
+probability. These values do not establish sub-millimetre physical resolution;
+the median-normalised CDF panels below make the central probability structure
+easier to compare than the full-range logarithmic densities.
+
+\begin{figure}[p]
+ \centering
+ \includegraphics[width=\linewidth]{generated/ch3_absolute_laws_para}
+ \caption{Paraglider displacement distributions with fixed flights, weights and origins.
+ Top: raw densities of $|X_E|$, $|X_N|$ and $R$. Middle: their rescaling by the common
+ exponent fitted separately for each quantity over \SIrange{10}{10000}{\second}.
+ Bottom: cumulative distributions after division by each lag's own median, drawn
+ from the 1st--99th empirical percentiles. Colours identify six lags selected across
+ the measured interval. Median normalisation removes an arbitrary scale change,
+ including one that is not a power law; remaining separation therefore reveals
+ changes of shape. The quantitative distances use the full ECDFs.}
+ \label{fig:absolute-laws-para}
+\end{figure}
+\begin{figure}[p]
+ \centering
+ \includegraphics[width=\linewidth]{generated/ch3_absolute_laws_hang}
+ \caption{The same distribution and collapse diagnostics for hang gliders. The
+ calculation uses the same origins at every lag and the same definition of $H_{j,*}$
+ as Figure~\ref{fig:absolute-laws-para}; it does not borrow the paraglider exponent.}
+ \label{fig:absolute-laws-hang}
+\end{figure}
+
+To distinguish an imperfect power fit from a failure of any single scale factor,
+we also plot $Y_j/Q_{j,.50}(\tau)$. A shape-preserving scale family must collapse
+under this normalisation even if its scale is not a power of lag. We measure
+separation by
+\begin{equation}
+ D=\max_{\tau,\tau'\in\mathcal L_{\rm shown}}\sup_u
+       |\widehat F^{\rm scaled}_{\tau}(u)
+        -\widehat F^{\rm scaled}_{\tau'}(u)|.
+ \label{eq:ecdf-collapse-distance}
+\end{equation}
+We evaluate the supremum at the empirical jumps for the six displayed lags.
+It is a descriptive probability difference. Weighted, paired and overlapping
+observations do not support an independent-sample Kolmogorov--Smirnov $p$-value.
+
+\begin{table}[tb]
+ \centering\small
+ \caption{Candidate common magnitude exponent and largest pairwise ECDF separation
+ among the six displayed lags. $D_{\rm power}$ uses the fitted power scale;
+ $D_{\rm median}$ uses each lag's own median. A distance of 0.10 is a ten-percentage-point
+ cumulative probability difference somewhere in the rescaled distribution.}
+ \label{tab:component-collapse}
+ \input{generated/ch3_self_similarity_collapse}
+\end{table}
+
+The fitted exponents are near 0.9, yet the rescaled distributions remain separated
+(Table~\ref{tab:component-collapse}). The radius has the largest power-rescaling
+distance in both disciplines, about 0.27 for paragliders and 0.33 for hang gliders.
+Dividing by each lag's median reduces these radial distances to about 0.19 and
+0.23, but leaves separation for all three quantities. Thus allowing an arbitrary
+scale at each lag still does not remove the observed shape changes. These are
+empirical discrepancies without a calibrated sampling-error threshold.
+
+\paragraph{Squared displacements.}
+For any of the nonnegative magnitudes $Y_j$ and $S_j=Y_j^2$, the inverse-CDF
+quantiles satisfy exactly
+\begin{equation}
+ Q_{S_j,p}(\tau)=Q_{Y_j,p}(\tau)^2,\qquad
+ \beta_{j,p}=2H_{j,p},\qquad
+ p_{S_j}(s;\tau)=\frac{p_{Y_j}(\sqrt{s};\tau)}{2\sqrt{s}},\quad s>0.
+ \label{eq:squared-displacement-scaling}
+\end{equation}
+The squared-density collapse therefore uses scale $a_j^2$ and exponent $2H_{j,*}$;
+bootstrap slope intervals double too. Squared-law plots appear in
+Appendix~\ref{app:squared-displacements}. Squaring is a monotone bijection for
+nonnegative values, so corresponding ECDF distances are unchanged. It cannot
+repair a failed collapse. Radial quantiles must still be computed from paired
+components: a quantile of $X_E^2+X_N^2$ is generally not the sum of their quantiles.
+
+\paragraph{Dependence on the fitting interval.}
+We repeat the common-exponent fit on \SIrange{60}{1970}{\second} and
+\SIrange{210}{1970}{\second}, retaining the same flights, origins and probabilities.
+These windows measure sensitivity; their endpoints are not estimated breakpoints.
+
+\begin{table}[tb]
+ \centering\small
+ \caption{Common magnitude exponent $H_{j,*}$ fitted on three lag windows with
+ identical observations and weights. The differences expose the cost of summarising
+ curved quantile growth by a single power. All twelve separate slopes and their
+ paired bootstrap contrasts for each window are retained in the numerical report.}
+ \label{tab:component-fit-ranges}
+ \input{generated/ch3_self_similarity_ranges}
+\end{table}
+
+The intermediate-window exponents move closer to one
+(Table~\ref{tab:component-fit-ranges}). Growth therefore depends on rank, direction
+and lag even after fixing the observations. Circling, partial returns, extended
+glides and weather could contribute, but this analysis does not separate their effects.
+Since the component laws themselves change shape, the data also do not isolate the
+special case of scaling marginals with changing dependence alone.
+
+\subsection{Signed joint distributions}
+Figures~\ref{fig:joint-para} and~\ref{fig:joint-hang} retain the signs of
+$(X_E,X_N)$ on the same flights and origins. Both coordinates are divided by
+$s_0(\tau/\SI{1000}{\second})^{H_*}$, where $H_*$ is the mean of all twelve slopes
+and $s_0=Q_{R,.50}(\tau_r)/(\tau_r/\SI{1000}{\second})^{H_*}$,
+with $\tau_r=\SI{1070}{\second}$, the available lag nearest the reference time.
+Thus the recorded median is adjusted to the common reference by the same power.
+Geographic axes remain fixed,
+without lag-specific centring, rotation or whitening.
+
+The six lags share 64 bins per axis within $[-6,6]$, plus overflow cells.
+With equal total weight per flight, let $p_{\tau,ij}$ be the joint cell mass.
+The distance between two binned laws is
+\begin{equation}
+ D_{\mathrm{joint}}(\tau,\tau')=
+ \frac12\sum_{ij}|p_{\tau,ij}-p_{\tau',ij}|,
+ \label{eq:joint-distribution-distance}
+\end{equation}
+including overflow. This comparison resolves differences at the chosen bin size;
+it is not a calibrated rejection test. Energy distance is an alternative for
+full multivariate laws with finite first moments~\cite{szekely2013}, but inference
+would still require calibration for paired flights and dependent origins.
+Even exact agreement of every one-lag vector law would leave multi-time
+self-similarity untested.
+
+\begin{figure}[tb]
+ \centering
+ \includegraphics[width=\linewidth]{generated/ch3_joint_para}
+ \caption{Signed joint displacement laws for the fixed paraglider population, after
+ one scalar power rescaling of both axes. Colours show probability per common cell.
+ Each panel reports the mass outside the displayed square; overflow cells are retained
+ in numerical comparisons. These are descriptive distributions, not iid hypothesis tests.}
+ \label{fig:joint-para}
+\end{figure}
+\begin{figure}[tb]
+ \centering
+ \includegraphics[width=\linewidth]{generated/ch3_joint_hang}
+ \caption{The same signed joint-law diagnostic for the fixed hang-glider population.
+ Axes and colour scales remain common across lags within the discipline.}
+ \label{fig:joint-hang}
+\end{figure}
+
+The candidate vector exponents are $H_*=0.920$ for paragliders and 0.911 for
+hang gliders. After this common rescaling, the central concentration and
+orientation still evolve with lag. In particular, the long-lag law occupies a
+smaller spread in the rescaled coordinates; the geographical mean also changes.
+These changes concern the signed vector distribution, beyond the magnitude
+comparisons. At the chosen resolution, pairwise distances range from 0.099 to
+0.370 for paragliders and from 0.136 to 0.441 for hang gliders. The 10-s versus
+10000-s distances are 0.370 and 0.403, respectively. Overflow mass is zero to
+numerical precision, so the measured separation is not caused by omitting a tail
+outside the displayed square.
+
+The fixed flights and origins rule out changing membership as the source of
+these particular differences. They do not distinguish changes of marginal shape,
+mean motion and component dependence. A larger binned distance also does not
+rank the disciplines by strength of a physical mechanism: the finite-flight
+sampling error and sensitivity to bin size have not been calibrated.
+
+\FloatBarrier
+\section{Directional structure, terrain and equipment}
 \label{sec:transport-axisroutes}
 \label{sec:transport-anisotropy}
+\label{sec:transport-environment}
+
+We next ask how directional structure varies across take-off regions and equipment
+groups, and which environmental interpretations these contrasts can support.
+The quantities differ from the fixed-population collapse test: launch-time
+second moments describe mean motion and spread together, whereas regional
+increment covariances describe centred spread over a lag. Their clocks, weighting
+and contributing flights must therefore be specified before comparing them.
 
 \subsection{East--north balance in the retained archive}
 
-The east--north second-moment ratio provides an initial check for directional imbalance
-in the retained archive. Isotropy would require the \emph{joint} displacement distribution
-to be unchanged by
-every rotation; equality of the two marginal distributions alone is insufficient.
-A first necessary condition is equality of their second moments. For the positions
-measured from launch, the archive diagnostic is
+Isotropy requires the joint displacement law to remain unchanged under rotation.
+Equality of east and north second moments is one necessary condition. For positions
+measured from launch, define
 \begin{equation}
   \rho_{EN}(t)=\frac{\langle E_f(t)^2\rangle_f}{\langle N_f(t)^2\rangle_f},
   \qquad
@@ -575,10 +926,9 @@ measured from launch, the archive diagnostic is
   =\operatorname{Var}_f[E_f(t)]+\langle E_f(t)\rangle_f^2.
   \label{eq:archive-directional-ratio}
 \end{equation}
-Thus $\rho_{EN}=1$ is necessary for isotropy about the launch point, but is not a full
-test of it. The ratio includes mean displacement as well as spread: it does not isolate
-anisotropy after drift removal. Here $t$ is elapsed time since launch, not a lag between
-two fixes within a flight, and the contributing population changes with $t$.
+This uncentred ratio combines mean motion and spread. Here $t$ is time since
+launch, and its contributing flights change with $t$. Unity checks one moment
+condition for isotropy.
 
 \begin{figure}[htbp]
   \centering
@@ -605,34 +955,15 @@ Over \SIrange{10}{10000}{\second}, the unresampled
 ratio ranges from \StatPrelimParaIsoRatioMin\ to \StatPrelimParaIsoRatioMax\ for
 paragliders and from \StatPrelimHangIsoRatioMin\ to \StatPrelimHangIsoRatioMax\ for
 hang gliders. These are curve extrema, not bootstrap-band limits. The directional
-imbalance motivates keeping east, north and the radial displacement separate. It
+imbalance supports treating east, north and radial displacement separately. It
 describes the heterogeneous retained archive; it does not identify whether route
 choice, terrain or wind produces the imbalance. The centred regional analysis below
 asks how much directional structure remains after subtracting each subgroup's mean.
+Launch-referenced positions can retain reacquisition offsets across missing
+intervals; within-segment increments avoid bridging those intervals but do not
+independently validate their endpoints.
 
-\subsection{Why marginal scaling need not give radial scaling}
-
-Good collapses of $|X_E|$ and $|X_N|$ do not establish a common scaling law for the vector.
-Two failures are possible. First, the component exponents may differ. For centred independent
-Gaussian components with variances $a\tau^{2H_E}$ and $b\tau^{2H_N}$,
-\begin{equation}
-  \mathbb E R^2=a\tau^{2H_E}+b\tau^{2H_N},\qquad
-  \frac12\frac{\mathrm d\log\mathbb E R^2}{\mathrm d\log\tau}
-   =\frac{H_Ea\tau^{2H_E}+H_Nb\tau^{2H_N}}
-          {a\tau^{2H_E}+b\tau^{2H_N}}.
-  \label{eq:anisotropic-exponents}
-\end{equation}
-Each marginal has an exact exponent; the radial second moment has a changing effective
-exponent. This counterexample requires no cross-correlation.
-
-Second, even equal marginal exponents leave the dependence between the components
-undetermined. The joint law of the rescaled pair may change with lag while both marginal
-laws remain fixed. A covariance or correlation coefficient detects only part of that
-change. Conversely, a common scaling law for the \emph{joint} vector implies the same
-scaling for its modulus, even if the vector is strongly anisotropic. Anisotropy alone
-therefore does not explain a failed radial collapse.
-
-\subsection{What regional principal axes measure}
+\subsection{Regional principal axes}
 
 For a region $g$, define the centred displacement covariance
 \begin{equation}
@@ -646,29 +977,42 @@ with $\lambda_1\ge\lambda_2$. The ratio and whitening below require
 $\lambda_2>0$. The leading eigenvector describes the direction of greatest
 spread, modulo $180^\circ$; it is an axis, not a signed wind direction. The ratio
 $\lambda_1/\lambda_2$ measures anisotropy of the covariance. An axis becomes poorly
-determined when the eigenvalues are close.
+determined when the eigenvalues are close. Covariances pool all supported
+baseline increment origins within each take-off box, so flights with more
+origins receive more weight. They use the eligible regional archive, independently
+of the fixed long-flight cohort. At least eight flights are required; this
+display condition supplies neither an uncertainty interval nor a precision guarantee.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\linewidth]{generated/ch3_pca}
-  \caption{Regional principal-axis diagnostics in the paraglider diagnostic subset. Covariances are
+  \caption{Regional principal-axis diagnostics in the paraglider eligible archive. Covariances are
   centred before diagonalisation. The principal direction is an axis modulo
   $180^\circ$ and its interpretation depends on the separation of the two eigenvalues.
   Region counts and lag dependence delimit the evidence. These measurements describe
-  displacement geometry and do not identify wind.}
+  displacement geometry and do not identify wind. Ellipses show the 10, 90 and
+1070-s covariances after trace normalisation; the eigenvalue-ratio curve also
+includes 10000 s. Normalisation removes their amplitude differences.}
   \label{fig:regional-pca}
 \end{figure}
 
-At \SI{\StatRevParaDurationReferenceLagS}{\second}, the Alpine subgroup contains
-\num{\StatRevParaPcaAlpsFlights} flights and has eigenvalue ratio
-\StatRevParaPcaAlpsRatio, with principal axis
-\SI{\StatRevParaPcaAlpsAngle}{\degree} counterclockwise from east. The Pyrenean subgroup
-contains \num{\StatRevParaPcaPyreneesFlights} flights, ratio
-\StatRevParaPcaPyreneesRatio\ and axis \SI{\StatRevParaPcaPyreneesAngle}{\degree}, closer
-to east--west. At long lag its ellipse becomes much more elongated, with reduced support;
-route geometry and selection both remain possible contributors. The coastal subgroup
-contains only \num{\StatRevParaPcaChannelCoastFlights} flights and has ratio
-\StatRevParaPcaChannelCoastRatio: low relief is not a guarantee of an isotropic control.
+At \SI{\StatRevParaDurationReferenceLagS}{\second}, the regional comparison is
+\begin{center}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Region} & \textbf{Flights} & $\boldsymbol{\lambda_1/\lambda_2}$ & \textbf{Axis from east} \\
+\midrule
+Alps & \num{\StatRevParaPcaAlpsFlights} & \StatRevParaPcaAlpsRatio & \SI{\StatRevParaPcaAlpsAngle}{\degree} \\
+Pyrenees & \num{\StatRevParaPcaPyreneesFlights} & \StatRevParaPcaPyreneesRatio & \SI{\StatRevParaPcaPyreneesAngle}{\degree} \\
+Channel coast & \num{\StatRevParaPcaChannelCoastFlights} & \StatRevParaPcaChannelCoastRatio & \SI{\StatRevParaPcaChannelCoastAngle}{\degree} \\
+\bottomrule
+\end{tabular}
+\end{center}
+Angles run counterclockwise from east. The Pyrenean axis lies closer to
+east--west; its eigenvalue ratio increases towards long lags as support falls,
+leaving both route geometry and selection as possible contributors. The coastal
+comparison also has unequal principal variances, with thousands of flights at
+the reference lag. Its geographical label does not provide an isotropic control.
 
 Rotation into the principal frame gives uncorrelated components at the lag at which the
 covariance was fitted. It does not establish independence or remove temporal
@@ -685,34 +1029,36 @@ Whitening separately at each lag would enforce a part of the desired collapse by
 construction. A meaningful control instead fits a transformation at a fixed reference
 scale and tests it on other scales and flights.
 
-\subsection{Terrain and wind cannot be separated by differentiating position}
+\subsection{Terrain, equipment and wind}
 \label{sec:transport-kinematics}
 
-The archive kinematic plots give a useful regional contrast. Over their displayed
-\SIrange{\StatKinFitMinS}{\StatKinFitMaxS}{\second} interval, the Pyrenean east/north
-position second-moment ratio has median \StatKinTerrainPyreneesPositionMedian; its velocity
-ratio is \StatKinTerrainPyreneesVelocityMedian. The Alpine ratios are
-\StatKinTerrainAlpsPositionMedian\ and \StatKinTerrainAlpsVelocityMedian, respectively.
-These are uncentred second moments, as in Eq.~\eqref{eq:archive-directional-ratio};
-velocity and acceleration have not had their subgroup means subtracted. The Pyrenean
-preference for east--west displacement is consistent with motion constrained
-by the massif. This is an association with geography, not an identification of its sole
-cause.
+Figure~\ref{fig:kinematic-isotropy-terrain} compares east/north second-moment
+ratios over \SIrange{\StatKinFitMinS}{\StatKinFitMaxS}{\second}. Their medians are
+\begin{center}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\textbf{Region} & \textbf{Position ratio} & \textbf{Velocity ratio} \\
+\midrule
+Alps & \StatKinTerrainAlpsPositionMedian & \StatKinTerrainAlpsVelocityMedian \\
+Pyrenees & \StatKinTerrainPyreneesPositionMedian & \StatKinTerrainPyreneesVelocityMedian \\
+\bottomrule
+\end{tabular}
+\end{center}
+These uncentred moments retain mean motion, as in
+Eq.~\eqref{eq:archive-directional-ratio}. The stronger Pyrenean east--west
+preference is consistent with the massif constraining headings, without
+identifying geography as its sole cause.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\linewidth]{generated/kinematic_isotropy_terrain}
-  \caption{Paraglider kinematic anisotropy by take-off region. Position, velocity and acceleration compare different temporal
-  aspects of the same motion, all at elapsed time since launch. Ratios are uncentred
-  second moments, $\langle u_E^2\rangle/\langle u_N^2\rangle$, and include mean motion.
-  Lines show the observed ratios and shading the pointwise 10--90\% site--day
-  bootstrap range. Both components use the same finite flight rows. Each displayed
-  time has at least \StatKinMinFlights\ flights and \StatKinMinClusters\ clusters;
-  legend counts show the range of contributing flights. Flights with a missing site or
-  date form singleton groups, so unknown shared exposure is not captured by the bands.
-  Panel limits follow the displayed quantity, with unity marked as a common reference;
-  equality of the component moments leaves cross moments and higher-order angular
-  structure untested. No scaling exponent is fitted here.}
+  \caption{Paraglider east/north second-moment ratios
+by take-off region, against time since launch. Position, velocity and acceleration
+all retain mean motion. Shading gives pointwise 10--90\% site--day bootstrap ranges;
+times require \StatKinMinFlights\ flights and \StatKinMinClusters\ clusters, with
+flight-count ranges in the legends. Missing site/date records form singleton groups.
+Unity marks equal component moments, leaving cross moments and angular structure
+untested. Panel limits follow each quantity; no scaling exponent is fitted.}
   \label{fig:kinematic-isotropy-terrain}
   \label{fig:kinematic-isotropy}
 \end{figure}
@@ -722,53 +1068,114 @@ cause.
  \IfFileExists{generated/kinematic_isotropy_terrain_level.pdf}{%
  \includegraphics[width=\linewidth]{generated/kinematic_isotropy_terrain_level}%
  }{\fbox{\parbox{.8\linewidth}{Equipment comparisons await the complete rebuild.}}}
- \caption{Paraglider second-moment ratios within each take-off region for two
- equipment-based experience groups: beginners (EN A/B, violet) and experts
- (EN C/D/CCC, ochre). Blue and terracotta are reserved for the two disciplines
- throughout, so an equipment split never wears them. These names refer to the experience proxy defined in the text.
- Tandem, non-certified and unclassified records are excluded from
- this contrast. Lines, pointwise bootstrap bands and coverage minima follow
- Figure~\ref{fig:kinematic-isotropy-terrain}; panel limits follow the observed range.}
+ \caption{Paraglider second-moment ratios within each
+take-off region: beginners (EN A/B, violet) and experts (EN C/D/CCC, ochre), using
+equipment as an experience proxy. Tandem, non-certified and unclassified records
+are excluded. Pointwise bootstrap bands and support minima follow
+Fig.~\ref{fig:kinematic-isotropy-terrain}.}
  \label{fig:kinematic-equipment}
 \end{figure}
 
-The handling demands associated with wing classification motivate an operational
-proxy for pilot experience. We call the EN A/B group \emph{beginners} and the
-EN C/D/CCC group \emph{experts}, using the harmonized catalogue classes described in
-Section~\ref{sec:glider}. The split groups together wings with lower and higher
-experience requirements; it does not assign a measured skill score to each pilot.
-In particular, an experienced pilot may fly an A/B wing, so the beginners group can
-contain experienced pilots. The difference between the groups therefore combines
-pilot selection and equipment effects.
+\FloatBarrier
+\paragraph{Equipment within each region.}
+EN A/B and EN C/D/CCC provide the beginners and experts proxies of
+Sec.~\ref{sec:glider}. In the Alps, the C/D/CCC position and velocity ratios
+remain closer to unity at all displayed supported times. The median position
+ratio is \StatKinTerrainAlpsEquipmentCDCCCPositionMedian, versus
+\StatKinTerrainAlpsEquipmentABPositionMedian\ for A/B. The Pyrenees and coastal
+contrasts do not have the same ordering across all times and quantities.
 
-Figure~\ref{fig:kinematic-equipment} shows a clear regional qualification to the
-experience hypothesis. In the Alps, the experts' position and velocity ratios remain
-closer to unity across the displayed times. Their median position ratio is
-\StatKinTerrainAlpsEquipmentCDCCCPositionMedian, compared with
-\StatKinTerrainAlpsEquipmentABPositionMedian\ for beginners. In the Pyrenees, experts
-show a smaller east--west imbalance at early elapsed times, but the position curves
-cross at a few hundred seconds; at long times both ratios approach five. The velocity
-ordering also changes. There is therefore no uniform reduction of directional imbalance
-among experts in that region. Along the Channel coast, expert ratios stay near unity,
-while the smaller beginners sample develops a larger imbalance and wider bands.
+\begin{figure}[p]
+ \centering
+ \includegraphics[width=\linewidth]{generated/kinematic_isotropy_flat_level}
+ \caption{Equipment contrasts in three take-off boxes outside the mountain
+ comparison: Channel Coast, Poitou-Charente and Champagne-Lorraine. Position and
+ velocity ratios use the paired support, pointwise 10--90\% site--day bootstrap
+ bands and display minima of Fig.~\ref{fig:kinematic-equipment}. The coastal row
+ is repeated to compare it directly with the two additional regions. The boxes
+ label take-off locations; they do not measure terrain exposure along each route
+ or match wind conditions between equipment groups.}
+ \label{fig:kinematic-low-relief}
+\end{figure}
 
-A ratio closer to unity describes a more balanced pair of second moments; cross moments
-and the angular distribution can still be anisotropic. The Alpine contrast is consistent
-with greater freedom in route choice, but season, launch site, flight duration and wing
-performance could also account for it. Attributing it specifically to pilot ability
-would require independent experience information and comparisons matched on flight
-conditions. In the Pyrenees, even the direction of the group contrast depends on elapsed time.
+
+\paragraph{An interpretation to test.}
+The smaller east--north imbalance of the C/D/CCC group in the Alps and over much
+of the coastal comparison motivates a hypothesis: equipment and pilot decisions
+may moderate the directional constraints associated with wind and terrain. A wing
+with different flight characteristics may permit different routes, while a pilot's
+choices may alter how a route follows the local lift and wind. Similar mountain
+profiles could reflect a shared geographical constraint, with a difference in its
+magnitude between groups. This is a possible explanation of the observed contrasts,
+rather than a measured decomposition of their causes.
+
+The Pyrenean curves limit that explanation. Their ordering reverses with elapsed
+time, and the C/D/CCC group does not remain uniformly closer to one in either
+position or velocity. Near \SI{9086}{\second}, the position ratios are about
+\num{5.05} for A/B and \num{5.11} for C/D/CCC. The coastal position contrast is
+larger at the same time, about \num{1.74} versus \num{1.04}, but its support is
+also unequal: \num{188} versus \num{1733} paired flights. The bands are pointwise
+10--90\% site--day bootstrap ranges, not simultaneous confidence bands or a direct
+confidence interval for a between-group difference.
+
+\paragraph{What proximity to unity establishes.}
+The ratio compares two ensemble raw second moments. It does not measure the
+isotropy of each flight or the ability of an individual pilot to make progress
+against wind. For example, a centred Gaussian with covariance
+\[
+ \begin{pmatrix}1&0.9\\0.9&1\end{pmatrix}
+\]
+has equal east and north second moments but a principal-variance ratio of 19.
+For a general centred law, a covariance proportional to the identity establishes
+only a second-order condition, rather than rotational invariance of the full
+distribution. A mixture
+of strongly east-directed and strongly north-directed routes can also balance
+ensemble moments while each route remains directional. Deliberately following a
+downwind cross-country route may be successful flight despite that directionality.
+
+\paragraph{Equipment, terrain and selection.}
+EN A/B and EN C/D/CCC are equipment groups used as experience proxies. Actual pilot
+skill is unmeasured, and an experienced pilot can fly an A/B wing. Certification
+classes describe tested flight behaviour and associated pilot requirements; the
+class is not itself a measured aerodynamic performance ranking
+\cite{dhv_classification}. Equipment, pilot selection and intended task therefore
+remain entangled in these comparisons.
+
+The Channel Coast box is also not a wind-only experiment. It includes coastal
+cliffs and valleys, including those documented in the Pays de Caux
+\cite{dreal_pays_de_caux}. Wind and terrain may jointly orient lift and routes.
+Moreover, the boxes classify take-off locations rather than terrain exposure along
+the entire flight. The additional Poitou-Charente and Champagne-Lorraine comparisons
+in Fig.~\ref{fig:kinematic-low-relief} extend the geographical description, but these
+broad boxes are not verified terrain polygons or meteorologically matched controls.
+The Poitou-Charente curves cross with broad overlapping bands; the later
+Champagne-Lorraine position contrast also leaves the C/D/CCC ratio above one.
+Thus the coastal pattern does not establish a general flatland mechanism.
+
+\paragraph{Discriminating comparisons.}
+A first comparison would restrict both equipment groups to overlapping take-off
+sites and days, with comparable duration and task. This would test whether the
+contrast survives closer matching of observed conditions; the current cluster
+bootstrap adjusts the uncertainty for one grouping structure without performing
+that matching. Mean ground drift, centred directional variability and the mixture
+of individual route directions should then be distinguished. Independent wind
+estimates and local terrain axes would allow an environmental alignment test.
+Where records permit it, comparisons of the same pilot using different wings could
+help assess equipment and pilot selection separately. Before describing any of
+these contrasts as resistance to wind, the target needs to be defined: upwind
+progress, air-relative performance and the choice of route are different outcomes.
+
+\paragraph{Wind and ground velocity.}
 
 The kinematic relation
 \begin{equation}
   \mathbf v_{\mathrm{ground}}=\mathbf v_{\mathrm{air}}+\mathbf w_h
   \label{eq:ground-air-wind}
 \end{equation}
-shows the identifiability problem. Without independent information about one term, ground
-velocity alone cannot determine the other two. The mean velocity includes route choice,
-net progress and wind. Terrain affects velocity through constrained headings and pilot
-decisions, while wind affects position through its time integral. Acceleration removes a
-strictly constant wind contribution but still contains changing wind and manoeuvres.
+prevents ground velocity alone from separating still-air motion and wind.
+Route choice and net progress also enter the mean. Differentiation removes a
+constant wind contribution but retains changing wind and manoeuvres.
+
 If the wind field is $\mathbf w_h(\mathbf r,z,t)$, its derivative along the trajectory is
 \begin{equation}
  \mathbf a_{\mathrm{ground}}
@@ -781,16 +1188,145 @@ If the wind field is $\mathbf w_h(\mathbf r,z,t)$, its derivative along the traj
 Thus even a time-independent wind field contributes to acceleration when the glider
 crosses spatial gradients.
 
-The defensible next comparison is conditional: principal axes and displacement statistics
-by region and site--day, then alignment with a terrain axis and an independently estimated
-wind vector. A thermal-centre drift estimate may help after segmentation, subject to
-assumptions about thermal motion; it is not an independent wind measurement by definition.
-Randomly rotating flights would create a rotationally balanced pooled sample while
-preserving each radial displacement. Such a control can diagnose geographical alignment,
-but cannot reconstruct the underlying motion in still air or without mountains.
+Separating these effects requires terrain alignment and independent wind estimates
+within matched region and site--day groups. Thermal-centre drift may help after
+segmentation, subject to assumptions about thermal motion. Randomly rotating flights
+offers an alignment control: it balances pooled directions while preserving every
+radial displacement, without reconstructing still-air motion.
 
 \FloatBarrier
-\section{Which model predictions are informative?}
+\section{Flight duration and equipment composition}
+\label{sec:duration-check}
+
+Longer flights may select different equipment, pilots and conditions. A change in their
+MSD can therefore reflect a change of population rather than an effect of observation
+length. We examine both duration thresholds and their equipment composition, using the
+identified segment curves from the full archive: \num{\StatDurationParaFlights} paraglider
+and \num{\StatDurationHangFlights} hang-glider flights have segments of at least
+eight fixes with native cadence at most \SI{10}{\second}. Here $T_f$ is the sum of the retained segment spans
+of flight $f$; gaps and discarded time are not part of this observed duration.
+
+First combine the available segment curves within each flight, weighting them by the
+number of admissible time origins, then give every contributing flight equal weight:
+\begin{equation}
+ m_f(\tau)=\frac{\sum_s n_{fs}(\tau)m_{fs}(\tau)}{\sum_s n_{fs}(\tau)},\qquad
+ M_{T_0}(\tau)=\frac{1}{N_{T_0}(\tau)}
+      \sum_{f:T_f\ge T_0,\,n_f(\tau)>0}m_f(\tau).
+ \label{eq:duration-flight-msd}
+\end{equation}
+For an eligible segment $fs$ of $N_{fs}$ fixes at interval $\Delta t_{fs}$,
+$n_{fs}=N_{fs}-\operatorname{round}(\tau/\Delta t_{fs})$; it is zero outside that segment's
+stored lag support, which ends at $\lfloor N_{fs}/2\rfloor\Delta t_{fs}$. No displacement
+crosses a segment boundary. This equal-flight average differs from the equal-segment
+archive average introduced earlier. Requested lags are rounded to each segment's native grid.
+
+\begin{figure}[tb]
+ \centering
+ \includegraphics[width=\linewidth]{generated/ch3_duration}
+ \caption{Time-averaged squared displacement by retained flight
+duration. Cohorts are nested; legend counts give the range of contributing flights.
+Each lag requires at least \StatDurationMinFlights\ flights. Threshold curves end
+at $T_0/2$, while the all-duration curve extends to \SI{10000}{\second}.
+Shorter flights progressively leave the reference near $T_0/2$, bringing the
+populations closer by selection.}
+ \label{fig:msd-duration}
+\end{figure}
+
+Figure~\ref{fig:duration-equipment} repeats the duration comparison within the
+beginners (EN A/B) and experts (EN C/D/CCC) groups. This separates within-class
+contrasts from changes in their relative abundance.
+
+\begin{figure}[tb]
+ \centering
+ \includegraphics[width=\linewidth]{generated/ch3_duration_equipment}
+ \caption{The duration comparison repeated for beginners (EN A/B) and experts
+ (EN C/D/CCC),
+ using the same estimator, lag limits and minimum support as Fig.~\ref{fig:msd-duration}.
+ Counts refer to distinct flights, and overlapping groups do not constitute independent
+ samples. Tandem, non-certified and unknown equipment is omitted from this contrast.}
+ \label{fig:duration-equipment}
+\end{figure}
+
+Without duration conditioning, the fitted slopes over
+\SIrange{\StatDurationFullFitMinS}{\StatDurationFullFitMaxS}{\second} are
+\StatDurationABFullExponent\ for beginners and \StatDurationCDCCCFullExponent\
+for experts. Table~\ref{tab:duration-equipment} compares all eight group--duration
+cells on \SIrange{\StatDurationFitMinS}{\StatDurationFitMaxS}{\second}, ending
+before half the one-hour threshold. Fit residuals measure departures from the
+line, independently of sampling uncertainty.
+
+Experts have the larger slope in every duration cell. From all durations to
+$T\ge4$ h, the slope rises from about 1.755 to 1.806 for beginners and from
+1.803 to 1.836 for experts. Duration contrasts thus persist within both classes.
+The nested cohorts remain dependent and the comparisons descriptive.
+
+\begin{table}[tb]
+ \centering\small
+ \caption{Duration and equipment contrasts on a common supported lag interval,
+ \SIrange{\StatDurationFitMinS}{\StatDurationFitMaxS}{\second}. Flight counts include
+ every eligible flight in the cell; the contributing count decreases with lag. The
+ residual is the root-mean-square deviation in $\log_{10}M_2$ from the fitted line.}
+ \label{tab:duration-equipment}
+ \input{generated/duration_equipment_table}
+\end{table}
+
+To separate within-class behaviour from class proportions, write the exact mixture
+identity over the two experience proxies,
+\begin{equation}
+ M_{T_0}^{\rm known}(\tau)=\sum_c p_c(\tau\mid T_0)M_{T_0,c}(\tau),\qquad
+ p_c(\tau\mid T_0)=\frac{N_{T_0,c}(\tau)}{\sum_jN_{T_0,j}(\tau)}.
+ \label{eq:duration-mixture}
+\end{equation}
+The weights depend on lag as well as duration. A standardized comparison instead holds
+them fixed at $\pi_c=N_{0,c}/\sum_jN_{0,j}$, the class proportions among all eligible
+known-equipment flights:
+\begin{equation}
+ M_{T_0}^{\rm fixed}(\tau)=\sum_c\pi_c M_{T_0,c}(\tau).
+ \label{eq:duration-standardized}
+\end{equation}
+Figure~\ref{fig:duration-composition} compares the four-hour/all-duration ratio before
+and after this adjustment. Both ratios exclude the same unknown or other equipment;
+otherwise changing the population would be confounded with changing the weights.
+The adjustment is displayed only where every class has at least
+\StatDurationMinFlights\ contributing flights.
+
+\begin{figure}[tb]
+ \centering
+ \includegraphics[width=\linewidth]{generated/ch3_duration_composition}
+ \caption{Equipment composition and its contribution to the duration comparison.
+ Left: proportions of flights in the nested duration cohorts, including other or unknown
+ equipment (\num{\StatDurationUnknownFlights} flights in the full eligible sample).
+ Right: the four-hour/all-duration MSD ratio among known classes, using the observed
+ lag-dependent mixture or fixed class weights. Unity denotes equal MSD amplitudes at
+ that lag, not equal trajectories or established statistical independence.}
+ \label{fig:duration-composition}
+\end{figure}
+
+Among the two known classes, the expert share rises from about 63.5\% in all
+durations to 78.9\% for $T\ge4$ h. The latter cohort still includes 7,415
+beginner-proxy flights. Fixing the class mixture reduces the MSD amplitude contrast:
+\begin{center}
+\begin{tabular}{@{}rcc@{}}
+\toprule
+ & \multicolumn{2}{c}{\textbf{Four-hour/all-duration MSD ratio}} \\
+\cmidrule(l){2-3}
+\textbf{Lag [s]} & \textbf{Observed mixture} & \textbf{Fixed class weights} \\
+\midrule
+576 & 1.30 & 1.25 \\
+1695 & 1.42 & 1.35 \\
+\bottomrule
+\end{tabular}
+\end{center}
+Composition explains part of the contrast under this adjustment; a substantial
+within-class difference remains. The return towards unity near
+\SI{7200}{\second} coincides with shorter flights leaving the reference population
+and cannot establish duration independence.
+
+Conditions, routes and pilot selection can still vary within each equipment class,
+so these associations do not isolate pilot skill or a causal effect of duration.
+
+\FloatBarrier
+\section{Comparison with stochastic models}
 \label{sec:process-class}
 
 \subsection{The moment spectrum and the L\'evy-walk benchmark}
@@ -834,38 +1370,33 @@ prediction with stated renewal and speed assumptions.
   \label{fig:levy-spectrum-schematic}
 \end{figure}
 
-The empirical spectra in Figure~\ref{fig:shape} are compared with these predictions.
-For $q$ from $0.25$ to $4$, $\nu(q)$ ranges from \StatRevParaMomentNuMin\ to
-\StatRevParaMomentNuMax\ in paragliders and from \StatRevHangMomentNuMin\ to
-\StatRevHangMomentNuMax\ in hang gliders. The pooled-increment values
-$\zeta(2)=\StatRevParaMomentZetaTwo$ and \StatRevHangMomentZetaTwo\ differ from the
-equal-flight $b_1$ in Table~\ref{tab:orderscan} because the weights differ.
-The $\beta=1.5$ curve in the figure is an illustrative reference, not a fitted null.
-A nearly linear spectrum without the predicted change of branch is evidence against this
-particular asymptotic description when the sampled scales and moments can resolve the
-change. It does not exclude all L\'evy walks: the ballistic regime $0<\beta<1$, truncated
-leg distributions, correlations and pre-asymptotic behaviour require separate comparisons.
-Near-linearity must also be compared with the quantiles after controlling their sampling
-population; it does not independently establish a common scaling law.
+For $q=0.25$ to $4$, the measured $\nu(q)$ ranges from
+\StatRevParaMomentNuMin\ to \StatRevParaMomentNuMax\ in paragliders and from
+\StatRevHangMomentNuMin\ to \StatRevHangMomentNuMax\ in hang gliders
+(Fig.~\ref{fig:shape}). The pooled values
+$\zeta(2)=\StatRevParaMomentZetaTwo$ and \StatRevHangMomentZetaTwo\ differ from
+the equal-flight $b_1$ because the weights differ. The plotted $\beta=1.5$ curve
+is a theoretical reference, not a fitted null.
 
-A quantitative rejection requires simulating the specified candidate at fitted parameters with
-the observed durations, sampling and preprocessing, and comparing the \emph{joint} moment
-and quantile results. The 90th percentile alone need not follow the ballistic front,
-whose probability changes with time. Its ordering is therefore not a second independent
-rejection test. High-order moments also require a flight-level sensitivity check before an inferential
-exclusion.
+The near-linear spectrum lacks the predicted branch change, challenging this
+asymptotic benchmark where the observations can resolve it. Ballistic L\'evy walks,
+truncated legs, correlated steps and finite-time crossovers need separate predictions.
+A quantitative test requires simulations with the observed durations, sampling and
+preprocessing, compared jointly with moments and controlled quantiles. High-order
+moments also need flight-level sensitivity checks; the 90th percentile alone need
+not track the ballistic front.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\linewidth]{generated/ch3_models}
   \caption{Displacement moment spectra and centred multivariate kurtosis in the diagnostic
-  subset, with theoretical moment spectra shown as reference curves. These observables
+  eligible archive, with theoretical moment spectra shown as reference curves. These observables
   constrain the growth and shape of the increment distribution, respectively, but neither
   alone identifies the generating process.}
   \label{fig:shape}
 \end{figure}
 
-\subsection{Non-Gaussianity: what is measured, and what it cannot identify}
+\subsection{Centred kurtosis and heterogeneity}
 \label{sec:transport-gaussian}
 
 At each lag with a finite, positive-definite covariance, centre the increment and
@@ -875,13 +1406,10 @@ standardise by that full covariance:
   \qquad K_M(\tau)=\mathbb E[Q^2]-d(d+2),\quad d=2.
   \label{eq:nongauss}
 \end{equation}
-This is Mardia's kurtosis excess~\cite{mardia1970}. A nonsingular Gaussian vector has
-$Q\sim\chi^2_d$, hence $K_M=0$, including when it is anisotropic. Positive excess means
-a larger fourth moment of standardised radius than this Gaussian reference, although it
-does not by itself imply a power-law tail. Conversely, zero excess satisfies a necessary
-Gaussian moment condition without establishing Gaussianity. To call a measured difference
-from zero statistically significant also requires a reference calibrated for the finite
-sample and its dependence.
+Mardia's kurtosis excess~\cite{mardia1970} vanishes for a nonsingular Gaussian
+vector, including an anisotropic one, since $Q\sim\chi_d^2$. Positive excess
+means a larger fourth moment of standardised radius. It neither requires a
+power-law tail nor makes zero excess sufficient for Gaussianity.
 
 For the $n$ pooled increments at a lag, the calculation uses
 \begin{equation}
@@ -895,11 +1423,10 @@ For the $n$ pooled increments at a lag, the calculation uses
  \end{aligned}
  \label{eq:empirical-mardia}
 \end{equation}
-where $\widehat Q_i$ substitutes these estimates into Eq.~\eqref{eq:nongauss}.
-With this covariance denominator, $n^{-1}\sum_i\widehat Q_i=2$ and Jensen's inequality
-gives $\widehat K_M\ge-4$. Negative values are therefore possible: they indicate
-a smaller fourth moment of standardised radius than the Gaussian reference, not a
-negative variance. Even a Gaussian sample need not give exactly zero.
+Here $\widehat Q_i$ uses these empirical moments. With covariance denominator $n$,
+$n^{-1}\sum_i\widehat Q_i=2$, so Jensen's inequality gives
+$\widehat K_M\ge-4$. Negative excess is possible, and even a Gaussian sample
+need not give exactly zero.
 
 The measured $K_M$ is not constant. Across the displayed interval its range is
 \StatRevParaMardiaMin\ to \StatRevParaMardiaMax\ for paragliders and
@@ -916,18 +1443,14 @@ fixed covariance, $A>0$ is independent, and both required moments exist. Then
   K_M=d(d+2)\left[\frac{\mathbb E A^2}{(\mathbb E A)^2}-1\right].
   \label{eq:pooled-nongauss}
 \end{equation}
-This is a scale-mixture example, not an identity for arbitrary flights with different
-means and differently oriented covariance matrices. Subtracting a trace-based width
-mixture estimate from pooled kurtosis does not recover each flight's kurtosis.
+This identity applies to the stated scale mixture; flights with different means
+and covariance orientations require a fuller calculation. The pooled excess
+therefore compares the archive with one homogeneous Gaussian law. Conditional
+Gaussian models need separate centring and covariance estimates within environment
+or phase groups, with simulations accounting for finite samples and dependence.
+A peak in pooled kurtosis alone cannot identify a thermal timescale.
 
-The measured excess therefore tests a \emph{single homogeneous Gaussian law for the pooled
-increments}. To assess Gaussian fluctuations conditional on environment or phase requires
-separate centring and covariance estimates in those strata, adequate sample sizes and a
-matched simulation. The peak of a pooled kurtosis curve may reflect changing mixtures or
-geometry; it is not automatically a thermal timescale or evidence of central-limit
-behaviour.
-
-\subsection{Velocity memory at more than one resolution}
+\subsection{Velocity memory across resolutions}
 \label{sec:transport-memory}
 
 A fix-to-fix velocity mixes recorder cadence, smoothing and physical turning. To examine
@@ -939,24 +1462,33 @@ longer scales, define velocity averaged over a duration $h$,
                          {\langle|\delta\mathbf v_h|^2\rangle}.
   \label{eq:vacf}
 \end{equation}
-The analysis compares $h=10$, $60$ and $\SI{300}{\second}$. In each selected segment,
-it forms adjacent block velocities $\mathbf v_{f,j}$, subtracts their mean and computes
+We compare $h=10$, $60$ and \SI{300}{\second}. In each retained segment $fs$,
+form $n_{fs}$ adjacent velocity blocks and subtract their segment mean.
+The segment estimate and archive average are
 \begin{equation}
-  \widehat C_{f,h}(kh)=
-  \frac{(n_f-k)^{-1}\sum_{j=0}^{n_f-k-1}
-         \delta\mathbf v_{f,j}\cdot\delta\mathbf v_{f,j+k}}
-       {n_f^{-1}\sum_{j=0}^{n_f-1}|\delta\mathbf v_{f,j}|^2},
-  \qquad
-  \widehat C_h=\frac{1}{N_h(k)}\sum_{f\in\mathcal F_h(k)}\widehat C_{f,h}.
-  \label{eq:vacf-estimator}
+\begin{aligned}
+ \widehat C_{fs,h}(kh)
+ &=\frac{(n_{fs}-k)^{-1}\sum_{j=0}^{n_{fs}-k-1}
+       \delta\mathbf v_{fs,j}\cdot\delta\mathbf v_{fs,j+k}}
+      {n_{fs}^{-1}\sum_{j=0}^{n_{fs}-1}|\delta\mathbf v_{fs,j}|^2},\\[4pt]
+ \widehat C_h(kh)
+ &=\frac1{|\mathcal F_h(k)|}\sum_{f\in\mathcal F_h(k)}
+   \frac1{|\mathcal S_{f,h}(k)|}\sum_{s\in\mathcal S_{f,h}(k)}\widehat C_{fs,h}(kh).
+\end{aligned}
+\label{eq:vacf-estimator}
 \end{equation}
-Here $n_f$ is the number of complete velocity blocks and $\mathcal F_h(k)$ contains
-segments with $n_f\ge8$, nonzero velocity variance and $k\le\lfloor n_f/4\rfloor$.
-A mean of normalised correlations gives each contributing flight equal weight; it differs
-from normalising a covariance pooled across all flights. Lags smaller than $h$ share averaging intervals
-and can generate correlation from overlap alone; interpretation uses non-overlapping
-intervals. Correlations at different $h$ answer different questions and need not coincide.
-Subtracting a mean estimated on a finite segment can also depress the long-lag correlation.
+Here $\mathcal S_{f,h}(k)$ contains the supported segments of flight $f$:
+\[
+ n_{fs}\ge8,\qquad
+ \sum_j|\delta\mathbf v_{fs,j}|^2>0,\qquad
+ 1\le k\le\lfloor n_{fs}/4\rfloor.
+\]
+Flights with a nonempty set form $\mathcal F_h(k)$. Segments receive equal weight
+within each flight, then flights receive equal weight. This differs from normalising
+one pooled covariance.
+
+The separation $\tau=kh\ge h$ avoids overlap between the two velocity blocks.
+Finite-segment centring can nevertheless depress long-lag correlations.
 
 Figure~\ref{fig:velocity-memory} places the positive correlations on logarithmic axes,
 where a power-law interval would satisfy
@@ -966,15 +1498,9 @@ where a power-law interval would satisfy
  \log C_h(\tau)\simeq\log A_h-\gamma_h\log\tau.
  \label{eq:vacf-loglaw}
 \end{equation}
-Curvature therefore matters as much as the apparent slope. The companion panels retain
-the sign, since a negative correlation cannot be represented on a logarithmic ordinate
-and taking its absolute value would change the physical question. The plotted quantity
-is the mean of normalised flight correlations in Eq.~\eqref{eq:vacf-estimator}, rather
-than a pooled velocity autocovariance. Within one flight, normalisation by the zero-lag
-covariance leaves a positive power-law exponent unchanged; after averaging heterogeneous
-flights, the weighting still matters.
+The linear-ordinate panels retain zero crossings and negative correlation.
 
-\begin{figure}[htbp]
+\begin{figure}[!htbp]
  \centering
  \includegraphics[width=\linewidth]{generated/ch3_velocity_memory}
  \caption{Velocity memory at averaging widths $h=10$, $60$ and $\SI{300}{\second}$.
@@ -987,17 +1513,26 @@ flights, the weighting still matters.
  \label{fig:velocity-memory}
 \end{figure}
 
-At a separation of \SI{600}{\second}, the three resolutions give correlations
-\StatRevParaVacfTenAtSixHundred, \StatRevParaVacfSixtyAtSixHundred\ and
-\StatRevParaVacfThreeHundredAtSixHundred\ for paragliders; the hang-glider values are
-\StatRevHangVacfTenAtSixHundred, \StatRevHangVacfSixtyAtSixHundred\ and
-\StatRevHangVacfThreeHundredAtSixHundred. The sample means remain positive beyond
-individual fixes and minute-scale averaging, without a calibrated uncertainty statement
-at this separation. Their log--log curves bend, and the hang-glider estimate becomes
-negative at long separation; neither figure supports assigning one power-law decay
-across the full interval. A larger normalised correlation after
-averaging also reflects the suppression of faster fluctuations, not necessarily an
-increase in the underlying memory time.
+\FloatBarrier
+At a ten-minute separation, all three resolutions retain positive sample means:
+\begin{center}
+\begin{tabular}{@{}rcc@{}}
+\toprule
+\textbf{Width $h$ [s]} & \textbf{Paraglider $\widehat C_h(600\,\mathrm s)$}
+ & \textbf{Hang-glider $\widehat C_h(600\,\mathrm s)$} \\
+\midrule
+10 & \StatRevParaVacfTenAtSixHundred & \StatRevHangVacfTenAtSixHundred \\
+60 & \StatRevParaVacfSixtyAtSixHundred & \StatRevHangVacfSixtyAtSixHundred \\
+300 & \StatRevParaVacfThreeHundredAtSixHundred & \StatRevHangVacfThreeHundredAtSixHundred \\
+\bottomrule
+\end{tabular}
+\end{center}
+No calibrated intervals are reported here. Coarse averaging suppresses fast
+fluctuations and can increase normalized correlation without lengthening the
+underlying memory. The log--log curves bend, and estimates in both disciplines
+turn negative at long separation; one decay exponent does not describe the full interval.
+
+\paragraph{Memory and displacement growth.}
 
 For a stationary centred velocity with variance
 $\sigma_v^2=\langle|\delta\mathbf v|^2\rangle$, integrating velocity over the
@@ -1006,9 +1541,8 @@ displacement interval and using stationarity gives Taylor's relation~\cite{taylo
   M_{2,c}(\tau)=2\sigma_v^2\int_0^\tau(\tau-s)C(s)\,\mathrm ds.
   \label{eq:green-kubo}
 \end{equation}
-The velocity-variance factor is required because $C$ is dimensionless. This relation
-concerns the centred displacement and the same stationary population; it cannot directly
-identify the growth of an uncentred, heterogeneous archive MSD.
+The factor $\sigma_v^2$ restores the velocity units because $C$ is normalised.
+Taylor's relation concerns centred displacement in the same stationary population.
 
 For example, an exponentially correlated velocity, $C(s)=e^{-s/t_p}$, gives
 \begin{equation}
@@ -1016,19 +1550,24 @@ For example, an exponentially correlated velocity, $C(s)=e^{-s/t_p}$, gives
       \left[\tau-t_p(1-e^{-\tau/t_p})\right].
   \label{eq:persistent-msd}
 \end{equation}
-It is ballistic for $\tau\ll t_p$ and diffusive for $\tau\gg t_p$. An intermediate
-superdiffusive slope can therefore arise in a finite-persistence model. A distribution of
-$t_p$ across flights broadens the crossover. Such a model is not excluded merely because
-a fitted MSD slope exceeds one.
+Its limits are
+\[
+ M_{2,c}(\tau)\simeq
+ \begin{cases}
+  \sigma_v^2\tau^2, & \tau\ll t_p \quad\text{(ballistic)},\\
+  2\sigma_v^2t_p\tau, & \tau\gg t_p \quad\text{(diffusive)}.
+ \end{cases}
+\]
+An intermediate superdiffusive slope can therefore arise from finite persistence.
+Different $t_p$ across flights broaden the crossover. A fitted MSD slope above
+one does not exclude this model.
 
-If instead $C(s)\sim s^{-\gamma}$ with $0<\gamma<1$ \emph{asymptotically},
-Eq.~\eqref{eq:green-kubo} gives $M_{2,c}\propto\tau^{2-\gamma}$. Measurements on a finite
-interval cannot establish convergence or divergence of the integral to infinity.
-Consequently the measured memory is reported at the observed scales, without declaring
-it non-integrable. Its persistence also does not prove correlation between successive
-glides: that comparison requires the episode boundaries of Chapter~\ref{ch:phases}.
+An asymptotic tail $C(s)\sim s^{-\gamma}$ with $0<\gamma<1$ instead gives
+$M_{2,c}\propto\tau^{2-\gamma}$. Finite records cannot establish whether the
+correlation integral diverges. Correlation between successive glides also requires
+the episode boundaries introduced in Chapter~\ref{ch:phases}.
 
-\subsection{A model comparison with explicit limits}
+\subsection{Model predictions and remaining tests}
 
 Table~\ref{tab:fingerprint} collects the useful exclusions and the hypotheses that remain
 open. The scope is the pooled data over the observed interval. A candidate can fail there and
@@ -1078,179 +1617,31 @@ models require their own finite-scale predictions.\\
 \end{tabular}
 \end{table}
 
-An uncoupled renewal model with long resting times is also not established simply by
-naming climb a waiting phase: a glider moves while climbing. Tests of waiting times,
-renewal independence and coupling to the next displacement belong to the segmented
-analysis, where a renewal hypothesis can be confronted with the observed episode
-durations and their dependence.
+A glider moves while climbing. Treating climb as a waiting phase in a renewal model
+therefore needs tests of episode durations, displacement coupling and independence
+in the segmented analysis.
 
 \FloatBarrier
-\section{Flight duration and equipment composition}
-\label{sec:duration-check}
-
-Longer flights may select different equipment, pilots and conditions. A change in their
-MSD can therefore reflect a change of population rather than an effect of observation
-length. We examine both duration thresholds and their equipment composition, using the
-identified segment curves from the full archive: \num{\StatDurationParaFlights} paraglider
-and \num{\StatDurationHangFlights} hang-glider flights have segments of at least
-eight fixes with native cadence at most \SI{10}{\second}. Here $T_f$ is the sum of the retained segment spans
-of flight $f$; gaps and discarded time are not part of this observed duration.
-
-First combine the available segment curves within each flight, weighting them by the
-number of admissible time origins, then give every contributing flight equal weight:
-\begin{equation}
- m_f(\tau)=\frac{\sum_s n_{fs}(\tau)m_{fs}(\tau)}{\sum_s n_{fs}(\tau)},\qquad
- M_{T_0}(\tau)=\frac{1}{N_{T_0}(\tau)}
-      \sum_{f:T_f\ge T_0,\,n_f(\tau)>0}m_f(\tau).
- \label{eq:duration-flight-msd}
-\end{equation}
-For an eligible segment of $N_{fs}$ fixes at interval $\delta_{fs}$,
-$n_{fs}=N_{fs}-\operatorname{round}(\tau/\delta_{fs})$; it is zero outside that segment's
-stored lag support, which ends at $\lfloor N_{fs}/2\rfloor\delta_{fs}$. No displacement
-crosses a segment boundary. This equal-flight average differs from the equal-segment
-archive average introduced earlier. Requested lags are rounded to each segment's native grid.
-
-\begin{figure}[tb]
- \centering
- \includegraphics[width=\linewidth]{generated/ch3_duration}
- \caption{Time-averaged squared displacement grouped by retained flight duration.
- The groups are nested; legend counts give the range of distinct contributing flights
- over each displayed curve. At least \StatDurationMinFlights\ flights are required per lag.
- Each threshold curve stops at $\tau=T_0/2$, while the all-duration curve extends to
- \SI{10000}{\second}. As lag approaches the threshold's half-duration, shorter flights
- progressively disappear from the reference too, bringing the populations closer.
- For uninterrupted records, no flight shorter than $T_0$ can contribute beyond $T_0/2$;
- segmentation further restricts support. Convergence there is a selection effect,
- not evidence of duration independence.}
- \label{fig:msd-duration}
-\end{figure}
-
-For paragliders the comparison is repeated within the beginners (EN A/B) and experts
-(EN C/D/CCC) groups defined above (Fig.~\ref{fig:duration-equipment}). This asks whether
-the duration contrast remains within each experience proxy, and whether the two groups
-have different growth rates. Longer flights need not contain the same proportions of
-beginners and experts, so their pooled MSD can change even when neither group's
-conditional dynamics depends on duration.
-
-\begin{figure}[tb]
- \centering
- \includegraphics[width=\linewidth]{generated/ch3_duration_equipment}
- \caption{The duration comparison repeated for beginners (EN A/B) and experts
- (EN C/D/CCC),
- using the same estimator, lag limits and minimum support as Fig.~\ref{fig:msd-duration}.
- Counts refer to distinct flights, and overlapping groups do not constitute independent
- samples. Tandem, non-certified and unknown equipment is omitted from this contrast.}
- \label{fig:duration-equipment}
-\end{figure}
-
-Without duration conditioning, the descriptive slopes $b$ of $M_2\propto\tau^b$ over
-\SIrange{\StatDurationFullFitMinS}{\StatDurationFullFitMaxS}{\second} are
-\StatDurationABFullExponent\ for beginners and \StatDurationCDCCCFullExponent\ for
-experts. For a direct comparison of all eight group--duration cells,
-Table~\ref{tab:duration-equipment} uses the shorter common interval
-\SIrange{\StatDurationFitMinS}{\StatDurationFitMaxS}{\second}. Its upper limit cannot
-exceed half the one-hour threshold. This secondary comparison does not replace the main
-\SIrange{10}{10000}{\second} analysis. A straight-line fit summarizes growth over its
-stated interval; its residual quantifies curvature or departures from that fit, and is
-not a sampling confidence interval or a test of a Hurst exponent.
-
-On the common interval, the expert slope exceeds the beginner slope in every duration
-cell. Within beginners it increases from about 1.755 for all durations to 1.806 for
-$T\ge4$ h; within experts the corresponding values are 1.803 and 1.836. Thus both an
-equipment contrast and a within-class duration contrast are present descriptively.
-They do not measure a causal effect of pilot experience, and the nested samples cannot
-be treated as independent comparisons.
-
-\begin{table}[tb]
- \centering\small
- \caption{Duration and equipment contrasts on a common supported lag interval,
- \SIrange{\StatDurationFitMinS}{\StatDurationFitMaxS}{\second}. Flight counts include
- every eligible flight in the cell; the contributing count decreases with lag. The
- residual is the root-mean-square deviation in $\log_{10}M_2$ from the fitted line.}
- \label{tab:duration-equipment}
- \input{generated/duration_equipment_table}
-\end{table}
-
-To separate within-class behaviour from class proportions, write the exact mixture
-identity over the two experience proxies,
-\begin{equation}
- M_{T_0}^{\rm known}(\tau)=\sum_c p_c(\tau\mid T_0)M_{T_0,c}(\tau),\qquad
- p_c(\tau\mid T_0)=\frac{N_{T_0,c}(\tau)}{\sum_jN_{T_0,j}(\tau)}.
- \label{eq:duration-mixture}
-\end{equation}
-The weights depend on lag as well as duration. A standardized comparison instead holds
-them fixed at $\pi_c=N_{0,c}/\sum_jN_{0,j}$, the class proportions among all eligible
-known-equipment flights:
-\begin{equation}
- M_{T_0}^{\rm fixed}(\tau)=\sum_c\pi_c M_{T_0,c}(\tau).
- \label{eq:duration-standardized}
-\end{equation}
-Figure~\ref{fig:duration-composition} compares the four-hour/all-duration ratio before
-and after this adjustment. Both ratios exclude the same unknown or other equipment;
-otherwise changing the population would be confounded with changing the weights.
-The adjustment is displayed only where every class has at least
-\StatDurationMinFlights\ contributing flights.
-
-\begin{figure}[tb]
- \centering
- \includegraphics[width=\linewidth]{generated/ch3_duration_composition}
- \caption{Equipment composition and its contribution to the duration comparison.
- Left: proportions of flights in the nested duration cohorts, including other or unknown
- equipment (\num{\StatDurationUnknownFlights} flights in the full eligible sample).
- Right: the four-hour/all-duration MSD ratio among known classes, using the observed
- lag-dependent mixture or fixed class weights. Unity denotes equal MSD amplitudes at
- that lag, not equal trajectories or established statistical independence.}
- \label{fig:duration-composition}
-\end{figure}
-
-Among flights in the two known classes, the expert share increases from about 63.5\%
-for all durations to 78.9\% for $T\ge4$ h; the latter cohort still contains 7,426
-beginner-proxy flights, so it is not made up of experts alone. Standardisation reduces
-the four-hour/all-duration MSD ratio at \SI{576}{\second} from about 1.30 to 1.25,
-and at \SI{1695}{\second} from 1.42 to 1.35. The two-class composition therefore
-accounts for part of the amplitude contrast under this descriptive adjustment, while
-a substantial within-class contrast remains. The return towards unity near
-\SI{7200}{\second} coincides with the loss of shorter flights from the reference;
-it cannot demonstrate duration independence.
-
-The MSD therefore varies with both duration and equipment in this archive. These
-associations do not isolate pilot skill or the effect of duration itself, because
-conditions, routes and pilot selection can still differ within each class.
-
-\FloatBarrier
-\section{Chapter summary and constraints for the phase analysis}
+\section{Constraints for the phase analysis}
 \label{sec:transport-verdict}
 
-Over the measured interval, displacement grows faster than the linear MSD of
-homogeneous Brownian motion, but this alone does not distinguish persistent motion
-from longer-range correlations. The constant-velocity control retains curvature and
-effective slopes near two, so it has not delivered a well-defined intrinsic Hurst
-exponent. Fixing the quantile population exposes changes in relative spread that a
-single fitted exponent obscures, while the regional analysis reveals a pronounced
-Pyrenean east--west preference and no universal reduction of anisotropy among experts.
-Duration contrasts persist within both equipment groups and after fixing their
-proportions. These results constrain a model jointly; none identifies the physical
-process in isolation.
+A model must account jointly for moment growth, changing quantile spread,
+regional anisotropy, velocity memory, and the contrasts by route, duration and
+equipment. An effective exponent alone cannot describe this set of observations.
 
-The later model comparison must reproduce the displacement moments and quantiles over stated lags,
-changes in relative distribution width, anisotropy by region, coarse velocity memory,
-and differences associated with open and closed tasks. The second difference is retained
-as a control with a precise invariance: it cancels a constant velocity. It does not
-identify that velocity as wind or reconstruct an environmentally neutral flight.
-
-The next chapter introduces phase labels. A subsequent analysis must measure durations,
-displacements, altitude changes and dependencies within and between episodes. There is an
-exact bookkeeping constraint on that work. Let $c$ partition \emph{all} admissible windows
-into phase histories, including windows that cross a boundary. Then
+Chapter~\ref{ch:phases} introduces phase labels. Connecting those phases to global
+transport requires durations, displacements and dependencies within and between
+episodes. If $c$ partitions all admissible windows into phase histories, including
+windows crossing a phase boundary, then
 \begin{equation}
   M_q(\tau)=\sum_c w_c(\tau)M_q(\tau\mid c),\qquad
   w_c=\frac{n_c}{\sum_{c'}n_{c'}},\qquad \sum_cw_c=1,
   \label{eq:phase-reconstruction}
 \end{equation}
-for a window-weighted observable. A flight-weighted version first applies the identity
-within each flight. Restricting to windows wholly inside one of three phases omits
-transition windows and will not, in general, reconstruct the global moment. The exponents
-are not weighted sums of phase exponents because both amplitudes and weights depend on lag.
+for window weighting. With flight weighting, apply the identity within each
+flight first. Windows wholly inside individual phases omit transitions and
+cannot generally reconstruct the global moment. Since both weights and conditional
+amplitudes depend on lag, global exponents are not weighted phase exponents.
 
 Any exhaustive partition satisfies this identity, including one with incorrect labels.
 Reconstructing the global moments therefore checks the calculation; independent labels

@@ -1,0 +1,26 @@
+{
+  "reviewed_utc": "2026-09-12T15:04:04.760669+00:00",
+  "audit_sha256": "29317d6ba94947fa92baac65836728824303b04936bb189f85ef2e3fe2e36f9b",
+  "figures": {
+    "segmentation_current_example_para.pdf": "53fd458c1a0159256512844e1e8ebda124cdd9c89f04222087e63aa46f61a4ee",
+    "segmentation_current_example_hang.pdf": "dc14c518b2b3f1f4f60a2e471f5ce41df5cc273305bed55d0549c48138069efb",
+    "segmentation_coverage.pdf": "cedfa662e57f7e902e8b6360f044bbc46fa542237b45bcdce4c15dc8e3ca3b20",
+    "segmentation_decoding_transitions.pdf": "c8e3fd7327d426e101d9082ecbeae0f4b0402210ea515ea8fd058370de034e0d",
+    "segmentation_decoder_ablation.pdf": "ab9130ef6a2c123ec2b0bb57ec3fe161c693da780c745f923d0805bd6e932522"
+  },
+  "visual_review": [
+    "Eight-minute current para/hang excerpts inspected: legible labels, complete panels and legends, no clipping.",
+    "Para climb persists through brief changes of vertical speed/coherence. Hang sustained ascent partly assigned search with divided posterior. Current manuscript interpretation agrees.",
+    "Fresh coverage, fitted/decoding matrices and development ablation also inspected: complete labels, no clipping; counts and numerical limitations agree with current generated tables."
+  ],
+  "current_values": {
+    "emitted_decisions_para": 171663465,
+    "emitted_decisions_hang": 7301634,
+    "excluded_cleaned_duration_pct_para": 8.24,
+    "excluded_cleaned_duration_pct_hang": 5.88,
+    "selected_last_gain_para": -0.0755,
+    "selected_last_gain_hang": -2.15,
+    "human_reference_intervals": 0
+  },
+  "scope": "Numerical fit and visual plausibility review; no independent behavioural accuracy or demonstrated fit convergence."
+}

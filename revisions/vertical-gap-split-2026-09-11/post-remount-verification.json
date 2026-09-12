@@ -1,0 +1,212 @@
+{
+  "run_id": "20260912T104500Z-5cfc4e8c",
+  "status": "passed",
+  "verification": {
+    "elapsed_seconds": 540.0848309993744,
+    "started_unix": 1789210131.83458,
+    "status": "complete"
+  },
+  "log_sha256": "01ce25b3f89ffb322ce839dcabac8007603071b517ab8a7a4fcafcb573b33bee",
+  "source_sha256": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+  "numerical_source_sha256": "dea64e843864abd8316c1fa9442fe2e721213720ab200edb887621748000cdee",
+  "datasets": {
+    "hang gliders": {
+      "attempted_files": 6716,
+      "cleaning": {
+        "configuration": {
+          "alt_channel": {
+            "baro_witness_min_range_m": 30.0,
+            "baro_witness_present_min": 0.95,
+            "gnss_min_range_m": 30.0,
+            "gnss_present_min": 0.95
+          },
+          "fix": {
+            "frozen_delta_z_m": 5.0,
+            "frozen_eps_m": 15.0,
+            "frozen_tau_s": 60.0,
+            "hampel_eps_min_m": 15.0,
+            "hampel_k": 5.0,
+            "hampel_min_window_fixes": 5,
+            "hampel_window_s": 20.0,
+            "integrity_max_fraction": 0.1,
+            "max_altitude_m": 6000.0,
+            "max_horizontal_speed_mps": {
+              "hang gliders": 55.0,
+              "paragliders": 45.0
+            },
+            "max_vertical_speed_mps": 10.0,
+            "min_altitude_m": -100.0,
+            "vz_min_window_fixes": 5,
+            "vz_window_s": 5.0
+          },
+          "flight": {
+            "max_duration_s": 57600.0,
+            "min_alt_range_m": 600.0,
+            "min_duration_s": 2400.0,
+            "min_path_km": 20.0
+          },
+          "sampling": {
+            "max_gap_factor": 10.0,
+            "max_gap_seconds": 20.0,
+            "max_missing_fraction": 0.1,
+            "min_segment_duration_s": 90.0
+          },
+          "savgol": {
+            "polyorder": 3,
+            "tau_c_horizontal_s": 5.0,
+            "tau_c_vertical_s": 5.0
+          },
+          "trimming": {
+            "ground_flatness_m": 5.0,
+            "interior_ground_s": 600.0,
+            "sustained_s": 30.0,
+            "takeoff_speed_mps": 5.0
+          }
+        },
+        "packages": {
+          "numpy": "2.5.0",
+          "pandas": "3.0.3",
+          "pyarrow": "24.0.0",
+          "scipy": "1.18.0"
+        },
+        "pipeline_version": "2.3.0",
+        "source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85"
+      },
+      "completed_utc": "2026-09-11T20:43:15.077098+00:00",
+      "discipline": "hang gliders",
+      "limit": 0,
+      "retained_flights": 6094,
+      "run_id": "d49745c0-5316-48fb-b529-03d6c6861e86",
+      "seed": 20260803,
+      "started_utc": "2026-09-11T20:40:18.685461+00:00",
+      "status": "complete",
+      "tables": {
+        "fixes.parquet": {
+          "bytes": 1145119236,
+          "footer_sha256": "047cbf367ed30a62505edbd055e7769e8493927eca25232517dc351992f7e6b9",
+          "mtime_ns": 1789159394600000000,
+          "rows": 34567535
+        },
+        "flights_meta.parquet": {
+          "bytes": 592328,
+          "footer_sha256": "28562f5d15ff9a5daab16e9d0cec6044e1dedd5b28a2cef290a23616431770d8",
+          "mtime_ns": 1789159394710000000,
+          "rows": 6716
+        },
+        "segments.parquet": {
+          "bytes": 259635,
+          "footer_sha256": "cc9a292bd97f03572fa5075c1971e70ebea0d64b41b69ec799b027ad9ad0e354",
+          "mtime_ns": 1789159395050000000,
+          "rows": 12515
+        },
+        "suspect_intervals.parquet": {
+          "bytes": 3366,
+          "footer_sha256": "dfe242554f72fbeb61820cd26e286157c365d151708c44154efd9c75a9375644",
+          "mtime_ns": 1789159395050000000,
+          "rows": 5
+        }
+      }
+    },
+    "paragliders": {
+      "attempted_files": 186052,
+      "cleaning": {
+        "configuration": {
+          "alt_channel": {
+            "baro_witness_min_range_m": 30.0,
+            "baro_witness_present_min": 0.95,
+            "gnss_min_range_m": 30.0,
+            "gnss_present_min": 0.95
+          },
+          "fix": {
+            "frozen_delta_z_m": 5.0,
+            "frozen_eps_m": 15.0,
+            "frozen_tau_s": 60.0,
+            "hampel_eps_min_m": 15.0,
+            "hampel_k": 5.0,
+            "hampel_min_window_fixes": 5,
+            "hampel_window_s": 20.0,
+            "integrity_max_fraction": 0.1,
+            "max_altitude_m": 6000.0,
+            "max_horizontal_speed_mps": {
+              "hang gliders": 55.0,
+              "paragliders": 45.0
+            },
+            "max_vertical_speed_mps": 10.0,
+            "min_altitude_m": -100.0,
+            "vz_min_window_fixes": 5,
+            "vz_window_s": 5.0
+          },
+          "flight": {
+            "max_duration_s": 57600.0,
+            "min_alt_range_m": 600.0,
+            "min_duration_s": 2400.0,
+            "min_path_km": 20.0
+          },
+          "sampling": {
+            "max_gap_factor": 10.0,
+            "max_gap_seconds": 20.0,
+            "max_missing_fraction": 0.1,
+            "min_segment_duration_s": 90.0
+          },
+          "savgol": {
+            "polyorder": 3,
+            "tau_c_horizontal_s": 5.0,
+            "tau_c_vertical_s": 5.0
+          },
+          "trimming": {
+            "ground_flatness_m": 5.0,
+            "interior_ground_s": 600.0,
+            "sustained_s": 30.0,
+            "takeoff_speed_mps": 5.0
+          }
+        },
+        "packages": {
+          "numpy": "2.5.0",
+          "pandas": "3.0.3",
+          "pyarrow": "24.0.0",
+          "scipy": "1.18.0"
+        },
+        "pipeline_version": "2.3.0",
+        "source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85"
+      },
+      "completed_utc": "2026-09-11T20:40:12.674340+00:00",
+      "discipline": "paragliders",
+      "limit": 0,
+      "retained_flights": 156406,
+      "run_id": "5cbc434e-c472-468e-bcdc-c58bd9e42e0c",
+      "seed": 20260803,
+      "started_utc": "2026-09-11T19:25:37.811625+00:00",
+      "status": "complete",
+      "tables": {
+        "fixes.parquet": {
+          "bytes": 43385490898,
+          "footer_sha256": "efc8e7660c4564138bcd2be3261d1f5146a6e14b2151fe2c784650f42aaafef7",
+          "mtime_ns": 1789159104580000000,
+          "rows": 1369807970
+        },
+        "flights_meta.parquet": {
+          "bytes": 13474270,
+          "footer_sha256": "67f8227e92ace7d927fac2db074ebe437a1f458348fb78fd35fb42d9cf55329f",
+          "mtime_ns": 1789159117260000000,
+          "rows": 186052
+        },
+        "segments.parquet": {
+          "bytes": 5461073,
+          "footer_sha256": "cf75538b57090c17ae2d40ba81b9e5079a0b5b43a0e74a353598a976c0941136",
+          "mtime_ns": 1789159212440000000,
+          "rows": 335924
+        },
+        "suspect_intervals.parquet": {
+          "bytes": 8480,
+          "footer_sha256": "9f7f25a9148562c685c0fab28332ba85a90a1771ba5befaa02a8d393a4c8824a",
+          "mtime_ns": 1789159212630000000,
+          "rows": 508
+        }
+      }
+    }
+  },
+  "reused_output_hashes_unchanged": true,
+  "parent_manifest_status": "failed",
+  "original_parent_manifest_sha256": "5cb285e8657d778a5b6cedd166f5a53053a67e5f597cff017f96b8a84c744e66",
+  "scope": "All retained fix values passed the structural/operational verifier again; table identities and completed-prefix outputs unchanged. This is not a full cryptographic checksum of every canonical table byte or external validation of flight behavior."
+}

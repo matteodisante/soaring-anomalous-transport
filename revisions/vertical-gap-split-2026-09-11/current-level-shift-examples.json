@@ -1,0 +1,185 @@
+{
+  "observed_utc": "2026-09-12T13:00:43.129876+00:00",
+  "source_sha256": "36cefc9a9be885ba77b5d49310c65a7821901727e9c16ca9ca3b4e42f380a0b9",
+  "cleaning": {
+    "pipeline_version": "2.3.0",
+    "configuration": {
+      "fix": {
+        "max_horizontal_speed_mps": {
+          "paragliders": 45.0,
+          "hang gliders": 55.0
+        },
+        "max_vertical_speed_mps": 10.0,
+        "vz_window_s": 5.0,
+        "vz_min_window_fixes": 5,
+        "min_altitude_m": -100.0,
+        "max_altitude_m": 6000.0,
+        "hampel_window_s": 20.0,
+        "hampel_k": 5.0,
+        "hampel_eps_min_m": 15.0,
+        "hampel_min_window_fixes": 5,
+        "frozen_eps_m": 15.0,
+        "frozen_delta_z_m": 5.0,
+        "frozen_tau_s": 60.0,
+        "integrity_max_fraction": 0.1
+      },
+      "alt_channel": {
+        "gnss_present_min": 0.95,
+        "gnss_min_range_m": 30.0,
+        "baro_witness_present_min": 0.95,
+        "baro_witness_min_range_m": 30.0
+      },
+      "trimming": {
+        "takeoff_speed_mps": 5.0,
+        "sustained_s": 30.0,
+        "interior_ground_s": 600.0,
+        "ground_flatness_m": 5.0
+      },
+      "flight": {
+        "min_duration_s": 2400.0,
+        "min_path_km": 20.0,
+        "max_duration_s": 57600.0,
+        "min_alt_range_m": 600.0
+      },
+      "sampling": {
+        "max_gap_factor": 10.0,
+        "max_gap_seconds": 20.0,
+        "max_missing_fraction": 0.1,
+        "min_segment_duration_s": 90.0
+      },
+      "savgol": {
+        "polyorder": 3,
+        "tau_c_horizontal_s": 5.0,
+        "tau_c_vertical_s": 5.0
+      }
+    },
+    "source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85",
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "scipy": "1.18.0",
+      "pyarrow": "24.0.0"
+    }
+  },
+  "historical_comparison_sha256": "e1bdd4ced37fef50739ada9ad2f5beeccdbefc1ee73ecfdbd6b407e96b422952",
+  "script_sha256": "8880d99955829e17d437677d76e236e5117cc20940fb7c8f81f3ba4717ed4a36",
+  "inputs": {
+    "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/flights_meta.parquet": "ed43395efe3320bd8c87f23cb4d79646861999e4e6860492c02094de701d8f13",
+    "/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc/derived/flights_meta.parquet": "e56489dd367ebf842addbbae205657bfdfd8a8ea51371c03b8aa27e99529950a"
+  },
+  "rows": [
+    {
+      "discipline": "paragliders",
+      "flight_id": "20320546",
+      "selection": "Same identified historical example: largest count",
+      "raw_path": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/raw/igc/2021-2022/2022-05-10_20320546.igc",
+      "raw_sha256": "4b4c93d4e69a560564a48bd3be3c5338f37498e65592d3737537df4dccc7ce95",
+      "candidate_count": 1593,
+      "candidate_endpoint_already_altitude_flagged": 41,
+      "candidate_times_near_usable_feature_centres": 963,
+      "usable_feature_count": 1763,
+      "retained_segments": 15,
+      "retained_fixes": 30743,
+      "fraction_z_reconstructed": 0.032755423998959116
+    },
+    {
+      "discipline": "paragliders",
+      "flight_id": "20332252",
+      "selection": "Same identified historical example: largest count",
+      "raw_path": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/raw/igc/2021-2022/2022-08-29_20332252.igc",
+      "raw_sha256": "0c394794b70615124f8de376682c886fd5660cf46d9be83041afb48f0ee42e19",
+      "candidate_count": 1250,
+      "candidate_endpoint_already_altitude_flagged": 7,
+      "candidate_times_near_usable_feature_centres": 901,
+      "usable_feature_count": 1436,
+      "retained_segments": 6,
+      "retained_fixes": 22669,
+      "fraction_z_reconstructed": 0.024041642772067582
+    },
+    {
+      "discipline": "paragliders",
+      "flight_id": "20172867",
+      "selection": "Same identified historical example: seeded positive-count example",
+      "raw_path": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/raw/igc/2014-2015/2015-07-21_20172867.igc",
+      "raw_sha256": "549c78e00dc485dd84143f8df1bf693aeef1f3eeb1aedf3167a898195fd94a3f",
+      "candidate_count": 1,
+      "candidate_endpoint_already_altitude_flagged": 0,
+      "candidate_times_near_usable_feature_centres": 1,
+      "usable_feature_count": 755,
+      "retained_segments": 1,
+      "retained_fixes": 7585,
+      "fraction_z_reconstructed": 0.0
+    },
+    {
+      "discipline": "paragliders",
+      "flight_id": "20240435",
+      "selection": "Same identified historical example: seeded positive-count example",
+      "raw_path": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/raw/igc/2017-2018/2018-05-25_20240435.igc",
+      "raw_sha256": "8d782fca1c2388a486fdddc83ce735e652531bfdb4981464e238eeeacb54ccc0",
+      "candidate_count": 2,
+      "candidate_endpoint_already_altitude_flagged": 0,
+      "candidate_times_near_usable_feature_centres": 2,
+      "usable_feature_count": 2166,
+      "retained_segments": 1,
+      "retained_fixes": 21728,
+      "fraction_z_reconstructed": 4.602356406480118e-05
+    },
+    {
+      "discipline": "hang gliders",
+      "flight_id": "20324243",
+      "selection": "Same identified historical example: largest count",
+      "raw_path": "/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc/raw/igc/2021-2022/2022-06-14_20324243.igc",
+      "raw_sha256": "09b08fae12f924ff97689dd1eea636ecc5a2400552d8fe3e8265cf3a3233831e",
+      "candidate_count": 925,
+      "candidate_endpoint_already_altitude_flagged": 62,
+      "candidate_times_near_usable_feature_centres": 383,
+      "usable_feature_count": 1236,
+      "retained_segments": 40,
+      "retained_fixes": 20690,
+      "fraction_z_reconstructed": 0.044659255679072016
+    },
+    {
+      "discipline": "hang gliders",
+      "flight_id": "20340405",
+      "selection": "Same identified historical example: largest count",
+      "raw_path": "/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc/raw/igc/2022-2023/2023-05-03_20340405.igc",
+      "raw_sha256": "8906436fe12d1445a374b27db575923afa7d1bf06e7078d5d9d7c7685f828d68",
+      "candidate_count": 765,
+      "candidate_endpoint_already_altitude_flagged": 39,
+      "candidate_times_near_usable_feature_centres": 335,
+      "usable_feature_count": 839,
+      "retained_segments": 27,
+      "retained_fixes": 16293,
+      "fraction_z_reconstructed": 0.0538881728349598
+    },
+    {
+      "discipline": "hang gliders",
+      "flight_id": "20374095",
+      "selection": "Same identified historical example: seeded positive-count example",
+      "raw_path": "/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc/raw/igc/2024-2025/2025-04-04_20374095.igc",
+      "raw_sha256": "0650c3caeeb3a6427074a36e26994ed0d4c03fae25d1a515d80d502de6388192",
+      "candidate_count": 2,
+      "candidate_endpoint_already_altitude_flagged": 0,
+      "candidate_times_near_usable_feature_centres": 2,
+      "usable_feature_count": 1741,
+      "retained_segments": 1,
+      "retained_fixes": 17440,
+      "fraction_z_reconstructed": 0.0
+    },
+    {
+      "discipline": "hang gliders",
+      "flight_id": "20303237",
+      "selection": "Same identified historical example: seeded positive-count example",
+      "raw_path": "/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc/raw/igc/2020-2021/2021-06-13_20303237.igc",
+      "raw_sha256": "3194dcf184ad95d7f8035bb308c5b08d7542da6ed2bb48c4119ac5c0ebeb8fde",
+      "candidate_count": 1,
+      "candidate_endpoint_already_altitude_flagged": 0,
+      "candidate_times_near_usable_feature_centres": 1,
+      "usable_feature_count": 886,
+      "retained_segments": 1,
+      "retained_fixes": 8893,
+      "fraction_z_reconstructed": 0.0
+    }
+  ],
+  "scope": "Eight previously identified examples recomputed in memory with current cleaning and feature definitions. No archive, model, or generated thesis output modified. Counter reproduction and temporal association do not establish surviving defects, causality or population prevalence."
+}

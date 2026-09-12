@@ -19,12 +19,14 @@ transport statistics and segments flight into transition, search and climb.
 | 3. Global transport | What do displacements, quantiles, directional structure and velocity memory require of a stochastic model? |
 | 4. Flight phases | How are transition, search and climb inferred, and what evidence is needed to validate those labels? |
 
-Two appendices specify the spectral estimates and the geodetic coordinate transformation.
+Three appendices specify the spectral estimates, the geodetic coordinate transformation
+and the relation between absolute and squared displacement distributions.
 The roadmap records later work on phase-conditioned observables, solo/group flight,
 stochastic modelling and simulation, and thermal landscapes with route optimisation.
 
-Chapter 3 distinguishes full-archive summaries from a reproducible diagnostic subset
-measured over 10–10,000 s. Quantile and moment weights, changing coverage and model
+Chapter 3 now computes the 10–10,000 s diagnostics from all eligible cleaned
+flights and segments. The complete rerun and reviewed 116-page thesis are finished. Signed joint displacement
+laws complement the absolute component and radial distributions. Quantile and moment weights, changing coverage and model
 assumptions are explicit. Regional principal axes do not identify wind. Beginners (EN A/B)
 and experts (EN C/D/CCC) are equipment-based experience proxies used consistently in
 anisotropy and duration comparisons; the catalogue does not measure individual skill.
@@ -32,25 +34,23 @@ The model comparisons constrain particular
 predictions; formal process rejection needs calibrated finite-record simulations.
 Independent manual labels remain necessary before claiming segmentation accuracy.
 
-The cleaning and all 38 rebuild stages completed for run
-`20260910T221820Z-05d36ab4`: 156,305 paraglider and 6,093 hang-glider flights were
-retained. The [fresh-results review](revisions/fresh-results-review-2026-09-11.md)
-records the empirical interpretation. The 101-page PDF of that run was checked and reconciled
-with the SSD run, including the corrected rejection cascade. The manuscript figures were
-restyled afterwards, which moved the build to 102 pages. Validation includes
-834 passing tests, 258 additional algebraic/support checks on saved results, and
-agreement of the annotation pack with both mounted archives.
-The [completion record](revisions/manuscript-review-2026-09-11/completion.json)
-identifies the reviewed sources, outputs and PDF; the
-[request checklist](revisions/request-checklist-2026-09-11.md) records the scope.
+Pipeline 2.3.0 applies the temporal gap bound to missing altitude and splits the full
+trajectory at long vertical holes. Both complete archives were rebuilt: 156406
+paraglider and 6094 hang-glider flights were retained. The full common-grid Chapter 3
+diagnostics use 155085 and 6060 eligible flights; fixed long-flight controls use
+14360 and 563. All 39 downstream stages and the final manuscript review completed.
+See the [execution and review record](revisions/vertical-gap-split-2026-09-11/README.md)
+for source identities, recovery evidence and remaining scientific limitations.
 
-The computational rebuild and one manuscript-review pass are complete. Making
-Chapters 3 and 4 semi-final still requires quantitative model comparisons and
-segmentation validation.
-The current HMM remains a model requiring independent phase validation. Its selected
-restart has a negative final likelihood increment, and its coverage and posterior
-probabilities are not classification accuracy. These limits and the absence of
-calibrated stochastic-model rejection tests are stated in the manuscript.
+The numerical rebuild does not by itself validate HMM phase labels or formally
+reject a stochastic transport model. The fresh phase outputs were reviewed;
+independent phase labels and calibrated model comparisons remain necessary.
+The [request checklist](revisions/request-checklist-2026-09-11.md) distinguishes
+these research questions from the current delivery.
+
+[Supervisor chapter decks](presentations/README.md) cover both complete chapters,
+including the current joint laws and the interpretation and criticisms of the
+regional equipment comparison. They were assembled after the thesis review.
 
 ## Rebuild after changing cleaning
 
@@ -121,7 +121,7 @@ The [pipeline guide](https://matteodisante.github.io/soaring-anomalous-transport
 [Generated provenance](https://matteodisante.github.io/soaring-anomalous-transport/guide/provenance/) maps manuscript inputs to their producers;
 [the bibliography audit](https://matteodisante.github.io/soaring-anomalous-transport/guide/bibliography/) records source verification and its limits.
 
-The roadmap requires no action. The current [manual annotation pack](annotations/phase_labeling/20260910T221820Z-05d36ab4/README.md) is ready; follow
+The roadmap requires no action. The current [manual annotation pack](annotations/phase_labeling/20260912T133040Z-073601cb/README.md) is ready; follow
 [the annotation instructions](annotations/phase_labeling/README.md).
 Keep the final test split separate from model tuning.
 

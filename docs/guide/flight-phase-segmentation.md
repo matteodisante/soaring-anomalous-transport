@@ -29,10 +29,13 @@ whole vertical Savitzky–Golay fit support. Native fixes bracketing window endp
 belong to the support. Unavailable decisions break HMM sequences. There is no posterior
 confidence threshold: grey means missing or excluded support, not low confidence.
 
-Fresh feature extraction requires the propagated derivative flag, introduced with
-preprocessing 2.2.0. Re-decoding previously saved features remains possible, but its
-historical coverage is explicitly identified in the audit. Those old counts do not
-measure the corrected mask. Rebuild cleaning and segmentation to update them.
+Feature extraction requires the propagated derivative flag. Pipeline 2.3.0 splits
+the full trajectory at long vertical gaps and excludes missing-altitude endpoints.
+Feature extraction, model fitting, decoding, coverage and annotation packs must
+identify that same cleaned support. Changing it requires regeneration of all five
+products. Re-decoding saved features is possible, but the audit identifies their
+original archive and coverage; it does not certify fresh extraction on a changed
+archive. New dated annotation packs preserve any human labels in existing packs.
 
 ## Fitting and current decoding
 

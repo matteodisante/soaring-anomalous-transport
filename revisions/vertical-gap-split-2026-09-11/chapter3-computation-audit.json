@@ -1,0 +1,25 @@
+{
+  "machine": {
+    "cpu": "Apple M1",
+    "cpu_cores": 8,
+    "memory_bytes": 8589934592
+  },
+  "saved_subset_flights": {
+    "paragliders": 955,
+    "hang gliders": 479
+  },
+  "saved_fixed_long_flights": {
+    "paragliders": 107,
+    "hang gliders": 56
+  },
+  "previous_run": "20260910T221820Z-05d36ab4",
+  "previous_msd_measure_minutes": 44.18,
+  "findings": [
+    "measure_msd streams the full archive but loops over flights serially and recomputes TAMSDs for components and duration cohorts",
+    "generate_revision_diagnostics randomly samples Parquet groups, caps flights per group and keeps the longest segment",
+    "revision diagnostics retain per-lag increment pools in memory and are not ready for a simple full-archive sample-cap increase on 8 GB RAM",
+    "TAMSD and velocity autocorrelation already use FFT algorithms",
+    "the new fixed-population bootstrap is serial; no full-archive timing has been measured"
+  ],
+  "scope": "Read-only performance assessment requested during the vertical-gap cleaning retry; Chapter 3 numerical changes were concurrently present in the workspace."
+}

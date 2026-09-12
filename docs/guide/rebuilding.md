@@ -94,6 +94,28 @@ completed and its definition has not changed, omit `--clean` to repeat only the
 downstream workflow. Intermediate arrays from the failed run remain available
 for investigation.
 
+### Identified recovery after an interruption
+
+The September 2026 recovery is recorded under
+`revisions/vertical-gap-split-2026-09-11/`. Its bounded continuation scripts preserve
+the failed parent manifests, validate reused arrays and their segment support, and
+repeat the full structural check after remounting the SSD. They are specific to
+the recorded completed-stage prefix; they are not a general instruction to ignore
+a failed source or data guard.
+
+During that recovery, four viewer files changed while the Chapter 3 reporter was
+running. The completed numerical stage was preserved, and subsequent stages run
+inside the identified frozen source tree. A separate comparison verifies every
+other guarded source file and the unchanged geography definitions imported by
+the terrain reporter. The original broad source hash is retained as the identity
+of the executed code. It is not silently replaced by the working checkout's hash.
+
+Final manuscript review must still wait for the complete numerical chain. The
+working thesis can then be reconciled with the reviewed isolated output by checking
+all result hashes, manuscript bytes, source dependencies and cleaned-table identities.
+The reconciliation record must state the viewer differences explicitly. An unchanged
+cleaning version string alone is insufficient evidence of this agreement.
+
 ## Roadmap and manual annotations
 
 The [roadmap](../thesis-roadmap.md) records the scientific sequence and the

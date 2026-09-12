@@ -1,0 +1,79 @@
+{
+  "operation": "Re-layout the existing synthetic reach-gate examples for projection.\n\nCalls the original example function with its save callback redirected in memory.\nThe synthetic inputs and implemented cleaning decisions are unchanged. No observed\nflight data or canonical generated outputs are read or overwritten.\n",
+  "plot_function_sha256": "d20a634320ee55accc834975607099131e6b0202b6a0c3d103a0956c73adba78",
+  "script_sha256": "e2a646d9c0b6dfab07f69a62eeebea0f811d86cba9ec3f1d8ebdec15472d35f8",
+  "cleaning": {
+    "pipeline_version": "2.3.0",
+    "configuration": {
+      "fix": {
+        "max_horizontal_speed_mps": {
+          "paragliders": 45.0,
+          "hang gliders": 55.0
+        },
+        "max_vertical_speed_mps": 10.0,
+        "vz_window_s": 5.0,
+        "vz_min_window_fixes": 5,
+        "min_altitude_m": -100.0,
+        "max_altitude_m": 6000.0,
+        "hampel_window_s": 20.0,
+        "hampel_k": 5.0,
+        "hampel_eps_min_m": 15.0,
+        "hampel_min_window_fixes": 5,
+        "frozen_eps_m": 15.0,
+        "frozen_delta_z_m": 5.0,
+        "frozen_tau_s": 60.0,
+        "integrity_max_fraction": 0.1
+      },
+      "alt_channel": {
+        "gnss_present_min": 0.95,
+        "gnss_min_range_m": 30.0,
+        "baro_witness_present_min": 0.95,
+        "baro_witness_min_range_m": 30.0
+      },
+      "trimming": {
+        "takeoff_speed_mps": 5.0,
+        "sustained_s": 30.0,
+        "interior_ground_s": 600.0,
+        "ground_flatness_m": 5.0
+      },
+      "flight": {
+        "min_duration_s": 2400.0,
+        "min_path_km": 20.0,
+        "max_duration_s": 57600.0,
+        "min_alt_range_m": 600.0
+      },
+      "sampling": {
+        "max_gap_factor": 10.0,
+        "max_gap_seconds": 20.0,
+        "max_missing_fraction": 0.1,
+        "min_segment_duration_s": 90.0
+      },
+      "savgol": {
+        "polyorder": 3,
+        "tau_c_horizontal_s": 5.0,
+        "tau_c_vertical_s": 5.0
+      }
+    },
+    "source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85",
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "scipy": "1.18.0",
+      "pyarrow": "24.0.0"
+    }
+  },
+  "outputs": {
+    "gate-spike-pair.pdf": {
+      "sha256": "f42d78a7496c201c80b871d80b8e0dbc41b41a4e192ff71624f33da190c817b4",
+      "unchanged_data_sha256": "7d52e8538211847aca7583979a0f434d3b4d98b32bdd0bfb2c8ae1ca94e969d1"
+    },
+    "gate-rejoin-pair.pdf": {
+      "sha256": "f429fb21dfe4148f9e57d475179ccda6adc2b9697d0564e61dfd7efc026e6e60",
+      "unchanged_data_sha256": "fad94ae30882997456f20797520cb68da2732a4e80907d8e3626bfbc61a8b789"
+    },
+    "gate-boundary-pair.pdf": {
+      "sha256": "a05f4b7120ec70ea7b0e6703f2064b7c15254d684442e3d9446acc694966b96a",
+      "unchanged_data_sha256": "92d111cc3806bd190f3c8a1508bd1aab04dd5b7e6c077e85641fbf3dfea420ea"
+    }
+  }
+}

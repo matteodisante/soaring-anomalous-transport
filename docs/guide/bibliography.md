@@ -1,6 +1,6 @@
 # Bibliography: evidence and local inventory
 
-Initial audit: **10 September 2026**; additional original-source checks: **11 September 2026**. The machine-readable record is
+Initial audit: **10 September 2026**; additional original-source checks: **11–12 September 2026**. The machine-readable record is
 `revisions/bibliography-audit-2026-09-10.json`; it preserves the registry responses,
 primary URLs, the fields actually checked and local-file hashes. A metadata match
 establishes the identity of a work. Whether that work supports a statement is a
@@ -77,6 +77,22 @@ The final manuscript also cites three methods whose originals were inspected:
   the integration order. The publisher and registry identify **1922**; the often-used
   1921 filename and the 1920 reading date in the scan do not replace that issue date.
 
+The vector-law discussion also uses the Cramér–Wold characterization, operator
+self-similarity and multivariate energy distance. Their purpose is to distinguish
+marginal/radial checks from the signed joint law; none calibrates the present
+paired, overlapping observations automatically.
+
+For the regional interpretation, the official
+[DHV classification page](https://www.dhv.de/en/type-inspection/classification/)
+supports distinguishing tested flight behaviour from aerodynamic performance and
+measured pilot skill. The
+[DREAL Pays de Caux description](https://www.normandie.developpement-durable.gouv.fr/le-pays-de-caux-a1902.html)
+documents coastal cliffs and valleys, contradicting a terrain-free coastal control.
+Both pages were checked on 12 September 2026; their scope and the proposed
+comparisons are recorded in
+`revisions/vertical-gap-split-2026-09-11/regional-interpretation-review.md`.
+These are issuing-body web sources, not downloaded paper PDFs in the inventory below.
+
 ## Inventory
 
 “Registry” means publisher-deposited Crossref metadata were retrieved. “Primary”
@@ -139,3 +155,22 @@ For later changes, verify the specific version, record what was actually opened,
 and distinguish a formula's assumptions from its applicability to these data.
 Unreachable originals remain identified as such; metadata or a secondary citation
 must not be described as a full-text check.
+
+
+## Joint-law review, 11 September 2026
+
+Three primary sources support the added distinction between component/radial
+diagnostics, the full bivariate law and process self-similarity:
+
+- `fraiman2022`: [arXiv record](https://arxiv.org/abs/2206.13612), Cramér–Wold
+  characterization by all line projections; the finite-direction result assumes
+  elliptical laws and is not used as a general result here.
+- `didier2011`: [arXiv record](https://arxiv.org/abs/1102.1822), operator fractional
+  Brownian motion and the broader multivariate scaling framework.
+- `szekely2013`: [author manuscript](https://pages.stat.wisc.edu/~wahba/stat860public/pdf4/Energy/JSPI5102.pdf),
+  energy distance for multivariate distribution comparisons with finite first moments.
+  No claim is made that an iid test calibration applies to overlapping flight increments.
+
+The exact same-marginals/same-radius counterexample is verified independently in
+`tests/analysis/observables/test_archive_diagnostics.py`. The implemented joint
+histogram distance is explicitly a finite-resolution descriptive diagnostic.

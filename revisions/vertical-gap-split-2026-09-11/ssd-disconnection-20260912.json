@@ -1,0 +1,77 @@
+{
+  "observed_utc": "2026-09-12T01:03:33.144792+00:00",
+  "run_id": "20260911T213634Z-7b7367f1",
+  "parent_run": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1",
+  "status": "interrupted_external_device_unavailable",
+  "last_completed_stage": "kinematics",
+  "completed_stages": 23,
+  "interrupted_stage": "transport_full",
+  "last_completed_bootstrap_lag_s": 140,
+  "error": "Reporter died with SIGBUS; driver could not write its failure manifest because the SSD disappeared. diskutil list external physical returned no devices.",
+  "log_sha256": "678bf755a7e08eb98bda746bcc002cef60c2727bbdffccfc57ea079f5d8237ae",
+  "source_sha256": "130dad5455ea06f905aadadc5d248e56aff29ab0116199feb8178411b3508d1f",
+  "numerical_source_sha256": "dea64e843864abd8316c1fa9442fe2e721213720ab200edb887621748000cdee",
+  "cleaning": {
+    "pipeline_version": "2.3.0",
+    "configuration": {
+      "fix": {
+        "max_horizontal_speed_mps": {
+          "paragliders": 45.0,
+          "hang gliders": 55.0
+        },
+        "max_vertical_speed_mps": 10.0,
+        "vz_window_s": 5.0,
+        "vz_min_window_fixes": 5,
+        "min_altitude_m": -100.0,
+        "max_altitude_m": 6000.0,
+        "hampel_window_s": 20.0,
+        "hampel_k": 5.0,
+        "hampel_eps_min_m": 15.0,
+        "hampel_min_window_fixes": 5,
+        "frozen_eps_m": 15.0,
+        "frozen_delta_z_m": 5.0,
+        "frozen_tau_s": 60.0,
+        "integrity_max_fraction": 0.1
+      },
+      "alt_channel": {
+        "gnss_present_min": 0.95,
+        "gnss_min_range_m": 30.0,
+        "baro_witness_present_min": 0.95,
+        "baro_witness_min_range_m": 30.0
+      },
+      "trimming": {
+        "takeoff_speed_mps": 5.0,
+        "sustained_s": 30.0,
+        "interior_ground_s": 600.0,
+        "ground_flatness_m": 5.0
+      },
+      "flight": {
+        "min_duration_s": 2400.0,
+        "min_path_km": 20.0,
+        "max_duration_s": 57600.0,
+        "min_alt_range_m": 600.0
+      },
+      "sampling": {
+        "max_gap_factor": 10.0,
+        "max_gap_seconds": 20.0,
+        "max_missing_fraction": 0.1,
+        "min_segment_duration_s": 90.0
+      },
+      "savgol": {
+        "polyorder": 3,
+        "tau_c_horizontal_s": 5.0,
+        "tau_c_vertical_s": 5.0
+      }
+    },
+    "source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85",
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "scipy": "1.18.0",
+      "pyarrow": "24.0.0"
+    }
+  },
+  "device_integrity": "Cannot inspect while disconnected; validate after remount before reusing data.",
+  "prior_cleaning_status": "Both pipeline2.3.0 archives completed and verified; canonical tables were read-only in the interrupted stage.",
+  "recovery": "Preserve source versions; validate canonical tables, prior complete stages and caches; stage bootstrap positions/outputs and logs on internal disk; reuse only validated measurements."
+}
