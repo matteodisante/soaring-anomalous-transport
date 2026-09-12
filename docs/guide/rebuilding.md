@@ -223,10 +223,13 @@ review; `cleaning` identifies the current, algorithmically identical definition.
 No cleaned values or thresholds changed. This is a recorded exception with evidence,
 not permission to relabel old outputs after an algorithm change.
 
-The `terrain_axes` and `channel_wind` stages run after the current flight report.
+The `terrain_axes`, `channel_flight_altitude` and `channel_wind` stages run
+after the current flight report.
 They use frozen independent ETOPO and ERA5 inputs included in the repository;
-rebuilding these comparisons requires no weather download. They produce eight
-small figure, macro and JSON outputs, each identifying the current flight report.
+rebuilding these comparisons requires no weather download. The altitude stage
+reads cleaned GNSS altitude from the verified SSD snapshot on the exact coastal
+PCA windows. Together the stages produce nine figure, macro and JSON outputs,
+each identifying the current flight report.
 The environmental record at `revisions/environment-axis-integration-2026-09-12/`
 links the grouped-TAMSD numerical record and the earlier full-run lineage. Its
 combined manuscript review checks all 89 inherited outputs and eight new outputs,
@@ -240,3 +243,20 @@ The nine hourly ERA5 API responses are preserved as gzip in
 default; `--download-to NEW_DIRECTORY` makes a separate new download without
 changing the scientific input archive. The directory README documents source
 attribution, returned grid cells, angle convention and reuse in standard Python.
+
+The focused extension `revisions/channel-wind-flight-altitude-2026-09-13/`
+archives complete hourly ERA5 pressure-level u/v/geopotential at nine cells,
+2016–2025, and the measured altitude of the 10,000-s coastal PCA windows.
+`fetch_pressure_wind.py` verifies the frozen archive offline by default; use
+`--output NEW_DIRECTORY` with its documented isolated dependencies to repeat
+the pinned-snapshot extraction. The wind producer interpolates components
+against hourly geometric level heights at mean flight altitude, and compares
+all-year all hours with all-year 09–17 UTC, plus separate seasonal checks.
+
+Its numerical and manuscript reviews retain 94 parent outputs unchanged,
+replace the three wind outputs and add one altitude report (98 total).
+Completed parent manifests remain immutable. Presentation preparation requires
+`--wind-altitude-update revisions/channel-wind-flight-altitude-2026-09-13`
+as well as the four existing parent flags. This comparison does not require a
+new cleaning or flight transport run; current cleaning and table identities
+are verified before reusing those results.

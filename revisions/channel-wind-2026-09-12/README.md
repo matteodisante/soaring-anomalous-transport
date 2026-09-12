@@ -1,5 +1,10 @@
 # Channel Coast: archived ERA5 wind reference
 
+The current coastal comparison is extended to measured flight altitude in
+`revisions/channel-wind-flight-altitude-2026-09-13/`. This directory preserves
+the completed surface-reference inputs and earlier review; use the new
+revision for current wind results and manuscript reproduction.
+
 This directory preserves **all nine hourly API responses used in the thesis**,
 losslessly compressed as `cell-0.json.gz` to `cell-8.json.gz`. They contain
 87,672 consecutive UTC hours per cell, from 2016-01-01 00:00 through

@@ -44,25 +44,45 @@ The Alps give 47.6° against the current 65.2° flight axis; the Pyrenees give
 170.5° against 170.5°. This is a highland-footprint orientation, not a traced
 crest or terrain exposure along tracks.
 
-For the Channel Coast, nine representative ERA5 cells retain hourly 2016–2025
-wind at 10 and 100 m above ground. Meteorological directions are converted to
-E/N velocity components before averaging with approximate area weights. The
-10 m annual wind axis is 25.8° against the 30.2° flight PCA axis; the 100 m
-annual check gives 26.8°. April–September, 09–17 UTC at 10 m gives 2.1°:
-annual alignment is sensitive to time selection. The mean-vector/mean-speed
-ratio is 0.28 and is not a confidence measure. A mean wind and centred
-covariance are different statistics; constant additive wind cancels under
-centring. The comparison does not identify a causal wind or equipment effect.
+For the Channel Coast, `measure_channel_flight_altitude.py` measures cleaned
+GNSS altitude on the exact 2013 nonoverlapping 10,000-s PCA windows from 1680
+paraglider flights. Trapezoidal means on the existing 10-s segment grids give
+1006.262 m with equal window weights; equal flight weights give 980.260 m.
+The window-mean interquartile range is 853.932–1159.549 m. Logged absolute
+GNSS altitude is interpreted approximately as MSL altitude; recorder datums
+are not harmonised. This is not height above ground or launch altitude.
 
-All nine API responses are saved losslessly in
-`revisions/channel-wind-2026-09-12/`, with requests, hashes, reading examples,
-an offline verifier and a protected re-download command. The raw archive is
-6.33 MB compressed and has a verified SSD mirror. Six-hour subsampling changes
-the annual axis by at most 0.52°, but hourly data preserve the directional
-distribution and flexible time selections at negligible storage cost. These
-are provider-rounded API values on nine cells, not the full ERA5 grid or
-weather matched to flights. The combined manuscript review is recorded in
-`revisions/environment-axis-integration-2026-09-12/`.
+A pinned public ERA5 pressure-level archive supplies hourly 2016–2025 E/N
+wind and geopotential at the same nine representative regional cells, on
+1000/925/850/700-hPa levels. Each hourly geopotential profile is converted to
+geometric height, then velocity components are interpolated to mean flight
+altitude between above-ground bounds, without extrapolation. Components are
+averaged with approximate area weights; degree angles are never averaged.
+The main comparison separates all-year all hours from all-year 09–17 UTC
+inclusive. April–September, with both time selections, is a separate seasonal
+sensitivity. The 10/100-m AGL winds remain lower-level controls.
+
+At mean flight altitude, the all-year all-hour wind axis is 15.8° and the
+09–17 UTC axis is 17.9°, against the 30.2° PCA axis: separations 14.4° and
+12.3°. The warm-season cases give 14.2° and 9.6° separations. Annual alignment
+is less close than near the surface, but temporal sensitivity is smaller.
+Quartile-height sensitivities share supported hours across all heights/cells:
+868 of 87,672 hours are excluded because the lower target has no above-ground
+lower bound. The main mean-height comparisons retain all selected hours.
+Annual quartile-height axes range from 14.3° to 17.2° for all hours and from
+16.4° to 19.3° for daytime, supporting the remaining offset.
+
+The complete selected pressure-level observations, height summary, methods,
+source attribution and offline reading instructions are preserved in
+`revisions/channel-wind-flight-altitude-2026-09-13/`. The new numerical and
+manuscript reviews link the preceding environmental review without changing
+its completed records or any flight transport result. The original nine
+surface API responses remain in `revisions/channel-wind-2026-09-12/` (6.33 MB
+compressed). These data cover a sparse regional grid; they are not weather
+matched to flight dates, routes or instantaneous heights. A mean wind and
+centred covariance are different statistics; a common constant additive wind
+cancels under centring. Alignment cannot establish a causal wind or equipment
+effect, and the mean-vector/mean-speed ratio is not a confidence measure.
 
 Regional PCA evaluates the four decade lags directly from the existing 10-s
 coordinates. It does not round them onto the geometric lag grid used for the

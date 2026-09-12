@@ -1,5 +1,10 @@
 # Independent terrain and wind references in the current thesis and slides
 
+The current coastal comparison is extended to measured flight altitude in
+`revisions/channel-wind-flight-altitude-2026-09-13/`. This directory preserves
+the completed surface-reference inputs and earlier review; use the new
+revision for current wind results and manuscript reproduction.
+
 This revision integrates the ETOPO mountain-footprint comparison and the new
 ERA5 coastal wind reference into the current Chapter 3. It also reviews the
 combined manuscript containing the audited grouped TAMSD extension. The

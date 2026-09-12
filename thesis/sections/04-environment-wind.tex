@@ -1,79 +1,137 @@
 \subsubsection{An independent coastal wind reference}
 \label{sec:independent-coastal-wind}
 
-For the Channel Coast, an independent wind climatology provides the corresponding
-orientation reference. ERA5 hourly reanalysis \cite{era5_hourly}, retrieved through
-the Open-Meteo Historical Weather API \cite{open_meteo_historical}, supplies wind
-speed and direction at 10 and \SI{100}{\metre} above ground. The reference covers
-ten complete years, 2016--2025. It uses nine representative cells: the nearest
-ERA5 cells to the centres of a regular $3\times3$ partition of the existing
-Channel Coast box. Model selection is explicitly ERA5, on its $0.25^\circ$ grid,
-with neither a land-cell preference nor elevation downscaling. This sparse
-regional sample is adequate for an indicative orientation comparison; it does
-not resolve local coastal lift or reproduce weather along individual flights.
+The relevant vertical reference for the Channel Coast is the altitude of the
+flights contributing to the \SI{10000}{\second} PCA. The cleaned GNSS altitude
+$z$ is interpolated onto the same \SI{10}{\second} segment grids as the horizontal
+coordinates. Trapezoidal integration gives a mean altitude along each of the
+\num{\StatWindWindows} nonoverlapping displacement windows; averaging those
+means with equal window weights gives \SI{\StatWindHeightM}{\metre}. The
+\num{\StatWindFlights} flights and their segment boundaries are exactly those
+of the PCA. Giving each flight equal weight instead gives
+\SI{\StatWindHeightFlightM}{\metre}; the middle half of window-mean altitudes
+lies between \SI{\StatWindHeightLowM}{\metre} and
+\SI{\StatWindHeightHighM}{\metre}. These are absolute recorded altitude proxies,
+not take-off altitude or height above the terrain. The receiver datums have
+not been harmonised (Section~\ref{sec:enu}); the comparison interprets them
+approximately as altitude above mean sea level, with limited physical precision.
 
-If $s$ is wind speed and $\phi$ the meteorological direction, measured clockwise
-from north and indicating where the wind comes from, the east and north
-components of air motion are
+ERA5 hourly pressure-level wind and geopotential \cite{era5_pressure} supply
+an independent reference at that altitude. A pinned snapshot of the public
+Earthmover archive \cite{earthmover_era5} provides 2016--2025 values at the same
+nine $0.25^\circ$ cells used for the regional surface-wind reference. These
+cells are nearest to the centres of a regular $3\times3$ partition of the
+Channel Coast take-off box. The extracted levels are 1000, 925, 850 and
+\SI{700}{\hecto\pascal}. For each cell and hour, geopotential $\Phi$ gives
+geopotential height $H=\Phi/g_0$ and approximate geometric height
+\cite{ecmwf_geopotential_height}
 \begin{equation}
- u=-s\sin\phi,\qquad v=-s\cos\phi,\qquad
- \theta_w=\operatorname{atan2}(\langle v\rangle,\langle u\rangle).
+ h=\frac{R_\oplus H}{R_\oplus-H},\qquad
+ g_0=\SI[group-digits=false]{9.80665}{\metre\per\second\squared},\quad
+ R_\oplus=\SI{6371000}{\metre}.
+ \label{eq:wind-level-height}
+\end{equation}
+The east and north wind components are linearly interpolated between the two
+hourly level heights bracketing \SI{\StatWindHeightM}{\metre}. Both bounds
+must be above the model terrain. All selected profiles satisfy these conditions;
+no below-ground bound or vertical extrapolation enters the averages. A fixed
+pressure level is therefore not assigned a fixed altitude.
+
+The main comparison separates \emph{all hours throughout the year} from
+\emph{09--17 UTC inclusive throughout the year}. April--September, with the
+same two hourly selections, is a separate seasonal sensitivity. The ERA5 winds
+at 10 and \SI{100}{\metre} above ground, retrieved through Open-Meteo
+\cite{era5_hourly,open_meteo_historical}, remain lower-level controls. Their
+meteorological \emph{from} directions $\phi$, clockwise from north, are converted
+using $u=-s\sin\phi$, $v=-s\cos\phi$. All comparisons average the velocity
+components over the selected hours and weight cells by
+$\cos(\mathrm{latitude})$ to approximate represented area. The resulting
+\emph{towards} angle,
+\begin{equation}
+ \theta_w=\operatorname{atan2}(\langle v\rangle,\langle u\rangle),
  \label{eq:regional-wind-axis}
 \end{equation}
-The averages include every archived hour and weight cells by
-$\cos(\mathrm{latitude})$ to approximate represented area. Direction angles
-are never averaged arithmetically. The resulting \emph{towards} angle is
-counterclockwise from east, then reduced modulo $180^\circ$ for comparison
-with the undirected PCA axis. Thus a meteorological wind \emph{from}
-\SI{\StatWindSurfaceFrom}{\degree} corresponds to the reference axis
-\SI{\StatWindSurfaceAngle}{\degree} used here.
+is counterclockwise from east and reduced modulo $180^\circ$ to compare with
+the undirected PCA axis. Neither height interpolation nor temporal averaging
+acts directly on degree angles.
 
 \begin{figure}[htbp]
  \centering
  \includegraphics[width=\linewidth]{generated/ch3_channel_wind}
- \caption{ERA5 coastal wind reference and the paraglider covariance axis at
- \SI{10000}{\second}. Left: weighted frequency of air motion \emph{towards}
- 15-degree sectors at \SI{10}{\metre}, excluding speeds below
- \SI{0.5}{\metre\per\second} and normalising the retained observations.
- The coloured arrow is the mean wind vector direction, calculated using all
- hours; the dashed line is the undirected flight axis. Right: mean-vector
- axes for the annual \SI{10}{\metre} reference, an annual \SI{100}{\metre}
- check, and a \SI{10}{\metre} April--September, 09--17 UTC check.
- Grey marks show the nine separate annual cell means, not confidence limits.
- The same \num{\StatWindFlights} coastal flights define the PCA reference
- in all three comparisons.}
+ \caption{ERA5 wind at mean coastal flight altitude and the paraglider PCA
+ at \SI{10000}{\second}. Left: frequencies of air motion \emph{towards}
+ 15-degree sectors at \SI{\StatWindHeightM}{\metre}, for all-year all hours
+ and all-year 09--17 UTC. Speeds below \SI{0.5}{\metre\per\second} are
+ excluded only from the frequency curves; arrows show the vector means using
+ all selected hours. Right: wind axes at flight altitude, approximately above
+ mean sea level, and at 10 and \SI{100}{\metre} above ground (AGL).
+ The warm daytime selection is shown as a separate check. The dashed black
+ line is the same flight covariance axis in every comparison.}
  \label{fig:independent-coastal-wind}
 \end{figure}
 
-The annual surface-wind axis, \SI{\StatWindSurfaceAngle}{\degree}, is close to
-the flight axis, \SI{\StatWindFlightAngle}{\degree}: their separation is
-\SI{\StatWindSurfaceDifference}{\degree}. The \SI{100}{\metre} annual axis,
-\SI{\StatWindHundredAngle}{\degree}, gives a similar separation of
-\SI{\StatWindHundredDifference}{\degree}. However, selecting April--September
-and 09--17 UTC inclusive rotates the surface reference to
-\SI{\StatWindWarmDayAngle}{\degree}, increasing the separation to
-\SI{\StatWindWarmDayDifference}{\degree}. Annual alignment therefore does
-not persist under this simple seasonal and daytime selection. This window
-is an operational sensitivity check, not an estimate of actual flight times.
+\begin{center}
+\small
+\begin{tabular}{@{}lrrr@{}}\toprule
+\textbf{At mean flight altitude} & \textbf{Wind axis} & \textbf{PCA separation} & $\boldsymbol{\rho_w}$\\\midrule
+All year, all hours & \StatWindHeightAllAngle$^\circ$ & \StatWindHeightAllDifference$^\circ$ & \StatWindHeightAllResultant\\
+All year, 09--17 UTC & \StatWindHeightDayAngle$^\circ$ & \StatWindHeightDayDifference$^\circ$ & \StatWindHeightDayResultant\\
+April--September, all hours & \StatWindHeightWarmAllAngle$^\circ$ & \StatWindHeightWarmAllDifference$^\circ$ & \StatWindHeightWarmAllResultant\\
+April--September, 09--17 UTC & \StatWindHeightWarmDayAngle$^\circ$ & \StatWindHeightWarmDayDifference$^\circ$ & \StatWindHeightWarmDayResultant\\\bottomrule
+\end{tabular}
+\end{center}
+Here $\rho_w=\|\langle\mathbf w\rangle\|/\langle\|\mathbf w\|\rangle$
+measures directional cancellation, not confidence in an angle or the fraction
+of winds near it. The reference PCA angle is
+\SI{\StatWindFlightAngle}{\degree}.
 
-The main ratio $\|\langle\mathbf w\rangle\|/\langle\|\mathbf w\|\rangle$
-is only \num{\StatWindSurfaceResultant}: substantial directional cancellation
-occurs across the observed winds. This ratio measures neither confidence in
-the angle nor the fraction of winds in its sector. More fundamentally, a mean
-wind vector and a centred displacement covariance are different statistics.
-A common constant additive wind shifts displacement by $\tau\mathbf w$ and
-is removed by centring at fixed lag. Variable winds between flights or within
-tracks, and route choices responding to them, can still orient the covariance;
-climatological alignment alone cannot establish those mechanisms.
+At flight altitude the annual all-hour wind axis is
+\SI{\StatWindHeightAllAngle}{\degree}, separated from the flight axis by
+\SI{\StatWindHeightAllDifference}{\degree}. Restricting the same year-round
+population to 09--17 UTC gives \SI{\StatWindHeightDayAngle}{\degree} and a
+\SI{\StatWindHeightDayDifference}{\degree} separation. Thus the wind reference
+and displacement spread share a broadly eastward orientation, with an estimated
+offset of more than ten degrees. The warm-season selections retain
+separations of about 10--14 degrees. At this altitude the temporal checks
+therefore change the comparison less than at 10 and \SI{100}{\metre} AGL,
+where the annual near alignment gives way to a larger warm-daytime offset
+(Figure~\ref{fig:independent-coastal-wind}). Surface alignment cannot simply
+be transferred to the altitude at which these flights take place.
 
-All nine hourly API responses are archived without loss, with coordinates,
-request URLs, units, retrieval times and SHA-256 identities. The compressed
-inputs occupy about \SI{6.3}{\mega\byte}; they can be reused offline. Taking one
-value every six hours, for every possible UTC starting phase, changes the
-annual axis by at most $0.52^\circ$. Hourly resolution is retained because its
-storage cost is small and it preserves the wind distribution and flexible
-time-of-day checks. The ten-year reference reduces dependence on a single year,
-but it is not matched to the full flight archive, take-off conditions or flight
-altitudes. The evidence supports an indicative annual orientational association,
-with clear temporal sensitivity, rather than a causal explanation of the
-coastal ellipse or of differences between equipment groups.
+A height sensitivity evaluates the two quartiles of window-mean altitude and
+the equal-flight mean. At the lower quartile, some hours have no above-ground
+pressure level below the target. The comparison therefore excludes
+\num{\StatWindSensitivityExcludedHours} of the \num{87672} hours, about 1\%,
+from \emph{every} tested height and cell, and recomputes the mean-height
+reference on those same hours. The main estimates above retain all their
+selected hours. On common support, the quartile-height annual axes span
+\SI{\StatWindSensitivityAllLowAngle}{\degree}--\SI{\StatWindSensitivityAllHighAngle}{\degree}
+for all hours and
+\SI{\StatWindSensitivityDayLowAngle}{\degree}--\SI{\StatWindSensitivityDayHighAngle}{\degree}
+for 09--17 UTC. Equal-flight altitude weighting changes the corresponding
+mean-height axes by less than \SI{0.3}{\degree}; restricting the main altitude
+to common support changes its annual axes by less than \SI{0.1}{\degree}.
+These checks preserve the annual offset. They are sensitivity ranges, not
+confidence intervals or a calibration of the GNSS datum.
+
+The comparison remains descriptive. The wind climatology is not matched to
+flight dates, positions or instantaneous altitudes, and a take-off box need
+not contain whole flight routes. Moreover, the wind reference is a mean
+velocity while the PCA describes \emph{centred} displacement covariance. A
+common constant additive wind shifts every displacement at fixed lag by
+$\tau\mathbf w$ and disappears under centring; variable winds, route choices
+and flight selection can still affect the covariance. The angular resemblance
+therefore does not establish a wind-driven mechanism or resistance to wind by
+one equipment group. The useful next question is whether winds matched to
+the observed flight conditions explain the remaining offset and covariance
+orientation.
+
+The complete selected hourly pressure-level observations are preserved
+losslessly, with coordinates, timestamps, surface geopotential, source snapshot
+and hashes, in
+\path{revisions/channel-wind-flight-altitude-2026-09-13/}. The archive occupies
+about 32.22 MB compressed; the earlier 10/100-m inputs occupy another 6.33 MB.
+Both have SSD copies and offline reuse instructions. Only the regional extract
+used here is stored. Keeping its hourly resolution supports vertical
+interpolation before averaging, the directional distributions and separate
+time selections at modest storage cost.
