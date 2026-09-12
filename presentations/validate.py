@@ -37,10 +37,19 @@ def main() -> None:
     for name, record in source["panels"].items():
         assets[name + ".pdf"] = record["sha256"]
     manifests = {}
-    for name in ("figure-manifest.json", "supervisor-panel-manifest.json",
-                 "supervisor-map-manifest.json", "supervisor-gate-manifest.json"):
+    figure_manifests = ["figure-manifest.json", "supervisor-panel-manifest.json",
+                        "supervisor-map-manifest.json", "supervisor-gate-manifest.json"]
+    if source.get("regional_variations_update"):
+        figure_manifests.append("variation-panel-manifest.json")
+    for name in figure_manifests:
         path = ROOT / name
         record = json.loads(path.read_text())
+        if name == "variation-panel-manifest.json":
+            if digest(ROOT / "render_variation_panels.py") != record["script_sha256"]:
+                raise ValueError("Variation panel renderer changed after rendering")
+            for input_name, expected in record["inputs"].items():
+                if digest(ROOT / input_name) != expected:
+                    raise ValueError(f"Variation panel input changed: {input_name}")
         manifests[name] = digest(path)
         for output, value in record["outputs"].items():
             expected = value["sha256"] if isinstance(value, dict) else value
@@ -66,7 +75,7 @@ def main() -> None:
     documents = {}
     forbidden = re.compile(r"2\.0\.[01]|2\.2\.0|whole-record rule|"
                            r"historical comparison|older slides|formerly reconstructed", re.I)
-    for chapter, count in ((2, 58), (3, 75)):
+    for chapter, count in ((2, 58), (3, 85)):
         tex = (ROOT / f"chapter{chapter}.tex").read_text()
         if forbidden.search(tex):
             raise ValueError("The chapter includes superseded implementation narrative")
@@ -103,7 +112,7 @@ def main() -> None:
               "presentation_sources": {p.name: digest(p) for p in
                   sorted(ROOT.glob("*.py")) + [ROOT / "theme.tex", ROOT / "chapter2.tex", ROOT / "chapter3.tex"]},
               "scope": "Complete chapter decks use the reviewed current results. All referenced figure and numerical inputs match their manifests; full reports retain all bytes in gzip; four PDFs compile without LaTeX warnings or overfull boxes.",
-              "visual_review": "The complete 133-slide layout was reviewed at the full-run delivery. The regional PCA update was then checked on all three affected Chapter 3 slides and their speaker-note pages; four exact decade lags, full supported-flight counts and matching thesis colours were verified."}
+              "visual_review": "The preceding full-run and four-lag PCA layouts were retained. The revised cancellation slide and ten added regional-variation slides were inspected in the 85-slide Chapter 3 deck and in the accompanying note pages. Crops preserve vector axes and labels; values and support agree with the reviewed complete regional report."}
     (ROOT / "validation.json").write_text(json.dumps(result, indent=2) + "\n")
     print(f"Verified four chapter PDFs, {len(assets)} figure assets and complete report bytes.")
 

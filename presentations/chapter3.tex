@@ -2,6 +2,7 @@
 \newcommand{\TalkShort}{Chapter 3: global transport}
 \input{theme}
 \input{data/ch3_revision.tex}
+\input{data/ch3_regional_variations_values.tex}
 \input{data/duration_equipment.tex}
 \input{data/kinematic_isotropy.tex}
 \input{data/msd.tex}
@@ -99,7 +100,7 @@ The local slope bends. One fitted number does not establish a power law.
 \small The constant velocity may combine wind, route choice and net progress. A turn or spatially varying wind survives.
 \column{.48\textwidth}
 \textbf{Conditional interpretation}\par
-\small If the centred residual has stationary increments and variance $K\tau^{2H}$,
+\small If centred increments have finite variance, stationary statistics and the law $K\tau^{2H}$,
 \[
  V_2=K(4-2^{2H})\tau^{2H},\quad 0<H<1.
 \]
@@ -107,7 +108,43 @@ At $H=1$ the prefactor vanishes. Our $b_2\simeq2$ cannot be read as a validated 
 \end{columns}
 \question{Which residual and which scale interval could satisfy the assumptions needed to estimate $H$?}
 \source{At $\tau=10^4$ s, $V_2$ retains only \num{\StatRevParaLastOrderTwoFlights} para / \num{\StatRevHangLastOrderTwoFlights} hang flights; it needs $2\tau$ of continuous support.}
-\speaker{Explain the cancellation algebraically. Adjacent increments I1 and I2 obey Var(I1+I2)=K(2tau) to the power 2H. Expanding Var(I2-I1) gives the prefactor. The derivation requires finite variance and stationary increments with the stated power over the relevant lags, including 2tau. A smooth curved trajectory instead gives V2 proportional to tau to the fourth at small lag. We have therefore gained a diagnostic invariant, but have not isolated the motion in still air or obtained its Hurst exponent.}
+\speaker{Invariant means unchanged after adding a constant position offset and a constant velocity times time. It does not mean constant as tau changes. For adjacent increments I1 and I2, their sum spans 2tau and their difference is A2. The parallelogram identity gives V2=4M(tau)-M(2tau) for the same stationary-increment population. Substituting M(tau)=K tau to the power 2H gives the displayed formula. All three conditions matter: finite variance, stationary increment statistics, and the same power law through 2tau. Stationarity means that the increment law at a given duration does not change with the start time; it does not require independence. A fitted b2 above two does not by itself identify which assumption fails. A random-phase circular trajectory has stationary increments and finite variance but no exact increment power law, and V2 grows as tau to the fourth at small lag.}
+\end{frame}
+
+\begin{frame}{Second differences measure changes of interval-mean velocity}
+\[
+ \overline{\mathbf v}_1=\frac{\mathbf r(t+\tau)-\mathbf r(t)}{\tau},\qquad
+ \overline{\mathbf v}_2=\frac{\mathbf r(t+2\tau)-\mathbf r(t+\tau)}{\tau}.
+\]
+\[
+ \frac{A_2\mathbf r}{\tau}=\overline{\mathbf v}_2-\overline{\mathbf v}_1,
+ \qquad D_2(\tau)=\frac{\sqrt{V_2(\tau)}}{\tau}
+ =\sqrt{\left\langle|\overline{\mathbf v}_2-\overline{\mathbf v}_1|^2\right\rangle}.
+\]
+\small $D_2$ is in m/s. At $\tau=60$ s it compares the mean velocity vector in
+one minute with the vector in the next minute. Changes of magnitude and direction both contribute.
+\question{At which scales does the ground motion change most, and how does that depend on the region?}
+\source{Exact kinematic identity; no power law or stationarity assumption is needed.}
+\speaker{This is an RMS change of interval-mean ground velocity. It is neither instantaneous acceleration nor wind speed. A constant added velocity cancels in both intervals. Keeping the physical units makes regional amplitudes interpretable even when a single exponent is not supported. The later regional study uses this quantity together with the vector covariance, distributions and order-three control.}
+\end{frame}
+
+\begin{frame}{Third differences also cancel a constant acceleration}
+\[
+ A_3\mathbf r=\mathbf r(t+3\tau)-3\mathbf r(t+2\tau)
+               +3\mathbf r(t+\tau)-\mathbf r(t),\qquad
+ V_3=\langle|A_3\mathbf r|^2\rangle.
+\]
+\small For $\mathbf r=\mathbf r_0+\mathbf v_0t+\tfrac12\mathbf a t^2$ with constant $\mathbf a$,
+\[
+ V_2=|\mathbf a|^2\tau^4,\qquad V_3=0.
+\]
+Under the centred stationary-increment power law,
+\[
+ \frac{V_3}{V_2}=\frac{15-6\,2^{2H}+3^{2H}}{4-2^{2H}},\qquad 0<H<1.
+\]
+\question{Do the same supported observations satisfy the predicted relation between orders?}
+\source{Order three requires $3\tau$ of continuous support; the model law must hold through $3\tau$.}
+\speaker{V3 is a sensitivity check to quadratic position trends. A smooth turn survives: typically V2 scales as tau to the fourth and V3 as tau to the sixth at small lag. Under the stated model both orders have exponent 2H but different amplitudes; Brownian motion plus constant velocity gives V3/V2=3. Independent position error with variance sigma squared per coordinate contributes 6 sigma squared at order two and 20 at order three. Correlated errors and smoothing require a different noise calculation. Agreement between orders does not prove that environmental forcing has been removed.}
 \end{frame}
 
 \begin{frame}{Open and closed tasks change the growth of displacements}
@@ -604,6 +641,66 @@ Different marginal exponents, or changing joint dependence, can prevent radial s
 \centering\fig[54mm]{supervisor-pca-coast.pdf}
 \question{Does the axis remain stable as lag and contributing population change?}
 \speaker{The covariance pools eligible regional origins from the full archive. Ellipses are centred and normalized by the centred RMS radius; they hide absolute magnitude and drift. The axis is modulo 180 degrees and becomes poorly determined near equal eigenvalues. The lags are exactly 10, 100, 1000 and 10000 seconds, measured on the 10-second coordinate grid. Every supported flight contributes at each lag, and increments stay inside individual segments. The displayed counts shrink at long lags; covariance changes can therefore include population selection.}
+\end{frame}
+
+\begin{frame}{Alps: velocity changes retain a directional structure}
+\centering\fig[51mm]{variation-region-alps.pdf}
+\question{Which part of the lag dependence persists with common origins and after changing difference order?}
+\source{Equal flight weights. At 1000 s, matched orders retain \num{\StatVarParaAlpsFlights} flights. Shading: pointwise 95\% site--day intervals.}
+\speaker{Left: available-order-two origins dotted, matched orders solid, and common origins through 1000 seconds dashed. Right: covariance anisotropy of orders one, two and three on identical origins. Unlike the preceding pooled-origin PCA, these curves give equal weight to flights. The full report also saves the pooled-origin sensitivity. Eighteen lags cover 10 to 10000 seconds. Matching all orders requires three times the lag; common origins use every ten-second origin supporting a 3000-second stencil. This changes the observations as well as flight membership.}
+\end{frame}
+
+\begin{frame}{Pyrenees: the long-lag change coincides with falling support}
+\centering\fig[51mm]{variation-region-pyrenees.pdf}
+\question{How much of the late rise survives a comparison with fixed flights and origins?}
+\source{At 1000 s: \num{\StatVarParaPyreneesFlights} matched flights; at 10,000 s: only \num{\StatVarParaPyreneesMaxFlights}. Cells below eight flights are omitted from plots.}
+\speaker{The conventions are identical to the Alpine panel. At 1000 seconds the order-two eigenvalue ratio is 1.42, compared with 2.17 for ordinary increments. The sharp late changes need to be read together with the support figure. All numerical cells are retained in the report, including the final three-flight cell, but that cell is not plotted as a population result. The omitted 10000-second order-two ellipse is therefore intentional.}
+\end{frame}
+
+\begin{frame}{Channel Coast: smaller changes at 1000 s, with residual anisotropy}
+\centering\fig[51mm]{variation-region-coast.pdf}
+\question{Could route geometry and varying forcing explain the contrast that survives constant-velocity cancellation?}
+\source{At 1000 s: \num{\StatVarParaCoastFlights} matched flights, $D_2=\StatVarParaCoastRmsMatched$ m/s and covariance ratio \StatVarParaCoastRatioTwo.}
+\speaker{The coastal RMS change becomes lower than the mountain values over part of the lag range. It is higher than the Alpine value at ten seconds, so one amplitude ratio does not describe every scale. An added constant wind alone cannot explain a V2 difference between otherwise identical populations. Variable wind, its effect on decisions, route geometry and selection remain possible. These boxes classify take-off locations, not exposure along the whole flight.}
+\end{frame}
+
+\begin{frame}{Second-difference ellipses retain orientation after drift cancellation}
+\[
+ C_2=\operatorname{Cov}(A_2\mathbf r),\qquad
+ V_2=\operatorname{tr}C_2+|\langle A_2\mathbf r\rangle|^2.
+\]
+\centering\fig[40mm]{ch3_variation_axes.pdf}
+\question{Do the resolved axes align with independent terrain and wind information?}
+\source{Matched-order origins, equal flight weights; each ellipse is normalised by its own centred RMS.}
+\speaker{The four colours match the exact PCA display lags. Ellipses describe centred spread and omit both amplitude and mean. Near-circular ellipses, especially the coastal ten-second one, do not resolve a useful direction. At 1000 seconds the order-two axes are approximately 65 degrees in the Alps, 171 degrees in the Pyrenees and 31 degrees on the coast, counterclockwise from east. Axes are modulo 180 degrees and do not supply signed wind directions. Independent indicative terrain axes are a separate comparison; regional box axes do not measure terrain exposure along individual tracks.}
+\end{frame}
+
+\begin{frame}{The regional contrast persists in a common-context control}
+\centering\fig[48mm]{ch3_variation_controls.pdf}
+\question{Which part survives matching actual weather, sites and pilot identity?}
+\source{Common origins through 1000 s. Dashed: \StatVarParaStandardStrata\ shared context strata, descriptive. Shading: simultaneous 95\% bands for the unstandardised ratios.}
+\speaker{The context control standardises task, retained-duration band, season period and equipment, with at least ten flights per region per retained stratum. Target stratum mass is proportional to the smallest regional count. It retains 65537 Alpine, 9933 Pyrenean and 4366 coastal flights. The 1000-second RMS changes are 5.13, 4.62 and 3.72 m/s. These dashed point estimates have no calibrated intervals. The shaded ratio intervals instead apply to the unstandardised common-origin population and use 500 site-day bootstrap replicates jointly over the supported lag grid. The Alpine-to-coastal ratio there is 1.426 with a simultaneous band from 1.403 to 1.449 at 1000 seconds. No equivalence margin was specified, so a non-significant difference would not establish equality.}
+\end{frame}
+
+\begin{frame}{The ratio between orders changes with the lag}
+\centering\fig[49mm]{variation-order-ratios.pdf}
+\question{Which scale interval could satisfy both the slope and amplitude predictions of one model?}
+\source{Matched origins and flight weights; pointwise 95\% site--day intervals. Dotted: Brownian motion plus constant velocity.}
+\speaker{V3/V2 is approximately 2.29 in both mountain regions at 100 seconds; at 1000 seconds it is 2.60 in the Alps, 2.79 in the Pyrenees and 2.42 on the coast. The lag dependence is itself diagnostic. V3 is not an independent sample and does not automatically isolate still-air dynamics. Its longer support and larger sensitivity to position noise must accompany any interpretation. No Hurst estimate is validated by these curves.}
+\end{frame}
+
+\begin{frame}{The distribution distinguishes frequent small changes from large events}
+\centering\fig[47mm]{variation-change-distributions.pdf}
+\question{Where on the trajectories do the largest contributions occur, and which verified flight phases contain them?}
+\source{Equal-flight CDFs on matched-order support. Full report: all four display lags, zero and overflow mass, and quantile bin bounds.}
+\speaker{At 1000 seconds the upper tenth of changes contributes about 43--47 percent of the squared-change signal in the Alps, 40--44 percent in the Pyrenees and 38--43 percent on the coast. Those ranges bound the unresolved histogram boundary bin; they are not sampling confidence intervals. The result measures concentration of this observable. It does not label turbulence or a particular flight phase. Phase conditioning and independent wind attribution have not been performed in this extension.}
+\end{frame}
+
+\begin{frame}{Order-three support limits the long-lag regional comparison}
+\centering\fig[49mm]{ch3_variation_support.pdf}
+\question{Which conclusions remain supported in both disciplines and across the same range of scales?}
+\source{Solid: orders share $3\tau$ support. Dashed: origins common through 1000 s. All eligible regional flights contribute where supported.}
+\speaker{The full regional measurement includes 108189 paraglider flights and 4747 hang-glider flights. At 10000 seconds, matched paraglider counts are 1865, 3 and 36 for Alps, Pyrenees and Channel Coast; hang-glider counts are 17, zero and zero. Coastal hang gliders number only 26 even at short lags. The report retains their estimates and suppresses intervals below twenty contributing site-day groups. No common three-region equipment/context strata survive for hang gliders, so that standardisation is not claimed for this discipline.}
 \end{frame}
 
 \begin{frame}{Alps: C/D/CCC has smaller coordinate-moment imbalance}

@@ -1,25 +1,22 @@
 {
-  "created_utc": "2026-09-12T16:10:01.898547+00:00",
-  "numerical_run_id": "regional-pca-lags-2026-09-12",
+  "created_utc": "2026-09-12T17:01:59.828020+00:00",
+  "numerical_run_id": "regional-variations-2026-09-12",
   "baseline_numerical_run_id": "20260912T133040Z-073601cb",
   "cleaning_version": "2.3.0",
   "cleaning_source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85",
   "reviewed_thesis": {
-    "reviewed_utc": "2026-09-12T16:10:01.520227+00:00",
     "status": "complete",
-    "numerical_run_id": "regional-pca-lags-2026-09-12",
+    "reviewed_utc": "2026-09-12T17:01:45.230518+00:00",
+    "numerical_run_id": "regional-variations-2026-09-12",
     "baseline_numerical_run_id": "20260912T133040Z-073601cb",
-    "numerical_update_sha256": "ab0628828ab209c2d3e050ef01b0d145e86641b15d61755a0e6d0383bcc27355",
-    "pdf_sha256": "379e8212adf2158d068e28dc93f6e754e5e266e9a42c5cacf1baddfd2b0e2303",
-    "pages": 116,
-    "working_source_sha256": "c01255e655647e6ab7bebb5357aba5b8f1bf19a28feb74021d015fce50d92c48",
-    "source_sha256": "c01255e655647e6ab7bebb5357aba5b8f1bf19a28feb74021d015fce50d92c48",
-    "numerical_source_sha256": "3af2b80482adfc178f5e65ed9ad92676cfac2b8a7ebcb585715d1120e43a1597",
+    "numerical_update_sha256": "5e09665c203c10a6c99387d0b5e8275bfc20a28494c7815da22dd3921711c66c",
+    "pdf_sha256": "fc59f28fa1e87324d3135a387086ebf6245716adeb8509b146b8d46b3090e4b6",
+    "pages": 123,
     "source_files": {
       "configs/delta_download.yaml": "a7e0f4e2c137eea66b63f75c2d5fc3de1db00d983619daa8cf1affaa4de476dd",
       "configs/para_download.yaml": "e7f65907e7d10fc5f1181948f18ac2645b8bced6f28212c12846a71a645ba459",
       "configs/preprocessing.yaml": "62bb2f4885c5fadc33074958a87c297d70859f361f3e4fdd95ae88761ea8964f",
-      "configs/rebuild.yaml": "7c98de31f2afe31f844f4fc79a28ea9d12bc40224d8cef9a35072d8fa03c0732",
+      "configs/rebuild.yaml": "54ca55fc0f4b9f24e56069c023e2a1089e73644d5e81a8fa6f89a454019897a3",
       "configs/segmentation.yaml": "530666a2846040ee3bdc6b3151e6103a767cacf0ce83769140159d0563580bbc",
       "scripts/check_reproducible.py": "3af0f2b5962a7005aa605f495af354a7b1a860000ec1ba0f1b9f6b4196537bc3",
       "scripts/label_flight_phases.py": "93a52e9083e4ae6395a91cc75f6e94eb6944e1a0ee53f742798edd490bda84fe",
@@ -46,9 +43,12 @@
       "scripts/reporting/ch3_global_transport/generate_duration_equipment.py": "ed5c0e3ac1468b3133e8fab1a80d426baf863d8f4ea5d428455c0bc47dce49dd",
       "scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py": "d6c613777bd240891614165b6c634b52bfc744b5b9ab334e62ab03fd404305a4",
       "scripts/reporting/ch3_global_transport/generate_msd_figure.py": "c954934beb6cb2c50afdeb4a8ee8857d5f1feb91a4ff7b67f43416dc69b0055d",
+      "scripts/reporting/ch3_global_transport/generate_regional_variations.py": "11173ff1e49f0ec040275c602869143e26f20797dc91d80ed50513cba8b3ef07",
       "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py": "437e3de3d0c5e9b43cb5b6141298f659c0bcf618c65f27874b5bb26949368fb9",
       "scripts/reporting/ch3_global_transport/generate_scaling_schematics.py": "51fa27bbe0d86141029e80c53be1a6fd5b8e1aa76f6a3557f8244564babe1314",
       "scripts/reporting/ch3_global_transport/measure_msd.py": "17381b40c8222e9c717621648920ee05c8cf63ad29574a9b7e765fae7d5b058e",
+      "scripts/reporting/ch3_global_transport/measure_regional_variations.py": "ae3578f94f76691da3e3002b7c20da041cfa092a36c60d229278e105526b404c",
+      "scripts/reporting/ch3_global_transport/render_regional_variations.py": "ba3b9e3e17c8f51dd7e3e6a04431e81e2981884e32a45a267802f5231c3d0b66",
       "scripts/reporting/ch4_flight_phases/generate_decoder_audit.py": "46112c0492c5d53a6ea09bd6a485aa26a88090a7a1a8de4f69c18536fcc8324c",
       "scripts/reporting/ch4_flight_phases/generate_segmentation_report.py": "5348b36f774fb0fc780f0334a63e28eb2473e40fbd1a5286a4ea3a2c445bd833",
       "scripts/reporting/ch4_flight_phases/prepare_annotation_pack.py": "060660c62115a25ff7ce82fa72841344f0ba15701a9528ff0a729ad55c2f80a0",
@@ -97,6 +97,7 @@
       "src/soaring/analysis/observables/propagator.py": "5d444912fd36ef4da108012241092a4af10f5b0f308a4fd4176a7a9d9b649090",
       "src/soaring/analysis/observables/regimes.py": "e404451986129be963813b87e3fdf12dd32ba15931c5f5d3cc380f3ea5750fdd",
       "src/soaring/analysis/observables/regional_pca.py": "0af6acec64ec9776e35665717c1f51fd63482d50ffbc59ab19215deb162f47ea",
+      "src/soaring/analysis/observables/regional_variations.py": "432542adb864cefda38691c9d07e3bb2e50a54ae7677383252f754301ff41eda",
       "src/soaring/analysis/observables/segment_support.py": "eb8885df6c17233bb032a55fcdb85355e54a9a76759683ae6c0c32b82cac11a8",
       "src/soaring/analysis/observables/self_similarity.py": "bde7bae350a67129a72a496c01c97382d89eaa76a11b3b8adfbd67032d04dd64",
       "src/soaring/analysis/observables/synthetic.py": "d54312f6ebdfc5cb32f36a64050167d0cff23bdc6da293321be53f2546c712ea",
@@ -129,6 +130,7 @@
       "src/soaring/reporting/guards.py": "f5b2e598b078d03dc31d582522ce759fbcfcc72b45b2fb0fd0829744424fbc5d",
       "src/soaring/reporting/macros.py": "ea0a533460cbf78f31c770b461d0019214f65e1ebe45a6da5a8de7812cf3cc90",
       "src/soaring/reporting/regional_pca.py": "49b56d51083e7234f6a6724777596a4d6583a8ac8d0612b6d2e167805ef3e43a",
+      "src/soaring/reporting/regional_variations.py": "e4e8d3a4342cd0316ba248198732b03659f0e5b768a08238dcd402c5cea8df49",
       "src/soaring/reporting/self_similarity.py": "43bb0b97672694b40e68326fbca2b5ed65b87414dad03259226944f461dde315",
       "src/soaring/reporting/snapshot.py": "739c8c617455cba89fd5805ea5c4aa70fca03c43159a096af9eef3de5d2ad961",
       "src/soaring/reporting/style.py": "313f731be76f476cfef3edd0db63a5a14adc749cfb521e38be6dde5010823ac8",
@@ -147,28 +149,15 @@
       "thesis/appendices/B-psd.tex": "66c22e46cb223164a5984ddc80947599dea79d63c583735f68891fbf184d97a8",
       "thesis/appendices/C-displacement-squares.tex": "9bd8c97198a0db0c8485e69b0b3b5c5ed002feecad3ec7d41afe494fc029e9e3",
       "thesis/appendices/geodesy.tex": "e764d60a05edabb325d85c3dff1c4169f4507baa9dc0c073d7dbcf752d71fdd4",
-      "thesis/main.tex": "514db1b56586fdee8ef433f5253b38070edad801a9ece9a20eeeeae8848207f5",
+      "thesis/main.tex": "252afefdb61a5795630705e4fad02a8687ba81ad204b1a90857aed84ec82875c",
       "thesis/references.bib": "2317f343ec868ad3399bc47c4dec23464b6b3dec50d0f789ccf95b6cd2b5e1c2",
       "thesis/sections/01-introduction.tex": "947b18a21ddb5a970553bd4d5338d3b806a6f0d45b44f684aeeca43a71865cd4",
       "thesis/sections/03-dataset.tex": "5488c48d9d42480ddc1a5ac3fb104f3a985db49042db089ab254b527b411cc4b",
-      "thesis/sections/04-global-transport.tex": "cea059f473c08d979119e9e2f8119d3f9f6f913b3bafc0d01d8af980f99d717f",
+      "thesis/sections/04-global-transport.tex": "9d288f5c1ddb18327c0942b824a21321fcdf947fdbd8476536dceaff5fc63010",
+      "thesis/sections/04-regional-variations.tex": "f77ee7ba742d4d981dcd5c2ca7ce6fd576eba531618e3364a50d2970d1e3b557",
       "thesis/sections/05-flight-phases.tex": "a181ba84f6309e9392c7fed6078403690a8ca4d06c436546d69d700bf060f9be",
       "uv.lock": "0958d555d6b2f488cc79e7b43aef8035cf9f8ea4d366084229559efe4b8e6ae0"
     },
-    "viewer_files_excluded_from_numerical_equivalence": [
-      "src/soaring/viewer/catalog_index.py",
-      "src/soaring/viewer/geography.py",
-      "src/soaring/viewer/widgets/flight_picker.py",
-      "src/soaring/viewer/widgets/map_view.py"
-    ],
-    "post_run_formatting": {
-      "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py": {
-        "executed_sha256": "fd0d757cd7f6b352a0270d0a00fca678eecfee0d5cd48a799e872e3eef16f8e8",
-        "reviewed_sha256": "437e3de3d0c5e9b43cb5b6141298f659c0bcf618c65f27874b5bb26949368fb9",
-        "proof": "identical complete Python AST; error-message line wrapping only"
-      }
-    },
-    "scope": "Regional PCA recomputed at exact decade lags; all other results inherited from the completed full run. Current cleaning identity and all source tables verified. Thesis prose, figure and reference table reviewed together. Full reviewed source hashes include the independent viewer changes; those files are not dependencies of the focused PCA calculation and are excluded from baseline numerical equivalence.",
     "generated_outputs": {
       "altitude_noise.pdf": "1b3d013b2257c48fb22a836b60ec0a4beaa0aae74b6d5b34615c230be3afea3a",
       "altitude_noise.tex": "ce20649b1e535b18857874c5f53447c9ca09f611ad7d6a82be5be1539e03ad1e",
@@ -246,48 +235,63 @@
       "trim_interior_excisions.pdf": "3c1b246a257406cdd1d1cfa546a9055425be38cb1c3cc1c66e7687c37a57243f",
       "trim_split_seconds.pdf": "b7d70b987341db5ddf0acc108fce80f7f0384e6741f0ba835efc6e39023c472b",
       "verify.tex": "80d310eed0f6fae9282d5354703447ce0b3d4761f3d85f2702c1263e60e813a4",
-      "vertical_median_explainer.pdf": "237d5432c3774397db870d91403bad0a760bc7c7b7791b3d904d6bb977c7e82a"
+      "vertical_median_explainer.pdf": "237d5432c3774397db870d91403bad0a760bc7c7b7791b3d904d6bb977c7e82a",
+      "ch3_regional_variations.pdf": "541381e934670db49b5155e117d2785f4edb4b54166883e177f7e48819abad5d",
+      "ch3_variation_axes.pdf": "d6ef509d238378efd31a888d34db971af266631d64673180356a0c381a69a4c3",
+      "ch3_variation_orders.pdf": "ab85dc1a1f7cf04013625feef735355f617ddeb5ff497e8715b2c8cf7b01e64f",
+      "ch3_variation_distributions.pdf": "082fb44901a8c15a9932ecc5e89fc6d5cbc5cf62eab8f2af175b843c2eec410d",
+      "ch3_variation_controls.pdf": "924cc09af61752d53ae05c647fc83852345403225d831dab5e48526256dc40bb",
+      "ch3_variation_support.pdf": "e0d260ccc21e3e12df49d30f5b4b205ef90534c5b0accc9db2b8c837596ab363",
+      "ch3_regional_variations_values.tex": "cbee52b20093dbcdb60b133d4601331189aa30d2f472a023710d9fbc30611814"
     },
-    "visual_review": "Four ellipses, markers, axis labels and flight counts inspected in all regions; printed Figure 3.15 and adjacent reference table checked after compilation."
+    "scope": "All inherited figures and values match the completed PCA delivery. New values match the full regional report; new figures were visually inspected. Regional differences are not identified as wind or Hurst estimates; standardised controls have no calibrated intervals."
   },
-  "review_record_sha256": "135011468eea080ee37c0830fce7898878b7adb6fa00e8bc0ba6a4a2283ea515",
+  "review_record_sha256": "6b20c203a61daf02330d376ab1e61f7afb7d6314c4a6a8d302c6f521d74f5c84",
   "operation": "Copy reviewed current results and crop vector panels; no analysis rerun.",
   "inputs": {
     "thesis/generated/altitude_noise.pdf": "1b3d013b2257c48fb22a836b60ec0a4beaa0aae74b6d5b34615c230be3afea3a",
+    "thesis/generated/altitude_noise.tex": "ce20649b1e535b18857874c5f53447c9ca09f611ad7d6a82be5be1539e03ad1e",
+    "thesis/generated/census.tex": "b074570942e98efa14c5bb6807a73015877347153b28256195322d7dc1ec4029",
+    "thesis/generated/ch3_regional_variations.pdf": "541381e934670db49b5155e117d2785f4edb4b54166883e177f7e48819abad5d",
+    "thesis/generated/ch3_regional_variations_values.tex": "cbee52b20093dbcdb60b133d4601331189aa30d2f472a023710d9fbc30611814",
+    "thesis/generated/ch3_revision.tex": "5dce292b605bbce23b189c018e5fb341ae70902153142b7de3960a9797224068",
     "thesis/generated/ch3_scaling.pdf": "db1b5b69d2be684932a74dba546d1c9e26b941c5d1705e82b78da675d06482fc",
+    "thesis/generated/ch3_variation_axes.pdf": "d6ef509d238378efd31a888d34db971af266631d64673180356a0c381a69a4c3",
+    "thesis/generated/ch3_variation_controls.pdf": "924cc09af61752d53ae05c647fc83852345403225d831dab5e48526256dc40bb",
+    "thesis/generated/ch3_variation_distributions.pdf": "082fb44901a8c15a9932ecc5e89fc6d5cbc5cf62eab8f2af175b843c2eec410d",
+    "thesis/generated/ch3_variation_orders.pdf": "ab85dc1a1f7cf04013625feef735355f617ddeb5ff497e8715b2c8cf7b01e64f",
+    "thesis/generated/ch3_variation_support.pdf": "e0d260ccc21e3e12df49d30f5b4b205ef90534c5b0accc9db2b8c837596ab363",
     "thesis/generated/ch3_velocity_memory.pdf": "fa645cd571b738368f42b9d11f5b9eb7631c441b3d903c447e04668bc358841f",
     "thesis/generated/cleaning_real_examples.pdf": "49612dd385d90136dc01f41fde3dad8934e2de864c02d8b7c6e95d98e7b1c180",
     "thesis/generated/closed_loop_schematic.pdf": "49ac81e59ed558c44c79b0b082e99d02bb44af254cbd0354db6744128120247b",
     "thesis/generated/dataset_seasons.pdf": "b22b47b4b7c48e33e5a03df016ee26f60619ca80c7526feb432c92a0a69e537e",
+    "thesis/generated/dataset_stats.tex": "37c1225cb29bab89728d936d19108a4aa2df6e0987d05a5974e8b04b7eb85ac2",
+    "thesis/generated/duration_equipment.json": "b742f0e124dc5e4391b80e5ab817243aea15a5cc8a0e9483f7c9742a85e93c07",
+    "thesis/generated/duration_equipment.tex": "1b58d61b137a00aef082c6c40c77da9231930133f7cf30e14e31e835fc85138d",
+    "thesis/generated/duration_equipment_table.tex": "9b6ac088595a023f01f7ee4f67048b56545439d7473cfdfbae220c09c14fa6d2",
     "thesis/generated/fixlevel_diagnostics.pdf": "57c0f97325f61931d2f7a68206316809422bd35dc9e601577b28abde51256dba",
+    "thesis/generated/kinematic_isotropy.tex": "42bc2831e7eaca48f5c9281bad48195f395dc422387f9b2db1e4bf96951f2d3a",
     "thesis/generated/kinematic_isotropy_flat_level.pdf": "a8834af134a42226bd9312c7f0312b38211093192e0a5496580580eec168c8d1",
     "thesis/generated/kinematic_isotropy_terrain.pdf": "d2a6ae12b2bb456eaf214219b6a4609776178773402273b7b8fd684c0bf5ce10",
     "thesis/generated/kinematic_isotropy_terrain_level.pdf": "9c7feef8651b1de4b6853438c646fd02b97827740fe95fec00064eabe9d34f7e",
     "thesis/generated/msd.pdf": "d305f4455492145d8673513408db50ebbb133e92d8be93f11affe74ca3d225b1",
+    "thesis/generated/msd.tex": "5e10b91714e8876786d11072cf07c7a5a0a9486e0565ecb6812ffd99a60f14d2",
+    "thesis/generated/pipeline_census.tex": "f9c8b2ebe673f87ebe3d1095889d43fb75104ed9bcd3fd5c7ce00b7c04c00b53",
     "thesis/generated/prelim_ensemble.pdf": "fa8ac48de4d9399d4fa742d2b07d618f694f1a7083a3f7f5db17ad136105e595",
     "thesis/generated/quantile_scaling_schematic.pdf": "0f0a5e87699d797d8f9497db3f7fbf597d7b19b2292de024c81ecab6c146aa70",
     "thesis/generated/sampling_intervals.pdf": "cc9afbea1a8a34ac6ccc200344b0416ee9686d337445864db83d8e50ddc1a708",
     "thesis/generated/savgol_explainer.pdf": "e3d896eb81d48268cb43ad7192d22e64d5fdfed57995c89c4bfec3525540f7dd",
     "thesis/generated/savgol_response.pdf": "bd00f208dbf4fbe893d1dbad2419649e59ad736e6777183ee7aa2c673811fac9",
+    "thesis/generated/stats.tex": "f6f730be7a9dd57e4a23aa8b5a058343b4d5d21608ae3a3957703d293e26ce2a",
     "thesis/generated/terrain_map.pdf": "0f9bf537afd513171832c4a978cbf3e81a685630d0ce20ac387e4b4e9d990a14",
+    "thesis/generated/trim.tex": "4b06146f61d0935c3fb14648f6dc109b19b5584dc8d905c6a0343a00e3fa936a",
     "thesis/generated/trim_interior_excisions.pdf": "3c1b246a257406cdd1d1cfa546a9055425be38cb1c3cc1c66e7687c37a57243f",
     "thesis/generated/trim_split_seconds.pdf": "b7d70b987341db5ddf0acc108fce80f7f0384e6741f0ba835efc6e39023c472b",
-    "thesis/generated/altitude_noise.tex": "ce20649b1e535b18857874c5f53447c9ca09f611ad7d6a82be5be1539e03ad1e",
-    "thesis/generated/census.tex": "b074570942e98efa14c5bb6807a73015877347153b28256195322d7dc1ec4029",
-    "thesis/generated/ch3_revision.tex": "5dce292b605bbce23b189c018e5fb341ae70902153142b7de3960a9797224068",
-    "thesis/generated/dataset_stats.tex": "37c1225cb29bab89728d936d19108a4aa2df6e0987d05a5974e8b04b7eb85ac2",
-    "thesis/generated/duration_equipment.json": "b742f0e124dc5e4391b80e5ab817243aea15a5cc8a0e9483f7c9742a85e93c07",
-    "thesis/generated/duration_equipment.tex": "1b58d61b137a00aef082c6c40c77da9231930133f7cf30e14e31e835fc85138d",
-    "thesis/generated/duration_equipment_table.tex": "9b6ac088595a023f01f7ee4f67048b56545439d7473cfdfbae220c09c14fa6d2",
-    "thesis/generated/kinematic_isotropy.tex": "42bc2831e7eaca48f5c9281bad48195f395dc422387f9b2db1e4bf96951f2d3a",
-    "thesis/generated/msd.tex": "5e10b91714e8876786d11072cf07c7a5a0a9486e0565ecb6812ffd99a60f14d2",
-    "thesis/generated/pipeline_census.tex": "f9c8b2ebe673f87ebe3d1095889d43fb75104ed9bcd3fd5c7ce00b7c04c00b53",
-    "thesis/generated/stats.tex": "f6f730be7a9dd57e4a23aa8b5a058343b4d5d21608ae3a3957703d293e26ce2a",
-    "thesis/generated/trim.tex": "4b06146f61d0935c3fb14648f6dc109b19b5584dc8d905c6a0343a00e3fa936a",
     "thesis/generated/ch3_revision.json": "a3d87d85cd843d04c8c2239f000e6bfde190ee385eead536579fc7af941c593c",
     "thesis/generated/ch3_self_similarity.json": "345113af9bec605331e42288b95e0311586007c2276b2919e7d228b339d7febf",
+    "revisions/regional-variations-2026-09-12/report.json.gz": "3b1951934610ed85ff8d3a933d59bede4e636a61c9871b6407e9208e219993fe",
     "thesis/sections/03-dataset.tex": "5488c48d9d42480ddc1a5ac3fb104f3a985db49042db089ab254b527b411cc4b",
-    "thesis/sections/04-global-transport.tex": "cea059f473c08d979119e9e2f8119d3f9f6f913b3bafc0d01d8af980f99d717f",
+    "thesis/sections/04-global-transport.tex": "9d288f5c1ddb18327c0942b824a21321fcdf947fdbd8476536dceaff5fc63010",
     "configs/preprocessing.yaml": "62bb2f4885c5fadc33074958a87c297d70859f361f3e4fdd95ae88761ea8964f",
     "src/soaring/reporting/style.py": "313f731be76f476cfef3edd0db63a5a14adc749cfb521e38be6dde5010823ac8"
   },
@@ -448,9 +452,135 @@
       "gzip_sha256": "07239748528fd6acc721c7dbd8da1ea1908e10b29e60bd5b5dcaf54e7f16d1b0",
       "gzip_size_bytes": 6891214,
       "archive_name": "ch3_self_similarity.json.gz"
+    },
+    "ch3_regional_variations.json": {
+      "archive_name": "ch3_regional_variations.json.gz",
+      "raw_sha256": "c738311bc736d299b65c98066ea705f67edfa2577e1b28112f4706cb02a2c2d4",
+      "raw_size_bytes": 2256577,
+      "gzip_sha256": "3b1951934610ed85ff8d3a933d59bede4e636a61c9871b6407e9208e219993fe",
+      "gzip_size_bytes": 420822
     }
   },
-  "script_sha256": "766a491520f0f58211ecd04ec1c9a6df38a092e9a022bef060f7b78872124fe0",
+  "regional_variations_update": {
+    "status": "complete",
+    "run_id": "regional-variations-2026-09-12",
+    "parent_run_id": "regional-pca-lags-2026-09-12",
+    "parent_update_sha256": "ab0628828ab209c2d3e050ef01b0d145e86641b15d61755a0e6d0383bcc27355",
+    "baseline_run_id": "20260912T133040Z-073601cb",
+    "cleaning": {
+      "configuration": {
+        "alt_channel": {
+          "baro_witness_min_range_m": 30.0,
+          "baro_witness_present_min": 0.95,
+          "gnss_min_range_m": 30.0,
+          "gnss_present_min": 0.95
+        },
+        "fix": {
+          "frozen_delta_z_m": 5.0,
+          "frozen_eps_m": 15.0,
+          "frozen_tau_s": 60.0,
+          "hampel_eps_min_m": 15.0,
+          "hampel_k": 5.0,
+          "hampel_min_window_fixes": 5,
+          "hampel_window_s": 20.0,
+          "integrity_max_fraction": 0.1,
+          "max_altitude_m": 6000.0,
+          "max_horizontal_speed_mps": {
+            "hang gliders": 55.0,
+            "paragliders": 45.0
+          },
+          "max_vertical_speed_mps": 10.0,
+          "min_altitude_m": -100.0,
+          "vz_min_window_fixes": 5,
+          "vz_window_s": 5.0
+        },
+        "flight": {
+          "max_duration_s": 57600.0,
+          "min_alt_range_m": 600.0,
+          "min_duration_s": 2400.0,
+          "min_path_km": 20.0
+        },
+        "sampling": {
+          "max_gap_factor": 10.0,
+          "max_gap_seconds": 20.0,
+          "max_missing_fraction": 0.1,
+          "min_segment_duration_s": 90.0
+        },
+        "savgol": {
+          "polyorder": 3,
+          "tau_c_horizontal_s": 5.0,
+          "tau_c_vertical_s": 5.0
+        },
+        "trimming": {
+          "ground_flatness_m": 5.0,
+          "interior_ground_s": 600.0,
+          "sustained_s": 30.0,
+          "takeoff_speed_mps": 5.0
+        }
+      },
+      "packages": {
+        "numpy": "2.5.0",
+        "pandas": "3.0.3",
+        "pyarrow": "24.0.0",
+        "scipy": "1.18.0"
+      },
+      "pipeline_version": "2.3.0",
+      "source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85"
+    },
+    "operation": "new regional finite-difference measurement on verified PCA coordinates; inherited numerical outputs unchanged",
+    "numerical_audit_sha256": "cadcf9dae7d1e39e7d06128bc12dfa77f71ab828aaa4837706c88681fec9a527",
+    "figure_manifest_sha256": "8f6f1dce495eef0549c4b04a3b230164870d98005feaa3e36e4c6089916db7aa",
+    "outputs": {
+      "ch3_regional_variations.pdf": {
+        "sha256": "541381e934670db49b5155e117d2785f4edb4b54166883e177f7e48819abad5d",
+        "producer": "scripts/reporting/ch3_global_transport/generate_regional_variations.py",
+        "historical_control": false
+      },
+      "ch3_variation_axes.pdf": {
+        "sha256": "d6ef509d238378efd31a888d34db971af266631d64673180356a0c381a69a4c3",
+        "producer": "scripts/reporting/ch3_global_transport/generate_regional_variations.py",
+        "historical_control": false
+      },
+      "ch3_variation_orders.pdf": {
+        "sha256": "ab85dc1a1f7cf04013625feef735355f617ddeb5ff497e8715b2c8cf7b01e64f",
+        "producer": "scripts/reporting/ch3_global_transport/generate_regional_variations.py",
+        "historical_control": false
+      },
+      "ch3_variation_distributions.pdf": {
+        "sha256": "082fb44901a8c15a9932ecc5e89fc6d5cbc5cf62eab8f2af175b843c2eec410d",
+        "producer": "scripts/reporting/ch3_global_transport/generate_regional_variations.py",
+        "historical_control": false
+      },
+      "ch3_variation_controls.pdf": {
+        "sha256": "924cc09af61752d53ae05c647fc83852345403225d831dab5e48526256dc40bb",
+        "producer": "scripts/reporting/ch3_global_transport/generate_regional_variations.py",
+        "historical_control": false
+      },
+      "ch3_variation_support.pdf": {
+        "sha256": "e0d260ccc21e3e12df49d30f5b4b205ef90534c5b0accc9db2b8c837596ab363",
+        "producer": "scripts/reporting/ch3_global_transport/generate_regional_variations.py",
+        "historical_control": false
+      },
+      "ch3_regional_variations_values.tex": {
+        "sha256": "cbee52b20093dbcdb60b133d4601331189aa30d2f472a023710d9fbc30611814",
+        "producer": "scripts/reporting/ch3_global_transport/generate_regional_variations.py",
+        "historical_control": false
+      }
+    },
+    "compressed_report": {
+      "archive_name": "ch3_regional_variations.json.gz",
+      "raw_sha256": "c738311bc736d299b65c98066ea705f67edfa2577e1b28112f4706cb02a2c2d4",
+      "raw_size_bytes": 2256577,
+      "gzip_sha256": "3b1951934610ed85ff8d3a933d59bede4e636a61c9871b6407e9208e219993fe",
+      "gzip_size_bytes": 420822
+    },
+    "post_run_source_alignment": {
+      "path": "scripts/reporting/ch3_global_transport/measure_regional_variations.py",
+      "executed_archive": "executed-measure-regional-variations.py.gz",
+      "scope": "CLI now also resolves absolute coordinate-store paths; all non-main function ASTs and the complete measurement module are unchanged"
+    }
+  },
+  "script_sha256": "d659837783d06beac7c50ffdb60e7a9f9ddfeef38cfa6311d7452cf196938e81",
   "numerical_update_sha256": "ab0628828ab209c2d3e050ef01b0d145e86641b15d61755a0e6d0383bcc27355",
   "numerical_lineage": "Regional PCA from the focused exact-lag update; all other measurements from the completed full-archive run."
 }

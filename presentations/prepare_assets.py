@@ -75,6 +75,8 @@ def main() -> None:
     parser.add_argument("--run", type=Path, default=REPO / "revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T133040Z-073601cb")
     parser.add_argument("--pca-update", type=Path,
                         help="reviewed focused PCA update layered on the completed full run")
+    parser.add_argument("--variation-update", type=Path,
+                        help="reviewed regional finite-difference extension after the PCA update")
     args = parser.parse_args()
     run = args.run.resolve()
     review_path = run / "review-inputs/manuscript-review.json"
@@ -101,6 +103,26 @@ def main() -> None:
         release["run_id"] = pca_update["run_id"]
         if review["generated_outputs"] != {n: r["sha256"] for n, r in release["outputs"].items()}:
             raise ValueError("The manuscript review refers to different generated inputs")
+        for name, expected in ({} if args.variation_update else review["source_files"]).items():
+            if digest(REPO / name) != expected:
+                raise ValueError(f"Reviewed source changed: {name}")
+    variation_update = None
+    if args.variation_update:
+        variation_dir = args.variation_update.resolve()
+        variation_path = variation_dir / "numerical-update.json"
+        variation_update = json.loads(variation_path.read_text())
+        if (pca_update is None or variation_update["status"] != "complete"
+                or variation_update["parent_update_sha256"] != digest(update_path)
+                or variation_update["parent_run_id"] != release["run_id"]):
+            raise ValueError("The variation extension requires its reviewed parent PCA")
+        release["outputs"].update(variation_update["outputs"])
+        release["run_id"] = variation_update["run_id"]
+        review_path = variation_dir / "manuscript-review.json"
+        review = json.loads(review_path.read_text())
+        if (review["status"] != "complete"
+                or review["numerical_update_sha256"] != digest(variation_path)
+                or review["generated_outputs"] != {n: r["sha256"] for n, r in release["outputs"].items()}):
+            raise ValueError("The variation manuscript review has different inputs")
         for name, expected in review["source_files"].items():
             if digest(REPO / name) != expected:
                 raise ValueError(f"Reviewed source changed: {name}")
@@ -120,7 +142,11 @@ def main() -> None:
         "operation": "Copy reviewed current results and crop vector panels; no analysis rerun.",
         "inputs": {}, "panels": {}, "compressed_reports": {},
     }
-    for name in [n + ".pdf" for n in ORIGINALS] + DATA:
+    originals = set([n + ".pdf" for n in ORIGINALS] + DATA)
+    if variation_update:
+        manifest["regional_variations_update"] = variation_update
+        originals.update(variation_update["outputs"])
+    for name in sorted(originals):
         source = REPO / "thesis/generated" / name
         actual = digest(source)
         required = release["outputs"].get(name)
@@ -147,6 +173,16 @@ def main() -> None:
         shutil.copy2(source, data / source.name)
         manifest["compressed_reports"][name] = record
         manifest["inputs"]["thesis/generated/" + name] = record["raw_sha256"]
+    if variation_update:
+        record = variation_update["compressed_report"]
+        frozen = variation_dir / "report.json.gz"
+        raw = gzip.decompress(frozen.read_bytes())
+        if (digest(frozen) != record["gzip_sha256"]
+                or hashlib.sha256(raw).hexdigest() != record["raw_sha256"]):
+            raise ValueError("The regional variation report changed after review")
+        shutil.copy2(frozen, data / record["archive_name"])
+        manifest["compressed_reports"]["ch3_regional_variations.json"] = record
+        manifest["inputs"][str(frozen.relative_to(REPO))] = digest(frozen)
     for name, (original, bounds) in PANELS.items():
         page = PdfReader(assets / (original + ".pdf")).pages[0]
         width, height = float(page.mediabox.width), float(page.mediabox.height)
