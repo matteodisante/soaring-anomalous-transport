@@ -80,8 +80,14 @@ _CATALOG_ROWS = [
 ]
 
 _FLIGHTS_META_ROWS = [
-    {"flight_id": "1", "drop_reason": None},
-    {"flight_id": "2", "drop_reason": "duration_below_minimum"},
+    {"flight_id": "1", "lat0": 45.31, "lon0": 5.89, "alt0": 980.0, "drop_reason": None},
+    {
+        "flight_id": "2",
+        "lat0": 45.40,
+        "lon0": 6.10,
+        "alt0": 1010.0,
+        "drop_reason": "duration_below_minimum",
+    },
     # flights 3 and 4 never reached the pipeline: absent here on purpose.
 ]
 
@@ -205,6 +211,86 @@ def test_kept_only_excludes_unprocessed_and_dropped_flights(discipline):
     assert result["flight_id"].tolist() == ["1"]
 
 
+def test_filter_by_region_keeps_only_take_offs_inside_that_box(discipline):
+    meta_rows = [
+        {
+            "flight_id": "1",
+            "lat0": 45.31,
+            "lon0": 5.89,
+            "alt0": 980.0,
+            "drop_reason": None,
+        },
+        {
+            "flight_id": "2",
+            "lat0": 50.0,
+            "lon0": 0.0,
+            "alt0": 80.0,
+            "drop_reason": None,
+        },
+        {
+            "flight_id": "3",
+            "lat0": 0.0,
+            "lon0": 0.0,
+            "alt0": 500.0,
+            "drop_reason": None,
+        },
+    ]
+    pd.DataFrame(meta_rows).to_parquet(
+        discipline.config().derived_dir / "flights_meta.parquet"
+    )
+    result = catalog_index.filter_flights(discipline, region="Alps")
+    assert result["flight_id"].tolist() == ["1"]
+
+
+def test_filter_by_terrain_keeps_only_that_elevation_band(discipline):
+    meta_rows = [
+        {
+            "flight_id": "1",
+            "lat0": 45.31,
+            "lon0": 5.89,
+            "alt0": 980.0,
+            "drop_reason": None,
+        },
+        {
+            "flight_id": "2",
+            "lat0": 45.40,
+            "lon0": 6.10,
+            "alt0": 80.0,
+            "drop_reason": None,
+        },
+        {
+            "flight_id": "3",
+            "lat0": 45.50,
+            "lon0": 6.20,
+            "alt0": 2200.0,
+            "drop_reason": None,
+        },
+    ]
+    pd.DataFrame(meta_rows).to_parquet(
+        discipline.config().derived_dir / "flights_meta.parquet"
+    )
+    result = catalog_index.filter_flights(discipline, terrain="Plains")
+    assert result["flight_id"].tolist() == ["2"]
+
+
+def test_filter_by_region_excludes_flights_never_reaching_the_pipeline(discipline):
+    # flight 3 exists in the catalog (see _CATALOG_ROWS) but has no flights_meta row.
+    meta_rows = [
+        {
+            "flight_id": "1",
+            "lat0": 45.31,
+            "lon0": 5.89,
+            "alt0": 980.0,
+            "drop_reason": None,
+        },
+    ]
+    pd.DataFrame(meta_rows).to_parquet(
+        discipline.config().derived_dir / "flights_meta.parquet"
+    )
+    result = catalog_index.filter_flights(discipline, region="Alps")
+    assert result["flight_id"].tolist() == ["1"]
+
+
 def test_resolve_igc_path_via_the_functional_name(discipline):
     igc_dir = discipline.config().igc_dir / "2020-2021"
     igc_dir.mkdir(parents=True)
@@ -233,12 +319,30 @@ def test_resolve_igc_path_is_none_when_the_file_was_never_downloaded(discipline)
 
 def test_takeoff_points_joins_kept_flights_with_their_origin(discipline):
     meta_rows = [
-        {"flight_id": "1", "lat0": 45.31, "lon0": 5.89, "drop_reason": None},
-        {"flight_id": "2", "lat0": 45.40, "lon0": 6.10, "drop_reason": "too_short"},
+        {
+            "flight_id": "1",
+            "lat0": 45.31,
+            "lon0": 5.89,
+            "alt0": 980.0,
+            "drop_reason": None,
+        },
+        {
+            "flight_id": "2",
+            "lat0": 45.40,
+            "lon0": 6.10,
+            "alt0": 1010.0,
+            "drop_reason": "too_short",
+        },
         # flight 3 was retained by the pipeline but never got a local frame (dropped
         # before stage (v) after all -- meta rows can carry that combination): no
         # origin to plot, so it must be excluded even though "kept" elsewhere.
-        {"flight_id": "3", "lat0": None, "lon0": None, "drop_reason": None},
+        {
+            "flight_id": "3",
+            "lat0": None,
+            "lon0": None,
+            "alt0": None,
+            "drop_reason": None,
+        },
         # flight 4 never reached the pipeline at all: absent here, same as elsewhere.
     ]
     pd.DataFrame(meta_rows).to_parquet(
@@ -248,6 +352,7 @@ def test_takeoff_points_joins_kept_flights_with_their_origin(discipline):
     assert points["flight_id"].tolist() == ["1"]
     assert points.iloc[0]["lat0"] == pytest.approx(45.31)
     assert points.iloc[0]["lon0"] == pytest.approx(5.89)
+    assert points.iloc[0]["alt0"] == pytest.approx(980.0)
     assert points.iloc[0]["season_year"] == 2020
     assert points.iloc[0]["date"] == "2020-07-15"
 

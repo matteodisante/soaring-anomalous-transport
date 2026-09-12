@@ -77,7 +77,9 @@ def _clear_caches():
     catalog_index._flights_meta_cache.clear()
 
 
-def _points_frame(n: int, lon0=6.0, lat0=45.0, spread=0.05) -> pd.DataFrame:
+def _points_frame(
+    n: int, lon0=6.0, lat0=45.0, spread=0.05, alt0=1000.0
+) -> pd.DataFrame:
     rng = np.random.default_rng(0)
     return pd.DataFrame(
         {
@@ -86,6 +88,7 @@ def _points_frame(n: int, lon0=6.0, lat0=45.0, spread=0.05) -> pd.DataFrame:
             "date": "2020-07-15",
             "lat0": lat0 + rng.uniform(-spread, spread, n),
             "lon0": lon0 + rng.uniform(-spread, spread, n),
+            "alt0": alt0,
             "pilot": "Alice",
             "flight_type": "Dist libre",
             "wing_class": "A",
@@ -230,6 +233,36 @@ def test_invalidate_makes_ensure_loaded_reload(qapp, tmp_path, monkeypatch):
     map_view.invalidate()
     map_view.ensure_loaded()
     assert calls == [1, 1]
+
+
+def test_region_filter_keeps_only_points_inside_the_chosen_box(qapp):
+    map_view = MapView()
+    alps = _points_frame(5, lon0=7.0, lat0=45.0, spread=0.01, alt0=1000.0)
+    coast = _points_frame(3, lon0=0.0, lat0=50.0, spread=0.01, alt0=100.0)
+    coast["flight_id"] = [f"coast-{i}" for i in range(3)]
+    map_view._points = {"paragliders": pd.concat([alps, coast], ignore_index=True)}
+
+    index = map_view._region_combo.findData("Alps")
+    assert index >= 0
+    map_view._region_combo.setCurrentIndex(index)
+    points = map_view._current_points()
+    assert len(points) == 5
+    assert (points["region"] == "Alps").all()
+
+
+def test_terrain_filter_keeps_only_the_chosen_elevation_band(qapp):
+    map_view = MapView()
+    low = _points_frame(4, alt0=100.0)
+    high = _points_frame(2, alt0=2000.0)
+    high["flight_id"] = [f"high-{i}" for i in range(2)]
+    map_view._points = {"paragliders": pd.concat([low, high], ignore_index=True)}
+
+    index = map_view._terrain_combo.findData("High mountains")
+    assert index >= 0
+    map_view._terrain_combo.setCurrentIndex(index)
+    points = map_view._current_points()
+    assert len(points) == 2
+    assert (points["terrain"] == "High mountains").all()
 
 
 def test_empty_view_in_points_mode_titles_no_flights(qapp):

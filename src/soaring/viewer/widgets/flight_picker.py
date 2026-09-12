@@ -40,7 +40,7 @@ from PyQt6.QtWidgets import (
 
 from ...acquisition.ffvl.naming import parse_igc_filename
 from ...reporting.disciplines import DISCIPLINES, Discipline
-from .. import catalog_index, data
+from .. import catalog_index, data, geography
 
 _RESULT_COLUMNS = [
     "flight_id",
@@ -188,6 +188,18 @@ class FlightPicker(QWidget):
         self._month_combo.addItem("(any)", None)
         for month in range(1, 13):
             self._month_combo.addItem(calendar.month_name[month], month)
+        # Not a searchable combo like _filter_combos: these aren't catalog columns
+        # (distinct_values() has nothing to offer for them) but a fixed, small set of
+        # boxes/bands computed from the pipeline's own lat0/lon0/alt0 -- see
+        # catalog_index.filter_flights().
+        self._region_combo = QComboBox()
+        self._region_combo.addItem("(any)", None)
+        for name in geography.REGIONS:
+            self._region_combo.addItem(name, name)
+        self._terrain_combo = QComboBox()
+        self._terrain_combo.addItem("(any)", None)
+        for name in geography.TERRAIN_ORDER:
+            self._terrain_combo.addItem(name, name)
         self._kept_only_check = QCheckBox("Kept by pipeline only")
         self._btn_search = QPushButton("Search catalog")
 
@@ -197,6 +209,10 @@ class FlightPicker(QWidget):
             if column == "wing_class":
                 # Grouped with the other always-present, calendar-fixed field.
                 filter_form.addRow("Month", self._month_combo)
+            if column == "takeoff":
+                # Grouped with the site name they refine (pipeline-derived, unlike it).
+                filter_form.addRow("Region", self._region_combo)
+                filter_form.addRow("Terrain", self._terrain_combo)
         filter_form.addRow(self._kept_only_check)
         filter_form.addRow(self._btn_search)
         filter_box = QGroupBox("Filter the catalog (metadata: can be wrong)")
@@ -425,6 +441,8 @@ class FlightPicker(QWidget):
                 discipline,
                 season_year=int(year_text) if year_text else None,
                 month=self._month_combo.currentData(),
+                region=self._region_combo.currentData(),
+                terrain=self._terrain_combo.currentData(),
                 kept_only=self._kept_only_check.isChecked(),
                 **text_values,
             )

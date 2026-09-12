@@ -15,6 +15,7 @@ import pandas as pd
 
 from ..acquisition.ffvl.naming import igc_path as build_igc_path
 from ..reporting.disciplines import Discipline
+from . import geography
 
 # One in-process cache per discipline: catalog.csv is tens of MB, worth loading once
 # per session rather than once per filter call.
@@ -64,18 +65,27 @@ def _load_catalog(discipline: Discipline) -> pd.DataFrame:
 
 
 def _load_flights_meta(discipline: Discipline) -> pd.DataFrame | None:
+    """Per-flight pipeline verdict plus the region/terrain labels.
+
+    Both derived from ``lat0``/``lon0``/``alt0``, so a flight with no local frame
+    (dropped before that pipeline stage) carries ``""`` for each, the same as a
+    flight absent from this table altogether.
+    """
     if discipline.name not in _flights_meta_cache:
         derived = discipline.derived_dir(require="flights_meta.parquet")
         if derived is None:
             _flights_meta_cache[discipline.name] = None
         else:
             meta = pd.read_parquet(
-                derived / "flights_meta.parquet", columns=["flight_id", "drop_reason"]
+                derived / "flights_meta.parquet",
+                columns=["flight_id", "lat0", "lon0", "alt0", "drop_reason"],
             )
             meta = meta.drop_duplicates(subset="flight_id", keep="last")
             meta["kept"] = meta["drop_reason"].isna()
+            meta["region"] = geography.classify_region(meta["lat0"], meta["lon0"])
+            meta["terrain"] = geography.classify_terrain(meta["alt0"])
             _flights_meta_cache[discipline.name] = meta[
-                ["flight_id", "kept", "drop_reason"]
+                ["flight_id", "kept", "drop_reason", "region", "terrain"]
             ]
     return _flights_meta_cache[discipline.name]
 
@@ -108,6 +118,8 @@ def filter_flights(
     club: str | None = None,
     wing: str | None = None,
     pilot: str | None = None,
+    region: str | None = None,
+    terrain: str | None = None,
     kept_only: bool = False,
 ) -> pd.DataFrame:
     """Catalog rows matching every given filter, joined against the pipeline's verdict.
@@ -119,6 +131,12 @@ def filter_flights(
     carry. Every text filter below matches whatever :func:`distinct_values` offers for
     that same column, so a dropdown built from it can never propose a value that then
     matches nothing.
+
+    ``region`` and ``terrain``, unlike every other filter here, are not catalog
+    columns: they are computed from ``flights_meta.parquet``'s ``lat0``/``lon0``/
+    ``alt0`` (:func:`soaring.viewer.geography.classify_region`/``classify_terrain``),
+    so a flight excluded by ``kept_only``'s reasoning -- unprocessed, or retained but
+    with no local frame -- also fails to match either one.
 
     Args:
         discipline: Which archive to search.
@@ -133,6 +151,11 @@ def filter_flights(
         club: Exact match against the pilot's club, case-insensitive.
         wing: Exact match against the wing model, case-insensitive.
         pilot: Exact match against the pilot name, case-insensitive.
+        region: One of :data:`soaring.viewer.geography.REGIONS` (``"Alps"``,
+            ``"Pyrenees"``, ``"Channel Coast"``): keep only take-offs inside that box.
+        terrain: One of :data:`soaring.viewer.geography.TERRAIN_ORDER` (``"Plains"``,
+            ``"Hills"``, ``"Low mountains"``, ``"High mountains"``): keep only
+            take-offs in that elevation band.
         kept_only: If ``True``, keep only flights the pipeline retained (a flight not
             found in ``flights_meta.parquet`` -- never processed -- is excluded too).
 
@@ -140,7 +163,8 @@ def filter_flights(
         A copy of the matching catalog rows, with a ``kept`` column added: ``True`` /
         ``False`` from the pipeline's verdict, ``pd.NA`` where ``flights_meta.parquet``
         is unreachable or the flight is not in it. ``pipeline_status`` explains
-        that distinction; ``drop_reason`` is included when archive results exist.
+        that distinction; ``drop_reason``, ``region`` and ``terrain`` are included
+        when archive results exist.
 
     Raises:
         FileNotFoundError: If this discipline's ``catalog.csv`` is not reachable.
@@ -172,6 +196,8 @@ def filter_flights(
         result = result.merge(meta, on="flight_id", how="left")
     else:
         result["kept"] = pd.NA
+        result["region"] = ""
+        result["terrain"] = ""
     result["pipeline_status"] = (
         result["kept"]
         .map({True: "Kept", False: "Dropped"})
@@ -181,6 +207,10 @@ def filter_flights(
     )
     if kept_only:
         result = result[result["kept"].fillna(False).astype(bool)]
+    if region is not None:
+        result = result[result["region"] == region]
+    if terrain is not None:
+        result = result[result["terrain"] == terrain]
     return result.reset_index(drop=True)
 
 
@@ -230,18 +260,19 @@ def takeoff_points(discipline: Discipline) -> pd.DataFrame:
 
     Reads ``flights_meta.parquet`` afresh (not through :func:`_load_flights_meta`'s
     cache, which keeps only ``flight_id``/``kept``) for the columns the map needs on
-    top of that: ``lat0``/``lon0``. Joined against the catalog for ``season_year``/
-    ``date`` (so a clicked point can be resolved to its ``.igc`` file with
-    :func:`resolve_igc_path`, the same way a catalog-search result is) and
-    :data:`TOOLTIP_COLUMNS` (what a hovered point shows).
+    top of that: ``lat0``/``lon0``/``alt0`` (the last for the map's terrain-band
+    filter -- see :func:`soaring.viewer.geography.classify_terrain`). Joined against
+    the catalog for ``season_year``/``date`` (so a clicked point can be resolved to
+    its ``.igc`` file with :func:`resolve_igc_path`, the same way a catalog-search
+    result is) and :data:`TOOLTIP_COLUMNS` (what a hovered point shows).
 
     Args:
         discipline: Which archive to read.
 
     Returns:
-        Columns ``flight_id``, ``season_year``, ``date``, ``lat0``, ``lon0``, plus
-        :data:`TOOLTIP_COLUMNS` -- one row per flight the pipeline retained. Empty
-        (same columns) if ``flights_meta.parquet`` is unreachable.
+        Columns ``flight_id``, ``season_year``, ``date``, ``lat0``, ``lon0``,
+        ``alt0``, plus :data:`TOOLTIP_COLUMNS` -- one row per flight the pipeline
+        retained. Empty (same columns) if ``flights_meta.parquet`` is unreachable.
 
     Raises:
         FileNotFoundError: If this discipline's ``catalog.csv`` is not reachable.
@@ -251,17 +282,17 @@ def takeoff_points(discipline: Discipline) -> pd.DataFrame:
     derived = discipline.derived_dir(require="flights_meta.parquet")
     if derived is None:
         empty = pd.Series(dtype=float)
-        return catalog.iloc[0:0].assign(lat0=empty, lon0=empty)
+        return catalog.iloc[0:0].assign(lat0=empty, lon0=empty, alt0=empty)
 
     meta = pd.read_parquet(
         derived / "flights_meta.parquet",
-        columns=["flight_id", "lat0", "lon0", "drop_reason"],
+        columns=["flight_id", "lat0", "lon0", "alt0", "drop_reason"],
     )
     meta = meta.drop_duplicates(subset="flight_id", keep="last")
     has_origin = meta["lat0"].notna() & meta["lon0"].notna()
     meta = meta[meta["drop_reason"].isna() & has_origin]
     return catalog.merge(
-        meta[["flight_id", "lat0", "lon0"]], on="flight_id", how="inner"
+        meta[["flight_id", "lat0", "lon0", "alt0"]], on="flight_id", how="inner"
     ).reset_index(drop=True)
 
 

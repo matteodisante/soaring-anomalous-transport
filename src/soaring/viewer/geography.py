@@ -36,6 +36,54 @@ FRANCE_EXTENT: Extent = (-5.5, 41.0, 10.0, 51.5)
 REUNION_EXTENT: Extent = (55.15, -21.42, 55.92, -20.82)
 CELL_DEG = 0.15
 
+# The same three take-off boxes as ``TERRAIN_GROUPS`` in
+# generate_kinematic_isotropy_figure.py (themselves a subset of ``REGIONS`` in
+# generate_prelim_figure.py: this drops "Massif Central" and the two other flat
+# controls, which those chapter-3 figures use but this picker does not offer).
+# Boxes, not polygons traced from the basemap, for the same reason given there:
+# a box that is written down can be checked against a gazetteer.
+REGIONS: dict[str, Extent] = {
+    "Alps": (5.4, 43.8, 10.0, 46.6),
+    "Pyrenees": (-1.9, 42.0, 3.3, 43.5),
+    "Channel Coast": (-1.8, 48.3, 2.0, 51.2),
+}
+
+# Descriptive elevation bands from arXiv:2608.00241 Eq. 1, same labels and
+# thresholds as generate_terrain_figure.py -- applied here to the pipeline's own
+# ``alt0`` (the cleaned trajectory's origin altitude) rather than that figure's
+# raw-first-fix proxy, since ``alt0`` is what the rest of the viewer already uses.
+TERRAIN_BANDS = [
+    ("Plains", -np.inf, 300.0),
+    ("Hills", 300.0, 800.0),
+    ("Low mountains", 800.0, 1500.0),
+    ("High mountains", 1500.0, np.inf),
+]
+TERRAIN_ORDER = [name for name, _, _ in TERRAIN_BANDS]
+
+
+def classify_region(lat: np.ndarray, lon: np.ndarray) -> np.ndarray:
+    """Label each point by the :data:`REGIONS` box it falls in, ``""`` if none."""
+    lat = np.asarray(lat, dtype=float)
+    lon = np.asarray(lon, dtype=float)
+    labels = np.full(lat.shape, "", dtype=object)
+    for name, (lon_min, lat_min, lon_max, lat_max) in REGIONS.items():
+        hit = (lon >= lon_min) & (lon <= lon_max) & (lat >= lat_min) & (lat <= lat_max)
+        labels[hit] = name
+    return labels
+
+
+def classify_terrain(alt: np.ndarray) -> np.ndarray:
+    """Label each altitude by the :data:`TERRAIN_BANDS` band it falls in.
+
+    ``""`` if not finite.
+    """
+    alt = np.asarray(alt, dtype=float)
+    labels = np.full(alt.shape, "", dtype=object)
+    finite = np.isfinite(alt)
+    for name, lo, hi in TERRAIN_BANDS:
+        labels[finite & (alt >= lo) & (alt < hi)] = name
+    return labels
+
 
 def load_basemap() -> dict | None:
     """The committed coastline/border geometry (``data/basemap.json``), or ``None``.

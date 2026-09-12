@@ -50,3 +50,22 @@ def test_draw_density_returns_none_when_nothing_falls_inside_the_extent():
     mesh = geography.draw_density(ax, lon, lat, geography.FRANCE_EXTENT)
     assert mesh is None
     plt.close(fig)
+
+
+def test_classify_region_labels_the_three_named_boxes():
+    lat = np.array([45.0, 42.8, 50.0, 10.0])
+    lon = np.array([7.0, 0.5, 0.0, 0.0])
+    labels = geography.classify_region(lat, lon)
+    assert list(labels) == ["Alps", "Pyrenees", "Channel Coast", ""]
+
+
+def test_classify_terrain_bands_match_the_thresholds():
+    alt = np.array([-10.0, 300.0, 800.0, 1500.0, np.nan])
+    labels = geography.classify_terrain(alt)
+    assert list(labels) == [
+        "Plains",
+        "Hills",
+        "Low mountains",
+        "High mountains",
+        "",
+    ]

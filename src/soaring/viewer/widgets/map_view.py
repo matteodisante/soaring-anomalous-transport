@@ -73,7 +73,10 @@ _PLOTTED_COLUMNS = [
     "date",
     "lat0",
     "lon0",
+    "alt0",
     "discipline",
+    "region",
+    "terrain",
     *catalog_index.TOOLTIP_COLUMNS,
 ]
 
@@ -105,6 +108,8 @@ def _tooltip_text(row: pd.Series) -> str:
     # measurement.
     duration_h = float(duration) / 3600.0 if duration else None
     duration_text = f"{duration_h:.1f} h" if duration_h is not None else "unknown"
+    region = _field(row, "region")
+    terrain = _field(row, "terrain")
     return (
         f"Flight {row['flight_id']} — {_field(row, 'date') or 'unknown date'}\n"
         f"Pilot: {pilot or 'unknown'}\n"
@@ -113,7 +118,9 @@ def _tooltip_text(row: pd.Series) -> str:
         f"Distance: {distance_text}   Duration: {duration_text}\n"
         f"Takeoff: {_field(row, 'takeoff') or 'unknown'} "
         f"(dept. {_field(row, 'dept') or 'unknown'})\n"
-        f"Landing: {_field(row, 'landing') or 'unknown'}"
+        f"Landing: {_field(row, 'landing') or 'unknown'}\n"
+        f"Region: {region or '(none of the named boxes)'}   "
+        f"Terrain: {terrain or 'unclassified'}"
     )
 
 
@@ -141,6 +148,14 @@ class MapView(QWidget):
         self._zone_combo = QComboBox()
         for name, extent in _ZONES:
             self._zone_combo.addItem(name, extent)
+        self._region_combo = QComboBox()
+        self._region_combo.addItem("All regions", None)
+        for name in geography.REGIONS:
+            self._region_combo.addItem(name, name)
+        self._terrain_combo = QComboBox()
+        self._terrain_combo.addItem("All terrain", None)
+        for name in geography.TERRAIN_ORDER:
+            self._terrain_combo.addItem(name, name)
         self._btn_reload = QPushButton("Reload")
         self._status = QLabel("Not loaded yet -- switch to this tab, or press Reload.")
 
@@ -149,6 +164,10 @@ class MapView(QWidget):
         top.addWidget(self._discipline_combo)
         top.addWidget(QLabel("Zone"))
         top.addWidget(self._zone_combo)
+        top.addWidget(QLabel("Region"))
+        top.addWidget(self._region_combo)
+        top.addWidget(QLabel("Terrain"))
+        top.addWidget(self._terrain_combo)
         top.addWidget(self._btn_reload)
         top.addStretch(1)
         top.addWidget(self._status)
@@ -169,7 +188,9 @@ class MapView(QWidget):
 
         self._full_redraw()
 
-        self._discipline_combo.currentIndexChanged.connect(self._on_discipline_changed)
+        self._discipline_combo.currentIndexChanged.connect(self._on_filter_changed)
+        self._region_combo.currentIndexChanged.connect(self._on_filter_changed)
+        self._terrain_combo.currentIndexChanged.connect(self._on_filter_changed)
         self._zone_combo.currentIndexChanged.connect(self._on_zone_selected)
         self._btn_reload.clicked.connect(self.reload_points)
         self._canvas.mpl_connect("button_press_event", self._on_click)
@@ -221,7 +242,17 @@ class MapView(QWidget):
         ]
         if not frames:
             return self._plotted.iloc[0:0]
-        return pd.concat(frames, ignore_index=True)
+        points = pd.concat(frames, ignore_index=True)
+        points["region"] = geography.classify_region(points["lat0"], points["lon0"])
+        points["terrain"] = geography.classify_terrain(points["alt0"])
+
+        region = self._region_combo.currentData()
+        if region is not None:
+            points = points[points["region"] == region]
+        terrain = self._terrain_combo.currentData()
+        if terrain is not None:
+            points = points[points["terrain"] == terrain]
+        return points.reset_index(drop=True)
 
     # -- redrawing --------------------------------------------------------------
     def _full_redraw(self) -> None:
@@ -254,8 +285,8 @@ class MapView(QWidget):
         self._cax.set_visible(False)
         self._recompute_view()
 
-    def _on_discipline_changed(self) -> None:
-        # Not a full redraw: switching which discipline is shown should recompute the
+    def _on_filter_changed(self) -> None:
+        # Not a full redraw: switching discipline/region/terrain should recompute the
         # density/points for the view the user is already looking at, not reset it.
         self._plotted = self._current_points()
         self._recompute_view()
