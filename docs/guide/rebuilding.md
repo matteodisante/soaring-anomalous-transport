@@ -180,7 +180,7 @@ For a focused measurement from the verified September 12 stores:
 ```
 
 Use a new output directory for a new measurement; preserve completed reports.
-The [regional revision record](../../revisions/regional-variations-2026-09-12/README.md)
+The regional revision record, `revisions/regional-variations-2026-09-12/README.md`,
 documents rendering, independent numerical checks, manuscript review and slide
 preparation. Its measurements took 168 seconds on the delivery machine using
 four workers and 500 bootstrap replicates; this is not a timing estimate for
@@ -222,3 +222,21 @@ file. The SSD manifests retain `executed_cleaning` and link the explicit documen
 review; `cleaning` identifies the current, algorithmically identical definition.
 No cleaned values or thresholds changed. This is a recorded exception with evidence,
 not permission to relabel old outputs after an algorithm change.
+
+The `terrain_axes` and `channel_wind` stages run after the current flight report.
+They use frozen independent ETOPO and ERA5 inputs included in the repository;
+rebuilding these comparisons requires no weather download. They produce eight
+small figure, macro and JSON outputs, each identifying the current flight report.
+The environmental record at `revisions/environment-axis-integration-2026-09-12/`
+links the grouped-TAMSD numerical record and the earlier full-run lineage. Its
+combined manuscript review checks all 89 inherited outputs and eight new outputs,
+source identities, external input hashes and the unchanged cleaning manifests.
+It explicitly distinguishes table stat/footer validation from a new full-byte
+checksum of the cleaned trajectories. The slide preparation command requires
+`--environment-update` with this record, in addition to its three parent flags.
+
+The nine hourly ERA5 API responses are preserved as gzip in
+`revisions/channel-wind-2026-09-12/`. `fetch_wind.py` verifies them offline by
+default; `--download-to NEW_DIRECTORY` makes a separate new download without
+changing the scientific input archive. The directory README documents source
+attribution, returned grid cells, angle convention and reuse in standard Python.

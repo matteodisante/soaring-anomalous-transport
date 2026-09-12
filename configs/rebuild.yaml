@@ -26,6 +26,8 @@ stages:
   - {id: preliminary, script: scripts/reporting/ch2_dataset/generate_prelim_figure.py, args: [--audit-dir, '{audit_dir}']}
   - {id: kinematics, script: scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py, args: [--audit-dir, '{audit_dir}']}
   - {id: transport_full, script: scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py, args: [--audit-dir, '{audit_dir}']}
+  - {id: terrain_axes, script: scripts/reporting/ch3_global_transport/generate_terrain_axis_comparison.py}
+  - {id: channel_wind, script: scripts/reporting/ch3_global_transport/generate_channel_wind_comparison.py}
   - {id: regional_variations, script: scripts/reporting/ch3_global_transport/generate_regional_variations.py, args: [--audit-dir, '{audit_dir}']}
   - {id: scaling_schematics, script: scripts/reporting/ch3_global_transport/generate_scaling_schematics.py}
   - {id: para_train, script: scripts/segment_flights.py, args: [train, --discipline, paragliders, --config, configs/segmentation.yaml]}

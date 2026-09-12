@@ -902,6 +902,7 @@ rank the disciplines by strength of a physical mechanism: the finite-flight
 sampling error and sensitivity to bin size have not been calibrated.
 
 \FloatBarrier
+\input{sections/04-grouped-tamsd}
 \section{Directional structure, terrain and equipment}
 \label{sec:transport-axisroutes}
 \label{sec:transport-anisotropy}
@@ -1037,6 +1038,71 @@ Whitening separately at each lag would enforce a part of the desired collapse by
 construction. A meaningful control instead fits a transformation at a fixed reference
 scale and tests it on other scales and flights.
 
+\subsubsection{Independent terrain orientation}
+\label{sec:independent-terrain-axis}
+
+An independent geographical reference helps distinguish an observed displacement
+axis from an assumed mountain direction. NOAA's ETOPO 2022 elevation model
+\cite{noaa_etopo2022} supplies this reference within the same Alpine and Pyrenean
+take-off boxes. Every fourth cell of its 15-arc-second grid is retained in each
+direction, giving one-arc-minute spacing. Cells at or above \SI{1000}{\metre}
+define an operational highland footprint. Their centres are projected into a
+WGS84 east--north tangent frame at the box centre, at zero projection height.
+The leading eigenvector of their spatial covariance, weighted by
+$\cos(\mathrm{latitude})$ to approximate cell area, gives its mean elongation
+axis. Elevation above the threshold adds no further weight. This construction
+estimates the orientation of a highland area, rather than extracting a crest.
+The threshold is not fitted to the flight directions.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{generated/ch3_terrain_axes}
+  \caption{Independent terrain orientation compared with the paraglider
+  displacement covariance at \SI{10000}{\second}. Elevation and the
+  \SI{1000}{\metre} contour come from ETOPO 2022 \cite{noaa_etopo2022}.
+  The solid dark line is the highland-footprint axis; the dashed coloured line
+  is the flight PCA axis, translated to the same centre for comparison.
+  Line lengths carry no displacement or ridge-length information. Map coordinates
+  are kilometres east and north of each box centre.}
+  \label{fig:independent-terrain-axes}
+\end{figure}
+
+\noindent\begin{minipage}{\linewidth}
+The angles, counterclockwise from east and modulo $180^\circ$, are
+\begin{center}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Region} & \textbf{Terrain axis} & \textbf{Flight axis} & \textbf{Separation}\\
+\midrule
+Alps & \SI{\StatTerrainAlpsAngle}{\degree} & \SI{\StatTerrainAlpsFlightAngle}{\degree} & \SI{\StatTerrainAlpsDifference}{\degree}\\
+Pyrenees & \SI{\StatTerrainPyreneesAngle}{\degree} & \SI{\StatTerrainPyreneesFlightAngle}{\degree} & \SI{\StatTerrainPyreneesDifference}{\degree}\\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\medskip
+Using thresholds of 500, 1000 and \SI{1500}{\metre} places the terrain axis in
+\SIrange{\StatTerrainAlpsMinAngle}{\StatTerrainAlpsMaxAngle}{\degree} in the Alps
+and \SIrange{\StatTerrainPyreneesMinAngle}{\StatTerrainPyreneesMaxAngle}{\degree}
+in the Pyrenees. These spans describe sensitivity to the footprint definition;
+they are not confidence intervals. Decimal values identify the calculation,
+not the precision of a physical mountain direction.
+
+The Pyrenean long-lag spread is closely aligned with the independent highland
+axis. This supports a geographical association between route orientation and
+the range. In the Alps, both axes occupy the northeast--southwest sector, but
+the flight axis is about $18^\circ$ more northward than the mean highland axis;
+simple parallel alignment is a poorer description there. The curved Alpine
+chain and its truncation by the box can contribute to this difference.
+Neither comparison identifies a causal terrain effect: wind, route choice and
+the long-flight population can also contribute. The PCA uses
+\num{\StatTerrainAlpsFlights} Alpine and \num{\StatTerrainPyreneesFlights}
+Pyrenean flights at this lag. Their increments can extend beyond the
+take-off box, and their tangent frames differ from the single regional terrain
+frame. This is an indicative regional comparison, not a measure of terrain
+exposure along individual tracks or a test of pilot skill.
+
+\input{sections/04-environment-wind}
+
 \subsection{Terrain, equipment and wind}
 \label{sec:transport-kinematics}
 
@@ -1166,8 +1232,11 @@ sites and days, with comparable duration and task. This would test whether the
 contrast survives closer matching of observed conditions; the current cluster
 bootstrap adjusts the uncertainty for one grouping structure without performing
 that matching. Mean ground drift, centred directional variability and the mixture
-of individual route directions should then be distinguished. Independent wind
-estimates and local terrain axes would allow an environmental alignment test.
+of individual route directions should then be distinguished. The independent
+regional references in Sections~\ref{sec:independent-terrain-axis}
+and~\ref{sec:independent-coastal-wind} provide an initial alignment comparison;
+wind matched to flight times and local terrain along tracks would test the
+proposed mechanisms more directly.
 Where records permit it, comparisons of the same pilot using different wings could
 help assess equipment and pilot selection separately. Before describing any of
 these contrasts as resistance to wind, the target needs to be defined: upwind
@@ -1638,6 +1707,15 @@ in the segmented analysis.
 A model must account jointly for moment growth, changing quantile spread,
 regional anisotropy, velocity memory, and the contrasts by route, duration and
 equipment. An effective exponent alone cannot describe this set of observations.
+
+The independent terrain comparison strengthens the geographical interpretation
+of the Pyrenean displacement axis, while the Alpine axis differs from the mean
+highland orientation. A model of environment-dependent motion should preserve
+this regional distinction; neither angle comparison supplies a causal separation
+of terrain, wind and route selection. On the Channel Coast, the annual ERA5
+mean wind axis is close to the flight axis, but the warm daytime reference is
+not. That sensitivity precludes treating the annual alignment as a stable
+explanation of the coastal covariance.
 
 Chapter~\ref{ch:phases} introduces phase labels. Connecting those phases to global
 transport requires durations, displacements and dependencies within and between

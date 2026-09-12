@@ -71,5 +71,8 @@ I due piccoli file NetCDF scaricati sono inclusi; non servono Google Maps, nuovi
 voli o una nuova pulizia. `terrain-axis.json` conserva URL, hash SHA-256, box,
 metodo, risultati, sensibilità e identificazione dei risultati PCA usati.
 La verifica usa soltanto operazioni geometriche; non sono stati ricalcolati i voli.
-Questa analisi aggiuntiva è consegnata qui separatamente dal PDF della tesi e
-dalle presentazioni già revisionati nella correzione dei ritardi PCA.
+Il confronto è ora integrato nella tesi e nelle slide del capitolo 3, insieme
+al riferimento ERA5 per la Channel Coast. La revisione combinata è documentata
+in `revisions/environment-axis-integration-2026-09-12/`. Questi input e la
+stima geografica originale sono conservati; il produttore canonico
+`generate_terrain_axis_comparison.py` li confronta con il report PCA corrente.

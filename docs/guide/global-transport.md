@@ -36,6 +36,34 @@ snapshot. Its manifest records source and table identities. Earlier generated pr
 must not be treated as current merely because their filenames match. See the
 [rebuild guide](rebuilding.md).
 
+Independent environmental references are published by
+`generate_terrain_axis_comparison.py` and `generate_channel_wind_comparison.py`.
+ETOPO 2022 cell centres above 1000 m within the exact mountain boxes define an
+area-weighted spatial covariance axis, with 500/1500 m threshold sensitivities.
+The Alps give 47.6° against the current 65.2° flight axis; the Pyrenees give
+170.5° against 170.5°. This is a highland-footprint orientation, not a traced
+crest or terrain exposure along tracks.
+
+For the Channel Coast, nine representative ERA5 cells retain hourly 2016–2025
+wind at 10 and 100 m above ground. Meteorological directions are converted to
+E/N velocity components before averaging with approximate area weights. The
+10 m annual wind axis is 25.8° against the 30.2° flight PCA axis; the 100 m
+annual check gives 26.8°. April–September, 09–17 UTC at 10 m gives 2.1°:
+annual alignment is sensitive to time selection. The mean-vector/mean-speed
+ratio is 0.28 and is not a confidence measure. A mean wind and centred
+covariance are different statistics; constant additive wind cancels under
+centring. The comparison does not identify a causal wind or equipment effect.
+
+All nine API responses are saved losslessly in
+`revisions/channel-wind-2026-09-12/`, with requests, hashes, reading examples,
+an offline verifier and a protected re-download command. The raw archive is
+6.33 MB compressed and has a verified SSD mirror. Six-hour subsampling changes
+the annual axis by at most 0.52°, but hourly data preserve the directional
+distribution and flexible time selections at negligible storage cost. These
+are provider-rounded API values on nine cells, not the full ERA5 grid or
+weather matched to flights. The combined manuscript review is recorded in
+`revisions/environment-axis-integration-2026-09-12/`.
+
 Regional PCA evaluates the four decade lags directly from the existing 10-s
 coordinates. It does not round them onto the geometric lag grid used for the
 other diagnostics. All supported, nonoverlapping origins within each segment

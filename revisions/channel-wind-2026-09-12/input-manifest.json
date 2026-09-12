@@ -1,0 +1,126 @@
+{
+  "model": "ERA5",
+  "provider": "Open-Meteo Historical Weather API",
+  "source_url": "https://open-meteo.com/en/docs/historical-weather-api",
+  "period": [
+    "2016-01-01",
+    "2025-12-31"
+  ],
+  "box_lon_lat_deg": [
+    -1.8,
+    2.0,
+    48.3,
+    51.2
+  ],
+  "sampling": "centres of a regular 3 by 3 partition of the exact Channel Coast box; nearest ERA5 cells, no land preference or elevation downscaling",
+  "files": [
+    {
+      "file": "cell-0.json.gz",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=48.783333&longitude=-1.166667&start_date=2016-01-01&end_date=2025-12-31&hourly=wind_speed_10m%2Cwind_direction_10m%2Cwind_speed_100m%2Cwind_direction_100m&models=era5&wind_speed_unit=ms&timezone=UTC&cell_selection=nearest&elevation=nan",
+      "requested_latitude": 48.78333333333333,
+      "requested_longitude": -1.1666666666666667,
+      "latitude": 48.75,
+      "longitude": -1.25,
+      "retrieved_utc": "2026-09-12T17:14:21.269429+00:00",
+      "sha256": "4321ee0cd9e0d356c055238ab2b4d2e5575c3dfd5a69847a4ecb07be4bdc2f24",
+      "raw_sha256": "8653f7a57a7fc33e107673cb1eef74a28175472bd83be6fcb649f7f5dd68d2b8",
+      "hours": 87672
+    },
+    {
+      "file": "cell-1.json.gz",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=48.783333&longitude=0.100000&start_date=2016-01-01&end_date=2025-12-31&hourly=wind_speed_10m%2Cwind_direction_10m%2Cwind_speed_100m%2Cwind_direction_100m&models=era5&wind_speed_unit=ms&timezone=UTC&cell_selection=nearest&elevation=nan",
+      "requested_latitude": 48.78333333333333,
+      "requested_longitude": 0.09999999999999987,
+      "latitude": 48.75,
+      "longitude": 0.0,
+      "retrieved_utc": "2026-09-12T17:14:22.376726+00:00",
+      "sha256": "af112d6f066eeae22499dadd9174b908fa4b13ff45d3cff84098936b0a1bcb51",
+      "raw_sha256": "76992f5fcaead86baafde3169008f14eebfe7ab1f871cd0cda22bee560372380",
+      "hours": 87672
+    },
+    {
+      "file": "cell-2.json.gz",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=48.783333&longitude=1.366667&start_date=2016-01-01&end_date=2025-12-31&hourly=wind_speed_10m%2Cwind_direction_10m%2Cwind_speed_100m%2Cwind_direction_100m&models=era5&wind_speed_unit=ms&timezone=UTC&cell_selection=nearest&elevation=nan",
+      "requested_latitude": 48.78333333333333,
+      "requested_longitude": 1.3666666666666667,
+      "latitude": 48.75,
+      "longitude": 1.25,
+      "retrieved_utc": "2026-09-12T17:14:20.496886+00:00",
+      "sha256": "5c066f932e032ddd599763e2d61e2f5acc7b9d3314f9b37477bad67890d3fb5b",
+      "raw_sha256": "3f19ef04d03dab4131e1c5e69c984827ffe98832dbe4da97a3eb07a3334b45c5",
+      "hours": 87672
+    },
+    {
+      "file": "cell-3.json.gz",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=49.750000&longitude=-1.166667&start_date=2016-01-01&end_date=2025-12-31&hourly=wind_speed_10m%2Cwind_direction_10m%2Cwind_speed_100m%2Cwind_direction_100m&models=era5&wind_speed_unit=ms&timezone=UTC&cell_selection=nearest&elevation=nan",
+      "requested_latitude": 49.75,
+      "requested_longitude": -1.1666666666666667,
+      "latitude": 49.75,
+      "longitude": -1.25,
+      "retrieved_utc": "2026-09-12T17:14:30.127315+00:00",
+      "sha256": "c086919673d26ab97bb55d972b4d064a456d26586804e316ba35d45c8062a582",
+      "raw_sha256": "4d2398049a45984d50c3ccc92181a77763cc7ca0b7368e67965890fbef192f66",
+      "hours": 87672
+    },
+    {
+      "file": "cell-4.json.gz",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=49.750000&longitude=0.100000&start_date=2016-01-01&end_date=2025-12-31&hourly=wind_speed_10m%2Cwind_direction_10m%2Cwind_speed_100m%2Cwind_direction_100m&models=era5&wind_speed_unit=ms&timezone=UTC&cell_selection=nearest&elevation=nan",
+      "requested_latitude": 49.75,
+      "requested_longitude": 0.09999999999999987,
+      "latitude": 49.75,
+      "longitude": 0.0,
+      "retrieved_utc": "2026-09-12T17:14:21.624168+00:00",
+      "sha256": "1293bc33a84fa5b18e5d23ee4a37290bd32185aca217b36b5a84b7ae26854870",
+      "raw_sha256": "49173801e99112d6e062998527485442f84ff9e4a6daf8c2c500369b154c9ab6",
+      "hours": 87672
+    },
+    {
+      "file": "cell-5.json.gz",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=49.750000&longitude=1.366667&start_date=2016-01-01&end_date=2025-12-31&hourly=wind_speed_10m%2Cwind_direction_10m%2Cwind_speed_100m%2Cwind_direction_100m&models=era5&wind_speed_unit=ms&timezone=UTC&cell_selection=nearest&elevation=nan",
+      "requested_latitude": 49.75,
+      "requested_longitude": 1.3666666666666667,
+      "latitude": 49.75,
+      "longitude": 1.25,
+      "retrieved_utc": "2026-09-12T17:14:31.782733+00:00",
+      "sha256": "4a206fac1391bc446ae6b19a89e9e61f00b1cd13da5390b4d242467d81c0b4c4",
+      "raw_sha256": "2ea2fff5e91e631e96aeba5db6455ef3b785f7f6c9e2ab9e46c937d83741ab8b",
+      "hours": 87672
+    },
+    {
+      "file": "cell-6.json.gz",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=50.716667&longitude=-1.166667&start_date=2016-01-01&end_date=2025-12-31&hourly=wind_speed_10m%2Cwind_direction_10m%2Cwind_speed_100m%2Cwind_direction_100m&models=era5&wind_speed_unit=ms&timezone=UTC&cell_selection=nearest&elevation=nan",
+      "requested_latitude": 50.71666666666667,
+      "requested_longitude": -1.1666666666666667,
+      "latitude": 50.75,
+      "longitude": -1.25,
+      "retrieved_utc": "2026-09-12T17:14:30.329579+00:00",
+      "sha256": "4e17c2836f6a251147764e16d6ea8b7bb60152b92a78e77cb69ad2b20ac0126e",
+      "raw_sha256": "d075c1a252a707e22c94324f36dd3a7e56a57cdd40357f9462e601c700e3e89c",
+      "hours": 87672
+    },
+    {
+      "file": "cell-7.json.gz",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=50.716667&longitude=0.100000&start_date=2016-01-01&end_date=2025-12-31&hourly=wind_speed_10m%2Cwind_direction_10m%2Cwind_speed_100m%2Cwind_direction_100m&models=era5&wind_speed_unit=ms&timezone=UTC&cell_selection=nearest&elevation=nan",
+      "requested_latitude": 50.71666666666667,
+      "requested_longitude": 0.09999999999999987,
+      "latitude": 50.75,
+      "longitude": 0.0,
+      "retrieved_utc": "2026-09-12T17:17:32.101938+00:00",
+      "sha256": "6fcdac7578dfe323c22d150d5675a675f252c2a7133211864871d5193d409a10",
+      "raw_sha256": "482fe4a2f22bab24690716646705a3a0dbf6e8e3b42cf9cce5379f8e074244cc",
+      "hours": 87672
+    },
+    {
+      "file": "cell-8.json.gz",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=50.716667&longitude=1.366667&start_date=2016-01-01&end_date=2025-12-31&hourly=wind_speed_10m%2Cwind_direction_10m%2Cwind_speed_100m%2Cwind_direction_100m&models=era5&wind_speed_unit=ms&timezone=UTC&cell_selection=nearest&elevation=nan",
+      "requested_latitude": 50.71666666666667,
+      "requested_longitude": 1.3666666666666667,
+      "latitude": 50.75,
+      "longitude": 1.25,
+      "retrieved_utc": "2026-09-12T17:17:34.551946+00:00",
+      "sha256": "87833b2cf8622ee85be4308bb2619990e04c2539a8516a1fa19f9afc8d4ed896",
+      "raw_sha256": "115b4fa232e698262a1d32e8c8c0b4a6b137fba6e56a8075cbb98fcec4fa5e3e",
+      "hours": 87672
+    }
+  ]
+}
