@@ -26,6 +26,12 @@ def main() -> None:
     source = json.loads((ROOT / "source-manifest.json").read_text())
     if digest(REPO / "thesis/main.pdf") != source["reviewed_thesis"]["pdf_sha256"]:
         raise ValueError("The thesis changed after presentation input review")
+    for name, expected in source["reviewed_thesis"]["source_files"].items():
+        if digest(REPO / name) != expected:
+            raise ValueError(f"Reviewed thesis or numerical source changed: {name}")
+    for name, expected in source.get("environment_update", {}).get("external_input_files", {}).items():
+        if digest(REPO / name) != expected:
+            raise ValueError(f"Archived environmental input changed: {name}")
     assets = {}
     data = {}
     for name, expected in source["inputs"].items():
@@ -41,12 +47,15 @@ def main() -> None:
                         "supervisor-map-manifest.json", "supervisor-gate-manifest.json"]
     if source.get("regional_variations_update"):
         figure_manifests.append("variation-panel-manifest.json")
+    if source.get("grouped_tamsd_update"):
+        figure_manifests.append("tamsd-panel-manifest.json")
     for name in figure_manifests:
         path = ROOT / name
         record = json.loads(path.read_text())
-        if name == "variation-panel-manifest.json":
-            if digest(ROOT / "render_variation_panels.py") != record["script_sha256"]:
-                raise ValueError("Variation panel renderer changed after rendering")
+        if name in ("variation-panel-manifest.json", "tamsd-panel-manifest.json"):
+            renderer = "render_tamsd_panels.py" if name.startswith("tamsd") else "render_variation_panels.py"
+            if digest(ROOT / renderer) != record["script_sha256"]:
+                raise ValueError(f"Panel renderer changed after rendering: {renderer}")
             for input_name, expected in record["inputs"].items():
                 if digest(ROOT / input_name) != expected:
                     raise ValueError(f"Variation panel input changed: {input_name}")
@@ -75,8 +84,9 @@ def main() -> None:
     documents = {}
     forbidden = re.compile(r"2\.0\.[01]|2\.2\.0|whole-record rule|"
                            r"historical comparison|older slides|formerly reconstructed", re.I)
-    for chapter, count in ((2, 58), (3, 85)):
+    for chapter in (2, 3):
         tex = (ROOT / f"chapter{chapter}.tex").read_text()
+        count = len(re.findall(r"\\begin\{frame\}", tex)) + len(re.findall(r"\\titleframe\{", tex))
         if forbidden.search(tex):
             raise ValueError("The chapter includes superseded implementation narrative")
         referenced = set(re.findall(r"\\fig(?:\[[^\]]+\])?\{([^}]+)\}", tex))
@@ -112,7 +122,7 @@ def main() -> None:
               "presentation_sources": {p.name: digest(p) for p in
                   sorted(ROOT.glob("*.py")) + [ROOT / "theme.tex", ROOT / "chapter2.tex", ROOT / "chapter3.tex"]},
               "scope": "Complete chapter decks use the reviewed current results. All referenced figure and numerical inputs match their manifests; full reports retain all bytes in gzip; four PDFs compile without LaTeX warnings or overfull boxes.",
-              "visual_review": "The preceding full-run and four-lag PCA layouts were retained. The revised cancellation slide and ten added regional-variation slides were inspected in the 85-slide Chapter 3 deck and in the accompanying note pages. Crops preserve vector axes and labels; values and support agree with the reviewed complete regional report."}
+              "visual_review": "The preceding full-run and four-lag PCA layouts were retained. The revised cancellation slide, ten regional-variation slides and eight grouped-TAMSD slides were visually checked, including accompanying notes. The six terrain/wind comparison slides and notes were also checked for readable maps, formulas, legends and sensitivity conclusions. TAMSD row crops preserve complete axis labels and omit neighbouring rows. Values, support and group definitions agree with the complete reviewed reports."}
     (ROOT / "validation.json").write_text(json.dumps(result, indent=2) + "\n")
     print(f"Verified four chapter PDFs, {len(assets)} figure assets and complete report bytes.")
 

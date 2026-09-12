@@ -77,6 +77,10 @@ def main() -> None:
                         help="reviewed focused PCA update layered on the completed full run")
     parser.add_argument("--variation-update", type=Path,
                         help="reviewed regional finite-difference extension after the PCA update")
+    parser.add_argument("--tamsd-update", type=Path,
+                        help="reviewed regional and initial-altitude TAMSD extension")
+    parser.add_argument("--environment-update", type=Path,
+                        help="combined manuscript review with independent terrain and wind references")
     args = parser.parse_args()
     run = args.run.resolve()
     review_path = run / "review-inputs/manuscript-review.json"
@@ -123,9 +127,55 @@ def main() -> None:
                 or review["numerical_update_sha256"] != digest(variation_path)
                 or review["generated_outputs"] != {n: r["sha256"] for n, r in release["outputs"].items()}):
             raise ValueError("The variation manuscript review has different inputs")
-        for name, expected in review["source_files"].items():
+        for name, expected in ({} if args.tamsd_update else review["source_files"]).items():
             if digest(REPO / name) != expected:
                 raise ValueError(f"Reviewed source changed: {name}")
+    tamsd_update = None
+    if args.tamsd_update:
+        tamsd_dir = args.tamsd_update.resolve()
+        tamsd_path = tamsd_dir / "numerical-update.json"
+        tamsd_update = json.loads(tamsd_path.read_text())
+        if (variation_update is None or tamsd_update["status"] != "complete"
+                or tamsd_update["parent_update_sha256"] != digest(variation_path)
+                or tamsd_update["parent_run_id"] != release["run_id"]):
+            raise ValueError("The TAMSD extension requires its reviewed variation parent")
+        release["outputs"].update(tamsd_update["outputs"])
+        release["run_id"] = tamsd_update["run_id"]
+        # A combined environmental review may be the first manuscript review
+        # of this audited TAMSD measurement. It verifies the complete union below.
+        if not args.environment_update:
+            review_path = tamsd_dir / "manuscript-review.json"
+            review = json.loads(review_path.read_text())
+            if (review["status"] != "complete"
+                    or review["numerical_update_sha256"] != digest(tamsd_path)
+                    or review["generated_outputs"] != {n: r["sha256"] for n, r in release["outputs"].items()}):
+                raise ValueError("The grouped TAMSD review has different inputs")
+            for name, expected in review["source_files"].items():
+                if digest(REPO / name) != expected:
+                    raise ValueError(f"Reviewed source changed: {name}")
+    environment_update = None
+    if args.environment_update:
+        environment_dir = args.environment_update.resolve()
+        environment_path = environment_dir / "numerical-update.json"
+        environment_update = json.loads(environment_path.read_text())
+        if (tamsd_update is None or environment_update["status"] != "complete"
+                or environment_update["parent_update_sha256"] != digest(tamsd_path)
+                or environment_update["parent_run_id"] != release["run_id"]
+                or environment_update["inherited_generated_outputs"] !=
+                    {n: r["sha256"] for n, r in release["outputs"].items()}):
+            raise ValueError("The environmental comparison requires its audited TAMSD parent")
+        release["outputs"].update(environment_update["outputs"])
+        release["run_id"] = environment_update["run_id"]
+        review_path = environment_dir / "manuscript-review.json"
+        review = json.loads(review_path.read_text())
+        if (review["status"] != "complete"
+                or review["numerical_update_sha256"] != digest(environment_path)
+                or review["generated_outputs"] != {n: r["sha256"] for n, r in release["outputs"].items()}
+                or review["external_input_files"] != environment_update["external_input_files"]):
+            raise ValueError("The combined environmental manuscript review has different inputs")
+        for name, expected in (review["source_files"] | review["external_input_files"]).items():
+            if digest(REPO / name) != expected:
+                raise ValueError(f"Reviewed source or external input changed: {name}")
     if digest(REPO / "thesis/main.pdf") != review["pdf_sha256"]:
         raise ValueError("The canonical thesis is not the reviewed PDF")
     assets, data = ROOT / "assets", ROOT / "data"
@@ -146,6 +196,13 @@ def main() -> None:
     if variation_update:
         manifest["regional_variations_update"] = variation_update
         originals.update(variation_update["outputs"])
+    if tamsd_update:
+        manifest["grouped_tamsd_update"] = tamsd_update
+        originals.update(n for n in tamsd_update["outputs"] if n != "ch3_grouped_tamsd.json")
+    if environment_update:
+        manifest["environment_update"] = environment_update
+        originals.update(environment_update["outputs"])
+        manifest["inputs"].update(environment_update["external_input_files"])
     for name in sorted(originals):
         source = REPO / "thesis/generated" / name
         actual = digest(source)
@@ -182,6 +239,17 @@ def main() -> None:
             raise ValueError("The regional variation report changed after review")
         shutil.copy2(frozen, data / record["archive_name"])
         manifest["compressed_reports"]["ch3_regional_variations.json"] = record
+        manifest["inputs"][str(frozen.relative_to(REPO))] = digest(frozen)
+    if tamsd_update:
+        record = tamsd_update["compressed_report"]
+        frozen = tamsd_dir / "report.json.gz"
+        raw = gzip.decompress(frozen.read_bytes())
+        if (digest(frozen) != record["gzip_sha256"]
+                or hashlib.sha256(raw).hexdigest() != record["raw_sha256"]
+                or record["raw_sha256"] != release["outputs"]["ch3_grouped_tamsd.json"]["sha256"]):
+            raise ValueError("The grouped TAMSD report changed after review")
+        shutil.copy2(frozen, data / record["archive_name"])
+        manifest["compressed_reports"]["ch3_grouped_tamsd.json"] = record
         manifest["inputs"][str(frozen.relative_to(REPO))] = digest(frozen)
     for name, (original, bounds) in PANELS.items():
         page = PdfReader(assets / (original + ".pdf")).pages[0]
@@ -254,7 +322,11 @@ def main() -> None:
     manifest["script_sha256"] = digest(Path(__file__))
     if pca_update:
         manifest["numerical_update_sha256"] = digest(update_path)
-        manifest["numerical_lineage"] = "Regional PCA from the focused exact-lag update; all other measurements from the completed full-archive run."
+        manifest["numerical_lineage"] = (
+            "Completed full-archive run, followed by reviewed exact-lag PCA, "
+            "regional finite differences, grouped TAMSD and independent environmental "
+            "references where explicitly recorded in this manifest."
+        )
     (ROOT / "source-manifest.json").write_text(
         json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
     )

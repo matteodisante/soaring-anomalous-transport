@@ -1,0 +1,209 @@
+{
+  "operation": "Publish independent terrain measurements against current flight PCA; no trajectory measurement or threshold fitting",
+  "terrain_report": "revisions/terrain-axis-2026-09-12/terrain-axis.json",
+  "terrain_report_sha256": "4a49bef25d26d8ab07a934aadf293a4dad6f61de4b0501f439cd6bc31a6b795e",
+  "flight_report_sha256": "a3d87d85cd843d04c8c2239f000e6bfde190ee385eead536579fc7af941c593c",
+  "producer_sha256": "99d2e76fc8e289bd6c7b4f2a33a8c903e579fd5212bf728d4c31a9a95435dc9c",
+  "source_url": "https://www.ncei.noaa.gov/products/etopo-global-relief-model",
+  "doi": "https://doi.org/10.25921/fd45-gt74",
+  "method": "Area-weighted spatial covariance of DEM cell centres at or above 1000 m within the exact box. WGS84 local East/North coordinates at sea level, tangent at box centre; approximate area weights cos(latitude). No elevation weighting above the threshold. Largest eigenvector gives an unoriented axis. Thresholds 500 and 1500 m are sensitivity checks, not confidence bounds.",
+  "limits": [
+    "Indicative axis of the highland footprint, not an extracted crest or geological chain boundary.",
+    "Box shape, truncation, curved chains, plateaux and the elevation threshold influence the angle.",
+    "The flight box selects take-offs; some flight increments can extend beyond the box.",
+    "Terrain has a box-centred tangent frame, whereas flight increments pool flight-centred frames; this is an approximate regional comparison.",
+    "Alignment is descriptive evidence only: wind, routes and selection can also align displacement; no causal terrain attribution or uncertainty interval is inferred."
+  ],
+  "results": {
+    "Alps": {
+      "box_lon_lat_deg": [
+        5.4,
+        10.0,
+        43.8,
+        46.6
+      ],
+      "terrain_threshold_m": 1000,
+      "terrain": {
+        "angle_deg": 47.59612135942904,
+        "ratio": 3.00228809749328,
+        "centre_km": [
+          -31.358006821131188,
+          23.71238049417129
+        ],
+        "covariance_km2": [
+          [
+            7515.779232673813,
+            3922.185201158008
+          ],
+          [
+            3922.185201158007,
+            8228.602030783306
+          ]
+        ],
+        "cells": 19153,
+        "difference_from_flight_axis_deg": 17.63487896613239
+      },
+      "threshold_sensitivity": {
+        "500": {
+          "angle_deg": 42.05485281890378,
+          "ratio": 1.7778578797446138,
+          "centre_km": [
+            -33.72856153017177,
+            12.282340608853906
+          ],
+          "covariance_km2": [
+            [
+              9362.10794739489,
+              2534.8981808932704
+            ],
+            [
+              2534.8981808932704,
+              8839.063414021024
+            ]
+          ],
+          "cells": 28604,
+          "difference_from_flight_axis_deg": 23.176147506657642
+        },
+        "1000": {
+          "angle_deg": 47.59612135942904,
+          "ratio": 3.00228809749328,
+          "centre_km": [
+            -31.358006821131188,
+            23.71238049417129
+          ],
+          "covariance_km2": [
+            [
+              7515.779232673813,
+              3922.185201158008
+            ],
+            [
+              3922.185201158007,
+              8228.602030783306
+            ]
+          ],
+          "cells": 19153,
+          "difference_from_flight_axis_deg": 17.63487896613239
+        },
+        "1500": {
+          "angle_deg": 47.878895909456915,
+          "ratio": 4.610972126620786,
+          "centre_km": [
+            -22.37685912772754,
+            35.946514321011115
+          ],
+          "covariance_km2": [
+            [
+              6353.239996548482,
+              4348.810027348333
+            ],
+            [
+              4348.810027348333,
+              7230.239107709129
+            ]
+          ],
+          "cells": 12368,
+          "difference_from_flight_axis_deg": 17.35210441610451
+        }
+      },
+      "flight_lag_s": 10000,
+      "flight_angle_deg": 65.23100032556142,
+      "flight_n": 46336,
+      "flight_ratio": 2.535290386205237
+    },
+    "Pyrenees": {
+      "box_lon_lat_deg": [
+        -1.9,
+        3.3,
+        42.0,
+        43.5
+      ],
+      "terrain_threshold_m": 1000,
+      "terrain": {
+        "angle_deg": 170.48699085937727,
+        "ratio": 12.700338017662453,
+        "centre_km": [
+          5.99191453656499,
+          -16.171956129879398
+        ],
+        "covariance_km2": [
+          [
+            6703.828265728085,
+            -1032.6631838722337
+          ],
+          [
+            -1032.6631838722335,
+            714.5216293542212
+          ]
+        ],
+        "cells": 7637,
+        "difference_from_flight_axis_deg": 0.0317352965637383
+      },
+      "threshold_sensitivity": {
+        "500": {
+          "angle_deg": 175.38548245223814,
+          "ratio": 8.548521016621853,
+          "centre_km": [
+            -12.687401955971293,
+            -16.390147544257403
+          ],
+          "covariance_km2": [
+            [
+              10350.472463528591,
+              -737.1304031293907
+            ],
+            [
+              -737.1304031293907,
+              1277.2469192157296
+            ]
+          ],
+          "cells": 15054,
+          "difference_from_flight_axis_deg": 4.866756296297126
+        },
+        "1000": {
+          "angle_deg": 170.48699085937727,
+          "ratio": 12.700338017662453,
+          "centre_km": [
+            5.99191453656499,
+            -16.171956129879398
+          ],
+          "covariance_km2": [
+            [
+              6703.828265728085,
+              -1032.6631838722337
+            ],
+            [
+              -1032.6631838722335,
+              714.5216293542212
+            ]
+          ],
+          "cells": 7637,
+          "difference_from_flight_axis_deg": 0.0317352965637383
+        },
+        "1500": {
+          "angle_deg": 169.71069113920768,
+          "ratio": 20.500871949455327,
+          "centre_km": [
+            15.819224579625107,
+            -13.063167662835815
+          ],
+          "covariance_km2": [
+            [
+              5160.131109294742,
+              -889.6363289946065
+            ],
+            [
+              -889.6363289946067,
+              421.0837021095553
+            ]
+          ],
+          "cells": 3894,
+          "difference_from_flight_axis_deg": 0.8080350167333279
+        }
+      },
+      "flight_lag_s": 10000,
+      "flight_angle_deg": 170.518726155941,
+      "flight_n": 4331,
+      "flight_ratio": 7.247452066683105
+    }
+  }
+}

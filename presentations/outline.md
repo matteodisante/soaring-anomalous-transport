@@ -167,60 +167,79 @@ The decks follow the reviewed manuscript and have no prescribed duration. Page n
 | 46 | One scalar rescaling leaves changes in the signed joint law |
 | 47 | One-lag vector laws leave multi-time questions open |
 
+**Time-averaged transport by region and initial altitude**
+
+| Page | Topic |
+|---:|---|
+| 48 | Compare transport magnitude before its directional structure |
+| 49 | Regional TA-MSD: coastal flights travel farther at intermediate lags |
+| 50 | Fixing the population changes the apparent long-lag growth |
+| 51 | Regional support limits what the fixed control can establish |
+| 52 | Initial-altitude groups combine transport and regional composition |
+| 53 | The late rise in Plains and Hills is sensitive to population selection |
+| 54 | The altitude-band comparison also needs its flight counts |
+| 55 | Region and origin altitude are strongly associated in this sample |
+
 **Directional structure and environment**
 
 | Page | Topic |
 |---:|---|
-| 48 | Regional plots use different clocks, weights and centring |
-| 49 | Equal east and north moments do not establish isotropy |
-| 50 | Regional position moments differ along east and north |
-| 51 | Regional velocity moments show a related directional contrast |
-| 52 | Regional uncertainty bands do not match the groups |
-| 53 | PCA describes preferred axes; wind needs independent information |
-| 54 | Alps: centred principal axes across four lags |
-| 55 | Pyrenees: centred principal axes across four lags |
-| 56 | Channel Coast: centred principal axes across four lags |
-| 57 | Alps: velocity changes retain a directional structure |
-| 58 | Pyrenees: the long-lag change coincides with falling support |
-| 59 | Channel Coast: smaller changes at 1000 s, with residual anisotropy |
-| 60 | Second-difference ellipses retain orientation after drift cancellation |
-| 61 | The regional contrast persists in a common-context control |
-| 62 | The ratio between orders changes with the lag |
-| 63 | The distribution distinguishes frequent small changes from large events |
-| 64 | Order-three support limits the long-lag regional comparison |
-| 65 | Alps: C/D/CCC has smaller coordinate-moment imbalance |
-| 66 | Pyrenees: the ordering of the two groups reverses |
-| 67 | Channel Coast: the late position contrast is pronounced |
-| 68 | Poitou-Charente: the group curves cross |
-| 69 | Champagne-Lorraine: a late contrast does not keep C/D/CCC at unity |
-| 70 | The environmental interpretation remains a hypothesis |
-| 71 | Define the target before calling it resistance to wind |
+| 56 | Regional plots use different clocks, weights and centring |
+| 57 | Equal east and north moments do not establish isotropy |
+| 58 | Regional position moments differ along east and north |
+| 59 | Regional velocity moments show a related directional contrast |
+| 60 | Regional uncertainty bands do not match the groups |
+| 61 | PCA describes preferred axes; wind needs independent information |
+| 62 | Alps: centred principal axes across four lags |
+| 63 | Pyrenees: centred principal axes across four lags |
+| 64 | Channel Coast: centred principal axes across four lags |
+| 65 | A terrain direction measured independently of the flights |
+| 66 | Alps: shared sector, with an approximately 18-degree offset |
+| 67 | Pyrenees: the long-lag spread follows the highland axis |
+| 68 | Channel Coast: an archived wind reference, independent of flights |
+| 69 | Coastal annual alignment is sensitive to the time selection |
+| 70 | What the environmental comparisons establish |
+| 71 | Alps: velocity changes retain a directional structure |
+| 72 | Pyrenees: the long-lag change coincides with falling support |
+| 73 | Channel Coast: smaller changes at 1000 s, with residual anisotropy |
+| 74 | Second-difference ellipses retain orientation after drift cancellation |
+| 75 | The regional contrast persists in a common-context control |
+| 76 | The ratio between orders changes with the lag |
+| 77 | The distribution distinguishes frequent small changes from large events |
+| 78 | Order-three support limits the long-lag regional comparison |
+| 79 | Alps: C/D/CCC has smaller coordinate-moment imbalance |
+| 80 | Pyrenees: the ordering of the two groups reverses |
+| 81 | Channel Coast: the late position contrast is pronounced |
+| 82 | Poitou-Charente: the group curves cross |
+| 83 | Champagne-Lorraine: a late contrast does not keep C/D/CCC at unity |
+| 84 | The environmental interpretation remains a hypothesis |
+| 85 | Define the target before calling it resistance to wind |
 
 **Duration and equipment composition**
 
 | Page | Topic |
 |---:|---|
-| 72 | Long flights occur in both equipment groups |
-| 73 | Duration and equipment on the common 10--1695 s interval |
-| 74 | Fixing equipment proportions removes part of the duration contrast |
+| 86 | Long flights occur in both equipment groups |
+| 87 | Duration and equipment on the common 10--1695 s interval |
+| 88 | Fixing equipment proportions removes part of the duration contrast |
 
 **Model comparisons and temporal memory**
 
 | Page | Topic |
 |---:|---|
-| 75 | The moment spectrum challenges a specific L\'evy-walk benchmark |
-| 76 | Non-Gaussian pooled increments can arise from Gaussian mixtures |
-| 77 | Velocity memory remains visible after averaging over minutes |
-| 78 | Signed correlations retain the long-lag negative values |
-| 79 | Finite velocity persistence gives a ballistic-to-diffusive crossover |
-| 80 | Which models are challenged, and which remain open? |
-| 81 | Phase-conditioned moments must include windows crossing transitions |
-| 82 | Three decisions for this meeting |
+| 89 | The moment spectrum challenges a specific L\'evy-walk benchmark |
+| 90 | Non-Gaussian pooled increments can arise from Gaussian mixtures |
+| 91 | Velocity memory remains visible after averaging over minutes |
+| 92 | Signed correlations retain the long-lag negative values |
+| 93 | Finite velocity persistence gives a ballistic-to-diffusive crossover |
+| 94 | Which models are challenged, and which remain open? |
+| 95 | Phase-conditioned moments must include windows crossing transitions |
+| 96 | Three decisions for this meeting |
 
 **Linked representations and sources**
 
 | Page | Topic |
 |---:|---|
-| 83 | Squared laws transform the same distributional evidence |
-| 84 | Sources and the scope of the evidence |
-| 85 | Joint laws and environmental interpretation: additional sources |
+| 97 | Squared laws transform the same distributional evidence |
+| 98 | Sources and the scope of the evidence |
+| 99 | Joint laws and environmental interpretation: additional sources |

@@ -3,6 +3,9 @@
 \input{theme}
 \input{data/ch3_revision.tex}
 \input{data/ch3_regional_variations_values.tex}
+\input{data/ch3_grouped_tamsd_values.tex}
+\input{data/ch3_terrain_axes_values.tex}
+\input{data/ch3_channel_wind_values.tex}
 \input{data/duration_equipment.tex}
 \input{data/kinematic_isotropy.tex}
 \input{data/msd.tex}
@@ -547,6 +550,86 @@ several times, and hence full process self-similarity, untested.
 \speaker{Finite empirical distributions can differ under a common population law. Calibration must respect paired flights and dependent origins. Energy distance is an alternative multivariate diagnostic under finite first moments, but choosing another distance does not automatically supply the right uncertainty model.}
 \end{frame}
 
+\section{Time-averaged transport by region and initial altitude}
+
+\begin{frame}{Compare transport magnitude before its directional structure}
+\begin{columns}[T,onlytextwidth]
+\column{.49\textwidth}
+\small\textbf{Two groupings}\par\medskip
+Alps, Pyrenees and Channel Coast use the defined geographic boxes.\par\medskip
+Initial GNSS altitude $h_0$ defines:\par\smallskip
+\begin{tabular}{@{}lr@{}}\toprule
+Plains & $h_0<300$ m\\
+Hills & $300\le h_0<800$ m\\
+Low mountains & $800\le h_0<1500$ m\\
+High mountains & $h_0\ge1500$ m\\\bottomrule
+\end{tabular}
+\column{.47\textwidth}
+\small\textbf{One flight-level estimator}\par
+\[
+ \begin{aligned}
+ m_f(\tau)&=\frac{\sum_s n_{fs}m_{fs}}{\sum_s n_{fs}},\\
+ M_g(\tau)&=\frac{1}{N_g}\sum_{f\in g}m_f(\tau).
+ \end{aligned}
+\]
+Pool supported origins inside each flight, then weight contributing flights equally.
+\par\medskip
+Compare available segments with a fixed set supporting the largest lag.
+\end{columns}
+\question{How much of a group contrast concerns transport, and how much concerns which flights remain?}
+\source{Native-grid TA-MSD; \num{\StatGroupedParaFlights} para / \num{\StatGroupedHangFlights} hang flights. Altitude groups include the full eligible archive.}
+\speaker{The altitude variable is the cleaned GNSS coordinate origin, with no pressure fallback. The chapter-two exploratory map used the raw first altitude with a fallback, so the two grouping sources must be distinguished. The familiar names do not measure relief, terrain encountered along a route or instantaneous flight altitude. Native intervals are at most ten seconds, each segment has at least eight fixes, and stored lag support ends at half the segment's grid length. Requested lags are rounded to native steps. No displacement crosses a gap. The fixed control retains identical segments and flights over all lags, but available time origins and their segment weights still vary.}
+\end{frame}
+
+\begin{frame}{Regional TA-MSD: coastal flights travel farther at intermediate lags}
+\centering\fig[50mm]{tamsd-regions-growth.pdf}
+\question{Does the coastal ordering persist after restricting all lags to the same long segments?}
+\source{Solid: available segments. Dashed: fixed long segments. Shading: pointwise 95\% site--day bootstrap intervals for solid curves.}
+\speaker{At the requested 1049-second lag, paraglider RMS displacements are 5.54 km in the Alps, 4.69 km in the Pyrenees and 7.42 km on the coast. The fixed-segment values are 6.97, 6.58 and 9.65 km. The coastal ordering remains, whereas the mountain contrast narrows. These are RMS endpoint displacements, not path lengths. Hang gliders have the same available-population ordering, but the coastal sample contains only 26 flights. Lags are the native TAMSD grid; 1049 seconds must not be labeled an exact 1000-second PCA lag.}
+\end{frame}
+
+\begin{frame}{Fixing the population changes the apparent long-lag growth}
+\centering\fig[49mm]{tamsd-regions-velocity.pdf}
+\question{Would the upward turn remain if short flights could contribute observed long-lag displacements?}
+\source{The ordinate is RMS interval-mean ground speed, up to native-grid rounding. A horizontal curve corresponds to quadratic TAMSD growth.}
+\speaker{The available coastal paraglider TAMSD has a descriptive long-range slope of 2.20; the fixed-segment curve has 1.98. The superquadratic appearance therefore does not persist in this fixed-population fitted comparison. It is not evidence for an intrinsic superballistic process. The Alpine and Pyrenean fixed curves continue to fall in this normalization. Their higher intermediate-lag amplitude also shows that long-flight selection changes the observed population before short flights lose support. These are descriptive interval fits, not Hurst estimates or calibrated significance tests.}
+\end{frame}
+
+\begin{frame}{Regional support limits what the fixed control can establish}
+\centering\fig[49mm]{tamsd-regions-support.pdf}
+\question{Which regional conclusions have enough long-flight support in both disciplines?}
+\source{Fixed paraglider flights: \num{\StatGroupedParaAlpsFlightsFixed}, \num{\StatGroupedParaPyreneesFlightsFixed}, \num{\StatGroupedParaChannelCoastFlightsFixed}.}
+\speaker{The solid curves show changing support and the dashed curves fixed membership. The fixed Alpine hang-glider control contains 458 flights, but the Pyrenean and coastal controls contain only two each. Those two-flight means are saved but omitted from displayed population curves. Eight flights is a display minimum, not a precision guarantee. Intervals require at least twenty site-day clusters; overlapping origins are never independent bootstrap units.}
+\end{frame}
+
+\begin{frame}{Initial-altitude groups combine transport and regional composition}
+\centering\fig[50mm]{tamsd-altitude-growth.pdf}
+\question{Does an altitude-band contrast remain when region and contributing segments are held comparable?}
+\source{Bands use the cleaned GNSS origin: Plains, Hills, Low mountains, High mountains. All eligible regions enter these curves.}
+\speaker{At 1049 seconds the available paraglider RMS values are 7.23, 6.25, 5.40 and 5.66 km. The altitude ordering is not monotonic: the highest band exceeds the lower mountain band. For hang gliders the values are 9.91, 9.42, 8.38 and 7.49 km, but those groups differ in geographic and flight composition. Neither ordering is a within-pilot effect of altitude. The next panels expose the effect of fixing long segments and the lack of comparable regional-altitude populations.}
+\end{frame}
+
+\begin{frame}{The late rise in Plains and Hills is sensitive to population selection}
+\centering\fig[49mm]{tamsd-altitude-velocity.pdf}
+\question{Which parts of the ordering survive the fixed long-segment comparison?}
+\source{Solid: available segments; dashed: identical long segments at every lag. Shading is pointwise, not simultaneous.}
+\speaker{Paraglider long-range slopes change from 2.19 to 1.97 in Plains and from 2.21 to 1.93 in Hills after fixing the contributing segments. Their RMS amplitudes remain above the mountain-labelled groups near the reference lag, but their separation becomes smaller. For hang gliders, the Plains/Hills ordering reverses in the long-segment population. These comparisons show selection sensitivity; they do not isolate an altitude or terrain mechanism.}
+\end{frame}
+
+\begin{frame}{The altitude-band comparison also needs its flight counts}
+\centering\fig[49mm]{tamsd-altitude-support.pdf}
+\question{How much does the balance between altitude groups change as the lag increases?}
+\source{Counts concern supported flights. The fixed-segment control retains membership; its origins still depend on lag.}
+\speaker{Most eligible flights fall in the two mountain-labelled altitude bands, and long-flight retention differs greatly between bands. The paraglider fixed counts are 417, 514, 5452 and 7982; hang-glider counts are 45, 68, 348 and 102. The fixed control is conditional on long continuous segments, approximately twenty thousand seconds, with exact admission determined by the native-grid half-length rule. This explains small count differences from exact common-grid controls.}
+\end{frame}
+
+\begin{frame}{Region and origin altitude are strongly associated in this sample}
+\centering\fig[49mm]{ch3_tamsd_region_altitude.pdf}
+\question{Can a pooled altitude contrast be interpreted as terrain when the same strata barely overlap?}
+\source{RMS displacement at the requested \StatGroupedReferenceLagS-s lag; available segments. Descriptive cells, with no calibrated intervals.}
+\speaker{The coastal sample mainly occupies Plains, while the mountain regions mostly occupy the two higher bands. Within Alpine paragliders, altitude-band amplitudes are much closer than in the pooled altitude comparison. The few coastal records with high initial altitude do not prove high terrain; records can begin airborne. Values below eight flights are omitted, with counts retained. Later, the coastal V2 change is smaller despite larger TAMSD: that is compatible with more persistent net advancement, but the two diagnostics use different lag grids and support, so it is a qualitative comparison. Independent wind and route information are needed for attribution. We now examine directionality, which a scalar TAMSD cannot identify.}
+\end{frame}
+
 \section{Directional structure and environment}
 
 \begin{frame}{Regional plots use different clocks, weights and centring}
@@ -643,6 +726,95 @@ Different marginal exponents, or changing joint dependence, can prevent radial s
 \speaker{The covariance pools eligible regional origins from the full archive. Ellipses are centred and normalized by the centred RMS radius; they hide absolute magnitude and drift. The axis is modulo 180 degrees and becomes poorly determined near equal eigenvalues. The lags are exactly 10, 100, 1000 and 10000 seconds, measured on the 10-second coordinate grid. Every supported flight contributes at each lag, and increments stay inside individual segments. The displayed counts shrink at long lags; covariance changes can therefore include population selection.}
 \end{frame}
 
+\begin{frame}{A terrain direction measured independently of the flights}
+\begin{columns}[T,onlytextwidth]
+\column{.54\textwidth}
+\small
+\textbf{NOAA ETOPO 2022}\par\medskip
+Same Alpine and Pyrenean take-off boxes.\par\medskip
+One-arc-minute elevation sampling; retain the footprint above 1000 m.\par\medskip
+Project cell centres to regional east/north coordinates. The area-weighted spatial covariance gives the main axis.
+\column{.42\textwidth}
+\small
+\textbf{Definition sensitivity}\par\medskip
+Thresholds: 500, 1000, 1500 m.\par\medskip
+Alps: \StatTerrainAlpsMinAngle--\StatTerrainAlpsMaxAngle$^\circ$.\par
+Pyrenees: \StatTerrainPyreneesMinAngle--\StatTerrainPyreneesMaxAngle$^\circ$.\par\medskip
+These spans are not confidence intervals; the axis describes an area, not a traced crest.
+\end{columns}
+\question{Would local axes along the actual tracks change the regional comparison?}
+\source{\href{https://doi.org/10.25921/fd45-gt74}{NOAA NCEI, ETOPO 2022}. Both elevation subsets, requests, code and hashes are archived. Angles are counterclockwise from east, modulo $180^\circ$.}
+\speaker{Every fourth cell of the 15-arc-second grid gives one-arc-minute spacing. We select elevations at or above 1000 metres without fitting the threshold to the flight PCA. WGS84 tangent coordinates use the box centre and zero projection height. Weights are cosine latitude to approximate cell area; elevation above the threshold adds no weight. Threshold sensitivity is descriptive. The box boundaries, curved chains and plateaux affect the direction. Flight boxes identify take-offs, while increments can leave them and use flight-centred tangent frames. This is an indicative regional comparison.}
+\end{frame}
+
+\begin{frame}{Alps: shared sector, with an approximately 18-degree offset}
+\begin{columns}[c,onlytextwidth]
+\column{.65\textwidth}
+\fig[49mm]{ch3_terrain_axis_alps.pdf}
+\column{.32\textwidth}
+\small
+Terrain: \StatTerrainAlpsAngle$^\circ$.\par\medskip
+Flight PCA: \StatTerrainAlpsFlightAngle$^\circ$.\par\medskip
+Separation: \StatTerrainAlpsDifference$^\circ$.\par\medskip
+\num{\StatTerrainAlpsFlights} flights support 10,000 s.
+\end{columns}
+\question{How much of the offset reflects Alpine curvature, box truncation or route selection?}
+\source{Black: highland-footprint axis. Dashed colour: current flight PCA, shifted to the same centre. Line lengths have no physical meaning.}
+\speaker{Both orientations occupy the northeast-southwest sector, but the flight covariance is more northward. A simple claim that flights run parallel to one Alpine axis misses the approximately eighteen-degree difference. The terrain angle spans 42.1 to 47.9 degrees over the three thresholds, so this sensitivity does not eliminate the offset. Wind and long-flight selection remain possible contributors; the figure neither isolates a terrain effect nor tests pilot skill.}
+\end{frame}
+
+\begin{frame}{Pyrenees: the long-lag spread follows the highland axis}
+\begin{columns}[c,onlytextwidth]
+\column{.65\textwidth}
+\fig[49mm]{ch3_terrain_axis_pyrenees.pdf}
+\column{.32\textwidth}
+\small
+Terrain: \StatTerrainPyreneesAngle$^\circ$.\par\medskip
+Flight PCA: \StatTerrainPyreneesFlightAngle$^\circ$.\par\medskip
+Separation: less than $1^\circ$.\par\medskip
+\num{\StatTerrainPyreneesFlights} flights support 10,000 s.
+\end{columns}
+\question{Does the alignment persist for fixed flights and for terrain sampled along their routes?}
+\source{ETOPO footprint above 1000 m; threshold sensitivity: \StatTerrainPyreneesMinAngle--\StatTerrainPyreneesMaxAngle$^\circ$. Decimal agreement does not imply this physical precision.}
+\speaker{The near-parallel axes support a geographical association between displacement orientation and the range. They do not establish the causal contribution of terrain. Winds can align with the same range and pilots can select routes along it. The sensitivity span is not a sampling confidence interval. The comparison is made within the exact Pyrenean take-off box, but flight increments can extend beyond it.}
+\end{frame}
+
+\begin{frame}{Channel Coast: an archived wind reference, independent of flights}
+\small
+\textbf{ERA5, 2016--2025: nine representative cells, hourly wind at 10 and 100 m.}
+\[
+ u=-s\sin\phi,\quad v=-s\cos\phi,\qquad
+ \theta_w=\operatorname{atan2}(\langle v\rangle,\langle u\rangle).
+\]
+Here $\phi$ is meteorological \emph{from} north, clockwise. Average velocity components with approximate cell-area weights, then compare axes modulo $180^\circ$.\par\medskip
+All hours at 10 m define the main reference. Checks use 100 m and April--September, 09--17 UTC at 10 m.\par\medskip
+\textbf{All input values are preserved: 6.3 MB compressed, reusable offline.}
+\question{Which wind height and time selection best represent the flights contributing at 10,000 s?}
+\source{\href{https://doi.org/10.24381/cds.adbb2d47}{Copernicus/ECMWF ERA5}, via \href{https://open-meteo.com/en/docs/historical-weather-api}{Open-Meteo}. Exact URLs, coordinates, units and hashes accompany the data.}
+\speaker{We request the centres of a three-by-three partition of the exact Channel Coast box and select the nearest ERA5 cells, without a land preference or elevation downscaling. Returned latitudes are 48.75, 49.75 and 50.75 degrees; longitudes are minus 1.25, zero and 1.25 degrees. All nine cells have 87672 consecutive UTC hours. Cosine-latitude weights approximate cell area. This is a sparse recent-decade climatology, not weather matched to individual flights or the whole archive period. Six-hour subsampling changes the annual axis by at most 0.52 degrees over all phase offsets. Hourly data are retained because their storage cost is small and they preserve distribution and daytime checks. The complete JSON API responses are compressed without loss; these are provider-rounded values, not native GRIB fields.}
+\end{frame}
+
+\begin{frame}{Coastal annual alignment is sensitive to the time selection}
+\centering\fig[52mm]{ch3_channel_wind.pdf}
+\question{The annual reference is close to PCA; the warm daytime reference is about 28 degrees away. Which comparison is physically relevant?}
+\source{All angles counterclockwise from east. The rose shows where air moves towards. Mean-vector speed / mean speed = \StatWindSurfaceResultant.}
+\speaker{The annual 10-m wind axis is 25.8 degrees, corresponding to wind from meteorological 244.2 degrees, and the flight PCA axis is 30.2 degrees. The separation is 4.3 degrees; at 100 metres it is 3.3 degrees. April to September, 09 to 17 UTC inclusive, gives a 2.1-degree wind axis and a 28.1-degree separation. Thus the annual agreement does not persist in the warm daytime check. This check is an operational window, not actual recorded flight conditions. The rose uses weighted 15-degree sectors, excludes speeds below 0.5 m/s and normalises included observations. Means include all hours. The ratio 0.28 indicates directional cancellation, not confidence or the fraction of winds near the mean. Grey ticks show individual cell means. The same 1680 coastal flights define the comparison PCA.}
+\end{frame}
+
+\begin{frame}{What the environmental comparisons establish}
+\small
+\begin{tabular}{@{}p{2cm}p{10.8cm}@{}}\toprule
+Region & Conclusion supported by this comparison\\\midrule
+Pyrenees & Close terrain--flight alignment; a geographical association worth testing along tracks.\\[2mm]
+Alps & Same broad sector, with an approximately 18-degree offset from the mean highland axis.\\[2mm]
+Channel Coast & Close annual wind--flight alignment, but a substantial change under warm daytime selection.\\\bottomrule
+\end{tabular}\par\medskip
+A common constant wind shifts the mean displacement by $\tau\mathbf w$; centring removes it. Variable winds and route responses can still shape covariance.
+\question{Match flight times, heights and routes to wind and local terrain before attributing the ellipse or equipment contrasts to a cause.}
+\source{Independent regional references constrain an interpretation. They do not separate wind, terrain, route choice and long-flight selection.}
+\speaker{The PCA concerns centred displacement spread, whereas the wind reference concerns a mean velocity. Their orientation agreement alone cannot show that mean wind causes covariance anisotropy. Constant additive drift cancels when displacement is centred at fixed lag. Variable drift between flights, time-varying forcing and route decisions can alter covariance; their contributions need matched observations. The Pyrenean agreement is the strongest geographical alignment here. The coastal seasonal sensitivity is a substantive counterpoint, not a cosmetic uncertainty. Equipment class is not measured pilot expertise, and this comparison cannot establish resistance to wind.}
+\end{frame}
+
 \begin{frame}{Alps: velocity changes retain a directional structure}
 \centering\fig[51mm]{variation-region-alps.pdf}
 \question{Which part of the lag dependence persists with common origins and after changing difference order?}
@@ -672,7 +844,7 @@ Different marginal exponents, or changing joint dependence, can prevent radial s
 \centering\fig[40mm]{ch3_variation_axes.pdf}
 \question{Do the resolved axes align with independent terrain and wind information?}
 \source{Matched-order origins, equal flight weights; each ellipse is normalised by its own centred RMS.}
-\speaker{The four colours match the exact PCA display lags. Ellipses describe centred spread and omit both amplitude and mean. Near-circular ellipses, especially the coastal ten-second one, do not resolve a useful direction. At 1000 seconds the order-two axes are approximately 65 degrees in the Alps, 171 degrees in the Pyrenees and 31 degrees on the coast, counterclockwise from east. Axes are modulo 180 degrees and do not supply signed wind directions. Independent indicative terrain axes are a separate comparison; regional box axes do not measure terrain exposure along individual tracks.}
+\speaker{The four colours match the exact PCA display lags. Ellipses describe centred spread and omit both amplitude and mean. Near-circular ellipses, especially the coastal ten-second one, do not resolve a useful direction. At 1000 seconds the order-two axes are approximately 65 degrees in the Alps, 171 degrees in the Pyrenees and 31 degrees on the coast, counterclockwise from east. Axes are modulo 180 degrees and do not supply signed wind directions. The preceding independent comparisons provide regional references; they do not measure terrain or weather exposure along individual tracks, and annual coastal wind alignment changes with the time selection.}
 \end{frame}
 
 \begin{frame}{The regional contrast persists in a common-context control}
@@ -756,7 +928,7 @@ moment balance are different outcomes.
 \par\medskip
 A first comparison would match overlapping site--day, duration and task support;
 then separate mean drift, centred variability and individual route orientation.
-Independent wind and local terrain axes would support environmental alignment.
+Regional terrain and wind comparisons suggest alignment, with temporal sensitivity on the coast; local track-matched references are still needed.
 \question{Which target and matched comparison should be the first priority?}
 \speaker{The site--day bootstrap adjusts one uncertainty structure; it does not perform matching or remove confounding. Where data permit, the same pilot on different equipment could help assess selection, but weather and task still require control. Differentiating velocity removes a constant wind term, but not its variation along the trajectory or the pilot's manoeuvres.}
 \end{frame}
