@@ -1,0 +1,119 @@
+{
+  "status": "complete",
+  "run_id": "regional-variations-2026-09-12",
+  "parent_run_id": "regional-pca-lags-2026-09-12",
+  "parent_update_sha256": "ab0628828ab209c2d3e050ef01b0d145e86641b15d61755a0e6d0383bcc27355",
+  "baseline_run_id": "20260912T133040Z-073601cb",
+  "cleaning": {
+    "configuration": {
+      "alt_channel": {
+        "baro_witness_min_range_m": 30.0,
+        "baro_witness_present_min": 0.95,
+        "gnss_min_range_m": 30.0,
+        "gnss_present_min": 0.95
+      },
+      "fix": {
+        "frozen_delta_z_m": 5.0,
+        "frozen_eps_m": 15.0,
+        "frozen_tau_s": 60.0,
+        "hampel_eps_min_m": 15.0,
+        "hampel_k": 5.0,
+        "hampel_min_window_fixes": 5,
+        "hampel_window_s": 20.0,
+        "integrity_max_fraction": 0.1,
+        "max_altitude_m": 6000.0,
+        "max_horizontal_speed_mps": {
+          "hang gliders": 55.0,
+          "paragliders": 45.0
+        },
+        "max_vertical_speed_mps": 10.0,
+        "min_altitude_m": -100.0,
+        "vz_min_window_fixes": 5,
+        "vz_window_s": 5.0
+      },
+      "flight": {
+        "max_duration_s": 57600.0,
+        "min_alt_range_m": 600.0,
+        "min_duration_s": 2400.0,
+        "min_path_km": 20.0
+      },
+      "sampling": {
+        "max_gap_factor": 10.0,
+        "max_gap_seconds": 20.0,
+        "max_missing_fraction": 0.1,
+        "min_segment_duration_s": 90.0
+      },
+      "savgol": {
+        "polyorder": 3,
+        "tau_c_horizontal_s": 5.0,
+        "tau_c_vertical_s": 5.0
+      },
+      "trimming": {
+        "ground_flatness_m": 5.0,
+        "interior_ground_s": 600.0,
+        "sustained_s": 30.0,
+        "takeoff_speed_mps": 5.0
+      }
+    },
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "pyarrow": "24.0.0",
+      "scipy": "1.18.0"
+    },
+    "pipeline_version": "2.3.0",
+    "source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85"
+  },
+  "operation": "new regional finite-difference measurement on verified PCA coordinates; inherited numerical outputs unchanged",
+  "numerical_audit_sha256": "cadcf9dae7d1e39e7d06128bc12dfa77f71ab828aaa4837706c88681fec9a527",
+  "figure_manifest_sha256": "8f6f1dce495eef0549c4b04a3b230164870d98005feaa3e36e4c6089916db7aa",
+  "outputs": {
+    "ch3_regional_variations.pdf": {
+      "sha256": "541381e934670db49b5155e117d2785f4edb4b54166883e177f7e48819abad5d",
+      "producer": "scripts/reporting/ch3_global_transport/generate_regional_variations.py",
+      "historical_control": false
+    },
+    "ch3_variation_axes.pdf": {
+      "sha256": "d6ef509d238378efd31a888d34db971af266631d64673180356a0c381a69a4c3",
+      "producer": "scripts/reporting/ch3_global_transport/generate_regional_variations.py",
+      "historical_control": false
+    },
+    "ch3_variation_orders.pdf": {
+      "sha256": "ab85dc1a1f7cf04013625feef735355f617ddeb5ff497e8715b2c8cf7b01e64f",
+      "producer": "scripts/reporting/ch3_global_transport/generate_regional_variations.py",
+      "historical_control": false
+    },
+    "ch3_variation_distributions.pdf": {
+      "sha256": "082fb44901a8c15a9932ecc5e89fc6d5cbc5cf62eab8f2af175b843c2eec410d",
+      "producer": "scripts/reporting/ch3_global_transport/generate_regional_variations.py",
+      "historical_control": false
+    },
+    "ch3_variation_controls.pdf": {
+      "sha256": "924cc09af61752d53ae05c647fc83852345403225d831dab5e48526256dc40bb",
+      "producer": "scripts/reporting/ch3_global_transport/generate_regional_variations.py",
+      "historical_control": false
+    },
+    "ch3_variation_support.pdf": {
+      "sha256": "e0d260ccc21e3e12df49d30f5b4b205ef90534c5b0accc9db2b8c837596ab363",
+      "producer": "scripts/reporting/ch3_global_transport/generate_regional_variations.py",
+      "historical_control": false
+    },
+    "ch3_regional_variations_values.tex": {
+      "sha256": "cbee52b20093dbcdb60b133d4601331189aa30d2f472a023710d9fbc30611814",
+      "producer": "scripts/reporting/ch3_global_transport/generate_regional_variations.py",
+      "historical_control": false
+    }
+  },
+  "compressed_report": {
+    "archive_name": "ch3_regional_variations.json.gz",
+    "raw_sha256": "c738311bc736d299b65c98066ea705f67edfa2577e1b28112f4706cb02a2c2d4",
+    "raw_size_bytes": 2256577,
+    "gzip_sha256": "3b1951934610ed85ff8d3a933d59bede4e636a61c9871b6407e9208e219993fe",
+    "gzip_size_bytes": 420822
+  },
+  "post_run_source_alignment": {
+    "path": "scripts/reporting/ch3_global_transport/measure_regional_variations.py",
+    "executed_archive": "executed-measure-regional-variations.py.gz",
+    "scope": "CLI now also resolves absolute coordinate-store paths; all non-main function ASTs and the complete measurement module are unchanged"
+  }
+}

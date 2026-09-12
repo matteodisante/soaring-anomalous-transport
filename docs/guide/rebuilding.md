@@ -165,6 +165,27 @@ Its separate manuscript review records that lineage; it does not claim a new
 execution of cleaning, distribution fits or bootstrap calculations. A future
 complete rebuild uses the same exact-lag PCA implementation directly.
 
+The regional finite-difference extension is recorded separately in
+`revisions/regional-variations-2026-09-12/numerical-update.json`. It preserves
+that PCA revision and all earlier generated inputs, then adds three difference
+orders, directional moments, distribution summaries and site-day uncertainty.
+Its reviewed manuscript and presentation inputs include both numerical updates.
+The `regional_variations` rebuild stage runs after `transport_full` and uses
+the newly generated full coordinate stores. It needs no additional raw-data pass.
+For a focused measurement from the verified September 12 stores:
+
+```bash
+.venv/bin/python scripts/reporting/ch3_global_transport/measure_regional_variations.py \
+  --out /path/to/a/new/regional-variation-run
+```
+
+Use a new output directory for a new measurement; preserve completed reports.
+The [regional revision record](../../revisions/regional-variations-2026-09-12/README.md)
+documents rendering, independent numerical checks, manuscript review and slide
+preparation. Its measurements took 168 seconds on the delivery machine using
+four workers and 500 bootstrap replicates; this is not a timing estimate for
+the full cleaning and thesis rebuild.
+
 The final September 11 review also corrected an omitted altitude-admission row in
 the rejection cascade. That was a numerical report error, not a plotting-only edit.
 The report was regenerated from unchanged flight metadata and checked against an

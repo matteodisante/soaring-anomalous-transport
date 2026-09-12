@@ -23,6 +23,9 @@ weighting and lag-support conventions:
 | `ch3_models.pdf` | same full eligible archive | pooled moment spectrum and centred Mardia excess |
 | `ch3_velocity_memory.pdf` | same full eligible archive | positive coarse VACF on log–log axes, with signed companion panels |
 | `ch3_pca.pdf` | same full eligible archive | centred regional displacement covariance, eigenvalue ratio and axis at exactly 10, 100, 1000 and 10,000 s |
+| `ch3_regional_variations.pdf`, `ch3_variation_axes.pdf` | `generate_regional_variations.py` | RMS interval-mean velocity changes and covariance geometry of three difference orders |
+| `ch3_variation_controls.pdf`, `ch3_variation_distributions.pdf` | same regional measurement | shared origins, context standardisation, regional ratios and full-support magnitude distributions |
+| `ch3_variation_orders.pdf`, `ch3_variation_support.pdf`, `ch3_regional_variations_values.tex` | same regional measurement | order-three comparison, contributing flights/site-days and generated values |
 | `ch3_duration.pdf`, `ch3_duration_equipment.pdf`, `ch3_duration_composition.pdf` | full archive identified segment TAMSDs | equal-flight duration cohorts, EN strata and fixed class proportions |
 | `duration_equipment.tex`, `_table.tex`, `.json` | same archive duration report | slopes, support, cohort counts and mixture controls |
 | `ch3_revision.tex`, `.json` | same full eligible archive | generated values, flight IDs, source metadata, support and code provenance |
@@ -74,6 +77,63 @@ Champagne-Lorraine. These are latitude/longitude launch boxes, not terrain-model
 classifications or samples matched on weather. Use their separate curves to assess
 whether a coastal observation generalizes, rather than treating them as equivalent
 wind-only environments.
+
+## Regional second and third differences
+
+The regional extension uses every eligible flight in the Alps, Pyrenees and
+Channel Coast launch boxes: 108,189 paragliders and 4,747 hang gliders. It reuses
+the SHA-256-verified coordinate stores of the exact-lag PCA revision. It does
+not repeat cleaning or change the preceding transport measurements. The report,
+independent audit and delivery lineage are in
+`revisions/regional-variations-2026-09-12/`.
+
+For `A2 = r(t+2τ) − 2r(t+τ) + r(t)`, `V2 = E|A2|²` is invariant under adding
+a constant position or velocity. It can still depend on lag, region and route
+geometry. `D2 = sqrt(V2)/τ` is the RMS change between adjacent interval-mean
+ground velocities, in m/s. This identity needs no stationarity or power law.
+The vector mean and centred covariance separate directional variation from a
+nonzero average change: `V2 = tr Cov(A2) + |E A2|²`.
+
+There are 18 physical lags from 10 to 10,000 s and three support conventions:
+
+- **Available:** each order uses its supported origins, spaced by τ.
+- **Matched:** all three orders share origins with continuous support through
+  `3τ`; origin spacing remains τ. This is the order-comparison estimator.
+- **Common:** all orders and all lags through 1000 s share precisely the same
+  origins, spaced by 10 s, with 3000 s of continuous support. This controls
+  changes of flights, origins and their weights across these lags.
+
+No stencil crosses a segment boundary. Main results give each flight equal
+weight; pooled-origin sensitivity is saved separately and is closer to the
+weighting used in the preceding PCA. Five hundred site-day bootstrap replicates
+reuse cluster multiplicities across lags and orders. Unknown keys are singleton
+clusters. Pointwise 95% intervals require at least 20 clusters and 90% finite
+replicates. Regional RMS ratios additionally have simultaneous bands over the
+supported lag family. These do not account for shared conditions between
+different site-days or unobserved selection.
+
+A separate descriptive comparison standardises open/closed task, retained
+duration, season period and equipment across the three regions. Its 23 shared
+paraglider strata contain at least ten flights per region each. The target
+weights are proportional to the minimum regional stratum counts. This control
+has no calibrated confidence interval; hang gliders have no shared strata.
+
+At 1000 s with common origins, paraglider D2 is 5.31, 4.89 and 3.72 m/s in the
+Alps, Pyrenees and Channel Coast. The Alps/Pyrenees ratio is 1.086 (simultaneous
+95% band 1.074–1.097), and Alps/Coast is 1.426 (1.403–1.449). The ordering changes
+at short lag. Full-support distributions show whether changes involve typical
+windows or tails; upper-decile squared-contribution bounds reflect histogram
+resolution, not sampling uncertainty. Launch regions do not measure wind
+exposure, so these associations do not establish a wind mechanism.
+
+Order three cancels constant acceleration and requires `3τ` of support. It
+amplifies independent position-error variance more strongly than order two
+(20 versus 6 per coordinate). With centred stationary increments whose variance
+is `Kτ^(2H)` through `3τ`, the predicted ratio is
+`V3/V2 = (15 − 6·2^(2H) + 3^(2H))/(4 − 2^(2H))`. The observed lag-dependent
+ratios are an additional model check, not a validated Hurst estimate. Smooth
+turning, smoothing and decreasing support remain relevant. The 10,000-s matched
+comparison retains only 1865, 3 and 36 paragliders in the three regions.
 
 ## The 10–10,000 second measurement
 
