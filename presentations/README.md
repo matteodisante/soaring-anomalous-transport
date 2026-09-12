@@ -1,6 +1,6 @@
 # Presentazioni dei capitoli 2 e 3
 
-Queste presentazioni raccontano la tesi revisionata il 12 settembre 2026, con
+Queste presentazioni raccontano la tesi revisionata il 13 settembre 2026, con
 cleaning 2.3.0 e risultati del run completo `20260912T133040Z-073601cb`, con
 PCA regionale calcolata a 10, 100, 1000 e 10.000 s e documentata nella revisione
 `regional-pca-lags-2026-09-12`. L'estensione
@@ -9,7 +9,9 @@ covarianze direzionali, distribuzioni e controlli della popolazione.
 `grouped-tamsd-2026-09-12` aggiunge la TAMSD per regione e quota iniziale,
 con un controllo che mantiene gli stessi segmenti a tutti i lag.
 `environment-axis-integration-2026-09-12` integra gli assi ETOPO dei rilievi
-e il riferimento ERA5 per il vento costiero, con metodi, sensibilità e limiti.
+e il riferimento ERA5 per il vento costiero. La revisione
+`channel-wind-flight-altitude-2026-09-13` valuta il vento alla quota media
+delle finestre della PCA, con orari annuali e controlli stagionali separati.
 Sono capitoli da discutere con i supervisors, senza durata prestabilita.
 Le domande scientifiche accompagnano i risultati; i confronti tra versioni
 precedenti della pipeline non fanno parte delle slide.
@@ -17,7 +19,7 @@ precedenti della pipeline non fanno parte delle slide.
 | Documento | Slide | Versione con note |
 |---|---:|---|
 | [Capitolo 2](chapter2.pdf) | 58 | [PDF con note](chapter2-notes.pdf) |
-| [Capitolo 3](chapter3.pdf) | 99 | [PDF con note](chapter3-notes.pdf) |
+| [Capitolo 3](chapter3.pdf) | 101 | [PDF con note](chapter3-notes.pdf) |
 
 L'[indice](outline.md) riporta l'ordine e le pagine. I PDF con note affiancano
 alla slide le spiegazioni su stimatore, popolazione, limiti e interpretazione.
@@ -62,7 +64,7 @@ python3 presentations/build.py all --notes
 Per rigenerare gli asset dal manoscritto revisionato nella stessa checkout:
 
 ```bash
-uv run --no-project --with pypdf python presentations/prepare_assets.py --pca-update revisions/regional-pca-lags-2026-09-12 --variation-update revisions/regional-variations-2026-09-12 --tamsd-update revisions/grouped-tamsd-2026-09-12 --environment-update revisions/environment-axis-integration-2026-09-12
+uv run --no-project --with pypdf python presentations/prepare_assets.py --pca-update revisions/regional-pca-lags-2026-09-12 --variation-update revisions/regional-variations-2026-09-12 --tamsd-update revisions/grouped-tamsd-2026-09-12 --environment-update revisions/environment-axis-integration-2026-09-12 --wind-altitude-update revisions/channel-wind-flight-altitude-2026-09-13
 uv run --no-project --with pypdf python presentations/crop_chapter_panels.py
 .venv/bin/python presentations/render_figures.py
 .venv/bin/python presentations/render_chapter3_panels.py
@@ -97,10 +99,19 @@ Il collegamento `soaring-viewer://open` nella slide dell'esempio reale richiede
 il launcher macOS locale già previsto dal progetto; `install_viewer_link.py`
 lo registra. Il grafico incorporato resta disponibile per la discussione offline.
 
-Le sei slide ambientali confrontano i rilievi con la PCA a 10.000 s e il vento
+Le otto slide ambientali confrontano i rilievi con la PCA a 10.000 s e il vento
 con l'asse costiero. I Pirenei mostrano un forte allineamento; nelle Alpi rimane
-uno scarto di circa 18°. La media annuale ERA5 è vicina all'asse costiero, ma
-la selezione diurna della stagione calda aumenta lo scarto a circa 28°.
-Questa sensibilità e la differenza tra vento medio e covarianza centrata sono
-parte della conclusione. I nove file ERA5 orari sono conservati nel progetto
-(6.33 MB compressi) e sull'SSD, con istruzioni per il riuso offline.
+uno scarto di circa 18°. Per la costa si misura una quota media di 1006 m sulle
+2013 finestre della PCA, da 1680 voli. Il vento ERA5 viene interpolato a questa
+quota usando le altezze dei livelli atmosferici di ogni ora. Gli assi annuali
+sono 15.8° per tutte le ore e 17.9° per le 09–17 UTC, contro 30.2° della PCA:
+scarti di 14.4° e 12.3°. La selezione aprile–settembre resta un controllo
+separato, con scarti di 14.2° e 9.6°.
+
+Il confronto annuale in quota è meno allineato di quello al suolo, ma cambia
+meno con la stagione. Le slide discutono il ruolo della quota, i limiti del
+riferimento GNSS, il supporto comune per la sensibilità verticale e il bisogno
+di vento appaiato alle condizioni reali dei voli. La media del vento e la
+covarianza centrata sono statistiche diverse: la somiglianza degli assi non
+identifica una causa. Tutti i dati usati sono conservati nel progetto e su SSD:
+32.22 MB compressi per i livelli atmosferici, oltre ai 6.33 MB dei dati al suolo.

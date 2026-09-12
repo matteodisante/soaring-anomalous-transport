@@ -1,19 +1,19 @@
 {
-  "verified_utc": "2026-09-12T17:38:29.993919+00:00",
-  "numerical_run_id": "environment-axis-integration-2026-09-12",
+  "verified_utc": "2026-09-12T23:01:17.209475+00:00",
+  "numerical_run_id": "channel-wind-flight-altitude-2026-09-13",
   "reviewed_thesis": {
     "status": "complete",
-    "reviewed_utc": "2026-09-12T17:31:19.744081+00:00",
-    "numerical_run_id": "environment-axis-integration-2026-09-12",
+    "reviewed_utc": "2026-09-12T23:00:40.832716+00:00",
+    "numerical_run_id": "channel-wind-flight-altitude-2026-09-13",
     "baseline_numerical_run_id": "20260912T133040Z-073601cb",
-    "numerical_update_sha256": "2b27db267b564cd4a298118387d36d3d1fc6720ab7bd9524fa410ddbc2e33edd",
-    "pdf_sha256": "230832f528d588beec578d98b4271980301f3446752056acb616705a6a648e1e",
-    "pages": 131,
+    "numerical_update_sha256": "472a7a1de21a0474f8ece7abb01dd26c96db05b0aaaae8039c3ab35c410e3801",
+    "pdf_sha256": "c78205db992e9c7576f70aa814613dc5d3c0f6ed778b014063cc725439199af1",
+    "pages": 132,
     "source_files": {
       "configs/delta_download.yaml": "a7e0f4e2c137eea66b63f75c2d5fc3de1db00d983619daa8cf1affaa4de476dd",
       "configs/para_download.yaml": "e7f65907e7d10fc5f1181948f18ac2645b8bced6f28212c12846a71a645ba459",
       "configs/preprocessing.yaml": "62bb2f4885c5fadc33074958a87c297d70859f361f3e4fdd95ae88761ea8964f",
-      "configs/rebuild.yaml": "dbde6cad25c40157cb9596352e1f0cfa6d1af363e3260ef6ad2c32e5552c8271",
+      "configs/rebuild.yaml": "c747dadda1fbd19a8497fa5e5805d96b26996e60d25e72ecd85cf782e1560b00",
       "configs/segmentation.yaml": "530666a2846040ee3bdc6b3151e6103a767cacf0ce83769140159d0563580bbc",
       "scripts/check_reproducible.py": "3af0f2b5962a7005aa605f495af354a7b1a860000ec1ba0f1b9f6b4196537bc3",
       "scripts/label_flight_phases.py": "93a52e9083e4ae6395a91cc75f6e94eb6944e1a0ee53f742798edd490bda84fe",
@@ -37,7 +37,7 @@
       "scripts/reporting/ch2_dataset/generate_trimming_figure.py": "302d48afbf1437be6051cd8903e4c44902ddafb8d7b80925032ecd0d64969f98",
       "scripts/reporting/ch3_global_transport/audit_msd.py": "6b692fd45d0f7d2b209f1d04f5bf9c6f09be61994472f13f006649ce8af6c794",
       "scripts/reporting/ch3_global_transport/audit_msd_report.py": "be782af346c65568383a594ed5f9606d7aa19699e5df258611e3912eeb4df8dd",
-      "scripts/reporting/ch3_global_transport/generate_channel_wind_comparison.py": "556f2de5581845e96b92008cf24d97c2845e328d0ad9ad519df789e03d254703",
+      "scripts/reporting/ch3_global_transport/generate_channel_wind_comparison.py": "301f0e0e07181a0260d5150d2d43b3b88c0edc1f1200d9455887e964519b38cc",
       "scripts/reporting/ch3_global_transport/generate_duration_equipment.py": "ed5c0e3ac1468b3133e8fab1a80d426baf863d8f4ea5d428455c0bc47dce49dd",
       "scripts/reporting/ch3_global_transport/generate_grouped_tamsd.py": "c8e3681673b013893b86af56be674914ec164e824dc17544c86605a7fcaaaea0",
       "scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py": "d6c613777bd240891614165b6c634b52bfc744b5b9ab334e62ab03fd404305a4",
@@ -46,6 +46,7 @@
       "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py": "437e3de3d0c5e9b43cb5b6141298f659c0bcf618c65f27874b5bb26949368fb9",
       "scripts/reporting/ch3_global_transport/generate_scaling_schematics.py": "51fa27bbe0d86141029e80c53be1a6fd5b8e1aa76f6a3557f8244564babe1314",
       "scripts/reporting/ch3_global_transport/generate_terrain_axis_comparison.py": "99d2e76fc8e289bd6c7b4f2a33a8c903e579fd5212bf728d4c31a9a95435dc9c",
+      "scripts/reporting/ch3_global_transport/measure_channel_flight_altitude.py": "90a490ea12747f2a4e786329d9274c9ec501e2fbfd874514caf3f762362a805d",
       "scripts/reporting/ch3_global_transport/measure_msd.py": "17381b40c8222e9c717621648920ee05c8cf63ad29574a9b7e765fae7d5b058e",
       "scripts/reporting/ch3_global_transport/measure_regional_variations.py": "ae3578f94f76691da3e3002b7c20da041cfa092a36c60d229278e105526b404c",
       "scripts/reporting/ch3_global_transport/render_regional_variations.py": "ba3b9e3e17c8f51dd7e3e6a04431e81e2981884e32a45a267802f5231c3d0b66",
@@ -104,6 +105,7 @@
       "src/soaring/analysis/observables/synthetic.py": "d54312f6ebdfc5cb32f36a64050167d0cff23bdc6da293321be53f2546c712ea",
       "src/soaring/analysis/observables/transport.py": "8dee5217419db1b74a4ad1982cb612461903d008881e311497fd5aab6ca8e395",
       "src/soaring/analysis/observables/variations.py": "8b439705257a776fd586d61157ef9e9f5a228c430675ce95cae0fe4a97c5a57c",
+      "src/soaring/analysis/observables/wind_reference.py": "29a135ec7b7d0983ad71b39d47b100c37bf1e49d99fe54b4f2cdfc235c4f7715",
       "src/soaring/analysis/preproc/__init__.py": "8a78b443821270e5c27a123f57ec64a0688a28edc3ef5903b1ab82b11e66bb04",
       "src/soaring/analysis/preproc/altchannel.py": "4041196f0ddfb66adb8d24fa4566ac1b2de90807a96c299dc5d518778a726d4a",
       "src/soaring/analysis/preproc/cleaning.py": "ed08cbfe2cf293c7246c5937ba7be9ef1912400a51ecce2dd9feccfdb4efe189",
@@ -151,11 +153,11 @@
       "thesis/appendices/C-displacement-squares.tex": "9bd8c97198a0db0c8485e69b0b3b5c5ed002feecad3ec7d41afe494fc029e9e3",
       "thesis/appendices/geodesy.tex": "e764d60a05edabb325d85c3dff1c4169f4507baa9dc0c073d7dbcf752d71fdd4",
       "thesis/main.tex": "9b52e39e39bbf4187186efc432867432f4d3c05601d9ee8e96491ce8d0bb9ca4",
-      "thesis/references.bib": "d0ba09a6232f7f6c8ffc495b789aaa3fe418937c0c4af6b6b6e00b254861be22",
+      "thesis/references.bib": "f690b2ce87da8d74a56cbd029f839d19e967dc8b8bbe958700925920a0c14020",
       "thesis/sections/01-introduction.tex": "947b18a21ddb5a970553bd4d5338d3b806a6f0d45b44f684aeeca43a71865cd4",
       "thesis/sections/03-dataset.tex": "5488c48d9d42480ddc1a5ac3fb104f3a985db49042db089ab254b527b411cc4b",
-      "thesis/sections/04-environment-wind.tex": "d0a711685767af836df12caea03ba020e6aab719655c196f85bdaecbb515d865",
-      "thesis/sections/04-global-transport.tex": "1883854ec7cb68d72c66306b9b0fb11a91455f71cd025dd760132f650c119c9c",
+      "thesis/sections/04-environment-wind.tex": "99a0b6842f653b830a00481c6c1b5e6f42f8160180c795f1d99a3a0b308e7ec1",
+      "thesis/sections/04-global-transport.tex": "df3dcee0638c04a058cec4d17ed94bfb1c457aa421cf3f05bca7e9d8129ba62a",
       "thesis/sections/04-grouped-tamsd.tex": "c5dc2070d48c7b8ca709f24f7cd589cfc2160210de042a6fe30e68914744aa7d",
       "thesis/sections/04-regional-variations.tex": "f77ee7ba742d4d981dcd5c2ca7ce6fd576eba531618e3364a50d2970d1e3b557",
       "thesis/sections/05-flight-phases.tex": "a181ba84f6309e9392c7fed6078403690a8ca4d06c436546d69d700bf060f9be",
@@ -256,9 +258,10 @@
       "ch3_terrain_axis_pyrenees.pdf": "77044b7904c6bbefe316f26366dd417c2bd3e34ec7caca507d6d4da3bfc7ee7b",
       "ch3_terrain_axes_values.tex": "7a64bbe07ec86b049b884bb816c64b255193232899f45be6864abeb3262e61e5",
       "ch3_terrain_axes.json": "cd3399ff5581a905cd6b8e690eb9857d38d58b5cdd07ba5e6185f3f172bb9d44",
-      "ch3_channel_wind.pdf": "b81a965d2cc030830217981c94f16ce156af356661caf7457315752ab79b9e2d",
-      "ch3_channel_wind_values.tex": "2aa91b7bd84e18f3aac4a81af783f162fb4fb3db5b3575ac85ed55ec6f5149e2",
-      "ch3_channel_wind.json": "e8e7a4671540709b529b41436b6fa40dc55d05a9577c620439ddf43a06785802"
+      "ch3_channel_wind.pdf": "5db9b72546c797c406e8da96d84e731da450ca8ce6cbfea752a8f256cf747ef9",
+      "ch3_channel_wind_values.tex": "d233cf095004e0f5bbd2b5939b17564322e87a569a132d135435f3e3cbcf2d9c",
+      "ch3_channel_wind.json": "ac55b737c1907c6abcc44382df79e08738b82d96509931d59c60036ae9d77465",
+      "ch3_channel_flight_altitude.json": "172754510ff7bd5aff96c9ca02715549f7adaf949c24820cb1f02f493669d5c0"
     },
     "external_input_files": {
       "revisions/terrain-axis-2026-09-12/alps-etopo2022.nc": "221db417d8bc3f2109797fb379014c73392227cf54a6d07844bd046e53acace6",
@@ -277,11 +280,15 @@
       "revisions/channel-wind-2026-09-12/check_temporal_sampling.py": "d1d29de80a11617c873ef7bf7346210df7dd714cb40deef4fb7e17a9994a43b6",
       "revisions/channel-wind-2026-09-12/fetch_wind.py": "e572cfa6c37d091f08639a4dcff77fa8139cc4a6baa2acafd27b11905a37ef47",
       "revisions/channel-wind-2026-09-12/input-manifest.json": "de0013cb9ff503418aa560d6e4f9beb193292edfed3963bfa86701e5b24deebf",
-      "revisions/channel-wind-2026-09-12/sampling-check.json": "81653e2f9364b2b6ccf3cf08405a690885aeb432f9e5d90ba8349ae6127d2c21"
+      "revisions/channel-wind-2026-09-12/sampling-check.json": "81653e2f9364b2b6ccf3cf08405a690885aeb432f9e5d90ba8349ae6127d2c21",
+      "revisions/channel-wind-flight-altitude-2026-09-13/pressure-wind.npz": "02ac1e7e074c0a9d267fc0db894ba7e15ad28d5815f64625859fc519ee570b74",
+      "revisions/channel-wind-flight-altitude-2026-09-13/pressure-input-manifest.json": "6629c49126bf01df6940811e66a0b7dc4820a0ea6c7f12084f101a3b98ac55a0",
+      "revisions/channel-wind-flight-altitude-2026-09-13/flight-altitude.json": "172754510ff7bd5aff96c9ca02715549f7adaf949c24820cb1f02f493669d5c0",
+      "revisions/channel-wind-flight-altitude-2026-09-13/fetch_pressure_wind.py": "d5f0ae752337b8a23ac48d0c702af05e51fc5f7f5cb8c5e0018a61d4464f42ff"
     },
-    "scope": "Combined manuscript review includes audited grouped TAMSD and independent environmental references. Pyrenean alignment is strong; Alpine axes differ by about 18 degrees. Annual coastal wind alignment is sensitive to warm daytime selection. Methods, archive reuse and causal limits are explicit. Existing numerical outputs are byte-identical to reviewed parents."
+    "scope": "Coastal wind is evaluated at mean altitude of the exact PCA windows. Annual all-hour and daytime references are separated from seasonal checks. Pressure-level interpolation, GNSS datum approximation, height sensitivity and limits of causal interpretation are explicit. Other numerical results are unchanged."
   },
-  "source_manifest_sha256": "bac665fc91e0a77b729c39846483dd3f256e23ddb1162f443c66d81350e59823",
+  "source_manifest_sha256": "adf87b9c20cb0a27f616f8003387c43fb63dd16ae66f8de03e59ed16dcf830af",
   "figure_manifests": {
     "figure-manifest.json": "e74f38dcc4e4f25cc2909cc6ec6f8076f177663ad7ae5e98858e5d2fd64eec5a",
     "supervisor-panel-manifest.json": "7afaa78d4abc959ca7468257c508a58a865cb0ad528e2b4874408305201b7fb0",
@@ -295,33 +302,33 @@
   "documents": {
     "chapter2.pdf": {
       "pages": 58,
-      "sha256": "315a03b1fcf60ca03b9ad830297f50ef4b7c0cf878a16bb122d10ab4440ec355",
-      "bytes": 2736908,
+      "sha256": "b321e39d2f5328a523949d55a493be93bfc1fd01c60feff1c93e4d2506d5942b",
+      "bytes": 2736889,
       "speaker_notes": false
     },
     "chapter2-notes.pdf": {
       "pages": 58,
-      "sha256": "d12c1e69d826a78ffbce019657b39e9aabf4bb9681e41d601e6deaae3000a66f",
-      "bytes": 2758267,
+      "sha256": "d1a2ee467d7638316ec57c76b531310f489a194e5c2ab7125b700b0c8d4ab78e",
+      "bytes": 2758255,
       "speaker_notes": true
     },
     "chapter3.pdf": {
-      "pages": 99,
-      "sha256": "b54cfa1fd50932d5629d2ff7dd5e607ed2b4f2390d654d2b57f9c5f903a03bfb",
-      "bytes": 3449356,
+      "pages": 101,
+      "sha256": "4f30669e741f881cffcd63411b9c4282b26cf48468ff1d34f5a28b2fc4c5db58",
+      "bytes": 3478558,
       "speaker_notes": false
     },
     "chapter3-notes.pdf": {
-      "pages": 99,
-      "sha256": "24de24ba4c195638be562786ab39d9c12725aba01e2c0ef49326bf719fc83254",
-      "bytes": 3491815,
+      "pages": 101,
+      "sha256": "8fd37966563fce1eb4c60e6c2bb04ab5226c30b3b396916f1776cc6700537f13",
+      "bytes": 3522380,
       "speaker_notes": true
     }
   },
   "presentation_sources": {
     "build.py": "cceaaaaeea0c5980610b73d318be6ca0dd6e323513ddeacea1b208873be85312",
     "crop_chapter_panels.py": "67dd9f234156b32434b3fe4eeb8491688dbb17e9c01998f6244f9a8f753506db",
-    "prepare_assets.py": "0396108fc5ae854e0e6c2d0dd2dff7aa8411127d7e7f78e9bafb75043af31d5c",
+    "prepare_assets.py": "0cee9f6533d4d71cd1803b1ad381e978feb546bd3ab3a75d264d56f2cfd096c4",
     "render_chapter3_panels.py": "1c8d10cfa476ca9a67d0a6242603898e6a8cbb7440384123d6c5dbd03996e813",
     "render_figures.py": "3640b16dec9ce92b81f1b5a802d5d165a042a365f655283acde624680c6b4cd2",
     "render_supervisor_gate.py": "ab80e1dde09a1bd485f4d3a6f9c5b96dec75bf37821bf804a9656c42e2e307c5",
@@ -329,11 +336,11 @@
     "render_tamsd_panels.py": "f22f2d42ccf9d030b04ef10f9c7fcad3b70761620276bc4b3923af23534e2cc4",
     "render_variation_panels.py": "caf28be8d82e1947314391b0ee62cac544219a4c6bb255009045cbd478e872b3",
     "setup_viewer_link.py": "82033d5a5ac7a44626415a264996c20a09a6830b11d9fc1c7360bbaf45a704f1",
-    "validate.py": "7967f2989dce4b5ef28bd85cbcc0d4594d6116a9f8b38a8df9b31a4540fa465e",
-    "theme.tex": "f6c9372b64ff3f126d542c71e2bbfdd7efc73f3f67bf740941d3df21d295d48a",
+    "validate.py": "c65179f6690ce26be890f7bbb842df7caa9b409f441b1d330ad5a1c6c9d803b8",
+    "theme.tex": "53dd8ce3c4f67df9b76f1fd75fca169f15ba261147e117515b3b56c6e372c566",
     "chapter2.tex": "16546972e9041193d397af1c99b862f60267b188b1858a1c17057e697758faa5",
-    "chapter3.tex": "6077997d15ac5a77f64b720013095afc35f12c606f11a6bf875b7e186883e3c4"
+    "chapter3.tex": "5b35abed65368d73a75b53a410198186954de9e56bbba8d509fd1897b5ba2841"
   },
   "scope": "Complete chapter decks use the reviewed current results. All referenced figure and numerical inputs match their manifests; full reports retain all bytes in gzip; four PDFs compile without LaTeX warnings or overfull boxes.",
-  "visual_review": "The preceding full-run and four-lag PCA layouts were retained. The revised cancellation slide, ten regional-variation slides and eight grouped-TAMSD slides were visually checked, including accompanying notes. The six terrain/wind comparison slides and notes were also checked for readable maps, formulas, legends and sensitivity conclusions. TAMSD row crops preserve complete axis labels and omit neighbouring rows. Values, support and group definitions agree with the complete reviewed reports."
+  "visual_review": "The preceding full-run and four-lag PCA layouts were retained. The revised cancellation slide, ten regional-variation slides and eight grouped-TAMSD slides were visually checked, including accompanying notes. The terrain comparisons retain their reviewed maps. Current wind slides 68--72 and their notes were checked for readable formulas, the mean-altitude rose and height comparison, all-hour/daytime values, common-support sensitivity and current conclusions. TAMSD row crops preserve complete axis labels and omit neighbouring rows. Values, support and group definitions agree with the complete reviewed reports."
 }

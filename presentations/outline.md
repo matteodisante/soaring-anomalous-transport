@@ -196,50 +196,52 @@ The decks follow the reviewed manuscript and have no prescribed duration. Page n
 | 65 | A terrain direction measured independently of the flights |
 | 66 | Alps: shared sector, with an approximately 18-degree offset |
 | 67 | Pyrenees: the long-lag spread follows the highland axis |
-| 68 | Channel Coast: an archived wind reference, independent of flights |
-| 69 | Coastal annual alignment is sensitive to the time selection |
-| 70 | What the environmental comparisons establish |
-| 71 | Alps: velocity changes retain a directional structure |
-| 72 | Pyrenees: the long-lag change coincides with falling support |
-| 73 | Channel Coast: smaller changes at 1000 s, with residual anisotropy |
-| 74 | Second-difference ellipses retain orientation after drift cancellation |
-| 75 | The regional contrast persists in a common-context control |
-| 76 | The ratio between orders changes with the lag |
-| 77 | The distribution distinguishes frequent small changes from large events |
-| 78 | Order-three support limits the long-lag regional comparison |
-| 79 | Alps: C/D/CCC has smaller coordinate-moment imbalance |
-| 80 | Pyrenees: the ordering of the two groups reverses |
-| 81 | Channel Coast: the late position contrast is pronounced |
-| 82 | Poitou-Charente: the group curves cross |
-| 83 | Champagne-Lorraine: a late contrast does not keep C/D/CCC at unity |
-| 84 | The environmental interpretation remains a hypothesis |
-| 85 | Define the target before calling it resistance to wind |
+| 68 | Channel Coast: the reference height follows the PCA windows |
+| 69 | ERA5 wind is interpolated to the measured flight altitude |
+| 70 | At flight height, both annual references remain offset from PCA |
+| 71 | Height and time checks preserve a broad orientation resemblance |
+| 72 | What the environmental comparisons establish |
+| 73 | Alps: velocity changes retain a directional structure |
+| 74 | Pyrenees: the long-lag change coincides with falling support |
+| 75 | Channel Coast: smaller changes at 1000 s, with residual anisotropy |
+| 76 | Second-difference ellipses retain orientation after drift cancellation |
+| 77 | The regional contrast persists in a common-context control |
+| 78 | The ratio between orders changes with the lag |
+| 79 | The distribution distinguishes frequent small changes from large events |
+| 80 | Order-three support limits the long-lag regional comparison |
+| 81 | Alps: C/D/CCC has smaller coordinate-moment imbalance |
+| 82 | Pyrenees: the ordering of the two groups reverses |
+| 83 | Channel Coast: the late position contrast is pronounced |
+| 84 | Poitou-Charente: the group curves cross |
+| 85 | Champagne-Lorraine: a late contrast does not keep C/D/CCC at unity |
+| 86 | The environmental interpretation remains a hypothesis |
+| 87 | Define the target before calling it resistance to wind |
 
 **Duration and equipment composition**
 
 | Page | Topic |
 |---:|---|
-| 86 | Long flights occur in both equipment groups |
-| 87 | Duration and equipment on the common 10--1695 s interval |
-| 88 | Fixing equipment proportions removes part of the duration contrast |
+| 88 | Long flights occur in both equipment groups |
+| 89 | Duration and equipment on the common 10--1695 s interval |
+| 90 | Fixing equipment proportions removes part of the duration contrast |
 
 **Model comparisons and temporal memory**
 
 | Page | Topic |
 |---:|---|
-| 89 | The moment spectrum challenges a specific L\'evy-walk benchmark |
-| 90 | Non-Gaussian pooled increments can arise from Gaussian mixtures |
-| 91 | Velocity memory remains visible after averaging over minutes |
-| 92 | Signed correlations retain the long-lag negative values |
-| 93 | Finite velocity persistence gives a ballistic-to-diffusive crossover |
-| 94 | Which models are challenged, and which remain open? |
-| 95 | Phase-conditioned moments must include windows crossing transitions |
-| 96 | Three decisions for this meeting |
+| 91 | The moment spectrum challenges a specific L\'evy-walk benchmark |
+| 92 | Non-Gaussian pooled increments can arise from Gaussian mixtures |
+| 93 | Velocity memory remains visible after averaging over minutes |
+| 94 | Signed correlations retain the long-lag negative values |
+| 95 | Finite velocity persistence gives a ballistic-to-diffusive crossover |
+| 96 | Which models are challenged, and which remain open? |
+| 97 | Phase-conditioned moments must include windows crossing transitions |
+| 98 | Three decisions for this meeting |
 
 **Linked representations and sources**
 
 | Page | Topic |
 |---:|---|
-| 97 | Squared laws transform the same distributional evidence |
-| 98 | Sources and the scope of the evidence |
-| 99 | Joint laws and environmental interpretation: additional sources |
+| 99 | Squared laws transform the same distributional evidence |
+| 100 | Sources and the scope of the evidence |
+| 101 | Joint laws and environmental interpretation: additional sources |

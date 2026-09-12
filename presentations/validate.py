@@ -32,6 +32,9 @@ def main() -> None:
     for name, expected in source.get("environment_update", {}).get("external_input_files", {}).items():
         if digest(REPO / name) != expected:
             raise ValueError(f"Archived environmental input changed: {name}")
+    for name, expected in source.get("wind_altitude_update", {}).get("external_input_files", {}).items():
+        if digest(REPO / name) != expected:
+            raise ValueError(f"Archived pressure-level or altitude input changed: {name}")
     assets = {}
     data = {}
     for name, expected in source["inputs"].items():
@@ -122,7 +125,7 @@ def main() -> None:
               "presentation_sources": {p.name: digest(p) for p in
                   sorted(ROOT.glob("*.py")) + [ROOT / "theme.tex", ROOT / "chapter2.tex", ROOT / "chapter3.tex"]},
               "scope": "Complete chapter decks use the reviewed current results. All referenced figure and numerical inputs match their manifests; full reports retain all bytes in gzip; four PDFs compile without LaTeX warnings or overfull boxes.",
-              "visual_review": "The preceding full-run and four-lag PCA layouts were retained. The revised cancellation slide, ten regional-variation slides and eight grouped-TAMSD slides were visually checked, including accompanying notes. The six terrain/wind comparison slides and notes were also checked for readable maps, formulas, legends and sensitivity conclusions. TAMSD row crops preserve complete axis labels and omit neighbouring rows. Values, support and group definitions agree with the complete reviewed reports."}
+              "visual_review": "The preceding full-run and four-lag PCA layouts were retained. The revised cancellation slide, ten regional-variation slides and eight grouped-TAMSD slides were visually checked, including accompanying notes. The terrain comparisons retain their reviewed maps. Current wind slides 68--72 and their notes were checked for readable formulas, the mean-altitude rose and height comparison, all-hour/daytime values, common-support sensitivity and current conclusions. TAMSD row crops preserve complete axis labels and omit neighbouring rows. Values, support and group definitions agree with the complete reviewed reports."}
     (ROOT / "validation.json").write_text(json.dumps(result, indent=2) + "\n")
     print(f"Verified four chapter PDFs, {len(assets)} figure assets and complete report bytes.")
 

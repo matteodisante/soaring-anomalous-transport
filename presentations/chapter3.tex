@@ -779,26 +779,66 @@ Separation: less than $1^\circ$.\par\medskip
 \speaker{The near-parallel axes support a geographical association between displacement orientation and the range. They do not establish the causal contribution of terrain. Winds can align with the same range and pilots can select routes along it. The sensitivity span is not a sampling confidence interval. The comparison is made within the exact Pyrenean take-off box, but flight increments can extend beyond it.}
 \end{frame}
 
-\begin{frame}{Channel Coast: an archived wind reference, independent of flights}
+\begin{frame}{Channel Coast: the reference height follows the PCA windows}
+\begin{columns}[T,onlytextwidth]
+\column{.53\textwidth}
 \small
-\textbf{ERA5, 2016--2025: nine representative cells, hourly wind at 10 and 100 m.}
-\[
- u=-s\sin\phi,\quad v=-s\cos\phi,\qquad
- \theta_w=\operatorname{atan2}(\langle v\rangle,\langle u\rangle).
-\]
-Here $\phi$ is meteorological \emph{from} north, clockwise. Average velocity components with approximate cell-area weights, then compare axes modulo $180^\circ$.\par\medskip
-All hours at 10 m define the main reference. Checks use 100 m and April--September, 09--17 UTC at 10 m.\par\medskip
-\textbf{All input values are preserved: 6.3 MB compressed, reusable offline.}
-\question{Which wind height and time selection best represent the flights contributing at 10,000 s?}
-\source{\href{https://doi.org/10.24381/cds.adbb2d47}{Copernicus/ECMWF ERA5}, via \href{https://open-meteo.com/en/docs/historical-weather-api}{Open-Meteo}. Exact URLs, coordinates, units and hashes accompany the data.}
-\speaker{We request the centres of a three-by-three partition of the exact Channel Coast box and select the nearest ERA5 cells, without a land preference or elevation downscaling. Returned latitudes are 48.75, 49.75 and 50.75 degrees; longitudes are minus 1.25, zero and 1.25 degrees. All nine cells have 87672 consecutive UTC hours. Cosine-latitude weights approximate cell area. This is a sparse recent-decade climatology, not weather matched to individual flights or the whole archive period. Six-hour subsampling changes the annual axis by at most 0.52 degrees over all phase offsets. Hourly data are retained because their storage cost is small and they preserve distribution and daytime checks. The complete JSON API responses are compressed without loss; these are provider-rounded values, not native GRIB fields.}
+\textbf{Same population as the 10,000-s PCA}
+\begin{itemize}
+ \item \num{\StatWindFlights} paraglider flights.
+ \item \num{\StatWindWindows} nonoverlapping windows, wholly inside retained segments.
+ \item Mean cleaned GNSS altitude along each window; equal window weights.
+\end{itemize}
+\column{.43\textwidth}
+\small
+\textbf{Mean: \SI{\StatWindHeightM}{\metre}}\par\medskip
+Equal flight weights: \SI{\StatWindHeightFlightM}{\metre}.\par\medskip
+Middle half of window means:\\
+\SI{\StatWindHeightLowM}{\metre}--\SI{\StatWindHeightHighM}{\metre}.\par\medskip
+Approximate altitude above sea level; recorder datums are not harmonised.
+\end{columns}
+\question{Is one representative height sufficient, or should wind be matched to the altitude and location of each flight window?}
+\source{Trapezoidal integration on the same 10-s segment grids. The target describes the supported long-lag windows; it is not take-off altitude or height above the terrain.}
+\speaker{The mean is 1006.262 metres across 2013 exact PCA windows from 1680 flights, with the same equal-window weighting as the covariance. Each window altitude is a trapezoidal time average of cleaned GNSS z interpolated onto the existing 10-second grid. No gap is bridged. Equal weight per contributing flight gives 980.260 metres; the window-mean quartiles are 853.932 and 1159.549 metres. Short flights do not define this target because they cannot contribute at 10000 seconds. The raw GNSS vertical datum is not harmonised, so MSL is an approximation; these numbers do not imply metre-level physical accuracy. The quartile range describes heterogeneity, not uncertainty in the mean. Matching the target height does not yet match flight dates, instantaneous positions or local atmospheric conditions.}
 \end{frame}
 
-\begin{frame}{Coastal annual alignment is sensitive to the time selection}
+\begin{frame}{ERA5 wind is interpolated to the measured flight altitude}
+\small
+\textbf{2016--2025, hourly; nine cells in the coastal box; 1000/925/850/700 hPa.}
+\[
+ H=\Phi/g_0,\qquad h=\frac{R_\oplus H}{R_\oplus-H},\qquad
+ \theta_w=\operatorname{atan2}(\langle v(h)\rangle,\langle u(h)\rangle).
+\]
+Convert geopotential to each hour's level heights. Interpolate \textbf{E/N wind components} to \SI{\StatWindHeightM}{\metre}, between above-ground bounds.\par\medskip
+\textbf{Main comparison: all year, all hours vs.\ all year, 09--17 UTC.}\par
+April--September is a separate seasonal check. Winds at 10/100 m AGL provide lower-level controls.
+\question{How much of the surface-to-flight-height contrast reflects vertical shear, season and the flight conditions represented?}
+\source{\href{https://doi.org/10.24381/cds.bd0915c6}{Copernicus/ECMWF ERA5 pressure levels}, pinned \href{https://registry.opendata.aws/earthmover-era5/}{Earthmover archive}. Complete hourly extract: 32.22 MB compressed, preserved in the repository and on SSD.}
+\speaker{Use the same nine grid cells as the surface analysis: latitudes 48.75, 49.75, 50.75 degrees and longitudes minus 1.25, zero, 1.25 degrees. Geopotential height is Phi divided by 9.80665; geometric height uses spherical Earth radius 6371000 metres. A pressure level changes altitude from hour to hour. Linear interpolation acts on eastward and northward velocities, never direction angles. All 789048 cell-hour profiles bracket the main target above the model surface. Average components over time and with cosine-latitude cell weights, then reduce the towards-angle modulo 180 degrees for comparison with PCA. The annual all-hour selection has 87672 hours per cell; 09 through 17 UTC inclusive has 32877. The two warm-season selections have 43920 and 16470. UTC is fixed, without a daylight-saving correction. Source values, timestamps, coordinates, pressure levels, geopotential, surface geopotential and hashes are preserved losslessly for offline reuse.}
+\end{frame}
+
+\begin{frame}{At flight height, both annual references remain offset from PCA}
 \centering\fig[52mm]{ch3_channel_wind.pdf}
-\question{The annual reference is close to PCA; the warm daytime reference is about 28 degrees away. Which comparison is physically relevant?}
-\source{All angles counterclockwise from east. The rose shows where air moves towards. Mean-vector speed / mean speed = \StatWindSurfaceResultant.}
-\speaker{The annual 10-m wind axis is 25.8 degrees, corresponding to wind from meteorological 244.2 degrees, and the flight PCA axis is 30.2 degrees. The separation is 4.3 degrees; at 100 metres it is 3.3 degrees. April to September, 09 to 17 UTC inclusive, gives a 2.1-degree wind axis and a 28.1-degree separation. Thus the annual agreement does not persist in the warm daytime check. This check is an operational window, not actual recorded flight conditions. The rose uses weighted 15-degree sectors, excludes speeds below 0.5 m/s and normalises included observations. Means include all hours. The ratio 0.28 indicates directional cancellation, not confidence or the fraction of winds near the mean. Grey ticks show individual cell means. The same 1680 coastal flights define the comparison PCA.}
+\question{Annual gaps at flight height: \StatWindHeightAllDifference$^\circ$ for all hours, \StatWindHeightDayDifference$^\circ$ for 09--17 UTC. Why is the seasonal contrast larger near the surface?}
+\source{Angles counterclockwise from east. The rose shows where air moves towards at \SI{\StatWindHeightM}{\metre}; the black line is the \StatWindFlightAngle$^\circ$ centred PCA axis.}
+\speaker{At the mean flight altitude the all-year all-hour axis is 15.8 degrees and the 09--17 UTC axis is 17.9 degrees, against 30.2 degrees for flight PCA. The corresponding separations are 14.4 and 12.3 degrees. At 10/100 metres AGL the annual axes lie closer to PCA, but their warm-daytime references rotate further away. At flight altitude the warm-daytime axis is 20.6 degrees, giving a smaller 9.6-degree separation. The altitude-matched comparison therefore has a less close annual alignment and a smaller time-selection sensitivity than the surface comparison. These are descriptive contrasts, not formal tests of different angles. The rose uses weighted 15-degree sectors, excludes speeds below 0.5 m/s only from frequencies, and retains all hours in vector means. Teal is all-year all hours; plum is all-year daytime. Green appears only in the right-hand seasonal check.}
+\end{frame}
+
+\begin{frame}{Height and time checks preserve a broad orientation resemblance}
+\small
+\begin{center}
+\begin{tabular}{@{}lrrr@{}}\toprule
+At \SI{\StatWindHeightM}{\metre} & Wind axis & PCA gap & $\rho_w$\\\midrule
+All year, all hours & \StatWindHeightAllAngle$^\circ$ & \StatWindHeightAllDifference$^\circ$ & \StatWindHeightAllResultant\\
+All year, 09--17 UTC & \StatWindHeightDayAngle$^\circ$ & \StatWindHeightDayDifference$^\circ$ & \StatWindHeightDayResultant\\
+Apr--Sep, all hours & \StatWindHeightWarmAllAngle$^\circ$ & \StatWindHeightWarmAllDifference$^\circ$ & \StatWindHeightWarmAllResultant\\
+Apr--Sep, 09--17 UTC & \StatWindHeightWarmDayAngle$^\circ$ & \StatWindHeightWarmDayDifference$^\circ$ & \StatWindHeightWarmDayResultant\\\bottomrule
+\end{tabular}
+\end{center}
+At the quartile heights, annual axes span \StatWindSensitivityAllLowAngle--\StatWindSensitivityAllHighAngle$^\circ$ (all hours) and \StatWindSensitivityDayLowAngle--\StatWindSensitivityDayHighAngle$^\circ$ (daytime), on shared support.
+\question{Does the remaining offset reflect flight selection and route choices, or change when weather is matched to actual flights?}
+\source{$\rho_w=\|\langle\mathbf w\rangle\|/\langle\|\mathbf w\|\rangle$ measures cancellation. Height ranges are sensitivities, not confidence intervals. The main estimates retain all selected hours.}
+\speaker{The annual all-hour and daytime resultant fractions are 0.43 and 0.44; warm-season values are 0.35 and 0.37. These do not give confidence in a direction or the fraction of observations near it. At the lower quartile height, 868 profiles at one cell have no above-ground pressure level below the target. For the height sensitivity only, exclude these 868 hours from all nine cells at every tested height, including the mean-height reference: 86804 common hours remain per cell. Apply the same seasonal and daytime masks afterward. On common support the annual quartile-height axes range from 14.3 to 17.2 degrees for all hours and from 16.4 to 19.3 degrees for daytime. Equal-flight mean altitude changes the matched reference by less than 0.3 degrees, and common-hour selection changes the main annual reference by less than 0.1 degrees. These checks retain the offset but do not calibrate receiver datums or establish significance.}
 \end{frame}
 
 \begin{frame}{What the environmental comparisons establish}
@@ -807,12 +847,12 @@ All hours at 10 m define the main reference. Checks use 100 m and April--Septemb
 Region & Conclusion supported by this comparison\\\midrule
 Pyrenees & Close terrain--flight alignment; a geographical association worth testing along tracks.\\[2mm]
 Alps & Same broad sector, with an approximately 18-degree offset from the mean highland axis.\\[2mm]
-Channel Coast & Close annual wind--flight alignment, but a substantial change under warm daytime selection.\\\bottomrule
+Channel Coast & Wind at mean flight altitude lies about 12--14 degrees from PCA in both annual time selections; seasonal checks retain a broad resemblance.\\\bottomrule
 \end{tabular}\par\medskip
 A common constant wind shifts the mean displacement by $\tau\mathbf w$; centring removes it. Variable winds and route responses can still shape covariance.
 \question{Match flight times, heights and routes to wind and local terrain before attributing the ellipse or equipment contrasts to a cause.}
 \source{Independent regional references constrain an interpretation. They do not separate wind, terrain, route choice and long-flight selection.}
-\speaker{The PCA concerns centred displacement spread, whereas the wind reference concerns a mean velocity. Their orientation agreement alone cannot show that mean wind causes covariance anisotropy. Constant additive drift cancels when displacement is centred at fixed lag. Variable drift between flights, time-varying forcing and route decisions can alter covariance; their contributions need matched observations. The Pyrenean agreement is the strongest geographical alignment here. The coastal seasonal sensitivity is a substantive counterpoint, not a cosmetic uncertainty. Equipment class is not measured pilot expertise, and this comparison cannot establish resistance to wind.}
+\speaker{The PCA concerns centred displacement spread, whereas the wind reference concerns a mean velocity. Their orientation resemblance alone cannot show that mean wind causes covariance anisotropy. Constant additive drift cancels when displacement is centred at fixed lag. Variable drift between flights, time-varying forcing and route decisions can alter covariance; their contributions need matched observations. The Pyrenean agreement is the strongest geographical alignment here. The coastal comparison at mean flight altitude retains a broadly similar sector across the four time selections, with offsets of about 10 to 14 degrees. Surface winds exhibit a larger seasonal change, so their annual near alignment should not be transferred to flight altitude. Equipment class is not measured pilot expertise, and this comparison cannot establish resistance to wind.}
 \end{frame}
 
 \begin{frame}{Alps: velocity changes retain a directional structure}
@@ -844,7 +884,7 @@ A common constant wind shifts the mean displacement by $\tau\mathbf w$; centring
 \centering\fig[40mm]{ch3_variation_axes.pdf}
 \question{Do the resolved axes align with independent terrain and wind information?}
 \source{Matched-order origins, equal flight weights; each ellipse is normalised by its own centred RMS.}
-\speaker{The four colours match the exact PCA display lags. Ellipses describe centred spread and omit both amplitude and mean. Near-circular ellipses, especially the coastal ten-second one, do not resolve a useful direction. At 1000 seconds the order-two axes are approximately 65 degrees in the Alps, 171 degrees in the Pyrenees and 31 degrees on the coast, counterclockwise from east. Axes are modulo 180 degrees and do not supply signed wind directions. The preceding independent comparisons provide regional references; they do not measure terrain or weather exposure along individual tracks, and annual coastal wind alignment changes with the time selection.}
+\speaker{The four colours match the exact PCA display lags. Ellipses describe centred spread and omit both amplitude and mean. Near-circular ellipses, especially the coastal ten-second one, do not resolve a useful direction. At 1000 seconds the order-two axes are approximately 65 degrees in the Alps, 171 degrees in the Pyrenees and 31 degrees on the coast, counterclockwise from east. Axes are modulo 180 degrees and do not supply signed wind directions. The preceding independent comparisons provide regional references; they do not measure terrain or weather exposure along individual tracks, and the coastal mean-height wind reference retains a 10--14-degree offset across the tested time selections.}
 \end{frame}
 
 \begin{frame}{The regional contrast persists in a common-context control}
@@ -928,7 +968,7 @@ moment balance are different outcomes.
 \par\medskip
 A first comparison would match overlapping site--day, duration and task support;
 then separate mean drift, centred variability and individual route orientation.
-Regional terrain and wind comparisons suggest alignment, with temporal sensitivity on the coast; local track-matched references are still needed.
+Regional references show terrain alignment and a remaining coastal wind--PCA offset at flight altitude; local track-matched observations are still needed.
 \question{Which target and matched comparison should be the first priority?}
 \speaker{The site--day bootstrap adjusts one uncertainty structure; it does not perform matching or remove confounding. Where data permit, the same pilot on different equipment could help assess selection, but weather and task still require control. Differentiating velocity removes a constant wind term, but not its variation along the trajectory or the pilot's manoeuvres.}
 \end{frame}

@@ -81,6 +81,8 @@ def main() -> None:
                         help="reviewed regional and initial-altitude TAMSD extension")
     parser.add_argument("--environment-update", type=Path,
                         help="combined manuscript review with independent terrain and wind references")
+    parser.add_argument("--wind-altitude-update", type=Path,
+                        help="reviewed coastal wind comparison at measured flight altitude")
     args = parser.parse_args()
     run = args.run.resolve()
     review_path = run / "review-inputs/manuscript-review.json"
@@ -173,9 +175,33 @@ def main() -> None:
                 or review["generated_outputs"] != {n: r["sha256"] for n, r in release["outputs"].items()}
                 or review["external_input_files"] != environment_update["external_input_files"]):
             raise ValueError("The combined environmental manuscript review has different inputs")
-        for name, expected in (review["source_files"] | review["external_input_files"]).items():
+        guarded = ({} if args.wind_altitude_update else review["source_files"])
+        for name, expected in (guarded | review["external_input_files"]).items():
             if digest(REPO / name) != expected:
                 raise ValueError(f"Reviewed source or external input changed: {name}")
+    wind_altitude_update = None
+    if args.wind_altitude_update:
+        wind_dir = args.wind_altitude_update.resolve()
+        wind_path = wind_dir / "numerical-update.json"
+        wind_altitude_update = json.loads(wind_path.read_text())
+        if (environment_update is None or wind_altitude_update["status"] != "complete"
+                or wind_altitude_update["parent_update_sha256"] != digest(environment_path)
+                or wind_altitude_update["parent_run_id"] != release["run_id"]
+                or wind_altitude_update["parent_generated_outputs"] !=
+                    {n: r["sha256"] for n, r in release["outputs"].items()}):
+            raise ValueError("The wind-altitude update requires its environmental parent")
+        release["outputs"].update(wind_altitude_update["outputs"])
+        release["run_id"] = wind_altitude_update["run_id"]
+        review_path = wind_dir / "manuscript-review.json"
+        review = json.loads(review_path.read_text())
+        if (review["status"] != "complete"
+                or review["numerical_update_sha256"] != digest(wind_path)
+                or review["generated_outputs"] != {n: r["sha256"] for n, r in release["outputs"].items()}
+                or review["external_input_files"] != wind_altitude_update["external_input_files"]):
+            raise ValueError("The wind-altitude manuscript review has different inputs")
+        for name, expected in (review["source_files"] | review["external_input_files"]).items():
+            if digest(REPO / name) != expected:
+                raise ValueError(f"Reviewed wind-altitude input changed: {name}")
     if digest(REPO / "thesis/main.pdf") != review["pdf_sha256"]:
         raise ValueError("The canonical thesis is not the reviewed PDF")
     assets, data = ROOT / "assets", ROOT / "data"
@@ -203,6 +229,10 @@ def main() -> None:
         manifest["environment_update"] = environment_update
         originals.update(environment_update["outputs"])
         manifest["inputs"].update(environment_update["external_input_files"])
+    if wind_altitude_update:
+        manifest["wind_altitude_update"] = wind_altitude_update
+        originals.update(wind_altitude_update["outputs"])
+        manifest["inputs"].update(wind_altitude_update["external_input_files"])
     for name in sorted(originals):
         source = REPO / "thesis/generated" / name
         actual = digest(source)
