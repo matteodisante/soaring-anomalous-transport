@@ -186,6 +186,16 @@ preparation. Its measurements took 168 seconds on the delivery machine using
 four workers and 500 bootstrap replicates; this is not a timing estimate for
 the full cleaning and thesis rebuild.
 
+The `grouped_tamsd` stage reuses the identified native segment curves after
+`msd_measure`. It groups the full eligible population by the three take-off
+regions and four cleaned-origin GNSS altitude bands. Its second control fixes
+long segments across the full lag grid. The focused delivery and numerical audit
+are recorded in `revisions/grouped-tamsd-2026-09-12/`; the report preserves full
+membership, support and site-day intervals. Its approximately ten-second runtime
+uses already measured TAMSD arrays and does not include cleaning or the native
+FFT measurements. The initial-altitude labels must not be interpreted as measured
+terrain classes or substituted for the raw-first-altitude map's grouping.
+
 The final September 11 review also corrected an omitted altitude-admission row in
 the rejection cascade. That was a numerical report error, not a plotting-only edit.
 The report was regenerated from unchanged flight metadata and checked against an

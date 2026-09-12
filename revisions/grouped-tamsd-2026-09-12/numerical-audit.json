@@ -1,0 +1,24 @@
+{
+  "status": "complete",
+  "report_sha256": "7eeaf1004af31c7f9f282c2c2aaee171cdcbc2f6fd0fbdd1afd7f2905c8a61f2",
+  "checks": {
+    "paragliders": {
+      "flight_identities": 155085,
+      "group_control_lag_cells": 2242,
+      "direct_native_stencil_checks": 51,
+      "maximum_relative_stencil_difference": 5.215789057778781e-08,
+      "fixes_file": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/fixes.parquet",
+      "fixes_bytes": 43385490898,
+      "fixes_row_groups": 1362
+    },
+    "hang gliders": {
+      "flight_identities": 6060,
+      "group_control_lag_cells": 2242,
+      "direct_native_stencil_checks": 53,
+      "maximum_relative_stencil_difference": 4.535847056707233e-08,
+      "fixes_file": "/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc/derived/fixes.parquet",
+      "fixes_bytes": 1145119236,
+      "fixes_row_groups": 35
+    }
+  }
+}

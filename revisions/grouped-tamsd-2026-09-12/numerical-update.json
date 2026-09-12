@@ -1,0 +1,105 @@
+{
+  "status": "complete",
+  "run_id": "grouped-tamsd-2026-09-12",
+  "parent_run_id": "regional-variations-2026-09-12",
+  "parent_update_sha256": "5e09665c203c10a6c99387d0b5e8275bfc20a28494c7815da22dd3921711c66c",
+  "baseline_run_id": "20260912T133040Z-073601cb",
+  "cleaning": {
+    "configuration": {
+      "alt_channel": {
+        "baro_witness_min_range_m": 30.0,
+        "baro_witness_present_min": 0.95,
+        "gnss_min_range_m": 30.0,
+        "gnss_present_min": 0.95
+      },
+      "fix": {
+        "frozen_delta_z_m": 5.0,
+        "frozen_eps_m": 15.0,
+        "frozen_tau_s": 60.0,
+        "hampel_eps_min_m": 15.0,
+        "hampel_k": 5.0,
+        "hampel_min_window_fixes": 5,
+        "hampel_window_s": 20.0,
+        "integrity_max_fraction": 0.1,
+        "max_altitude_m": 6000.0,
+        "max_horizontal_speed_mps": {
+          "hang gliders": 55.0,
+          "paragliders": 45.0
+        },
+        "max_vertical_speed_mps": 10.0,
+        "min_altitude_m": -100.0,
+        "vz_min_window_fixes": 5,
+        "vz_window_s": 5.0
+      },
+      "flight": {
+        "max_duration_s": 57600.0,
+        "min_alt_range_m": 600.0,
+        "min_duration_s": 2400.0,
+        "min_path_km": 20.0
+      },
+      "sampling": {
+        "max_gap_factor": 10.0,
+        "max_gap_seconds": 20.0,
+        "max_missing_fraction": 0.1,
+        "min_segment_duration_s": 90.0
+      },
+      "savgol": {
+        "polyorder": 3,
+        "tau_c_horizontal_s": 5.0,
+        "tau_c_vertical_s": 5.0
+      },
+      "trimming": {
+        "ground_flatness_m": 5.0,
+        "interior_ground_s": 600.0,
+        "sustained_s": 30.0,
+        "takeoff_speed_mps": 5.0
+      }
+    },
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "pyarrow": "24.0.0",
+      "scipy": "1.18.0"
+    },
+    "pipeline_version": "2.3.0",
+    "source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85"
+  },
+  "operation": "new regional and initial-altitude TAMSD grouping on verified native segment curves; inherited outputs unchanged",
+  "numerical_audit_sha256": "e88a7d73d82d25e92914a49fe113d97cd415e93b8a1e47ea7e2c376f37a48ce2",
+  "numerical_audit_script_sha256": "bacfe188a97176a209cb751c84073b7abe014f77e246139ab85ec94cd2cc8593",
+  "figure_manifest_sha256": "8504edab92f97c8bcc446a8623b9538e826ddf8c99e6cc211be1611137047068",
+  "outputs": {
+    "ch3_tamsd_regions.pdf": {
+      "sha256": "f69575a2db59f78b460d08d8cf0798a1997bb44af0f17a961237b722888648c8",
+      "producer": "scripts/reporting/ch3_global_transport/generate_grouped_tamsd.py",
+      "historical_control": false
+    },
+    "ch3_tamsd_altitude.pdf": {
+      "sha256": "8b615d2114f38d2678ff6e8636c51a897b3e1c098ffce73ed80f6ea0e9fe353d",
+      "producer": "scripts/reporting/ch3_global_transport/generate_grouped_tamsd.py",
+      "historical_control": false
+    },
+    "ch3_tamsd_region_altitude.pdf": {
+      "sha256": "c620e5e31600dda4305bf78cee037ba7393c2405b79a6190329e916f3114b207",
+      "producer": "scripts/reporting/ch3_global_transport/generate_grouped_tamsd.py",
+      "historical_control": false
+    },
+    "ch3_grouped_tamsd_values.tex": {
+      "sha256": "b381f2b789f108c262373bf64bfac8c5ca3a0340d09581f3cd83ad39406a2449",
+      "producer": "scripts/reporting/ch3_global_transport/generate_grouped_tamsd.py",
+      "historical_control": false
+    },
+    "ch3_grouped_tamsd.json": {
+      "sha256": "7eeaf1004af31c7f9f282c2c2aaee171cdcbc2f6fd0fbdd1afd7f2905c8a61f2",
+      "producer": "scripts/reporting/ch3_global_transport/generate_grouped_tamsd.py",
+      "historical_control": false
+    }
+  },
+  "compressed_report": {
+    "archive_name": "ch3_grouped_tamsd.json.gz",
+    "raw_sha256": "7eeaf1004af31c7f9f282c2c2aaee171cdcbc2f6fd0fbdd1afd7f2905c8a61f2",
+    "raw_size_bytes": 37589701,
+    "gzip_sha256": "661db99c37aed567c0095b8be050b79c1e1be5b2a59b240ae4b29b96899ad047",
+    "gzip_size_bytes": 2198347
+  }
+}

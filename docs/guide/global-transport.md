@@ -23,6 +23,7 @@ weighting and lag-support conventions:
 | `ch3_models.pdf` | same full eligible archive | pooled moment spectrum and centred Mardia excess |
 | `ch3_velocity_memory.pdf` | same full eligible archive | positive coarse VACF on log–log axes, with signed companion panels |
 | `ch3_pca.pdf` | same full eligible archive | centred regional displacement covariance, eigenvalue ratio and axis at exactly 10, 100, 1000 and 10,000 s |
+| `ch3_tamsd_regions.pdf`, `ch3_tamsd_altitude.pdf`, `ch3_tamsd_region_altitude.pdf` | `generate_grouped_tamsd.py` | native-grid equal-flight TAMSD by region and initial GNSS altitude, fixed-segment controls and cross-classification |
 | `ch3_regional_variations.pdf`, `ch3_variation_axes.pdf` | `generate_regional_variations.py` | RMS interval-mean velocity changes and covariance geometry of three difference orders |
 | `ch3_variation_controls.pdf`, `ch3_variation_distributions.pdf` | same regional measurement | shared origins, context standardisation, regional ratios and full-support magnitude distributions |
 | `ch3_variation_orders.pdf`, `ch3_variation_support.pdf`, `ch3_regional_variations_values.tex` | same regional measurement | order-three comparison, contributing flights/site-days and generated values |
@@ -77,6 +78,32 @@ Champagne-Lorraine. These are latitude/longitude launch boxes, not terrain-model
 classifications or samples matched on weather. Use their separate curves to assess
 whether a coastal observation generalizes, rather than treating them as equivalent
 wind-only environments.
+
+## Grouped time-averaged displacement
+
+The preceding thesis section, `04-grouped-tamsd.tex`, first compares scalar
+TA-MSD magnitude across these regions and four initial-altitude bands. It uses
+the identified native segment curves, with origin-weighted pooling within a
+flight followed by equal flight weights. The all-eligible population comprises
+155,085 paragliders and 6,060 hang gliders. A control retains the same long
+segments and flights across all 59 requested lags from 10 to 10,000 s, but does
+not fix time origins. The requested reference is 1049 s, with native-step
+rounding; it is not the exact 1000-s PCA or variation measurement.
+
+Plains, Hills, Low mountains and High mountains use cleaned GNSS origin-altitude
+thresholds of 300, 800 and 1500 m. These are labels for altitude bands, not
+measured terrain classes, and differ in source from the raw-first-altitude map
+in Chapter 2. All eligible regions enter the altitude grouping. A crossed
+region/altitude table shows the unequal composition and sparse cells.
+
+The coastal paraglider RMS displacement is larger near 1000 s, while its V2
+velocity-change diagnostic below is smaller. Persistent net advancement is a
+possible interpretation, but the origins and lag grids differ and no wind
+mechanism is identified. Fixing the native segments reduces the coastal
+long-lag TAMSD slope from 2.20 to 1.98; analogous excesses in Plains and Hills
+also diminish. The report at `revisions/grouped-tamsd-2026-09-12/` retains
+membership, full curves, support, pointwise site-day intervals and descriptive
+slopes. The eight-flight display minimum is not an uncertainty guarantee.
 
 ## Regional second and third differences
 
