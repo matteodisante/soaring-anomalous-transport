@@ -57,17 +57,22 @@ Complete reports remain immutable; an initial local rendering iteration is kept
 under ignored `initial-render/`. Its numerical result arrays agree exactly with
 the final report.
 
-## Shared-checkout delivery coordination
+## Combined manuscript delivery
 
 The V2/V3 extension was completed in commits `119755d`, `3d2395a` and `a041fc3`.
 This follow-up owns `generate_grouped_tamsd.py`, `grouped_tamsd.py`, the
 `04-grouped-tamsd.tex` section, its figures, eight new TAMSD frames, and the
 `--tamsd-update` presentation overlay. It preserves the concurrently developing
-terrain-axis and coastal-wind work. Final manuscript/source review must include
-their completed numerical lineage before either conversation certifies the
-shared thesis PDF or stages shared files. The audited `numerical-update.json`
-is ready and preserves all inherited numerical inputs. Its current review was
-run with `--numerical-only`; the grouped-TAMSD report does not certify the
-concurrent terrain/wind outputs. The combined manuscript review remains pending.
-The TAMSD figures, eight slide layouts and their notes have been visually checked;
-the final slide preparation must use the combined reviewed manuscript.
+terrain-axis and coastal-wind work. The audited `numerical-update.json` preserves
+all inherited numerical inputs. Its measurement review used `--numerical-only`;
+the grouped-TAMSD report does not certify the terrain/wind outputs.
+
+The completed [combined manuscript review](../environment-axis-integration-2026-09-12/manuscript-review.json)
+uses this numerical update as its parent and verifies the union of 97 generated
+outputs, including both extensions, against the 131-page thesis. The TAMSD
+figures, eight slide layouts and their notes have been visually checked.
+Presentation preparation uses all four overlays, ending with
+`--environment-update revisions/environment-axis-integration-2026-09-12`;
+the full command is in [the presentation instructions](../../presentations/README.md).
+This preserves the separate numerical records while identifying one shared,
+reviewed manuscript and slide delivery.
