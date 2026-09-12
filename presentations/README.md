@@ -1,136 +1,71 @@
-# Presentazioni per i supervisori
+# Presentazioni dei capitoli 2 e 3
 
-Due presentazioni LaTeX/Beamer in inglese, preparate l'11 settembre 2026 sui
-risultati correnti della tesi. Ciascuna ha **18 slide principali per 20 minuti**:
-17 minuti e 40 secondi di esposizione, inclusi i passaggi fra slide, e 2 minuti e
-20 secondi per le domande finali proposte. Le slide di riserva sono fuori da
-questo tempo. Nel capitolo 2 è previsto anche un minuto per la dimostrazione nel viewer.
+Queste presentazioni raccontano la tesi revisionata il 12 settembre 2026, con
+cleaning 2.3.0 e risultati del run completo `20260912T133040Z-073601cb`.
+Sono capitoli da discutere con i supervisors, senza durata prestabilita.
+Le domande scientifiche accompagnano i risultati; i confronti tra versioni
+precedenti della pipeline non fanno parte delle slide.
 
-| Presentazione | PDF da proiettare | Sorgente | PDF con note a fianco |
-|---|---|---|---|
-| Capitolo 3: trasporto globale | [chapter3.pdf](chapter3.pdf) | [chapter3.tex](chapter3.tex) | [chapter3-notes.pdf](chapter3-notes.pdf) |
-| Capitolo 2: dati e cleaning | [chapter2.pdf](chapter2.pdf) | [chapter2.tex](chapter2.tex) | [chapter2-notes.pdf](chapter2-notes.pdf) |
+| Documento | Slide | Versione con note |
+|---|---:|---|
+| [Capitolo 2](chapter2.pdf) | 58 | [PDF con note](chapter2-notes.pdf) |
+| [Capitolo 3](chapter3.pdf) | 75 | [PDF con note](chapter3-notes.pdf) |
 
-La [scaletta temporale](timing.md) riporta durata e posizione di ogni slide
-principale. Le note nel sorgente contengono cosa spiegare a voce e le cautele
-necessarie per interpretare il risultato. Il PDF da proiettare ha collegamenti
-alle figure di riserva e alle fonti; i collegamenti sono disattivati nella copia
-con note per evitare destinazioni PDF duplicate nella doppia impaginazione.
+L'[indice](outline.md) riporta l'ordine e le pagine. I PDF con note affiancano
+alla slide le spiegazioni su stimatore, popolazione, limiti e interpretazione.
 
-## Impostazione del colloquio
+Il capitolo 2 segue acquisizione, campi IGC, scelta della quota, PSD su blocchi
+validi, decisioni sui fix, trimming, coordinate, segmentazione dei gap, smoothing
+e popolazione trattenuta. Le domande riguardano disponibilità dei canali,
+possibili salti di quota, sensibilità alle soglie e validazione indipendente.
+La durata nel grafico preliminare comprende i gap tra primo e ultimo fix;
+la lunghezza del percorso somma soltanto i tratti osservati.
 
-Il capitolo 3 parte dagli stimatori e arriva al confronto fra processi stocastici.
-Quantili a popolazione fissa, geometria dei compiti, anisotropia regionale e
-durata × equipaggiamento mostrano perché una pendenza dell'MSD non basta a
-identificare un processo. La discussione finale propone di scegliere il bersaglio
-fisico del modello, i primi confronti calibrati e le misure che richiedono la
-segmentazione. Il Lévy walk standard è presentato come un benchmark ancora da
-confrontare su traiettorie finite, senza dichiararne un'esclusione già dimostrata.
+Il capitolo 3 segue crescita e supporto, quantili e controlli della popolazione,
+rescaling marginale e congiunto, struttura direzionale e ambiente, durata ed
+equipaggiamento, modelli e memoria. Il campione completo eleggibile contiene
+155085 parapendii e 6060 deltaplani. Il controllo a voli e origini comuni contiene
+14360 e 563 voli: misura la stessa popolazione a tutti i lag e non sostituisce
+l'analisi dell'archivio completo.
 
-Il capitolo 2 segue le decisioni che trasformano i fix in traiettorie misurabili.
-Mostra esempi reali, la disponibilità locale del witness, il significato dei due
-test di velocità verticale, la ricostruzione e lo smoothing. I problemi aperti
-includono i salti di quota candidati, la ricostruzione verticale senza limite di
-durata e la sensibilità delle osservabili alle scelte operative.
+L'ipotesi che equipaggiamento e scelte dei piloti moderino i vincoli di vento e
+orografia viene presentata insieme alle sue criticità: rapporto tra momenti
+uguale a uno non basta per l'isotropia, le classi non misurano l'esperienza,
+l'ordinamento pirenaico si inverte, la costa comprende rilievi locali e i gruppi
+non sono appaiati per condizioni. La discussione propone confronti discriminanti;
+non attribuisce causalmente le differenze a vento o abilità.
 
-Lo stile riprende `13_06_26_slides_soaring_ctrw.tex` del 13 giugno 2026 nel progetto
-`disante_soaring_ctrw`: Palatino, barra blu acciaio, sigillo di Pisa, pagine
-bianche e fascia chiara nel titolo. Il formato è 16:9 per lasciare spazio ai
-grafici e alle formule. I colori delle popolazioni seguono la versione corrente
-della tesi: blu/terracotta per le discipline, viola/ocra per i due gruppi di
-equipaggiamento.
+## Provenienza e ricostruzione
 
-## Il pulsante del viewer
+La preparazione richiede prima una revisione completata della tesi. Il
+[source manifest](source-manifest.json) registra hash di tesi, sorgenti numerici,
+input e cleaning. Tutti i dati di risultato provengono da quel run. I due report
+completi sono conservati in `data/*.json.gz`: compressione senza perdita, nessun
+sottocampionamento o troncamento del report. I manifest delle figure distinguono
+copie, ritagli vettoriali e ridisegno degli array già calcolati.
 
-Nella **slide 17 del capitolo 2** il pulsante apre `soaring-viewer://open`.
-Il relativo handler macOS è già stato registrato e provato su questo Mac.
-La prova ha verificato l'avvio del processo Python tramite URL; non simula un
-clic dentro ogni possibile lettore PDF.
-
-Il viewer usa il codice corrente di questo checkout. L'applicazione può aprirsi
-senza SSD; i voli reali richiedono l'archivio montato. Per l'esempio della slide,
-usare **Browse .igc file…** e aprire:
-
-```text
-/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/raw/igc/2003-2004/2004-03-27_20030236.igc
-```
-
-L'intervallo mostrato è vicino a 4410 s dall'inizio del record grezzo. Il viewer
-può ricalcolare il preprocessing del solo volo selezionato; il lanciatore non
-rigenera l'archivio. I thread numerici sono limitati a uno durante la demo.
-
-Su un altro Mac o dopo aver spostato il checkout:
-
-```bash
-uv sync --group viewer
-python3 presentations/setup_viewer_link.py
-presentations/launch_viewer.command --check
-```
-
-Il lettore PDF può chiedere conferma per aprire un'applicazione esterna. Se non
-supporta questo collegamento, fare doppio clic su
-[launch_viewer.command](launch_viewer.command), oppure eseguirlo dal terminale.
-La figura reale è già nella slide e consente di continuare anche senza demo.
-Il log dell'avvio è `presentations/viewer-link.log`, ignorato da Git.
-
-L'app `Soaring Viewer.app` è generata localmente e non è versionata. Il suo
-handler accetta soltanto l'URL previsto e non esegue il contenuto dell'URL come
-comando. Per rimuovere la registrazione locale:
-
-```bash
-/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u 'presentations/Soaring Viewer.app'
-```
-
-## Compilazione
-
-La compilazione richiede `latexmk` e una distribuzione TeX con Beamer. Usa gli
-asset congelati nella cartella, senza SSD, rete o ricalcoli scientifici:
+Per compilare i quattro PDF dagli input inclusi, senza leggere l'SSD:
 
 ```bash
 python3 presentations/build.py all --notes
 ```
 
-L'ordine è capitolo 3, poi capitolo 2. Per uno soltanto:
+Per rigenerare gli asset dal manoscritto revisionato nella stessa checkout:
 
 ```bash
-python3 presentations/build.py 3 --notes
-python3 presentations/build.py 2 --notes
-```
-
-I PDF di consegna vengono scritti in questa cartella; i file intermedi sono in
-`build/`, ignorato da Git. Le note sono scritte nei comandi `\timing` dei sorgenti
-e sono incluse solo nel PDF con note.
-
-## Figure, numeri e aggiornamenti
-
-Gli asset sono una copia identificata dei risultati già disponibili nella tesi,
-inclusa la revisione grafica presente nel working tree al momento della copia.
-`source-manifest.json` registra gli hash degli originali, dei pannelli estratti,
-delle definizioni e della configurazione. `figure-manifest.json` identifica le
-figure ridisegnate per la proiezione usando esclusivamente array dei report
-congelati: nessun nuovo fit o confronto simulato è stato aggiunto.
-
-I pannelli ritagliati conservano i vettori PDF originali. Dove l'asse orizzontale
-era condiviso fra righe, il ritaglio include anche le etichette dell'asse
-originale corrispondente; i limiti sono gli stessi. Gli schemi disegnati in TikZ
-sono identificati come esempi, distinti dalle traiettorie reali.
-
-Per aggiornare le figure da una futura versione della tesi, dopo aver verificato
-la coerenza dei nuovi risultati:
-
-```bash
-# pypdf serve soltanto per preparare i ritagli, non per compilare i PDF.
 uv run --no-project --with pypdf python presentations/prepare_assets.py
+uv run --no-project --with pypdf python presentations/crop_chapter_panels.py
 .venv/bin/python presentations/render_figures.py
+.venv/bin/python presentations/render_chapter3_panels.py
+.venv/bin/python presentations/render_supervisor_gate.py
+.venv/bin/python presentations/render_supervisor_maps.py --run revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T133040Z-073601cb --out presentations/assets
 python3 presentations/build.py all --notes
 ```
 
-Questo rinnova gli asset. **Occorre anche rivedere testo, tabelle sintetiche e
-note:** alcune interpretazioni e cifre discusse sono intenzionalmente scritte
-nel sorgente della presentazione. Un aggiornamento automatico delle figure non
-può garantire che quelle frasi rimangano vere. Il sigillo, copiato dalla
-presentazione originale, è già incluso e non richiede il vecchio progetto.
+Solo il ridisegno delle mappe legge metadati del run e dei voli sull'SSD.
+Non viene rilanciato il cleaning, il bootstrap o alcun fit del capitolo 3.
+Il [registro di validazione](validation.json) identifica gli output verificati.
 
-Il controllo di consegna è registrato in [validation.json](validation.json).
-La rassegna dello stato scientifico resta nel
-[registro delle richieste](../revisions/request-checklist-2026-09-11.md).
+Il collegamento `soaring-viewer://open` nella slide dell'esempio reale richiede
+il launcher macOS locale già previsto dal progetto; `install_viewer_link.py`
+lo registra. Il grafico incorporato resta disponibile per la discussione offline.

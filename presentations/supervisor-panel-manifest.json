@@ -1,0 +1,41 @@
+{
+  "operation": "Redraw saved full-report arrays; no trajectory reads, new fits or resampling",
+  "inputs": {
+    "ch3_revision.json.gz": "f946b70221e4ee051c717b1cc42ac214c634b6846312573a6d0817c8066cf132",
+    "ch3_self_similarity.json.gz": "07239748528fd6acc721c7dbd8da1ea1908e10b29e60bd5b5dcaf54e7f16d1b0"
+  },
+  "script_sha256": "3cbb7670967cea8c34f8b56fe5eb80662205bc0466e726ee2a89081f2ee1c7d6",
+  "outputs": {
+    "supervisor-population-controls.pdf": "0177306e34e87e589f34e88483eafd0137392fa9af91b39f23886cbc4cfc5887",
+    "supervisor-range-sensitivity.pdf": "6f7ed56c2ad23ac8e5adbe69a8e4b86c618caae3bcdd7c67a21ac9c5947176c4",
+    "supervisor-contrasts-para.pdf": "01a0d3759e5cdb821a9974b0dcf2847128d79cd90768ff4c93f6adf73091928b",
+    "supervisor-contrasts-hang.pdf": "72174c04be2757d3d255aa4385cd5b1866fa9bc92b515887cfce8c76da26c22d",
+    "supervisor-quantiles-east.pdf": "66f83894c39dc7d0a0125abfdf18a70ec5feddce353ff3e9445fff733d6f4a65",
+    "supervisor-quantiles-north.pdf": "0ae2d588df1c57f1e026b0ec71e37b16a3b791f434ffc139dbe8dfb2d4a14c65",
+    "supervisor-quantiles-radial.pdf": "be10a52973d5bdbe8d03d1b9113f29e19fc5e467e6ae394bef5ac01550f5d162",
+    "supervisor-exponents-para.pdf": "c0da28ebfeb8481d1da744d2db306fb9bec91c95a4ff9e4ad01d45d931eb14b4",
+    "supervisor-exponents-hang.pdf": "70b21f0a5923c4ccb6fcbb23c277a8a479e7b58215fbe329637dc81d6aab534d",
+    "supervisor-collapse-para-east.pdf": "fc632a718be21b56bbc271c7ccbb991e2882ae2d6929626e43d760677a2b9ffa",
+    "supervisor-collapse-para-north.pdf": "8fd9570e9ce53c24ed9d96e16d22e1bd063b527f259d42c804297c09357610cf",
+    "supervisor-collapse-para-radial.pdf": "521a96f3de356da8a29f4aebb95cefde9b49254d933b08674ef9f765a72adf9b",
+    "supervisor-joint-para-1.pdf": "16e47d63120314986e3c82167589fa821b674482f3e9d83d4170d98c549651c0",
+    "supervisor-joint-para-2.pdf": "08a25b7e892593a1c0aea03c79dd07670b77bb3318f2f8e7b229b0fc6f1b2ef2",
+    "supervisor-joint-para-3.pdf": "06701db8fdc1f776e8f27ff13cb5722090bf21e39034a7070fcd28a4d7a1563b",
+    "supervisor-collapse-hang-east.pdf": "4f69a62d426b16fdd37f608f71d3e77ef00ead7c661b1c3866d05289ca0c2da7",
+    "supervisor-collapse-hang-north.pdf": "c9c262fefebc1d9f2a8fa0c7459b0085a525bd9218175ea1cd33f0617ff3c312",
+    "supervisor-collapse-hang-radial.pdf": "38d3817e8bf7cc57066722348f4682b927b8027bdfecd7c15b97138c4d15dc48",
+    "supervisor-joint-hang-1.pdf": "bcf29584357ffeb99156d72dae135d50aad11247df65d7c526c27a9613460078",
+    "supervisor-joint-hang-2.pdf": "c34537ea1173be57d9e53d934bdb8c33c0dd838436bf79c527cc79b572018eef",
+    "supervisor-joint-hang-3.pdf": "6baf5699c16b9a4283a55f7c7158e0bc9276eb9ce380218ef4a52ed3f20fe1ed",
+    "supervisor-pca-alps.pdf": "f30604f803c8e75ea32b242f1d4dae9f02c2b08de7a88b44ff42f349fdf45fc6",
+    "supervisor-pca-pyrenees.pdf": "d3c0d8a7d4073bad6817093e1fc75c625f4b7101980da6b46662e2ca706848c2",
+    "supervisor-pca-coast.pdf": "14b85111023efca2ff4374ad78a532b3a758ec9911c93b2824215e0c1aa7e1a6"
+  },
+  "notes": [
+    "Joint plots keep all six lags, original bins, overflow accounting and shared discipline colour scale.",
+    "Median-normalized displays use recorded 1st--99th quantile ranks, not an interpolated claim about the tails.",
+    "Logarithmic marginal panels show positive values; any point mass at zero is reported separately. Median panels show all positive recorded dense quantiles instead of fixing x limits at 0.01--10.",
+    "PCA panels display all four reported lags; only three ellipses were drawn in the original multi-panel figure.",
+    "Confidence segments use the exact saved percentile endpoints; they are not simultaneous intervals."
+  ]
+}

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import gzip
 import hashlib
 import json
 from pathlib import Path
@@ -49,7 +50,9 @@ def main():
             "pdf.fonttype": 42,
         }
     )
-    rev = json.loads((ROOT / "data/ch3_revision.json").read_text())
+    rev = json.loads(gzip.decompress((ROOT / "data/ch3_revision.json.gz").read_bytes()))
+    if rev["measurement_contract"]["scope"] != "full eligible archive":
+        raise ValueError("The complete eligible archive is required")
     duration = json.loads((ROOT / "data/duration_equipment.json").read_text())
     results = rev["results"]
     probs = np.array(rev["measurement_contract"]["probabilities"]) * 100
@@ -70,7 +73,6 @@ def main():
             xlabel="Percentile",
             xticks=probs,
         )
-        ax.set_ylim(0.81, 1.025)
     axs[0].set_ylabel(r"Fitted quantile slope $H_p$")
     axs[0].legend(loc="upper right", fontsize=8.5)
     save(fig, "talk-quantile-slopes")
@@ -181,7 +183,7 @@ def main():
             label = "All durations" if h == 0 else rf"$T\geq {h:g}$ h"
             ax.loglog(lag, y, style, color=color, label=label)
         ax.set(
-            title=("Beginners (EN A/B)" if ci == 0 else "Experts (EN C/D/CCC)"),
+            title=("EN A/B" if ci == 0 else "EN C/D/CCC"),
             xlabel=r"Lag $\tau$ [s]",
             xlim=(10, 10000),
             ylim=(3e3, 4e9),
@@ -216,7 +218,7 @@ def main():
         "operation": "Plot frozen arrays; no fitted or simulated values added.",
         "inputs": {
             n: hashlib.sha256((ROOT / "data" / n).read_bytes()).hexdigest()
-            for n in ["ch3_revision.json", "duration_equipment.json"]
+            for n in ["ch3_revision.json.gz", "duration_equipment.json"]
         },
         "script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "outputs": outputs,

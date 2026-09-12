@@ -5,14 +5,14 @@
 \input{data/duration_equipment.tex}
 \input{data/kinematic_isotropy.tex}
 \input{data/msd.tex}
-\hypersetup{pdftitle={Global transport: measurements, controls and open model questions}}
-
+\hypersetup{pdftitle={Global transport: full chapter, vector laws and supervisor discussion}}
+\title{Global transport in soaring flights}
 \begin{document}
-% MAIN TALK: 18 slides, 20 minutes including the final discussion prompt.
 \titleframe{Global transport in soaring flights}
-  {Measurements, controls and open model questions}
-  {Chapter 3\enspace$\bullet$\enspace20-minute supervisor meeting}
-\timing{0:20}{The purpose is to agree which empirical constraints can support model comparison now, and which controls are needed before rejecting a stochastic process. The earlier CTRW slides supply the visual style only; their proposed model and universality claims are not results of this analysis.}
+ {Measurements, controls and questions for the supervisors}
+ {Chapter 3\enspace$\bullet$\enspace Complete chapter review}
+{This deck develops the whole chapter without a prescribed duration. Its central distinction is between measured constraints on the observed ground trajectories and hypotheses about their generating process.}
+\section{Displacement, support and growth}
 
 \begin{frame}{What motion should a stochastic model reproduce?}
 \begin{columns}[T,onlytextwidth]
@@ -28,13 +28,41 @@
 \kw{$10\le\tau\le10^4$ s}.
 \column{.40\textwidth}
 \small
-\textbf{Two levels of evidence}\par\medskip
+\textbf{Retained and eligible populations}\par\medskip
 Archive: \num{\StatMsdParaFlights} paragliders and \num{\StatMsdHangFlights} hang gliders.\par\medskip
-Detailed diagnostics: \StatRevParaFlights\ and \StatRevHangFlights\ selected flights, one longest segment per flight, on a 10-s grid.
+Full diagnostics: \num{\StatRevParaFlights} and \num{\StatRevHangFlights} eligible flights, all supported segments, on a 10-s grid.
 \end{columns}
 \question{Displacement growth, distribution shape, directional preference and memory must be confronted together.}
-\source{Archive baseline: equal segment weights. Subset $V_1,V_2$: equal flight weights. Baseline quantiles and moments: pooled windows.}
-\timing{1:00}{Define horizontal position in a local east--north frame. The archive's original time-average curve uses equal segments, while the detailed subset and duration report use equal flights. The baseline high-order moments and quantiles pool windows. These distinctions explain why slopes from different figures are not interchangeable. The subset is reproducible but not a simple random sample of every flight. Flights recorded more slowly than 10 seconds are omitted. Launch-synchronised averages mix locations, years and seasons, so their difference from time averages is not an ergodicity test.}
+\source{Archive TAMSD: equal segment weights. Full $V_1,V_2$: equal flight weights. Baseline quantiles and moments: pooled windows.}
+\speaker{The full diagnostic collector has no flight cap and no longest-segment-only restriction. Flights recorded more slowly than ten seconds are ineligible for its common grid. Each lag uses every supported flight; a separate fixed long-flight comparison controls population change. Different grids, minimum segment sizes and weights explain some differences from the archive TAMSD.}
+\end{frame}
+
+\begin{frame}{Launch, segment and flight averages use different weights}
+\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{3cm}>{\raggedright\arraybackslash}p{4.5cm}>{\raggedright\arraybackslash}p{5cm}@{}}\toprule
+Estimator & Unit receiving equal weight & Support requirement\\\midrule
+Launch ensemble & available flights at elapsed time $t$ & observed coordinate at that time\\[3pt]
+Archive TAMSD & eligible retained segments & native-grid displacement within segment\\[3pt]
+Full $V_1,V_2$ & eligible flights at lag $\tau$ & within-segment common-grid stencil\\[3pt]
+Pooled moments & available increment origins & stated non-overlapping baseline stencil\\\bottomrule
+\end{tabular}
+\par\medskip
+Different exponents can reflect different weights and changing support. Their
+difference alone is not an ergodicity test.
+\question{Which estimator corresponds to the physical population the model should reproduce?}
+\speaker{Within a flight, contributions are combined using their admissible origins. The archive TAMSD and the full diagnostic reporter use different grids and minimum segment sizes, so their flight counts need not be identical. State the estimator before comparing numerical slopes.}
+\end{frame}
+
+\begin{frame}{Launch averages and time averages use different populations}
+\centering\fig[54mm]{msd-growth.pdf}
+\question{How much of the difference follows launch synchronization and segment weighting?}
+\speaker{These are the upper two panels of the complete archive MSD figure. Blue denotes paragliders and terracotta hang gliders. The quantities use different clocks and weighting; their comparison is not an ergodicity test.}
+\end{frame}
+
+\begin{frame}{Local slopes must be read together with falling support}
+\centering\fig[54mm]{msd-support.pdf}
+\question{Which scale interval supports a stable finite-range description?}
+\speaker{The lower panels of the archive MSD figure show local slopes and contributing flights or segments. A small bootstrap error does not remove scale dependence or population selection.}
 \end{frame}
 
 \begin{frame}{The MSD grows faster than linearly on the measured interval}
@@ -52,11 +80,11 @@ Detailed diagnostics: \StatRevParaFlights\ and \StatRevHangFlights\ selected fli
 $V_1=\langle R^2\rangle$; $V_2$ uses second differences.\par\medskip
 The local slope bends. One fitted number does not establish a power law.
 \end{columns}
-\source{Subset; 10--10,000 s. Solid: $V_1$; dashed: $V_2$; dotted: $V_1$, fixed long cohort. Right: half the local slope. Descriptive fits; no calibrated confidence intervals.}
-\timing{1:10}{Start from the observable, not a Hurst label. The first-difference exponents are 1.702 and 1.662 in this subset. The full archive's equal-segment time averages have descriptive slopes 1.779 and 1.742 under a different estimator. The plotted local slopes change with lag. Native cadence and smoothing matter near the lower end; changing flight coverage matters near the upper end. Introduce V2 only as the constant-velocity control explained next.}
+\source{Full eligible archive; 10--10,000 s. Solid: $V_1$; dashed: $V_2$; dotted: $V_1$, fixed long cohort. Right: half the local slope. Descriptive fits; no calibrated confidence intervals.}
+\speaker{The displayed exponents are imported from the completed full report. The first- and second-difference estimators use equal flight weights and do not cross segment boundaries. Their local slopes bend, so these are descriptive fits over the stated range. They differ from the equal-segment archive TAMSD and from pooled-origin high-order moments.}
 \end{frame}
 
-\begin{frame}{Second differences cancel constant velocity; an intrinsic $H$ remains open}
+\begin{frame}{Constant velocity cancels; an intrinsic $H$ remains open}
 \[
  A_2\mathbf r=\mathbf r(t+2\tau)-2\mathbf r(t+\tau)+\mathbf r(t),
  \qquad V_2=\langle|A_2\mathbf r|^2\rangle.
@@ -78,8 +106,8 @@ The local slope bends. One fitted number does not establish a power law.
 At $H=1$ the prefactor vanishes. Our $b_2\simeq2$ cannot be read as a validated $H\simeq1$.
 \end{columns}
 \question{Which residual and which scale interval could satisfy the assumptions needed to estimate $H$?}
-\source{At $\tau=10^4$ s, $V_2$ retains only 107 para / 56 hang flights; it needs $2\tau$ of continuous support.}
-\timing{1:20}{Explain the cancellation algebraically. Adjacent increments I1 and I2 obey Var(I1+I2)=K(2tau) to the power 2H. Expanding Var(I2-I1) gives the prefactor. The derivation requires finite variance and stationary increments with the stated power over the relevant lags, including 2tau. A smooth curved trajectory instead gives V2 proportional to tau to the fourth at small lag. We have therefore gained a diagnostic invariant, but have not isolated the motion in still air or obtained its Hurst exponent.}
+\source{At $\tau=10^4$ s, $V_2$ retains only \num{\StatRevParaLastOrderTwoFlights} para / \num{\StatRevHangLastOrderTwoFlights} hang flights; it needs $2\tau$ of continuous support.}
+\speaker{Explain the cancellation algebraically. Adjacent increments I1 and I2 obey Var(I1+I2)=K(2tau) to the power 2H. Expanding Var(I2-I1) gives the prefactor. The derivation requires finite variance and stationary increments with the stated power over the relevant lags, including 2tau. A smooth curved trajectory instead gives V2 proportional to tau to the fourth at small lag. We have therefore gained a diagnostic invariant, but have not isolated the motion in still air or obtained its Hurst exponent.}
 \end{frame}
 
 \begin{frame}{Open and closed tasks change the growth of displacements}
@@ -95,20 +123,49 @@ At $H=1$ the prefactor vanishes. Our $b_2\simeq2$ cannot be read as a validated 
  \node[below]at(0,-1.6){Closed circular course};
 \end{tikzpicture}
 \column{.54\textwidth}
-\small\textbf{Measured subset}\par\medskip
+\small\textbf{Full eligible archive}\par\medskip
 \begin{tabular}{@{}llrrr@{}}\toprule
  & Task & $N$ & $b_1$ & $b_2$\\\midrule
-Para & Open &391&1.752&1.968\\
- & Closed &559&1.652&2.054\\
-Hang & Open &171&1.702&1.893\\
- & Closed &308&1.641&2.004\\\bottomrule
+Para & Open &\StatRevParaOpenFlights&\StatRevParaOpenAlphaOne&\StatRevParaOpenAlphaTwo\\
+ & Closed &\StatRevParaClosedFlights&\StatRevParaClosedAlphaOne&\StatRevParaClosedAlphaTwo\\
+Hang & Open &\StatRevHangOpenFlights&\StatRevHangOpenAlphaOne&\StatRevHangOpenAlphaTwo\\
+ & Closed &\StatRevHangClosedFlights&\StatRevHangClosedAlphaOne&\StatRevHangClosedAlphaTwo\\\bottomrule
 \end{tabular}\par\medskip
 The ordering reverses at order two. Constant-drift cancellation leaves the return geometry in the observable.
 \end{columns}
 \question{Compare tasks at matched duration and region, using both physical lag and $\tau/T$.}
 \source{Task declarations; descriptive slopes, 10--10,000 s. Drawing is a geometric illustration. \hyperlink{circle}{Exact circular example}.}
-\timing{1:00}{The open and closed groups are defined by declared task, not by forcing every retained segment to return exactly. A circle at fixed speed has displacement that vanishes after a full period, and its second difference also retains this return. The change of slope need not mean a different stochastic law. Five para flights have no known task and do not enter this comparison. We should match duration and environment before interpreting the task difference causally.}
+\speaker{The task declaration supplies open/closed labels; it does not force every retained segment to return to its start. Counts and slopes are read from the full-run report. Match duration and environment before interpreting task contrasts. The exact circular example illustrates how geometry survives second differencing; it is not a fitted flight model.}
 \end{frame}
+
+\begin{frame}[label=circle]{A circle retains its geometry after second differencing}
+\small For $\mathbf r(t)=a(\cos\omega t,\sin\omega t)$ and $T_c=2\pi/\omega$,
+\[
+ V_1=4a^2\sin^2(\pi\tau/T_c),\qquad
+ V_2=16a^2\sin^4(\pi\tau/T_c).
+\]
+\centering\fig[44mm]{closed-loop-variations.pdf}
+\question{Which scale effects could follow return geometry without a change of stochastic law?}
+\speaker{This is an exact periodically continued circle, not a fitted flight model. Constant speed does not imply ballistic endpoint displacement over every lag. The original two variation panels are retained; the circular path was illustrated on the preceding task slide.}
+\end{frame}
+
+\begin{frame}{Observed-path closure needs special care for segmented flights}
+\[
+ c_f^{\rm obs}=
+ \frac{|\mathbf r_{f,\rm last}-\mathbf r_{f,\rm first}|}
+ {\displaystyle\sum_{s\in\mathcal S_f}\sum_k
+ |\mathbf r_{fs,k+1}-\mathbf r_{fs,k}|}.
+\]
+\small The denominator omits unobserved intervals. For a segmented flight,
+$c_f^{\rm obs}$ need not be bounded by one.
+\par\medskip
+Declared task, observed endpoint separation and actual flown-route closure are
+related descriptions with different information requirements.
+\question{Does the task contrast persist when restricted to continuously observed flights?}
+\speaker{The descriptor preserves recorded endpoints without inventing missing path length. Reacquisition offsets can affect it even though every increment used for transport remains inside one segment. Use the task labels and this observed-path ratio as distinct descriptive stratifications; neither is an independent route-quality label.}
+\end{frame}
+
+\section{Quantiles and population control}
 
 \begin{frame}{A single displacement scale predicts equal quantile slopes}
 \begin{columns}[T,onlytextwidth]
@@ -138,16 +195,58 @@ The ordering reverses at order two. Constant-drift cancellation leaves the retur
 \end{tikzpicture}
 \end{columns}
 \source{Schematic CDF. Quantiles describe ranks within one distribution; they do not define permanent classes of slow and fast flights. Equal slopes are necessary, not sufficient, for process self-similarity.}
-\timing{1:00}{The lower quartile probes relatively small displacements, while the 90th percentile probes larger ones. Both use the same distribution at each lag. A different flight may supply an observation near each rank, and rank identities may change; that does not invalidate a quantile. The mathematical issue is whether the population and weighting used to construct the distribution change with lag. No isotropy assumption is needed for the radial scaling implication.}
+\speaker{The lower quartile probes relatively small displacements, while the 90th percentile probes larger ones. Both use the same distribution at each lag. A different flight may supply an observation near each rank, and rank identities may change; that does not invalidate a quantile. The mathematical issue is whether the population and weighting used to construct the distribution change with lag. No isotropy assumption is needed for the radial scaling implication.}
 \end{frame}
 
-\begin{frame}{Controlling the population changes the quantile result}
-\centering\fig[47mm]{talk-quantile-slopes.pdf}
-\small\raggedright
-\textbf{Fixed control:} the same flights, equal flight weights and the same origins at every lag.
-The long cohorts contain \kw{107 para / 56 hang flights} with segments $\ge20,000$ s.
-\source{The changing para pool gives $H_{.90}>H_{.25}$; the fixed control gives the reverse. Intermediate weight/origin controls are in the \hyperlink{quantile-backup}{backup figure}. Slopes are descriptive.}
-\timing{1:20}{This is a resolved methodological concern with an unresolved inferential consequence. The fully controlled empirical CDF averages within each fixed flight and then gives each flight equal weight. The same admissible origins, whose longest-lag increment remains in the segment, are used at every lag. The four controls separate cohort membership, weights and origins. In the fixed para cohort the lower and upper slopes are 0.979 and 0.892; in hang they are 0.995 and 0.864. They are not strictly monotone across all ranks. These unusually long flights need not represent shorter flights. Overlapping origins do not provide independent replications.}
+\begin{frame}{The full archive and the fixed cohort answer different questions}
+\small
+\begin{center}
+\begin{tabular}{@{}lrr@{}}\toprule
+Population & Paragliders & Hang gliders\\\midrule
+Retained cleaned flights & \num{\StatMsdParaFlights} & \num{\StatMsdHangFlights}\\
+Eligible for the common-grid diagnostic & \num{\StatRevParaFlights} & \num{\StatRevHangFlights}\\
+Fixed long-flight control & \num{\StatRevParaFixedFlights} & \num{\StatRevHangFixedFlights}\\\bottomrule
+\end{tabular}
+\end{center}
+Every eligible segment contributes where it supports the lag. The long-flight
+control adds a common population and common origins across the complete lag range.
+\question{Which statement concerns the observed archive, and which is conditional on long flights?}
+\speaker{The common ten-second grid requires native cadence at most ten seconds and sufficient within-segment support. These are eligibility conditions, not flight-number caps imposed by the Mac. The twenty-thousand-second criterion is an operational choice for the additional control. It is not mathematically necessary merely to observe one increment at a ten-thousand-second lag.}
+\end{frame}
+
+\begin{frame}{The fixed control requires common temporal support}
+\small
+All eligible flights contribute at each supported lag in the archive-wide analysis.
+The additional fixed cohort contains every flight with a retained segment lasting
+at least 20,000 s.
+\par\medskip
+This provides at least 1001 common ten-second origins in one qualifying segment at
+the largest lag of 10,000 s. Shorter segments of those flights contribute wherever
+they support the same full lag stencil.
+\question{How different are the shorter-flight results on a shorter common lag interval?}
+\speaker{The 20,000-second threshold is more restrictive than mere existence of a 10,000-second increment. It is an explicit support convention for this sensitivity analysis. The need for long observations is mathematical; the particular factor of two and chosen maximum lag are design choices, not necessities imposed by memory limits.}
+\end{frame}
+
+\begin{frame}{Holding flights fixed does not by itself hold the observations fixed}
+\small
+\begin{enumerate}
+\item All available flights and origins, pooled.
+\item Fixed flights, still pooling their available origins.
+\item Fixed flights with equal total flight weight.
+\item Fixed flights, equal flight weight and the same origins at every lag.
+\end{enumerate}
+\[
+ F_\tau(r)=\frac1{N_*}\sum_f\frac1{n_f^*}
+       \sum_{k\in\mathcal O_f^*}\mathbf1\{R_{fk}(\tau)\le r\}.
+\]
+\question{How much of a change in the quantile curve comes from membership, weights or origin selection?}
+\speaker{All common origins stay within a retained segment for every requested lag. Overlapping increments are deliberately retained; they are not independent replicates. The final control uses 14360 paraglider flights with 21739115 common origins and 563 hang-glider flights. Read the final hang-glider origin count from its completed report rather than a preflight estimate.}
+\end{frame}
+
+\begin{frame}{Membership, flight weights and common origins change the comparison}
+\centering\fig[54mm]{supervisor-population-controls.pdf}
+\question{Which part of the slope change comes from each population control?}
+\speaker{The four controls use the same ranks and fitting interval. The fixed cohort includes every qualifying long flight. Curves here are descriptive point estimates; the final fixed-control uncertainty uses the whole-flight paired bootstrap.}
 \end{frame}
 
 \begin{frame}{Relative spread changes, but the change is not monotone}
@@ -166,36 +265,305 @@ A negative fitted slope summarizes part of that evolution; it does not imply nar
 \end{columns}
 \question{How much of this shape evolution survives site--day uncertainty, route matching and phase conditioning?}
 \source{Fully controlled population. A lower ratio means less relative spread by this measure; it does not establish a flatter density tail.}
-\timing{1:00}{At 10 seconds the ratios are about 1.94 and 2.23; they peak around 80 seconds at 4.48 and 5.89, fall towards 2000 seconds, and rise again. At 10000 seconds they are about 3.03 and 2.65, above the initial values. Because OLS is linear in the logarithmic observations, the fitted log-ratio slope equals the difference of fitted quantile slopes on the same lag set. This identity does not imply monotonicity. Both quantiles can grow while their ratio falls.}
+\speaker{The fixed-control ratio starts near 1.97 for paragliders and 2.27 for hang gliders, peaks near ninety and eighty seconds, and has a post-peak minimum near two thousand seconds. The final values near 3.01 and 2.60 exceed the initial ones. A negative fitted log-ratio slope is therefore not monotone narrowing.}
 \end{frame}
 
-\begin{frame}{The Pyrenean archive has a strong east--west preference}
-\begin{columns}[c,onlytextwidth]
-\column{.65\textwidth}
-\fig[26mm]{terrain-position.pdf}\par\vspace{1mm}
-\fig[26mm]{terrain-velocity.pdf}
-\column{.32\textwidth}
-\small
+\begin{frame}{All quantiles can grow while spread relative to the median narrows}
+\centering\fig[54mm]{quantile-example-laws.pdf}
+\question{How can a changing distribution shape coexist with increasing displacement scales?}
+\speaker{Analytical illustration: $R(\tau)=(\tau/\tau_0)^{0.85}\exp[\sigma(\tau)Z]$, with standard Gaussian $Z$ and $\sigma(\tau)=0.9-0.1\log(\tau/\tau_0)$ on the illustrated range. This is not a fit to flight data.}
+\end{frame}
+
+\begin{frame}{Unequal rank exponents can encode that changing shape}
+\centering\fig[54mm]{quantile-example-slopes.pdf}
+\question{Which empirical observations would distinguish this example from a true common scale family?}
+\speaker{For the same lognormal illustration, Hp=0.85-0.1 Phi-inverse(p). The example explains the algebra without assigning permanent slow/fast identities to particular flights. The actual empirical curves need their own population controls and uncertainty estimates.}
+\end{frame}
+
+\section{Vector scaling and dependence}
+
+\begin{frame}{Anisotropy does not prevent a common scalar rescaling}
 \[
- A_u(t)=\frac{\langle u_E(t)^2\rangle}{\langle u_N(t)^2\rangle}.
+ \mathbf X(\tau)\overset d=\tau^H\mathbf Z
+ \quad\Longrightarrow\quad
+ |\mathbf X(\tau)|\overset d=\tau^H|\mathbf Z|,
 \]
-\textbf{Elapsed time since launch}, not displacement lag.\par\medskip
-Position ratio approaches five in the Pyrenees. Velocity is also directionally unbalanced.\par\medskip
-These uncentred moments include mean motion.
-\end{columns}
-\source{Paraglider archive; take-off regions. Pointwise 10--90\% site--day bootstrap bands; at least 30 flights / 10 groups at each time. Directional balance is weaker than full isotropy.}
-\timing{1:00}{Keep the clock distinction explicit: these kinematics figures use elapsed time since launch, while the preceding increment statistics use lag. The Pyrenean position ratio grows towards five. That is consistent with the east--west development of the massif, but routes, launch-site selection, weather and disappearing short flights can all contribute. The regional bootstrap bands already exist; they do not provide confidence intervals for the quantile slopes shown earlier. A ratio of one would not test cross-covariance or the entire angular distribution.}
+\small even if the law of $\mathbf Z$ is anisotropic.
+\par\medskip
+With two centred independent Gaussian components instead,
+\[
+ \mathbb E[R^2]=a\tau^{2H_E}+b\tau^{2H_N},
+\]
+unequal component exponents can produce a lag-dependent radial effective exponent.
+\question{Is a mismatch caused by unequal directional scales, changing marginal shape or changing joint structure?}
+\speaker{Scalar self-similarity and isotropy are separate hypotheses. Operator self-similarity allows a matrix exponent and is broader, but does not permit arbitrary lag-by-lag normalization chosen to force collapse. The current plots assess the stated scalar comparison; they do not exhaust that wider model class.}
 \end{frame}
 
-\begin{frame}{The experience contrast depends on region and elapsed time}
-\begin{columns}[c,onlytextwidth]
-\column{.49\textwidth}\centering\fig[49mm]{equipment-alps.pdf}
-\column{.49\textwidth}\centering\fig[49mm]{equipment-pyrenees.pdf}
-\end{columns}
+\begin{frame}{East, north and radius together still do not identify the joint law}
+\[
+ \{(1,2),(-1,-2)\}
+ \qquad\text{versus}\qquad
+ \{(1,-2),(-1,2)\},
+\]
+\small each pair equiprobable.
+\begin{center}
+\begin{tabular}{@{}lcc@{}}\toprule
+Quantity & First law & Second law\\\midrule
+Signed east marginal & $\pm1$ & $\pm1$\\
+Signed north marginal & $\pm2$ & $\pm2$\\
+Radius & $\sqrt5$ & $\sqrt5$\\
+Cross-covariance & $+2$ & $-2$\\\bottomrule
+\end{tabular}
+\end{center}
+\question{The missing information is real: signs and component dependence require a joint diagnostic.}
+\speaker{This is an exact mathematical counterexample, not a simulated flight result. Even signed marginals and radius can agree while the joint laws differ. The Cramer--Wold characterization uses all signed linear projections, not only the two coordinate projections. The signed joint plots address additional structure at their stated bin resolution.}
+\end{frame}
+
+\begin{frame}{Fixed-population quantiles: east component}
+\centering\fig[54mm]{supervisor-quantiles-east.pdf}
+\question{Do the ranks retain one relative shape as the lag increases?}
+\speaker{Both disciplines use the same four ranks and their own complete fixed cohort. East and north use absolute signed-component magnitudes; radius is endpoint separation, not flown path length. Flights, origins and weights remain fixed across lags.}
+\end{frame}
+
+\begin{frame}{Fixed-population quantiles: north component}
+\centering\fig[54mm]{supervisor-quantiles-north.pdf}
+\question{Do the ranks retain one relative shape as the lag increases?}
+\speaker{Both disciplines use the same four ranks and their own complete fixed cohort. East and north use absolute signed-component magnitudes; radius is endpoint separation, not flown path length. Flights, origins and weights remain fixed across lags.}
+\end{frame}
+
+\begin{frame}{Fixed-population quantiles: radial displacement}
+\centering\fig[54mm]{supervisor-quantiles-radial.pdf}
+\question{Do the ranks retain one relative shape as the lag increases?}
+\speaker{Both disciplines use the same four ranks and their own complete fixed cohort. East and north use absolute signed-component magnitudes; radius is endpoint separation, not flown path length. Flights, origins and weights remain fixed across lags.}
+\end{frame}
+
+\begin{frame}{Whole-flight bootstrap preserves pairing across ranks, axes and lags}
 \small
-In the Alps the expert proxy is more balanced. In the Pyrenees the curves cross; there is no uniform expert advantage.
-\source{Beginners = EN A/B (violet); experts = EN C/D/CCC (ochre). Equipment is an experience proxy, not an individual skill measurement. Same ratio and clock as the previous slide.}
-\timing{1:00}{Use the user's proposed class mapping, with its limitation stated plainly. An experienced pilot may fly an A/B wing, and equipment performance itself changes the dynamics. In the Alps the expert group has a position ratio closer to one. In the Pyrenees the ordering changes after a few hundred seconds and both groups reach large east--west ratios. We should therefore show the regional result rather than claim that experts generally overcome terrain constraints. A matched site--day analysis is the next useful contrast.}
+Resample flights with replacement 400 times. Each selected flight retains all its
+common origins and its joint east--north observations at every lag.
+\par\medskip Overlapping origins remain within the resampled flight; they are not treated as independent replicates.
+\question{How would shared pilot history or site--day weather change these uncertainty estimates?}
+\speaker{The current intervals assume independent flights within the fixed long-flight population. They are not iid increment intervals, simultaneous bands over all comparisons, or measurement-error intervals. Paired differences are computed inside each replicate. A large complete archive does not remove the assumptions behind the resampling model.}
+\end{frame}
+
+\begin{frame}{Paragliders: component and radial exponent estimates}
+\centering\fig[54mm]{supervisor-exponents-para.pdf}
+\question{Which differences need a paired contrast instead of comparing overlapping intervals?}
+\speaker{Markers are full-range fitted exponents; vertical segments are the exact saved 95-percent percentile endpoints from 400 whole-flight bootstrap draws. They are not simultaneous intervals and do not include sensor, site-day or fitting-range uncertainty.}
+\end{frame}
+
+\begin{frame}{Paragliders: paired rank and directional contrasts}
+\centering\fig[54mm]{supervisor-contrasts-para.pdf}
+\question{Which differences persist under a change of fitting interval?}
+\speaker{The full-range north-minus-east contrast is positive with a 95-percent paired interval above zero at every one of the four ranks, in both disciplines. The rank contrast is H90 minus H25 for east, north and radius over each saved fit range. The directional contrast is north minus east at each rank over the full range. Both retain pairing inside the flight bootstrap. The zero line marks the stated equality hypothesis, without a multiple-comparison calibration.}
+\end{frame}
+
+\begin{frame}{Hang gliders: component and radial exponent estimates}
+\centering\fig[54mm]{supervisor-exponents-hang.pdf}
+\question{Which differences need a paired contrast instead of comparing overlapping intervals?}
+\speaker{Markers are full-range fitted exponents; vertical segments are the exact saved 95-percent percentile endpoints from 400 whole-flight bootstrap draws. They are not simultaneous intervals and do not include sensor, site-day or fitting-range uncertainty.}
+\end{frame}
+
+\begin{frame}{Hang gliders: paired rank and directional contrasts}
+\centering\fig[54mm]{supervisor-contrasts-hang.pdf}
+\question{Which differences persist under a change of fitting interval?}
+\speaker{The full-range north-minus-east contrast is positive with a 95-percent paired interval above zero at every one of the four ranks, in both disciplines. The rank contrast is H90 minus H25 for east, north and radius over each saved fit range. The directional contrast is north minus east at each rank over the full range. Both retain pairing inside the flight bootstrap. The zero line marks the stated equality hypothesis, without a multiple-comparison calibration.}
+\end{frame}
+
+\begin{frame}{A common fitted scale depends on the fitted interval}
+\centering\fig[54mm]{supervisor-range-sensitivity.pdf}
+\question{Which range has an independent physical justification?}
+\speaker{The component-specific common slopes average the four ranks with their own intercepts. The plot uses saved fits and intervals only, not new fitting. Agreement of a common summary does not establish equal individual rank slopes.}
+\end{frame}
+
+\begin{frame}{A large density near zero need not carry much probability}
+\[
+ \widehat f_j=\frac{p_j}{b_{j+1}-b_j}.
+\]
+\small A very narrow histogram bin can have a tall density and still contain
+little probability. Across the displayed marginal laws, the mass below 1 mm,
+including zero and the straddling bin, is below $0.003\%$.
+\par\medskip
+That numerical scale is not a claim of millimetre GNSS resolution.
+The following plots retain positive support; empirical-CDF comparisons also retain zero mass.
+\question{Do the central ranks and the probability-bearing tails tell the same scaling story?}
+\speaker{The stated bound comes from the complete saved histogram masses, not from reading a logarithmic density height. Tiny numerical displacements can reflect recorded coordinates and interpolation. The median-normalized displays show the saved first-to-ninety-ninth percentiles; they do not establish tail collapse beyond those ranks.}
+\end{frame}
+
+\begin{frame}{Paragliders: marginal collapse for east}
+\centering\fig[54mm]{supervisor-collapse-para-east.pdf}
+\question{Does power or median normalization leave a systematic shape change?}
+\speaker{The panels show recorded histogram densities, the saved power rescaling, and recorded first-to-ninety-ninth quantile ranks after median normalization. Positive values are displayed on logarithmic axes; any zero mass is reported separately and retained in the exact empirical-CDF distances. Median-normalized ranks do not establish collapse outside that rank range. The same selected lag colours are retained throughout.}
+\end{frame}
+
+\begin{frame}{Paragliders: marginal collapse for north}
+\centering\fig[54mm]{supervisor-collapse-para-north.pdf}
+\question{Does power or median normalization leave a systematic shape change?}
+\speaker{The panels show recorded histogram densities, the saved power rescaling, and recorded first-to-ninety-ninth quantile ranks after median normalization. Positive values are displayed on logarithmic axes; any zero mass is reported separately and retained in the exact empirical-CDF distances. Median-normalized ranks do not establish collapse outside that rank range. The same selected lag colours are retained throughout.}
+\end{frame}
+
+\begin{frame}{Paragliders: marginal collapse for radius}
+\centering\fig[54mm]{supervisor-collapse-para-radial.pdf}
+\question{Does power or median normalization leave a systematic shape change?}
+\speaker{The panels show recorded histogram densities, the saved power rescaling, and recorded first-to-ninety-ninth quantile ranks after median normalization. Positive values are displayed on logarithmic axes; any zero mass is reported separately and retained in the exact empirical-CDF distances. Median-normalized ranks do not establish collapse outside that rank range. The same selected lag colours are retained throughout.}
+\end{frame}
+
+\begin{frame}{Hang gliders: marginal collapse for east}
+\centering\fig[54mm]{supervisor-collapse-hang-east.pdf}
+\question{Does power or median normalization leave a systematic shape change?}
+\speaker{The panels show recorded histogram densities, the saved power rescaling, and recorded first-to-ninety-ninth quantile ranks after median normalization. Positive values are displayed on logarithmic axes; any zero mass is reported separately and retained in the exact empirical-CDF distances. Median-normalized ranks do not establish collapse outside that rank range. The same selected lag colours are retained throughout.}
+\end{frame}
+
+\begin{frame}{Hang gliders: marginal collapse for north}
+\centering\fig[54mm]{supervisor-collapse-hang-north.pdf}
+\question{Does power or median normalization leave a systematic shape change?}
+\speaker{The panels show recorded histogram densities, the saved power rescaling, and recorded first-to-ninety-ninth quantile ranks after median normalization. Positive values are displayed on logarithmic axes; any zero mass is reported separately and retained in the exact empirical-CDF distances. Median-normalized ranks do not establish collapse outside that rank range. The same selected lag colours are retained throughout.}
+\end{frame}
+
+\begin{frame}{Hang gliders: marginal collapse for radius}
+\centering\fig[54mm]{supervisor-collapse-hang-radial.pdf}
+\question{Does power or median normalization leave a systematic shape change?}
+\speaker{The panels show recorded histogram densities, the saved power rescaling, and recorded first-to-ninety-ninth quantile ranks after median normalization. Positive values are displayed on logarithmic axes; any zero mass is reported separately and retained in the exact empirical-CDF distances. Median-normalized ranks do not establish collapse outside that rank range. The same selected lag colours are retained throughout.}
+\end{frame}
+
+\begin{frame}{The joint comparison keeps geographic axes and one scalar scale}
+\[
+ \mathbf Z_\tau=
+ \frac{(X_E,X_N)}{s_0\left(\frac{\tau}{1000\,\mathrm s}\right)^{H_*}}.
+\]
+\small
+$H_*$ is the common fit across all component/rank slopes. The radial reference
+median near 1000 s is adjusted to 1000 s by the same power.
+\par\medskip
+There is no lag-specific centring, rotation or whitening. The six lags share the
+same cells and equal total weight per flight.
+\question{Which directional and dependence changes remain visible when the normalization cannot remove them separately?}
+\speaker{The common geographic axes are deliberate. Independent rotations or covariance normalization at each lag could erase part of the effect being studied. This is a test of one stated scale family of ground displacements, not a recovery of air-relative motion.}
+\end{frame}
+
+\begin{frame}{Paragliders: signed joint laws (1/3)}
+\centering\fig[54mm]{supervisor-joint-para-1.pdf}
+\question{Which changes concern orientation, central concentration or mass outside the displayed square?}
+\speaker{Each discipline uses one common colour scale across all six lags, one geographic frame and one scalar rescaling. Colours are probability per original cell. Outside mass is retained in overflow cells for the numerical comparison. Equal plot area does not imply equal precision across disciplines.}
+\end{frame}
+
+\begin{frame}{Paragliders: signed joint laws (2/3)}
+\centering\fig[54mm]{supervisor-joint-para-2.pdf}
+\question{Which changes concern orientation, central concentration or mass outside the displayed square?}
+\speaker{Each discipline uses one common colour scale across all six lags, one geographic frame and one scalar rescaling. Colours are probability per original cell. Outside mass is retained in overflow cells for the numerical comparison. Equal plot area does not imply equal precision across disciplines.}
+\end{frame}
+
+\begin{frame}{Paragliders: signed joint laws (3/3)}
+\centering\fig[54mm]{supervisor-joint-para-3.pdf}
+\question{Which changes concern orientation, central concentration or mass outside the displayed square?}
+\speaker{Each discipline uses one common colour scale across all six lags, one geographic frame and one scalar rescaling. Colours are probability per original cell. Outside mass is retained in overflow cells for the numerical comparison. Equal plot area does not imply equal precision across disciplines.}
+\end{frame}
+
+\begin{frame}{Hang gliders: signed joint laws (1/3)}
+\centering\fig[54mm]{supervisor-joint-hang-1.pdf}
+\question{Which changes concern orientation, central concentration or mass outside the displayed square?}
+\speaker{Each discipline uses one common colour scale across all six lags, one geographic frame and one scalar rescaling. Colours are probability per original cell. Outside mass is retained in overflow cells for the numerical comparison. Equal plot area does not imply equal precision across disciplines.}
+\end{frame}
+
+\begin{frame}{Hang gliders: signed joint laws (2/3)}
+\centering\fig[54mm]{supervisor-joint-hang-2.pdf}
+\question{Which changes concern orientation, central concentration or mass outside the displayed square?}
+\speaker{Each discipline uses one common colour scale across all six lags, one geographic frame and one scalar rescaling. Colours are probability per original cell. Outside mass is retained in overflow cells for the numerical comparison. Equal plot area does not imply equal precision across disciplines.}
+\end{frame}
+
+\begin{frame}{Hang gliders: signed joint laws (3/3)}
+\centering\fig[54mm]{supervisor-joint-hang-3.pdf}
+\question{Which changes concern orientation, central concentration or mass outside the displayed square?}
+\speaker{Each discipline uses one common colour scale across all six lags, one geographic frame and one scalar rescaling. Colours are probability per original cell. Outside mass is retained in overflow cells for the numerical comparison. Equal plot area does not imply equal precision across disciplines.}
+\end{frame}
+
+\begin{frame}{One scalar rescaling leaves changes in the signed joint law}
+\small
+\begin{center}
+\begin{tabular}{@{}lrr@{}}\toprule
+ & Paragliders & Hang gliders\\\midrule
+Common scalar exponent $H_*$ & 0.9196 & 0.9114\\
+Binned TV: 10 s versus 10,000 s & 0.370 & 0.403\\
+Largest TV among the six lags & 0.370 & 0.441\\\bottomrule
+\end{tabular}
+\end{center}
+Later rescaled laws concentrate more centrally, while their means also change.
+Overflow mass is zero to numerical precision in the displayed square.
+\par\medskip
+Mean motion, centred spread, orientation and dependence can all contribute.
+The plot alone does not separate their physical causes.
+\question{Would separating mean displacement from centred shape clarify which assumption fails?}
+\speaker{The comparison uses fixed flights, common origins, equal flight weights, signed geographic components and the same bins. These distances describe the recorded finite distributions; they have no calibrated rejection threshold. The first-to-last pair is not the maximum pair for hang gliders.}
+\end{frame}
+
+\begin{frame}{One-lag vector laws leave multi-time questions open}
+\[
+ D_{\rm joint}(\tau,\tau')=\frac12\sum_{ij}|p_{\tau,ij}-p_{\tau',ij}|.
+\]
+\small
+The grid has 64 interior bins per axis and overflow cells. The distance resolves
+changes at that bin scale; it is not a calibrated rejection test.
+\par\medskip
+Even agreement of every one-lag vector distribution would leave the joint law at
+several times, and hence full process self-similarity, untested.
+\question{Which multi-time or phase-conditioned comparison would most help choose between candidate processes?}
+\speaker{Finite empirical distributions can differ under a common population law. Calibration must respect paired flights and dependent origins. Energy distance is an alternative multivariate diagnostic under finite first moments, but choosing another distance does not automatically supply the right uncertainty model.}
+\end{frame}
+
+\section{Directional structure and environment}
+
+\begin{frame}{Regional plots use different clocks, weights and centring}
+\small
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}p{3.5cm}>{\raggedright\arraybackslash}p{3.1cm}@{}}\toprule
+Diagnostic & Clock & Weighting & Centring\\\midrule
+Launch-time ratio & time since launch $t$ & paired flights at each $t$ & raw moments\\[2pt]
+Regional PCA & increment lag $\tau$ & eligible origins pooled & mean removed\\[2pt]
+Fixed joint law & increment lag $\tau$ & equal total flight weight & mean retained\\\bottomrule
+\end{tabular}
+\par\medskip
+These measurements differ in method as well as population. Compare these choices
+before attributing a difference to a physical mechanism.
+\question{Which apparent disagreement remains after comparing like populations and observables?}
+\speaker{The PCA draws on the full eligible regional archive, not only the fixed long-flight cohort. Longer supported records supply more increment origins to that pooled covariance. The launch-time ratios use a different clock and a changing population. Make these distinctions before linking the three figures to wind or terrain.}
+\end{frame}
+
+\begin{frame}{Equal east and north moments do not establish isotropy}
+\[
+ \rho_{EN}=1,\qquad
+ \Sigma=\begin{pmatrix}1&0.9\\0.9&1\end{pmatrix},\qquad
+ \lambda_1/\lambda_2=19.
+\]
+\small This centred Gaussian has balanced coordinate moments but strongly unequal
+principal variances.
+\par\medskip
+A pooled mixture of east-directed and north-directed routes can also balance the
+ensemble while each flight remains directional.
+\question{Are we observing mean drift, centred directional variability, or a mixture of individually oriented routes?}
+\speaker{Full isotropy requires rotation invariance of the law. An isotropic covariance alone would still be only a second-order condition. Raw moments additionally contain the outer product of the mean with itself. An intentional downwind route can be successful despite being directional, so this ratio is not a direct performance score.}
+\end{frame}
+
+\begin{frame}{Regional position moments differ along east and north}
+\centering\fig[54mm]{terrain-position.pdf}
+\question{How much imbalance reflects mean drift, route orientation or changing support?}
+\speaker{The clock is time since estimated launch, not an increment lag. Position ratios approach five in the Pyrenees. Raw second moments include both covariance and the squared mean. Splits prevent cross-gap stencils but recorded endpoint offsets can still affect these launch-referenced coordinates.}
+\end{frame}
+
+\begin{frame}{Regional velocity moments show a related directional contrast}
+\centering\fig[54mm]{terrain-velocity.pdf}
+\question{Which position and velocity contrasts persist under matched conditions?}
+\speaker{The regional figure pools paired east/north observations at each elapsed time and uses site-day pointwise bands. Terrain, weather, routes and the disappearing short-flight population can all contribute. Coordinate-moment balance is weaker than full isotropy.}
+\end{frame}
+
+\begin{frame}{Regional uncertainty bands do not match the groups}
+\small
+The ratios use paired east and north observations. A site--day bootstrap with
+200 draws gives pointwise 10--90\% ranges; each plotted time needs at least 30
+flights and 10 clusters.
+\par\medskip
+Missing site/date keys are treated as singletons. Resampling these groups does not
+match the equipment populations on weather, task or duration.
+\question{Would a paired site--day comparison change the group difference and its uncertainty?}
+\speaker{The bands are not 95-percent intervals, simultaneous bands or direct intervals for the difference between groups. Their overlap is not itself a calibrated significance test. The many displayed time points are correlated and must not be counted as independent confirmations of an ordering.}
 \end{frame}
 
 \begin{frame}{PCA describes preferred axes; wind needs independent information}
@@ -216,9 +584,120 @@ Whitening changes lengths and only fixes second moments at the fitted scale.
 Different marginal exponents, or changing joint dependence, can prevent radial scaling.
 \end{columns}
 \question{Choose matched environments and an independent wind estimate before defining an ``environment-free'' model target.}
-\source{\hyperlink{pca-backup}{Regional PCA and its numerical support}. Anisotropy alone is compatible with a self-similar vector and a self-similar radius.}
-\timing{1:00}{Even independent Gaussian components can yield a changing radial exponent if their component exponents differ. If both component exponents agree, changing dependence can still prevent joint scaling. Conversely, a joint vector scaling law always implies radial scaling, whether the vector is isotropic or not. Rotating each flight randomly would balance aggregate directions without changing radial displacements; it cannot recover still-air motion. Independent wind information or carefully justified phase-based wind estimates should be discussed before choosing an environmental correction.}
+\source{The following panels report regional PCA and its support. Anisotropy alone is compatible with a self-similar vector and a self-similar radius.}
+\speaker{Even independent Gaussian components can yield a changing radial exponent if their component exponents differ. If both component exponents agree, changing dependence can still prevent joint scaling. Conversely, a joint vector scaling law always implies radial scaling, whether the vector is isotropic or not. Rotating each flight randomly would balance aggregate directions without changing radial displacements; it cannot recover still-air motion. Independent wind information or carefully justified phase-based wind estimates should be discussed before choosing an environmental correction.}
 \end{frame}
+
+\begin{frame}{Alps: centred principal axes across four lags}
+\centering\fig[54mm]{supervisor-pca-alps.pdf}
+\question{Does the axis remain stable as lag and contributing population change?}
+\speaker{The covariance pools eligible regional origins from the full archive. Ellipses are centred and normalized by the centred RMS radius; they hide absolute magnitude and drift. The axis is modulo 180 degrees and becomes poorly determined near equal eigenvalues. These panels display all four reported lags with their contributing-flight counts.}
+\end{frame}
+
+\begin{frame}{Pyrenees: centred principal axes across four lags}
+\centering\fig[54mm]{supervisor-pca-pyrenees.pdf}
+\question{Does the axis remain stable as lag and contributing population change?}
+\speaker{The covariance pools eligible regional origins from the full archive. Ellipses are centred and normalized by the centred RMS radius; they hide absolute magnitude and drift. The axis is modulo 180 degrees and becomes poorly determined near equal eigenvalues. These panels display all four reported lags with their contributing-flight counts.}
+\end{frame}
+
+\begin{frame}{Channel Coast: centred principal axes across four lags}
+\centering\fig[54mm]{supervisor-pca-coast.pdf}
+\question{Does the axis remain stable as lag and contributing population change?}
+\speaker{The covariance pools eligible regional origins from the full archive. Ellipses are centred and normalized by the centred RMS radius; they hide absolute magnitude and drift. The axis is modulo 180 degrees and becomes poorly determined near equal eigenvalues. These panels display all four reported lags with their contributing-flight counts.}
+\end{frame}
+
+\begin{frame}{Alps: C/D/CCC has smaller coordinate-moment imbalance}
+\centering\fig[54mm]{equipment-alps-both.pdf}
+\question{Does the ordering persist after matching site, day, task and duration?}
+\speaker{The fresh Alpine position and velocity ratios stay closer to unity for C/D/CCC over the supported grid. This is a descriptive ensemble observation. It does not establish individual isotropy, greater skill or a causal equipment effect. Violet: A/B; ochre: C/D/CCC. Beginners and experts in the retained figure legend denote equipment proxies. Bands are pointwise 10--90-percent site-day bootstrap ranges, not intervals for the group difference.}
+\end{frame}
+
+\begin{frame}{Pyrenees: the ordering of the two groups reverses}
+\centering\fig[54mm]{equipment-pyrenees-both.pdf}
+\question{What changes between the early and later portions of the curves?}
+\speaker{The Pyrenean curves do not support a uniform expert-proxy advantage. At late times both position ratios exceed five, while the velocity ordering also changes. Adjacent plotted times are correlated observations, not independent tests. Violet: A/B; ochre: C/D/CCC. Beginners and experts in the retained figure legend denote equipment proxies. Bands are pointwise 10--90-percent site-day bootstrap ranges, not intervals for the group difference.}
+\end{frame}
+
+\begin{frame}{Channel Coast: the late position contrast is pronounced}
+\centering\fig[54mm]{equipment-coast-both.pdf}
+\question{Can matching conditions separate directional route choice from wind response?}
+\speaker{Near 9086 seconds the position ratios are about 1.74 for A/B and 1.04 for C/D/CCC, supported by 188 and 1733 paired flights. These are raw ensemble second moments and the samples differ strongly. Coastal cliffs and valleys prevent a wind-only interpretation. Violet: A/B; ochre: C/D/CCC. Beginners and experts in the retained figure legend denote equipment proxies. Bands are pointwise 10--90-percent site-day bootstrap ranges, not intervals for the group difference.}
+\end{frame}
+
+\begin{frame}{Poitou-Charente: the group curves cross}
+\centering\fig[54mm]{equipment-poitou-both.pdf}
+\question{Does this low-relief launch box reproduce the coastal observation?}
+\speaker{The crossing curves and broad overlapping bands do not support a general group ordering. These broad launch-location boxes are neither DEM-verified plains nor controls matched on weather. Violet: A/B; ochre: C/D/CCC. Beginners and experts in the retained figure legend denote equipment proxies. Bands are pointwise 10--90-percent site-day bootstrap ranges, not intervals for the group difference.}
+\end{frame}
+
+\begin{frame}{Champagne-Lorraine: a late contrast does not keep C/D/CCC at unity}
+\centering\fig[54mm]{equipment-champagne-both.pdf}
+\question{Which parts of the coastal hypothesis transfer to this separate region?}
+\speaker{A later position contrast appears, but the C/D/CCC ratio also rises above one. Region, route mixture, weather and declining support must be separated before claiming the same physical cause. Violet: A/B; ochre: C/D/CCC. Beginners and experts in the retained figure legend denote equipment proxies. Bands are pointwise 10--90-percent site-day bootstrap ranges, not intervals for the group difference.}
+\end{frame}
+
+\begin{frame}{The environmental interpretation remains a hypothesis}
+\small
+\textbf{Hypothesis to discuss}\par
+Equipment and pilot choices may moderate directional constraints associated with
+wind and terrain. Similar mountain profiles may reflect shared route constraints.
+\par\medskip
+\textbf{Evidence limiting that interpretation}\par
+The Pyrenean ordering reverses; class is an experience proxy; coastal terrain is
+not absent; late support differs; and ensemble balance does not establish
+individual isotropy or performance.
+\question{What observation would distinguish this hypothesis from different sites, tasks, weather or route mixtures?}
+\speaker{Preserve the proposed explanation as a useful hypothesis rather than silently removing it or presenting it as established. Similar curve shape does not by itself establish a common cause or an unavoidable terrain constraint. Wind and terrain can interact, so the coast/mountains split does not identify their separate effects.}
+\end{frame}
+
+\begin{frame}{Define the target before calling it resistance to wind}
+\[
+ \mathbf v_{\rm ground}=\mathbf v_{\rm air}+\mathbf w_h.
+\]
+\small Upwind progress, air-relative performance, choice of route and geographic
+moment balance are different outcomes.
+\par\medskip
+A first comparison would match overlapping site--day, duration and task support;
+then separate mean drift, centred variability and individual route orientation.
+Independent wind and local terrain axes would support environmental alignment.
+\question{Which target and matched comparison should be the first priority?}
+\speaker{The site--day bootstrap adjusts one uncertainty structure; it does not perform matching or remove confounding. Where data permit, the same pilot on different equipment could help assess selection, but weather and task still require control. Differentiating velocity removes a constant wind term, but not its variation along the trajectory or the pilot's manoeuvres.}
+\end{frame}
+
+\section{Duration and equipment composition}
+
+\begin{frame}{Long flights occur in both equipment groups}
+\centering\fig[45mm]{talk-duration.pdf}
+\small\raggedright
+For $T\ge4$ h: \textcolor{beginner}{7,415 A/B flights} and \textcolor{expert}{27,815 C/D/CCC flights}.\par
+Across 10--10,000 s, all-duration slopes are \textcolor{beginner}{\StatDurationABFullExponent}\ and \textcolor{expert}{\StatDurationCDCCCFullExponent}.
+\source{Equal-flight MSD; groups are nested. Threshold curves stop at $\tau=T_0/2$; at least 30 flights per lag. \hyperlink{duration-backup}{All counts and common-range slopes}.}
+\speaker{The hypothesis that only experts contribute to flights longer than four hours is contradicted by the counts. Experts nevertheless become more frequent in the long-duration groups. On the common 10--1695 second interval, expert slopes exceed beginner slopes in every duration cell; within both classes slopes also increase between all flights and the four-hour group. This shorter interval is needed to compare all four nested cohorts under the half-duration rule. It is distinct from the main three-decade fit. Equipment, pilot selection, region and weather remain possible causes.}
+\end{frame}
+
+\begin{frame}[label=duration-backup]{Duration and equipment on the common 10--1695 s interval}
+\centering\small\renewcommand{\arraystretch}{1.12}
+\input{data/duration_equipment_table.tex}
+\source{Counts are eligible flights, not independent windows; support falls with lag. RMS residual measures departures from a fitted line, not uncertainty. Threshold samples overlap.}
+\end{frame}
+
+\begin{frame}{Fixing equipment proportions removes part of the duration contrast}
+\begin{columns}[c,onlytextwidth]
+\column{.57\textwidth}\fig[47mm]{talk-composition.pdf}
+\column{.40\textwidth}
+\small
+\[
+ M_{T_0}^{\rm fixed}(\tau)=\sum_c\pi_c M_{T_0,c}(\tau).
+\]
+Fixed weights: $\pi_{\rm A/B}=0.365$, $\pi_{\rm C/D/CCC}=0.635$.\par\medskip
+At $\tau=1695$ s the ratio falls from $1.42$ to $1.35$. A within-class contrast remains.
+\end{columns}
+\question{Match site--day and task next. Convergence near 7200 s also reflects shorter flights leaving the reference.}
+\source{Both curves use the same two known equipment groups. Equality at one lag does not establish independence from flight duration.}
+\speaker{The expert fraction among known classes rises from 63.5 percent overall to 78.9 percent in the four-hour cohort. Standardization uses the all-duration proportions at every lag for both numerator and denominator. It is a descriptive reweighting, not a causal adjustment. The remaining difference shows that the two-class proportions alone cannot account for the observed amplitude contrast. Near half the duration threshold, the reference loses shorter flights, so the curves are increasingly comparing similar populations.}
+\end{frame}
+
+\section{Model comparisons and temporal memory}
 
 \begin{frame}{The moment spectrum challenges a specific L\'evy-walk benchmark}
 \begin{columns}[c,onlytextwidth]
@@ -235,24 +714,7 @@ The empirical spectrum is nearly linear over $q=0.25$--4.
 \end{columns}
 \question{Can finite-record simulations resolve the predicted branch change under our sampling and selection?}
 \source{Pooled windows. $\beta=1.5$ is illustrative, not a fitted null; $q=\beta$ has a logarithmic correction. \href{https://doi.org/10.1103/RevModPhys.87.483}{Zaburdaev, Denisov \& Klafter (2015)}.}
-\timing{1:20}{The reported zeta(2) values are 1.733 and 1.693, different from equal-flight V1 because the weights differ. Nu(q)=zeta(q)/q varies only modestly: 0.849--0.878 for para and 0.839--0.861 for hang. This looks unlike the two-branch asymptotic benchmark, but it is not a calibrated exclusion. The reference beta is not estimated from our data. Fit candidate parameters, simulate comparable lengths and cadence, and compare moments together with controlled quantiles. High-order moments need checks for domination by a few flights. Truncation and correlated legs are different candidate models.}
-\end{frame}
-
-\begin{frame}{Velocity memory persists after averaging over minutes}
-\begin{columns}[c,onlytextwidth]
-\column{.61\textwidth}\fig[47mm]{memory-positive.pdf}
-\column{.36\textwidth}
-\small
-\[
- \mathbf v_h(t)=\frac{\mathbf r(t+h)-\mathbf r(t)}{h}.
-\]
-For $h=10,60,300$ s.\par\medskip
-Mean of per-flight centred, normalized correlations.\par\medskip
-At 600 s, para correlations are $0.144$, $0.198$, $0.272$ for the three widths.
-\end{columns}
-\question{A finite-persistence model remains plausible: fit its MSD and coarse velocity correlations jointly.}
-\source{Teal: 10 s; plum dashed: 60 s; grey dotted: 300 s. Positive values shown; \hyperlink{memory-backup}{signed curves in backup}. Curvature prevents a single decay-law claim.}
-\timing{1:20}{Velocities come from adjacent non-overlapping blocks; separations are at least h and at most a quarter of each contributing record. At least 20 flights contribute. The plotted quantity is the equal-flight mean of normalized correlations, not a pooled covariance. Finite-record centring can depress long-lag values, and the hang curve becomes negative. An exponential stationary covariance produces an MSD that crosses from ballistic to diffusive, so a fitted exponent between one and two is compatible with finite persistence. Averaging suppresses fast fluctuations and can raise the normalized correlation without lengthening the underlying memory time.}
+\speaker{The current pooled moment spectrum has $\zeta(2)=\StatRevParaMomentZetaTwo$ for paragliders and $\StatRevHangMomentZetaTwo$ for hang gliders. The corresponding $\zeta(q)/q$ ranges are imported in the report. The illustrative beta=1.5 line is not a fitted null. A finite-record comparison must reproduce sample lengths, cadence, selection and weighting, and assess whether the asymptotic branch change would be resolvable.}
 \end{frame}
 
 \begin{frame}{Non-Gaussian pooled increments can arise from Gaussian mixtures}
@@ -271,32 +733,34 @@ The observed curve changes sign and rises at large lag, where support is weakest
 \end{columns}
 \question{Test Gaussianity within matched environments or phases before rejecting conditional Gaussian dynamics.}
 \source{Centred, full-covariance Mardia excess; pooled windows. Positive excess does not identify a power-law tail. \href{https://doi.org/10.1093/biomet/57.3.519}{Mardia (1970)}.}
-\timing{0:50}{Explain the full covariance normalization: unequal east and north variances alone do not produce a nonzero population excess for a Gaussian. But mixing Gaussian variances does. If X equals sqrt(A) times a fixed Gaussian vector, K equals eight times Var(A) divided by E(A) squared. This illustrates heterogeneity; it is not a correction formula for arbitrary flights. The finite-sample estimate need not vanish even for Gaussian data, and overlapping windows require a matched reference before significance claims.}
+\speaker{Explain the full covariance normalization: unequal east and north variances alone do not produce a nonzero population excess for a Gaussian. But mixing Gaussian variances does. If X equals sqrt(A) times a fixed Gaussian vector, K equals eight times Var(A) divided by E(A) squared. This illustrates heterogeneity; it is not a correction formula for arbitrary flights. The finite-sample estimate need not vanish even for Gaussian data, and overlapping windows require a matched reference before significance claims.}
 \end{frame}
 
-\begin{frame}{Long flights occur in both equipment groups}
-\centering\fig[45mm]{talk-duration.pdf}
-\small\raggedright
-For $T\ge4$ h: \textcolor{beginner}{7,426 beginners} and \textcolor{expert}{27,842 experts}.\par
-Across 10--10,000 s, all-duration slopes are \textcolor{beginner}{\StatDurationABFullExponent}\ and \textcolor{expert}{\StatDurationCDCCCFullExponent}.
-\source{Equal-flight MSD; groups are nested. Threshold curves stop at $\tau=T_0/2$; at least 30 flights per lag. \hyperlink{duration-backup}{All counts and common-range slopes}.}
-\timing{1:10}{The hypothesis that only experts contribute to flights longer than four hours is contradicted by the counts. Experts nevertheless become more frequent in the long-duration groups. On the common 10--1695 second interval, expert slopes exceed beginner slopes in every duration cell; within both classes slopes also increase between all flights and the four-hour group. This shorter interval is needed to compare all four nested cohorts under the half-duration rule. It is distinct from the main three-decade fit. Equipment, pilot selection, region and weather remain possible causes.}
+\begin{frame}{Velocity memory remains visible after averaging over minutes}
+\centering\fig[54mm]{memory-positive.pdf}
+\question{Do the curves support one decay law over the displayed scales?}
+\speaker{Use $\mathbf v_h(t)=[\mathbf r(t+h)-\mathbf r(t)]/h$ for h=10, 60, 300 seconds. Velocities use adjacent non-overlapping blocks; correlations are centred and normalized within flights before averaging. At 600 seconds the para values are $\StatRevParaVacfTenAtSixHundred$, $\StatRevParaVacfSixtyAtSixHundred$ and $\StatRevParaVacfThreeHundredAtSixHundred$. These upper log panels show positive correlations only.}
 \end{frame}
 
-\begin{frame}{Fixing equipment proportions removes part of the duration contrast}
-\begin{columns}[c,onlytextwidth]
-\column{.57\textwidth}\fig[47mm]{talk-composition.pdf}
-\column{.40\textwidth}
+\begin{frame}{Signed correlations retain the long-lag negative values}
+\centering\fig[54mm]{memory-signed.pdf}
+\question{What share of the long-lag decrease could follow finite-record centring or route returns?}
+\speaker{A log plot cannot show the negative part. Both disciplines have long-lag negative values in the signed representation. Coarse averaging can raise normalized correlations without increasing the underlying physical persistence time. At least twenty flights contribute to each plotted estimate.}
+\end{frame}
+
+\begin{frame}[label=memory-backup]{Finite velocity persistence gives a ballistic-to-diffusive crossover}
 \small
+For the same stationary, centred velocity population,
 \[
- M_{T_0}^{\rm fixed}(\tau)=\sum_c\pi_c M_{T_0,c}(\tau).
+ M_{2,c}(\tau)=2\sigma_v^2\int_0^\tau(\tau-s)C(s)\,ds.
 \]
-Fixed weights: $\pi_{\rm A/B}=0.365$, $\pi_{\rm C/D/CCC}=0.635$.\par\medskip
-At $\tau=1695$ s the ratio falls from $1.42$ to $1.35$. A within-class contrast remains.
-\end{columns}
-\question{Match site--day and task next. Convergence near 7200 s also reflects shorter flights leaving the reference.}
-\source{Both curves use the same two known equipment groups. Equality at one lag does not establish independence from flight duration.}
-\timing{0:50}{The expert fraction among known classes rises from 63.5 percent overall to 78.9 percent in the four-hour cohort. Standardization uses the all-duration proportions at every lag for both numerator and denominator. It is a descriptive reweighting, not a causal adjustment. The remaining difference shows that the two-class proportions alone cannot account for the observed amplitude contrast. Near half the duration threshold, the reference loses shorter flights, so the curves are increasingly comparing similar populations.}
+With $C(s)=e^{-s/t_p}$,
+\[
+ M_{2,c}=2\sigma_v^2t_p[\tau-t_p(1-e^{-\tau/t_p})].
+\]
+Ballistic at short times, diffusive at long times.
+
+\source{\href{https://doi.org/10.1112/plms/s2-20.1.196}{Taylor (1922)}, pp. 207--208. This covariance identity cannot be applied directly to differently weighted heterogeneous means.}
 \end{frame}
 
 \begin{frame}{Which models are challenged, and which remain open?}
@@ -311,7 +775,22 @@ Renewal L\'evy walk, $1<\beta<2$ & Two-branch moment spectrum & Finite-record co
 \end{tabular}
 \question{``Challenged'' means a descriptive mismatch. Calibrated statistical rejection is still to be done.}
 \source{Each candidate needs its own parameters, environmental assumptions and observation protocol. A long-time diffusive limit has not been tested.}
-\timing{1:00}{This table is deliberately more cautious than the older slides. Ordinary Brownian motion is a poor descriptive model of the observed interval, but the asymptotic regime is unknown. fBm is challenged as a homogeneous pooled law; a phase-conditioned or environmentally heterogeneous Gaussian construction is not excluded. The exponential-persistence candidate deserves a joint MSD and VACF comparison. Standard Lévy walk needs finite-record calibration rather than rejection from an illustrative asymptotic line. An unbounded Lévy flight cannot literally describe continuous finite-speed flight; effective truncated versions need separate predictions.}
+\speaker{Ordinary Brownian motion is a poor descriptive model of the observed interval, but the asymptotic regime is unknown. fBm is challenged as a homogeneous pooled law; a phase-conditioned or environmentally heterogeneous Gaussian construction is not excluded. The exponential-persistence candidate deserves a joint MSD and VACF comparison. Standard Lévy walk needs finite-record calibration rather than rejection from an illustrative asymptotic line. An unbounded Lévy flight cannot literally describe continuous finite-speed flight; effective truncated versions need separate predictions.}
+\end{frame}
+
+\begin{frame}{Phase-conditioned moments must include windows crossing transitions}
+\[
+ M_q(\tau)=\sum_c w_c(\tau)M_q(\tau\mid c),\qquad
+ w_c=\frac{n_c}{\sum_{c'}n_{c'}}.
+\]
+\small Here $c$ partitions all admissible windows, including phase histories that
+cross boundaries. With equal flight weights, apply the identity within each flight
+before averaging.
+\par\medskip
+The identity holds for any exhaustive labels. Recovering the global curve verifies
+accounting, not the physical accuracy of those labels.
+\question{Which episode durations and between-phase dependencies could distinguish renewal dynamics from persistent motion?}
+\speaker{Within-phase windows alone generally omit part of the global moment. Both the mixture weights and conditional moments depend on lag, so global exponents are not weighted averages of phase exponents. A glider moves while climbing; a climb is not automatically a waiting state.}
 \end{frame}
 
 \begin{frame}{Three decisions for this meeting}
@@ -326,92 +805,23 @@ Renewal L\'evy walk, $1<\beta<2$ & Two-branch moment spectrum & Finite-record co
  \small Site--day uncertainty and route matching now; phase durations, increments and between-phase dependence after segmentation validation.
 \end{enumerate}
 \question{We have measured constraints on growth, shape, geometry and memory. The generating process and an intrinsic Hurst exponent remain unresolved.}
-\timing{2:20}{Use the remaining time to ask for prioritization. First agree what the stochastic model should represent; no isotropization operation has yet recovered still-air motion. Second agree a small set of explicit null models and jointly assessed observables rather than a search for as many nominal rejections as possible. Third agree the observational unit for uncertainty and the phase-conditioned measurements that distinguish renewal from correlated episodes. The future physical model chapter will also compare Monte Carlo simulations to global and phase-conditioned data, but null calibration for this chapter can begin earlier. Stop the prepared talk here and use backup slides only in response to questions.}
+\speaker{Agree the physical target, a small set of explicit candidate processes, and a sampling model for uncertainty. No rotation or rescaling has recovered still-air motion. Phase-conditioned comparisons should include transitions and between-episode dependence. Calibrated comparisons can begin before declaring a final physical model.}
 \end{frame}
 
-\backupstart
-\begin{frame}[label=quantile-backup]{The four population controls}
-\begin{columns}[c,onlytextwidth]
-\column{.56\textwidth}\fig[62mm]{ch3_quantile_control.pdf}
-\column{.41\textwidth}\small
-\begin{enumerate}
-\item All available flights, pooled windows.
-\item Fixed long flights, pooled windows.
-\item Fixed flights, equal flight weights.
-\item Same flights, weights and origins.
-\end{enumerate}
-\[
- \widehat F_\tau(x)=\frac1{N_*}\sum_f\frac1{n_f^*}
- \sum_k\mathbf1\{R_{fk}(\tau)\le x\}.
-\]
-Overlapping origins remain dependent.
-\end{columns}
-\end{frame}
+\section{Linked representations and sources}
 
-\begin{frame}{An example of changing shape at fixed quantile ranks}
-\begin{columns}[c,onlytextwidth]
-\column{.56\textwidth}\fig[61mm]{quantile_scaling_schematic.pdf}
-\column{.41\textwidth}\small
+\begin{frame}{Squared laws transform the same distributional evidence}
 \[
- R(\tau)=(\tau/\tau_0)^{.85}e^{\sigma(\tau)Z},\quad Z\sim N(0,1),
+ Q_{Y^2}(p)=Q_Y(p)^2,\qquad H_{Y^2,p}=2H_{Y,p}
+ \quad\text{for }Y\ge0.
 \]
-\[
- \sigma(\tau)=.9-.1\log(\tau/\tau_0),
-\]
-\[
- H_p=.85-.1\Phi^{-1}(p).
-\]
-All shown quantiles grow, while spread relative to the median shrinks.\par\medskip
-Analytical illustration only; this is not a fitted model for flights.
-\end{columns}
-\end{frame}
-
-\begin{frame}[label=circle]{A circle retains its geometry after second differencing}
-\begin{columns}[c,onlytextwidth]
-\column{.54\textwidth}\fig[59mm]{closed_loop_schematic.pdf}
-\column{.43\textwidth}\small
-\[
- \mathbf r(t)=a(\cos\omega t,\sin\omega t),\quad T_c=2\pi/\omega,
-\]
-\[
- V_1=4a^2\sin^2(\pi\tau/T_c),
-\]
-\[
- V_2=16a^2\sin^4(\pi\tau/T_c).
-\]
-The periodic continuation defines $V_2$ across the illustrated lags. Constant speed does not imply ballistic displacement at every lag.
-\end{columns}
-\source{Exact geometrical example, not an empirical estimate.}
-\end{frame}
-
-\begin{frame}[label=memory-backup]{Signed memory and the finite-persistence alternative}
-\begin{columns}[c,onlytextwidth]
-\column{.55\textwidth}\fig[49mm]{memory-signed.pdf}
-\column{.42\textwidth}\small
-For the same stationary, centred velocity population,
-\[
- M_{2,c}(\tau)=2\sigma_v^2\int_0^\tau(\tau-s)C(s)\,ds.
-\]
-With $C(s)=e^{-s/t_p}$,
-\[
- M_{2,c}=2\sigma_v^2t_p[\tau-t_p(1-e^{-\tau/t_p})].
-\]
-Ballistic at short times, diffusive at long times.
-\end{columns}
-\source{\href{https://doi.org/10.1112/plms/s2-20.1.196}{Taylor (1922)}, pp. 207--208. This covariance identity cannot be applied directly to differently weighted heterogeneous means.}
-\end{frame}
-
-\begin{frame}[label=pca-backup]{Regional principal axes are lag-dependent descriptive measurements}
-\centering\fig[47mm]{talk-pca.pdf}
-\small\raggedright
-Paragliders at $\tau=1070$ s. Covariance ellipses are normalized by their trace to compare shape and direction, without changing their eigenvalue ratios.
-\source{Centred covariance of pooled windows; dashed line = principal axis modulo $180^\circ$. Ellipses describe second moments, not Gaussian confidence regions. The coast is a small subgroup and is not an established isotropic control.}
-\end{frame}
-
-\begin{frame}[label=duration-backup]{Duration and equipment on the common 10--1695 s interval}
-\centering\small\renewcommand{\arraystretch}{1.12}
-\input{data/duration_equipment_table.tex}
-\source{Counts are eligible flights, not independent windows; support falls with lag. RMS residual measures departures from a fitted line, not uncertainty. Threshold samples overlap.}
+\small Squaring bin edges preserves their probability masses. A monotone transform
+also preserves the supremum distance between the correspondingly transformed CDFs.
+\par\medskip
+If $f_Y(0^+)=c>0$, then $f_{Y^2}(s)\sim c/(2\sqrt{s})$ near zero.
+This Jacobian effect says nothing about a heavy upper tail.
+\question{Which representation communicates the same result more clearly: displacement magnitude or its square?}
+\speaker{The appendix includes the squared-law figures for both disciplines. Replotting the same observations after a monotone transformation is useful for connecting quantiles with second moments; it does not multiply the amount of independent evidence. Zero mass and dimensional units still need to be carried consistently.}
 \end{frame}
 
 \begin{frame}{Sources and the scope of the evidence}
@@ -422,5 +832,14 @@ Paragliders at $\tau=1070$ s. Covariance ellipses are normalized by their trace 
 \refitem{https://doi.org/10.1093/biomet/57.3.519}{Mardia (1970), \emph{Measures of multivariate skewness and kurtosis}}{Centred kurtosis}
 \refitem{https://doi.org/10.1214/aos/1176344552}{Efron (1979), \emph{Bootstrap methods}}{Resampling principle}
 \source{Numerical evidence: current Chapter 3 reports, frozen in the accompanying data and asset manifests. Bibliographic access limitations are retained in the repository audit; citations do not validate the chosen sampling design or constitute calibrated rejection tests.}
+\end{frame}
+
+\begin{frame}{Joint laws and environmental interpretation: additional sources}
+\small
+\refitem{https://arxiv.org/abs/2206.13612}{Fraiman et al., Cram\'er--Wold results}{Joint laws and projections}
+\refitem{https://arxiv.org/abs/1102.1822}{Didier \& Pipiras, operator fractional Brownian motions}{Beyond scalar rescaling}
+\refitem{https://www.dhv.de/en/type-inspection/classification/}{DHV classification guidance}{Class is not a performance measure}
+\refitem{https://www.normandie.developpement-durable.gouv.fr/le-pays-de-caux-a1902.html}{DREAL Normandie, Le Pays de Caux}{Coastal cliffs and valleys}
+\source{The cited pages support specific mathematical or observational cautions. They do not identify the causes of the regional contrasts measured here.}
 \end{frame}
 \end{document}

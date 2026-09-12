@@ -1,41 +1,57 @@
 {
-  "created_utc": "2026-09-11T09:53:59.339798+00:00",
-  "git_head": "9e521ba4b91c8d6617180af27531ba36f3feb2a1",
-  "source_state": "Working-tree snapshot, including uncommitted manuscript/figure edits.",
-  "operation": "Copy existing numerical outputs and crop vector panels; no analysis rerun.",
+  "created_utc": "2026-09-12T15:26:46.976149+00:00",
+  "numerical_run_id": "20260912T133040Z-073601cb",
+  "cleaning_version": "2.3.0",
+  "cleaning_source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85",
+  "reviewed_thesis": {
+    "numerical_manifest_sha256": "46cd5abd009ae4a46bdc526f987c33f47d569b125f833b4c916b9d9cf0068186",
+    "numerical_run_id": "20260912T133040Z-073601cb",
+    "numerical_source_sha256": "dea64e843864abd8316c1fa9442fe2e721213720ab200edb887621748000cdee",
+    "pdf_sha256": "a9127a892460ff1078c5c0c8de3fcd5e66be3f5c93e838cefc1903a4071c9860",
+    "reviewed_utc": "2026-09-12T15:07:28.638269+00:00",
+    "scope": "Manuscript revision; numerical sources, generated results and datasets unchanged",
+    "source_sha256": "60c671cf75a7dc231706b4a4edf9330aa4e71cf87e9e68ece8409cbd22b03653"
+  },
+  "review_record_sha256": "ee5145cfb6e29cce46a30458218553866bf43dd5043d1358607ce6cf314895a5",
+  "operation": "Copy reviewed current results and crop vector panels; no analysis rerun.",
   "inputs": {
-    "thesis/generated/ch3_quantile_control.pdf": "70edd7a996fbeb60910d78071b35a401f4556e74e7b0fd3915164b1cc1838c89",
-    "thesis/generated/ch3_scaling.pdf": "82ac99efa775b13663ad77f922253817f3bdabf7a946094d61d33e2a64675c18",
-    "thesis/generated/ch3_velocity_memory.pdf": "17b7154c121670e681f72a7850bbcb7d48c8b865f0091f9856485261e5761987",
+    "thesis/generated/altitude_noise.pdf": "1b3d013b2257c48fb22a836b60ec0a4beaa0aae74b6d5b34615c230be3afea3a",
+    "thesis/generated/ch3_scaling.pdf": "db1b5b69d2be684932a74dba546d1c9e26b941c5d1705e82b78da675d06482fc",
+    "thesis/generated/ch3_velocity_memory.pdf": "fa645cd571b738368f42b9d11f5b9eb7631c441b3d903c447e04668bc358841f",
     "thesis/generated/cleaning_real_examples.pdf": "49612dd385d90136dc01f41fde3dad8934e2de864c02d8b7c6e95d98e7b1c180",
     "thesis/generated/closed_loop_schematic.pdf": "49ac81e59ed558c44c79b0b082e99d02bb44af254cbd0354db6744128120247b",
+    "thesis/generated/dataset_seasons.pdf": "b22b47b4b7c48e33e5a03df016ee26f60619ca80c7526feb432c92a0a69e537e",
     "thesis/generated/fixlevel_diagnostics.pdf": "57c0f97325f61931d2f7a68206316809422bd35dc9e601577b28abde51256dba",
-    "thesis/generated/kinematic_isotropy_terrain.pdf": "1dda92699d9e8f02fb0134ae2466674b882e805b606327bb6988dc30e06fb1a3",
-    "thesis/generated/kinematic_isotropy_terrain_level.pdf": "8b9adf7071a7aac82edd9561d1c3932219b036057325fc3c3142347f32c1889a",
-    "thesis/generated/prelim_map.pdf": "624ec2549a7c119af4ca8627a98589adff5fcffe8476fca4e5afb4c92ea4c4ef",
+    "thesis/generated/kinematic_isotropy_flat_level.pdf": "a8834af134a42226bd9312c7f0312b38211093192e0a5496580580eec168c8d1",
+    "thesis/generated/kinematic_isotropy_terrain.pdf": "d2a6ae12b2bb456eaf214219b6a4609776178773402273b7b8fd684c0bf5ce10",
+    "thesis/generated/kinematic_isotropy_terrain_level.pdf": "9c7feef8651b1de4b6853438c646fd02b97827740fe95fec00064eabe9d34f7e",
+    "thesis/generated/msd.pdf": "d305f4455492145d8673513408db50ebbb133e92d8be93f11affe74ca3d225b1",
+    "thesis/generated/prelim_ensemble.pdf": "fa8ac48de4d9399d4fa742d2b07d618f694f1a7083a3f7f5db17ad136105e595",
     "thesis/generated/quantile_scaling_schematic.pdf": "0f0a5e87699d797d8f9497db3f7fbf597d7b19b2292de024c81ecab6c146aa70",
     "thesis/generated/sampling_intervals.pdf": "cc9afbea1a8a34ac6ccc200344b0416ee9686d337445864db83d8e50ddc1a708",
     "thesis/generated/savgol_explainer.pdf": "e3d896eb81d48268cb43ad7192d22e64d5fdfed57995c89c4bfec3525540f7dd",
-    "thesis/generated/savgol_response.pdf": "85e1d12ca23941abf70c72c75c3b08f718108f4a20ee09bee04d08849ecc45f1",
-    "thesis/generated/savgol_spectrum.pdf": "51fb82e66bd0f4a97552a6092dee752af34d307ffbda92bf884bbda9dc2a8c37",
-    "thesis/generated/vertical_median_explainer.pdf": "237d5432c3774397db870d91403bad0a760bc7c7b7791b3d904d6bb977c7e82a",
-    "thesis/generated/ch3_revision.tex": "196c46ac08d00ba332943bd7ee74f42d348a0c0c46e4d70fee3fd3da4448970c",
-    "thesis/generated/ch3_revision.json": "6f43b410464206b150ececaf95a92113bf063f4f0782c209649a94f47f1a67f7",
-    "thesis/generated/duration_equipment.tex": "36be3ea45a8a012b42ecb680537ec16bc5bc2e83245ba907f13311d0d57666a3",
-    "thesis/generated/duration_equipment.json": "19c6d11a2f736fd7f4cce37efe0a0680c0767370e6afd0288bfaef1f280165cb",
-    "thesis/generated/duration_equipment_table.tex": "9abc7e6ed39dd336c98c496cfd234c2d41e115a592e076ec2acd760c94c5e2f6",
-    "thesis/generated/kinematic_isotropy.tex": "5dd9594ae82a3424dc3d1fb3b13fdf9f9948aebd47c2ab20c633835d7da7f092",
-    "thesis/generated/kinematic_isotropy.json": "71021839cb1687a5f2a7450cbdd17be40e2e50cb342be30ebc2c88b4a196708e",
-    "thesis/generated/msd.tex": "dcffbe7ef7c0c8a74cfa5b5b123d564294e491d0fc1b80792c03466400962468",
-    "thesis/generated/pipeline_census.tex": "cdc24078a98101dcdcfbda492d5eb3b6079930e52a9ccb6ca335d5525daf14a6",
-    "thesis/generated/dataset_stats.tex": "b1045f99c803210ba4f04ff9028ab7a91211b94beb116f771178bf14cc30baa9",
+    "thesis/generated/savgol_response.pdf": "bd00f208dbf4fbe893d1dbad2419649e59ad736e6777183ee7aa2c673811fac9",
+    "thesis/generated/terrain_map.pdf": "0f9bf537afd513171832c4a978cbf3e81a685630d0ce20ac387e4b4e9d990a14",
+    "thesis/generated/trim_interior_excisions.pdf": "3c1b246a257406cdd1d1cfa546a9055425be38cb1c3cc1c66e7687c37a57243f",
+    "thesis/generated/trim_split_seconds.pdf": "b7d70b987341db5ddf0acc108fce80f7f0384e6741f0ba835efc6e39023c472b",
+    "thesis/generated/altitude_noise.tex": "ce20649b1e535b18857874c5f53447c9ca09f611ad7d6a82be5be1539e03ad1e",
+    "thesis/generated/census.tex": "b074570942e98efa14c5bb6807a73015877347153b28256195322d7dc1ec4029",
+    "thesis/generated/ch3_revision.tex": "f57eec9c137671f80a4ef952259976c6e7d6d253076833dfcbf1c4255f434e92",
+    "thesis/generated/dataset_stats.tex": "37c1225cb29bab89728d936d19108a4aa2df6e0987d05a5974e8b04b7eb85ac2",
+    "thesis/generated/duration_equipment.json": "b742f0e124dc5e4391b80e5ab817243aea15a5cc8a0e9483f7c9742a85e93c07",
+    "thesis/generated/duration_equipment.tex": "1b58d61b137a00aef082c6c40c77da9231930133f7cf30e14e31e835fc85138d",
+    "thesis/generated/duration_equipment_table.tex": "9b6ac088595a023f01f7ee4f67048b56545439d7473cfdfbae220c09c14fa6d2",
+    "thesis/generated/kinematic_isotropy.tex": "42bc2831e7eaca48f5c9281bad48195f395dc422387f9b2db1e4bf96951f2d3a",
+    "thesis/generated/msd.tex": "5e10b91714e8876786d11072cf07c7a5a0a9486e0565ecb6812ffd99a60f14d2",
+    "thesis/generated/pipeline_census.tex": "f9c8b2ebe673f87ebe3d1095889d43fb75104ed9bcd3fd5c7ce00b7c04c00b53",
     "thesis/generated/stats.tex": "f6f730be7a9dd57e4a23aa8b5a058343b4d5d21608ae3a3957703d293e26ce2a",
-    "thesis/generated/cleaning_real_examples.json": "8a0b58dd442a5cd30785368d2275f8d91473edf6b9517792a0074137a82a1096",
-    "thesis/generated/cleaning_witness_audit.json": "91d4f2f2dbabd6c72b739f6abe0f642642f6f03ea74a18ad2311ed0ea3a81d63",
-    "thesis/sections/03-dataset.tex": "eac05392ddc3976fe1aa4446be760eae4fb7a3bee0a664a680dbffa2172ea296",
-    "thesis/sections/04-global-transport.tex": "c1848c09975f718b3dc196d18c0e32df6e1c0acfa54ea4c85bdf4cb04c696a26",
+    "thesis/generated/trim.tex": "4b06146f61d0935c3fb14648f6dc109b19b5584dc8d905c6a0343a00e3fa936a",
+    "thesis/generated/ch3_revision.json": "f42d68c83f5cef4069001492d888a9c36848a17f95452562b1cbfe6c925124a0",
+    "thesis/generated/ch3_self_similarity.json": "345113af9bec605331e42288b95e0311586007c2276b2919e7d228b339d7febf",
+    "thesis/sections/03-dataset.tex": "5488c48d9d42480ddc1a5ac3fb104f3a985db49042db089ab254b527b411cc4b",
+    "thesis/sections/04-global-transport.tex": "f7d76adc4fb99d220099ffa3a3102f5feee07cbcb87fb89528b1770fd76f5caa",
     "configs/preprocessing.yaml": "62bb2f4885c5fadc33074958a87c297d70859f361f3e4fdd95ae88761ea8964f",
-    "src/soaring/reporting/style.py": "8e56987486f67158e4f0c03a2fe75db45973c05d781f7635e52577f53ff07a68"
+    "src/soaring/reporting/style.py": "5bbacc842b8b3de15d041a5795ece2e0d81be835125c3f3fc7bcb6da19ba505c"
   },
   "panels": {
     "scaling-top": {
@@ -48,7 +64,7 @@
       ],
       "appended_original_x_axis_strip": null,
       "neighbouring_label_fragment_excluded": false,
-      "sha256": "701a5f8a609d82edd0768ce3442be01722619ee7b11ae234673875c0a002cd25"
+      "sha256": "f5a9fe78669134efe424ad8917d1f9f1a18c8b7088edeb3e2b681506fcae30c3"
     },
     "memory-positive": {
       "source": "ch3_velocity_memory.pdf",
@@ -63,7 +79,7 @@
         1
       ],
       "neighbouring_label_fragment_excluded": false,
-      "sha256": "0ff4bdd1f77a4c510ff01a92ceb9529097e28dea904d8736814e6bb1e90de997"
+      "sha256": "485ab1136cd85d357803dcf3d5cd889c88562fa77122339eab15e633a79e4e2e"
     },
     "memory-signed": {
       "source": "ch3_velocity_memory.pdf",
@@ -75,7 +91,7 @@
       ],
       "appended_original_x_axis_strip": null,
       "neighbouring_label_fragment_excluded": false,
-      "sha256": "e7d53314dbfb6692604bfdbea2b4ae0a6f4b72dcb91295b1f4c79e340c7dca24"
+      "sha256": "c8492e6fd91edefd4d8b4ff87a4be8431ca5bd3a567a9a50ffb675d8874e4b6c"
     },
     "terrain-position": {
       "source": "kinematic_isotropy_terrain.pdf",
@@ -90,7 +106,7 @@
         1
       ],
       "neighbouring_label_fragment_excluded": false,
-      "sha256": "fe7a310c8a992fddb5dceca9775433a8d4c6b088b31da9de1643126f522fe051"
+      "sha256": "0f92c0dd3d5e3db0f0c9e991ec7d333945831cbab6d922f4c0c97fc114418a7e"
     },
     "terrain-velocity": {
       "source": "kinematic_isotropy_terrain.pdf",
@@ -105,37 +121,7 @@
         1
       ],
       "neighbouring_label_fragment_excluded": false,
-      "sha256": "b0718292314084a9ccf7adf3d122be141cba2af1e2b38ef0a2d319980dfe4f86"
-    },
-    "equipment-alps": {
-      "source": "kinematic_isotropy_terrain_level.pdf",
-      "top_left_fraction_bounds": [
-        0,
-        0,
-        0.495,
-        0.315
-      ],
-      "appended_original_x_axis_strip": [
-        0.949,
-        1
-      ],
-      "neighbouring_label_fragment_excluded": false,
-      "sha256": "21e8e183e19128cb0640b4237462d7b78b0b8daaa25c0608204d3fe6415e0d38"
-    },
-    "equipment-pyrenees": {
-      "source": "kinematic_isotropy_terrain_level.pdf",
-      "top_left_fraction_bounds": [
-        0,
-        0.318,
-        0.495,
-        0.634
-      ],
-      "appended_original_x_axis_strip": [
-        0.949,
-        1
-      ],
-      "neighbouring_label_fragment_excluded": false,
-      "sha256": "713488e0650fb40a6bf232d218d1c57798cac6970eba979e21da706726063023"
+      "sha256": "53c00714fd8ff0394a98cfe4118bf8278217ab5bf21abfd0edea29d7ada28d27"
     },
     "defect-position": {
       "source": "cleaning_real_examples.pdf",
@@ -183,31 +169,7 @@
       ],
       "appended_original_x_axis_strip": null,
       "neighbouring_label_fragment_excluded": true,
-      "sha256": "2e68fc689e70ff76f18cde3c9ed97061c9457d1220a89d213109084ea8b5833b"
-    },
-    "vertical-spike": {
-      "source": "vertical_median_explainer.pdf",
-      "top_left_fraction_bounds": [
-        0,
-        0.32,
-        1,
-        0.667
-      ],
-      "appended_original_x_axis_strip": null,
-      "neighbouring_label_fragment_excluded": false,
-      "sha256": "3d39c365d99dd0f412b9443214de17e6ae15e0654991fd9c61b8ccf03695e9f4"
-    },
-    "vertical-sustained": {
-      "source": "vertical_median_explainer.pdf",
-      "top_left_fraction_bounds": [
-        0,
-        0.661,
-        1,
-        1
-      ],
-      "appended_original_x_axis_strip": null,
-      "neighbouring_label_fragment_excluded": false,
-      "sha256": "0f03a5606e870e28c607f2daf0c5d9cd5c70b2ad829cc16ecd7cc824164413a5"
+      "sha256": "d04acd2dec6e767e8ea11c0720754a882bba74994446197122c9cfa5c2f09e1c"
     },
     "sg-fit": {
       "source": "savgol_explainer.pdf",
@@ -231,14 +193,24 @@
       ],
       "appended_original_x_axis_strip": null,
       "neighbouring_label_fragment_excluded": false,
-      "sha256": "8278cb0782f5d81c8ff0d8c5ad65e4558e5759e4be812f666a8d3a7af9f76575"
+      "sha256": "fc429fbb243023a595e0a15144e1a1b0274e27e794385cfff2c77ad3c674a770"
     }
   },
-  "style_reference": {
-    "project": "disante_soaring_ctrw",
-    "source": "13_06_26_paper_slides/13_06_26_slides_soaring_ctrw.tex",
-    "source_sha256": "d304a8b636544a27a7cfc4613eba513616d9b87cdddf627369db1c97a2bef4ee",
-    "seal_sha256": "43f2ecf68e233db723bbc0d111f63cf1a83f53e9326aa29a57c17c30b94a6cca",
-    "adaptation": "Palatino, steel-blue header and title, Pisa seal; 16:9 canvas."
-  }
+  "compressed_reports": {
+    "ch3_revision.json": {
+      "raw_sha256": "f42d68c83f5cef4069001492d888a9c36848a17f95452562b1cbfe6c925124a0",
+      "raw_size_bytes": 104596274,
+      "gzip_sha256": "f946b70221e4ee051c717b1cc42ac214c634b6846312573a6d0817c8066cf132",
+      "gzip_size_bytes": 6561031,
+      "archive_name": "ch3_revision.json.gz"
+    },
+    "ch3_self_similarity.json": {
+      "raw_sha256": "345113af9bec605331e42288b95e0311586007c2276b2919e7d228b339d7febf",
+      "raw_size_bytes": 115880593,
+      "gzip_sha256": "07239748528fd6acc721c7dbd8da1ea1908e10b29e60bd5b5dcaf54e7f16d1b0",
+      "gzip_size_bytes": 6891214,
+      "archive_name": "ch3_self_similarity.json.gz"
+    }
+  },
+  "script_sha256": "7cafb0018a305c7613bfd71aa0ae1a9396013a1bf9058fe3b539bc58e43f4440"
 }

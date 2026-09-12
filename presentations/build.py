@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile the two supervisor talks; never rerun cleaning or analysis."""
+"""Compile the two complete supervisor chapter decks; never rerun cleaning or analysis."""
 
 from __future__ import annotations
 

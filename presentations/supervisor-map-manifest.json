@@ -1,0 +1,111 @@
+{
+  "operation": "Re-layout the existing launch maps with readable labels, using metadata only.\n\nUses the original plot function, bins, positions, geographic extents and colours.\nNo trajectory arrays, raw IGC reads, fitted parameters or bootstrap are involved.\n",
+  "annotation_layout": "Regional label sizes and line breaks adjusted; Alps label placed inside the plotted extent.",
+  "numerical_run": "revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T133040Z-073601cb",
+  "completed_source_stage": "preliminary",
+  "source_stage_command": [
+    "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/.venv/bin/python",
+    "scripts/reporting/ch2_dataset/generate_prelim_figure.py",
+    "--audit-dir",
+    "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays"
+  ],
+  "cleaning": {
+    "configuration": {
+      "alt_channel": {
+        "baro_witness_min_range_m": 30.0,
+        "baro_witness_present_min": 0.95,
+        "gnss_min_range_m": 30.0,
+        "gnss_present_min": 0.95
+      },
+      "fix": {
+        "frozen_delta_z_m": 5.0,
+        "frozen_eps_m": 15.0,
+        "frozen_tau_s": 60.0,
+        "hampel_eps_min_m": 15.0,
+        "hampel_k": 5.0,
+        "hampel_min_window_fixes": 5,
+        "hampel_window_s": 20.0,
+        "integrity_max_fraction": 0.1,
+        "max_altitude_m": 6000.0,
+        "max_horizontal_speed_mps": {
+          "hang gliders": 55.0,
+          "paragliders": 45.0
+        },
+        "max_vertical_speed_mps": 10.0,
+        "min_altitude_m": -100.0,
+        "vz_min_window_fixes": 5,
+        "vz_window_s": 5.0
+      },
+      "flight": {
+        "max_duration_s": 57600.0,
+        "min_alt_range_m": 600.0,
+        "min_duration_s": 2400.0,
+        "min_path_km": 20.0
+      },
+      "sampling": {
+        "max_gap_factor": 10.0,
+        "max_gap_seconds": 20.0,
+        "max_missing_fraction": 0.1,
+        "min_segment_duration_s": 90.0
+      },
+      "savgol": {
+        "polyorder": 3,
+        "tau_c_horizontal_s": 5.0,
+        "tau_c_vertical_s": 5.0
+      },
+      "trimming": {
+        "ground_flatness_m": 5.0,
+        "interior_ground_s": 600.0,
+        "sustained_s": 30.0,
+        "takeoff_speed_mps": 5.0
+      }
+    },
+    "packages": {
+      "numpy": "2.5.0",
+      "pandas": "3.0.3",
+      "pyarrow": "24.0.0",
+      "scipy": "1.18.0"
+    },
+    "pipeline_version": "2.3.0",
+    "source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85"
+  },
+  "inputs": {
+    "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/audit_flights_para.parquet": {
+      "sha256": "727f3c39cbd8de466f17b3e355459eba6e79be7c26ae830674949e9decc31a7e",
+      "size_bytes": 15117397
+    },
+    "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/flights_meta.parquet": {
+      "sha256": "ed43395efe3320bd8c87f23cb4d79646861999e4e6860492c02094de701d8f13",
+      "size_bytes": 13474270
+    },
+    "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/audit_flights_hang.parquet": {
+      "sha256": "6b13de0fb508898ab17455c7b5ef8d216022dc0f5f7df1b2628242494274a786",
+      "size_bytes": 632941
+    },
+    "/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc/derived/flights_meta.parquet": {
+      "sha256": "e56489dd367ebf842addbbae205657bfdfd8a8ea51371c03b8aa27e99529950a",
+      "size_bytes": 592328
+    }
+  },
+  "plot_function_sha256": "48d74ed3e9bb099733a413a67b6b6a536629d035096b1f60e9e90abb1e90e7aa",
+  "basemap_sha256": "f8c2204254aea21f704a550466550ccc36379f569091b2b35e0ba7d94d513d73",
+  "script_sha256": "43880a4f50c0661192444944a091be05e446cd18f36ea85dfa70e5f20ea187a2",
+  "flight_counts": {
+    "paragliders": 156406,
+    "hang gliders": 6094
+  },
+  "outputs": {
+    "supervisor-map-france.pdf": {
+      "sha256": "806d05a1ecd46234c73aee3defd717a7e4502c72706f0cb8cb44fc62de5778fb",
+      "unchanged_map_geometry_sha256": "443324cf38070101b903974f1501a18373296e02ba214b19995d237116964102"
+    },
+    "supervisor-map-reunion.pdf": {
+      "sha256": "c5e9c55fc7589b99db157edf0fce5937536e0249ef9865c9e1192fccac84cbd8",
+      "unchanged_map_geometry_sha256": "3f80fd04872cbfbac0c2d65e8d0d6d9af15692609ba51185cce4fef7ada0987d"
+    },
+    "supervisor-map-world.pdf": {
+      "sha256": "f0d544f9d8c2c57708229767cdf771481b3c01dca27048fcff35b73e05e6eb6d",
+      "unchanged_map_geometry_sha256": "c306e638a1656c49e1885a17a7f01fb21c0a2196cd55011013848ce8c6b8487d"
+    }
+  }
+}

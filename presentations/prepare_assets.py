@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Freeze thesis results for the talks and crop vector PDFs without refitting."""
+"""Freeze reviewed thesis results and crop vector PDFs without refitting."""
 
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 from datetime import UTC, datetime
@@ -33,8 +35,6 @@ PANELS = {
     "defect-frozen": ("cleaning_real_examples", (0, 0.333, 1, 0.667)),
     "defect-altitude": ("cleaning_real_examples", (0, 0.664, 1, 1)),
     "vertical-threshold": ("fixlevel_diagnostics", (0.32, 0, 0.651, 1)),
-    "vertical-spike": ("vertical_median_explainer", (0, 0.32, 1, 0.667)),
-    "vertical-sustained": ("vertical_median_explainer", (0, 0.661, 1, 1)),
     "sg-fit": ("savgol_explainer", (0, 0, 0.5, 1)),
     "sg-response": ("savgol_response", (0, 0, 0.5, 1)),
 }
@@ -47,32 +47,21 @@ AXIS_STRIPS = {
     "equipment-alps": (0.949, 1),
     "equipment-pyrenees": (0.949, 1),
 }
+# Discover the complete chapter inputs; this also includes originals for the
+# additional readable crops produced by crop_chapter_panels.py.
+from crop_chapter_panels import PANELS as CHAPTER_PANELS
+
+DECKS = [(ROOT / f"chapter{chapter}.tex").read_text() for chapter in (2, 3)]
+REFERENCED = set(re.findall(r"\\fig(?:\[[^\]]+\])?\{([^}]+)\}", "\n".join(DECKS)))
+PANELS = {name: spec for name, spec in PANELS.items() if name + ".pdf" in REFERENCED}
 ORIGINALS = sorted(
     {source for source, _ in PANELS.values()}
-    | {
-        "ch3_quantile_control",
-        "quantile_scaling_schematic",
-        "closed_loop_schematic",
-        "savgol_spectrum",
-        "prelim_map",
-        "sampling_intervals",
-    }
+    | {source for source, _, _ in CHAPTER_PANELS.values()}
+    | {Path(name).stem for name in REFERENCED
+       if (REPO / "thesis/generated" / name).is_file()}
 )
-DATA = [
-    "ch3_revision.tex",
-    "ch3_revision.json",
-    "duration_equipment.tex",
-    "duration_equipment.json",
-    "duration_equipment_table.tex",
-    "kinematic_isotropy.tex",
-    "kinematic_isotropy.json",
-    "msd.tex",
-    "pipeline_census.tex",
-    "dataset_stats.tex",
-    "stats.tex",
-    "cleaning_real_examples.json",
-    "cleaning_witness_audit.json",
-]
+DATA = sorted(set(re.findall(r"\\input\{data/([^}]+)\}", "\n".join(DECKS)))
+              | {"duration_equipment.json"})
 
 
 def digest(path: Path) -> str:
@@ -81,36 +70,55 @@ def digest(path: Path) -> str:
 
 
 def main() -> None:
-    """Copy current inputs and record their provenance without accessing the SSD."""
+    """Require the completed manuscript review before freezing any slide results."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--panels-only", action="store_true", help="Recrop the already frozen PDFs"
-    )
+    parser.add_argument("--run", type=Path, default=REPO / "revisions/vertical-gap-split-2026-09-11/recovery-runs/20260912T133040Z-073601cb")
     args = parser.parse_args()
+    run = args.run.resolve()
+    review_path = run / "review-inputs/manuscript-review.json"
+    review = json.loads(review_path.read_text())
+    release = json.loads((run / "review-inputs/manifest.json").read_text())
+    if release["status"] != "complete" or any(s["status"] != "complete" for s in release["stages"]):
+        raise ValueError("All numerical and thesis stages must be complete")
+    if digest(REPO / "thesis/main.pdf") != review["pdf_sha256"]:
+        raise ValueError("The canonical thesis is not the reviewed PDF")
     assets, data = ROOT / "assets", ROOT / "data"
     assets.mkdir(exist_ok=True)
     data.mkdir(exist_ok=True)
     manifest = {
         "created_utc": datetime.now(UTC).isoformat(),
-        "git_head": subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=REPO, text=True
-        ).strip(),
-        "source_state": "Working-tree snapshot, including uncommitted edits.",
-        "operation": "Copy existing results and crop vector panels; no analysis rerun.",
-        "inputs": {},
-        "panels": {},
+        "numerical_run_id": release["run_id"],
+        "cleaning_version": release["cleaning"]["pipeline_version"],
+        "cleaning_source_sha256": release["cleaning"]["source_sha256"],
+        "reviewed_thesis": review,
+        "review_record_sha256": digest(review_path),
+        "operation": "Copy reviewed current results and crop vector panels; no analysis rerun.",
+        "inputs": {}, "panels": {}, "compressed_reports": {},
     }
-    if args.panels_only:
-        manifest = json.loads((ROOT / "source-manifest.json").read_text())
-    elif (ROOT / "source-manifest.json").exists():
-        previous = json.loads((ROOT / "source-manifest.json").read_text())
-        if "style_reference" in previous:
-            manifest["style_reference"] = previous["style_reference"]
-    for name in [] if args.panels_only else [n + ".pdf" for n in ORIGINALS] + DATA:
-        source = REPO / "thesis" / "generated" / name
+    for name in [n + ".pdf" for n in ORIGINALS] + DATA:
+        source = REPO / "thesis/generated" / name
+        actual = digest(source)
+        required = release["outputs"].get(name)
+        if required:
+            if required["historical_control"] or actual != required["sha256"]:
+                raise ValueError(f"A current reviewed input is required: {name}")
+        else:
+            frozen = Path(release["source_root"]) / "thesis/generated" / name
+            if actual != digest(frozen):
+                raise ValueError(f"Supplementary report differs from completed source: {name}")
         target = (assets if source.suffix == ".pdf" else data) / name
         shutil.copy2(source, target)
-        manifest["inputs"][str(source.relative_to(REPO))] = digest(source)
+        manifest["inputs"][str(source.relative_to(REPO))] = actual
+    archive = REPO / "revisions/vertical-gap-split-2026-09-11/full-report-archive"
+    archived = json.loads((archive / "manifest.json").read_text())
+    for name, record in archived["reports"].items():
+        source = archive / record["archive_name"]
+        raw = gzip.decompress(source.read_bytes())
+        if hashlib.sha256(raw).hexdigest() != release["outputs"][name]["sha256"] or digest(source) != record["gzip_sha256"]:
+            raise ValueError(f"The complete compressed report is not verified: {name}")
+        shutil.copy2(source, data / source.name)
+        manifest["compressed_reports"][name] = record
+        manifest["inputs"]["thesis/generated/" + name] = record["raw_sha256"]
     for name, (original, bounds) in PANELS.items():
         page = PdfReader(assets / (original + ".pdf")).pages[0]
         width, height = float(page.mediabox.width), float(page.mediabox.height)
@@ -172,14 +180,14 @@ def main() -> None:
             "neighbouring_label_fragment_excluded": name == "vertical-threshold",
             "sha256": digest(assets / (name + ".pdf")),
         }
-    if not args.panels_only:
-        for name in [
-            "thesis/sections/03-dataset.tex",
-            "thesis/sections/04-global-transport.tex",
-            "configs/preprocessing.yaml",
-            "src/soaring/reporting/style.py",
-        ]:
-            manifest["inputs"][name] = digest(REPO / name)
+    for name in [
+        "thesis/sections/03-dataset.tex",
+        "thesis/sections/04-global-transport.tex",
+        "configs/preprocessing.yaml",
+        "src/soaring/reporting/style.py",
+    ]:
+        manifest["inputs"][name] = digest(REPO / name)
+    manifest["script_sha256"] = digest(Path(__file__))
     (ROOT / "source-manifest.json").write_text(
         json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
     )

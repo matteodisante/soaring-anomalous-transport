@@ -53,7 +53,7 @@
 }
 \setbeamertemplate{footline}{%
   \hspace{7mm}\textcolor{muted}{\fontsize{6.5}{8}\selectfont
-    Matteo Di Sante\enspace|\enspace\TalkShort\enspace|\enspace11 September 2026}
+    Matteo Di Sante\enspace|\enspace\TalkShort\enspace|\enspace12 September 2026}
   \hfill\textcolor{muted}{\fontsize{6.5}{8}\selectfont Supervisor discussion}\hspace{7mm}\vspace{2mm}
 }
 \newcommand{\kw}[1]{\textcolor{accent}{#1}}
@@ -63,9 +63,17 @@
     \small #1
   \end{beamercolorbox}}
 \newcommand{\fig}[2][54mm]{\includegraphics[width=\linewidth,height=#1,keepaspectratio]{assets/#2}\par}
-\newcommand{\timing}[2]{\note{\textbf{Time: #1.}\par\medskip #2}}
+\newcommand{\speaker}[1]{\note{#1}}
+\setbeamertemplate{note page}{%
+  \vspace{4mm}\noindent%
+  \begin{minipage}{\linewidth}
+    {\small\color{pisablue}\TalkShort\quad|\quad Slide \insertframenumber}\par\medskip
+    {\normalsize\bfseries\insertframetitle}\par\medskip
+    {\small\insertnote}
+  \end{minipage}
+}
 \newcommand{\refitem}[3]{\href{#1}{#2}\hfill {\color{muted}#3}\par\medskip}
-\newcommand{\titleframe}[3]{%
+\newcommand{\titleframe}[4]{%
 \begin{frame}[plain]
 \begin{tikzpicture}[remember picture,overlay]
  \fill[pisablue](current page.south west)rectangle(current page.north east);
@@ -76,9 +84,10 @@
  \node[text=white,align=center,text width=.92\paperwidth]at([yshift=-3mm]current page.center)
    {{\LARGE\bfseries #1}\\[3mm]{\large #2}};
  \node[text=pisablue,align=center]at([yshift=10mm]current page.south)
-   {{\normalsize Matteo Di Sante}\quad$\bullet$\quad{\normalsize 11 September 2026}\\[2mm]
+   {{\normalsize Matteo Di Sante}\quad$\bullet$\quad{\normalsize 12 September 2026}\\[2mm]
     {\small #3}};
 \end{tikzpicture}
+\note{#4}
 \end{frame}}
 \newcommand{\backupstart}{%
 \appendix
@@ -91,5 +100,5 @@
 \end{frame}}
 \hypersetup{colorlinks=true,urlcolor=accent,linkcolor=accent,pdfauthor={Matteo Di Sante}}
 % A notes sheet contains a second rendering of the slide. Disable its duplicate
-% destinations; the normal talk PDF retains all hyperlinks and the viewer button.
+% destinations; the normal slide PDF retains all hyperlinks and the viewer button.
 \ifdefined\Speakernotes\hypersetup{draft}\fi
