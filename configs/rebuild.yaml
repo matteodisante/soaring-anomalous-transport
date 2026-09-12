@@ -15,6 +15,7 @@ stages:
   - {id: smoothing_spectrum, script: scripts/reporting/ch2_dataset/generate_savgol_spectrum_figure.py, args: [--rescan]}
   - {id: cleaning_schematics, script: scripts/reporting/ch2_dataset/generate_cleaning_explainers.py}
   - {id: cleaning_examples, script: scripts/reporting/ch2_dataset/generate_cleaning_examples.py}
+  - {id: trimming, script: scripts/reporting/ch2_dataset/generate_trimming_figure.py}
   - {id: terrain, script: scripts/reporting/ch2_dataset/generate_terrain_figure.py}
   - {id: msd_measure, script: scripts/reporting/ch3_global_transport/measure_msd.py, args: [--out, '{audit_dir}']}
   - {id: msd_figure, script: scripts/reporting/ch3_global_transport/generate_msd_figure.py, args: [--audit-dir, '{audit_dir}']}
@@ -23,7 +24,7 @@ stages:
   - {id: msd_audit_report, script: scripts/reporting/ch3_global_transport/audit_msd_report.py, args: [--audit-dir, '{audit_dir}']}
   - {id: preliminary, script: scripts/reporting/ch2_dataset/generate_prelim_figure.py, args: [--audit-dir, '{audit_dir}']}
   - {id: kinematics, script: scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py, args: [--audit-dir, '{audit_dir}']}
-  - {id: transport_subset, script: scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py, args: [--audit-dir, '{audit_dir}']}
+  - {id: transport_full, script: scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py, args: [--audit-dir, '{audit_dir}']}
   - {id: scaling_schematics, script: scripts/reporting/ch3_global_transport/generate_scaling_schematics.py}
   - {id: para_train, script: scripts/segment_flights.py, args: [train, --discipline, paragliders, --config, configs/segmentation.yaml]}
   - {id: para_apply, script: scripts/segment_flights.py, args: [apply, --discipline, paragliders, --config, configs/segmentation.yaml]}

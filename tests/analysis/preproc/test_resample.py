@@ -2,6 +2,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from soaring.analysis.config import (
+    SamplingThresholds,
+    load_preproc_config,
+)
 from soaring.analysis.preproc.resample import (
     DROP_INCOMPLETE,
     DROP_NO_CADENCE,
@@ -13,10 +17,6 @@ from soaring.analysis.preproc.resample import (
     resample_flight,
     segment_bounds,
     split_bound_s,
-)
-from soaring.analysis.config import (
-    SamplingThresholds,
-    load_preproc_config,
 )
 
 # The adopted values, restated here so the behaviour tests below read as behaviour and
@@ -373,62 +373,103 @@ def test_a_segment_whose_channel_cannot_be_filled_is_dropped():
     assert out.fixes.empty
 
 
-def test_a_reconstructed_altitude_is_recorded_as_such():
-    """`interpolated` is a statement about the time base, and z can be absent alone.
+def test_a_short_reconstructed_altitude_has_its_own_flag():
+    flight = _straight_flight()
+    flight.loc[100:104, "z"] = np.nan
+    out = resample_flight(flight, SAMPLING)
+    assert not out.fixes.interpolated.any()
+    assert out.fixes.z_reconstructed.sum() == 5
+    assert out.frac_z_reconstructed == pytest.approx(5 / len(flight))
+    assert out.z_gap_max_s == 5
 
-    A logger that writes no barometric value, or a cleaning that removes one, leaves a
-    hole in the vertical channel while the horizontal record is intact: no time gap
-    opens, so every grid point is `measured` and `interpolated` stays False, while the
-    linear bridge fills the hole with a straight line of unbounded length. On a flight
-    missing 500 s of altitude the z error reached 540 m and the smoothing turned the
-    straight line into a vertical velocity that was pure invention -- with
-    `frac_interpolated` at 0.00000 and `was_resampled` at False. The vertical therefore
-    carries its own flag.
-    """
-    n, dt = 400, 1.0
-    t = np.arange(n, dtype=float) * dt
-    local = pd.DataFrame(
-        {
-            "t": t,
-            "E": 12.0 * t,
-            "N": 3.0 * t,
-            "z": 1000.0 + 2.0 * t,
-            "split_before": False,
-        }
+
+@pytest.mark.parametrize("dt", [1.0, 5.0, 15.0])
+@pytest.mark.parametrize("extra_steps", [0, 1])
+def test_vertical_gap_uses_elapsed_valid_endpoint_separation(dt, extra_steps):
+    flight = _straight_flight(duration_s=1800, dt=dt)
+    bound = float(split_bound_s(dt, SAMPLING))
+    left = int(300 / dt)
+    right = left + int(bound / dt) + extra_steps
+    flight.loc[left + 1 : right - 1, "z"] = np.nan
+    out = resample_flight(flight, SAMPLING)
+    if extra_steps == 0:
+        assert out.segments.kept.sum() == 1
+        assert out.fixes.z_reconstructed.sum() == right - left - 1
+        np.testing.assert_allclose(out.fixes.z, 1000 + 2 * out.fixes.t)
+    else:
+        kept = out.segments[out.segments.kept]
+        assert len(kept) == 2
+        assert kept.t_end.iloc[0] == flight.t.iloc[left]
+        assert kept.t_start.iloc[1] == flight.t.iloc[right]
+        assert not out.fixes.t.between(
+            flight.t.iloc[left], flight.t.iloc[right], inclusive="neither"
+        ).any()
+        assert not out.fixes.z_reconstructed.any()
+        assert kept.censored_start.tolist() == [False, True]
+        assert kept.censored_end.tolist() == [True, False]
+        assert out.segments.n_fix_raw.sum() == len(flight)
+
+
+def test_long_vertical_gap_preserves_origin_clock_and_segment_gates():
+    flight = _straight_flight()
+    flight.loc[50:199, "z"] = np.nan
+    out = resample_flight(flight, SAMPLING)
+    assert out.segments.drop_reason.tolist()[:2] == [DROP_TOO_SHORT, DROP_INCOMPLETE]
+    assert out.segments.kept.sum() == 1
+    assert out.fixes.t.iloc[0] == 200
+    assert out.fixes.E.iloc[0] == 2000
+    assert out.fixes.z.iloc[0] == 1400
+    assert out.segments.iloc[-1].censored_start
+
+
+def test_missing_altitude_endpoints_are_excluded_without_constant_extension():
+    flight = _straight_flight()
+    flight.loc[:4, "z"] = np.nan
+    flight.loc[598:, "z"] = np.nan
+    out = resample_flight(flight, SAMPLING)
+    assert out.fixes.t.min() == 5
+    assert out.fixes.t.max() == 597
+    assert not out.fixes.z_reconstructed.any()
+    kept = out.segments[out.segments.kept].iloc[0]
+    assert kept.censored_start and kept.censored_end
+    assert out.segments.n_fix_raw.sum() == len(flight)
+
+
+def test_forced_boundary_inside_short_altitude_hole_prevents_bridging():
+    flight = _straight_flight()
+    flight.loc[299:301, "z"] = np.nan
+    flight["split_before"] = flight.t == 300
+    out = resample_flight(flight, SAMPLING)
+    kept = out.segments[out.segments.kept]
+    assert kept.t_end.iloc[0] == 298
+    assert kept.t_start.iloc[1] == 302
+    assert not out.fixes.t.between(299, 301).any()
+    assert not out.fixes.z_reconstructed.any()
+
+
+def test_isolated_valid_altitude_cannot_keep_an_otherwise_missing_flight():
+    flight = _straight_flight()
+    flight["z"] = np.nan
+    flight.loc[300, "z"] = 1000
+    out = resample_flight(flight, SAMPLING)
+    assert out.drop_reason == DROP_NO_SEGMENT
+    assert out.fixes.empty
+    assert out.segments.n_fix_raw.sum() == len(flight)
+
+
+def test_flagged_grid_run_can_exceed_each_actual_interpolation_span():
+    # Valid readings at 16 and 32 s support every bridge, but nearest-fix flags
+    # at 10, 20 and 30 s remain invalid. Their run is not one 30-s source outage.
+    t = np.unique(np.r_[np.arange(0, 1001, 10), 16, 32]).astype(float)
+    local = pd.DataFrame({"t": t, "E": t * 10, "N": t * 5, "z": 1000 + t})
+    local.loc[local.t.isin([10, 20, 30]), "z"] = np.nan
+    result = resample_flight(local, SAMPLING)
+    assert result.g_max_s == 20
+    assert result.z_gap_max_s == 30
+    finite = local.loc[local.z.notna(), "t"].to_numpy()
+    grid = result.fixes.t.to_numpy()
+    right = np.searchsorted(finite, grid)
+    spans = np.where(
+        finite[right] == grid, 0, finite[right] - finite[np.maximum(0, right - 1)]
     )
-    local.loc[100:199, "z"] = np.nan  # 100 s the logger never wrote
-    out = resample_flight(local, SAMPLING)
-
-    fixes = out.fixes
-    assert not fixes["interpolated"].any(), "no time gap opened, so nothing is that"
-    reconstructed = fixes["z_reconstructed"].to_numpy(dtype=bool)
-    assert reconstructed.sum() == 100
-    assert reconstructed[100:200].all()
-    assert not reconstructed[:100].any() and not reconstructed[200:].any()
-
-    assert out.frac_z_reconstructed == pytest.approx(0.25)
-    assert out.z_gap_max_s == pytest.approx(100.0)
-    assert out.segments.loc[0, "frac_z_reconstructed"] == pytest.approx(0.25)
-    # And the two fractions are independent statements, which is the whole point.
-    assert out.frac_interpolated == 0.0
-
-
-def test_the_worst_altitude_run_separates_many_small_holes_from_one_long_one():
-    # A fraction cannot tell them apart, and they are not the same defect: a linear
-    # bridge over two seconds is a repair, over twelve minutes it is an invention.
-    n = 400
-    t = np.arange(n, dtype=float)
-    base = pd.DataFrame(
-        {"t": t, "E": 12.0 * t, "N": 3.0 * t, "z": 1000.0 + 2.0 * t}
-    ).assign(split_before=False)
-
-    scattered = base.copy()
-    for start in range(20, 220, 20):
-        scattered.loc[start : start + 4, "z"] = np.nan  # 10 holes of five seconds
-    one_long = base.copy()
-    one_long.loc[100:149, "z"] = np.nan  # one hole of fifty
-
-    a, b = resample_flight(scattered, SAMPLING), resample_flight(one_long, SAMPLING)
-    assert a.frac_z_reconstructed == pytest.approx(b.frac_z_reconstructed)
-    assert a.z_gap_max_s == pytest.approx(5.0)
-    assert b.z_gap_max_s == pytest.approx(50.0)
+    assert spans.max() == 16

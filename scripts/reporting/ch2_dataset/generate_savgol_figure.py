@@ -113,12 +113,33 @@ def main() -> int:
     ax = axes[0]
     ax.plot(f, gain, color=BLUE, lw=2)
     ax.axhline(0.5, color=".65", ls=":", lw=1)
+    ax.text(0.015, 0.53, "half power", color=".4", fontsize=8, ha="left")
+    null = f[np.argmin(gain)]
+    ax.vlines(null, 0, 0.45, color=ORANGE, ls=":", lw=1)
+    ax.plot([null], [gain.min()], "o", color=ORANGE, ms=5, zorder=5)
+    ax.text(
+        0.49,
+        0.72,
+        rf"zero at $\nu_0\approx{null:.3f}$",
+        color=ORANGE,
+        fontsize=8,
+        ha="right",
+    )
+    ax.text(
+        0.49,
+        0.62,
+        rf"Nyquist: $|G|^2\approx{gain[-1]:.2f}$",
+        color=".2",
+        fontsize=8,
+        ha="right",
+    )
     ax.set(
-        xlabel=r"normalized frequency $f\Delta t$",
+        xlabel=r"normalized frequency $\nu=f\Delta t$ [cycles per sample]",
         ylabel=r"power transmission $|G|^2$",
         title=f"(a) Filter response ($w={w}$, $p={p}$)",
         xlim=(0, 0.5),
         ylim=(0, 1.05),
+        xticks=[0, 0.1, 0.2, 0.3, 0.4, 0.5],
     )
     ax = axes[1]
     ax.plot(

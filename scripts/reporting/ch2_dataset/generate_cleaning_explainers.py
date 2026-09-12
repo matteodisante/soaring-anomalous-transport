@@ -21,13 +21,17 @@ ROOT = Path(__file__).resolve().parents[3]
 # Static output contract for the provenance checker; paths may be built dynamically.
 GENERATED_OUTPUTS = (
     "cleaning_defects_schematic.pdf",
+    "horizontal_gate_explainer.pdf",
     "vertical_median_explainer.pdf",
 )
 
 sys.path.insert(0, str(ROOT / "src"))
+from soaring.analysis.census import great_circle_m  # noqa: E402
 from soaring.analysis.config import load_preproc_config  # noqa: E402
 from soaring.analysis.preproc.cleaning import (  # noqa: E402
+    _scan_positions,
     clean_flight,
+    hampel_flags,
     local_vz,
     step_vz,
 )
@@ -122,6 +126,109 @@ def defects():
     save(fig, "cleaning_defects_schematic")
 
 
+def gate_case(cfg, t, east, north):
+    """Run the implemented scan on one constructed track and read its decision.
+
+    The panels below draw the reach test from the scan's own anchors, and the assertion
+    keeps that drawing honest: the decision shown is the one the whole cleaning stage
+    takes on the same track, not a restatement of the rule in figure code.
+    """
+    lat = 45.0 + north / 111_320.0
+    lon = 7.0 + east / (111_320.0 * np.cos(np.deg2rad(45.0)))
+    flight = pd.DataFrame(
+        {
+            "t": t,
+            "lat": lat,
+            "lon": lon,
+            "alt": 1500 + 2 * t,
+            "baro_alt": 1500 + 2 * t,
+            "valid": True,
+        }
+    )
+    bound = cfg.fix.max_horizontal_speed_mps["paragliders"]
+    flags = hampel_flags(t, lat, lon, cfg.fix)
+    deleted, split, anchor = _scan_positions(
+        t, lat, lon, flags, bound, cfg.fix.hampel_window_s
+    )
+    cleaned = clean_flight(flight, cfg.fix, discipline="paragliders")
+    kept = cleaned.fixes["t"].to_numpy()
+    assert np.array_equal(np.setdiff1d(t, kept), t[deleted])
+    assert np.array_equal(
+        cleaned.fixes.loc[cleaned.fixes["split_before"], "t"].to_numpy(),
+        t[split & ~deleted],
+    )
+    with np.errstate(divide="ignore", invalid="ignore"):
+        reach = great_circle_m(lat[anchor], lon[anchor], lat, lon) / (t - t[anchor])
+    reach[0] = np.nan  # the first fix anchors itself
+    return deleted, split, reach
+
+
+def horizontal_gate():
+    """Contrast the three outcomes of the reach/rejoin gate on one defect shape."""
+    cfg = load_preproc_config()
+    bound = cfg.fix.max_horizontal_speed_mps["paragliders"]
+    window = cfg.fix.hampel_window_s
+    t = np.arange(0, 161, 1.0)
+    east = 12.0 * t  # an ordinary cruise, well inside the bound
+    cases = []
+    for offset, stop in ((700.0, 41), (400.0, 100), (4000.0, 100)):
+        north = np.zeros_like(t)
+        north[40:stop] = offset
+        cases.append((offset, north))
+    titles = [
+        (f"(a) Spike, {cases[0][0]:.0f} m for 1 s", "(b) Rejoins at once: deleted"),
+        (f"(c) Offset {cases[1][0]:.0f} m for 60 s", "(d) Rejoins in $w$: deleted"),
+        (f"(e) Offset {cases[2][0]:.0f} m for 60 s", "(f) No rejoin in $w$: cut"),
+    ]
+    fig, grid = plt.subplots(
+        2, 3, figsize=(6.6, 4.3), sharex=True, constrained_layout=True
+    )
+    axes = grid.T
+    for col, ((_offset, north), (top, bottom)) in enumerate(
+        zip(cases, titles, strict=True)
+    ):
+        deleted, split, reach = gate_case(cfg, t, east, north)
+        top_ax, low_ax = axes[col]
+        top_ax.plot(t, north, color=GREY, lw=1, zorder=1)
+        top_ax.plot(t[~deleted], north[~deleted], "o", color=BLUE, ms=2.2, zorder=2)
+        top_ax.plot(t[deleted], north[deleted], "x", color=RED, ms=6, mew=1.4, zorder=3)
+        top_ax.set_title(top, loc="left", fontsize=9)
+        top_ax.set_ylabel("North offset [m]")
+        top_ax.margins(y=0.14)  # headroom for the marker on the displaced branch
+        low_ax.semilogy(t, reach, color=GREY, lw=1)
+        low_ax.axhline(bound, color=RED, ls="--", lw=1)
+        low_ax.set_title(bottom, loc="left", fontsize=9)
+        low_ax.set_ylabel("$V(a,i)$ [m/s]")
+        low_ax.set_xlabel("Time [s]")
+        low_ax.set_ylim(1, 3e4)
+        # Every block the scan opened, and the span it was allowed to stay open for.
+        opens = np.flatnonzero(
+            np.r_[False, np.diff(reach > bound) > 0] & (reach > bound)
+        )
+        for start in opens:
+            for ax in (top_ax, low_ax):
+                ax.axvspan(t[start], t[start] + window, color=BLUE, alpha=0.09, lw=0)
+        for boundary in np.flatnonzero(split):
+            for ax in (top_ax, low_ax):
+                ax.axvline(t[boundary], color=RED, ls=":", lw=1.2)
+        for ax in (top_ax, low_ax):
+            ax.grid(visible=True, which="major", color=".9", lw=0.5)
+    axes[2][0].annotate(
+        "nothing deleted",
+        xy=(70, 2000),
+        fontsize=8,
+        color=RED,
+        ha="center",
+    )
+    axes[0][1].annotate(
+        f"$v_{{xy}}^{{\\max}}$ = {bound:.0f} m/s",
+        xy=(85, bound * 1.6),
+        fontsize=8,
+        color=RED,
+    )
+    save(fig, "horizontal_gate_explainer")
+
+
 def median():
     """Show the real configured median/spike decisions on three controlled signals."""
     cfg = load_preproc_config()
@@ -178,4 +285,5 @@ def median():
 
 if __name__ == "__main__":
     defects()
+    horizontal_gate()
     median()

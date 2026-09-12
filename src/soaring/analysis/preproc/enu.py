@@ -260,7 +260,7 @@ def _altitude_for_frame(t: np.ndarray, alt: np.ndarray) -> np.ndarray:
     Missing values are interpolated from the flight's own altitudes, and a flight with
     none at all falls back to sea level. This series is used *only* to place the fixes
     in the local frame, never as the vertical coordinate: ``z`` keeps the gap, which
-    stage (vi) fills once, audited, and flags.
+    stage (vi) fills and flags only within the gap bound, excluding longer holes.
     """
     finite = np.isfinite(alt)
     if finite.all():

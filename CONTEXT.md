@@ -20,11 +20,16 @@ _Avoid_: Hampel filter (the filter substitutes values; this only identifies).
 **Impossibility gate**:
 The test that actually deletes a horizontal fix: unreachable from the last accepted fix
 at the discipline's absolute horizontal-speed bound, with the removal of its block
-restoring reachability.
+restoring reachability. Reachability is measured on the chord from that anchor, which
+stays put while a block is open, so the test relaxes as time passes.
 
 **Block**:
 The contiguous span of fixes the position scan tentatively removes together — the
-smallest one whose removal lets the track rejoin the trend.
+smallest one whose removal lets the track rejoin the trend. A block may stay open for at
+most `hampel_window_s`, reused as that cap; when nothing rejoins inside it the scan
+deletes nothing and marks a segment boundary at the block's first fix instead. A
+displacement past `max_speed * hampel_window_s` can never rejoin, so a re-acquisition
+offset at the kilometre scale always takes the boundary.
 
 **Off-the-trend defect**:
 A horizontal fix that disagrees with its neighbours (a spike, or an out-and-back jump).
@@ -51,14 +56,17 @@ GNSS declarations or missing altitudes supplies the fallback. These signatures d
 prove the receiver's internal state, and the barometric comparison measures net change.
 
 **Bridge-or-split rule (gap rule)**:
-The resampling-stage rule that compares a temporal hole with `g_max`: interpolated
-at or below that limit, split above it. Explicit cleaning boundaries always split.
+The resampling-stage rule that compares both inter-fix gaps and the elapsed time
+between consecutive finite altitudes with `g_max`: interpolated at or below that
+limit, split above it. A long altitude-only hole excludes the intervening horizontal
+fixes too. Missing altitude outside finite support is excluded without extrapolation.
+Explicit cleaning boundaries always split.
 
 **`z_reconstructed`**:
-The altitude-channel analogue of `interpolated`. Within a retained horizontal segment,
-missing altitude is reconstructed from the available altitude readings and flagged;
-a channel with no finite support makes the segment unreconstructable. Altitude-only
-missingness does not itself enter the temporal bridge-or-split decision.
+The altitude-channel analogue of `interpolated`. Within a retained segment, short
+altitude holes are reconstructed from finite readings no more than `g_max` apart and
+flagged. Longer holes split the full trajectory. Unsupported intervals remain recorded
+as rejected candidates in the segment table; their fixes never enter the output.
 
 **Level shift**:
 A candidate isolated vertical step above the speed threshold, with no return within

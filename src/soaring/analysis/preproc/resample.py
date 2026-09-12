@@ -47,9 +47,10 @@ coordinates and linear on altitude. Both preserve the scalar range between conse
 finite endpoints. Componentwise range preservation does not guarantee a physically
 correct two-dimensional path. For a twice-differentiable true altitude and exact
 endpoints, the linear interpolation error is bounded by max|z''|*g^2/8; missing altitude
-runs have no duration cap in this stage, so this formula is not a global metre-scale
-accuracy guarantee. Outside finite altitude support, numpy.interp uses the nearest
-endpoint value. These reconstructions are flagged separately from missing grid times.
+gaps between finite altitude readings are subject to the same split bound as temporal
+gaps. Longer vertical gaps remove the unsupported interval from all three coordinates.
+Leading and trailing missing altitude is excluded, never held at the endpoint value.
+Short reconstructions remain flagged; a duration cap does not guarantee accuracy.
 
 ``scipy`` is imported lazily, as elsewhere in this package, so importing this module
 never requires the ``analysis`` dependency group.
@@ -203,6 +204,36 @@ def segment_bounds(
     return list(itertools.pairwise(edges))
 
 
+def _altitude_bounds(
+    t: np.ndarray, z: np.ndarray, bounds: list[tuple[int, int]], g_max_s: float
+) -> list[tuple[int, int]]:
+    """Partition temporal segments into bounded altitude support and excluded runs.
+
+    Consecutive finite readings may share a segment only up to ``g_max_s`` apart.
+    Missing prefixes, suffixes and long interior holes become separate, incomplete
+    candidates so their exclusion remains visible in the segment table. Refining each
+    temporal segment separately preserves mandatory cleaning boundaries, even inside
+    a missing-altitude run. Returned ranges still partition every input fix.
+    """
+    result = []
+    for start, stop in bounds:
+        finite = np.flatnonzero(np.isfinite(z[start:stop])) + start
+        if finite.size == 0:
+            result.append((start, stop))
+            continue
+        groups = np.split(finite, np.flatnonzero(np.diff(t[finite]) > g_max_s) + 1)
+        cursor = start
+        for group in groups:
+            first, end = int(group[0]), int(group[-1]) + 1
+            if cursor < first:
+                result.append((cursor, first))
+            result.append((first, end))
+            cursor = end
+        if cursor < stop:
+            result.append((cursor, stop))
+    return result
+
+
 def _uniform_grid(t: np.ndarray, dt_s: float) -> np.ndarray:
     """The uniform grid of a segment: anchored on its first fix, stepping ``dt_s``.
 
@@ -238,8 +269,8 @@ def _fill_channel(
     """Resample one scalar channel onto ``grid``, over its own finite samples.
 
     Per channel, not per fix: a fix whose altitude cleaning invalidated still carries a
-    valid position, and the altitude it lost is restored here (sec:uniform). The channel
-    is therefore interpolated over the samples *it* has, ignoring the others.
+    valid position; within bounded support its altitude is restored here (sec:uniform).
+    Each channel is interpolated over its own finite samples.
 
     Args:
         t: Fix times of the segment.
@@ -257,7 +288,7 @@ def _fill_channel(
     if ok.sum() < 2:
         return np.full(grid.size, np.nan)
     if not monotone:
-        return np.interp(grid, t[ok], values[ok])
+        return np.interp(grid, t[ok], values[ok], left=np.nan, right=np.nan)
     # Lazy, as elsewhere in this package: importing the module must not require the
     # optional `analysis` dependency group.
     from scipy.interpolate import PchipInterpolator
@@ -310,7 +341,12 @@ def resample_flight(
     g_max = float(split_bound_s(dt, sampling))
 
     forced = local[split_column].to_numpy(dtype=bool) if split_column in local else None
-    bounds = segment_bounds(t, g_max, forced=forced)
+    bounds = _altitude_bounds(
+        t,
+        local["z"].to_numpy(dtype=float),
+        segment_bounds(t, g_max, forced=forced),
+        g_max,
+    )
     carried = [c for c in local.columns if c not in {*LOCAL_COLUMNS, split_column}]
 
     fix_frames: list[pd.DataFrame] = []
@@ -332,7 +368,9 @@ def resample_flight(
             "censored_start": start > 0,
             "censored_end": stop < t.size,
             "kept": False,
-            "drop_reason": DROP_TOO_SHORT,
+            "drop_reason": (
+                DROP_TOO_SHORT if np.isfinite(seg["z"]).any() else DROP_INCOMPLETE
+            ),
         }
         if stop - start >= 2:
             grid_fixes, frac, frac_z = _resample_segment(seg, dt, carried, segment_id)
@@ -421,18 +459,9 @@ def _resample_segment(
     nearest, distance = _nearest_fix(t, grid)
     measured = distance <= 0.5 * dt_s + _HALF_STEP_SLACK_S
 
-    # `measured` is a statement about the *time base*: a grid point is measured when a
-    # fix lies within half a step of it. It says nothing about whether that fix carried
-    # an altitude, and the vertical channel is the one that can be absent while the
-    # horizontal is intact -- a barometer the logger never wrote, or a value the
-    # cleaning removed. `_fill_channel` bridges such a hole with a straight line of
-    # unbounded length, and with only the time-coverage flag the table would report the
-    # result as measured: on a synthetic flight missing 500 s of altitude the z error
-    # reached 540 m, `frac_interpolated` stayed at 0.00000 and `was_resampled` at False,
-    # while the smoothing turned the straight line into a vertical velocity that was
-    # pure invention. A repair made in silence is a diagnosis lost (sec:uniform), so the
-    # vertical carries its own flag: a grid point's z is measured only when the fix it
-    # came from actually had one.
+    # Time coverage and altitude support are distinct: a short altitude-only hole
+    # has an existing horizontal fix and still needs its own reconstruction flag.
+    # Long vertical holes and unsupported endpoints were excluded by _altitude_bounds.
     z_measured = measured & np.isfinite(seg["z"].to_numpy(dtype=float)[nearest])
 
     out = pd.DataFrame(

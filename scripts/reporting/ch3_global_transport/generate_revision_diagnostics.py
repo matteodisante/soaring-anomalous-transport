@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
-"""Fresh 10--10000 s diagnostics on a reproducible, explicitly bounded flight sample.
+"""10--10000 s diagnostics over all eligible cleaned flights and segments.
 
-Read randomly selected Parquet row groups and randomly select complete flights within
-each group. A flight crossing either row-group edge is excluded to avoid inventing a
-segment boundary. Keep the longest continuous segment per selected flight, restricted
-to native cadence <=10 s. This is an exploratory sample, not a probability-weighted
-estimate of the full archive: boundary exclusion and the cap per row group can alter
-the duration mix. All IDs, selected row groups, source metadata and measured support
-are recorded beside the figures. Existing full-archive cached observables are untouched.
+Stream complete flights across Parquet row groups, using a common 10 s grid for
+segments with native cadence at most 10 s. All supported segments contribute;
+no increment crosses a recording boundary. Disk-backed pools and bounded process
+queues permit a complete scan on a laptop. --sample is for development only.
 """
 
 from __future__ import annotations
@@ -34,10 +31,31 @@ GENERATED_OUTPUTS = (
     "ch3_pca.pdf",
     "ch3_revision.tex",
     "ch3_revision.json",
+    "ch3_self_similarity.json",
+    "ch3_self_similarity_table.tex",
+    "ch3_self_similarity_collapse.tex",
+    "ch3_self_similarity_ranges.tex",
+    "ch3_self_similarity_values.tex",
+    "ch3_joint_para.pdf",
+    "ch3_joint_hang.pdf",
+    "ch3_fixed_quantiles.pdf",
+    "ch3_fixed_exponents.pdf",
+    "ch3_absolute_laws_para.pdf",
+    "ch3_absolute_laws_hang.pdf",
+    "ch3_squared_laws_para.pdf",
+    "ch3_squared_laws_hang.pdf",
 )
 
 sys.path.insert(0, str(ROOT / "src"))
 
+from soaring.analysis.observables.archive_diagnostics import (  # noqa: E402
+    archive_quantile_control,
+    collect_archive,
+    load_measurement,
+    measure_archive,
+    region_geometry,
+    save_measurement,
+)
 from soaring.analysis.observables.global_diagnostics import (  # noqa: E402
     covariance_geometry,
     declared_task_class,
@@ -62,16 +80,16 @@ REGIONS = {
     "Channel Coast": (-1.8, 2.0, 48.3, 51.2),
 }
 PDF_META = {"CreationDate": None, "Creator": "soaring.analysis"}
-from soaring.reporting.style import (
+from soaring.reporting.style import (  # noqa: E402
     COMPONENT_COLORS,
-    CONTROL_GREYS,
+    CONTROL_COLORS,
     DISCIPLINE_COLORS,
     QUANTILE_COLORS,
     paper_style,
 )
 
 PLOT_COLORS = DISCIPLINE_COLORS
-CACHE_VERSION = 3
+CACHE_VERSION = 4
 FIXED_QUANTILE_DURATION_S = 20000
 QUANTILE_CONTROL_NAMES = (
     "All available / pooled",
@@ -88,7 +106,7 @@ def file_signature(path):
     return {"path": str(path), "bytes": stat.st_size, "mtime_ns": stat.st_mtime_ns}
 
 
-def measurement_contract(para_groups, hang_groups, per_group):
+def measurement_contract(para_groups, hang_groups, per_group, *, sample=False):
     """Hash estimator dependencies separately from rendering and summary code."""
     functions = (
         sample_flights,
@@ -104,6 +122,17 @@ def measurement_contract(para_groups, hang_groups, per_group):
     )
     return {
         "version": CACHE_VERSION,
+        "scope": "development sample" if sample else "full eligible archive",
+        "archive_modules_sha256": {
+            name: hashlib.sha256(
+                (ROOT / "src/soaring/analysis/observables" / name).read_bytes()
+            ).hexdigest()
+            for name in (
+                "archive_diagnostics.py",
+                "segment_support.py",
+                "joint_distribution.py",
+            )
+        },
         "estimator_sha256": hashlib.sha256(
             "\n".join(inspect.getsource(f) for f in functions).encode()
         ).hexdigest(),
@@ -463,11 +492,20 @@ def summarize(m):
         for target in (10, 100, 1000, 10000):
             j = int(np.argmin(abs(LAGS - target)))
             who = m["owners"][j]
-            selection = f.region.to_numpy()[who] == name
-            n_flights = len(np.unique(who[selection]))
+            if "_frames" in m:
+                n_flights, geometry = region_geometry(
+                    m["vectors"][j], who, f.region.to_numpy() == name
+                )
+            else:
+                selection = f.region.to_numpy()[who] == name
+                n_flights = len(np.unique(who[selection]))
+                geometry = (
+                    covariance_geometry(m["vectors"][j][selection])
+                    if n_flights >= 8
+                    else {}
+                )
             if n_flights < 8:
                 continue
-            geometry = covariance_geometry(m["vectors"][j][selection])
             if geometry:
                 out["pca"].append(
                     {
@@ -660,7 +698,7 @@ def draw(measured, summaries):
     finish(fig, "ch3_quantiles.pdf")
 
     fig, axes = plt.subplots(2, 2, figsize=(6.1, 5.5), layout="constrained")
-    control_colors = CONTROL_GREYS
+    control_colors = CONTROL_COLORS
     control_styles = (":", "--", "-.", "-")
     for col, (discipline, _m) in enumerate(measured.items()):
         control = summaries[discipline]["quantile_control"]
@@ -858,9 +896,16 @@ def main():
     parser.add_argument(
         "--audit-dir", type=Path, default=Path("/Volumes/SSD_DISANTE/derived-audit")
     )
+    parser.add_argument("--sample", action="store_true", help="development subset only")
+    parser.add_argument("--jobs", type=int, default=None, help="bounded flight workers")
     parser.add_argument("--para-groups", type=int, default=24)
     parser.add_argument("--hang-groups", type=int, default=12)
     parser.add_argument("--per-group", type=int, default=40)
+    parser.add_argument(
+        "--saved-snapshot",
+        type=Path,
+        help="extend an immutable completed diagnostic cache with explicit provenance",
+    )
     parser.add_argument(
         "--reuse",
         action="store_true",
@@ -873,19 +918,81 @@ def main():
     from soaring.reporting.style import paper_style
 
     paper_style()
+    from soaring.reporting.self_similarity import write_report
+
+    if args.saved_snapshot:
+        with args.saved_snapshot.open("rb") as stream:
+            saved = pickle.load(stream)
+        manifest_path = args.saved_snapshot.parent.parent / "manifest.json"
+        manifest = json.loads(manifest_path.read_text())
+        if manifest.get("status") != "complete":
+            raise RuntimeError("--saved-snapshot requires a completed run")
+        snapshot = {
+            "kind": "completed saved snapshot; not a claim about a running rebuild",
+            "manifest": str(manifest_path),
+            "run_id": manifest.get("run_id"),
+            "cache": file_signature(args.saved_snapshot),
+            "cache_sha256": hashlib.sha256(
+                args.saved_snapshot.read_bytes()
+            ).hexdigest(),
+            "pipeline_versions": sorted(
+                {
+                    value["cleaning"]["pipeline_version"]
+                    for value in manifest.get("datasets", {}).values()
+                }
+            ),
+        }
+        write_report(
+            saved["measured"],
+            saved["provenance"],
+            saved["contract"],
+            OUT,
+            snapshot=snapshot,
+        )
+        saved_summaries = {name: summarize(m) for name, m in saved["measured"].items()}
+        draw(saved["measured"], saved_summaries)
+        return
     measured, summaries, provenance, macros = {}, {}, {}, {}
-    cache = args.audit_dir / "ch3_revision_sample.pkl"
-    contract = measurement_contract(args.para_groups, args.hang_groups, args.per_group)
+    args.audit_dir.mkdir(parents=True, exist_ok=True)
+    cache = args.audit_dir / (
+        "ch3_revision_sample.pkl" if args.sample else "ch3_revision_full.pkl"
+    )
+    contract = measurement_contract(
+        args.para_groups, args.hang_groups, args.per_group, sample=args.sample
+    )
     if args.reuse:
         with cache.open("rb") as stream:
-            measured, provenance = validate_cache(pickle.load(stream), contract)
+            saved = pickle.load(stream)
+        measured, provenance = validate_cache(saved, contract)
+        if not args.sample:
+            measured = {
+                name: load_measurement(Path(directory))
+                for name, directory in saved["directories"].items()
+            }
     for discipline, g in DISCIPLINES.items():
         count = args.para_groups if g.slug == "para" else args.hang_groups
         if not args.reuse:
-            frames, provenance[discipline] = sample_flights(
-                g, args.audit_dir, count, args.per_group, 20260910
-            )
-            measured[discipline] = measure(frames)
+            if args.sample:
+                frames, provenance[discipline] = sample_flights(
+                    g, args.audit_dir, count, args.per_group, 20260910
+                )
+                measured[discipline] = measure(frames)
+            else:
+                directory = args.audit_dir / f"ch3-full-{g.slug}"
+                frames, provenance[discipline] = collect_archive(
+                    g, directory, REGIONS, declared_task_class, file_signature
+                )
+                measured[discipline] = measure_archive(
+                    frames, directory, LAGS, SCALES, Q, PROBABILITIES, args.jobs
+                )
+                measured[discipline]["quantile_control"] = archive_quantile_control(
+                    measured[discipline],
+                    frames,
+                    LAGS,
+                    PROBABILITIES,
+                    QUANTILE_CONTROL_NAMES,
+                )
+                save_measurement(measured[discipline], directory)
         frame = measured[discipline]["frame"]
         classes = frame.task.map(declared_task_class)
         frame["closed"] = classes == "closed"
@@ -981,23 +1088,44 @@ def main():
             s["duration_cohorts"][0]["reference_lag_s"]
         )
         print(
-            f"{discipline}: {s['n_flights']} flights; {s['n_fixed']} in fixed long cohort; "
+            f"{discipline}: {s['n_flights']} flights; "
+            f"{s['n_fixed']} in fixed long cohort; "
             f"MSD slopes {s['alpha']}; detailed quantile controls in JSON",
             flush=True,
         )
     if not args.reuse:
         with cache.open("wb") as stream:
             pickle.dump(
-                {"measured": measured, "provenance": provenance, "contract": contract},
+                {
+                    "measured": measured if args.sample else {},
+                    "directories": {
+                        name: str((args.audit_dir / f"ch3-full-{g.slug}").resolve())
+                        for name, g in DISCIPLINES.items()
+                    }
+                    if not args.sample
+                    else {},
+                    "provenance": provenance,
+                    "contract": contract,
+                },
                 stream,
                 protocol=5,
             )
     OUT.mkdir(exist_ok=True)
     draw(measured, summaries)
+    write_report(
+        measured,
+        provenance,
+        contract,
+        OUT,
+        snapshot={
+            "kind": "diagnostic inputs verified or measured in this run",
+            "audit_dir": str(args.audit_dir),
+        },
+    )
     report = {
         "requested_range_s": [10, 10000],
         "q": Q,
-        "method": __doc__,
+        "method": __doc__ if not args.sample else inspect.getdoc(sample_flights),
         "provenance": provenance,
         "measurement_contract": contract,
         "results": summaries,

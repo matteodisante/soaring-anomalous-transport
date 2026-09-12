@@ -103,6 +103,10 @@ QUANTILE_COLORS = {0.25: "#482878", 0.50: "#31688E", 0.75: "#26828E", 0.90: "#35
 # controls, or the parts of one stacked total. A ramp says "more of the same
 # quantity" where a categorical set would wrongly suggest unrelated groups.
 CONTROL_GREYS = ("#B4B4B4", "#8A8A8A", "#606060", "#303030")
+# Sampling conventions are compared by colour as well as line style.
+CONTROL_COLORS = ("#8C8C8C", "#2E7D8A", "#A9629E", "#4E8A5B")
+# Ordered lag series in displacement-law figures, from short to long.
+LAG_COLORS = ("#440154", "#414487", "#2A788E", "#22A884", "#7AD151", "#AD9D00")
 STACK_GREYS = ("#4A4A4A", "#7A7A7A", "#A6A6A6", "#D0D0D0")
 
 # Every set a figure may draw from, for the disjointness checks in the tests.
@@ -114,6 +118,8 @@ PALETTE_FAMILIES = {
     "channel": CHANNEL_COLORS,
     "component": COMPONENT_COLORS,
     "quantile": QUANTILE_COLORS,
+    "sampling_control": dict(enumerate(CONTROL_COLORS)),
+    "lag": dict(enumerate(LAG_COLORS)),
 }
 RESERVED_FAMILIES = ("discipline", "equipment")
 

@@ -203,7 +203,7 @@ def _scan_positions(
     flagged: np.ndarray,
     max_speed_mps: float,
     block_span_s: float,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Scan left to right, removing bounded excursions and splitting discontinuities.
 
     The last accepted fix anchors the impossibility gate. An unreachable block is
@@ -232,24 +232,31 @@ def _scan_positions(
             therefore affects attribution as well as computational work.
 
     Returns:
-        ``(delete, split_before)``, two boolean arrays over the fixes. The invariant
-        that no impossible step survives inside a segment is *not* established here:
-        two later passes still delete fixes, so it is enforced once, on the final
-        surviving set, by :func:`_boundary_impossible_steps`.
+        ``(delete, split_before, anchor)``. The first two are boolean arrays over the
+        fixes. The third is the index of the fix each one was judged against, which is
+        its predecessor wherever no block was open; it carries no decision and exists so
+        that the explainer figure of sec:fixlevel can draw the reach test the scan
+        actually applied rather than a restatement of it. The invariant that no
+        impossible step survives inside a segment is *not* established here: two later
+        passes still delete fixes, so it is enforced once, on the final surviving set,
+        by :func:`_boundary_impossible_steps`.
     """
     n = t.size
     delete = np.zeros(n, dtype=bool)
     split = np.zeros(n, dtype=bool)
+    # Every fix is judged against its predecessor until a block opens and freezes it.
+    anchors = np.maximum(np.arange(n) - 1, 0)
     step_speed = _step_speeds(t, lat, lon)
     # The overwhelmingly common case: nothing off the trend and no impossible step, so
     # the scan below would accept every fix in turn. Skipping it keeps the archive-wide
     # cost in the parser rather than in this loop.
     if not flagged.any() and np.all(step_speed <= max_speed_mps):
-        return delete, split
+        return delete, split, anchors
 
     anchor = 0
     pending: list[int] = []
     for i in range(1, n):
+        anchors[i] = anchor
         if not pending and step_speed[i - 1] <= max_speed_mps:
             anchor = i
             continue
@@ -317,7 +324,7 @@ def _scan_positions(
     # then carries every average computed over that segment. A step the bound rejects
     # is a transition of unknown course, so it is made a boundary, on the same footing
     # as a long gap. It is enforced on the final surviving set, in `clean_flight`.
-    return delete, split
+    return delete, split, anchors
 
 
 def _frozen_runs(
@@ -759,7 +766,7 @@ def clean_flight(
 
     # (2) Position outliers: the identifier flags, the speed bound corroborates.
     flagged = hampel_flags(t, lat, lon, fix_level)
-    spike, split = _scan_positions(
+    spike, split, _ = _scan_positions(
         t, lat, lon, flagged, max_speed, fix_level.hampel_window_s
     )
 

@@ -112,7 +112,9 @@ if TYPE_CHECKING:
 #        at the empirical change into the slower-decaying raw-distribution tail.
 #        This changes altitude censoring and requires rebuilding derived tables.
 # 2.2.0: propagate reconstructed-altitude support through the vertical SG fit.
-PIPELINE_VERSION = "2.2.0"
+# 2.3.0: apply g_max to consecutive finite altitudes; exclude long vertical holes
+#        and unsupported endpoints from the full trajectory before resampling.
+PIPELINE_VERSION = "2.3.0"
 
 # The reason a flight carries when the driver could not run the pipeline over it at all
 # -- an unreadable file, a parser failure, a bug. It lives here, with the other stage

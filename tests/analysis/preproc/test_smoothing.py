@@ -439,7 +439,7 @@ def test_reconstruction_support_does_not_cross_segment_boundaries():
     flight = _cubic_flight(duration_s=240.0)
     flight["split_before"] = False
     flight.loc[120, "split_before"] = True
-    flight.loc[119, "z"] = np.nan
+    flight.loc[118, "z"] = np.nan
     out = _run(flight)
     assert out.fixes.loc[out.fixes.segment_id == 0, "z_derivative_reconstructed"].any()
     assert not out.fixes.loc[

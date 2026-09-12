@@ -9,6 +9,7 @@ from soaring.analysis.preproc.cleaning import (
     REMOVED_BACKWARD_TIME,
     REMOVED_FROZEN_RUN,
     REMOVED_POSITION_SPIKE,
+    _scan_positions,
     clean_flight,
     hampel_flags,
     integrity_gate,
@@ -617,6 +618,36 @@ def test_a_short_offset_is_removed_as_an_excursion_and_that_is_the_limit():
 
     assert out.report.n_splits == 0
     assert 0 < out.report.n_removed_spike <= 20
+
+
+def test_the_scan_reports_the_anchor_each_fix_was_judged_against():
+    # The explainer figure of the thesis draws the reach test from this trace, so it has
+    # to be the scan's own anchors: the predecessor wherever nothing is pending, and the
+    # fix frozen before a block for as long as that block stays open.
+    flight = _glide()
+    flight.loc[150:, "lat"] += 4000.0 / _M_PER_DEG_LAT  # jumps and never rejoins
+    t = flight["t"].to_numpy()
+    lat = flight["lat"].to_numpy()
+    lon = flight["lon"].to_numpy()
+    delete, split, anchor = _scan_positions(
+        t,
+        lat,
+        lon,
+        hampel_flags(t, lat, lon, FIX),
+        FIX.max_horizontal_speed_mps["paragliders"],
+        FIX.hampel_window_s,
+    )
+
+    assert not delete.any()
+    assert split[150]
+    # The block opens at 150 and runs until one second past the permitted span; every
+    # fix in it is measured from 149, the last one the scan accepted.
+    open_block = np.zeros(len(t), dtype=bool)
+    open_block[150:172] = True
+    assert (anchor[open_block] == 149).all()
+    elsewhere = ~open_block
+    elsewhere[0] = False  # the first fix anchors itself
+    assert (anchor[elsewhere] == np.flatnonzero(elsewhere) - 1).all()
 
 
 def test_a_run_of_null_island_fixes_is_removed_despite_the_broken_median():

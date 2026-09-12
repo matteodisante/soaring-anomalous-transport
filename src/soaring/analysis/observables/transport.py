@@ -482,6 +482,18 @@ class TAMSDAccumulator:
         if n < 3 or not np.isfinite(dt_s) or dt_s <= 0:
             return
         delta2 = time_averaged_msd(east, north, dt_s)
+        self.add_curve(delta2, dt_s)
+
+    def add_curve(self, delta2: np.ndarray, dt_s: float) -> None:
+        """Add an already computed segment curve using the same support convention.
+
+        This lets component sums and duration cohorts reuse the expensive FFT.
+        The curve contains every native lag starting at zero.
+        """
+        delta2 = np.asarray(delta2, dtype=float)
+        n = delta2.size
+        if n < 3 or not np.isfinite(dt_s) or dt_s <= 0:
+            return
         index = np.round(self.lags / dt_s).astype(int)
         # A lag the segment cannot resolve -- shorter than its step, or longer than the
         # segment itself -- is not answered rather than answered badly. The last few

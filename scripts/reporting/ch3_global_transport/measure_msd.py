@@ -57,6 +57,7 @@ def run(discipline: str, out_dir: Path) -> int:
         MSDAccumulator,
         TAMSDAccumulator,
         log_lag_grid,
+        time_averaged_msd,
     )
 
     derived = DISCIPLINES[discipline].derived_dir()
@@ -112,7 +113,11 @@ def run(discipline: str, out_dir: Path) -> int:
                 continue
             step = float(np.median(np.diff(seg_times)))
             east_s, north_s = segment["E"].to_numpy(), segment["N"].to_numpy()
-            time_averaged.add(east_s, north_s, step)
+            zeros_s = np.zeros_like(east_s)
+            east_curve = time_averaged_msd(east_s, zeros_s, step)
+            north_curve = time_averaged_msd(zeros_s, north_s, step)
+            radial_curve = east_curve + north_curve
+            time_averaged.add_curve(radial_curve, step)
             segment_rows.append(
                 {
                     "flight_id": str(flight.flight_id.iloc[0]),
@@ -122,13 +127,12 @@ def run(discipline: str, out_dir: Path) -> int:
                     "total_retained_duration_s": retained_duration,
                 }
             )
-            zeros_s = np.zeros_like(east_s)
-            ta_east.add(east_s, zeros_s, step)
-            ta_north.add(zeros_s, north_s, step)
+            ta_east.add_curve(east_curve, step)
+            ta_north.add_curve(north_curve, step)
             span = float(seg_times[-1] - seg_times[0])
             for threshold, ta_cohort in ta_cohorts.items():
                 if span >= threshold:
-                    ta_cohort.add(east_s, north_s, step)
+                    ta_cohort.add_curve(radial_curve, step)
             n_segments += 1
         if count % 20_000 == 0:
             print(f"  {discipline}: {count} flights", flush=True)

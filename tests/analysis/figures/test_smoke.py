@@ -27,6 +27,10 @@ from soaring.analysis.figures.preproc import (
     make_gap_diagnostics_figure,
     make_sampling_figure,
 )
+from soaring.analysis.figures.trimming import (
+    make_interior_excision_figure,
+    make_trim_split_figure,
+)
 from soaring.analysis.observables.transport import MSDResult
 
 
@@ -101,6 +105,38 @@ def test_the_fixlevel_diagnostics_survive_a_gapped_channel(nan_every, config):
     """
     figure = make_fixlevel_diagnostics_figure(_distributions(nan_every), config.fix)
     assert figure.axes
+
+
+def _trim_scan(n=4000, seed=0, max_excised=1):
+    rng = np.random.default_rng(seed)
+    return pd.DataFrame(
+        {
+            "takeoff_trimmed_s": rng.lognormal(4.0, 1.5, n),
+            "landing_trimmed_s": rng.lognormal(3.5, 1.5, n),
+            "n_interior_excised": rng.choice(
+                np.arange(max_excised + 1),
+                n,
+                p=[0.99] + [0.01 / max_excised] * max_excised
+                if max_excised
+                else [1.0],
+            ),
+        }
+    )
+
+
+def test_the_trim_split_figure_renders():
+    scans = {"paragliders": _trim_scan(), "hang gliders": _trim_scan(500, seed=1)}
+    assert make_trim_split_figure(scans).axes
+
+
+def test_the_interior_excision_figure_survives_an_all_zero_discipline():
+    # hang gliders: every flight at zero, no non-zero bar to draw -- must not raise
+    # trying to size an empty array (np.unique/max on a single-valued column).
+    scans = {
+        "paragliders": _trim_scan(max_excised=3),
+        "hang gliders": _trim_scan(500, seed=1, max_excised=0),
+    }
+    assert make_interior_excision_figure(scans).axes
 
 
 def test_the_msd_figure_renders_both_estimators():
