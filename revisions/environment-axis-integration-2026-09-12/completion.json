@@ -1,0 +1,65 @@
+{
+  "status": "complete",
+  "verified_utc": "2026-09-12T17:41:19.342402+00:00",
+  "reviewed_commit": "24d34e6d91541751c44ed728973e94d71690c1fa",
+  "verified_committed_inputs": 266,
+  "verified_generated_outputs": 97,
+  "full_reports_verified_via_committed_gzip": [
+    "thesis/generated/ch3_revision.json",
+    "thesis/generated/ch3_self_similarity.json",
+    "thesis/generated/ch3_grouped_tamsd.json"
+  ],
+  "thesis_pages": 131,
+  "presentation_documents": {
+    "chapter2.pdf": {
+      "pages": 58,
+      "sha256": "315a03b1fcf60ca03b9ad830297f50ef4b7c0cf878a16bb122d10ab4440ec355",
+      "bytes": 2736908,
+      "speaker_notes": false
+    },
+    "chapter2-notes.pdf": {
+      "pages": 58,
+      "sha256": "d12c1e69d826a78ffbce019657b39e9aabf4bb9681e41d601e6deaae3000a66f",
+      "bytes": 2758267,
+      "speaker_notes": true
+    },
+    "chapter3.pdf": {
+      "pages": 99,
+      "sha256": "b54cfa1fd50932d5629d2ff7dd5e607ed2b4f2390d654d2b57f9c5f903a03bfb",
+      "bytes": 3449356,
+      "speaker_notes": false
+    },
+    "chapter3-notes.pdf": {
+      "pages": 99,
+      "sha256": "24de24ba4c195638be562786ab39d9c12725aba01e2c0ef49326bf719fc83254",
+      "bytes": 3491815,
+      "speaker_notes": true
+    }
+  },
+  "tests": "4 wind-convention/vector-averaging tests passed; scoped Ruff passed; static provenance 115 files, 1371 macros, zero problems; strict documentation build passed",
+  "visual_review": "Thesis terrain/wind figures and six new environmental slides checked; source values and sensitivity/causal limitations agree. New wind methods and results note pages also inspected.",
+  "ssd_delivery": "/Volumes/SSD_DISANTE/derived-audit/releases/environment-axis-integration-2026-09-12",
+  "ssd_delivery_files": {
+    "thesis/main.pdf": "230832f528d588beec578d98b4271980301f3446752056acb616705a6a648e1e",
+    "presentations/chapter2.pdf": "315a03b1fcf60ca03b9ad830297f50ef4b7c0cf878a16bb122d10ab4440ec355",
+    "presentations/chapter2-notes.pdf": "d12c1e69d826a78ffbce019657b39e9aabf4bb9681e41d601e6deaae3000a66f",
+    "presentations/chapter3.pdf": "b54cfa1fd50932d5629d2ff7dd5e607ed2b4f2390d654d2b57f9c5f903a03bfb",
+    "presentations/chapter3-notes.pdf": "24de24ba4c195638be562786ab39d9c12725aba01e2c0ef49326bf719fc83254",
+    "presentations/README.md": "8b1b5760fc10f57372707fef75a68742f837daba4d2092d117eab91975f0405b",
+    "presentations/outline.md": "4d277af122030829670128364deb47400879d5775b55100b58fd11f6560437d7",
+    "presentations/validation.json": "7277afff8ff1d468f1b59d8850c8b1228503846a8a4748f91422c8f1440613ca",
+    "presentations/source-manifest.json": "bac665fc91e0a77b729c39846483dd3f256e23ddb1162f443c66d81350e59823",
+    "revisions/environment-axis-integration-2026-09-12/manuscript-review.json": "b6e56ca330001283537c2f5d58a4ceff392a829ce425da85cf99d163ea40810f",
+    "revisions/environment-axis-integration-2026-09-12/manuscript-build.log.gz": "b8b6af7848d8975e7c09660d38c4eb3c4ee329b076c1e6b3e87c87dd4cbb690c",
+    "revisions/environment-axis-integration-2026-09-12/README.md": "10eed997e149c0f007e5489f86337299ff53e4ea138d40cd3299f6639a30e853",
+    "revisions/environment-axis-integration-2026-09-12/review_delivery.py": "adfda0a8f2b1b05d107cecf8ffbff963ac222bf7f68875abde9a3d3996d0f42e",
+    "revisions/environment-axis-integration-2026-09-12/numerical-update.json": "2b27db267b564cd4a298118387d36d3d1fc6720ab7bd9524fa410ddbc2e33edd"
+  },
+  "ssd_bytes_copied": 18078688,
+  "ssd_free_bytes_before": 15512633344,
+  "ssd_free_bytes_after": 15490088960,
+  "wind_archive_compressed_bytes": 6325394,
+  "wind_mirror": "/Volumes/SSD_DISANTE/derived-audit/external-data/channel-wind-2026-09-12",
+  "wind_mirror_all_files_identical": true,
+  "scope": "Completed combined current manuscript and chapter decks. Independent environmental inputs preserved in Git and on SSD. No cleaning or inherited flight measurement rerun."
+}
