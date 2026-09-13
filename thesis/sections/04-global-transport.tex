@@ -1237,21 +1237,62 @@ Whitening separately at each lag would enforce a part of the desired collapse by
 construction. A meaningful control instead fits a transformation at a fixed reference
 scale and tests it on other scales and flights.
 
+\FloatBarrier
 \subsubsection{Independent terrain orientation}
 \label{sec:independent-terrain-axis}
 
 An independent geographical reference helps distinguish an observed displacement
 axis from an assumed mountain direction. NOAA's ETOPO 2022 elevation model
 \cite{noaa_etopo2022} supplies this reference within the same Alpine and Pyrenean
-take-off boxes. Every fourth cell of its 15-arc-second grid is retained in each
-direction, giving one-arc-minute spacing. Cells at or above \SI{1000}{\metre}
-define an operational highland footprint. Their centres are projected into a
-WGS84 east--north tangent frame at the box centre, at zero projection height.
-The leading eigenvector of their spatial covariance, weighted by
-$\cos(\mathrm{latitude})$ to approximate cell area, gives its mean elongation
-axis. Elevation above the threshold adds no further weight. This construction
-estimates the orientation of a highland area, rather than extracting a crest.
-The threshold is not fitted to the flight directions.
+take-off boxes. The construction can be pictured as making a binary map of the
+high terrain and fitting an ellipse to the selected map cells: the ellipse's
+long axis is the indicative direction of the mountain area.
+
+\paragraph{Construction.}
+The numerical recipe is:
+\begin{enumerate}[leftmargin=*,itemsep=0.25em,topsep=0.4em]
+ \item Crop the ETOPO elevation map to the same Alpine or Pyrenean box used to
+ classify flight take-offs.
+ \item Retain every fourth cell in longitude and latitude. Starting from the
+ 15-arc-second ETOPO grid gives one-arc-minute spacing and approximately one
+ sixteenth of the original number of cells.
+ \item Select the retained cells with elevation $h_i\ge\SI{1000}{\metre}$.
+ This produces a binary highland footprint: elevation above the threshold gives
+ no additional weight.
+ \item Convert the centre of every selected cell from longitude--latitude to
+ local WGS84 coordinates $\mathbf q_i=(E_i,N_i)$, in metres from the centre of
+ the regional box. Use zero projection height because only the plan-view
+ orientation is required.
+ \item Assign the area weight $w_i=\cos\varphi_i$, where $\varphi_i$ is the cell
+ latitude, to compensate approximately for the decreasing physical width of a
+ longitude--latitude cell away from the equator.
+ \item Compute the weighted centre and the $2\times2$ spatial covariance of the
+ selected cell centres.
+ \item Diagonalise that covariance. The eigenvector with the larger eigenvalue
+ is the long axis of the footprint; report its angle counterclockwise from east,
+ modulo $180^\circ$.
+\end{enumerate}
+In step 6 the quantities are
+\begin{equation}
+ \overline{\mathbf q}=
+ \frac{\sum_iw_i\mathbf q_i}{\sum_iw_i},\qquad
+ C_{\mathrm{terrain}}=
+ \frac{\sum_iw_i(\mathbf q_i-\overline{\mathbf q})
+                    (\mathbf q_i-\overline{\mathbf q})^\top}
+      {\sum_iw_i}.
+ \label{eq:terrain-footprint-covariance}
+\end{equation}
+The eigenvector of $C_{\mathrm{terrain}}$ with the larger eigenvalue is the
+long axis of the area-weighted cell cloud.
+
+\paragraph{Interpretation.}
+No flight coordinate enters this calculation, and neither the threshold nor the
+axis is fitted to the flight PCA. The method estimates the mean elongation of all
+terrain above the chosen threshold inside the box. It does not trace a crest,
+identify individual valleys or weight the terrain actually crossed by a flight.
+The box boundary, plateaux and the curvature of a mountain chain can therefore
+affect the result. Repeating the construction at 500 and \SI{1500}{\metre}
+measures sensitivity to the operational footprint definition.
 
 \begin{figure}[htbp]
   \centering

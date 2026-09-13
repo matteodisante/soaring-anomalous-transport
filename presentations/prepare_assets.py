@@ -87,6 +87,8 @@ def main() -> None:
                         help="later manuscript review; repeat in chronological order")
     parser.add_argument("--temporal-update", type=Path,
                         help="reviewed held-out signed and temporal scaling extension")
+    parser.add_argument("--post-temporal-editorial-review", type=Path, action="append",
+                        help="manuscript-only review after the temporal extension")
     args = parser.parse_args()
     if args.editorial_review and not args.wind_altitude_update:
         parser.error("--editorial-review requires the current wind-altitude lineage")
@@ -244,7 +246,27 @@ def main() -> None:
                 or review["numerical_update_sha256"] != digest(temporal_path)
                 or review["generated_outputs"] != {n: r["sha256"] for n, r in release["outputs"].items()}):
             raise ValueError("The temporal manuscript review has different inputs")
-    if args.editorial_review or temporal_update:
+    if args.post_temporal_editorial_review and not temporal_update:
+        parser.error("--post-temporal-editorial-review requires --temporal-update")
+    for editorial_path in args.post_temporal_editorial_review or []:
+        parent_review = review
+        parent_hash = digest(review_path)
+        review_path = editorial_path.resolve()
+        review = json.loads(review_path.read_text())
+        if (review["status"] != "complete"
+                or review["parent_manuscript_review_sha256"] != parent_hash
+                or any(review[key] != parent_review[key] for key in (
+                    "numerical_run_id", "numerical_update_sha256",
+                    "generated_outputs", "external_input_files"))
+                or review["source_files"].keys() != parent_review["source_files"].keys()):
+            raise ValueError("The post-temporal review must preserve its numerical parent")
+        changed = {n for n, h in review["source_files"].items()
+                   if h != parent_review["source_files"][n]}
+        if (changed != set(review["changed_manuscript_sources"])
+                or any(not n.startswith("thesis/") or Path(n).suffix not in (".tex", ".bib")
+                       for n in changed)):
+            raise ValueError("A post-temporal review may change only manuscript sources")
+    if args.editorial_review or temporal_update or args.post_temporal_editorial_review:
         for name, expected in (review["source_files"] | review["external_input_files"]).items():
             if digest(REPO / name) != expected:
                 raise ValueError(f"Reviewed editorial input changed: {name}")
