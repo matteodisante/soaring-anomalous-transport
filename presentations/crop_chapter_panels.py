@@ -1,6 +1,6 @@
 """Crop reviewed chapter figures into readable vector panels.
 
-Reads only completed Chapter 2 and regional products; preserves curves, bands and
+Reads only completed chapter products; preserves curves, bands and
 their original axis labels. Sources are the completed, reviewed manuscript inputs.
 """
 from pathlib import Path
@@ -23,6 +23,9 @@ PANELS = {
     'closed-loop-variations': ('closed_loop_schematic', (0, .427, 1, 1), None),
     'quantile-example-laws': ('quantile_scaling_schematic', (0, 0, 1, .5), None),
     'quantile-example-slopes': ('quantile_scaling_schematic', (0, .5, 1, 1), None),
+    'archive-quantile-curves': ('ch3_quantiles', (0, 0, 1, .368), None),
+    'archive-quantile-exponents': ('ch3_quantiles', (0, .375, 1, .702), None),
+    'archive-quantile-ratio': ('ch3_quantiles', (0, .708, 1, 1), None),
     'altitude-psd-panel': ('altitude_noise', (0, .495, .495, 1), None),
     'altitude-traces': ('altitude_noise', (0, 0, 1, .49), None),
     'altitude-availability': ('altitude_noise', (.50, .495, 1, 1), None),

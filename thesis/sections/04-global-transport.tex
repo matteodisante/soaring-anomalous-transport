@@ -419,6 +419,45 @@ The radial law follows by integrating the joint density over angle, including th
 Jacobian $r$. It does not require isotropy. In particular, a two-dimensional density at
 the origin would scale as $a_\tau^{-2}$, not as $a_\tau^{-1}$.
 
+\paragraph{East and north scaling.}
+Projecting Eq.~\eqref{eq:increment-scaling} onto either geographic axis gives
+the signed component laws
+\begin{equation}
+ X_E(t,\tau)\overset d=a_\tau X_E(t,\tau_0),\qquad
+ X_N(t,\tau)\overset d=a_\tau X_N(t,\tau_0).
+ \label{eq:component-increment-scaling}
+\end{equation}
+Their one-dimensional densities therefore satisfy
+\begin{equation}
+ p_E(x;\tau)=a_\tau^{-1}f_E(x/a_\tau),\qquad
+ p_N(y;\tau)=a_\tau^{-1}f_N(y/a_\tau),
+ \label{eq:component-density-scaling}
+\end{equation}
+where $f_E(u)=\int F(u,v)\,\mathrm dv$ and
+$f_N(v)=\int F(u,v)\,\mathrm du$ are marginals of the reference joint density
+in Eq.~\eqref{eq:radial-jacobian}. Neither independence nor isotropy is required:
+the same exponent $H$ does not require $f_E=f_N$.
+
+The component quantile analysis below uses the magnitudes $Y_j=|X_j|$,
+for $j\in\{E,N\}$. These obey
+\begin{equation}
+ |X_j(t,\tau)|\overset d=a_\tau|X_j(t,\tau_0)|,\qquad
+ Q_{|X_j|,p}(\tau)=a_\tau Q_{|X_j|,p}(\tau_0).
+ \label{eq:absolute-component-scaling}
+\end{equation}
+For $y>0$, their densities are
+$p_{|X_j|}(y;\tau)=p_j(y;\tau)+p_j(-y;\tau)$ and have the same
+one-dimensional factor $a_\tau^{-1}$. A log--log quantile slope is defined only
+for positive finite quantiles; this qualification matters for absolute
+components and prevents applying that fit directly to negative or zero signed
+quantiles.
+
+If scaling is assumed separately for the two marginals, one may instead write
+$X_j(t,\tau)\overset d=(\tau/\tau_0)^{H_j}X_j(t,\tau_0)$ with distinct
+$H_E$ and $H_N$. This is a weaker marginal hypothesis: even equal exponents
+would not establish the vector law without its component dependence
+(Sec.~\ref{sec:transport-vector-scaling}).
+
 Define the radial quantile at probability $p$ by
 \begin{equation}
   Q_p(\tau)=\inf\{r:\Pr[R(t,\tau)\le r]\ge p\},\qquad 0<p<1.

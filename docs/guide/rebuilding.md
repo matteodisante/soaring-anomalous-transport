@@ -269,3 +269,11 @@ example and the compiled thesis. Presentation preparation then adds
 `--editorial-review revisions/joint-laws-and-hurst-interpretation-2026-09-13/manuscript-review.json`
 to the existing parent flags. This review updates manuscript identities while
 requiring the same numerical inputs and immutable parent review.
+
+`revisions/component-scaling-and-quantile-slides-2026-09-13/` adds the explicit
+east/north scaling laws and completes the slides' quantile-fitting explanation.
+Run its `review_manuscript.py` before preparing assets, and append its
+`manuscript-review.json` as a second `--editorial-review` argument. Reviews are
+checked in chronological order; numerical identities must match at every step.
+The three Fig. 3.4 panels are vector crops. Dashed lines in fixed-population
+quantile plots evaluate the saved regression coefficients without fitting again.

@@ -255,6 +255,39 @@ related descriptions with different information requirements.
 
 \section{Quantiles and population control}
 
+\begin{frame}{Scalar vector scaling also constrains east and north}
+\small With $a_\tau=(\tau/\tau_0)^H$, the vector law
+$\mathbf X(t,\tau)\overset d=a_\tau\mathbf X(t,\tau_0)$ implies
+\[
+ X_E(t,\tau)\overset d=a_\tau X_E(t,\tau_0),\qquad
+ X_N(t,\tau)\overset d=a_\tau X_N(t,\tau_0).
+\]
+\begin{columns}[T,onlytextwidth]
+\column{.48\textwidth}
+\small\textbf{Signed marginal densities}\par
+\[
+ p_E(x;\tau)=a_\tau^{-1}f_E(x/a_\tau),
+\]
+\[
+ p_N(y;\tau)=a_\tau^{-1}f_N(y/a_\tau).
+\]
+The exponent is shared; the shapes $f_E$ and $f_N$ can differ. No independence or isotropy is assumed.
+\column{.48\textwidth}
+\small\textbf{Magnitudes used for quantile fits}\par
+For $j\in\{E,N\}$,
+\[
+ |X_j(\tau)|\overset d=a_\tau|X_j(\tau_0)|,
+\]
+\[
+ Q_{|X_j|,p}(\tau)=a_\tau Q_{|X_j|,p}(\tau_0).
+\]
+Positive finite quantiles allow log fits. Negative or zero signed quantiles do not.
+\end{columns}
+\question{Do both marginal scales agree, and does their joint dependence scale with them?}
+\source{Thesis Sec. 3.2.1. One-dimensional densities have factor $a_\tau^{-1}$; the two-dimensional joint density has $a_\tau^{-2}$.}
+\speaker{The signed east marginal is obtained by integrating the joint reference density over north, and conversely for north. Multiplication by a positive scalar commutes with each projection, absolute value and radial norm. For positive y, the absolute-component density is the sum of the signed density at y and minus y. If only separate marginal scaling is assumed, each component may instead have its own exponent $H_E$ or $H_N$. This weaker hypothesis does not determine the joint law, even if the two exponents coincide. The later east, north and radial quantile plots concern magnitudes rather than signed component quantiles; direction and dependence are retained in the subsequent signed joint maps.}
+\end{frame}
+
 \begin{frame}{A single displacement scale predicts equal quantile slopes}
 \begin{columns}[T,onlytextwidth]
 \column{.53\textwidth}
@@ -284,6 +317,71 @@ related descriptions with different information requirements.
 \end{columns}
 \source{Schematic CDF. Quantiles describe ranks within one distribution; they do not define permanent classes of slow and fast flights. Equal slopes are necessary, not sufficient, for process self-similarity.}
 \speaker{The lower quartile probes relatively small displacements, while the 90th percentile probes larger ones. Both use the same distribution at each lag. A different flight may supply an observation near each rank, and rank identities may change; that does not invalidate a quantile. The mathematical issue is whether the population and weighting used to construct the distribution change with lag. No isotropy assumption is needed for the radial scaling implication.}
+\end{frame}
+
+\begin{frame}{From displacement windows to one quantile at each lag}
+\small
+For each supported origin, measure the paired displacement
+$\mathbf X(t,\tau)=\mathbf r(t+\tau)-\mathbf r(t)$, then form
+\[
+ Y_E=|X_E|,\qquad Y_N=|X_N|,\qquad Y_R=\sqrt{X_E^2+X_N^2}.
+\]
+For each quantity $j$, sort the values at that lag and accumulate their weights:
+\[
+ \widehat F_{j,\tau}(y)=\sum_{f,k}w_{fk}(\tau)
+      \mathbf1\{Y_{j,fk}(\tau)\le y\},\qquad \sum_{f,k}w_{fk}(\tau)=1.
+\]
+Read the first observed value where cumulative weight reaches
+$p=.25,.50,.75,.90$. Repeat at every lag to obtain four curves $\widehat Q_{j,p}(\tau)$.\par\medskip
+\kw{Pooled windows:} equal weight per window.
+\kw{Fixed-population control:} equal total weight per flight, with common origins.
+\question{Which population and weights define the distribution whose quantiles we are fitting?}
+\source{Thesis Sec. 3.2. Quantiles use inverse empirical CDFs without interpolation; flight-specific quantiles are not averaged.}
+\speaker{Each lag supplies a new distribution of displacement magnitudes, not a list of permanent slow and fast flight classes. The baseline pools non-overlapping supported windows from all eligible flights at that lag. With equal window weight, the quantile is the observation of rank ceiling(p times number of windows). The fully controlled analysis gives an origin in flight f weight $1/(N n_f)$, keeping flights, origins and weights fixed across lags. Its origins overlap and are not independent. All coordinates use the same paired windows; the radial quantile must be computed from each window's radius, not from the component quantiles. No drift subtraction is applied to these quantile curves.}
+\end{frame}
+
+\begin{frame}{Each fitted $H_{j,p}$ is the slope of one log--log quantile curve}
+\small For one discipline, quantity $j$ and probability $p$, set
+\[
+ x_\ell=\log\!\frac{\tau_\ell}{1000\,\mathrm s},\qquad
+ y_\ell=\log\!\left[\widehat Q_{j,p}(\tau_\ell)/(1\,\mathrm m)\right].
+\]
+Fit a straight line with a free intercept by ordinary least squares:
+\[
+ (\widehat b_{j,p},\widehat H_{j,p})
+ =\arg\min_{b,H}\sum_{\ell\in\mathcal L}(y_\ell-b-Hx_\ell)^2,
+ \qquad \widehat Q^{\rm fit}_{j,p}(\tau)
+ =(1\,\mathrm m)e^{\widehat b_{j,p}}\left(\frac{\tau}{1000\,\mathrm s}\right)^{\widehat H_{j,p}}.
+\]
+\begin{itemize}
+\item Full interval: 31 saved lags from 10 to 10,000 s, equal weight per lag.
+\item Repeat for three quantities and four ranks: \kw{12 slopes per discipline}.
+\item A fitted slope summarises the curve; curvature can remain around the line.
+\end{itemize}
+\question{Does one straight line describe these lags, and does its slope depend on rank or direction?}
+\source{Thesis Secs. 3.2--3.3. Only positive supported quantiles enter log fits. The time reference changes the intercept, not the slope.}
+\speaker{These are regressions of log quantile against log lag, not quantile regression of individual displacements, not fits to histogram density, and not slopes read off an exponent-versus-percentile plot. Natural and base-ten logarithms give the same exponent when used on both axes. The displayed 1000-s reference matches the fixed-population producer; the pooled producer uses seconds directly, which changes only the intercept. All 31 lags are positive and supported in the saved full-range results. When comparing the four sampling controls, the code uses their common positive lag set. The separate fixed-population fits are repeated on 60--1970 s and 210--1970 s for sensitivity. No inverse-variance weighting is used. These descriptive H values are not independently validated process Hurst exponents.}
+\end{frame}
+
+\begin{frame}{Archive quantile curves are the input to the fits}
+\centering\fig[48mm]{archive-quantile-curves.pdf}
+\question{Are the four log--log curves approximately parallel, and where do they bend?}
+\source{Thesis Fig. 3.4, top row. Radial quantiles; all eligible windows pooled at each lag. Purple to green: 25th, 50th, 75th, 90th percentiles.}
+\speaker{This is a vector crop of the thesis figure, with its original curves, axes and legends. Each coloured curve contains one empirical radial quantile at every lag. Its log--log regression yields one radial H value in the next slide. The east and north curves are fitted by the same procedure, using absolute component magnitudes. The eligible population and number of windows can change with lag; this baseline precedes the fixed-population controls. These are empirical curves, not fitted lines.}
+\end{frame}
+
+\begin{frame}{Each point here summarises a separate quantile fit}
+\centering\fig[48mm]{archive-quantile-exponents.pdf}
+\question{Can the rank and directional differences be explained by changing flights or window weights?}
+\source{Thesis Fig. 3.4, middle row. Left: paragliders; right: hang gliders. Fits span 10--10,000 s; the horizontal axis is percentile, not lag.}
+\speaker{For example, the radial point at percentile 50 is the slope of the median curve in the preceding slide. Repeat the regression separately for all four ranks and all three quantities to obtain this panel. Lines joining the points guide the eye; they are not another regression. These pooled-archive slopes have no calibrated confidence intervals. They differ from the later fixed-flight estimates because the empirical distributions use different flights, origins and weights. Rank ordering is therefore not yet evidence for an intrinsic transport mechanism.}
+\end{frame}
+
+\begin{frame}{The archive quantile ratio also reveals changes with lag}
+\centering\fig[48mm]{archive-quantile-ratio.pdf}
+\question{Would this change in relative spread survive if the contributing population stayed fixed?}
+\source{Thesis Fig. 3.4, bottom row. $Q_{.90}/Q_{.25}$ uses the same pooled radial curves as the first row. Left: paragliders; right: hang gliders.}
+\speaker{A common multiplicative displacement scale would cancel in this ratio and leave a constant. The measured ratio rises, falls and rises again, so a single fitted exponent difference compresses a curved evolution. This is the changing-pool baseline; the fixed-population ratio appears after the sampling controls and must not be substituted for it without explanation. Both distribution shape and population composition can contribute here.}
 \end{frame}
 
 \begin{frame}{The full archive and the fixed cohort answer different questions}
@@ -410,18 +508,21 @@ Cross-covariance & $+2$ & $-2$\\\bottomrule
 \begin{frame}{Fixed-population quantiles: east component}
 \centering\fig[54mm]{supervisor-quantiles-east.pdf}
 \question{Do the ranks retain one relative shape as the lag increases?}
+\source{Solid: weighted empirical quantiles. Dashed: separate saved log--log fits over 10--10,000 s. Each dashed slope is one $H_{E,p}$.}
 \speaker{Both disciplines use the same four ranks and their own complete fixed cohort. East and north use absolute signed-component magnitudes; radius is endpoint separation, not flown path length. Flights, origins and weights remain fixed across lags.}
 \end{frame}
 
 \begin{frame}{Fixed-population quantiles: north component}
 \centering\fig[54mm]{supervisor-quantiles-north.pdf}
 \question{Do the ranks retain one relative shape as the lag increases?}
+\source{Solid: weighted empirical quantiles. Dashed: separate saved log--log fits over 10--10,000 s. Each dashed slope is one $H_{N,p}$.}
 \speaker{Both disciplines use the same four ranks and their own complete fixed cohort. East and north use absolute signed-component magnitudes; radius is endpoint separation, not flown path length. Flights, origins and weights remain fixed across lags.}
 \end{frame}
 
 \begin{frame}{Fixed-population quantiles: radial displacement}
 \centering\fig[54mm]{supervisor-quantiles-radial.pdf}
 \question{Do the ranks retain one relative shape as the lag increases?}
+\source{Solid: weighted empirical quantiles. Dashed: separate saved log--log fits over 10--10,000 s. Each dashed slope is one $H_{R,p}$.}
 \speaker{Both disciplines use the same four ranks and their own complete fixed cohort. East and north use absolute signed-component magnitudes; radius is endpoint separation, not flown path length. Flights, origins and weights remain fixed across lags.}
 \end{frame}
 
@@ -429,6 +530,9 @@ Cross-covariance & $+2$ & $-2$\\\bottomrule
 \small
 Resample flights with replacement 400 times. Each selected flight retains all its
 common origins and its joint east--north observations at every lag.
+\par\medskip Recompute the weighted CDFs, extract all quantiles and repeat the same
+log--log fits in every draw. The 2.5th and 97.5th percentiles of the fitted slopes
+give the displayed 95\% intervals; contrasts are computed within each draw.
 \par\medskip Overlapping origins remain within the resampled flight; they are not treated as independent replicates.
 \question{How would shared pilot history or site--day weather change these uncertainty estimates?}
 \speaker{The current intervals assume independent flights within the fixed long-flight population. They are not iid increment intervals, simultaneous bands over all comparisons, or measurement-error intervals. Paired differences are computed inside each replicate. A large complete archive does not remove the assumptions behind the resampling model.}
@@ -456,6 +560,26 @@ common origins and its joint east--north observations at every lag.
 \centering\fig[54mm]{supervisor-contrasts-hang.pdf}
 \question{Which differences persist under a change of fitting interval?}
 \speaker{The full-range north-minus-east contrast is positive with a 95-percent paired interval above zero at every one of the four ranks, in both disciplines. The rank contrast is H90 minus H25 for east, north and radius over each saved fit range. The directional contrast is north minus east at each rank over the full range. Both retain pairing inside the flight bootstrap. The zero line marks the stated equality hypothesis, without a multiple-comparison calibration.}
+\end{frame}
+
+\begin{frame}{The collapse exponent shares one slope across four quantile ranks}
+\small The separate $H_{j,p}$ describe each curve. For the marginal collapse,
+fit one $H_{j,*}$ per quantity, with a separate intercept for each rank:
+\[
+ \min_{H,\{b_p\}}\sum_p\sum_{\ell\in\mathcal L}
+ \left[\log\!\frac{Q_{j,p}(\tau_\ell)}{1\,\mathrm m}
+       -b_p-H\log\!\frac{\tau_\ell}{1000\,\mathrm s}\right]^2.
+\]
+Equal rank and lag weights on the same grid give
+$H_{j,*}=\tfrac14\sum_pH_{j,p}$. With $a_j(\tau)=[\tau/(1000\,\mathrm s)]^{H_{j,*}}$,
+\[
+ u=Y_j/a_j(\tau),\qquad p_u(u;\tau)=a_j(\tau)\,p_{Y_j}(a_j(\tau)u;\tau).
+\]
+The horizontal scale and vertical density change together to preserve probability.
+The exponent is fixed before comparing the rescaled laws.
+\question{Do the laws collapse under this candidate power, or do their shapes still change?}
+\source{Thesis Sec. 3.3.2. Separate $H_{j,p}$, shared marginal $H_{j,*}$ and the later joint-vector $H_*$ serve different comparisons.}
+\speaker{Averaging the four slopes is equivalent to the stated common-slope least-squares fit only because all ranks use the same lag grid with equal rank and lag weights and have separate intercepts. Sharing a fitted slope does not establish that the separate slopes are equal. The full-range common exponent is used for the power-rescaled marginal panels; narrower fitting windows provide sensitivity checks with the same observations. Dividing by each lag's own median is a further comparison that removes an arbitrary scale change, not only a power law. For the later signed two-dimensional maps, one scalar exponent averages all twelve separate slopes across quantities and ranks; it is not a lag-specific whitening or rotation.}
 \end{frame}
 
 \begin{frame}{A common fitted scale depends on the fitted interval}

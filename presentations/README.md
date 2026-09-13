@@ -22,7 +22,7 @@ precedenti della pipeline non fanno parte delle slide.
 | Documento | Slide | Versione con note |
 |---|---:|---|
 | [Capitolo 2](chapter2.pdf) | 58 | [PDF con note](chapter2-notes.pdf) |
-| [Capitolo 3](chapter3.pdf) | 103 | [PDF con note](chapter3-notes.pdf) |
+| [Capitolo 3](chapter3.pdf) | 110 | [PDF con note](chapter3-notes.pdf) |
 
 L'[indice](outline.md) riporta l'ordine e le pagine. I PDF con note affiancano
 alla slide le spiegazioni su stimatore, popolazione, limiti e interpretazione.
@@ -47,6 +47,15 @@ $D_2$, il limite del controllo a voli fissi e l'esempio analitico con persistenz
 finita. Le domande propongono controlli con origini comuni, fasi di volo e
 sensibilità al campionamento. L'esempio non è un modello adattato ai voli e
 nessuna causa fisica viene dichiarata identificata.
+
+Le slide 15--21 esplicitano le leggi di scaling per est e nord, poi seguono
+la procedura dagli spostamenti alla CDF pesata, ai quantili e al fit log--log.
+La figura 3.4 è riportata integralmente in tre ritagli vettoriali: curve radiali,
+esponenti per quantità e percentile, rapporto fra quantili. I grafici a
+popolazione fissa includono le rette costruite dai coefficienti già salvati.
+La slide 39 distingue i dodici esponenti separati dall'esponente comune usato
+per il rescaling. Anche il bootstrap mostra esplicitamente il ricalcolo delle
+CDF, dei quantili e dei fit in ogni replica.
 
 L'ipotesi che equipaggiamento e scelte dei piloti moderino i vincoli di vento e
 orografia viene presentata insieme alle sue criticità: rapporto tra momenti
@@ -74,7 +83,7 @@ python3 presentations/build.py all --notes
 Per rigenerare gli asset dal manoscritto revisionato nella stessa checkout:
 
 ```bash
-uv run --no-project --with pypdf python presentations/prepare_assets.py --pca-update revisions/regional-pca-lags-2026-09-12 --variation-update revisions/regional-variations-2026-09-12 --tamsd-update revisions/grouped-tamsd-2026-09-12 --environment-update revisions/environment-axis-integration-2026-09-12 --wind-altitude-update revisions/channel-wind-flight-altitude-2026-09-13 --editorial-review revisions/joint-laws-and-hurst-interpretation-2026-09-13/manuscript-review.json
+uv run --no-project --with pypdf python presentations/prepare_assets.py --pca-update revisions/regional-pca-lags-2026-09-12 --variation-update revisions/regional-variations-2026-09-12 --tamsd-update revisions/grouped-tamsd-2026-09-12 --environment-update revisions/environment-axis-integration-2026-09-12 --wind-altitude-update revisions/channel-wind-flight-altitude-2026-09-13 --editorial-review revisions/joint-laws-and-hurst-interpretation-2026-09-13/manuscript-review.json --editorial-review revisions/component-scaling-and-quantile-slides-2026-09-13/manuscript-review.json
 uv run --no-project --with pypdf python presentations/crop_chapter_panels.py
 .venv/bin/python presentations/render_figures.py
 .venv/bin/python presentations/render_chapter3_panels.py

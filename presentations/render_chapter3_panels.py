@@ -138,8 +138,12 @@ def render(data, out):
         fig, axs = axes()
         for ax, (name, result) in zip(axs, results.items(), strict=True):
             q = np.asarray(result['quantiles_m'])
+            fit = result['fits']['full']
+            fit_lags = np.asarray(fit['lags_s'])
             for j, (rank, color) in enumerate(zip(RANKS, RANK_COLORS, strict=True)):
                 ax.loglog(result['lags_s'], q[:, k, j], color=color, label=f'p={rank:g}')
+                fitted = np.exp(fit['intercept_at_1000s'][k][j]) * (fit_lags / 1000.) ** fit['h'][k][j]
+                ax.loglog(fit_lags, fitted, '--', color=color, linewidth=1.1)
             ax.set(title=f"{NAMES[name]}; N={result['n_flights']:,}",
                    xlabel=r'Lag $\tau$ [s]', ylabel=f'{VARIABLES[k]} quantile [m]')
             ax.legend(ncol=2, loc='upper left', frameon=False)
@@ -242,6 +246,7 @@ def render(data, out):
         'inputs': {p.name: digest(p) for p in paths},
         'script_sha256': digest(Path(__file__)), 'outputs': outputs,
         'notes': [
+            'Fixed-population quantile panels pair empirical curves with dashed lines evaluated from the saved full-range slopes and intercepts; no refitting.',
             'Joint plots keep all six lags, original bins, overflow accounting and shared discipline colour scale.',
             'Median-normalized displays use recorded 1st--99th quantile ranks, not an interpolated claim about the tails.',
             'Logarithmic marginal panels show positive values; any point mass at zero is reported separately. Median panels show all positive recorded dense quantiles instead of fixing x limits at 0.01--10.',
