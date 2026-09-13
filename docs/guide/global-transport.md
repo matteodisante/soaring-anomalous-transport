@@ -20,6 +20,7 @@ weighting and lag-support conventions:
 | `ch3_fixed_quantiles.pdf`, `ch3_fixed_exponents.pdf` | all eligible long flights in that archive | fixed common origins, equal flight weights and paired whole-flight intervals |
 | `ch3_absolute_laws_*.pdf`, `ch3_squared_laws_*.pdf` | same fixed long-flight cohort | distributions before and after rescaling; squared-law counterparts |
 | `ch3_joint_para.pdf`, `ch3_joint_hang.pdf` | same fixed long-flight cohort | signed East–North distributions on shared bins after one scalar rescaling |
+| `ch3_temporal_scaling_*.pdf`, `_population.tex`, `_bounds.tex` | `generate_temporal_scaling.py` | signed and two-interval projected laws, training/validation date split, common origins and simultaneous date-bootstrap bounds |
 | `ch3_models.pdf` | same full eligible archive | pooled moment spectrum and centred Mardia excess |
 | `ch3_velocity_memory.pdf` | same full eligible archive | positive coarse VACF on log–log axes, with signed companion panels |
 | `ch3_pca.pdf` | same full eligible archive | centred regional displacement covariance, eigenvalue ratio and axis at exactly 10, 100, 1000 and 10,000 s |
@@ -35,6 +36,24 @@ The complete rebuild regenerates these products from the current verified cleani
 snapshot. Its manifest records source and table identities. Earlier generated products
 must not be treated as current merely because their filenames match. See the
 [rebuild guide](rebuilding.md).
+
+The signed/temporal extension tests fixed grids of 10–10000, 100–1600 and
+1000–8000 s. Two consecutive increments require uninterrupted support through
+twice the largest lag. Every eligible flight with a valid catalogue date enters
+training or validation; no flight cap is used. Twelve training quantile slopes
+are averaged into one H, then 16 fixed signed projections are evaluated on
+held-out dates without per-lag normalisation. All lag pairs share origins and
+flight weights. The 999-replicate date bootstrap is simultaneous within a grid
+and discipline, conditional on training. Dependence between dates can remain;
+finite projected CDFs do not determine the complete 4D law.
+
+Between 100 and 1600 s, paraglider spatial and temporal upper discrepancy bounds
+are 0.0313 and 0.0829; hang-glider bounds are 0.0640 and 0.1043. This supports
+approximate scaling at the stated resolution, strongest for paragliders. Exact
+process self-similarity, stationary increments and an intrinsic Hurst exponent
+remain unestablished. Full/long-grid temporal lower bounds exceed 0.20. The
+protocol, populations, input identities and reproduction commands are recorded in
+`revisions/temporal-self-similarity-2026-09-13/README.md`.
 
 Independent environmental references are published by
 `generate_terrain_axis_comparison.py` and `generate_channel_wind_comparison.py`.

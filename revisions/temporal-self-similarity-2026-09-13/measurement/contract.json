@@ -1,0 +1,71 @@
+{
+  "sources": {
+    "scripts/reporting/ch3_global_transport/measure_temporal_scaling.py": "7561020ad552459985767218764d5558d3d06128f1d26390b612a7b13cbe65d0",
+    "src/soaring/analysis/observables/temporal_scaling.py": "63f0fa0c64b66a546f31901000badc5f5b23a9b14f9571664f8e4394de44cd0b",
+    "src/soaring/analysis/observables/segment_support.py": "eb8885df6c17233bb032a55fcdb85355e54a9a76759683ae6c0c32b82cac11a8",
+    "src/soaring/analysis/observables/archive_diagnostics.py": "a3bb7656e3ffe9313ff4699e0aa883c6df521aff447d0b00ae2e5cc6a220f0bd",
+    "revisions/temporal-self-similarity-2026-09-13/protocol.json": "b6db3f093ffd19ecfc6399db1dc885ce85177943165434d95edd18610edc97bd"
+  },
+  "coordinate_manifest_sha256": "ab0628828ab209c2d3e050ef01b0d145e86641b15d61755a0e6d0383bcc27355",
+  "protocol": {
+    "version": 1,
+    "purpose": "Estimate approximate finite-dimensional scaling, without treating non-rejection as proof of self-similarity.",
+    "regimes": {
+      "full": [
+        10,
+        100,
+        1000,
+        10000
+      ],
+      "intermediate": [
+        100,
+        200,
+        400,
+        800,
+        1600
+      ],
+      "long": [
+        1000,
+        2000,
+        4000,
+        8000
+      ]
+    },
+    "grid_s": 10,
+    "origin_stride_steps": 1,
+    "support": "Within each regime, every origin with two times the largest lag of uninterrupted segment support; identical flights and origins at every lag.",
+    "weighting": "Uniform within each flight across its eligible origins, then equal flight weights.",
+    "training_split": "SHA256 of temporal-scaling-v1:YYYY-MM-DD has even first byte. Entire calendar dates share a role across both disciplines. Invalid dates are excluded and counted.",
+    "fit": "Training-only inverse-CDF quantiles of absolute E, absolute N, and radius at probabilities 0.25, 0.5, 0.75, 0.9. Common H is the unweighted mean of the 12 log-log slopes. Histograms have 8192 logarithmic bins from 1e-6 to 1e7 metres, plus zero and overflow bins; report resolution and reject quantiles outside finite bins.",
+    "normalization": "One common H and one scalar length: the training radial median at the smallest lag. No lag-specific centering, whitening, rotation, or marginal normalization.",
+    "observable": "Z(t,tau) = (E(t+tau)-E(t), N(t+tau)-N(t), E(t+2tau)-E(t+tau), N(t+2tau)-N(t+tau)).",
+    "projections": "Four coordinate axes and all twelve normalized pairwise sums and differences in R4, fixed before measurement.",
+    "cdf_thresholds": [
+      -8,
+      -4,
+      -2,
+      -1,
+      -0.5,
+      -0.25,
+      -0.1,
+      0,
+      0.1,
+      0.25,
+      0.5,
+      1,
+      2,
+      4,
+      8
+    ],
+    "error": "Maximum absolute probability difference over every pair of lags, the fixed thresholds and indicated projections, measured on held-out dates.",
+    "uncertainty": "999 paired calendar-date bootstrap replicates. Simultaneous 95% band on all signed lag-pair differences within a discipline and regime, conditional on training fit. Date clusters assumed independent; pilot dependence across dates may remain.",
+    "tolerances": [
+      0.05,
+      0.1,
+      0.2
+    ],
+    "interpretation": "An upper bound below a tolerance supports approximate agreement at this diagnostic resolution only; these finite projections and two consecutive intervals cannot establish full process self-similarity or stationarity.",
+    "seed": 20260913,
+    "bootstrap_resamples": 999
+  }
+}
