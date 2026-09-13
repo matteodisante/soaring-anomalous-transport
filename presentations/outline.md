@@ -1,6 +1,9 @@
 # Chapter decks and discussion map
 
-The decks follow the reviewed manuscript and have no prescribed duration. Page numbers include the title page. Discussion questions appear only in the speaker notes.
+The decks follow the reviewed manuscript and have no prescribed duration. The
+numbers below are the visible numbers of content slides and include the title
+page. Unnumbered divider pages identify the corresponding thesis section or
+subsection explicitly. Discussion questions appear only in the speaker notes.
 
 ## Chapter 2
 

@@ -16,6 +16,7 @@
 {This deck covers the whole chapter. It has no prescribed talk duration. The methodological choices, current results and unresolved validation questions are intended to be discussed together.}
 \section{Archive, records and population}
 
+\subsectionframe{2.1.1}{Source: the FFVL Coupe F\'ed\'erale de Distance}
 \begin{frame}{The archive contains recorded cross-country flights}
 \begin{columns}[T,onlytextwidth]
 \column{.58\textwidth}
@@ -39,6 +40,7 @@ Neither the catalogue nor the retained sample is an unbiased population of all s
 \speaker{The attempted and retained counts are imported from the current completed pipeline census. Catalogue entries, downloaded tracks and retained flights have different denominators. Participation, declarations, devices and the cross-country restrictions jointly select the observed population.}
 \end{frame}
 
+\subsectionframe{2.1.3}{Acquisition and verification}
 \begin{frame}{Acquisition preserves the declarations and their recorded tracks}
 \begin{columns}[T,onlytextwidth]
 \column{.48\textwidth}
@@ -57,6 +59,7 @@ A readable file can still contain physically implausible measurements.
 \speaker{The XML exports and IGC files supply the source evidence; the catalogue can be rebuilt. Acquisition checks file content, while subsequent cleaning assesses time, geometry and channel support. The analysis uses FFVL data only. Other platforms would change geographical and aircraft coverage but are not part of the current numerical population.}
 \end{frame}
 
+\subsectionframe{2.2}{The IGC tracklog format}
 \begin{frame}{An IGC fix contains two altitude fields and a validity declaration}
 \small
 \begin{tabular}{@{}lp{10.8cm}@{}}\toprule
@@ -73,6 +76,7 @@ record structure; cleaning supplies the physical and temporal checks.
 \speaker{Explain the separation between syntax and observation quality. The B-record A/V declaration describes the GNSS solution, not the quality of every measured channel. A pressure value alone does not establish a usable barometer. Cadence is recorder-dependent and can vary within the original file.}
 \end{frame}
 
+\subsectionframe{2.4}{Glider categories}
 \begin{frame}{Equipment classes and scoring labels describe different things}
 \begin{columns}[T,onlytextwidth]
 \column{.48\textwidth}\textbf{Equipment}\par\medskip
@@ -91,6 +95,7 @@ Actual pilot skill is not measured by that split.
 
 \section{Processing contract and altitude evidence}
 
+\subsectionframe{2.7}{Trajectory pre-processing}
 \begin{frame}{The processing order determines what each cut acts on}
 \centering
 \begin{tikzpicture}[node distance=5mm,>=Stealth,
@@ -113,6 +118,7 @@ altitude range $\ge600$ m, elapsed span $\le16$ h, plus integrity and reach chec
 \speaker{Cleaning precedes smoothing. Trimming precedes the cross-country selection, so parked time is not counted as flown duration. Duration and path sum within contiguous blocks; elapsed span includes gaps. Fix-level rules can remove positions, invalidate only altitude or impose boundaries. Sampling later decides which remaining holes may be bridged. The 600 m altitude-range rule is a population restriction; it is not proof that an excluded flight was not soaring.}
 \end{frame}
 
+\subsectionframe{2.7.1}{Choice of altitude channel}
 \begin{frame}{GNSS supplies altitude; pressure has a separate witness role}
 \begin{columns}[T,onlytextwidth]
 \column{.48\textwidth}
@@ -201,6 +207,7 @@ datum corrections and changing sensor biases do not cancel like a constant offse
 
 \section{Fix-level decisions}
 
+\subsectionframe{2.7.2}{Fix-level cleaning}
 \begin{frame}{Timestamp and coordinate bookkeeping precede geometric decisions}
 \small
 Duplicate timestamps are consolidated; backward clock steps, impossible coordinates
@@ -362,6 +369,7 @@ A targeted check found candidate times inside usable phase-feature windows in al
 
 \section{Trimming and flight selection}
 
+\subsectionframe{2.7.3}{Trimming of ground phases}
 \begin{frame}{Outer trimming uses a sustained horizontal-speed criterion}
 \[
  v_{xy}>\SI{\PreprocTakeoffSpeedMps}{\metre\per\second}
@@ -401,6 +409,7 @@ the detector abstains.
 \speaker{There are 231 affected paraglider and three hang-glider records among those reaching the trimming census. The count is not an independently labelled false-positive rate. Every excision creates a boundary.}
 \end{frame}
 
+\subsectionframe{2.7.4}{Flight-level filtering}
 \begin{frame}{Flight-level gates define the study population}
 \small
 \begin{center}
@@ -419,6 +428,7 @@ Further integrity and reach checks apply. Segment acceptance follows separately.
 
 \section{Coordinates and supported segments}
 
+\subsectionframe{2.7.5}{From geographic to local Cartesian coordinates}
 \begin{frame}{Convert geographic coordinates before measuring horizontal motion}
 \[
  (\varphi,\lambda,h)\longrightarrow
@@ -467,6 +477,7 @@ the later gap rule still controls which complete trajectory segments survive.
 \speaker{Keeping this distinction avoids interpreting Earth-curvature sagitta as a physical descent. A constant vertical bias cancels from vertical differences; spatial or temporal changes do not. The implementation preserves missing-altitude support for subsequent resampling decisions even when a height proxy was needed to calculate horizontal coordinates.}
 \end{frame}
 
+\subsectionframe{2.7.6}{Uniform sampling within a flight}
 \begin{frame}{Recorder cadence varies across the raw archive}
 \centering\fig[59mm]{sampling_intervals.pdf}
 \question{Which native cadences resolve the shortest scales used later?}
@@ -549,6 +560,7 @@ nearest-fix flags is not a direct measurement of finite-source altitude spacing.
 
 \section{Smoothing and differentiation}
 
+\subsectionframe{2.7.7}{Smoothing and differentiation}
 \begin{frame}{One local polynomial estimates position and derivatives}
 \begin{columns}[c,onlytextwidth]
 \column{.59\textwidth}\centering\fig[48mm]{sg-fit.pdf}
@@ -619,11 +631,13 @@ smoother trajectory does not establish that its short-lag MSD is unchanged.
 
 \section{Retained archive and checks}
 
+\subsectionframe{2.8}{Pipeline summary}
 \begin{frame}[label=census-backup]{The complete first-failure census}
 \centering\footnotesize\renewcommand{\arraystretch}{1.05}\PipeCensusTable
 \source{Current clean archive, pipeline version 2.3.0. All numerical entries are imported from the frozen generated table.}
 \end{frame}
 
+\subsectionframe{2.9}{Preliminary characterization}
 \begin{frame}{Elapsed record span and observed path use different gap conventions}
 \centering\fig[59mm]{retained-duration-path.pdf}
 \takeaway{Duration spans the first to last retained fix, including gaps; path sums only within segments.}
@@ -687,6 +701,7 @@ bands. They do not measure slope, relief or exposure along a route.
 \speaker{The first raw fix can precede take-off, occur after the flight has started, or contain sensor settling. Pressure fallback does not enter the cleaned vertical trajectory. A low starting altitude does not rule out ridge or cliff soaring, and a high plateau can have low local relief.}
 \end{frame}
 
+\subsectionframe{2.6}{Data quality and caveats}
 \begin{frame}{Completed checks and outstanding empirical validation}
 \question{What has been checked, and what still needs empirical validation?}
 \begin{columns}[T,onlytextwidth]
@@ -742,6 +757,7 @@ Compare the raw and current processed trajectory, then zoom into the suspect int
 \speaker{The vertical gap cap has been implemented. The remaining question is its scientific sensitivity, alongside altitude-step candidates, cadence and smoothing. Compare common populations where possible and report changes in admission separately. Agree which independently labelled or injected defects would most improve confidence in the phase features.}
 \end{frame}
 
+\subsectionframe{2.10}{Trajectories for the transport analysis}
 \begin{frame}{Transport plots must retain explicit support and populations}
 \small
 \begin{itemize}

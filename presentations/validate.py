@@ -89,7 +89,12 @@ def main() -> None:
                            r"historical comparison|older slides|formerly reconstructed", re.I)
     for chapter in (2, 3):
         tex = (ROOT / f"chapter{chapter}.tex").read_text()
-        count = len(re.findall(r"\\begin\{frame\}", tex)) + len(re.findall(r"\\titleframe\{", tex))
+        numbered_count = (
+            len(re.findall(r"\\begin\{frame\}", tex))
+            + len(re.findall(r"\\titleframe\{", tex))
+        )
+        divider_count = len(re.findall(r"\\subsectionframe\{", tex))
+        count = numbered_count + divider_count
         if forbidden.search(tex):
             raise ValueError("The chapter includes superseded implementation narrative")
         referenced = set(re.findall(r"\\fig(?:\[[^\]]+\])?\{([^}]+)\}", tex))
@@ -113,7 +118,10 @@ def main() -> None:
             log = (ROOT / "build" / stem / (stem + ".log")).read_text()
             if re.search(r"Overfull|Undefined control sequence|Fatal error|LaTeX Warning:", log):
                 raise ValueError(f"Unresolved LaTeX problem: {stem}")
-            documents[path.name] = {"pages": count, "sha256": digest(path),
+            documents[path.name] = {"pages": count,
+                                    "numbered_slides": numbered_count,
+                                    "subsection_dividers": divider_count,
+                                    "sha256": digest(path),
                                     "bytes": path.stat().st_size,
                                     "speaker_notes": bool(suffix)}
     result = {"verified_utc": datetime.now(UTC).isoformat(),

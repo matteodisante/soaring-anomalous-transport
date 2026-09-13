@@ -22,12 +22,14 @@ Le domande scientifiche compaiono solo nelle note della versione con note;
 i confronti tra versioni
 precedenti della pipeline non fanno parte delle slide.
 
-| Documento | Slide | Versione con note |
-|---|---:|---|
-| [Capitolo 2](chapter2.pdf) | 58 | [PDF con note](chapter2-notes.pdf) |
-| [Capitolo 3](chapter3.pdf) | 119 | [PDF con note](chapter3-notes.pdf) |
+| Documento | Slide numerate | Pagine PDF incl. divisori | Versione con note |
+|---|---:|---:|---|
+| [Capitolo 2](chapter2.pdf) | 58 | 74 | [PDF con note](chapter2-notes.pdf) |
+| [Capitolo 3](chapter3.pdf) | 119 | 146 | [PDF con note](chapter3-notes.pdf) |
 
-L'[indice](outline.md) riporta l'ordine e le pagine. I PDF con note affiancano
+Ogni blocco è preceduto da un divisore che riporta il numero esatto della sezione
+o sottosezione nella tesi. L'[indice](outline.md) riporta l'ordine e il numero
+delle slide di contenuto; i divisori non sono numerati. I PDF con note affiancano
 alla slide le domande di discussione e le spiegazioni su stimatore, popolazione,
 limiti e interpretazione. Le slide proiettate non contengono domande; i riquadri
 con risultati e precisazioni scientifiche restano visibili.

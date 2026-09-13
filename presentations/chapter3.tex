@@ -18,6 +18,7 @@
 {This deck develops the whole chapter without a prescribed duration. Its central distinction is between measured constraints on the observed ground trajectories and hypotheses about their generating process.}
 \section{Displacement, support and growth}
 
+\subsectionframe{3.1}{Displacement and time scales}
 \begin{frame}{The motion a stochastic model must reproduce}
 \question{What motion should a stochastic model reproduce?}
 \begin{columns}[T,onlytextwidth]
@@ -64,12 +65,14 @@ difference alone is not an ergodicity test.
 \speaker{These are the upper two panels of the complete archive MSD figure. Blue denotes paragliders and terracotta hang gliders. The quantities use different clocks and weighting; their comparison is not an ergodicity test.}
 \end{frame}
 
+\subsectionframe{3.1.1}{Effective and local growth exponents}
 \begin{frame}{Local slopes must be read together with falling support}
 \centering\fig[54mm]{msd-support.pdf}
 \question{Which scale interval supports a stable finite-range description?}
 \speaker{The lower panels of the archive MSD figure show local slopes and contributing flights or segments. A small bootstrap error does not remove scale dependence or population selection.}
 \end{frame}
 
+\subsectionframe{3.1.2}{Removing a constant velocity}
 \begin{frame}{The MSD grows faster than linearly on the measured interval}
 \begin{columns}[c,onlytextwidth]
 \column{.67\textwidth}
@@ -180,6 +183,7 @@ are a plausible origin of the measured curvature.
 \speaker{For the same stationary-increment population, V2(tau)=4M2(tau)-M2(2tau). A 2H interpretation requires one increment power law at both tau and 2tau, not merely stationarity. Exponential velocity covariance introduces a persistence time and gives a cubic-to-linear crossover; a differentiable curved path can instead give a quartic small-lag limit. Neither limit is claimed to describe all measured lags. The observed D2 curves are nonmonotone and need not follow one exponential model. Anisotropy alone does not invalidate the vector variance identity. We have a plausible explanation in terms of finite physical scales and sampling, not an identified wind effect or demonstrated nonstationarity. When conditioning on phases, retain an explicit category for windows crossing transitions.}
 \end{frame}
 
+\subsectionframe{3.1.2}{Third differences and the distribution of changes}
 \begin{frame}{Third differences also cancel a constant acceleration}
 \[
  A_3\mathbf r=\mathbf r(t+3\tau)-3\mathbf r(t+2\tau)
@@ -199,6 +203,7 @@ Under the centred stationary-increment power law,
 \speaker{V3 is a sensitivity check to quadratic position trends. A smooth turn survives: typically V2 scales as tau to the fourth and V3 as tau to the sixth at small lag. Under the stated model both orders have exponent 2H but different amplitudes; Brownian motion plus constant velocity gives V3/V2=3. Independent position error with variance sigma squared per coordinate contributes 6 sigma squared at order two and 20 at order three. Correlated errors and smoothing require a different noise calculation. Agreement between orders does not prove that environmental forcing has been removed.}
 \end{frame}
 
+\subsectionframe{3.1.3}{Open and closed routes}
 \begin{frame}{Open and closed tasks change the growth of displacements}
 \begin{columns}[c,onlytextwidth]
 \column{.42\textwidth}
@@ -256,6 +261,7 @@ related descriptions with different information requirements.
 
 \section{Quantiles and population control}
 
+\subsectionframe{3.2.1}{The scaling prediction}
 \begin{frame}{Scalar vector scaling also constrains east and north}
 \small With $a_\tau=(\tau/\tau_0)^H$, the vector law
 $\mathbf X(t,\tau)\overset d=a_\tau\mathbf X(t,\tau_0)$ implies
@@ -385,6 +391,7 @@ Fit a straight line with a free intercept by ordinary least squares:
 \speaker{A common multiplicative displacement scale would cancel in this ratio and leave a constant. The measured ratio rises, falls and rises again, so a single fitted exponent difference compresses a curved evolution. This is the changing-pool baseline; the fixed-population ratio appears after the sampling controls and must not be substituted for it without explanation. Both distribution shape and population composition can contribute here.}
 \end{frame}
 
+\subsectionframe{3.2.2}{A fixed population across lags}
 \begin{frame}{The full archive and the fixed cohort answer different questions}
 \small
 \begin{center}
@@ -436,6 +443,7 @@ they support the same full lag stencil.
 \speaker{The four controls use the same ranks and fitting interval. The fixed cohort includes every qualifying long flight. Curves here are descriptive point estimates; the final fixed-control uncertainty uses the whole-flight paired bootstrap.}
 \end{frame}
 
+\subsectionframe{3.2.3}{Relative spread}
 \begin{frame}{Relative spread changes, but the change is not monotone}
 \begin{columns}[c,onlytextwidth]
 \column{.65\textwidth}\fig[48mm]{talk-quantile-ratio.pdf}
@@ -469,6 +477,7 @@ A negative fitted slope summarizes part of that evolution; it does not imply nar
 
 \section{Vector scaling and dependence}
 
+\subsectionframe{3.3.1}{Testing east, north and radial scaling}
 \begin{frame}{Anisotropy does not prevent a common scalar rescaling}
 \[
  \mathbf X(\tau)\overset d=\tau^H\mathbf Z
@@ -563,6 +572,7 @@ give the displayed 95\% intervals; contrasts are computed within each draw.
 \speaker{The full-range north-minus-east contrast is positive with a 95-percent paired interval above zero at every one of the four ranks, in both disciplines. The rank contrast is H90 minus H25 for east, north and radius over each saved fit range. The directional contrast is north minus east at each rank over the full range. Both retain pairing inside the flight bootstrap. The zero line marks the stated equality hypothesis, without a multiple-comparison calibration.}
 \end{frame}
 
+\subsectionframe{3.3.2}{Distribution collapse}
 \begin{frame}{The collapse exponent shares one slope across four quantile ranks}
 \small The separate $H_{j,p}$ describe each curve. For the marginal collapse,
 fit one $H_{j,*}$ per quantity, with a separate intercept for each rank:
@@ -697,6 +707,7 @@ These plots do not establish signed-component or multi-time process self-similar
 \speaker{The visible component collapse should be acknowledged explicitly, while its quality is quantified rather than described as exact. The table contains the saved maxima over all pairs of the six displayed lags. Each quantity uses its own fitted common exponent; these are not a demonstration of one common vector exponent. The radial density's lack of a plateau is not evidence against scaling. Its separation between lags is the relevant discrepancy. Taking absolute values discards sign information, and separate one-lag laws leave temporal joint laws untested. Median normalization also leaves discrepancies: the radial maxima become 0.194 for paragliders and 0.229 for hang gliders. The distances are not independent-sample KS p-values and do not quantify statistical significance.}
 \end{frame}
 
+\subsectionframe{3.3.3}{Signed joint distributions}
 \begin{frame}{The joint comparison keeps geographic axes and one scalar scale}
 \[
  \mathbf Z_\tau=
@@ -781,6 +792,7 @@ several times, and hence full process self-similarity, untested.
 \speaker{Finite empirical distributions can differ under a common population law. Calibration must respect paired flights and dependent origins. Energy distance is an alternative multivariate diagnostic under finite first moments, but choosing another distance does not automatically supply the right uncertainty model.}
 \end{frame}
 
+\subsectionframe{3.3.4}{Testing approximate scaling beyond one-lag magnitudes}
 \begin{frame}{Two consecutive displacements test temporal scaling}
 \[
  \mathbf X_1=\mathbf r(t+\tau)-\mathbf r(t),\qquad
@@ -894,6 +906,7 @@ is a plausible interpretation; the mechanisms are not identified here.
 
 \section{Time-averaged transport by region and initial altitude}
 
+\subsectionframe{3.4.1}{Flight weighting and a fixed-segment control}
 \begin{frame}{Compare transport magnitude before its directional structure}
 \begin{columns}[T,onlytextwidth]
 \column{.49\textwidth}
@@ -923,6 +936,7 @@ Compare available segments with a fixed set supporting the largest lag.
 \speaker{The altitude variable is the cleaned GNSS coordinate origin, with no pressure fallback. The chapter-two exploratory map used the raw first altitude with a fallback, so the two grouping sources must be distinguished. The familiar names do not measure relief, terrain encountered along a route or instantaneous flight altitude. Native intervals are at most ten seconds, each segment has at least eight fixes, and stored lag support ends at half the segment's grid length. Requested lags are rounded to native steps. No displacement crosses a gap. The fixed control retains identical segments and flights over all lags, but available time origins and their segment weights still vary.}
 \end{frame}
 
+\subsectionframe{3.4.2}{Regional contrasts and changing population}
 \begin{frame}{Regional TA-MSD: coastal flights travel farther at intermediate lags}
 \centering\fig[50mm]{tamsd-regions-growth.pdf}
 \question{Does the coastal ordering persist after restricting all lags to the same long segments?}
@@ -944,6 +958,7 @@ Compare available segments with a fixed set supporting the largest lag.
 \speaker{The solid curves show changing support and the dashed curves fixed membership. The fixed Alpine hang-glider control contains 458 flights, but the Pyrenean and coastal controls contain only two each. Those two-flight means are saved but omitted from displayed population curves. Eight flights is a display minimum, not a precision guarantee. Intervals require at least twenty site-day clusters; overlapping origins are never independent bootstrap units.}
 \end{frame}
 
+\subsectionframe{3.4.3}{Initial-altitude bands and their regional composition}
 \begin{frame}{Initial-altitude groups combine transport and regional composition}
 \centering\fig[50mm]{tamsd-altitude-growth.pdf}
 \question{Does an altitude-band contrast remain when region and contributing segments are held comparable?}
@@ -974,6 +989,7 @@ Compare available segments with a fixed set supporting the largest lag.
 
 \section{Directional structure and environment}
 
+\subsectionframe{3.5}{Directional structure, terrain and equipment}
 \begin{frame}{Regional plots use different clocks, weights and centring}
 \small
 \begin{tabular}{@{}l>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}p{3.5cm}>{\raggedright\arraybackslash}p{3.1cm}@{}}\toprule
@@ -989,6 +1005,7 @@ before attributing a difference to a physical mechanism.
 \speaker{The PCA draws on the full eligible regional archive, not only the fixed long-flight cohort. Longer supported records supply more increment origins to that pooled covariance. The launch-time ratios use a different clock and a changing population. Make these distinctions before linking the three figures to wind or terrain.}
 \end{frame}
 
+\subsectionframe{3.5.1}{East--north balance in the retained archive}
 \begin{frame}{Equal east and north moments do not establish isotropy}
 \[
  \rho_{EN}=1,\qquad
@@ -1028,6 +1045,7 @@ match the equipment populations on weather, task or duration.
 \speaker{The bands are not 95-percent intervals, simultaneous bands or direct intervals for the difference between groups. Their overlap is not itself a calibrated significance test. The many displayed time points are correlated and must not be counted as independent confirmations of an ordering.}
 \end{frame}
 
+\subsectionframe{3.5.2}{Regional principal axes}
 \begin{frame}{PCA describes preferred axes; wind needs independent information}
 \begin{columns}[T,onlytextwidth]
 \column{.47\textwidth}
@@ -1198,6 +1216,7 @@ A common constant wind shifts the mean displacement by $\tau\mathbf w$; centring
 \speaker{The PCA concerns centred displacement spread, whereas the wind reference concerns a mean velocity. Their orientation resemblance alone cannot show that mean wind causes covariance anisotropy. Constant additive drift cancels when displacement is centred at fixed lag. Variable drift between flights, time-varying forcing and route decisions can alter covariance; their contributions need matched observations. The Pyrenean agreement is the strongest geographical alignment here. The coastal comparison at mean flight altitude retains a broadly similar sector across the four time selections, with offsets of about 10 to 14 degrees. Surface winds exhibit a larger seasonal change, so their annual near alignment should not be transferred to flight altitude. Equipment class is not measured pilot expertise, and this comparison cannot establish resistance to wind.}
 \end{frame}
 
+\subsectionframe{3.5.2}{Regional changes of velocity and direction}
 \begin{frame}{Alps: velocity changes retain a directional structure}
 \centering\fig[51mm]{variation-region-alps.pdf}
 \question{Which part of the lag dependence persists with common origins and after changing difference order?}
@@ -1237,6 +1256,7 @@ A common constant wind shifts the mean displacement by $\tau\mathbf w$; centring
 \speaker{The context control standardises task, retained-duration band, season period and equipment, with at least ten flights per region per retained stratum. Target stratum mass is proportional to the smallest regional count. It retains 65537 Alpine, 9933 Pyrenean and 4366 coastal flights. The 1000-second RMS changes are 5.13, 4.62 and 3.72 m/s. These dashed point estimates have no calibrated intervals. The shaded ratio intervals instead apply to the unstandardised common-origin population and use 500 site-day bootstrap replicates jointly over the supported lag grid. The Alpine-to-coastal ratio there is 1.426 with a simultaneous band from 1.403 to 1.449 at 1000 seconds. No equivalence margin was specified, so a non-significant difference would not establish equality.}
 \end{frame}
 
+\subsectionframe{3.5.2}{Third differences and the distribution of changes}
 \begin{frame}{The ratio between orders changes with the lag}
 \centering\fig[49mm]{variation-order-ratios.pdf}
 \question{Which scale interval could satisfy both the slope and amplitude predictions of one model?}
@@ -1258,6 +1278,7 @@ A common constant wind shifts the mean displacement by $\tau\mathbf w$; centring
 \speaker{The full regional measurement includes 108189 paraglider flights and 4747 hang-glider flights. At 10000 seconds, matched paraglider counts are 1865, 3 and 36 for Alps, Pyrenees and Channel Coast; hang-glider counts are 17, zero and zero. Coastal hang gliders number only 26 even at short lags. The report retains their estimates and suppresses intervals below twenty contributing site-day groups. No common three-region equipment/context strata survive for hang gliders, so that standardisation is not claimed for this discipline.}
 \end{frame}
 
+\subsectionframe{3.5.3}{Terrain, equipment and wind}
 \begin{frame}{Alps: C/D/CCC has smaller coordinate-moment imbalance}
 \centering\fig[54mm]{equipment-alps-both.pdf}
 \question{Does the ordering persist after matching site, day, task and duration?}
@@ -1318,6 +1339,7 @@ Regional references show terrain alignment and a remaining coastal wind--PCA off
 
 \section{Duration and equipment composition}
 
+\subsectionframe{3.6}{Flight duration and equipment composition}
 \begin{frame}{Long flights occur in both equipment groups}
 \centering\fig[45mm]{talk-duration.pdf}
 \small\raggedright
@@ -1351,6 +1373,7 @@ At $\tau=1695$ s the ratio falls from $1.42$ to $1.35$. A within-class contrast 
 
 \section{Model comparisons and temporal memory}
 
+\subsectionframe{3.7.1}{The moment spectrum and the L\'evy-walk benchmark}
 \begin{frame}{The moment spectrum challenges a specific L\'evy-walk benchmark}
 \begin{columns}[c,onlytextwidth]
 \column{.55\textwidth}\fig[49mm]{talk-moments.pdf}
@@ -1369,6 +1392,7 @@ The empirical spectrum is nearly linear over $q=0.25$--4.
 \speaker{The current pooled moment spectrum has $\zeta(2)=\StatRevParaMomentZetaTwo$ for paragliders and $\StatRevHangMomentZetaTwo$ for hang gliders. The corresponding $\zeta(q)/q$ ranges are imported in the report. The illustrative beta=1.5 line is not a fitted null. A finite-record comparison must reproduce sample lengths, cadence, selection and weighting, and assess whether the asymptotic branch change would be resolvable.}
 \end{frame}
 
+\subsectionframe{3.7.2}{Centred kurtosis and heterogeneity}
 \begin{frame}{Non-Gaussian pooled increments can arise from Gaussian mixtures}
 \begin{columns}[c,onlytextwidth]
 \column{.56\textwidth}\fig[48mm]{talk-kurtosis.pdf}
@@ -1388,6 +1412,7 @@ The observed curve changes sign and rises at large lag, where support is weakest
 \speaker{Explain the full covariance normalization: unequal east and north variances alone do not produce a nonzero population excess for a Gaussian. But mixing Gaussian variances does. If X equals sqrt(A) times a fixed Gaussian vector, K equals eight times Var(A) divided by E(A) squared. This illustrates heterogeneity; it is not a correction formula for arbitrary flights. The finite-sample estimate need not vanish even for Gaussian data, and overlapping windows require a matched reference before significance claims.}
 \end{frame}
 
+\subsectionframe{3.7.3}{Velocity memory across resolutions}
 \begin{frame}{Velocity memory remains visible after averaging over minutes}
 \centering\fig[54mm]{memory-positive.pdf}
 \question{Do the curves support one decay law over the displayed scales?}
@@ -1415,6 +1440,7 @@ Ballistic at short times, diffusive at long times.
 \source{\href{https://doi.org/10.1112/plms/s2-20.1.196}{Taylor (1922)}, pp. 207--208. This covariance identity cannot be applied directly to differently weighted heterogeneous means.}
 \end{frame}
 
+\subsectionframe{3.7.4}{Model predictions and remaining tests}
 \begin{frame}{Current constraints on candidate models}
 \question{Which models are challenged, and which remain open?}
 \small\renewcommand{\arraystretch}{1.2}\setlength{\tabcolsep}{4pt}
@@ -1431,6 +1457,7 @@ Renewal L\'evy walk, $1<\beta<2$ & Two-branch moment spectrum & Finite-record co
 \speaker{Ordinary Brownian motion is a poor descriptive model of the observed interval, but the asymptotic regime is unknown. fBm is challenged as a homogeneous pooled law; a phase-conditioned or environmentally heterogeneous Gaussian construction is not excluded. The exponential-persistence candidate deserves a joint MSD and VACF comparison. Standard Lévy walk needs finite-record calibration rather than rejection from an illustrative asymptotic line. An unbounded Lévy flight cannot literally describe continuous finite-speed flight; effective truncated versions need separate predictions.}
 \end{frame}
 
+\subsectionframe{3.8}{Constraints for the phase analysis}
 \begin{frame}{Phase-conditioned moments must include windows crossing transitions}
 \[
  M_q(\tau)=\sum_c w_c(\tau)M_q(\tau\mid c),\qquad

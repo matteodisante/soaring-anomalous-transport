@@ -1,5 +1,5 @@
 {
-  "verified_utc": "2026-09-13T15:49:58.936052+00:00",
+  "verified_utc": "2026-09-13T16:41:36.794324+00:00",
   "numerical_run_id": "temporal-self-similarity-2026-09-13",
   "reviewed_thesis": {
     "status": "complete",
@@ -316,27 +316,35 @@
   "verified_assets": 118,
   "documents": {
     "chapter2.pdf": {
-      "pages": 58,
-      "sha256": "787611f3f6415c313b258eeecbbf6c7a808e390b107d96b04cbbbd89129983c5",
-      "bytes": 2698024,
+      "pages": 74,
+      "numbered_slides": 58,
+      "subsection_dividers": 16,
+      "sha256": "427946b8e6abf3726b39bfc123f3ee9a57ed5c0f102c91bc8d9975e44125d6c4",
+      "bytes": 2710843,
       "speaker_notes": false
     },
     "chapter2-notes.pdf": {
-      "pages": 58,
-      "sha256": "675a4ec76449d1e424c33bcd410d070d0cb6a464719528477932f7b302e85716",
-      "bytes": 2723748,
+      "pages": 74,
+      "numbered_slides": 58,
+      "subsection_dividers": 16,
+      "sha256": "399f47b4fabca501d08b3e972e6e0fb87031e3249d2c3317775ab0ed2380627c",
+      "bytes": 2734991,
       "speaker_notes": true
     },
     "chapter3.pdf": {
-      "pages": 119,
-      "sha256": "da291a1764ae59cda3cd8f36a1ce9e0b9917d2335fd7cf0bcb4b542d1926978c",
-      "bytes": 3756785,
+      "pages": 146,
+      "numbered_slides": 119,
+      "subsection_dividers": 27,
+      "sha256": "9a75beb2e16332c4e92a7d85963ed0a03bc57be2dac3e167e8d1ea22c41649bc",
+      "bytes": 3777246,
       "speaker_notes": false
     },
     "chapter3-notes.pdf": {
-      "pages": 119,
-      "sha256": "d530220417b1571a34fc19eeddbe9cf9910edc4e66a777652e52869cbc414960",
-      "bytes": 3822605,
+      "pages": 146,
+      "numbered_slides": 119,
+      "subsection_dividers": 27,
+      "sha256": "054314effefebe53e0f014c721df7d3fb5845c36dda73c679e6c837bb15ee8a8",
+      "bytes": 3841191,
       "speaker_notes": true
     }
   },
@@ -352,10 +360,10 @@
     "render_variation_panels.py": "caf28be8d82e1947314391b0ee62cac544219a4c6bb255009045cbd478e872b3",
     "review_editorial.py": "453d627494e3a8baff71bd314a694e7155a7e5d768dd74e970b1c194f3a72b7f",
     "setup_viewer_link.py": "82033d5a5ac7a44626415a264996c20a09a6830b11d9fc1c7360bbaf45a704f1",
-    "validate.py": "5d5319448c4d8182b23436fe88774d26ed147484404362ce2855b5d79ae465ab",
-    "theme.tex": "af05904ac82536e2ff0e5f164b480164b695a473e373a77ac6443378804fd227",
-    "chapter2.tex": "1171534ee1d5d30c1716ece097d6e502a4d87e86c6c50d637d38255178be9eef",
-    "chapter3.tex": "343d9b8ceafa36950c9464180f8a04153e09038ae91d42e08e74fc314338ac45"
+    "validate.py": "993d58a389dab80ad8459d84fde72434a98e1d9eb69f746a293ce7928958e63e",
+    "theme.tex": "a2541e91dbcb6c38714406534760a723003166f8fde1c4cd9c97fd67988689f6",
+    "chapter2.tex": "f4dfcb9a2bb68bf8aef7e7b4338539a6db9b15857c00e4a65f8573c067ec9914",
+    "chapter3.tex": "890a453def2cf0cdf7ba4f6dec533d6b3af9e092ef5f317f53505357eb992ce7"
   },
   "scope": "Complete chapter decks use the reviewed current results. All referenced figure and numerical inputs match their manifests; full reports retain all bytes in gzip; four PDFs compile without LaTeX warnings or overfull boxes.",
   "visual_review": "Chapter 3 slides 59--65 explain the signed four-component temporal observable, fixed support, training-only quantile fit, held-out projected CDFs, paired date bootstrap, intermediate-range results and limits. Slides 60--61 and the new result panels were inspected for readable formulas and plots. Their values and populations agree with the reviewed thesis and complete measurement report. Existing marginal-collapse, Hurst-limit and wind results remain unchanged. The discussion-question layout already present in the workspace was preserved."

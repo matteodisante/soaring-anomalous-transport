@@ -85,6 +85,19 @@
 \end{tikzpicture}
 \note{#4}
 \end{frame}}
+% Marks a thesis subsection boundary: a PDF bookmark plus a full-page divider,
+% so each block of slides can be traced back to its exact place in the thesis.
+\newcommand{\subsectionframe}[2]{%
+\subsection{#2}
+\begin{frame}[plain,noframenumbering]
+\begin{tikzpicture}[remember picture,overlay]
+ \fill[pisablue](current page.south west)rectangle(current page.north east);
+ \node[text=pisablight,align=center,text width=.82\paperwidth]
+   at([yshift=10mm]current page.center){{\normalsize Thesis~\S#1}};
+ \node[text=white,align=center,text width=.82\paperwidth]
+   at([yshift=-4mm]current page.center){{\Large\bfseries #2}};
+\end{tikzpicture}
+\end{frame}}
 \newcommand{\backupstart}{%
 \appendix
 \begin{frame}[plain,noframenumbering]
