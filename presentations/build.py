@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile the two complete supervisor chapter decks; never rerun cleaning or analysis."""
+"""Compile the supervisor decks; never rerun cleaning or analysis."""
 
 from __future__ import annotations
 
@@ -12,7 +12,9 @@ from pathlib import Path
 def main() -> None:
     """Build Chapter 3 first, optionally followed by Chapter 2 and speaker notes."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("chapter", choices=("all", "3", "2"), nargs="?", default="all")
+    parser.add_argument(
+        "chapter", choices=("all", "3", "2", "3.5"), nargs="?", default="all"
+    )
     parser.add_argument(
         "--notes", action="store_true", help="Also build slide + notes PDFs"
     )
@@ -20,16 +22,28 @@ def main() -> None:
     root = Path(__file__).resolve().parent
     if shutil.which("latexmk") is None:
         raise SystemExit("latexmk and a TeX installation are required.")
-    for chapter in (3, 2) if args.chapter == "all" else (int(args.chapter),):
-        stem = f"chapter{chapter}"
+    decks = {
+        "2": ("chapter2", None),
+        "3": ("chapter3", None),
+        "3.5": ("chapter3-section35", "SectionThreeFiveOnly"),
+    }
+    selected = ("3", "2", "3.5") if args.chapter == "all" else (args.chapter,)
+    for deck in selected:
+        stem, selector = decks[deck]
         for notes in [False, True] if args.notes else [False]:
             job = stem + ("-notes" if notes else "")
             out = root / "build" / job
             out.mkdir(parents=True, exist_ok=True)
             target = root / (job + ".tex")
-            if notes:
+            if notes or selector:
+                definitions = []
+                if notes:
+                    definitions.append("\\def\\Speakernotes{1}")
+                if selector:
+                    definitions.append(f"\\def\\{selector}{{1}}")
+                source = "chapter3" if selector else stem
                 target.write_text(
-                    f"\\def\\Speakernotes{{1}}\n\\input{{{stem}.tex}}\n",
+                    "\n".join(definitions) + f"\n\\input{{{source}.tex}}\n",
                     encoding="utf-8",
                 )
             try:
@@ -47,7 +61,7 @@ def main() -> None:
                     check=True,
                 )
             finally:
-                if notes:
+                if notes or selector:
                     target.unlink(missing_ok=True)
             shutil.copy2(out / (job + ".pdf"), root / (job + ".pdf"))
             print(f"Built {root / (job + '.pdf')}")

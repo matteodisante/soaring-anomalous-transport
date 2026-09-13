@@ -26,6 +26,7 @@ precedenti della pipeline non fanno parte delle slide.
 |---|---:|---:|---|
 | [Capitolo 2](chapter2.pdf) | 58 | 74 | [PDF con note](chapter2-notes.pdf) |
 | [Capitolo 3](chapter3.pdf) | 119 | 146 | [PDF con note](chapter3-notes.pdf) |
+| [Capitolo 3, Sezioni 3.5.1--3.5.3](chapter3-section35.pdf) | 32 | 37 | [PDF con note](chapter3-section35-notes.pdf) |
 
 Ogni blocco è preceduto da un divisore che riporta il numero esatto della sezione
 o sottosezione nella tesi. L'[indice](outline.md) riporta l'ordine e il numero
@@ -96,11 +97,22 @@ completi sono conservati in `data/*.json.gz`: compressione senza perdita, nessun
 sottocampionamento o troncamento del report. I manifest delle figure distinguono
 copie, ritagli vettoriali e ridisegno degli array già calcolati.
 
-Per compilare i quattro PDF dagli input inclusi, senza leggere l'SSD:
+Per compilare tutti e sei i PDF dagli input inclusi, senza leggere l'SSD:
 
 ```bash
 python3 presentations/build.py all --notes
 ```
+
+Per compilare la presentazione autonoma delle Sezioni 3.5.1--3.5.3:
+
+```bash
+python3 presentations/build.py 3.5 --notes
+```
+
+Il deck mirato legge direttamente il blocco corrispondente in `chapter3.tex`:
+testo, figure e note non sono duplicati in una seconda sorgente.
+L'[indice dedicato](section35-outline.md) collega le 32 slide numerate alle tre
+sottosezioni della tesi.
 
 Per rigenerare gli asset dal manoscritto revisionato nella stessa checkout:
 

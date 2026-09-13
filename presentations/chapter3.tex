@@ -9,9 +9,21 @@
 \input{data/duration_equipment.tex}
 \input{data/kinematic_isotropy.tex}
 \input{data/msd.tex}
+\ifdefined\SectionThreeFiveOnly
+\hypersetup{pdftitle={Directional structure and environment: Chapter 3, Sections 3.5.1--3.5.3}}
+\title{Directional structure and environment}
+\else
 \hypersetup{pdftitle={Global transport: full chapter, vector laws and supervisor discussion}}
 \title{Global transport in soaring flights}
+\fi
 \begin{document}
+\ifdefined\SectionThreeFiveOnly
+\titleframe{Directional structure and environment}
+ {Measurements, controls and questions for the supervisors}
+ {Chapter 3, Sections 3.5.1--3.5.3}
+ {This deck contains the current thesis material on east--north balance, regional changes, terrain, equipment and wind.}
+\section{Directional structure and environment}
+\else
 \titleframe{Global transport in soaring flights}
  {Measurements, controls and questions for the supervisors}
  {Chapter 3}
@@ -1004,7 +1016,9 @@ before attributing a difference to a physical mechanism.
 \question{Which apparent disagreement remains after comparing like populations and observables?}
 \speaker{The PCA draws on the full eligible regional archive, not only the fixed long-flight cohort. Longer supported records supply more increment origins to that pooled covariance. The launch-time ratios use a different clock and a changing population. Make these distinctions before linking the three figures to wind or terrain.}
 \end{frame}
+\fi
 
+% SECTION35-EXTRACT-BEGIN: shared by the complete and focused decks.
 \subsectionframe{3.5.1}{East--north balance in the retained archive}
 \begin{frame}{Equal east and north moments do not establish isotropy}
 \[
@@ -1336,7 +1350,9 @@ Regional references show terrain alignment and a remaining coastal wind--PCA off
 \question{Which target and matched comparison should be the first priority?}
 \speaker{The site--day bootstrap adjusts one uncertainty structure; it does not perform matching or remove confounding. Where data permit, the same pilot on different equipment could help assess selection, but weather and task still require control. Differentiating velocity removes a constant wind term, but not its variation along the trajectory or the pilot's manoeuvres.}
 \end{frame}
+% SECTION35-EXTRACT-END
 
+\ifdefined\SectionThreeFiveOnly\else
 \section{Duration and equipment composition}
 
 \subsectionframe{3.6}{Flight duration and equipment composition}
@@ -1523,4 +1539,5 @@ This Jacobian effect says nothing about a heavy upper tail.
 \refitem{https://www.normandie.developpement-durable.gouv.fr/le-pays-de-caux-a1902.html}{DREAL Normandie, Le Pays de Caux}{Coastal cliffs and valleys}
 \source{The cited pages support specific mathematical or observational cautions. They do not identify the causes of the regional contrasts measured here.}
 \end{frame}
+\fi
 \end{document}

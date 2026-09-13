@@ -91,7 +91,7 @@ def main() -> None:
         tex = (ROOT / f"chapter{chapter}.tex").read_text()
         numbered_count = (
             len(re.findall(r"\\begin\{frame\}", tex))
-            + len(re.findall(r"\\titleframe\{", tex))
+            + (1 if chapter == 3 else len(re.findall(r"\\titleframe\{", tex)))
         )
         divider_count = len(re.findall(r"\\subsectionframe\{", tex))
         count = numbered_count + divider_count
@@ -124,6 +124,40 @@ def main() -> None:
                                     "sha256": digest(path),
                                     "bytes": path.stat().st_size,
                                     "speaker_notes": bool(suffix)}
+    chapter3_tex = (ROOT / "chapter3.tex").read_text()
+    try:
+        focused_tex = chapter3_tex.split("% SECTION35-EXTRACT-BEGIN:", 1)[1].split(
+            "% SECTION35-EXTRACT-END", 1
+        )[0]
+    except IndexError as exc:
+        raise ValueError("Section 3.5 extraction markers are missing") from exc
+    focused_numbered = len(re.findall(r"\\begin\{frame\}", focused_tex)) + 1
+    focused_dividers = len(re.findall(r"\\subsectionframe\{", focused_tex))
+    focused_count = focused_numbered + focused_dividers
+    focused_sections = set(re.findall(r"\\subsectionframe\{([^}]+)\}", focused_tex))
+    if focused_sections != {"3.5.1", "3.5.2", "3.5.3"}:
+        raise ValueError(f"Unexpected subsection in focused deck: {focused_sections}")
+    for suffix in ("", "-notes"):
+        stem = f"chapter3-section35{suffix}"
+        path = ROOT / (stem + ".pdf")
+        reader = PdfReader(path)
+        if len(reader.pages) != focused_count:
+            raise ValueError(f"Unexpected page count: {stem}")
+        width = float(reader.pages[0].mediabox.width)
+        if abs(width - (907.087 if suffix else 453.543)) > .01:
+            raise ValueError(f"Incorrect slide/notes layout: {stem}")
+        text = "\n".join(page.extract_text() for page in reader.pages)
+        if forbidden.search(text):
+            raise ValueError(f"Superseded content in compiled PDF: {stem}")
+        log = (ROOT / "build" / stem / (stem + ".log")).read_text()
+        if re.search(r"Overfull|Undefined control sequence|Fatal error|LaTeX Warning:", log):
+            raise ValueError(f"Unresolved LaTeX problem: {stem}")
+        documents[path.name] = {"pages": focused_count,
+                                "numbered_slides": focused_numbered,
+                                "subsection_dividers": focused_dividers,
+                                "sha256": digest(path),
+                                "bytes": path.stat().st_size,
+                                "speaker_notes": bool(suffix)}
     result = {"verified_utc": datetime.now(UTC).isoformat(),
               "numerical_run_id": source["numerical_run_id"],
               "reviewed_thesis": source["reviewed_thesis"],
@@ -132,10 +166,10 @@ def main() -> None:
               "documents": documents,
               "presentation_sources": {p.name: digest(p) for p in
                   sorted(ROOT.glob("*.py")) + [ROOT / "theme.tex", ROOT / "chapter2.tex", ROOT / "chapter3.tex"]},
-              "scope": "Complete chapter decks use the reviewed current results. All referenced figure and numerical inputs match their manifests; full reports retain all bytes in gzip; four PDFs compile without LaTeX warnings or overfull boxes.",
-              "visual_review": "Chapter 3 slides 59--65 explain the signed four-component temporal observable, fixed support, training-only quantile fit, held-out projected CDFs, paired date bootstrap, intermediate-range results and limits. Slides 60--61 and the new result panels were inspected for readable formulas and plots. Their values and populations agree with the reviewed thesis and complete measurement report. Existing marginal-collapse, Hurst-limit and wind results remain unchanged. The discussion-question layout already present in the workspace was preserved."}
+              "scope": "Complete chapter decks and the Section 3.5 focused deck use the reviewed current results. All referenced figure and numerical inputs match their manifests; full reports retain all bytes in gzip; six PDFs compile without LaTeX warnings or overfull boxes.",
+              "visual_review": "Chapter 3 slides 59--65 explain the signed four-component temporal observable, fixed support, training-only quantile fit, held-out projected CDFs, paired date bootstrap, intermediate-range results and limits. Slides 60--61 and the new result panels were inspected for readable formulas and plots. The 37-page focused Section 3.5 deck was inspected as a contact sheet; its title, five subsection dividers and 32 numbered slides are complete and legible. Values and populations agree with the reviewed thesis and complete measurement report. Existing marginal-collapse, Hurst-limit and wind results remain unchanged. The discussion-question layout already present in the workspace was preserved."}
     (ROOT / "validation.json").write_text(json.dumps(result, indent=2) + "\n")
-    print(f"Verified four chapter PDFs, {len(assets)} figure assets and complete report bytes.")
+    print(f"Verified six presentation PDFs, {len(assets)} figure assets and complete report bytes.")
 
 
 if __name__ == "__main__":
