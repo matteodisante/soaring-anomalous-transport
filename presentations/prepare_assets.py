@@ -83,7 +83,11 @@ def main() -> None:
                         help="combined manuscript review with independent terrain and wind references")
     parser.add_argument("--wind-altitude-update", type=Path,
                         help="reviewed coastal wind comparison at measured flight altitude")
+    parser.add_argument("--editorial-review", type=Path,
+                        help="later manuscript review with unchanged numerical inputs")
     args = parser.parse_args()
+    if args.editorial_review and not args.wind_altitude_update:
+        parser.error("--editorial-review requires the current wind-altitude lineage")
     run = args.run.resolve()
     review_path = run / "review-inputs/manuscript-review.json"
     review = json.loads(review_path.read_text())
@@ -199,9 +203,31 @@ def main() -> None:
                 or review["generated_outputs"] != {n: r["sha256"] for n, r in release["outputs"].items()}
                 or review["external_input_files"] != wind_altitude_update["external_input_files"]):
             raise ValueError("The wind-altitude manuscript review has different inputs")
-        for name, expected in (review["source_files"] | review["external_input_files"]).items():
+        guarded = {} if args.editorial_review else review["source_files"]
+        for name, expected in (guarded | review["external_input_files"]).items():
             if digest(REPO / name) != expected:
                 raise ValueError(f"Reviewed wind-altitude input changed: {name}")
+    if args.editorial_review:
+        parent_review = review
+        parent_hash = digest(review_path)
+        review_path = args.editorial_review.resolve()
+        review = json.loads(review_path.read_text())
+        if (review["status"] != "complete"
+                or review["parent_manuscript_review_sha256"] != parent_hash
+                or any(review[key] != parent_review[key] for key in (
+                    "numerical_run_id", "numerical_update_sha256",
+                    "generated_outputs", "external_input_files"))
+                or review["source_files"].keys() != parent_review["source_files"].keys()):
+            raise ValueError("The editorial review must preserve its numerical parent")
+        changed = {n for n, h in review["source_files"].items()
+                   if h != parent_review["source_files"][n]}
+        if (changed != set(review["changed_manuscript_sources"])
+                or any(not n.startswith("thesis/") or Path(n).suffix not in (".tex", ".bib")
+                       for n in changed)):
+            raise ValueError("An editorial review may change only manuscript sources")
+        for name, expected in (review["source_files"] | review["external_input_files"]).items():
+            if digest(REPO / name) != expected:
+                raise ValueError(f"Reviewed editorial input changed: {name}")
     if digest(REPO / "thesis/main.pdf") != review["pdf_sha256"]:
         raise ValueError("The canonical thesis is not the reviewed PDF")
     assets, data = ROOT / "assets", ROOT / "data"

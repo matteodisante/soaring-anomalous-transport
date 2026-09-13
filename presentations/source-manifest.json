@@ -1,17 +1,17 @@
 {
-  "created_utc": "2026-09-12T23:01:10.550330+00:00",
+  "created_utc": "2026-09-13T10:19:49.496456+00:00",
   "numerical_run_id": "channel-wind-flight-altitude-2026-09-13",
   "baseline_numerical_run_id": "20260912T133040Z-073601cb",
   "cleaning_version": "2.3.0",
   "cleaning_source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85",
   "reviewed_thesis": {
     "status": "complete",
-    "reviewed_utc": "2026-09-12T23:00:40.832716+00:00",
+    "reviewed_utc": "2026-09-13T10:19:35.254550+00:00",
     "numerical_run_id": "channel-wind-flight-altitude-2026-09-13",
     "baseline_numerical_run_id": "20260912T133040Z-073601cb",
     "numerical_update_sha256": "472a7a1de21a0474f8ece7abb01dd26c96db05b0aaaae8039c3ab35c410e3801",
-    "pdf_sha256": "c78205db992e9c7576f70aa814613dc5d3c0f6ed778b014063cc725439199af1",
-    "pages": 132,
+    "pdf_sha256": "441cefd2ff43dad1a35c698fe42fbea5284df20e3756e925a602d2616da3d74a",
+    "pages": 134,
     "source_files": {
       "configs/delta_download.yaml": "a7e0f4e2c137eea66b63f75c2d5fc3de1db00d983619daa8cf1affaa4de476dd",
       "configs/para_download.yaml": "e7f65907e7d10fc5f1181948f18ac2645b8bced6f28212c12846a71a645ba459",
@@ -160,7 +160,7 @@
       "thesis/sections/01-introduction.tex": "947b18a21ddb5a970553bd4d5338d3b806a6f0d45b44f684aeeca43a71865cd4",
       "thesis/sections/03-dataset.tex": "5488c48d9d42480ddc1a5ac3fb104f3a985db49042db089ab254b527b411cc4b",
       "thesis/sections/04-environment-wind.tex": "99a0b6842f653b830a00481c6c1b5e6f42f8160180c795f1d99a3a0b308e7ec1",
-      "thesis/sections/04-global-transport.tex": "df3dcee0638c04a058cec4d17ed94bfb1c457aa421cf3f05bca7e9d8129ba62a",
+      "thesis/sections/04-global-transport.tex": "0e37fdec6576ed0a3c4349f7a11b7c45bb1be6c2b99847fc18ea3a5116b8c835",
       "thesis/sections/04-grouped-tamsd.tex": "c5dc2070d48c7b8ca709f24f7cd589cfc2160210de042a6fe30e68914744aa7d",
       "thesis/sections/04-regional-variations.tex": "f77ee7ba742d4d981dcd5c2ca7ce6fd576eba531618e3364a50d2970d1e3b557",
       "thesis/sections/05-flight-phases.tex": "a181ba84f6309e9392c7fed6078403690a8ca4d06c436546d69d700bf060f9be",
@@ -289,9 +289,15 @@
       "revisions/channel-wind-flight-altitude-2026-09-13/flight-altitude.json": "172754510ff7bd5aff96c9ca02715549f7adaf949c24820cb1f02f493669d5c0",
       "revisions/channel-wind-flight-altitude-2026-09-13/fetch_pressure_wind.py": "d5f0ae752337b8a23ac48d0c702af05e51fc5f7f5cb8c5e0018a61d4464f42ff"
     },
-    "scope": "Coastal wind is evaluated at mean altitude of the exact PCA windows. Annual all-hour and daytime references are separated from seasonal checks. Pressure-level interpolation, GNSS datum approximation, height sensitivity and limits of causal interpretation are explicit. Other numerical results are unchanged."
+    "scope": "Clarify spatial one-lag versus temporal joint laws, and develop the kinematic, finite-persistence and sampling explanations for effective second-difference slopes. All 98 generated numerical products and all numerical sources remain unchanged.",
+    "parent_manuscript_review_sha256": "e3838606b9dfc94447b1761d2a145440e94410445b9778ee617e4851c9b32ad2",
+    "changed_manuscript_sources": [
+      "thesis/sections/04-global-transport.tex"
+    ],
+    "interpretation_check_sha256": "6192b03420c7bc99cbd4a77967a0d85b060c4b31fdacffbb225fddd508ce11a6",
+    "review_script_sha256": "213b8549651d58d8a7a914f4671c7e7340b7a7a226a5292fd32f1e375e626462"
   },
-  "review_record_sha256": "e3838606b9dfc94447b1761d2a145440e94410445b9778ee617e4851c9b32ad2",
+  "review_record_sha256": "2c2726c2c84838b6945ef9513ea36f8805de2d20a87eb5723878745829b981d4",
   "operation": "Copy reviewed current results and crop vector panels; no analysis rerun.",
   "inputs": {
     "revisions/terrain-axis-2026-09-12/alps-etopo2022.nc": "221db417d8bc3f2109797fb379014c73392227cf54a6d07844bd046e53acace6",
@@ -371,7 +377,7 @@
     "revisions/regional-variations-2026-09-12/report.json.gz": "3b1951934610ed85ff8d3a933d59bede4e636a61c9871b6407e9208e219993fe",
     "revisions/grouped-tamsd-2026-09-12/report.json.gz": "661db99c37aed567c0095b8be050b79c1e1be5b2a59b240ae4b29b96899ad047",
     "thesis/sections/03-dataset.tex": "5488c48d9d42480ddc1a5ac3fb104f3a985db49042db089ab254b527b411cc4b",
-    "thesis/sections/04-global-transport.tex": "df3dcee0638c04a058cec4d17ed94bfb1c457aa421cf3f05bca7e9d8129ba62a",
+    "thesis/sections/04-global-transport.tex": "0e37fdec6576ed0a3c4349f7a11b7c45bb1be6c2b99847fc18ea3a5116b8c835",
     "configs/preprocessing.yaml": "62bb2f4885c5fadc33074958a87c297d70859f361f3e4fdd95ae88761ea8964f",
     "src/soaring/reporting/style.py": "313f731be76f476cfef3edd0db63a5a14adc749cfb521e38be6dde5010823ac8"
   },
@@ -1206,7 +1212,7 @@
     },
     "numerical_audit_sha256": "a823fcb3ff53183132304c23491f3c1d66a43473b0fbab149ec130e34a6b50d7"
   },
-  "script_sha256": "0cee9f6533d4d71cd1803b1ad381e978feb546bd3ab3a75d264d56f2cfd096c4",
+  "script_sha256": "86284c42b0f76686e42363f9d86f3accc314a721a696038ad85c87c1d9922160",
   "numerical_update_sha256": "ab0628828ab209c2d3e050ef01b0d145e86641b15d61755a0e6d0383bcc27355",
   "numerical_lineage": "Completed full-archive run, followed by reviewed exact-lag PCA, regional finite differences, grouped TAMSD and independent environmental references where explicitly recorded in this manifest."
 }

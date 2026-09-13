@@ -12,6 +12,9 @@ con un controllo che mantiene gli stessi segmenti a tutti i lag.
 e il riferimento ERA5 per il vento costiero. La revisione
 `channel-wind-flight-altitude-2026-09-13` valuta il vento alla quota media
 delle finestre della PCA, con orari annuali e controlli stagionali separati.
+La revisione `joint-laws-and-hurst-interpretation-2026-09-13` chiarisce nella
+tesi il limite dell'interpretazione come Hurst e la distinzione fra congiunte
+spaziali a un lag e temporali. Gli input numerici delle slide restano invariati.
 Sono capitoli da discutere con i supervisors, senza durata prestabilita.
 Le domande scientifiche accompagnano i risultati; i confronti tra versioni
 precedenti della pipeline non fanno parte delle slide.
@@ -64,7 +67,7 @@ python3 presentations/build.py all --notes
 Per rigenerare gli asset dal manoscritto revisionato nella stessa checkout:
 
 ```bash
-uv run --no-project --with pypdf python presentations/prepare_assets.py --pca-update revisions/regional-pca-lags-2026-09-12 --variation-update revisions/regional-variations-2026-09-12 --tamsd-update revisions/grouped-tamsd-2026-09-12 --environment-update revisions/environment-axis-integration-2026-09-12 --wind-altitude-update revisions/channel-wind-flight-altitude-2026-09-13
+uv run --no-project --with pypdf python presentations/prepare_assets.py --pca-update revisions/regional-pca-lags-2026-09-12 --variation-update revisions/regional-variations-2026-09-12 --tamsd-update revisions/grouped-tamsd-2026-09-12 --environment-update revisions/environment-axis-integration-2026-09-12 --wind-altitude-update revisions/channel-wind-flight-altitude-2026-09-13 --editorial-review revisions/joint-laws-and-hurst-interpretation-2026-09-13/manuscript-review.json
 uv run --no-project --with pypdf python presentations/crop_chapter_panels.py
 .venv/bin/python presentations/render_figures.py
 .venv/bin/python presentations/render_chapter3_panels.py

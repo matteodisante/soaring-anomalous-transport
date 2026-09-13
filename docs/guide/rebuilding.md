@@ -260,3 +260,12 @@ Completed parent manifests remain immutable. Presentation preparation requires
 as well as the four existing parent flags. This comparison does not require a
 new cleaning or flight transport run; current cleaning and table identities
 are verified before reusing those results.
+
+The manuscript clarification in
+`revisions/joint-laws-and-hurst-interpretation-2026-09-13/` preserves all 98
+numerical products. Run its `review_clarification.py` with the scientific
+environment to check the saved variation curves, the analytical covariance
+example and the compiled thesis. Presentation preparation then adds
+`--editorial-review revisions/joint-laws-and-hurst-interpretation-2026-09-13/manuscript-review.json`
+to the existing parent flags. This review updates manuscript identities while
+requiring the same numerical inputs and immutable parent review.

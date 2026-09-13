@@ -252,8 +252,71 @@ hang glider & all selected & \StatRevHangFlights & \StatRevHangAlphaOne & \StatR
 
 The measured $b_2$ values near or above two, together with the curvature in
 Fig.~\ref{fig:transport}, prevent a direct interpretation as $2H$ for a
-stationary-increment process. The control removes constant velocity but does
+scale-free stationary-increment residual. The control removes constant velocity but does
 not yield an intrinsic Hurst exponent here.
+
+\paragraph{A plausible origin of the apparent exponent.}
+The cancellation itself does not impose stationary increments or a power law
+on the remaining motion. To see what $V_2$ measures, write the velocities averaged
+over two consecutive intervals as $\overline{\mathbf v}_1=\mathbf I_1/\tau$
+and $\overline{\mathbf v}_2=\mathbf I_2/\tau$. Then, exactly,
+\[
+ D_2(\tau)=
+ \sqrt{\left\langle|\overline{\mathbf v}_2-
+                         \overline{\mathbf v}_1|^2\right\rangle},
+ \qquad V_2(\tau)=\tau^2D_2^2(\tau),\qquad
+ b_{2,\mathrm{loc}}=2+2\frac{\mathrm d\log D_2}{\mathrm d\log\tau}.
+\]
+The averages use the same flights, origins and weights as $V_2$ at each lag.
+In the saved curves over \SIrange{10}{10000}{\second}, $D_2$ varies
+nonmonotonically between approximately \SIrange{4.9}{7.3}{\metre\per\second}
+for paragliders and \SIrange{7.6}{11.5}{\metre\per\second} for hang gliders:
+its magnitude changes much less than the three-decade lag range.
+Thus $b_2$ near two can arise when the change between interval-mean velocity
+vectors remains of comparable magnitude across the fitted lags. It does not
+establish $H=1$: in Eq.~\eqref{eq:variation-hurst}, that exact boundary case
+would give $V_2=0$. The small excesses above two are descriptive estimates,
+not calibrated evidence for $H>1$.
+
+Finite turning and velocity-persistence times provide a physical reason for
+curvature. Constant-velocity cancellation retains circling, acceleration,
+changes between glides and climbs, and changes in wind along a trajectory.
+These motions introduce characteristic times rather than guaranteeing a
+scale-free residual. At short lags, smoothing and cadence may also affect the
+observed change; the smooth-trajectory $\tau^4$ limit above is a possible local
+regime, not an assertion that the measured interval lies in that limit.
+
+Nonstationarity is not required for this interpretation. In a single
+stationary-increment population, the general identity is
+$V_2(\tau)=4M_2(\tau)-M_2(2\tau)$; the power-law expression follows only if
+the same law holds at both $\tau$ and $2\tau$. For the stationary exponentially
+correlated velocity example of Eq.~\eqref{eq:persistent-msd}, with persistence
+time $t_p$ and velocity variance $\sigma_v^2$, this gives
+\[
+ V_2(\tau)=2\sigma_v^2t_p^2
+ \left[2\frac{\tau}{t_p}-3+4e^{-\tau/t_p}-e^{-2\tau/t_p}\right].
+\]
+Its short-lag growth is $4\sigma_v^2\tau^3/(3t_p)$ and its long-lag growth is
+$4\sigma_v^2t_p\tau$. A slope near two can therefore occur in a crossover
+even though the position increments are stationary and there is no globally
+self-similar position process. This example establishes a mechanism, not a fit
+to the flight curves; their bends need not follow one exponential persistence
+time.
+
+Population selection can compound these physical scale effects. Fixing the
+long-flight cohort does not bring $b_2$ below two in either discipline
+(Table~\ref{tab:orderscan}), so disappearing short flights alone do not explain
+the result. That control still changes the admitted origins and their within-flight
+weights with lag. Nor can the empirical $V_1$ and $V_2$ curves be inserted into
+the stationary identity without matching their observations and weights.
+The plausible working explanation is therefore that the fitted interval combines
+velocity and route time scales with changing observation support, rather than
+isolating one self-similar residual. Anisotropy alone would not invalidate
+Eq.~\eqref{eq:variation-hurst}. To distinguish these explanations, the next
+checks should hold flights and origins fixed through $2\tau$, examine the
+increment law across flight time and phases, and seek a stable scaling interval
+outside cadence and smoothing effects. The current evidence does not identify
+one physical cause or prove that no useful restricted-regime $H$ exists.
 
 \subsection{Open and closed routes}
 \label{sec:strata-compat}
@@ -843,6 +906,35 @@ Since the component laws themselves change shape, the data also do not isolate t
 special case of scaling marginals with changing dependence alone.
 
 \subsection{Signed joint distributions}
+\paragraph{Spatial and temporal joint laws.}
+Here \emph{joint} refers to the east and north components of the same displacement
+$\mathbf X(t,\tau)=\mathbf r(t+\tau)-\mathbf r(t)$. At each lag, the
+two-dimensional law $p_\tau(x_E,x_N)$ describes their simultaneous dependence,
+including the shape and orientation of the displacement cloud. Comparing these
+laws at several lags still compares separate two-dimensional distributions.
+
+A temporal joint law also retains the association between displacements in
+different intervals. For example, two consecutive intervals of duration $\tau$
+give the four-dimensional random vector
+\[
+ \bigl(X_E(t,\tau),X_N(t,\tau),
+       X_E(t+\tau,\tau),X_N(t+\tau,\tau)\bigr).
+\]
+Its law describes how the first displacement is related to the next, such as
+whether an eastward displacement tends to be followed by another eastward
+displacement or a return. The separate one-lag laws do not generally determine
+this joint law. They can nevertheless constrain temporal dependence through
+the distribution of accumulated displacements; they are not devoid of temporal
+information.
+
+Process self-similarity requires the joint scaling of every finite collection
+of observation times, as defined in Sec.~\ref{sec:transport-propagator}.
+With stationary increments, the collapse of the one-lag vector laws is a
+necessary consequence, but even exact collapse would not establish that full
+property. The maps and distances below assess this one-lag consequence; they
+do not estimate a four-dimensional temporal joint law or higher multi-time laws.
+
+\paragraph{The measured spatial comparison.}
 Figures~\ref{fig:joint-para} and~\ref{fig:joint-hang} retain the signs of
 $(X_E,X_N)$ on the same flights and origins. Both coordinates are divided by
 $s_0(\tau/\SI{1000}{\second})^{H_*}$, where $H_*$ is the mean of all twelve slopes
@@ -864,8 +956,6 @@ including overflow. This comparison resolves differences at the chosen bin size;
 it is not a calibrated rejection test. Energy distance is an alternative for
 full multivariate laws with finite first moments~\cite{szekely2013}, but inference
 would still require calibration for paired flights and dependent origins.
-Even exact agreement of every one-lag vector law would leave multi-time
-self-similarity untested.
 
 \begin{figure}[tb]
  \centering
