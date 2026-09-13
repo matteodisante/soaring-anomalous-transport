@@ -22,7 +22,7 @@ precedenti della pipeline non fanno parte delle slide.
 | Documento | Slide | Versione con note |
 |---|---:|---|
 | [Capitolo 2](chapter2.pdf) | 58 | [PDF con note](chapter2-notes.pdf) |
-| [Capitolo 3](chapter3.pdf) | 101 | [PDF con note](chapter3-notes.pdf) |
+| [Capitolo 3](chapter3.pdf) | 103 | [PDF con note](chapter3-notes.pdf) |
 
 L'[indice](outline.md) riporta l'ordine e le pagine. I PDF con note affiancano
 alla slide le spiegazioni su stimatore, popolazione, limiti e interpretazione.
@@ -40,6 +40,13 @@ equipaggiamento, modelli e memoria. Il campione completo eleggibile contiene
 155085 parapendii e 6060 deltaplani. Il controllo a voli e origini comuni contiene
 14360 e 563 voli: misura la stessa popolazione a tutti i lag e non sostituisce
 l'analisi dell'archivio completo.
+
+Le slide 7--10 distinguono cancellazione della velocità costante e stima di
+Hurst. Le due slide di approfondimento riportano gli intervalli osservati di
+$D_2$, il limite del controllo a voli fissi e l'esempio analitico con persistenza
+finita. Le domande propongono controlli con origini comuni, fasi di volo e
+sensibilità al campionamento. L'esempio non è un modello adattato ai voli e
+nessuna causa fisica viene dichiarata identificata.
 
 L'ipotesi che equipaggiamento e scelte dei piloti moderino i vincoli di vento e
 orografia viene presentata insieme alle sue criticità: rapporto tra momenti

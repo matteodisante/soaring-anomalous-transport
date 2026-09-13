@@ -117,131 +117,133 @@ The decks follow the reviewed manuscript and have no prescribed duration. Page n
 | 6 | The MSD grows faster than linearly on the measured interval |
 | 7 | Constant velocity cancels; an intrinsic $H$ remains open |
 | 8 | Second differences measure changes of interval-mean velocity |
-| 9 | Third differences also cancel a constant acceleration |
-| 10 | Open and closed tasks change the growth of displacements |
-| 11 | A circle retains its geometry after second differencing |
-| 12 | Observed-path closure needs special care for segmented flights |
+| 9 | Why a slope near two need not identify a Hurst exponent |
+| 10 | Finite persistence can produce a crossover without nonstationarity |
+| 11 | Third differences also cancel a constant acceleration |
+| 12 | Open and closed tasks change the growth of displacements |
+| 13 | A circle retains its geometry after second differencing |
+| 14 | Observed-path closure needs special care for segmented flights |
 
 **Quantiles and population control**
 
 | Page | Topic |
 |---:|---|
-| 13 | A single displacement scale predicts equal quantile slopes |
-| 14 | The full archive and the fixed cohort answer different questions |
-| 15 | The fixed control requires common temporal support |
-| 16 | Holding flights fixed does not by itself hold the observations fixed |
-| 17 | Membership, flight weights and common origins change the comparison |
-| 18 | Relative spread changes, but the change is not monotone |
-| 19 | All quantiles can grow while spread relative to the median narrows |
-| 20 | Unequal rank exponents can encode that changing shape |
+| 15 | A single displacement scale predicts equal quantile slopes |
+| 16 | The full archive and the fixed cohort answer different questions |
+| 17 | The fixed control requires common temporal support |
+| 18 | Holding flights fixed does not by itself hold the observations fixed |
+| 19 | Membership, flight weights and common origins change the comparison |
+| 20 | Relative spread changes, but the change is not monotone |
+| 21 | All quantiles can grow while spread relative to the median narrows |
+| 22 | Unequal rank exponents can encode that changing shape |
 
 **Vector scaling and dependence**
 
 | Page | Topic |
 |---:|---|
-| 21 | Anisotropy does not prevent a common scalar rescaling |
-| 22 | East, north and radius together still do not identify the joint law |
-| 23 | Fixed-population quantiles: east component |
-| 24 | Fixed-population quantiles: north component |
-| 25 | Fixed-population quantiles: radial displacement |
-| 26 | Whole-flight bootstrap preserves pairing across ranks, axes and lags |
-| 27 | Paragliders: component and radial exponent estimates |
-| 28 | Paragliders: paired rank and directional contrasts |
-| 29 | Hang gliders: component and radial exponent estimates |
-| 30 | Hang gliders: paired rank and directional contrasts |
-| 31 | A common fitted scale depends on the fitted interval |
-| 32 | A large density near zero need not carry much probability |
-| 33 | Paragliders: marginal collapse for east |
-| 34 | Paragliders: marginal collapse for north |
-| 35 | Paragliders: marginal collapse for radius |
-| 36 | Hang gliders: marginal collapse for east |
-| 37 | Hang gliders: marginal collapse for north |
-| 38 | Hang gliders: marginal collapse for radius |
-| 39 | The joint comparison keeps geographic axes and one scalar scale |
-| 40 | Paragliders: signed joint laws (1/3) |
-| 41 | Paragliders: signed joint laws (2/3) |
-| 42 | Paragliders: signed joint laws (3/3) |
-| 43 | Hang gliders: signed joint laws (1/3) |
-| 44 | Hang gliders: signed joint laws (2/3) |
-| 45 | Hang gliders: signed joint laws (3/3) |
-| 46 | One scalar rescaling leaves changes in the signed joint law |
-| 47 | One-lag vector laws leave multi-time questions open |
+| 23 | Anisotropy does not prevent a common scalar rescaling |
+| 24 | East, north and radius together still do not identify the joint law |
+| 25 | Fixed-population quantiles: east component |
+| 26 | Fixed-population quantiles: north component |
+| 27 | Fixed-population quantiles: radial displacement |
+| 28 | Whole-flight bootstrap preserves pairing across ranks, axes and lags |
+| 29 | Paragliders: component and radial exponent estimates |
+| 30 | Paragliders: paired rank and directional contrasts |
+| 31 | Hang gliders: component and radial exponent estimates |
+| 32 | Hang gliders: paired rank and directional contrasts |
+| 33 | A common fitted scale depends on the fitted interval |
+| 34 | A large density near zero need not carry much probability |
+| 35 | Paragliders: marginal collapse for east |
+| 36 | Paragliders: marginal collapse for north |
+| 37 | Paragliders: marginal collapse for radius |
+| 38 | Hang gliders: marginal collapse for east |
+| 39 | Hang gliders: marginal collapse for north |
+| 40 | Hang gliders: marginal collapse for radius |
+| 41 | The joint comparison keeps geographic axes and one scalar scale |
+| 42 | Paragliders: signed joint laws (1/3) |
+| 43 | Paragliders: signed joint laws (2/3) |
+| 44 | Paragliders: signed joint laws (3/3) |
+| 45 | Hang gliders: signed joint laws (1/3) |
+| 46 | Hang gliders: signed joint laws (2/3) |
+| 47 | Hang gliders: signed joint laws (3/3) |
+| 48 | One scalar rescaling leaves changes in the signed joint law |
+| 49 | One-lag vector laws leave multi-time questions open |
 
 **Time-averaged transport by region and initial altitude**
 
 | Page | Topic |
 |---:|---|
-| 48 | Compare transport magnitude before its directional structure |
-| 49 | Regional TA-MSD: coastal flights travel farther at intermediate lags |
-| 50 | Fixing the population changes the apparent long-lag growth |
-| 51 | Regional support limits what the fixed control can establish |
-| 52 | Initial-altitude groups combine transport and regional composition |
-| 53 | The late rise in Plains and Hills is sensitive to population selection |
-| 54 | The altitude-band comparison also needs its flight counts |
-| 55 | Region and origin altitude are strongly associated in this sample |
+| 50 | Compare transport magnitude before its directional structure |
+| 51 | Regional TA-MSD: coastal flights travel farther at intermediate lags |
+| 52 | Fixing the population changes the apparent long-lag growth |
+| 53 | Regional support limits what the fixed control can establish |
+| 54 | Initial-altitude groups combine transport and regional composition |
+| 55 | The late rise in Plains and Hills is sensitive to population selection |
+| 56 | The altitude-band comparison also needs its flight counts |
+| 57 | Region and origin altitude are strongly associated in this sample |
 
 **Directional structure and environment**
 
 | Page | Topic |
 |---:|---|
-| 56 | Regional plots use different clocks, weights and centring |
-| 57 | Equal east and north moments do not establish isotropy |
-| 58 | Regional position moments differ along east and north |
-| 59 | Regional velocity moments show a related directional contrast |
-| 60 | Regional uncertainty bands do not match the groups |
-| 61 | PCA describes preferred axes; wind needs independent information |
-| 62 | Alps: centred principal axes across four lags |
-| 63 | Pyrenees: centred principal axes across four lags |
-| 64 | Channel Coast: centred principal axes across four lags |
-| 65 | A terrain direction measured independently of the flights |
-| 66 | Alps: shared sector, with an approximately 18-degree offset |
-| 67 | Pyrenees: the long-lag spread follows the highland axis |
-| 68 | Channel Coast: the reference height follows the PCA windows |
-| 69 | ERA5 wind is interpolated to the measured flight altitude |
-| 70 | At flight height, both annual references remain offset from PCA |
-| 71 | Height and time checks preserve a broad orientation resemblance |
-| 72 | What the environmental comparisons establish |
-| 73 | Alps: velocity changes retain a directional structure |
-| 74 | Pyrenees: the long-lag change coincides with falling support |
-| 75 | Channel Coast: smaller changes at 1000 s, with residual anisotropy |
-| 76 | Second-difference ellipses retain orientation after drift cancellation |
-| 77 | The regional contrast persists in a common-context control |
-| 78 | The ratio between orders changes with the lag |
-| 79 | The distribution distinguishes frequent small changes from large events |
-| 80 | Order-three support limits the long-lag regional comparison |
-| 81 | Alps: C/D/CCC has smaller coordinate-moment imbalance |
-| 82 | Pyrenees: the ordering of the two groups reverses |
-| 83 | Channel Coast: the late position contrast is pronounced |
-| 84 | Poitou-Charente: the group curves cross |
-| 85 | Champagne-Lorraine: a late contrast does not keep C/D/CCC at unity |
-| 86 | The environmental interpretation remains a hypothesis |
-| 87 | Define the target before calling it resistance to wind |
+| 58 | Regional plots use different clocks, weights and centring |
+| 59 | Equal east and north moments do not establish isotropy |
+| 60 | Regional position moments differ along east and north |
+| 61 | Regional velocity moments show a related directional contrast |
+| 62 | Regional uncertainty bands do not match the groups |
+| 63 | PCA describes preferred axes; wind needs independent information |
+| 64 | Alps: centred principal axes across four lags |
+| 65 | Pyrenees: centred principal axes across four lags |
+| 66 | Channel Coast: centred principal axes across four lags |
+| 67 | A terrain direction measured independently of the flights |
+| 68 | Alps: shared sector, with an approximately 18-degree offset |
+| 69 | Pyrenees: the long-lag spread follows the highland axis |
+| 70 | Channel Coast: the reference height follows the PCA windows |
+| 71 | ERA5 wind is interpolated to the measured flight altitude |
+| 72 | At flight height, both annual references remain offset from PCA |
+| 73 | Height and time checks preserve a broad orientation resemblance |
+| 74 | What the environmental comparisons establish |
+| 75 | Alps: velocity changes retain a directional structure |
+| 76 | Pyrenees: the long-lag change coincides with falling support |
+| 77 | Channel Coast: smaller changes at 1000 s, with residual anisotropy |
+| 78 | Second-difference ellipses retain orientation after drift cancellation |
+| 79 | The regional contrast persists in a common-context control |
+| 80 | The ratio between orders changes with the lag |
+| 81 | The distribution distinguishes frequent small changes from large events |
+| 82 | Order-three support limits the long-lag regional comparison |
+| 83 | Alps: C/D/CCC has smaller coordinate-moment imbalance |
+| 84 | Pyrenees: the ordering of the two groups reverses |
+| 85 | Channel Coast: the late position contrast is pronounced |
+| 86 | Poitou-Charente: the group curves cross |
+| 87 | Champagne-Lorraine: a late contrast does not keep C/D/CCC at unity |
+| 88 | The environmental interpretation remains a hypothesis |
+| 89 | Define the target before calling it resistance to wind |
 
 **Duration and equipment composition**
 
 | Page | Topic |
 |---:|---|
-| 88 | Long flights occur in both equipment groups |
-| 89 | Duration and equipment on the common 10--1695 s interval |
-| 90 | Fixing equipment proportions removes part of the duration contrast |
+| 90 | Long flights occur in both equipment groups |
+| 91 | Duration and equipment on the common 10--1695 s interval |
+| 92 | Fixing equipment proportions removes part of the duration contrast |
 
 **Model comparisons and temporal memory**
 
 | Page | Topic |
 |---:|---|
-| 91 | The moment spectrum challenges a specific L\'evy-walk benchmark |
-| 92 | Non-Gaussian pooled increments can arise from Gaussian mixtures |
-| 93 | Velocity memory remains visible after averaging over minutes |
-| 94 | Signed correlations retain the long-lag negative values |
-| 95 | Finite velocity persistence gives a ballistic-to-diffusive crossover |
-| 96 | Which models are challenged, and which remain open? |
-| 97 | Phase-conditioned moments must include windows crossing transitions |
-| 98 | Three decisions for this meeting |
+| 93 | The moment spectrum challenges a specific L\'evy-walk benchmark |
+| 94 | Non-Gaussian pooled increments can arise from Gaussian mixtures |
+| 95 | Velocity memory remains visible after averaging over minutes |
+| 96 | Signed correlations retain the long-lag negative values |
+| 97 | Finite velocity persistence gives a ballistic-to-diffusive crossover |
+| 98 | Which models are challenged, and which remain open? |
+| 99 | Phase-conditioned moments must include windows crossing transitions |
+| 100 | Three decisions for this meeting |
 
 **Linked representations and sources**
 
 | Page | Topic |
 |---:|---|
-| 99 | Squared laws transform the same distributional evidence |
-| 100 | Sources and the scope of the evidence |
-| 101 | Joint laws and environmental interpretation: additional sources |
+| 101 | Squared laws transform the same distributional evidence |
+| 102 | Sources and the scope of the evidence |
+| 103 | Joint laws and environmental interpretation: additional sources |

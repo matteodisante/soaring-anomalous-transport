@@ -45,16 +45,13 @@
     \large\insertframetitle\strut
   \end{beamercolorbox}
   \begin{tikzpicture}[remember picture,overlay]
-    \node[anchor=north west,inner sep=0pt,xshift=2mm,yshift=-1.2mm]
-      at(current page.north west){\includegraphics[height=8mm]{assets/cherubino_white.png}};
     \node[anchor=north east,text=white,inner sep=0pt,xshift=-2.3mm,yshift=-4.2mm]
       at(current page.north east){\small\insertframenumber};
   \end{tikzpicture}
 }
 \setbeamertemplate{footline}{%
   \hspace{7mm}\textcolor{muted}{\fontsize{6.5}{8}\selectfont
-    Matteo Di Sante\enspace|\enspace\TalkShort\enspace|\enspace13 September 2026}
-  \hfill\textcolor{muted}{\fontsize{6.5}{8}\selectfont Supervisor discussion}\hspace{7mm}\vspace{2mm}
+    Matteo Di Sante\enspace|\enspace\TalkShort}\vspace{2mm}
 }
 \newcommand{\kw}[1]{\textcolor{accent}{#1}}
 \newcommand{\source}[1]{\par\vspace{1mm}{\fontsize{7}{8.3}\selectfont\color{muted}#1\par}}
@@ -78,13 +75,10 @@
 \begin{tikzpicture}[remember picture,overlay]
  \fill[pisablue](current page.south west)rectangle(current page.north east);
  \fill[pisablight](current page.south west)rectangle([yshift=20mm]current page.south east);
- \node[anchor=north,yshift=-4mm]at(current page.north){\includegraphics[height=13mm]{assets/cherubino_white.png}};
- \node[text=white,align=center]at([yshift=19mm]current page.center)
-   {{\scshape\large University of Pisa}\\[2mm]{\small Department of Physics ``Enrico Fermi''}};
- \node[text=white,align=center,text width=.92\paperwidth]at([yshift=-3mm]current page.center)
-   {{\LARGE\bfseries #1}\\[3mm]{\large #2}};
+ \node[text=white,align=center,text width=.92\paperwidth]at(current page.center)
+   {{\LARGE\bfseries #1}};
  \node[text=pisablue,align=center]at([yshift=10mm]current page.south)
-   {{\normalsize Matteo Di Sante}\quad$\bullet$\quad{\normalsize 13 September 2026}\\[2mm]
+   {{\normalsize Version: 14/09/2026}\\[2mm]
     {\small #3}};
 \end{tikzpicture}
 \note{#4}

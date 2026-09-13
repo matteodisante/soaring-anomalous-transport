@@ -14,7 +14,7 @@
 \begin{document}
 \titleframe{Global transport in soaring flights}
  {Measurements, controls and questions for the supervisors}
- {Chapter 3\enspace$\bullet$\enspace Complete chapter review}
+ {Chapter 3}
 {This deck develops the whole chapter without a prescribed duration. Its central distinction is between measured constraints on the observed ground trajectories and hypotheses about their generating process.}
 \section{Displacement, support and growth}
 
@@ -129,6 +129,54 @@ one minute with the vector in the next minute. Changes of magnitude and directio
 \question{At which scales does the ground motion change most, and how does that depend on the region?}
 \source{Exact kinematic identity; no power law or stationarity assumption is needed.}
 \speaker{This is an RMS change of interval-mean ground velocity. It is neither instantaneous acceleration nor wind speed. A constant added velocity cancels in both intervals. Keeping the physical units makes regional amplitudes interpretable even when a single exponent is not supported. The later regional study uses this quantity together with the vector covariance, distributions and order-three control.}
+\end{frame}
+
+\begin{frame}{Why a slope near two need not identify a Hurst exponent}
+\[
+ V_2(\tau)=\tau^2D_2^2(\tau),\qquad
+ b_{2,\mathrm{loc}}=2+2\frac{\mathrm d\log D_2}{\mathrm d\log\tau}.
+\]
+\begin{columns}[T,onlytextwidth]
+\column{.47\textwidth}
+\small\textbf{Saved full-archive curves}\par\medskip
+Over 10--10,000 s, $D_2$ varies within:\par\smallskip
+\begin{tabular}{@{}lc@{}}\toprule
+ & $D_2$ range (m/s)\\\midrule
+Paragliders & 4.9--7.3\\
+Hang gliders & 7.6--11.5\\\bottomrule
+\end{tabular}
+\par\smallskip
+A nonmonotone change of less than a factor two across three decades of lag.
+\column{.49\textwidth}
+\small\textbf{Interpretation and limits}\par\medskip
+The $\tau^2$ factor can dominate growth; local curvature prevents one validated $H$.\par\medskip
+The fixed long-flight cohort also gives $b_2>2$: flight membership alone cannot explain it. Origins and weights still change.
+\end{columns}
+\question{Does a stable slope survive with flights and origins fixed, within comparable flight phases?}
+\source{Thesis Sec. 3.1.2; saved full-archive variations, unchanged numerical run. Ranges are descriptive, not confidence intervals.}
+\speaker{D2 is the RMS difference between mean ground-velocity vectors in adjacent intervals, with the same per-lag averaging as V2. These ranges were checked directly from the saved full-archive arrays; no flight subsampling or new transport fit was used. Approximate constancy explains how a descriptive slope near two arises, but does not identify its physical cause. At the exact H=1 boundary of the stationary-increment power-law model, the second difference would have zero variance. Small fitted excesses above two have no calibrated significance here. Keeping only long flights fixes membership but not the contributing origins or their weights. Cadence and smoothing sensitivity should accompany a search for a restricted stable regime; the current evidence does not rule out every useful finite-range H.}
+\end{frame}
+
+\begin{frame}{Finite persistence can produce a crossover without nonstationarity}
+\small A stationary centred velocity with variance $\sigma_v^2$ and normalised
+correlation $C(s)=e^{-s/t_p}$ gives
+\[
+ V_2(\tau)=2\sigma_v^2t_p^2
+ \left[2\frac{\tau}{t_p}-3+4e^{-\tau/t_p}-e^{-2\tau/t_p}\right].
+\]
+\[
+ \tau\ll t_p:\quad V_2\sim\frac{4\sigma_v^2}{3t_p}\tau^3,
+ \qquad
+ \tau\gg t_p:\quad V_2\sim4\sigma_v^2t_p\tau.
+\]
+\small A local slope near two occurs between these regimes despite stationary
+position increments. \kw{This is an analytical example, not a fit to the flights.}\par\medskip
+In flights, turns, glide--climb transitions and changing wind survive constant-velocity
+cancellation. Their characteristic times, combined with changing observation support,
+are a plausible origin of the measured curvature.
+\question{Which dominates the bends: turning, phase changes or sampling? Can phase-conditioned and common-origin comparisons separate them?}
+\source{Thesis Sec. 3.1.2 and the velocity-covariance model in Sec. 3.6; the closed formula was checked against covariance integration.}
+\speaker{For the same stationary-increment population, V2(tau)=4M2(tau)-M2(2tau). A 2H interpretation requires one increment power law at both tau and 2tau, not merely stationarity. Exponential velocity covariance introduces a persistence time and gives a cubic-to-linear crossover; a differentiable curved path can instead give a quartic small-lag limit. Neither limit is claimed to describe all measured lags. The observed D2 curves are nonmonotone and need not follow one exponential model. Anisotropy alone does not invalidate the vector variance identity. We have a plausible explanation in terms of finite physical scales and sampling, not an identified wind effect or demonstrated nonstationarity. When conditioning on phases, retain an explicit category for windows crossing transitions.}
 \end{frame}
 
 \begin{frame}{Third differences also cancel a constant acceleration}
