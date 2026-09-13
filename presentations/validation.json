@@ -1,5 +1,5 @@
 {
-  "verified_utc": "2026-09-13T19:55:47.778911+00:00",
+  "verified_utc": "2026-09-13T20:08:44.973442+00:00",
   "numerical_run_id": "temporal-self-similarity-2026-09-13",
   "reviewed_thesis": {
     "status": "complete",
@@ -314,9 +314,9 @@
     "supervisor-gate-manifest.json": "0b7d58c5e51b8b9d6b737b662b30d5d706026a53b3fcbbe791680de032679e6c",
     "variation-panel-manifest.json": "aa9d31b57965b018270b3a49bc648d8ce49f32a42d17fa5580a29b78e3aad5df",
     "tamsd-panel-manifest.json": "93d860a71c6d96d6f1c57cb6ed3a3d325d8d1fbcc838fd18edb40b057cca226a",
-    "panel-crop-manifest.json": "c301028b05c0cc24c3d3c5e8db401e9ab6bf1cd0dbe0b76952094e7e989a3c04"
+    "panel-crop-manifest.json": "74d92bc65ed8028f5f0bc4fdc1defb123610b6b95c13672028f3489de1a97529"
   },
-  "verified_assets": 118,
+  "verified_assets": 122,
   "documents": {
     "chapter2.pdf": {
       "pages": 74,
@@ -351,25 +351,55 @@
       "speaker_notes": true
     },
     "chapter3-section35.pdf": {
-      "pages": 37,
-      "numbered_slides": 32,
-      "subsection_dividers": 5,
-      "sha256": "0e5bb28ff9d5ea4a6d25f1809102b9403f9d9cb3545b2a9653571509e6716cde",
-      "bytes": 1581340,
+      "pages": 40,
+      "numbered_slides": 37,
+      "subsection_dividers": 3,
+      "sha256": "0f2d97a33a6c85a54d5be162e3752adb339a96c4f3ae611adff27008fefb3dd5",
+      "bytes": 1879717,
       "speaker_notes": false
     },
     "chapter3-section35-notes.pdf": {
-      "pages": 37,
-      "numbered_slides": 32,
-      "subsection_dividers": 5,
-      "sha256": "933fec26663b1abc8b3b0b22dcb094e68d16e6694784ac99c8ef6a1f9b76108c",
-      "bytes": 1601064,
+      "pages": 40,
+      "numbered_slides": 37,
+      "subsection_dividers": 3,
+      "sha256": "4c15fad1c6ff54dab35f92afba5729182cbb0c8daebe036e759f4ec072dbb391",
+      "bytes": 1897251,
       "speaker_notes": true
     }
   },
+  "focused_thesis_figures": {
+    "3.20": {
+      "source": "thesis/generated/prelim_isotropy.pdf",
+      "sha256": "a082d326a9dda2f422e7431ed0f0f85776d4155de0c478bed4ccdfe4039c3ed8"
+    },
+    "3.21": {
+      "source": "thesis/generated/ch3_pca.pdf",
+      "sha256": "3501a6e7b783d6deec93d946f7a0a97f5897d3c2593437f24750b34ba5929bab"
+    },
+    "3.22": {
+      "source": "thesis/generated/ch3_terrain_axes.pdf",
+      "sha256": "d2f0ece41c9b68eab1de2cfb616487c94582717cbf2a12ba1e29c3247803688e"
+    },
+    "3.23": {
+      "source": "thesis/generated/ch3_channel_wind.pdf",
+      "sha256": "5db9b72546c797c406e8da96d84e731da450ca8ce6cbfea752a8f256cf747ef9"
+    },
+    "3.24": {
+      "source": "thesis/generated/kinematic_isotropy_terrain.pdf",
+      "sha256": "d2a6ae12b2bb456eaf214219b6a4609776178773402273b7b8fd684c0bf5ce10"
+    },
+    "3.25": {
+      "source": "thesis/generated/kinematic_isotropy_terrain_level.pdf",
+      "sha256": "9c7feef8651b1de4b6853438c646fd02b97827740fe95fec00064eabe9d34f7e"
+    },
+    "3.26": {
+      "source": "thesis/generated/kinematic_isotropy_flat_level.pdf",
+      "sha256": "a8834af134a42226bd9312c7f0312b38211093192e0a5496580580eec168c8d1"
+    }
+  },
   "presentation_sources": {
-    "build.py": "81099beefc35624fa67fca32a2edff9b985335e273c6e3b7f7a8197d1c47f849",
-    "crop_chapter_panels.py": "4904c4ef0ae1f5210c268f4c9c09ed9eb180d0f97fb2c1777260f35b2e7d978c",
+    "build.py": "825d20d1e21b2875ee1fedc89adc70750d14477d6f4add0c0ab0b1c46e4ed562",
+    "crop_chapter_panels.py": "77b5a8a316c16f387d0bee035eca975b81d6ffa8dbe6b6d93e52e532f8c245f3",
     "prepare_assets.py": "b0bea8ff5a93d97ae926ee47d84d3792a5ff506f0c2b6a2888d3da5a5ce6d943",
     "render_chapter3_panels.py": "7305198248db3c7d3651a700b6840f4909c6f18741a237c43d21d652bd58c3c7",
     "render_figures.py": "3640b16dec9ce92b81f1b5a802d5d165a042a365f655283acde624680c6b4cd2",
@@ -379,11 +409,12 @@
     "render_variation_panels.py": "caf28be8d82e1947314391b0ee62cac544219a4c6bb255009045cbd478e872b3",
     "review_editorial.py": "453d627494e3a8baff71bd314a694e7155a7e5d768dd74e970b1c194f3a72b7f",
     "setup_viewer_link.py": "82033d5a5ac7a44626415a264996c20a09a6830b11d9fc1c7360bbaf45a704f1",
-    "validate.py": "920b1d03a06efcdf4eaa06b7f31f234edfdb4c87b04d878a1673cab26df39b3b",
+    "validate.py": "8f42b3c0b9ed6c729c90c595687328fca22c1b2e12fdd1f76a4aee6e58d3a20a",
     "theme.tex": "a2541e91dbcb6c38714406534760a723003166f8fde1c4cd9c97fd67988689f6",
     "chapter2.tex": "f4dfcb9a2bb68bf8aef7e7b4338539a6db9b15857c00e4a65f8573c067ec9914",
-    "chapter3.tex": "962503a9b0e0eaebf946c1d1628a23b615013045d35ec2634ea5c7112a28c492"
+    "chapter3.tex": "962503a9b0e0eaebf946c1d1628a23b615013045d35ec2634ea5c7112a28c492",
+    "chapter3-section35.tex": "26b757ad0d62aa6b5c0a6bae2f7280379032fe69f05947f10c7e7a206885aecd"
   },
   "scope": "Complete chapter decks and the Section 3.5 focused deck use the reviewed current results. All referenced figure and numerical inputs match their manifests; full reports retain all bytes in gzip; six PDFs compile without LaTeX warnings or overfull boxes.",
-  "visual_review": "Chapter 3 slides 59--65 explain the signed four-component temporal observable, fixed support, training-only quantile fit, held-out projected CDFs, paired date bootstrap, intermediate-range results and limits. Slides 60--61 and the new result panels were inspected for readable formulas and plots. The 37-page focused Section 3.5 deck was inspected as a contact sheet; its title, five subsection dividers and 32 numbered slides are complete and legible. Values and populations agree with the reviewed thesis and complete measurement report. Existing marginal-collapse, Hurst-limit and wind results remain unchanged. The discussion-question layout already present in the workspace was preserved."
+  "visual_review": "Chapter 3 slides 59--65 explain the signed four-component temporal observable, fixed support, training-only quantile fit, held-out projected CDFs, paired date bootstrap, intermediate-range results and limits. Slides 60--61 and the new result panels were inspected for readable formulas and plots. The focused deck follows thesis subsections 3.5.1, 3.5.2 and 3.5.3 in order. Figures 3.20--3.26 appear whole, with supplementary enlargements and visible commentary. The final 40-page deck was inspected as a contact sheet; all three subsection dividers and 37 numbered slides are present. Values and populations agree with the reviewed thesis and complete measurement report. Existing marginal-collapse, Hurst-limit and wind results remain unchanged. The discussion-question layout already present in the workspace was preserved."
 }

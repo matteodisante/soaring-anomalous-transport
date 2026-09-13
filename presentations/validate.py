@@ -124,19 +124,45 @@ def main() -> None:
                                     "sha256": digest(path),
                                     "bytes": path.stat().st_size,
                                     "speaker_notes": bool(suffix)}
-    chapter3_tex = (ROOT / "chapter3.tex").read_text()
-    try:
-        focused_tex = chapter3_tex.split("% SECTION35-EXTRACT-BEGIN:", 1)[1].split(
-            "% SECTION35-EXTRACT-END", 1
-        )[0]
-    except IndexError as exc:
-        raise ValueError("Section 3.5 extraction markers are missing") from exc
+    focused_tex = (ROOT / "chapter3-section35.tex").read_text()
     focused_numbered = len(re.findall(r"\\begin\{frame\}", focused_tex)) + 1
     focused_dividers = len(re.findall(r"\\subsectionframe\{", focused_tex))
     focused_count = focused_numbered + focused_dividers
-    focused_sections = set(re.findall(r"\\subsectionframe\{([^}]+)\}", focused_tex))
-    if focused_sections != {"3.5.1", "3.5.2", "3.5.3"}:
+    focused_sections = re.findall(r"\\subsectionframe\{([^}]+)\}", focused_tex)
+    if focused_sections != ["3.5.1", "3.5.2", "3.5.3"]:
         raise ValueError(f"Unexpected subsection in focused deck: {focused_sections}")
+    referenced = set(re.findall(r"\\fig(?:\[[^\]]+\])?\{([^}]+)\}", focused_tex))
+    if not referenced.issubset(assets):
+        raise ValueError(f"Missing focused figure provenance: {referenced - assets.keys()}")
+    # Every figure from the three requested thesis subsections must appear whole;
+    # cropped panels supplement these figures and never replace missing panels.
+    expected_figures = {
+        "prelim_isotropy.pdf": "3.20", "ch3_pca.pdf": "3.21",
+        "ch3_terrain_axes.pdf": "3.22", "ch3_channel_wind.pdf": "3.23",
+        "kinematic_isotropy_terrain.pdf": "3.24",
+        "kinematic_isotropy_terrain_level.pdf": "3.25",
+        "kinematic_isotropy_flat_level.pdf": "3.26",
+    }
+    direct_figures = set(re.findall(
+        r"\\includegraphics(?:\[[^\]]+\])?\{\.\./thesis/generated/([^}]+)\}",
+        focused_tex,
+    ))
+    if direct_figures | (referenced & expected_figures.keys()) != expected_figures.keys():
+        raise ValueError("The focused deck must contain exactly thesis Figures 3.20--3.26")
+    reviewed_outputs = source["reviewed_thesis"]["generated_outputs"]
+    focused_figures = {}
+    for name, number in expected_figures.items():
+        path = REPO / "thesis/generated" / name
+        if digest(path) != reviewed_outputs[name]:
+            raise ValueError(f"Focused thesis figure changed since review: {name}")
+        focused_figures[number] = {"source": str(path.relative_to(REPO)),
+                                  "sha256": digest(path)}
+    for name in re.findall(r"\\input\{data/([^}]+)\}", focused_tex):
+        if digest(ROOT / "data" / name) != data[name]:
+            raise ValueError(f"Focused slide values differ from thesis input: {name}")
+    for name in re.findall(r"\\input\{\.\./thesis/generated/([^}]+)\}", focused_tex):
+        if digest(REPO / "thesis/generated" / name) != reviewed_outputs[name]:
+            raise ValueError(f"Focused numerical input differs from reviewed thesis: {name}")
     for suffix in ("", "-notes"):
         stem = f"chapter3-section35{suffix}"
         path = ROOT / (stem + ".pdf")
@@ -164,10 +190,11 @@ def main() -> None:
               "source_manifest_sha256": digest(ROOT / "source-manifest.json"),
               "figure_manifests": manifests, "verified_assets": len(assets),
               "documents": documents,
+              "focused_thesis_figures": focused_figures,
               "presentation_sources": {p.name: digest(p) for p in
-                  sorted(ROOT.glob("*.py")) + [ROOT / "theme.tex", ROOT / "chapter2.tex", ROOT / "chapter3.tex"]},
+                  sorted(ROOT.glob("*.py")) + [ROOT / "theme.tex", ROOT / "chapter2.tex", ROOT / "chapter3.tex", ROOT / "chapter3-section35.tex"]},
               "scope": "Complete chapter decks and the Section 3.5 focused deck use the reviewed current results. All referenced figure and numerical inputs match their manifests; full reports retain all bytes in gzip; six PDFs compile without LaTeX warnings or overfull boxes.",
-              "visual_review": "Chapter 3 slides 59--65 explain the signed four-component temporal observable, fixed support, training-only quantile fit, held-out projected CDFs, paired date bootstrap, intermediate-range results and limits. Slides 60--61 and the new result panels were inspected for readable formulas and plots. The 37-page focused Section 3.5 deck was inspected as a contact sheet; its title, five subsection dividers and 32 numbered slides are complete and legible. Values and populations agree with the reviewed thesis and complete measurement report. Existing marginal-collapse, Hurst-limit and wind results remain unchanged. The discussion-question layout already present in the workspace was preserved."}
+              "visual_review": "Chapter 3 slides 59--65 explain the signed four-component temporal observable, fixed support, training-only quantile fit, held-out projected CDFs, paired date bootstrap, intermediate-range results and limits. Slides 60--61 and the new result panels were inspected for readable formulas and plots. The focused deck follows thesis subsections 3.5.1, 3.5.2 and 3.5.3 in order. Figures 3.20--3.26 appear whole, with supplementary enlargements and visible commentary. The final 40-page deck was inspected as a contact sheet; all three subsection dividers and 37 numbered slides are present. Values and populations agree with the reviewed thesis and complete measurement report. Existing marginal-collapse, Hurst-limit and wind results remain unchanged. The discussion-question layout already present in the workspace was preserved."}
     (ROOT / "validation.json").write_text(json.dumps(result, indent=2) + "\n")
     print(f"Verified six presentation PDFs, {len(assets)} figure assets and complete report bytes.")
 

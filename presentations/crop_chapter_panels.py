@@ -13,6 +13,10 @@ from pypdf.generic import RectangleObject
 ROOT = Path(__file__).resolve().parents[1]
 OUT = Path(__file__).resolve().parent / 'assets'
 PANELS = {
+    'section35-pca-alps': ('ch3_pca', (0, 0, 1, 1/3), None),
+    'section35-pca-pyrenees': ('ch3_pca', (0, 1/3, 1, 2/3), None),
+    'section35-pca-coast': ('ch3_pca', (0, 2/3, 1, 1), None),
+    'section35-acceleration': ('kinematic_isotropy_terrain', (0, 2/3, 1, 1), None),
     'msd-growth': ('msd', (0, 0, 1, .525), None),
     'msd-support': ('msd', (0, .525, 1, 1), None),
     'retained-duration-path': ('prelim_ensemble', (0, 0, 1, .5), None),

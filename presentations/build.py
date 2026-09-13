@@ -25,7 +25,7 @@ def main() -> None:
     decks = {
         "2": ("chapter2", None),
         "3": ("chapter3", None),
-        "3.5": ("chapter3-section35", "SectionThreeFiveOnly"),
+        "3.5": ("chapter3-section35", None),
     }
     selected = ("3", "2", "3.5") if args.chapter == "all" else (args.chapter,)
     for deck in selected:
