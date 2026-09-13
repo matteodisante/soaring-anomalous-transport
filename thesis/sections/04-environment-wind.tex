@@ -16,9 +16,12 @@ not take-off altitude or height above the terrain. The receiver datums have
 not been harmonised (Section~\ref{sec:enu}); the comparison interprets them
 approximately as altitude above mean sea level, with limited physical precision.
 
-ERA5 hourly pressure-level wind and geopotential \cite{era5_pressure} supply
-an independent reference at that altitude. A pinned snapshot of the public
-Earthmover archive \cite{earthmover_era5} provides 2016--2025 values at the same
+ERA5 hourly pressure-level wind and geopotential from ECMWF/Copernicus
+\cite{era5_pressure} supply an independent reference at that altitude. The
+values are accessed through a pinned snapshot of Earthmover's public,
+cloud-optimised copy of ERA5 on AWS \cite{earthmover_era5}. Earthmover is the
+distributor of this losslessly stored copy, not the producer of a separate
+meteorological reanalysis. The snapshot provides 2016--2025 values at the same
 nine $0.25^\circ$ cells used for the regional surface-wind reference. These
 cells are nearest to the centres of a regular $3\times3$ partition of the
 Channel Coast take-off box. The extracted levels are 1000, 925, 850 and
