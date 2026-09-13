@@ -277,3 +277,10 @@ Run its `review_manuscript.py` before preparing assets, and append its
 checked in chronological order; numerical identities must match at every step.
 The three Fig. 3.4 panels are vector crops. Dashed lines in fixed-population
 quantile plots evaluate the saved regression coefficients without fitting again.
+
+The next manuscript review, in
+`revisions/marginal-collapse-and-radial-shape-2026-09-13/`, explains approximate
+marginal collapse and the different radial density shape. Its README records
+the `presentations/review_editorial.py` command. Append this review as the
+third `--editorial-review` argument when preparing slide assets. Completed
+reviews remain unchanged; a fresh review output is required for later edits.

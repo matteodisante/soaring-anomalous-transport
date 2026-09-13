@@ -602,6 +602,44 @@ The following plots retain positive support; empirical-CDF comparisons also reta
 \speaker{The stated bound comes from the complete saved histogram masses, not from reading a logarithmic density height. Tiny numerical displacements can reflect recorded coordinates and interpolation. The median-normalized displays show the saved first-to-ninety-ninth percentiles; they do not establish tail collapse beyond those ranks.}
 \end{frame}
 
+\begin{frame}{A radial density can scale without a plateau near zero}
+\small For a regular joint density, polar coordinates give
+\[
+ p_R(r;\tau)=r\int_0^{2\pi}
+ p_{\mathbf X}(r\cos\theta,r\sin\theta;\tau)\,\mathrm d\theta.
+\]
+\begin{columns}[T,onlytextwidth]
+\column{.48\textwidth}
+\centering
+\begin{tikzpicture}[scale=.5,>=Stealth]
+ \fill[teal!20](-.25,-1.1)rectangle(.25,1.1);
+ \draw[->](-1.4,0)--(1.4,0)node[right]{$X_E$};
+ \draw[->](0,-1.2)--(0,1.2)node[above]{$X_N$};
+ \draw[teal,dashed](-.25,-1.1)--(-.25,1.1);
+ \draw[teal,dashed](.25,-1.1)--(.25,1.1);
+\end{tikzpicture}
+\par\small A strip gives a component plateau:
+\[
+ p_{|X_E|}(x)\longrightarrow2p_E(0)>0.
+\]
+\column{.48\textwidth}
+\centering
+\begin{tikzpicture}[scale=.5,>=Stealth]
+ \fill[wine!20](0,0)circle(.5);
+ \draw[->](-1.4,0)--(1.4,0)node[right]{$X_E$};
+ \draw[->](0,-1.2)--(0,1.2)node[above]{$X_N$};
+ \draw[wine](0,0)circle(.5);
+\end{tikzpicture}
+\par\small A disk gives a radial rise:
+\[
+ p_R(r)\sim2\pi p_{\mathbf X}(0,0)r.
+\]
+\end{columns}
+\question{A rising radial density is compatible with exact scaling.}
+\source{Finite, continuous, nonzero densities at the origin; no isotropy assumption. This explains the geometry, not a fitted small-radius law.}
+\speaker{The component density integrates probability over a strip; radial density integrates it around an annulus whose area includes the factor r. The corresponding cumulative probabilities near zero grow linearly and quadratically. Under a common spatial scale a, the factor r=a times the rescaled radius converts the joint density factor a to the minus two into the radial factor a to the minus one. This is consistent with the same one-dimensional scaling prefactor for the component and radial densities. As an exact example, independent centred Gaussian coordinates with common standard deviation sigma give a half-normal absolute component with a plateau and a Rayleigh radius rising from zero; both collapse exactly when sigma scales by a. The real flights need not be Gaussian, and their tiny-radius histograms need not reach these smooth-density limits.}
+\end{frame}
+
 \begin{frame}{Paragliders: marginal collapse for east}
 \centering\fig[54mm]{supervisor-collapse-para-east.pdf}
 \question{Does power or median normalization leave a systematic shape change?}
@@ -636,6 +674,26 @@ The following plots retain positive support; empirical-CDF comparisons also reta
 \centering\fig[54mm]{supervisor-collapse-hang-radial.pdf}
 \question{Does power or median normalization leave a systematic shape change?}
 \speaker{The panels show recorded histogram densities, the saved power rescaling, and recorded first-to-ninety-ninth quantile ranks after median normalization. Positive values are displayed on logarithmic axes; any zero mass is reported separately and retained in the exact empirical-CDF distances. Median-normalized ranks do not establish collapse outside that rank range. The same selected lag colours are retained throughout.}
+\end{frame}
+
+\begin{frame}{East and north show approximate collapse, with residual differences}
+\small Power rescaling visibly brings the absolute east and north densities together.
+Radial curves also group more closely, but differences remain around the peak
+and on its rising side.\par\medskip
+\begin{center}
+\begin{tabular}{@{}lrrr@{}}\toprule
+Maximum ECDF separation & $|X_E|$ & $|X_N|$ & $R$\\\midrule
+Paragliders & 0.177 & 0.203 & 0.273\\
+Hang gliders & 0.185 & 0.269 & 0.331\\\bottomrule
+\end{tabular}
+\end{center}
+A value of 0.177 means a 17.7-percentage-point cumulative probability difference
+for some pair of lags after power rescaling. Log density axes can conceal it.\par\medskip
+\kw{Conclusion: approximate scaling of absolute-component one-lag laws.}
+These plots do not establish signed-component or multi-time process self-similarity.
+\question{Which lag and probability ranges support a useful approximation, and what discrepancy should the model tolerate?}
+\source{Thesis Figs. 3.10--3.11 and Table 3.5. Fixed flights, weights and origins; descriptive distances without a calibrated rejection threshold.}
+\speaker{The visible component collapse should be acknowledged explicitly, while its quality is quantified rather than described as exact. The table contains the saved maxima over all pairs of the six displayed lags. Each quantity uses its own fitted common exponent; these are not a demonstration of one common vector exponent. The radial density's lack of a plateau is not evidence against scaling. Its separation between lags is the relevant discrepancy. Taking absolute values discards sign information, and separate one-lag laws leave temporal joint laws untested. Median normalization also leaves discrepancies: the radial maxima become 0.194 for paragliders and 0.229 for hang gliders. The distances are not independent-sample KS p-values and do not quantify statistical significance.}
 \end{frame}
 
 \begin{frame}{The joint comparison keeps geographic axes and one scalar scale}

@@ -22,7 +22,7 @@ precedenti della pipeline non fanno parte delle slide.
 | Documento | Slide | Versione con note |
 |---|---:|---|
 | [Capitolo 2](chapter2.pdf) | 58 | [PDF con note](chapter2-notes.pdf) |
-| [Capitolo 3](chapter3.pdf) | 110 | [PDF con note](chapter3-notes.pdf) |
+| [Capitolo 3](chapter3.pdf) | 112 | [PDF con note](chapter3-notes.pdf) |
 
 L'[indice](outline.md) riporta l'ordine e le pagine. I PDF con note affiancano
 alla slide le spiegazioni su stimatore, popolazione, limiti e interpretazione.
@@ -57,6 +57,12 @@ La slide 39 distingue i dodici esponenti separati dall'esponente comune usato
 per il rescaling. Anche il bootstrap mostra esplicitamente il ricalcolo delle
 CDF, dei quantili e dei fit in ogni replica.
 
+Le slide 42 e 49 distinguono la forma della densità dalla qualità del collasso.
+Uno schema di striscia e disco spiega perché la densità radiale può crescere
+vicino a zero mentre quelle delle componenti hanno un plateau. Si riconosce
+esplicitamente il collasso approssimato di est e nord, riportando le distanze
+ECDF residue e i limiti dell'interpretazione come self-similarità del processo.
+
 L'ipotesi che equipaggiamento e scelte dei piloti moderino i vincoli di vento e
 orografia viene presentata insieme alle sue criticità: rapporto tra momenti
 uguale a uno non basta per l'isotropia, le classi non misurano l'esperienza,
@@ -83,7 +89,7 @@ python3 presentations/build.py all --notes
 Per rigenerare gli asset dal manoscritto revisionato nella stessa checkout:
 
 ```bash
-uv run --no-project --with pypdf python presentations/prepare_assets.py --pca-update revisions/regional-pca-lags-2026-09-12 --variation-update revisions/regional-variations-2026-09-12 --tamsd-update revisions/grouped-tamsd-2026-09-12 --environment-update revisions/environment-axis-integration-2026-09-12 --wind-altitude-update revisions/channel-wind-flight-altitude-2026-09-13 --editorial-review revisions/joint-laws-and-hurst-interpretation-2026-09-13/manuscript-review.json --editorial-review revisions/component-scaling-and-quantile-slides-2026-09-13/manuscript-review.json
+uv run --no-project --with pypdf python presentations/prepare_assets.py --pca-update revisions/regional-pca-lags-2026-09-12 --variation-update revisions/regional-variations-2026-09-12 --tamsd-update revisions/grouped-tamsd-2026-09-12 --environment-update revisions/environment-axis-integration-2026-09-12 --wind-altitude-update revisions/channel-wind-flight-altitude-2026-09-13 --editorial-review revisions/joint-laws-and-hurst-interpretation-2026-09-13/manuscript-review.json --editorial-review revisions/component-scaling-and-quantile-slides-2026-09-13/manuscript-review.json --editorial-review revisions/marginal-collapse-and-radial-shape-2026-09-13/manuscript-review.json
 uv run --no-project --with pypdf python presentations/crop_chapter_panels.py
 .venv/bin/python presentations/render_figures.py
 .venv/bin/python presentations/render_chapter3_panels.py

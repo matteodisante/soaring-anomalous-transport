@@ -418,6 +418,9 @@ the two-dimensional and radial laws obey different Jacobians:
 The radial law follows by integrating the joint density over angle, including the polar
 Jacobian $r$. It does not require isotropy. In particular, a two-dimensional density at
 the origin would scale as $a_\tau^{-2}$, not as $a_\tau^{-1}$.
+These are consequences of the proposed vector scale family, not statements
+that the measured laws already satisfy it. A shared scale factor does not
+require the radial and component densities to have the same shape.
 
 \paragraph{East and north scaling.}
 Projecting Eq.~\eqref{eq:increment-scaling} onto either geographic axis gives
@@ -898,13 +901,76 @@ observations do not support an independent-sample Kolmogorov--Smirnov $p$-value.
  \input{generated/ch3_self_similarity_collapse}
 \end{table}
 
-The fitted exponents are near 0.9, yet the rescaled distributions remain separated
-(Table~\ref{tab:component-collapse}). The radius has the largest power-rescaling
-distance in both disciplines, about 0.27 for paragliders and 0.33 for hang gliders.
-Dividing by each lag's median reduces these radial distances to about 0.19 and
-0.23, but leaves separation for all three quantities. Thus allowing an arbitrary
-scale at each lag still does not remove the observed shape changes. These are
-empirical discrepancies without a calibrated sampling-error threshold.
+\paragraph{Approximate collapse and its limits.}
+Figures~\ref{fig:absolute-laws-para} and~\ref{fig:absolute-laws-hang} show a
+clear visual improvement after power rescaling: the absolute east and north
+densities approximately superpose over a broad part of their displayed range.
+This is evidence of approximate marginal scaling on the measured interval,
+with fitted exponents near 0.9. The radial curves also move into a broadly
+common range, especially around their main peak and upper falloff, but retain
+more visible differences on the rising side and around the peak.
+
+The visual agreement is not exact distributional collapse. The maximum
+power-rescaled ECDF separations are 0.177, 0.203 and 0.273 for east, north and
+radius in paragliders, and 0.185, 0.269 and 0.331 in hang gliders
+(Table~\ref{tab:component-collapse}). For example, 0.177 is a difference of
+17.7 percentage points in cumulative probability for some pair of displayed
+lags, not a relative density error. Logarithmic density axes can make such
+differences appear small. Median normalisation reduces the radial distances
+to 0.194 and 0.229, but leaves separation for all three quantities. The
+rank-dependent slopes and changing quantile ratios provide further evidence
+that one power scale is an incomplete description.
+
+We therefore describe the east and north results as approximate collapse of
+the absolute-component one-lag laws, rather than established self-similarity
+of either signed component process. Taking absolute values loses sign
+information, and these plots do not test joint scaling across multiple times.
+Nor do different fitted $H_{E,*}$ and $H_{N,*}$ establish one common vector
+exponent. The measured discrepancies have no calibrated sampling-error
+threshold: they quantify the residual differences without constituting a
+formal rejection test or excluding useful scaling on a more restricted range.
+
+\paragraph{Why the radial density need not have a plateau.}
+Scaling compares a given quantity across lags; it does not require the
+component and radial scaling functions to coincide. At a fixed lag, polar
+coordinates give the exact relation
+\begin{equation}
+ p_R(r;\tau)=r\int_0^{2\pi}
+ p_{\mathbf X}(r\cos\theta,r\sin\theta;\tau)\,\mathrm d\theta,
+ \qquad r>0.
+ \label{eq:radial-angular-density}
+\end{equation}
+If the joint density is continuous and finite at the origin, with a nonzero
+value there, then $p_R(r;\tau)\sim2\pi p_{\mathbf X}(0,0;\tau)r$ as
+$r\downarrow0$. In contrast, a continuous finite signed marginal density
+gives $p_{|X_E|}(x;\tau)\to2p_E(0;\tau)$, and similarly for north.
+A nonzero marginal value therefore gives a plateau, while the regular radial
+density starts linearly from zero. This distinction does not require isotropy.
+Geometrically, a small absolute east displacement selects a strip; a small
+radius requires both components to lie in a small disk. Their probabilities
+are respectively of order $\epsilon$ and $\epsilon^2$ under these regularity
+conditions.
+
+An exact scale-family example makes the distinction explicit. For independent
+centred Gaussian components with common standard deviation
+$\sigma_\tau=\sigma_0a_\tau$, the absolute-component and radial densities are
+\begin{equation}
+ p_{|X_E|}(x;\tau)=\frac{\sqrt{2/\pi}}{\sigma_\tau}
+       e^{-x^2/(2\sigma_\tau^2)},\qquad
+ p_R(r;\tau)=\frac{r}{\sigma_\tau^2}
+       e^{-r^2/(2\sigma_\tau^2)},\quad x,r\ge0.
+ \label{eq:gaussian-component-radial-scaling}
+\end{equation}
+Both collapse exactly after division of their argument by $a_\tau$ and
+multiplication of their density by $a_\tau$, although only the component
+density has a plateau. The extra $r$ becomes $a_\tau u$, leaving the same
+overall factor $a_\tau^{-1}$ for the radial density in
+Eq.~\eqref{eq:radial-jacobian}. This example explains why a rising radial
+curve is compatible with scaling; it is not a Gaussian fit to the flights.
+The observed small-radius histograms need not have reached the regular
+asymptotic regime, particularly near numerical zeros. Their residual
+separation across lags, rather than the absence of a plateau, is the
+relevant limitation on collapse.
 
 \paragraph{Squared displacements.}
 For any of the nonnegative magnitudes $Y_j$ and $S_j=Y_j^2$, the inverse-CDF
