@@ -34,7 +34,7 @@ FFVL Coupe F\'ed\'erale de Distance: self-declared flights, heterogeneous record
 Time and horizontal position; GNSS and pressure altitude when recorded; receiver validity declaration.\par\medskip
 Neither the catalogue nor the retained sample is an unbiased population of all soaring flights.
 \end{columns}
-\question{The analysis population is defined jointly by who records and declares a flight, and by which records our criteria retain.}
+\takeaway{The analysis population is defined jointly by who records and declares a flight, and by which records our criteria retain.}
 \source{Current pipeline census. Para catalogue seasons: 1999--2000 to 2025--2026; hang: 2001--2002 to 2025--2026. Downloaded-track coverage differs.}
 \speaker{The attempted and retained counts are imported from the current completed pipeline census. Catalogue entries, downloaded tracks and retained flights have different denominators. Participation, declarations, devices and the cross-country restrictions jointly select the observed population.}
 \end{frame}
@@ -69,7 +69,7 @@ B & UTC time, latitude, longitude, GNSS validity, pressure altitude, GNSS altitu
 \par\medskip
 A syntactically valid coordinate need not be a plausible measurement. The parser checks
 record structure; cleaning supplies the physical and temporal checks.
-\question{A V flag invalidates GNSS altitude here; horizontal position remains provisional until its own checks.}
+\takeaway{A V flag invalidates GNSS altitude here; horizontal position remains provisional until its own checks.}
 \speaker{Explain the separation between syntax and observation quality. The B-record A/V declaration describes the GNSS solution, not the quality of every measured channel. A pressure value alone does not establish a usable barometer. Cadence is recorder-dependent and can vary within the original file.}
 \end{frame}
 
@@ -149,7 +149,7 @@ No pipeline Savitzky--Golay smoothing enters these spectra.
 \par\medskip
 Shading is the per-frequency 10--90\% range across selected flights.
 \end{columns}
-\question{Similar median spectra do not establish identical sensors or identical variation between flights.}
+\takeaway{Similar median spectra do not establish identical sensors or identical variation between flights.}
 \speaker{The diagnostic begins with 3000 sampled raw paths per discipline and retains 2008 paired spectra under the stated support and cadence criteria. The longest paired regular block excludes missing-value codes, invalid GNSS flags and long gaps. The shaded per-frequency 10--90 percent range describes variation across these selected flights, not a confidence interval for sensor noise.}
 \end{frame}
 
@@ -316,7 +316,7 @@ This is an exceedance fraction, not the fraction of altitudes removed. Both neig
  \foreach\x in{2,4,6,8,10,12,14}{\fill[black](\x,0)circle(1.6pt);\node[below]at(\x,-.1){$\x$};}
  \node[above]at(8,.1){fix $k$};
 \end{tikzpicture}
-\question{Both medians exceed the threshold although the two steps touching fix $k$ are only 2 m/s. This is a neighbourhood decision.}
+\takeaway{Both medians exceed the threshold although the two steps touching fix $k$ are only 2 m/s. This is a neighbourhood decision.}
 \source{Schematic with 2-s cadence; speeds in m/s. Below five finite steps, $u_j=|v_{z,j}^{\rm obs}|$ instead of the median. Equality at 10 m/s does not trigger invalidation.}
 \speaker{This is the diagram to explain the two formulae without hiding their limitation. Windows are centred on step midpoints, not on fixes. In the example the two central touching steps have magnitudes two, yet the surrounding three large values make each median twelve. Both tests are needed, but their heavily overlapping observations are not independent confirmation. The rule invalidates only altitude, leaving time and horizontal position. The sparse-window fallback uses the step magnitude if fewer than five finite speeds are available. With adequate support, an isolated out-and-back spike can leave the median low and needs the separate opposite-sign step test.}
 \end{frame}
@@ -448,7 +448,7 @@ Subtract the origin in ECEF, then rotate. Geodetic latitude follows the ellipsoi
 normal; geocentric latitude follows a radius from the Earth's centre.
 \par\medskip
 The IGC latitude already supplies the geodetic angle used in this transformation.
-\question{A coordinate convention can create an apparent displacement error before any physical model is fitted.}
+\takeaway{A coordinate convention can create an apparent displacement error before any physical model is fitted.}
 \speaker{This is a fixed orthonormal rotation of the three-dimensional ECEF displacement, not an independently refitted frame at each lag. On the ellipsoid, geodetic and geocentric latitude differ. The complete derivation and approximations belong to the thesis geodesy appendix and can be discussed without treating the Earth as locally flat over arbitrary distances.}
 \end{frame}
 
@@ -566,7 +566,7 @@ For offsets $u=-m,\ldots,m$,
 \]
 The same fit is applied separately to $E,N,z$ inside each segment.
 \end{columns}
-\question{Smoothing controls derivative noise, but it also changes resolved motion and propagates reconstructed values through its windows.}
+\takeaway{Smoothing controls derivative noise, but it also changes resolved motion and propagates reconstructed values through its windows.}
 \source{Synthetic illustration of the implemented Savitzky--Golay fit. \href{https://doi.org/10.1021/ac60214a047}{Savitzky \& Golay (1964)}.}
 \speaker{The polynomial is fitted in sample offsets, so physical derivatives require division by cadence and its square. A cubic is the present modelling choice; a quadratic would already permit nonzero acceleration. The coefficients are computed using the numerical library rather than explicitly inverting a normal-equation matrix. The example is synthetic and only illustrates the estimator. Real GNSS noise can be correlated and nonstationary, and a plausible filtered curve is not proof that a manoeuvre has been preserved.}
 \end{frame}
@@ -626,7 +626,7 @@ smoother trajectory does not establish that its short-lag MSD is unchanged.
 
 \begin{frame}{Elapsed record span and observed path use different gap conventions}
 \centering\fig[59mm]{retained-duration-path.pdf}
-\question{Duration spans the first to last retained fix, including gaps; path sums only within segments.}
+\takeaway{Duration spans the first to last retained fix, including gaps; path sums only within segments.}
 \speaker{The plotted duration is the elapsed span from first to last retained fix, including gaps. The path sums within retained segments and excludes missing intervals. Chapter 3 duration cohorts instead sum the retained segment spans. Later segment losses can reduce duration and path below the earlier parent-flight gates. The histograms preserve the original bins and normalization.}
 \end{frame}
 
@@ -687,7 +687,8 @@ bands. They do not measure slope, relief or exposure along a route.
 \speaker{The first raw fix can precede take-off, occur after the flight has started, or contain sensor settling. Pressure fallback does not enter the cleaned vertical trajectory. A low starting altitude does not rule out ridge or cliff soaring, and a high plateau can have low local relief.}
 \end{frame}
 
-\begin{frame}{What has been checked, and what still needs empirical validation?}
+\begin{frame}{Completed checks and outstanding empirical validation}
+\question{What has been checked, and what still needs empirical validation?}
 \begin{columns}[T,onlytextwidth]
 \column{.48\textwidth}
 \textbf{Completed}\par\medskip\small
@@ -725,7 +726,8 @@ Compare the raw and current processed trajectory, then zoom into the suspect int
 \speaker{Use the viewer if raw data and the registered local launcher are available. The frozen example is also in the slide for offline discussion. Loading one flight may recompute that flight with the current code; it does not rebuild the archive. Independently assess the neighbouring trajectory before using an algorithmic decision as a label.}
 \end{frame}
 
-\begin{frame}{Which cleaning uncertainties should we resolve first?}
+\begin{frame}{Priorities for resolving cleaning uncertainties}
+\question{Which cleaning uncertainties should we resolve first?}
 \begin{enumerate}
  \item \kw{Vertical reliability.}\par\small
  Compare observables with and without neighbourhoods of candidate altitude steps; assess sensitivity to the adopted vertical gap bound.
@@ -736,7 +738,7 @@ Compare the raw and current processed trajectory, then zoom into the suspect int
  \item \kw{Independent evidence for difficult decisions.}\par\small
  Review paired-channel examples and realistic injected defects; distinguish acceptance criteria from measured error rates.
 \end{enumerate}
-\question{The trajectories are reproducible. Their remaining uncertainties must be quantified where they affect the physics.}
+\takeaway{The trajectories are reproducible. Their remaining uncertainties must be quantified where they affect the physics.}
 \speaker{The vertical gap cap has been implemented. The remaining question is its scientific sensitivity, alongside altitude-step candidates, cadence and smoothing. Compare common populations where possible and report changes in admission separately. Agree which independently labelled or injected defects would most improve confidence in the phase features.}
 \end{frame}
 

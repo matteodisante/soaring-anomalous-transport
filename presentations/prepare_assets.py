@@ -85,6 +85,8 @@ def main() -> None:
                         help="reviewed coastal wind comparison at measured flight altitude")
     parser.add_argument("--editorial-review", type=Path, action="append",
                         help="later manuscript review; repeat in chronological order")
+    parser.add_argument("--temporal-update", type=Path,
+                        help="reviewed held-out signed and temporal scaling extension")
     args = parser.parse_args()
     if args.editorial_review and not args.wind_altitude_update:
         parser.error("--editorial-review requires the current wind-altitude lineage")
@@ -225,7 +227,24 @@ def main() -> None:
                 or any(not n.startswith("thesis/") or Path(n).suffix not in (".tex", ".bib")
                        for n in changed)):
             raise ValueError("An editorial review may change only manuscript sources")
-    if args.editorial_review:
+    temporal_update = None
+    if args.temporal_update:
+        temporal_dir = args.temporal_update.resolve()
+        temporal_path = temporal_dir / "numerical-update.json"
+        temporal_update = json.loads(temporal_path.read_text())
+        if (temporal_update["status"] != "complete"
+                or temporal_update["parent_manuscript_review_sha256"] != digest(review_path)
+                or temporal_update["parent_generated_outputs"] != review["generated_outputs"]):
+            raise ValueError("The temporal extension requires its reviewed numerical parent")
+        release["outputs"].update(temporal_update["outputs"])
+        release["run_id"] = temporal_update["run_id"]
+        review_path = temporal_dir / "manuscript-review.json"
+        review = json.loads(review_path.read_text())
+        if (review["status"] != "complete"
+                or review["numerical_update_sha256"] != digest(temporal_path)
+                or review["generated_outputs"] != {n: r["sha256"] for n, r in release["outputs"].items()}):
+            raise ValueError("The temporal manuscript review has different inputs")
+    if args.editorial_review or temporal_update:
         for name, expected in (review["source_files"] | review["external_input_files"]).items():
             if digest(REPO / name) != expected:
                 raise ValueError(f"Reviewed editorial input changed: {name}")
@@ -260,6 +279,9 @@ def main() -> None:
         manifest["wind_altitude_update"] = wind_altitude_update
         originals.update(wind_altitude_update["outputs"])
         manifest["inputs"].update(wind_altitude_update["external_input_files"])
+    if temporal_update:
+        manifest["temporal_scaling_update"] = temporal_update
+        originals.update(temporal_update["outputs"])
     for name in sorted(originals):
         source = REPO / "thesis/generated" / name
         actual = digest(source)

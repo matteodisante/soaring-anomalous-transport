@@ -18,7 +18,8 @@
 {This deck develops the whole chapter without a prescribed duration. Its central distinction is between measured constraints on the observed ground trajectories and hypotheses about their generating process.}
 \section{Displacement, support and growth}
 
-\begin{frame}{What motion should a stochastic model reproduce?}
+\begin{frame}{The motion a stochastic model must reproduce}
+\question{What motion should a stochastic model reproduce?}
 \begin{columns}[T,onlytextwidth]
 \column{.56\textwidth}
 \[
@@ -36,7 +37,7 @@
 Archive: \num{\StatMsdParaFlights} paragliders and \num{\StatMsdHangFlights} hang gliders.\par\medskip
 Full diagnostics: \num{\StatRevParaFlights} and \num{\StatRevHangFlights} eligible flights, all supported segments, on a 10-s grid.
 \end{columns}
-\question{Displacement growth, distribution shape, directional preference and memory must be confronted together.}
+\takeaway{Displacement growth, distribution shape, directional preference and memory must be confronted together.}
 \source{Archive TAMSD: equal segment weights. Full $V_1,V_2$: equal flight weights. Baseline quantiles and moments: pooled windows.}
 \speaker{The full diagnostic collector has no flight cap and no longest-segment-only restriction. Flights recorded more slowly than ten seconds are ineligible for its common grid. Each lag uses every supported flight; a separate fixed long-flight comparison controls population change. Different grids, minimum segment sizes and weights explain some differences from the archive TAMSD.}
 \end{frame}
@@ -501,7 +502,7 @@ Radius & $\sqrt5$ & $\sqrt5$\\
 Cross-covariance & $+2$ & $-2$\\\bottomrule
 \end{tabular}
 \end{center}
-\question{The missing information is real: signs and component dependence require a joint diagnostic.}
+\takeaway{The missing information is real: signs and component dependence require a joint diagnostic.}
 \speaker{This is an exact mathematical counterexample, not a simulated flight result. Even signed marginals and radius can agree while the joint laws differ. The Cramer--Wold characterization uses all signed linear projections, not only the two coordinate projections. The signed joint plots address additional structure at their stated bin resolution.}
 \end{frame}
 
@@ -635,7 +636,7 @@ The following plots retain positive support; empirical-CDF comparisons also reta
  p_R(r)\sim2\pi p_{\mathbf X}(0,0)r.
 \]
 \end{columns}
-\question{A rising radial density is compatible with exact scaling.}
+\takeaway{A rising radial density is compatible with exact scaling.}
 \source{Finite, continuous, nonzero densities at the origin; no isotropy assumption. This explains the geometry, not a fitted small-radius law.}
 \speaker{The component density integrates probability over a strip; radial density integrates it around an annulus whose area includes the factor r. The corresponding cumulative probabilities near zero grow linearly and quadratically. Under a common spatial scale a, the factor r=a times the rescaled radius converts the joint density factor a to the minus two into the radial factor a to the minus one. This is consistent with the same one-dimensional scaling prefactor for the component and radial densities. As an exact example, independent centred Gaussian coordinates with common standard deviation sigma give a half-normal absolute component with a plateau and a Rayleigh radius rising from zero; both collapse exactly when sigma scales by a. The real flights need not be Gaussian, and their tiny-radius histograms need not reach these smooth-density limits.}
 \end{frame}
@@ -778,6 +779,117 @@ Even agreement of every one-lag vector distribution would leave the joint law at
 several times, and hence full process self-similarity, untested.
 \question{Which multi-time or phase-conditioned comparison would most help choose between candidate processes?}
 \speaker{Finite empirical distributions can differ under a common population law. Calibration must respect paired flights and dependent origins. Energy distance is an alternative multivariate diagnostic under finite first moments, but choosing another distance does not automatically supply the right uncertainty model.}
+\end{frame}
+
+\begin{frame}{Two consecutive displacements test temporal scaling}
+\[
+ \mathbf X_1=\mathbf r(t+\tau)-\mathbf r(t),\qquad
+ \mathbf X_2=\mathbf r(t+2\tau)-\mathbf r(t+\tau),
+\]
+\[
+ \mathbf Z_\tau=(X_{1,E},X_{1,N},X_{2,E},X_{2,N}),\qquad
+ \widetilde{\mathbf Z}_\tau=
+ \frac{\mathbf Z_\tau}{s_0(\tau/\tau_0)^{H_*}}.
+\]
+\small
+An $H$-self-similar process with stationary increments predicts the same
+rescaled law at every lag.
+\par\medskip
+$(\mathbf X_1,\mathbf X_2)$ also determines positions relative to the origin
+at $\tau$ and $2\tau$: $(\mathbf X_1,\mathbf X_1+\mathbf X_2)$.
+\takeaway{Signs and the association between consecutive intervals are retained.}
+\question{Does agreement persist when a return or continuation is measured explicitly?}
+\speaker{This is a new measurement on the verified cleaning 2.3.0 coordinates. The observable is four-dimensional. The transformation to two anchored positions is invertible. The pooled random origins do not themselves establish stationary increments; full process self-similarity would require all finite collections of times.}
+\end{frame}
+
+\begin{frame}{Keep common support and separate training from validation}
+\small
+\begin{center}
+\begin{tabular}{@{}lrr@{}}\toprule
+Lag grid (s) & Support through & Eligible para / hang\\\midrule
+10, 100, 1000, 10000 & 20000 s & 14360 / 563\\
+100, 200, 400, 800, 1600 & 3200 s & 149831 / 5914\\
+1000, 2000, 4000, 8000 & 16000 s & 26977 / 1240\\\bottomrule
+\end{tabular}
+\end{center}
+Every supported 10-s origin in every eligible segment; identical origins at all
+lags within a grid. Equal total weight per flight.
+\par\medskip
+A fixed calendar-date split assigns whole days to training or validation.
+On training days, fit the four quantile ranks of $|E_1|$, $|N_1|$ and $R_1$;
+average their twelve log--log slopes to obtain one $H_*$. Use the training
+radial median at the smallest lag as $s_0$.
+\source{The exponent and length scale are then fixed on validation days. No per-lag centring, rotation or whitening.}
+\question{How much do the different duration-supported populations affect the comparison between grids?}
+\speaker{The protocol fixes the three grids before this measurement, informed by earlier descriptive results; endpoints are not estimated crossover times. All eligible flights with valid dates enter either training or validation. Three intermediate-grid paraglider flights have invalid catalogue dates and are excluded. Intermediate validation uses 75561 paraglider flights on 2997 dates and 2980 hang-glider flights on 938 dates. Training quantiles use 8192 logarithmic bins, with a 0.183 percent quantile resolution bound; validation CDF probabilities are directly counted. Training-fit uncertainty is conditioned on, because validation evaluates that fixed candidate on separate dates.}
+\end{frame}
+
+\begin{frame}{Measure probability discrepancies and their uncertainty}
+\small
+Four coordinate axes and all twelve normalised pairwise sums and differences
+give 16 fixed signed projections $u$. Evaluate their CDFs at
+\[
+ z\in\{0,\pm0.1,\pm0.25,\pm0.5,\pm1,\pm2,\pm4,\pm8\}.
+\]
+\[
+ \widehat D=\max_{\tau<\tau',u,z}
+ |\widehat F_{\tau,u}(z)-\widehat F_{\tau',u}(z)|.
+\]
+Resample whole validation dates 999 times, keeping the same multiplicity for
+every flight, origin, lag and projection within a day.
+\par\medskip
+The 95th percentile $c_{.95}$ of the maximum centred bootstrap error gives
+the upper bound $U=\min(1,\widehat D+c_{.95})$.
+\takeaway{Require $U$ below a declared tolerance: 0.05, 0.10 or 0.20.}
+\source{Simultaneous within one discipline and grid; conditional on the training fit. Finite projections and thresholds, not an omnibus 4D test.}
+\question{Which probability tolerance is acceptable for the model we want to build?}
+\speaker{A discrepancy of 0.05 means five percentage points of cumulative probability, not five percent relative displacement error. The spatial group comprises E1, N1 and their sum/difference. The temporal group contains the remaining projections involving interval two. These include two-interval dependence, but a finite projection set cannot determine arbitrary multivariate laws. Cluster resampling assumes independently resampleable dates; weather across adjacent dates and repeat pilots can remain dependent. Bounds are not simultaneous across all six discipline-grid analyses and are not exact finite-sample guarantees. Positive evidence for approximate agreement comes from an upper bound below a stated tolerance, not from failing to reject exact equality.}
+\end{frame}
+
+\begin{frame}{Paragliders: intermediate scaling survives a temporal check}
+\centering\fig[45mm]{ch3_temporal_scaling_para.pdf}
+\small
+100--1600 s; training $H_*=0.915$.
+Spatial-projection upper bound: 0.0313. Temporal upper bound: 0.0829.
+\takeaway{The declared 0.05 spatial and 0.10 temporal tolerances are supported.}
+\question{Can phase mixtures explain why the temporal difference separates more than E or N?}
+\speaker{The plotted CDFs use held-out dates, common origins and equal flight weights. All five lags are retained. Lines connect the tested thresholds; no claim is made about every intermediate threshold. The right panel is the predefined direction E1 minus E2 over square root two, which measures changes between consecutive eastward displacements. The reported temporal bound is the maximum over all twelve temporal projections, not just this displayed one. Exact equality is still inconsistent with the resolved nonzero discrepancies.}
+\end{frame}
+
+\begin{frame}{Hang gliders: similar collapse, less precise temporal agreement}
+\centering\fig[45mm]{ch3_temporal_scaling_hang.pdf}
+\small
+100--1600 s; training $H_*=0.899$.
+Spatial upper bound: 0.0640. Temporal distance: 0.0893; upper bound: 0.1043.
+\takeaway{Spatial agreement passes 0.10; the temporal result narrowly misses it.}
+\question{Does the remaining temporal discrepancy reflect flight behaviour, selection or limited independent days?}
+\speaker{The temporal result passes the predeclared 0.20 criterion, but that is a substantially coarser statement. We do not round 0.1043 down to claim a 0.10 pass. The signed east and north upper bounds are 0.0511 and 0.0640. Fewer flights and dates contribute than for paragliders. Differences between disciplines do not by themselves identify a physical cause.}
+\end{frame}
+
+\begin{frame}{The scaling approximation has a restricted lag range}
+\centering\fig[50mm]{ch3_temporal_scaling_distances.pdf}
+\takeaway{On the full and long grids, temporal lower bounds exceed 0.20 in both disciplines.}
+\source{Points: maximum CDF differences. Bars: simultaneous 95\% bootstrap bounds. Dashed lines: declared tolerances. Each grid has its own fixed cohort.}
+\question{Would a common-cohort comparison distinguish scale changes from the duration selection between grids?}
+\speaker{The full grid is 10, 100, 1000, 10000 seconds; the long grid is 1000, 2000, 4000, 8000 seconds. Temporal discrepancies are much larger than in the intermediate grid, and their lower bounds exceed twenty probability points. The populations differ between grids, though membership and origins are fixed within each grid. This prevents assigning the entire contrast causally to lag. The full and long comparisons do demonstrate a mismatch within each selected population.}
+\end{frame}
+
+\begin{frame}{The supported claim is approximate intermediate-range scaling}
+\begin{block}{Evidence strengthened beyond visual collapse}
+Over 100--1600 s, one scalar exponent approximately preserves signed spatial
+and tested two-interval laws, most clearly for paragliders.
+\end{block}
+\small
+This supports an approximate self-similar description at the measured
+directions, thresholds, tolerances and population.
+\par\medskip
+Exact invariance, arbitrary multi-time laws and increment stationarity remain
+unestablished. The fitted exponent is not an intrinsic Hurst exponent.
+\par\medskip
+An intermediate interval between short manoeuvres and longer route constraints
+is a plausible interpretation; the mechanisms are not identified here.
+\question{Is this approximation sufficient for a model, or should its temporal accuracy be the next target?}
+\speaker{The positive conclusion is deliberately explicit: the work no longer stops at a visual resemblance of absolute components. It tests held-out signs, spatial projections and projections involving consecutive intervals, then quantifies an approximation error. It does not turn a finite grid into a proof of process self-similarity. The paraglider temporal upper bound is 8.29 probability points; the hang-glider bound is 10.43. These statements remain conditional on the cluster assumptions.}
 \end{frame}
 
 \section{Time-averaged transport by region and initial altitude}
@@ -1049,7 +1161,8 @@ April--September is a separate seasonal check. Winds at 10/100 m AGL provide low
 
 \begin{frame}{At flight height, both annual references remain offset from PCA}
 \centering\fig[52mm]{ch3_channel_wind.pdf}
-\question{Annual gaps at flight height: \StatWindHeightAllDifference$^\circ$ for all hours, \StatWindHeightDayDifference$^\circ$ for 09--17 UTC. Why is the seasonal contrast larger near the surface?}
+\takeaway{Annual gaps at flight height: \StatWindHeightAllDifference$^\circ$ for all hours, \StatWindHeightDayDifference$^\circ$ for 09--17 UTC.}
+\question{Why is the seasonal contrast larger near the surface?}
 \source{Angles counterclockwise from east. The rose shows where air moves towards at \SI{\StatWindHeightM}{\metre}; the black line is the \StatWindFlightAngle$^\circ$ centred PCA axis.}
 \speaker{At the mean flight altitude the all-year all-hour axis is 15.8 degrees and the 09--17 UTC axis is 17.9 degrees, against 30.2 degrees for flight PCA. The corresponding separations are 14.4 and 12.3 degrees. At 10/100 metres AGL the annual axes lie closer to PCA, but their warm-daytime references rotate further away. At flight altitude the warm-daytime axis is 20.6 degrees, giving a smaller 9.6-degree separation. The altitude-matched comparison therefore has a less close annual alignment and a smaller time-selection sensitivity than the surface comparison. These are descriptive contrasts, not formal tests of different angles. The rose uses weighted 15-degree sectors, excludes speeds below 0.5 m/s only from frequencies, and retains all hours in vector means. Teal is all-year all hours; plum is all-year daytime. Green appears only in the right-hand seasonal check.}
 \end{frame}
@@ -1302,7 +1415,8 @@ Ballistic at short times, diffusive at long times.
 \source{\href{https://doi.org/10.1112/plms/s2-20.1.196}{Taylor (1922)}, pp. 207--208. This covariance identity cannot be applied directly to differently weighted heterogeneous means.}
 \end{frame}
 
-\begin{frame}{Which models are challenged, and which remain open?}
+\begin{frame}{Current constraints on candidate models}
+\question{Which models are challenged, and which remain open?}
 \small\renewcommand{\arraystretch}{1.2}\setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}>{\raggedright\arraybackslash}p{.26\textwidth}>{\raggedright\arraybackslash}p{.34\textwidth}>{\raggedright\arraybackslash}p{.35\textwidth}@{}}\toprule
 Candidate & Prediction to test & Present conclusion\\\midrule
@@ -1312,7 +1426,7 @@ Homogeneous fBm & Gaussian law; common $H_p$ & Challenged as one pooled law.\\
 Exponential velocity memory & Ballistic--diffusive crossover & Remains a candidate.\\
 Renewal L\'evy walk, $1<\beta<2$ & Two-branch moment spectrum & Finite-record comparison still needed.\\\bottomrule
 \end{tabular}
-\question{``Challenged'' means a descriptive mismatch. Calibrated statistical rejection is still to be done.}
+\takeaway{``Challenged'' means a descriptive mismatch. Calibrated statistical rejection is still to be done.}
 \source{Each candidate needs its own parameters, environmental assumptions and observation protocol. A long-time diffusive limit has not been tested.}
 \speaker{Ordinary Brownian motion is a poor descriptive model of the observed interval, but the asymptotic regime is unknown. fBm is challenged as a homogeneous pooled law; a phase-conditioned or environmentally heterogeneous Gaussian construction is not excluded. The exponential-persistence candidate deserves a joint MSD and VACF comparison. Standard Lévy walk needs finite-record calibration rather than rejection from an illustrative asymptotic line. An unbounded Lévy flight cannot literally describe continuous finite-speed flight; effective truncated versions need separate predictions.}
 \end{frame}
@@ -1335,7 +1449,7 @@ accounting, not the physical accuracy of those labels.
 \begin{frame}{Three decisions for this meeting}
 \begin{enumerate}
  \item \kw{Define the model target.}\par
- \small Ground-relative motion conditional on environment, or a residual after an independently justified wind correction?
+ \small Ground-relative motion conditional on environment; residual motion requires an independently justified wind correction.
  \normalsize
  \item \kw{Agree the first calibrated comparisons.}\par
  \small Fit Brownian controls, fBm, finite persistence and a specified L\'evy walk; simulate the same record lengths, selection and estimators.
@@ -1343,7 +1457,8 @@ accounting, not the physical accuracy of those labels.
  \item \kw{Choose the most informative next measurements.}\par
  \small Site--day uncertainty and route matching now; phase durations, increments and between-phase dependence after segmentation validation.
 \end{enumerate}
-\question{We have measured constraints on growth, shape, geometry and memory. The generating process and an intrinsic Hurst exponent remain unresolved.}
+\takeaway{We have measured constraints on growth, shape, geometry and memory. The generating process and an intrinsic Hurst exponent remain unresolved.}
+\question{Ground-relative motion conditional on environment, or a residual after an independently justified wind correction?}
 \speaker{Agree the physical target, a small set of explicit candidate processes, and a sampling model for uncertainty. No rotation or rescaling has recovered still-air motion. Phase-conditioned comparisons should include transitions and between-episode dependence. Calibrated comparisons can begin before declaring a final physical model.}
 \end{frame}
 

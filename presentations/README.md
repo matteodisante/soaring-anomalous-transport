@@ -14,18 +14,23 @@ e il riferimento ERA5 per il vento costiero. La revisione
 delle finestre della PCA, con orari annuali e controlli stagionali separati.
 La revisione `joint-laws-and-hurst-interpretation-2026-09-13` chiarisce nella
 tesi il limite dell'interpretazione come Hurst e la distinzione fra congiunte
-spaziali a un lag e temporali. Gli input numerici delle slide restano invariati.
+spaziali a un lag e temporali. L'estensione numerica
+`temporal-self-similarity-2026-09-13` aggiunge una verifica con giornate separate
+per fit e valutazione, includendo segni e proiezioni di due intervalli consecutivi.
 Sono capitoli da discutere con i supervisors, senza durata prestabilita.
-Le domande scientifiche accompagnano i risultati; i confronti tra versioni
+Le domande scientifiche compaiono solo nelle note della versione con note;
+i confronti tra versioni
 precedenti della pipeline non fanno parte delle slide.
 
 | Documento | Slide | Versione con note |
 |---|---:|---|
 | [Capitolo 2](chapter2.pdf) | 58 | [PDF con note](chapter2-notes.pdf) |
-| [Capitolo 3](chapter3.pdf) | 112 | [PDF con note](chapter3-notes.pdf) |
+| [Capitolo 3](chapter3.pdf) | 119 | [PDF con note](chapter3-notes.pdf) |
 
 L'[indice](outline.md) riporta l'ordine e le pagine. I PDF con note affiancano
-alla slide le spiegazioni su stimatore, popolazione, limiti e interpretazione.
+alla slide le domande di discussione e le spiegazioni su stimatore, popolazione,
+limiti e interpretazione. Le slide proiettate non contengono domande; i riquadri
+con risultati e precisazioni scientifiche restano visibili.
 
 Il capitolo 2 segue acquisizione, campi IGC, scelta della quota, PSD su blocchi
 validi, decisioni sui fix, trimming, coordinate, segmentazione dei gap, smoothing
@@ -63,6 +68,15 @@ vicino a zero mentre quelle delle componenti hanno un plateau. Si riconosce
 esplicitamente il collasso approssimato di est e nord, riportando le distanze
 ECDF residue e i limiti dell'interpretazione come self-similarità del processo.
 
+Le slide 59--65 sviluppano la verifica temporale: vettore a quattro componenti,
+supporto comune, fit dei dodici esponenti sui quantili di training, proiezioni
+firmate, bootstrap per giornata e risultati su dati di validazione. Tra 100 e
+1600 s, i limiti superiori spaziale/temporale sono 0.0313/0.0829 per i parapendii
+e 0.0640/0.1043 per i deltaplani. Sono differenze di probabilità cumulativa ai
+punti verificati, con bande simultanee entro ciascuna disciplina e griglia.
+Sostengono uno scaling approssimato intermedio, soprattutto per i parapendii;
+non dimostrano self-similarità esatta a tempi arbitrari o un Hurst intrinseco.
+
 L'ipotesi che equipaggiamento e scelte dei piloti moderino i vincoli di vento e
 orografia viene presentata insieme alle sue criticità: rapporto tra momenti
 uguale a uno non basta per l'isotropia, le classi non misurano l'esperienza,
@@ -89,7 +103,7 @@ python3 presentations/build.py all --notes
 Per rigenerare gli asset dal manoscritto revisionato nella stessa checkout:
 
 ```bash
-uv run --no-project --with pypdf python presentations/prepare_assets.py --pca-update revisions/regional-pca-lags-2026-09-12 --variation-update revisions/regional-variations-2026-09-12 --tamsd-update revisions/grouped-tamsd-2026-09-12 --environment-update revisions/environment-axis-integration-2026-09-12 --wind-altitude-update revisions/channel-wind-flight-altitude-2026-09-13 --editorial-review revisions/joint-laws-and-hurst-interpretation-2026-09-13/manuscript-review.json --editorial-review revisions/component-scaling-and-quantile-slides-2026-09-13/manuscript-review.json --editorial-review revisions/marginal-collapse-and-radial-shape-2026-09-13/manuscript-review.json
+uv run --no-project --with pypdf python presentations/prepare_assets.py --pca-update revisions/regional-pca-lags-2026-09-12 --variation-update revisions/regional-variations-2026-09-12 --tamsd-update revisions/grouped-tamsd-2026-09-12 --environment-update revisions/environment-axis-integration-2026-09-12 --wind-altitude-update revisions/channel-wind-flight-altitude-2026-09-13 --editorial-review revisions/joint-laws-and-hurst-interpretation-2026-09-13/manuscript-review.json --editorial-review revisions/component-scaling-and-quantile-slides-2026-09-13/manuscript-review.json --editorial-review revisions/marginal-collapse-and-radial-shape-2026-09-13/manuscript-review.json --temporal-update revisions/temporal-self-similarity-2026-09-13
 uv run --no-project --with pypdf python presentations/crop_chapter_panels.py
 .venv/bin/python presentations/render_figures.py
 .venv/bin/python presentations/render_chapter3_panels.py

@@ -55,7 +55,9 @@
 }
 \newcommand{\kw}[1]{\textcolor{accent}{#1}}
 \newcommand{\source}[1]{\par\vspace{1mm}{\fontsize{7}{8.3}\selectfont\color{muted}#1\par}}
-\newcommand{\question}[1]{\par\vfill
+% Discussion prompts belong only on the companion notes page.
+\newcommand{\question}[1]{\note{\par\textbf{Discussion.} #1\par\medskip}}
+\newcommand{\takeaway}[1]{\par\vfill
   \begin{beamercolorbox}[wd=\linewidth,sep=5pt]{discussion}
     \small #1
   \end{beamercolorbox}}
