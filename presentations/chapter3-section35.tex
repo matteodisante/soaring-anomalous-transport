@@ -70,6 +70,54 @@ Plots require \StatPrelimIsoMinFlights\ flights and
 \section{Regional principal axes}
 \subsectionframe{3.5.2}{Regional principal axes}
 
+\begin{frame}{France: launch density and regional selection boxes}
+\begin{columns}[c,onlytextwidth]
+\column{.55\textwidth}
+\fig[57mm]{supervisor-map-france.pdf}
+\column{.42\textwidth}\small
+Retained paragliders and hang gliders are pooled. The map window contains
+94.8\% of their recorded starting locations.
+\par\medskip
+Colour gives flights per $0.15^\circ\!\times0.15^\circ$ cell, on a logarithmic scale.
+\par\medskip
+Dashed boxes assign regional membership from the starting location:
+Alps, Pyrenees, Massif Central and Channel Coast.
+\par\medskip
+The PCA below compares Alps, Pyrenees and Channel Coast. Routes may leave their
+starting box.
+\end{columns}
+\source{Chapter 2 geographic-coverage map, France panel. Boxes are latitude/longitude selections; they do not trace terrain boundaries or route exposure.}
+\question{Would membership based on the full route change the regional comparison?}
+\speaker{The colour scale counts retained flights, not distinct sites or time spent in a cell. The percentage refers to the plotted window, which includes neighbouring countries, not an administrative definition of France. Box bounds (longitude; latitude, degrees) are Alps: 5.4--10.0; 43.8--46.6, Pyrenees: -1.9--3.3; 42.0--43.5, Massif Central: 1.8--4.6; 43.6--46.2, and Channel Coast: -1.8--2.0; 48.3--51.2. The map pools both disciplines, whereas the regional PCA panels shown next concern paragliders. The coastal box includes cliffs and valleys, so its name does not establish low relief along a flight.}
+\end{frame}
+
+\begin{frame}{France: recorded starting-altitude bands}
+\begin{columns}[c,onlytextwidth]
+\column{.53\textwidth}
+\fig[58mm]{terrain_map.pdf}
+\column{.44\textwidth}\footnotesize
+First raw IGC altitude $z_0$: GNSS when usable, with pressure fallback for this map.
+\par\smallskip
+\begin{tabular}{@{}ll@{}}\toprule
+Map label & Recorded altitude\\\midrule
+Plains & $z_0<300$ m\\
+Hills & $300\le z_0<800$ m\\
+Low mountains & $800\le z_0<1500$ m\\
+High mountains & $z_0\ge1500$ m\\\bottomrule
+\end{tabular}
+\par\smallskip
+Each $0.15^\circ\!\times0.15^\circ$ cell: colour shows the most frequent altitude
+band; marker area grows with log flight count.
+\par\smallskip
+Crosses mark the ten busiest cells in each band. Both disciplines are pooled.
+\par\smallskip
+These labels describe starting altitude; they do not measure slope or local relief.
+\end{columns}
+\source{Chapter 2 starting-altitude map. Raw first-fix proxy with uncertain vertical datum; the independent ETOPO terrain map is introduced later.}
+\question{Would verified launch elevations and local relief change the altitude classification?}
+\speaker{The map uses the first valid raw B record of each retained flight, before trajectory cleaning or trimming. GNSS is preferred when finite, nonzero and inside the configured plausibility range; otherwise a usable pressure altitude is used. Flights without a usable first altitude do not enter the coloured cells. The pressure fallback is specific to this exploratory map: the cleaned trajectory uses GNSS altitude. Marker area is 6 + 22 log10(n + 1), where n counts classified flights in the cell, and the colour is the modal band rather than the mean altitude. A first fix may precede take-off or occur after flight has begun. The four labels are altitude bins, not terrain-model classes; low starting altitude can coexist with cliffs or steep slopes.}
+\end{frame}
+
 \begin{frame}{PCA measures spread around the mean displacement}
 \[
  \mathbf X_f(t,\tau)=\mathbf r_f(t+\tau)-\mathbf r_f(t),\qquad
@@ -138,6 +186,76 @@ absolute displacement amplitude is removed.
 \speaker{The plotted axis is modulo 180 degrees. A nearly circular ellipse does not determine a precise preferred axis. Coastal take-offs do not provide an isotropic reference by definition.}
 \end{frame}
 
+\begin{frame}{Directional constraints become more visible at longer lags}
+\small
+\begin{center}
+\begin{tabular}{@{}lrrrr@{}}\toprule
+$\lambda_1/\lambda_2$ & 10 s & 100 s & 1000 s & 10,000 s\\\midrule
+Alps & 1.55 & 1.76 & 2.13 & 2.54\\
+Pyrenees & 1.31 & 1.54 & 2.19 & 7.25\\
+Channel Coast & 1.39 & 1.65 & 1.92 & 2.19\\\bottomrule
+\end{tabular}
+\end{center}
+The centred displacement cloud becomes more elongated over longer intervals.
+Both principal variances may still grow.
+\par\medskip
+Physical interpretation: longer increments can reveal route constraints and
+persistent wind contributions that are less visible over a short part of a flight.
+\par\medskip
+Here $\tau$ is increment duration. The four measured lags do not establish a
+positive derivative at every scale; the contributing flights also change.
+\source{Thesis Section 3.5.2 and Fig. 3.21. Regional paraglider PCA; the environmental mechanisms remain hypotheses.}
+\question{Does the increase persist with fixed flights and origins, and does its scale follow terrain geometry or wind persistence?}
+\speaker{This develops the interpretation that a pilot needs time to explore a corridor or accumulate persistent forcing before its signature becomes prominent in net displacement. The ratio compares proportional growth: $d\log(\lambda_1/\lambda_2)/d\tau=\lambda_1'/\lambda_1-\lambda_2'/\lambda_2$ wherever differentiable. It is not a force measurement or the time since launch. The short-lag ellipses are already anisotropic. Declining support and changing route mixtures are alternative contributors. Values are rounded from the saved full regional PCA report.}
+\end{frame}
+
+\begin{frame}{Terrain constraints appear as a route explores their scale}
+\small
+$\tau_{\rm terrain}$ is an illustrative time to explore a distance $L$ across
+a valley or flight corridor; it has not been measured here.
+\par\medskip
+When an increment spans such a distance, terrain or the edge of usable lift may
+require a turn. Across-corridor displacement is limited, while motion along the
+corridor can continue.
+\[
+ \tau_{\rm terrain}\sim\frac{L}{v_\perp}
+ \quad\text{(persistent crossing)},\qquad
+ \tau_{\rm terrain}\sim\frac{L^2}{D_\perp}
+ \quad\text{(diffusive exploration)}.
+\]
+$v_\perp$: transverse speed; $D_\perp$: transverse diffusion coefficient.
+\par\medskip
+The two estimates assume different types of motion. Pilots may anticipate
+terrain, and local lift can affect headings at shorter lags.
+\source{Thesis Section 3.5.2, environmental interpretation. Actual terrain constraints depend on altitude, lift and route choice.}
+\question{Does the scale of the anisotropy increase track corridor width or distance to terrain along the actual route?}
+\speaker{The idea of feeling a boundary means that an increment spans enough motion for terrain geometry to constrain its endpoint. Mountains are not reflecting walls, and pilots need not reach a physical edge: anticipated turns and the distribution of usable lift can guide them earlier. The relevant speed or diffusivity is transverse to the corridor. This interpretation allows a stronger signature at long lag without assuming zero terrain influence at short lag. Both sides of a curved corridor and mixtures of route directions complicate a single regional PCA axis.}
+\end{frame}
+
+\begin{frame}{A weak persistent wind contribution can emerge with lag}
+\small
+Wind displacement accumulates as
+$\Delta\mathbf r_w(t,\tau)=\int_0^\tau\mathbf w_h(t+s)\,ds$.
+Direction changes can cause cancellation; persistence allows coherent accumulation.
+\par\medskip
+Illustration: an isotropic background with covariance $2D\tau I_2$, plus an
+independent wind along $\mathbf e$, varying across observations with variance
+$\sigma_w^2$ and constant within each increment:
+\[
+ \Sigma(\tau)=2D\tau I_2+\sigma_w^2\tau^2\mathbf e\mathbf e^\top,
+ \qquad
+ \frac{\lambda_1}{\lambda_2}=1+\frac{\sigma_w^2\tau}{2D}.
+\]
+A weaker contribution needs a longer interval to compete with background spread,
+provided it stays coherent that long.
+\par\smallskip
+A constant wind shared by all observations shifts only the mean and cancels
+from this centred PCA.
+\source{Thesis Section 3.5.2, illustrative wind model (not fitted). Temporal-correlation relation: Taylor (1922).}
+\question{Is wind coherent over the inferred crossover, and are its directions aligned across the contributing flights?}
+\speaker{The illustrative crossover is of order $2D/\sigma_w^2$, where $\sigma_w^2$ is the variance of the scalar wind component. It must lie within the wind-coherence regime. A nonzero common mean wind is removed by centring; the covariance term comes from variability across the ensemble. Temporal and spatial wind changes or route responses can also contribute. For a stationary scalar wind component, integrated displacement variance is $2\int_0^\tau(\tau-s)C_w(s)\,ds$. Nearly constant random wind gives quadratic growth over short coherent intervals; finite integrable memory generally gives linear growth at long intervals. Longer observation does not create coherence. The real air-relative motion can correlate with wind, and persistent winds with isotropically distributed headings need not create an ensemble axis.}
+\end{frame}
+
 \begin{frame}{Rotation and whitening change different properties}
 \small
 A rotation into the principal frame makes the components uncorrelated at the
@@ -157,6 +275,29 @@ in every ellipse.
 \question{Does one transformation fitted at a reference lag also describe other lags and flights?}
 \speaker{Rotation cannot improve radial collapse because it preserves every radius. Whitening is discussed as a control; the ellipses in Fig. 3.21 use scalar trace normalisation.}
 \end{frame}
+
+\begin{frame}{Whitening each lag makes each increment covariance isotropic}
+\[
+ W_\tau=\Sigma_g(\tau)^{-1/2},\qquad
+ \mathbf Z_\tau=W_\tau[\mathbf X_\tau-\boldsymbol\mu_g(\tau)].
+\]
+\[
+ \operatorname{Cov}(\mathbf Z_\tau)
+ =W_\tau\Sigma_g(\tau)W_\tau^\top=I_2.
+\]
+\small
+At each lag, every unit-vector projection has variance one.
+The covariance ellipse is a circle by construction.
+\par\medskip
+This requires a positive-definite covariance. With estimated matrices, the
+identity holds on the same weighted observations used for fitting.
+\par\medskip
+Angular structure beyond covariance and dependence between times remain to be tested.
+\source{Thesis Section 3.5.2. Whitening identity: Kessy, Lewin and Strimmer (2018), doi:10.1080/00031305.2016.1277159.}
+\question{Which angular or temporal differences remain after removing each lag's covariance shape?}
+\speaker{Yes, each centred increment distribution becomes isotropic at second order. This statement concerns one lag at a time and the fitted population. It neither ensures the same property on held-out flights nor establishes a rotationally invariant full distribution. A Gaussian vector with zero mean and identity covariance is isotropic, but Gaussianity has not been established for these pooled increments. Lag-specific whitening removes the eigenvalue-ratio trend by definition and therefore cannot be used as evidence that environmental effects have been physically removed.}
+\end{frame}
+
 
 \begin{frame}{The terrain axis comes from an independent elevation map}
 \small

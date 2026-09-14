@@ -1,6 +1,6 @@
 # Presentazioni dei capitoli 2 e 3
 
-Queste presentazioni raccontano la tesi revisionata il 13 settembre 2026, con
+Queste presentazioni raccontano la tesi revisionata il 14 settembre 2026, con
 cleaning 2.3.0 e risultati del run completo `20260912T133040Z-073601cb`, con
 PCA regionale calcolata a 10, 100, 1000 e 10.000 s e documentata nella revisione
 `regional-pca-lags-2026-09-12`. L'estensione
@@ -25,8 +25,8 @@ precedenti della pipeline non fanno parte delle slide.
 | Documento | Slide numerate | Pagine PDF incl. divisori | Versione con note |
 |---|---:|---:|---|
 | [Capitolo 2](chapter2.pdf) | 58 | 74 | [PDF con note](chapter2-notes.pdf) |
-| [Capitolo 3](chapter3.pdf) | 119 | 146 | [PDF con note](chapter3-notes.pdf) |
-| [Capitolo 3, Sezioni 3.5.1--3.5.3](chapter3-section35.pdf) | 37 | 40 | [PDF con note](chapter3-section35-notes.pdf) |
+| [Capitolo 3](chapter3.pdf) | 123 | 150 | [PDF con note](chapter3-notes.pdf) |
+| [Capitolo 3, Sezioni 3.5.1--3.5.3](chapter3-section35.pdf) | 43 | 46 | [PDF con note](chapter3-section35-notes.pdf) |
 
 Ogni blocco è preceduto da un divisore che riporta il numero esatto della sezione
 o sottosezione nella tesi. L'[indice](outline.md) riporta l'ordine e il numero
@@ -113,14 +113,27 @@ Il deck mirato ha una sorgente dedicata, `chapter3-section35.tex`, e segue
 esclusivamente le tre sottosezioni della tesi, nello stesso ordine. Riporta
 integralmente le Figure 3.20--3.26, con ingrandimenti dei pannelli più densi,
 commenti visibili e domande di discussione nelle note. L'[indice dedicato](section35-outline.md)
-collega le 37 slide numerate alle tre sottosezioni e alle figure.
+collega le 43 slide numerate alle tre sottosezioni e alle figure.
+Le slide 5--6 introducono la PCA con due mappe della Francia: densità dei voli
+e box regionali, poi fasce della quota del primo fix grezzo. Spiegano scala
+logaritmica, griglia, criteri di appartenenza, colori, dimensioni dei simboli e
+croci; distinguono la quota registrata dal rilievo misurato con ETOPO.
+La revisione `anisotropy-scale-interpretation-2026-09-14` sviluppa in tesi e in
+quattro nuove slide di entrambi i deck l'interpretazione proposta da Matteo:
+gli incrementi più lunghi possono rendere visibili i vincoli di percorso e
+l'accumulo del vento persistente. Specifica il tempo di esplorazione di un
+corridoio, il ruolo della coerenza e un esempio di vento variabile fra voli,
+senza attribuire causalmente la crescita del rapporto a un solo meccanismo.
+Il whitening per lag rende isotropa ciascuna covarianza degli incrementi;
+la discussione più dettagliata delle covarianze a due tempi rimane in tesi.
+Le nuove slide sono 83--86 nel capitolo 3 e 12--14, 16 nel deck mirato.
 I controlli verificano anche la presenza di tutte e sette le figure e i loro
 hash rispetto al manoscritto revisionato.
 
 Per rigenerare gli asset dal manoscritto revisionato nella stessa checkout:
 
 ```bash
-uv run --no-project --with pypdf python presentations/prepare_assets.py --pca-update revisions/regional-pca-lags-2026-09-12 --variation-update revisions/regional-variations-2026-09-12 --tamsd-update revisions/grouped-tamsd-2026-09-12 --environment-update revisions/environment-axis-integration-2026-09-12 --wind-altitude-update revisions/channel-wind-flight-altitude-2026-09-13 --editorial-review revisions/joint-laws-and-hurst-interpretation-2026-09-13/manuscript-review.json --editorial-review revisions/component-scaling-and-quantile-slides-2026-09-13/manuscript-review.json --editorial-review revisions/marginal-collapse-and-radial-shape-2026-09-13/manuscript-review.json --temporal-update revisions/temporal-self-similarity-2026-09-13 --post-temporal-editorial-review revisions/terrain-axis-recipe-2026-09-13/manuscript-review.json --post-temporal-editorial-review revisions/era5-source-clarification-2026-09-13/manuscript-review.json
+uv run --no-project --with pypdf python presentations/prepare_assets.py --pca-update revisions/regional-pca-lags-2026-09-12 --variation-update revisions/regional-variations-2026-09-12 --tamsd-update revisions/grouped-tamsd-2026-09-12 --environment-update revisions/environment-axis-integration-2026-09-12 --wind-altitude-update revisions/channel-wind-flight-altitude-2026-09-13 --editorial-review revisions/joint-laws-and-hurst-interpretation-2026-09-13/manuscript-review.json --editorial-review revisions/component-scaling-and-quantile-slides-2026-09-13/manuscript-review.json --editorial-review revisions/marginal-collapse-and-radial-shape-2026-09-13/manuscript-review.json --temporal-update revisions/temporal-self-similarity-2026-09-13 --post-temporal-editorial-review revisions/terrain-axis-recipe-2026-09-13/manuscript-review.json --post-temporal-editorial-review revisions/era5-source-clarification-2026-09-13/manuscript-review.json --post-temporal-editorial-review revisions/anisotropy-scale-interpretation-2026-09-14/manuscript-review.json
 uv run --no-project --with pypdf python presentations/crop_chapter_panels.py
 .venv/bin/python presentations/render_figures.py
 .venv/bin/python presentations/render_chapter3_panels.py

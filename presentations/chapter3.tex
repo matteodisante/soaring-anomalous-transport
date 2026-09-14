@@ -1100,6 +1100,99 @@ Different marginal exponents, or changing joint dependence, can prevent radial s
 \speaker{The covariance pools eligible regional origins from the full archive. Ellipses are centred and normalized by the centred RMS radius; they hide absolute magnitude and drift. The axis is modulo 180 degrees and becomes poorly determined near equal eigenvalues. The lags are exactly 10, 100, 1000 and 10000 seconds, measured on the 10-second coordinate grid. Every supported flight contributes at each lag, and increments stay inside individual segments. The displayed counts shrink at long lags; covariance changes can therefore include population selection.}
 \end{frame}
 
+\begin{frame}{Directional constraints become more visible at longer lags}
+\small
+\begin{center}
+\begin{tabular}{@{}lrrrr@{}}\toprule
+$\lambda_1/\lambda_2$ & 10 s & 100 s & 1000 s & 10,000 s\\\midrule
+Alps & 1.55 & 1.76 & 2.13 & 2.54\\
+Pyrenees & 1.31 & 1.54 & 2.19 & 7.25\\
+Channel Coast & 1.39 & 1.65 & 1.92 & 2.19\\\bottomrule
+\end{tabular}
+\end{center}
+The centred displacement cloud becomes more elongated over longer intervals.
+Both principal variances may still grow.
+\par\medskip
+Physical interpretation: longer increments can reveal route constraints and
+persistent wind contributions that are less visible over a short part of a flight.
+\par\medskip
+Here $\tau$ is increment duration. The four measured lags do not establish a
+positive derivative at every scale; the contributing flights also change.
+\source{Thesis Section 3.5.2 and Fig. 3.21. Regional paraglider PCA; the environmental mechanisms remain hypotheses.}
+\question{Does the increase persist with fixed flights and origins, and does its scale follow terrain geometry or wind persistence?}
+\speaker{This develops the interpretation that a pilot needs time to explore a corridor or accumulate persistent forcing before its signature becomes prominent in net displacement. The ratio compares proportional growth: $d\log(\lambda_1/\lambda_2)/d\tau=\lambda_1'/\lambda_1-\lambda_2'/\lambda_2$ wherever differentiable. It is not a force measurement or the time since launch. The short-lag ellipses are already anisotropic. Declining support and changing route mixtures are alternative contributors. Values are rounded from the saved full regional PCA report.}
+\end{frame}
+
+\begin{frame}{Terrain constraints appear as a route explores their scale}
+\small
+$\tau_{\rm terrain}$ is an illustrative time to explore a distance $L$ across
+a valley or flight corridor; it has not been measured here.
+\par\medskip
+When an increment spans such a distance, terrain or the edge of usable lift may
+require a turn. Across-corridor displacement is limited, while motion along the
+corridor can continue.
+\[
+ \tau_{\rm terrain}\sim\frac{L}{v_\perp}
+ \quad\text{(persistent crossing)},\qquad
+ \tau_{\rm terrain}\sim\frac{L^2}{D_\perp}
+ \quad\text{(diffusive exploration)}.
+\]
+$v_\perp$: transverse speed; $D_\perp$: transverse diffusion coefficient.
+\par\medskip
+The two estimates assume different types of motion. Pilots may anticipate
+terrain, and local lift can affect headings at shorter lags.
+\source{Thesis Section 3.5.2, environmental interpretation. Actual terrain constraints depend on altitude, lift and route choice.}
+\question{Does the scale of the anisotropy increase track corridor width or distance to terrain along the actual route?}
+\speaker{The idea of feeling a boundary means that an increment spans enough motion for terrain geometry to constrain its endpoint. Mountains are not reflecting walls, and pilots need not reach a physical edge: anticipated turns and the distribution of usable lift can guide them earlier. The relevant speed or diffusivity is transverse to the corridor. This interpretation allows a stronger signature at long lag without assuming zero terrain influence at short lag. Both sides of a curved corridor and mixtures of route directions complicate a single regional PCA axis.}
+\end{frame}
+
+\begin{frame}{A weak persistent wind contribution can emerge with lag}
+\small
+Wind displacement accumulates as
+$\Delta\mathbf r_w(t,\tau)=\int_0^\tau\mathbf w_h(t+s)\,ds$.
+Direction changes can cause cancellation; persistence allows coherent accumulation.
+\par\medskip
+Illustration: an isotropic background with covariance $2D\tau I_2$, plus an
+independent wind along $\mathbf e$, varying across observations with variance
+$\sigma_w^2$ and constant within each increment:
+\[
+ \Sigma(\tau)=2D\tau I_2+\sigma_w^2\tau^2\mathbf e\mathbf e^\top,
+ \qquad
+ \frac{\lambda_1}{\lambda_2}=1+\frac{\sigma_w^2\tau}{2D}.
+\]
+A weaker contribution needs a longer interval to compete with background spread,
+provided it stays coherent that long.
+\par\smallskip
+A constant wind shared by all observations shifts only the mean and cancels
+from this centred PCA.
+\source{Thesis Section 3.5.2, illustrative wind model (not fitted). Temporal-correlation relation: Taylor (1922).}
+\question{Is wind coherent over the inferred crossover, and are its directions aligned across the contributing flights?}
+\speaker{The illustrative crossover is of order $2D/\sigma_w^2$, where $\sigma_w^2$ is the variance of the scalar wind component. It must lie within the wind-coherence regime. A nonzero common mean wind is removed by centring; the covariance term comes from variability across the ensemble. Temporal and spatial wind changes or route responses can also contribute. For a stationary scalar wind component, integrated displacement variance is $2\int_0^\tau(\tau-s)C_w(s)\,ds$. Nearly constant random wind gives quadratic growth over short coherent intervals; finite integrable memory generally gives linear growth at long intervals. Longer observation does not create coherence. The real air-relative motion can correlate with wind, and persistent winds with isotropically distributed headings need not create an ensemble axis.}
+\end{frame}
+
+\begin{frame}{Whitening each lag makes each increment covariance isotropic}
+\[
+ W_\tau=\Sigma_g(\tau)^{-1/2},\qquad
+ \mathbf Z_\tau=W_\tau[\mathbf X_\tau-\boldsymbol\mu_g(\tau)].
+\]
+\[
+ \operatorname{Cov}(\mathbf Z_\tau)
+ =W_\tau\Sigma_g(\tau)W_\tau^\top=I_2.
+\]
+\small
+At each lag, every unit-vector projection has variance one.
+The covariance ellipse is a circle by construction.
+\par\medskip
+This requires a positive-definite covariance. With estimated matrices, the
+identity holds on the same weighted observations used for fitting.
+\par\medskip
+Angular structure beyond covariance and dependence between times remain to be tested.
+\source{Thesis Section 3.5.2. Whitening identity: Kessy, Lewin and Strimmer (2018), doi:10.1080/00031305.2016.1277159.}
+\question{Which angular or temporal differences remain after removing each lag's covariance shape?}
+\speaker{Yes, each centred increment distribution becomes isotropic at second order. This statement concerns one lag at a time and the fitted population. It neither ensures the same property on held-out flights nor establishes a rotationally invariant full distribution. A Gaussian vector with zero mean and identity covariance is isotropic, but Gaussianity has not been established for these pooled increments. Lag-specific whitening removes the eigenvalue-ratio trend by definition and therefore cannot be used as evidence that environmental effects have been physically removed.}
+\end{frame}
+
+
 \begin{frame}{A terrain direction measured independently of the flights}
 \begin{columns}[T,onlytextwidth]
 \column{.54\textwidth}
