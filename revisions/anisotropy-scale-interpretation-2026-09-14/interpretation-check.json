@@ -1,0 +1,95 @@
+{
+  "status": "complete",
+  "verified_utc": "2026-09-14T08:40:10.218249+00:00",
+  "scope": "Editorial interpretation and algebraic examples; no new flight measurement or causal test.",
+  "pca_report_sha256": "0c26c6178c7f2bdab1b115b7a6e26db3a7537c2f2dcdfa1213df3362101a816e",
+  "observed_pca": {
+    "Alps": [
+      {
+        "lag_s": 10,
+        "ratio": 1.551241532147986,
+        "n_flights": 91006
+      },
+      {
+        "lag_s": 100,
+        "ratio": 1.756867388526418,
+        "n_flights": 90996
+      },
+      {
+        "lag_s": 1000,
+        "ratio": 2.1293700278564636,
+        "n_flights": 90737
+      },
+      {
+        "lag_s": 10000,
+        "ratio": 2.535290386205237,
+        "n_flights": 46336
+      }
+    ],
+    "Pyrenees": [
+      {
+        "lag_s": 10,
+        "ratio": 1.3138945529841357,
+        "n_flights": 12269
+      },
+      {
+        "lag_s": 100,
+        "ratio": 1.5353993900137293,
+        "n_flights": 12268
+      },
+      {
+        "lag_s": 1000,
+        "ratio": 2.1911536471787625,
+        "n_flights": 12242
+      },
+      {
+        "lag_s": 10000,
+        "ratio": 7.247452066683105,
+        "n_flights": 4331
+      }
+    ],
+    "Channel Coast": [
+      {
+        "lag_s": 10,
+        "ratio": 1.3902267231652738,
+        "n_flights": 4914
+      },
+      {
+        "lag_s": 100,
+        "ratio": 1.6518203954864994,
+        "n_flights": 4913
+      },
+      {
+        "lag_s": 1000,
+        "ratio": 1.9203076927122866,
+        "n_flights": 4890
+      },
+      {
+        "lag_s": 10000,
+        "ratio": 2.1930840143844117,
+        "n_flights": 1680
+      }
+    ]
+  },
+  "same_four_frames_in_both_decks": [
+    "Directional constraints become more visible at longer lags",
+    "Terrain constraints appear as a route explores their scale",
+    "A weak persistent wind contribution can emerge with lag",
+    "Whitening each lag makes each increment covariance isotropic"
+  ],
+  "whitened_covariance_max_absolute_error": 8.881784197001252e-16,
+  "illustrative_wind_ratio_max_absolute_error": 3.552713678800501e-15,
+  "two_time_covariance_quarter_turn_difference": 0.2386512185411911,
+  "assumptions": [
+    "Lag is increment duration, not time since launch; monotonicity is observed at four lags.",
+    "Terrain exploration times are dimensional examples, not fitted thresholds or hard mountain walls.",
+    "Common deterministic wind cancels from centred covariance.",
+    "The wind example assumes an independent diffusive isotropic background and ensemble-variable wind coherent within each increment.",
+    "Lag-wise whitening is exact for the fitted positive-definite weighted covariance, not necessarily new data.",
+    "Second-order process isotropy also constrains two-time covariances; lag-wise matrices need not preserve increment additivity."
+  ],
+  "sources": {
+    "Taylor (1922), pp. 207--208": "https://mhd.ens.fr/IHP09/Young/Biblio/Taylor1921.pdf",
+    "Kessy, Lewin and Strimmer (2018), whitening identity": "https://arxiv.org/abs/1512.00809"
+  }
+}

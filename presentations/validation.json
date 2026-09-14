@@ -1,14 +1,14 @@
 {
-  "verified_utc": "2026-09-13T20:08:44.973442+00:00",
+  "verified_utc": "2026-09-14T08:40:29.038437+00:00",
   "numerical_run_id": "temporal-self-similarity-2026-09-13",
   "reviewed_thesis": {
     "status": "complete",
-    "reviewed_utc": "2026-09-13T19:05:29.518468+00:00",
+    "reviewed_utc": "2026-09-14T08:40:10.218249+00:00",
     "numerical_run_id": "temporal-self-similarity-2026-09-13",
     "baseline_numerical_run_id": "20260912T133040Z-073601cb",
     "numerical_update_sha256": "74964a7a91c71d6c3fe96686e17795dba61a917cace58a3c77035b76d3690c7f",
-    "pdf_sha256": "9972ea30619b0f7223e76a1a8b7c738c44675e9a3dec731978875892835d5a9f",
-    "pages": 138,
+    "pdf_sha256": "81463a2c92c2114270bec671f1cff941ffd2a6a33003e001941f6ba5244815ea",
+    "pages": 140,
     "source_files": {
       "configs/delta_download.yaml": "a7e0f4e2c137eea66b63f75c2d5fc3de1db00d983619daa8cf1affaa4de476dd",
       "configs/para_download.yaml": "e7f65907e7d10fc5f1181948f18ac2645b8bced6f28212c12846a71a645ba459",
@@ -153,11 +153,11 @@
       "thesis/appendices/C-displacement-squares.tex": "9bd8c97198a0db0c8485e69b0b3b5c5ed002feecad3ec7d41afe494fc029e9e3",
       "thesis/appendices/geodesy.tex": "e764d60a05edabb325d85c3dff1c4169f4507baa9dc0c073d7dbcf752d71fdd4",
       "thesis/main.tex": "9b52e39e39bbf4187186efc432867432f4d3c05601d9ee8e96491ce8d0bb9ca4",
-      "thesis/references.bib": "f690b2ce87da8d74a56cbd029f839d19e967dc8b8bbe958700925920a0c14020",
+      "thesis/references.bib": "0709c0a807818193d05d29870ad5628259c0805f2878210fca3f65af9e867761",
       "thesis/sections/01-introduction.tex": "947b18a21ddb5a970553bd4d5338d3b806a6f0d45b44f684aeeca43a71865cd4",
       "thesis/sections/03-dataset.tex": "5488c48d9d42480ddc1a5ac3fb104f3a985db49042db089ab254b527b411cc4b",
       "thesis/sections/04-environment-wind.tex": "b3c8690f464f54f22b72f64476d7c7d2bbbaa758fff47fa62db94da16ae1bead",
-      "thesis/sections/04-global-transport.tex": "3e1d036f9e6328ee9000f7293a4410a42c69835c413e671f7c529f37855e410c",
+      "thesis/sections/04-global-transport.tex": "05f44f3ca710650c736bb545ec6fbd3e4bec4d867652f4ea377e11c000b5a0a1",
       "thesis/sections/04-grouped-tamsd.tex": "c5dc2070d48c7b8ca709f24f7cd589cfc2160210de042a6fe30e68914744aa7d",
       "thesis/sections/04-regional-variations.tex": "f77ee7ba742d4d981dcd5c2ca7ce6fd576eba531618e3364a50d2970d1e3b557",
       "thesis/sections/05-flight-phases.tex": "a181ba84f6309e9392c7fed6078403690a8ca4d06c436546d69d700bf060f9be",
@@ -297,16 +297,17 @@
       "revisions/channel-wind-flight-altitude-2026-09-13/flight-altitude.json": "172754510ff7bd5aff96c9ca02715549f7adaf949c24820cb1f02f493669d5c0",
       "revisions/channel-wind-flight-altitude-2026-09-13/fetch_pressure_wind.py": "d5f0ae752337b8a23ac48d0c702af05e51fc5f7f5cb8c5e0018a61d4464f42ff"
     },
-    "scope": "Clarify that ERA5 is produced by ECMWF/Copernicus and that Earthmover distributes the pinned lossless cloud copy used for pressure-level extraction; numerical inputs and results are unchanged.",
-    "parent_manuscript_review_sha256": "a871c5c4128afd3f09a27faa06eaa5246b33df26fa67470fb36705df857597e5",
-    "interpretation_check_sha256": "6192b03420c7bc99cbd4a77967a0d85b060c4b31fdacffbb225fddd508ce11a6",
-    "review_script_sha256": "453d627494e3a8baff71bd314a694e7155a7e5d768dd74e970b1c194f3a72b7f",
-    "interpretation_check_path": "revisions/joint-laws-and-hurst-interpretation-2026-09-13/interpretation-check.json",
+    "scope": "Develop the proposed terrain-exploration and coherent-wind interpretation of increasing PCA anisotropy; distinguish lag-wise whitening from second-order process isotropy. Numerical results unchanged.",
+    "parent_manuscript_review_sha256": "46712dc50185dd4193b4abfc028f05df2c4747f512a1e5e31ee91885f3a5d9f2",
+    "interpretation_check_sha256": "c981c29e8fbe8a0f73f04849c09dbd940bb602c477250913188ca36d39d487d9",
+    "review_script_sha256": "3d1ff7c3fe95e63ee8e46238cbcbfa970b6ff278e35e021cc35eb21a797ba254",
+    "interpretation_check_path": "revisions/anisotropy-scale-interpretation-2026-09-14/interpretation-check.json",
     "changed_manuscript_sources": [
-      "thesis/sections/04-environment-wind.tex"
+      "thesis/references.bib",
+      "thesis/sections/04-global-transport.tex"
     ]
   },
-  "source_manifest_sha256": "c5bfe9e3943f36278598343541aa5c10475f632cddb986404a1063debe96c900",
+  "source_manifest_sha256": "1a8b3da310a83f2873149a60b70c8330e74266c5a6cebdf66a5f255894339a49",
   "figure_manifests": {
     "figure-manifest.json": "e74f38dcc4e4f25cc2909cc6ec6f8076f177663ad7ae5e98858e5d2fd64eec5a",
     "supervisor-panel-manifest.json": "ab300805ca7be43623df92c7900c2407f79ddc4fa5571e1da97265c37a8d7bc5",
@@ -335,35 +336,35 @@
       "speaker_notes": true
     },
     "chapter3.pdf": {
-      "pages": 146,
-      "numbered_slides": 119,
+      "pages": 150,
+      "numbered_slides": 123,
       "subsection_dividers": 27,
-      "sha256": "fa65223a19a15156a07daf3d18724101de673c85ebc9620be01ea7f2ac3084da",
-      "bytes": 3777552,
+      "sha256": "1341078d3e0f4c86af1cb1709244a199262c91bf49e3d70909372ed16540189e",
+      "bytes": 3784904,
       "speaker_notes": false
     },
     "chapter3-notes.pdf": {
-      "pages": 146,
-      "numbered_slides": 119,
+      "pages": 150,
+      "numbered_slides": 123,
       "subsection_dividers": 27,
-      "sha256": "3ce178da345909767c7ce532a7a9d0b27e8ff58cb794a8d6110713e998cafb9a",
-      "bytes": 3841322,
+      "sha256": "08e4f232acd761b8009bd5d525eba73cfcad2fa38f7db0999a5472c7d9bb1739",
+      "bytes": 3851549,
       "speaker_notes": true
     },
     "chapter3-section35.pdf": {
-      "pages": 40,
-      "numbered_slides": 37,
+      "pages": 46,
+      "numbered_slides": 43,
       "subsection_dividers": 3,
-      "sha256": "0f2d97a33a6c85a54d5be162e3752adb339a96c4f3ae611adff27008fefb3dd5",
-      "bytes": 1879717,
+      "sha256": "4d2b6d2370d613635e63b96cca79ea7bd52480e0b7cc75f6d8f915ff924142bb",
+      "bytes": 2361441,
       "speaker_notes": false
     },
     "chapter3-section35-notes.pdf": {
-      "pages": 40,
-      "numbered_slides": 37,
+      "pages": 46,
+      "numbered_slides": 43,
       "subsection_dividers": 3,
-      "sha256": "4c15fad1c6ff54dab35f92afba5729182cbb0c8daebe036e759f4ec072dbb391",
-      "bytes": 1897251,
+      "sha256": "dc46841e125a0b1b85139a2e8f48bd0d140d9eeb1fc899696dc676258e2ff5b5",
+      "bytes": 2384053,
       "speaker_notes": true
     }
   },
@@ -409,12 +410,12 @@
     "render_variation_panels.py": "caf28be8d82e1947314391b0ee62cac544219a4c6bb255009045cbd478e872b3",
     "review_editorial.py": "453d627494e3a8baff71bd314a694e7155a7e5d768dd74e970b1c194f3a72b7f",
     "setup_viewer_link.py": "82033d5a5ac7a44626415a264996c20a09a6830b11d9fc1c7360bbaf45a704f1",
-    "validate.py": "8f42b3c0b9ed6c729c90c595687328fca22c1b2e12fdd1f76a4aee6e58d3a20a",
+    "validate.py": "c7a6439d010621318e82c326d8b1e180ff600e4459cbf1da1f8c51925dd8ba15",
     "theme.tex": "a2541e91dbcb6c38714406534760a723003166f8fde1c4cd9c97fd67988689f6",
     "chapter2.tex": "f4dfcb9a2bb68bf8aef7e7b4338539a6db9b15857c00e4a65f8573c067ec9914",
-    "chapter3.tex": "962503a9b0e0eaebf946c1d1628a23b615013045d35ec2634ea5c7112a28c492",
-    "chapter3-section35.tex": "26b757ad0d62aa6b5c0a6bae2f7280379032fe69f05947f10c7e7a206885aecd"
+    "chapter3.tex": "df5df6d6c5b6f3e8c3d7115de83bd217ca0c70e695cb74470e3481b7c95031e1",
+    "chapter3-section35.tex": "d23be6060ddc0e231a75cb9457865f9620f35378c5411306f29bc7a70220182a"
   },
   "scope": "Complete chapter decks and the Section 3.5 focused deck use the reviewed current results. All referenced figure and numerical inputs match their manifests; full reports retain all bytes in gzip; six PDFs compile without LaTeX warnings or overfull boxes.",
-  "visual_review": "Chapter 3 slides 59--65 explain the signed four-component temporal observable, fixed support, training-only quantile fit, held-out projected CDFs, paired date bootstrap, intermediate-range results and limits. Slides 60--61 and the new result panels were inspected for readable formulas and plots. The focused deck follows thesis subsections 3.5.1, 3.5.2 and 3.5.3 in order. Figures 3.20--3.26 appear whole, with supplementary enlargements and visible commentary. The final 40-page deck was inspected as a contact sheet; all three subsection dividers and 37 numbered slides are present. Values and populations agree with the reviewed thesis and complete measurement report. Existing marginal-collapse, Hurst-limit and wind results remain unchanged. The discussion-question layout already present in the workspace was preserved."
+  "visual_review": "Chapter 3 slides 59--65 explain the signed four-component temporal observable, fixed support, training-only quantile fit, held-out projected CDFs, paired date bootstrap, intermediate-range results and limits. Slides 60--61 and the new result panels were inspected for readable formulas and plots. The focused deck follows thesis subsections 3.5.1, 3.5.2 and 3.5.3 in order. Figures 3.20--3.26 appear whole, with supplementary enlargements and visible commentary. The original 40-page focused deck was inspected as a contact sheet. The two added France-map slides (5--6) and their notes were inspected individually: captions explain the launch-density grid and regional boxes, then raw first-fix altitude bands, colour, marker area and busiest-cell crosses. Four further slides in both Chapter 3 decks develop the observed ratio trend, terrain-exploration scales, an illustrative coherent-wind model and lag-wise whitening. The terrain time and parameters are explicitly defined. The separate directional-memory slide was removed from both decks at the author's request; that counterexample remains in the thesis. The added slides and their notes were inspected for readable equations and matched wording; the corresponding thesis discussion was inspected after compilation. The current focused deck has 46 pages, 3 subsection dividers and 43 numbered slides. Values and populations agree with the reviewed thesis and complete measurement report. Existing marginal-collapse, Hurst-limit and wind results remain unchanged. The discussion-question layout already present in the workspace was preserved."
 }

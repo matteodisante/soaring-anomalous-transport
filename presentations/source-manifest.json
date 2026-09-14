@@ -6,12 +6,12 @@
   "cleaning_source_sha256": "db1e245f47cf4c1bd623ecc5aa8a8b8879a41c8d4d2b585689e9632ef91ccd85",
   "reviewed_thesis": {
     "status": "complete",
-    "reviewed_utc": "2026-09-13T19:05:29.518468+00:00",
+    "reviewed_utc": "2026-09-14T08:40:10.218249+00:00",
     "numerical_run_id": "temporal-self-similarity-2026-09-13",
     "baseline_numerical_run_id": "20260912T133040Z-073601cb",
     "numerical_update_sha256": "74964a7a91c71d6c3fe96686e17795dba61a917cace58a3c77035b76d3690c7f",
-    "pdf_sha256": "9972ea30619b0f7223e76a1a8b7c738c44675e9a3dec731978875892835d5a9f",
-    "pages": 138,
+    "pdf_sha256": "81463a2c92c2114270bec671f1cff941ffd2a6a33003e001941f6ba5244815ea",
+    "pages": 140,
     "source_files": {
       "configs/delta_download.yaml": "a7e0f4e2c137eea66b63f75c2d5fc3de1db00d983619daa8cf1affaa4de476dd",
       "configs/para_download.yaml": "e7f65907e7d10fc5f1181948f18ac2645b8bced6f28212c12846a71a645ba459",
@@ -156,11 +156,11 @@
       "thesis/appendices/C-displacement-squares.tex": "9bd8c97198a0db0c8485e69b0b3b5c5ed002feecad3ec7d41afe494fc029e9e3",
       "thesis/appendices/geodesy.tex": "e764d60a05edabb325d85c3dff1c4169f4507baa9dc0c073d7dbcf752d71fdd4",
       "thesis/main.tex": "9b52e39e39bbf4187186efc432867432f4d3c05601d9ee8e96491ce8d0bb9ca4",
-      "thesis/references.bib": "f690b2ce87da8d74a56cbd029f839d19e967dc8b8bbe958700925920a0c14020",
+      "thesis/references.bib": "0709c0a807818193d05d29870ad5628259c0805f2878210fca3f65af9e867761",
       "thesis/sections/01-introduction.tex": "947b18a21ddb5a970553bd4d5338d3b806a6f0d45b44f684aeeca43a71865cd4",
       "thesis/sections/03-dataset.tex": "5488c48d9d42480ddc1a5ac3fb104f3a985db49042db089ab254b527b411cc4b",
       "thesis/sections/04-environment-wind.tex": "b3c8690f464f54f22b72f64476d7c7d2bbbaa758fff47fa62db94da16ae1bead",
-      "thesis/sections/04-global-transport.tex": "3e1d036f9e6328ee9000f7293a4410a42c69835c413e671f7c529f37855e410c",
+      "thesis/sections/04-global-transport.tex": "05f44f3ca710650c736bb545ec6fbd3e4bec4d867652f4ea377e11c000b5a0a1",
       "thesis/sections/04-grouped-tamsd.tex": "c5dc2070d48c7b8ca709f24f7cd589cfc2160210de042a6fe30e68914744aa7d",
       "thesis/sections/04-regional-variations.tex": "f77ee7ba742d4d981dcd5c2ca7ce6fd576eba531618e3364a50d2970d1e3b557",
       "thesis/sections/05-flight-phases.tex": "a181ba84f6309e9392c7fed6078403690a8ca4d06c436546d69d700bf060f9be",
@@ -300,16 +300,17 @@
       "revisions/channel-wind-flight-altitude-2026-09-13/flight-altitude.json": "172754510ff7bd5aff96c9ca02715549f7adaf949c24820cb1f02f493669d5c0",
       "revisions/channel-wind-flight-altitude-2026-09-13/fetch_pressure_wind.py": "d5f0ae752337b8a23ac48d0c702af05e51fc5f7f5cb8c5e0018a61d4464f42ff"
     },
-    "scope": "Clarify that ERA5 is produced by ECMWF/Copernicus and that Earthmover distributes the pinned lossless cloud copy used for pressure-level extraction; numerical inputs and results are unchanged.",
-    "parent_manuscript_review_sha256": "a871c5c4128afd3f09a27faa06eaa5246b33df26fa67470fb36705df857597e5",
-    "interpretation_check_sha256": "6192b03420c7bc99cbd4a77967a0d85b060c4b31fdacffbb225fddd508ce11a6",
-    "review_script_sha256": "453d627494e3a8baff71bd314a694e7155a7e5d768dd74e970b1c194f3a72b7f",
-    "interpretation_check_path": "revisions/joint-laws-and-hurst-interpretation-2026-09-13/interpretation-check.json",
+    "scope": "Develop the proposed terrain-exploration and coherent-wind interpretation of increasing PCA anisotropy; distinguish lag-wise whitening from second-order process isotropy. Numerical results unchanged.",
+    "parent_manuscript_review_sha256": "46712dc50185dd4193b4abfc028f05df2c4747f512a1e5e31ee91885f3a5d9f2",
+    "interpretation_check_sha256": "c981c29e8fbe8a0f73f04849c09dbd940bb602c477250913188ca36d39d487d9",
+    "review_script_sha256": "3d1ff7c3fe95e63ee8e46238cbcbfa970b6ff278e35e021cc35eb21a797ba254",
+    "interpretation_check_path": "revisions/anisotropy-scale-interpretation-2026-09-14/interpretation-check.json",
     "changed_manuscript_sources": [
-      "thesis/sections/04-environment-wind.tex"
+      "thesis/references.bib",
+      "thesis/sections/04-global-transport.tex"
     ]
   },
-  "review_record_sha256": "46712dc50185dd4193b4abfc028f05df2c4747f512a1e5e31ee91885f3a5d9f2",
+  "review_record_sha256": "5c84a0f91812fc74579936df552f1d416137c41c45ad5f33587cd80bbeeb9a75",
   "operation": "Copy reviewed current results and crop vector panels; no analysis rerun.",
   "inputs": {
     "revisions/terrain-axis-2026-09-12/alps-etopo2022.nc": "221db417d8bc3f2109797fb379014c73392227cf54a6d07844bd046e53acace6",
@@ -395,7 +396,7 @@
     "revisions/regional-variations-2026-09-12/report.json.gz": "3b1951934610ed85ff8d3a933d59bede4e636a61c9871b6407e9208e219993fe",
     "revisions/grouped-tamsd-2026-09-12/report.json.gz": "661db99c37aed567c0095b8be050b79c1e1be5b2a59b240ae4b29b96899ad047",
     "thesis/sections/03-dataset.tex": "5488c48d9d42480ddc1a5ac3fb104f3a985db49042db089ab254b527b411cc4b",
-    "thesis/sections/04-global-transport.tex": "3e1d036f9e6328ee9000f7293a4410a42c69835c413e671f7c529f37855e410c",
+    "thesis/sections/04-global-transport.tex": "05f44f3ca710650c736bb545ec6fbd3e4bec4d867652f4ea377e11c000b5a0a1",
     "configs/preprocessing.yaml": "62bb2f4885c5fadc33074958a87c297d70859f361f3e4fdd95ae88761ea8964f",
     "src/soaring/reporting/style.py": "313f731be76f476cfef3edd0db63a5a14adc749cfb521e38be6dde5010823ac8"
   },
@@ -1429,5 +1430,10 @@
   },
   "script_sha256": "b0bea8ff5a93d97ae926ee47d84d3792a5ff506f0c2b6a2888d3da5a5ce6d943",
   "numerical_update_sha256": "ab0628828ab209c2d3e050ef01b0d145e86641b15d61755a0e6d0383bcc27355",
-  "numerical_lineage": "Completed full-archive run, followed by reviewed exact-lag PCA, regional finite differences, grouped TAMSD and independent environmental references where explicitly recorded in this manifest."
+  "numerical_lineage": "Completed full-archive run, followed by reviewed exact-lag PCA, regional finite differences, grouped TAMSD and independent environmental references where explicitly recorded in this manifest.",
+  "editorial_update": {
+    "review_path": "revisions/anisotropy-scale-interpretation-2026-09-14/manuscript-review.json",
+    "parent_source_manifest_sha256": "c5bfe9e3943f36278598343541aa5c10475f632cddb986404a1063debe96c900",
+    "operation": "Refresh reviewed manuscript provenance; retain existing figure, panel and numerical input records."
+  }
 }
