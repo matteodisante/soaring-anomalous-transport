@@ -1222,6 +1222,92 @@ leaving both route geometry and selection as possible contributors. The coastal
 comparison also has unequal principal variances, with thousands of flights at
 the reference lag. Its geographical label does not provide an isotropic control.
 
+\paragraph{Environmental constraints across displacement scales.}
+In all three regions, the observed ratio $A_g(\tau)=\lambda_1(\tau)/\lambda_2(\tau)$
+increases between each pair of successive measured lags. The centred displacement
+cloud therefore becomes more elongated as the observation interval lengthens.
+This suggests that terrain-guided routes and persistent wind effects become more
+visible in displacement geometry when an increment spans enough time to explore
+their spatial scale or accumulate their directional contribution. Here $\tau$ is
+the duration of an increment starting anywhere inside a supported segment; it is
+not the time elapsed since take-off. The four estimates establish an ordering on
+the sampled grid, rather than a positive derivative at every intermediate lag.
+Where the eigenvalues are differentiable and positive,
+\begin{equation}
+ \frac{d\log A_g}{d\tau}
+ =\frac{\lambda_1'}{\lambda_1}-\frac{\lambda_2'}{\lambda_2}.
+ \label{eq:pca-relative-growth}
+\end{equation}
+An increasing ratio measures faster proportional growth along the principal axis;
+both variances may still increase. It does not measure the strength of a force.
+
+\paragraph{Time needed to explore terrain constraints.}
+A short increment may sample only a small part of a valley, ridge or accessible
+flight corridor. Over a longer interval, the pilot may approach terrain or leave
+usable lift and have to turn, follow the valley or remain near the ridge. The
+transverse displacement can then grow more slowly than displacement along the
+route. This gives a concrete interpretation to the idea of taking time to
+``feel the boundary'': the increment must span enough of the route for its
+geometry to restrict the observed displacement. In an idealised corridor of
+width $L$, transverse displacement is bounded by the corridor width while
+longitudinal displacement can continue to grow. A crossing-time estimate is
+$L/v_\perp$ for approximately persistent transverse motion, or of order
+$L^2/D_\perp$ for diffusive transverse exploration. These are dimensional
+examples, not fitted time scales for the flights. Actual mountains are neither
+reflecting walls nor impermeable boundaries at every altitude. Pilots may
+anticipate a turn, and terrain-linked lift can influence headings immediately.
+The ratios already exceed one at 10~s, so the observation does not imply that
+orography is irrelevant at short lags.
+
+\FloatBarrier
+\paragraph{Wind coherence and accumulated displacement.}
+The horizontal wind contribution along a flight is
+$\Delta\mathbf r_w(t,\tau)=\int_0^\tau\mathbf w_h(t+s)\,ds$.
+A persistent component accumulates with a consistent sign; rapidly changing
+components can partly cancel. The covariance of this contribution is
+\begin{equation}
+ \Sigma_w(t,\tau)=\int_0^\tau\!\int_0^\tau
+ \operatorname{Cov}[\mathbf w_h(t+s),\mathbf w_h(t+u)]\,ds\,du.
+ \label{eq:wind-integrated-covariance}
+\end{equation}
+For a stationary scalar component with autocovariance $C_w(s)$, this reduces to
+$2\int_0^\tau(\tau-s)C_w(s)\,ds$, the velocity-correlation relation underlying
+Taylor's dispersion formula~\cite{taylor1922}. Over an interval shorter than its coherence
+time, nearly constant random wind gives a contribution proportional to $\tau^2$;
+well beyond an integrable correlation time, the leading growth is generally
+linear in $\tau$ when the integrated autocovariance is nonzero. Waiting longer
+does not itself make wind more coherent. A weak persistent contribution can
+nevertheless become visible after accumulating enough displacement relative to
+other sources of spread.
+
+For the centred PCA, a constant wind vector shared by every observation only
+adds $\tau\mathbf w_h$ to the mean and disappears on centring. The proposed wind
+mechanism must therefore involve variability between flights or increment
+origins, temporal or spatial changes of wind, or a response of the chosen route.
+As an illustrative calculation, let the background displacement have covariance
+$2D\tau I_2$ and let an independent wind component $W$ act along a fixed unit
+axis $\mathbf e$. Suppose $W$ varies across the ensemble with variance
+$\sigma_w^2$ but remains constant within an increment. Then
+\begin{equation}
+ \Sigma(\tau)=2D\tau I_2+\sigma_w^2\tau^2\mathbf e\mathbf e^\top,
+ \qquad
+ \frac{\lambda_1}{\lambda_2}=1+\frac{\sigma_w^2\tau}{2D}.
+ \label{eq:wind-anisotropy-example}
+\end{equation}
+In this example a small $\sigma_w$ delays the scale at which the directional
+contribution competes with the background, of order $2D/\sigma_w^2$. The wind
+must remain coherent over that scale for this argument to apply. Neither the
+diffusive background nor the independent wind model has been fitted here.
+In the flights, air-relative motion and wind can be correlated, adding cross
+covariances to Eq.~\eqref{eq:wind-integrated-covariance}; a broadly isotropic
+distribution of persistent wind directions would also fail to select a common
+axis. Thus the growing ratio supports an interpretation in terms of accumulated
+environmental guidance, while its attribution requires fixed flight/origin
+support, terrain scales along the routes and wind matched to flight time and
+altitude. Changing route mixtures and the declining long-lag population can
+also contribute to the observed growth.
+
+\paragraph{Rotation, whitening and second-order isotropy.}
 Rotation into the principal frame gives uncorrelated components at the lag at which the
 covariance was fitted. It does not establish independence or remove temporal
 correlations. It cannot improve radial collapse because
@@ -1233,9 +1319,35 @@ Whitening with the reference covariance,
 $\mathbf Z(\tau)=\Sigma_g(\tau_0)^{-1/2}[\mathbf X(\tau)-\boldsymbol\mu_g(\tau)]$,
 changes lengths. It sets the covariance to the identity at the reference lag $\tau_0$; it need not
 do so at other lags, and it does not imply a rotationally invariant distribution.
-Whitening separately at each lag would enforce a part of the desired collapse by
-construction. A meaningful control instead fits a transformation at a fixed reference
-scale and tests it on other scales and flights.
+If instead each lag has its own positive-definite covariance, then
+\begin{equation}
+ \mathbf Z_\tau=\Sigma_g(\tau)^{-1/2}
+ [\mathbf X_\tau-\boldsymbol\mu_g(\tau)],\qquad
+ \operatorname{Cov}(\mathbf Z_\tau)=I_2
+ \label{eq:lagwise-whitening}
+\end{equation}
+by the defining identity of whitening~\cite{kessy2018}. This does enforce
+second-order isotropy of each centred increment distribution separately: all
+unit-vector projections have variance one and the covariance ellipse is a
+circle. With estimated covariances, the equality holds on the same weighted
+sample used to fit the transformation; it is not guaranteed on new flights.
+Higher-order angular structure can remain, and the resulting normalisation
+does not test a common scaling law.
+
+Second-order isotropy of an entire centred vector process would also require
+its two-time covariance $K(s,t)=\operatorname{Cov}[\mathbf Y(s),\mathbf Y(t)]$
+to satisfy $QK(s,t)Q^\top=K(s,t)$ for every spatial rotation $Q$ and every pair
+of times. Equal one-time covariances do not ensure this. For example, two
+independent stationary components with unit variance and autocorrelations
+$\exp(-a|h|)$ and $\exp(-b|h|)$, with $a,b>0$ and $a\ne b$, have covariance $I_2$ at every
+time but different directional memory. Their two-time covariance is diagonal
+with unequal entries at nonzero separation, so a quarter-turn changes it.
+Moreover, applying a different matrix to each increment lag generally breaks
+the additivity needed to interpret those vectors as increments of a single
+transformed trajectory. A control that tests whether one spatial transformation
+and one scalar scale factor suffice instead fits the transformation at a fixed
+reference lag and evaluates covariance shape, angular distributions and
+two-time dependence on other scales and flights.
 
 \FloatBarrier
 \subsubsection{Independent terrain orientation}
