@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 r"""Check generated macro names used by the manuscript.
 
-Definitions in ``thesis/generated/*.tex`` are compared with uses of the ``Stat``
-and ``Preproc`` families in the other thesis sources. Undefined names and invalid
-control-sequence names fail the check; unused definitions are reported separately.
+Definitions in ``thesis/generated/*.tex`` are compared with uses of the ``Stat``,
+``Preproc`` and ``Vilp`` families in the other thesis sources. Undefined names and
+invalid control-sequence names fail the check; unused definitions are reported
+separately.
 The scan also flags numerical literals for editorial inspection.
 
 This is a name-consistency check. It does not evaluate numerical values, follow
@@ -37,7 +38,7 @@ GENERATED = THESIS / "generated"
 
 # Macro families written by a generator. A macro outside these prefixes is hand-written
 # LaTeX (a command defined in the preamble) and none of this script's business.
-PREFIXES = ("Stat", "Preproc")
+PREFIXES = ("Stat", "Preproc", "Vilp")
 
 _DEFINITION = re.compile(r"\\newcommand\{\\([A-Za-z]+)\}")
 _USE = re.compile(r"\\((?:" + "|".join(PREFIXES) + r")[A-Za-z]+)")

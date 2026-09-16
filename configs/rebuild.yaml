@@ -43,6 +43,7 @@ stages:
   - {id: hang_coverage, script: scripts/segment_flights.py, args: [coverage, --discipline, 'hang gliders', --config, configs/segmentation.yaml]}
   - {id: segmentation_report, script: scripts/reporting/ch4_flight_phases/generate_segmentation_report.py, args: [--config, configs/segmentation.yaml]}
   - {id: segmentation_audit, script: scripts/reporting/ch4_flight_phases/generate_decoder_audit.py, args: [--config, configs/segmentation.yaml]}
+  - {id: vilpellet_report, script: scripts/reporting/ch5_vilpellet/generate_vilpellet_report.py}
   - {id: annotations, script: scripts/reporting/ch4_flight_phases/prepare_annotation_pack.py, args: [--output-dir, '{annotation_dir}']}
   - {id: ssd_inventory, script: scripts/reporting/tools/write_ssd_readme.py}
   - {id: snapshot_status, script: scripts/reporting/checks/generate_snapshot_status.py, args: [--audit-dir, '{audit_dir}']}

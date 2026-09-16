@@ -237,7 +237,9 @@ def config_macros(writer: MacroWriter, config: VilpelletConfig) -> None:
     writer.put("MinFixes", tex_int(config.eligibility.min_fixes))
     half_window = features.persistence_fixes // 2
     writer.put("TurnSignSelected", half_window)
-    writer.put("TurnSignAgreeing", math.ceil(features.beta_persistence * half_window))
+    writer.put(
+        "TurnSignAgreeing", math.ceil(features.beta_persistence * half_window)
+    )
     writer.put("ObservationValues", len(config.parameters.emission[0]))
     writer.put("FeatureCount", 3)
     writer.put("StateCount", len(config.state_names))
@@ -248,29 +250,6 @@ def config_macros(writer: MacroWriter, config: VilpelletConfig) -> None:
         writer.put(f"Component{_SPELLED_DIGITS[component]}", name)
     writer.put("InputSource", config.input_policy.source)
     writer.put("PreSmooth", "on" if config.input_policy.pre_smooth else "off")
-
-    # Render these blocks directly from the applied parameters, in component order.
-    writer.put(
-        "TransitionMatrix",
-        r" \\ ".join(
-            " & ".join(f"{v:.5f}" for v in row) for row in config.parameters.transition
-        ),
-    )
-    initial = []
-    for value in config.parameters.initial:
-        mantissa, exponent = f"{value:.6e}".split("e")
-        initial.append(rf"{mantissa}\times 10^{{{int(exponent)}}}")
-    writer.put("InitialVector", r",\; ".join(initial))
-    writer.put(
-        "EmissionRows",
-        r" \\ ".join(
-            f"{i} ({name}) & " + " & ".join(f"{v:.3f}" for v in row)
-            for i, (name, row) in enumerate(
-                zip(config.state_names, config.parameters.emission, strict=True)
-            )
-        )
-        + r" \\",
-    )
 
 
 def _percent(record: dict[str, dict[str, float]], phase: str) -> str:
@@ -330,7 +309,9 @@ def example_macros(
         writer.put("ExampleComparisonStatus", UNREACHABLE_PANEL.replace("\n", " "))
         return
     writer.put("ExampleCommonFixes", tex_int(scores["n_common_fixes"]))
-    writer.put("ExampleAgreementPercent", f"{100.0 * scores['agreement_fraction']:.1f}")
+    writer.put(
+        "ExampleAgreementPercent", f"{100.0 * scores['agreement_fraction']:.1f}"
+    )
     writer.put(
         "ExampleComparisonStatus",
         "Both decoders labelled this flight, so the agreement fraction below is "
@@ -360,7 +341,9 @@ def build_comparison_figure(
     palette = phase_palette()
     figure = make_plan_figure(TEXT_WIDTH_IN, 4.4)
     figure.subplots_adjust(top=0.83, bottom=0.17)
-    left = gaussian_fixes if gaussian_fixes is not None else vilpellet_fixes.iloc[0:0]
+    left = (
+        gaussian_fixes if gaussian_fixes is not None else vilpellet_fixes.iloc[0:0]
+    )
     left_axis, _right_axis = plot_segmentation_comparison(
         figure,
         left,
