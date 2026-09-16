@@ -54,6 +54,7 @@ analysis = [
 # solo per lanciare il trajectory viewer interattivo, non per generare figure o CI.
 viewer = [
     "PyQt6>=6.6",
+    "pyproj>=3.6",     # metric 5 km cells in the thermal-plane viewer
 ]
 
 [tool.uv]

@@ -22,6 +22,8 @@ one available as the frozen-lock witness and for the noise diagnostics.
 
 from __future__ import annotations
 
+import re
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
@@ -238,7 +240,9 @@ def parse_igc(path: str | Path) -> pd.DataFrame:
 _FIRST_FIX_CHUNK_BYTES = 65536
 
 
-def _first_valid_fix(lines: list[str]) -> dict[str, float] | None:
+def _first_valid_fix(
+    lines: list[str], *, include_utc: bool = False
+) -> dict[str, float] | None:
     """The first line in ``lines`` that decodes as a valid ``B`` record, or ``None``.
 
     Same per-line validity rules as :func:`parse_igc` (time-of-day, lat/lon range and
@@ -247,7 +251,20 @@ def _first_valid_fix(lines: list[str]) -> dict[str, float] | None:
     the kind of drift that makes "first raw fix" quietly stop meaning what
     :func:`parse_igc` means by a fix.
     """
+    day = None
     for line in lines:
+        if include_utc and (match := re.match(r"H[FO]DTE(?:DATE:)?(\d{6})", line)):
+            token = match[1]
+            try:
+                year = int(token[4:6])
+                day = datetime(
+                    1900 + year if year >= 70 else 2000 + year,
+                    int(token[2:4]),
+                    int(token[:2]),
+                    tzinfo=UTC,
+                )
+            except ValueError:
+                day = None
         if not line.startswith("B") or len(line) < 35:
             continue
         try:
@@ -258,26 +275,37 @@ def _first_valid_fix(lines: list[str]) -> dict[str, float] | None:
             lon = _lon(line[15:24])
         except ValueError:
             continue
-        return {
+        result = {
             "lat": lat,
             "lon": lon,
             "baro_alt": _altitude(line[25:30]),
             "gnss_alt": _altitude(line[30:35]),
         }
+        if include_utc:
+            result["start_utc"] = (
+                day.timestamp() + hh * 3600 + mm * 60 + ss
+                if day is not None
+                else float("nan")
+            )
+        return result
     return None
 
 
-def first_fix(path: str | Path) -> dict[str, float] | None:
+def first_fix(
+    path: str | Path, *, include_utc: bool = False
+) -> dict[str, float] | None:
     """The earliest valid ``B`` record of a raw IGC file, decoded but not cleaned.
 
     Unlike :func:`parse_igc`, this does not parse the whole flight: it reads one chunk
     from the front of the file (header plus a handful of fixes, almost always enough)
     and only falls back to the complete file for the rare log whose leading records are
-    all corrupt. Scanning the raw archive for "the altitude a pilot launched at" this way
+    all corrupt. Scanning for "the altitude a pilot launched at" this way
     costs a few kilobytes per flight rather than the whole track.
 
     Args:
         path: Path to the ``.igc`` file.
+        include_utc: Also return ``start_utc`` (Unix seconds) from the IGC date
+            header and first accepted B record; NaN when the date is unavailable.
 
     Returns:
         A dict with ``lat``, ``lon``, ``baro_alt``, ``gnss_alt`` (same decoding as
@@ -292,13 +320,15 @@ def first_fix(path: str | Path) -> dict[str, float] | None:
         lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
         # The last line may be cut mid-record at the chunk boundary; drop it unless the
         # chunk was short enough that it is the whole file and thus already complete.
-        found = _first_valid_fix(lines if chunk_is_whole_file else lines[:-1])
+        found = _first_valid_fix(
+            lines if chunk_is_whole_file else lines[:-1], include_utc=include_utc
+        )
         if found is not None or chunk_is_whole_file:
             return found
         rest = fh.read()
     text = (chunk + rest).decode("latin-1", errors="replace")
     lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
-    return _first_valid_fix(lines)
+    return _first_valid_fix(lines, include_utc=include_utc)
 
 
 def _present_fraction(fixes: pd.DataFrame, column: str) -> float:
