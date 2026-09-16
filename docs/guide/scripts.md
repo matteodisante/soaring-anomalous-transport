@@ -31,11 +31,17 @@ These paths preserve earlier runs and human labels.
 | `verify_dataset.py` | Full scan of cleaned tables; checks structural and numerical invariants | `verify.tex`; fails on violations |
 | `check_reproducible.py` | Reprocesses a seeded sample of retained raw flights and compares all stored columns; `--sample`, `--seed` | Terminal/log report; fails on discrepancies |
 | `segment_flights.py` | `train`, `apply`, `coverage` with a discipline and segmentation configuration | Model, decoded flights, intervals, feature coverage and run reports |
+| `segment_flights_vilpellet.py` | `flight`, `apply`, `coverage` with the transcribed Vilpellet model, whose parameters are read from `configs/segmentation_vilpellet.yaml` and applied without fitting | A printed per-flight composition, or decoded fixes, runs and a coverage record under `derived/segmentation/vilpellet/` |
 | `label_flight_phases.py` | Opens a prepared annotation pack for manual review | Human labels and review status |
 
 The verifier establishes the listed invariants. It does not measure the cleaner's error
 rate against independently labelled defects. Reproduction checks implementation identity
 on a sample; independent phase labels are needed to evaluate segmentation accuracy.
+
+The two segmenters write to separate directories and share no parameters. [The phase
+guide](flight-phase-segmentation.md) specifies the Gaussian model and [the Vilpellet
+guide](vilpellet-segmentation.md) specifies the transcribed one, including its
+eligibility gate and the cadences it refuses.
 
 ## Chapter 2 reports
 
@@ -102,6 +108,16 @@ These scripts are under `scripts/reporting/ch4_flight_phases/`.
 The combined driver runs training, application and coverage for both disciplines before
 these reports. [The phase guide](flight-phase-segmentation.md) specifies the feature and
 decoder conventions.
+
+## Chapter 5 reports
+
+`scripts/reporting/ch5_vilpellet/generate_vilpellet_report.py` decodes one named flight
+with the Chapter 4 Gaussian model and with the transcribed Vilpellet model on identical
+cleaned geometry. It writes the plan-view comparison, an altitude timeline under the
+Vilpellet labels, every fixed model constant as a LaTeX macro, and a JSON record of
+where each number came from. It fits nothing. See [the Vilpellet
+guide](vilpellet-segmentation.md) for the features, the provenance of the parameters and
+what remains unvalidated.
 
 ## Build checks and tools
 

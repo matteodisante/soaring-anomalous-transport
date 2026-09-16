@@ -19,6 +19,7 @@ and thermal-route questions.
 | Read the processed tables | [SSD layout and schemas](guide/data-on-disk.md) |
 | Measure motion before segmentation | [Global transport](guide/global-transport.md) |
 | Infer and evaluate flight phases | [Segmentation](guide/flight-phase-segmentation.md) |
+| Compare a second, transferred segmenter | [Vilpellet segmenter](guide/vilpellet-segmentation.md) |
 | Inspect climb intersections by cell, time and height | [Thermal planes](guide/thermal-planes.md) |
 | Rebuild the scientific results | [Complete workflow](guide/rebuilding.md) |
 | Trace a figure or numerical value | [Generated provenance](guide/provenance.md) |
@@ -40,6 +41,11 @@ Generated numerical macros are checked against their uses in the manuscript. The
 [figure conventions](guide/figures.md) specify colours, dimensions, support counts and
 band meanings. The [bibliography audit](guide/bibliography.md) distinguishes inspected
 primary sources from metadata-only checks.
+
+Two segmenters are kept runnable on the same cleaned geometry: the Gaussian model fitted
+here, and a transcription of Vilpellet's binary-feature model whose parameters were fitted
+elsewhere and are applied unchanged. Neither has been compared against independent human
+labels.
 
 For setup, see [installation](guide/installation.md). The [script guide](guide/scripts.md)
 lists entry points, and the [API reference](reference.md) is built from package docstrings.
