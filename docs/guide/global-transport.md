@@ -172,6 +172,19 @@ also diminish. The report at `revisions/grouped-tamsd-2026-09-12/` retains
 membership, full curves, support, pointwise site-day intervals and descriptive
 slopes. The eight-flight display minimum is not an uncertainty guarantee.
 
+Section 3.4.4 fits paraglider altitude-band curves separately for declared open
+and closed circuits over all 59 lags from 10 to 10000 s. Figure 3.20 and Table 3.9
+report H_eff = slope/2 with marginal 95% intervals from 2000 whole-site-day
+bootstrap draws within each circuit-altitude stratum, separately for available
+and fixed long segments. The FFVL task mapping is the same as in the earlier
+open/closed route comparison; 275 non-classifiable declarations are excluded.
+The two groups contain 67003 open and 87807 closed flights. The table includes
+support at the first and last lag. These are effective moment exponents conditional
+on the fit range and population. The `altitude_hurst` rebuild stage exports the
+figure, table, parameter macros and report through `generate_altitude_hurst.py`.
+The completed measurement and manuscript checks are recorded in
+`revisions/altitude-hurst-open-closed-2026-09-15/`.
+
 ## Regional second and third differences
 
 The regional extension uses every eligible flight in the Alps, Pyrenees and

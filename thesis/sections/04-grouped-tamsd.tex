@@ -48,7 +48,8 @@ a flight still change with lag. It is conditional on long continuous records,
 not a replacement for the archive-wide comparison. The native rounding rule can
 admit slightly different boundary cases from the exact common-grid controls.
 
-Five hundred complete site--day bootstrap draws are paired across lags and the
+For Figs.~\ref{fig:tamsd-regions} and~\ref{fig:tamsd-altitude}, five hundred
+complete site--day bootstrap draws are paired across lags and the
 two controls within each group. Shading gives pointwise 95\% percentile intervals
 for the available-segment curve; at least 20 contributing groups and 90\% finite
 replicates are required. Three paraglider flights have missing cluster keys and
@@ -169,7 +170,104 @@ added mean motion; it does not identify wind as the cause. The native-grid
 TA-MSD and the matched-order difference diagnostic use different origins and
 nearby, rather than identical, reference lags, so this is not an exact paired
 decomposition. A quantitative mechanism test should align those observations and
-add independent wind, route, terrain and pilot information. Directional moments
-are needed next because a scalar TA-MSD does not describe the orientation of motion.
+add independent wind, route, terrain and pilot information.
+
+\subsection{Paraglider scaling by altitude and circuit type}
+\label{sec:altitude-hurst}
+
+For paragliders, we compare the four altitude bands separately within declared
+open and closed circuits, using the task classes of Sec.~\ref{sec:strata-compat}.
+Free-distance tasks and distance tasks with one, two or three points form the
+open group; triangles, quadrilaterals and out-and-return tasks form the closed
+group. This is a catalogue declaration of route type, not a test that a retained
+segment returns exactly to its origin. The eligible sample contains
+\num{\StatAltitudeHurstOpenFlights} open and
+\num{\StatAltitudeHurstClosedFlights} closed flights. The
+\num{\StatAltitudeHurstUnknownFlights} flights whose task labels do not identify
+either class are excluded from this comparison.
+
+Within each circuit class, we fit all
+\num{\StatAltitudeHurstLags} requested lags from
+\SI{\StatAltitudeHurstFitLow}{\second} to
+\SI{\StatAltitudeHurstFitHigh}{\second}, including both endpoints. For each
+circuit class, altitude band and segment control, an unweighted least-squares fit in
+logarithmic coordinates gives
+\begin{equation}
+ \log\!\left[\frac{M_g(\tau)}{\SI{1}{\metre\squared}}\right]
+ = a_g+\alpha_g\log\!\left[\frac{\tau}{\SI{1}{\second}}\right],
+ \qquad H_{\mathrm{eff},g}=\frac{\alpha_g}{2}.
+ \label{eq:altitude-effective-hurst}
+\end{equation}
+This is one fit across the full range, rather than an average of the three
+decade slopes. The notation $H_{\mathrm{eff}}$ denotes an effective
+second-moment scaling exponent. It does not establish self-similarity,
+stationary increments or an intrinsic Hurst parameter for these flights.
+
+\begin{figure}[p]
+ \centering
+ \includegraphics[width=.94\linewidth]{generated/ch3_altitude_hurst}
+ \caption{Paraglider horizontal flight TA-MSD by initial GNSS altitude, with
+ separate open- and closed-circuit fits over the full 10--10,000-s range.
+ Columns distinguish the declared circuit classes; the
+ upper row uses available segments and the lower row fixes the segments
+ supporting the maximum lag. Solid lines show measured means and dashed lines
+ the fitted power laws. Legends give $H_{\mathrm{eff}}$ and its marginal 95\%
+ site--day bootstrap interval. Ribbons give pointwise 95\% intervals for the
+ means. Both use \num{\StatAltitudeHurstResamples} complete cluster draws within
+ each circuit--altitude stratum. Flight counts are reported in
+ Table~\ref{tab:altitude-hurst}.}
+ \label{fig:altitude-hurst}
+\end{figure}
+
+Uncertainty is estimated by \num{\StatAltitudeHurstResamples} bootstrap draws
+of whole site--day groups within each circuit--altitude stratum. Each draw retains all
+flights in every selected group and uses the same cluster multiplicities at
+every lag and in both segment controls. We recompute the equal-flight mean and
+refit Eq.~\eqref{eq:altitude-effective-hurst} on the same lag grid. The 2.5th and
+97.5th percentiles of the resulting $H_{\mathrm{eff}}$ values form the reported
+interval. This preserves the observed dependence between lags and within a
+site--day; it does not treat individual displacement origins or fitted lag
+values as independent observations. Every fit has at least twenty contributing
+site--day groups at each lag and all
+\num{\StatAltitudeHurstResamples} replicates are finite.
+
+\begin{table}[htbp]
+ \centering
+ \caption{Paraglider effective exponents $H_{\mathrm{eff}}$ from the full
+ 10--10,000-s fit, separately for declared open and closed circuits.
+ Brackets give marginal 95\% site--day bootstrap intervals. Flight counts show
+ available support at 10 and 10,000~s; the fixed control retains the latter
+ flight set throughout. Weighting and controls match Fig.~\ref{fig:altitude-hurst}.}
+ \label{tab:altitude-hurst}
+ \small
+ \input{generated/ch3_altitude_hurst_table}
+\end{table}
+
+Table~\ref{tab:altitude-hurst} and Fig.~\ref{fig:altitude-hurst} separate the
+altitude comparison from the mixture of declared task types. With available
+segments, open circuits have larger fitted exponents than closed circuits in
+each altitude band. The altitude ordering also changes with circuit class:
+Plains and Hills lie above both mountain-labelled groups for open circuits,
+whereas both mountain-labelled groups lie above Plains and Hills for closed
+circuits. Flight support
+differs substantially between strata. In particular, the fixed closed-circuit
+Plains control contains only
+\num{\StatAltitudeHurstClosedPlainsFixedFlights} flights in
+\num{\StatAltitudeHurstClosedPlainsFixedClusters} site--day groups. Its interval
+should be read alongside this small population. The fixed controls condition
+on long continuous records; they do not match the open and closed groups by
+duration, region, weather or pilot. Differences between their fitted exponents
+can therefore reflect both route geometry and population composition.
+
+These intervals assume independently resampleable site--day groups. Repeated
+pilots or weather shared across groups can leave dependence unaccounted for.
+They quantify sampling uncertainty conditional on the chosen lag range,
+weighting and population, and do not include uncertainty from cleaning,
+altitude labels or the adequacy of a power law. In particular, the bending
+curves and decade slopes above remain relevant even when the full-range
+interval is narrow. The marginal intervals are not simultaneous tests of
+differences between altitude bands or circuit classes, and the pooled groups do not isolate a
+causal altitude effect. Directional moments are needed next because a scalar
+TA-MSD does not describe the orientation of motion.
 
 \FloatBarrier

@@ -21,6 +21,9 @@ stages:
   - {id: msd_figure, script: scripts/reporting/ch3_global_transport/generate_msd_figure.py, args: [--audit-dir, '{audit_dir}']}
   - {id: duration_equipment, script: scripts/reporting/ch3_global_transport/generate_duration_equipment.py, args: [--audit-dir, '{audit_dir}']}
   - {id: grouped_tamsd, script: scripts/reporting/ch3_global_transport/generate_grouped_tamsd.py, args: [--audit-dir, '{audit_dir}']}
+  - id: altitude_hurst
+    script: scripts/reporting/ch3_global_transport/generate_altitude_hurst.py
+    args: [--audit-dir, '{audit_dir}', --parent, thesis/generated/ch3_grouped_tamsd.json, --record-dir, '{audit_dir}/altitude-hurst', --out, '{audit_dir}/altitude-hurst/figures', --thesis-out, thesis/generated, --fit-range, '10', '10000', --resamples, '2000']
   - {id: msd_audit_measure, script: scripts/reporting/ch3_global_transport/audit_msd.py, args: [--out, '{audit_dir}']}
   - {id: msd_audit_report, script: scripts/reporting/ch3_global_transport/audit_msd_report.py, args: [--audit-dir, '{audit_dir}']}
   - {id: preliminary, script: scripts/reporting/ch2_dataset/generate_prelim_figure.py, args: [--audit-dir, '{audit_dir}']}
