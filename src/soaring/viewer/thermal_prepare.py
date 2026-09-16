@@ -107,7 +107,11 @@ def prepare_climbs(index, *, workers=4, progress=print):
     pending = set()
     with (
         sqlite3.connect(index.path) as census,
-        sqlite3.connect(index.path.with_name("thermal-climbs.sqlite3")) as saved,
+        # A read-only audit can briefly hold a shared lock. Wait for it instead
+        # of aborting a long preparation after SQLite's default five seconds.
+        sqlite3.connect(
+            index.path.with_name("thermal-climbs.sqlite3"), timeout=120
+        ) as saved,
         ProcessPoolExecutor(
             max_workers=workers, mp_context=multiprocessing.get_context("spawn")
         ) as pool,
