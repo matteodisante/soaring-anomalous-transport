@@ -1,0 +1,196 @@
+{
+  "agreement": {
+    "agreement_fraction": 0.7739443378119002,
+    "confusion": {
+      "climb|climb": 5191,
+      "climb|search": 691,
+      "climb|transition": 1008,
+      "search|climb": 606,
+      "search|search": 636,
+      "search|transition": 2398,
+      "transition|climb": 8,
+      "transition|transition": 10302
+    },
+    "n_agreeing_fixes": 16129,
+    "n_common_fixes": 20840
+  },
+  "code_version": "fb595b6-dirty",
+  "config_path": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/configs/segmentation_vilpellet.yaml",
+  "config_sha256": "924232dc3ccff8cbf007850e062a4d87e34cd60b95cf61577ade3aa3858ce46e",
+  "config_values": {
+    "alpha_straight_rad": {
+      "hang gliders": 0.17398039,
+      "paragliders": 0.20960958,
+      "sailplanes": 0.1
+    },
+    "decoding": {
+      "majority_fixes": 90
+    },
+    "eligibility": {
+      "max_mean_dt_s": 1.2,
+      "min_fixes": 3600,
+      "require_increasing_times": true,
+      "require_unique_times": true
+    },
+    "features": {
+      "beta_persistence": 0.9,
+      "persistence_fixes": 30,
+      "position_smoothing_fixes": 6,
+      "turn_smoothing_fixes": 6
+    },
+    "input": {
+      "pre_smooth": true,
+      "source": "cleaned"
+    },
+    "literal_minimal_script": false,
+    "parameters": {
+      "emission": {
+        "climb": [
+          1.54243294e-11,
+          0.000507106916,
+          8.72065952e-05,
+          0.998979845,
+          8.52234426e-21,
+          1.25568196e-12,
+          7.85199401e-13,
+          0.000425841826
+        ],
+        "search": [
+          0.32568058,
+          0.177503496,
+          0.49589906,
+          0.000721547291,
+          6.96932383e-05,
+          1.93093305e-05,
+          0.000106025552,
+          2.89805651e-07
+        ],
+        "transition": [
+          6.93534587e-06,
+          1.04473011e-08,
+          2.91554932e-06,
+          1.93493842e-10,
+          0.738362033,
+          0.0140643862,
+          0.241340621,
+          0.00622309818
+        ]
+      },
+      "initial": [
+        0.0566075578,
+        0.943392442,
+        5.88699965e-29
+      ],
+      "transition_matrix": [
+        [
+          0.98961359,
+          0.00346214,
+          0.00692427
+        ],
+        [
+          0.00666667,
+          0.99,
+          0.00333333
+        ],
+        [
+          0.00099934,
+          0.00712054,
+          0.99188012
+        ]
+      ]
+    },
+    "recommendations": {
+      "drop_tail_s": 0.0,
+      "min_run_s": 0.0,
+      "search_requires_following_climb": false
+    },
+    "schema_version": 1,
+    "state_names": [
+      "climb",
+      "search",
+      "transition"
+    ]
+  },
+  "definitions": {
+    "agreement_fraction": "Fraction of the fixes both decoders classified on which they name the same phase.",
+    "confusion": "Counts keyed 'chapter4_phase|vilpellet_phase', over the fixes both decoders classified.",
+    "n_runs": "Uninterrupted runs carrying a phase; unclassified stretches are excluded under both decoders.",
+    "time_fraction": "Each fix accounts for the interval to the next fix of the same physical track; the last fix of a track takes the median step."
+  },
+  "flight": {
+    "alpha_straight_rad": 0.20960958,
+    "discipline": "paragliders",
+    "duration_s": 21124.0,
+    "flight_id": "2021-09-01_20308851",
+    "igc_path": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/raw/igc/2021-2022/2021-09-01_20308851.igc",
+    "n_cleaned_fixes": 21125,
+    "n_segments": 1,
+    "source": "paraglider"
+  },
+  "gaussian": {
+    "available": true,
+    "mapping_method": "provisional-emission-signatures",
+    "n_runs": 126,
+    "note": "Chapter 4 labels decoded on demand through soaring.viewer.data.load_flight_phases.",
+    "phases": {
+      "climb": {
+        "duration_s": 6890.0,
+        "fix_fraction": 0.3261538461538461,
+        "n_fixes": 6890,
+        "time_fraction": 0.3261538461538461
+      },
+      "search": {
+        "duration_s": 3640.0,
+        "fix_fraction": 0.1723076923076923,
+        "n_fixes": 3640,
+        "time_fraction": 0.1723076923076923
+      },
+      "transition": {
+        "duration_s": 10310.0,
+        "fix_fraction": 0.4880473372781065,
+        "n_fixes": 10310,
+        "time_fraction": 0.4880473372781065
+      },
+      "unclassified": {
+        "duration_s": 285.0,
+        "fix_fraction": 0.01349112426035503,
+        "n_fixes": 285,
+        "time_fraction": 0.01349112426035503
+      }
+    }
+  },
+  "generator": "scripts/reporting/ch5_vilpellet/generate_vilpellet_report.py",
+  "outputs": {
+    "comparison_pdf": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/thesis/generated/ch5_vilpellet_comparison.pdf",
+    "example_pdf": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/thesis/generated/ch5_vilpellet_example.pdf",
+    "n_macros": 38,
+    "values_tex": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/thesis/generated/ch5_vilpellet_values.tex"
+  },
+  "vilpellet": {
+    "eligible": true,
+    "n_runs": 121,
+    "phases": {
+      "climb": {
+        "duration_s": 5814.0,
+        "fix_fraction": 0.2752189349112426,
+        "n_fixes": 5814,
+        "time_fraction": 0.2752189349112426
+      },
+      "search": {
+        "duration_s": 1342.0,
+        "fix_fraction": 0.06352662721893491,
+        "n_fixes": 1342,
+        "time_fraction": 0.06352662721893491
+      },
+      "transition": {
+        "duration_s": 13969.0,
+        "fix_fraction": 0.6612544378698225,
+        "n_fixes": 13969,
+        "time_fraction": 0.6612544378698225
+      }
+    },
+    "reasons": {
+      "classified": 21125
+    }
+  }
+}
