@@ -1,0 +1,110 @@
+# Vilpellet's three-state binary-feature HMM, transcribed for this repository.
+#
+# Provenance.  Every number below comes from the reference implementation shipped with
+# the internship code (`flight_phase_inference_minimal.py`, December 2025), which is the
+# inference-only extract of `scripts/hmm/train_hmm.py` in the same package.  The model
+# was fitted once, by Baum-Welch, on 2019 paraglider flights taken from four Alpine
+# take-off sites, and its parameters are then applied unchanged to every flight; nothing
+# here is refitted by this repository.  See thesis Chapter 5 and
+# docs/guide/vilpellet-segmentation.md.
+schema_version: 1
+
+# --- Feature construction -----------------------------------------------------------
+# Windows are counts of FIXES, not seconds, exactly as in the source implementation.
+# They are only equivalent to 6 s / 30 s / 90 s because the eligibility gate below
+# restricts the method to tracks logged at very close to 1 Hz.
+features:
+  # Gaussian rolling mean applied to the ENU coordinates before anything else.
+  # pandas `win_type="gaussian"` with std = window / 6.
+  position_smoothing_fixes: 6
+  # Centred rolling mean applied to the signed heading increment.
+  turn_smoothing_fixes: 6
+  # The persistence window shared by all three binary features.
+  persistence_fixes: 30
+  # Fraction of a persistence window that must agree for a feature to fire.
+  beta_persistence: 0.9
+
+# Straightness threshold on the smoothed signed heading increment, in radians per fix.
+# Obtained by Vilpellet from a kernel density estimate of the turn-angle distribution
+# (`scripts/radius_treshold_kernel/`), separately per glider class.
+alpha_straight_rad:
+  paragliders: 0.20960958
+  hang gliders: 0.17398039
+  sailplanes: 0.1
+
+# --- Decoding -----------------------------------------------------------------------
+decoding:
+  # Rolling majority vote applied to the Viterbi path, in fixes.
+  majority_fixes: 90
+
+# --- Eligibility --------------------------------------------------------------------
+# The guards the source scripts apply before a track is fed to the model.  A track that
+# fails any of them is returned unlabelled rather than decoded on a cadence the
+# sample-count windows were never calibrated for.
+eligibility:
+  max_mean_dt_s: 1.2
+  min_fixes: 3600
+  require_unique_times: true
+  require_increasing_times: true
+
+# --- State naming -------------------------------------------------------------------
+# Index i of this list is the behavioural name of HMM component i.  The order is fixed
+# by the fitted emission vectors and is NOT the order written in the `regime_map` line
+# of `flight_phase_inference_minimal.py`, which transposes climb and transition; see
+# docs/guide/vilpellet-segmentation.md for the emission-by-emission argument and the
+# measurement that settles it.  Set `literal_minimal_script` to reproduce that line.
+state_names: [climb, search, transition]
+literal_minimal_script: false
+
+# --- Author's own usage recommendations ---------------------------------------------
+# Recorded from the closing comments of the reference implementation.  All are inactive
+# by default: they change which decoded runs are kept, so they belong to an analysis,
+# not to the segmentation itself.
+recommendations:
+  # Discard the final minutes of each flight; the author considers them uninformative.
+  drop_tail_s: 0.0
+  # Discard decoded runs shorter than this; the author warns that short runs are the
+  # least reliable.
+  min_run_s: 0.0
+  # Keep a search run only when a climb run follows it.
+  search_requires_following_climb: false
+
+# --- Input adaptation ---------------------------------------------------------------
+input:
+  # `cleaned`   : this repository's preprocessed ENU trajectory (default, so that the
+  #               two segmentations are compared on identical geometry).
+  # `raw_gnss`  : latitude/longitude/GNSS altitude straight from the IGC file, which is
+  #               the input the reference implementation consumes.
+  source: cleaned
+  # Apply the Gaussian position smoothing above.  It is part of the feature definition
+  # that the straightness threshold was calibrated against, so it stays on even when the
+  # cleaned input has already been Savitzky-Golay smoothed.  That double smoothing is a
+  # real difference from the reference pipeline and is stated in the thesis.
+  pre_smooth: true
+
+# --- Fitted parameters --------------------------------------------------------------
+# Emissions are categorical over the 8 possible values of the three binary features,
+# enumerated in the order
+#   0:(0,0,0) 1:(0,0,1) 2:(0,1,0) 3:(0,1,1) 4:(1,0,0) 5:(1,0,1) 6:(1,1,0) 7:(1,1,1)
+# with the triple read as
+#   (persistent straightness, positive mean vertical speed, persistent turn sign).
+parameters:
+  emission:
+    # Component 0: almost all mass on (0,1,1) -- turning, rising, one turn direction.
+    climb:      [1.54243294e-11, 5.07106916e-04, 8.72065952e-05, 9.98979845e-01,
+                 8.52234426e-21, 1.25568196e-12, 7.85199401e-13, 4.25841826e-04]
+    # Component 1: mass spread over (0,0,0), (0,0,1), (0,1,0) -- turning without a
+    # settled direction, no sustained ascent.
+    search:     [3.25680580e-01, 1.77503496e-01, 4.95899060e-01, 7.21547291e-04,
+                 6.96932383e-05, 1.93093305e-05, 1.06025552e-04, 2.89805651e-07]
+    # Component 2: mass on (1,0,0) and (1,1,0) -- straight, no persistent turn sign.
+    transition: [6.93534587e-06, 1.04473011e-08, 2.91554932e-06, 1.93493842e-10,
+                 7.38362033e-01, 1.40643862e-02, 2.41340621e-01, 6.22309818e-03]
+  # Row i, column j is the probability of moving from component i to component j.
+  transition_matrix:
+    - [0.98961359, 0.00346214, 0.00692427]
+    - [0.00666667, 0.99000000, 0.00333333]
+    - [0.00099934, 0.00712054, 0.99188012]
+  # Initial distribution.  The third entry is numerically zero: the fit never starts a
+  # flight in the straight-transition component.
+  initial: [5.66075578e-02, 9.43392442e-01, 5.88699965e-29]

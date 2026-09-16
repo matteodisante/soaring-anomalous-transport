@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from ..analysis.config import PreprocConfig
     from ..analysis.preproc.pipeline import FlightRecord
     from ..analysis.segmentation.model import HMMArtifact
+    from ..analysis.segmentation.vilpellet import VilpelletConfig
 
 
 @dataclass(frozen=True)
@@ -198,6 +199,86 @@ def load_flight_phases(
         sequence_prior_weight=policy.weight,
         search_optional=policy.allow_search_skip,
         coverage=native_coverage_summary(fixes),
+    )
+
+
+@lru_cache(maxsize=4)
+def _load_vilpellet_config(config_path: str, config_mtime_ns: int) -> VilpelletConfig:
+    """Load and cache the transcribed protocol until its YAML changes on disk."""
+    del config_mtime_ns  # part of the cache key; the loader only needs the path
+    from ..analysis.segmentation.vilpellet import load_vilpellet_config
+
+    return load_vilpellet_config(config_path)
+
+
+def _vilpellet_config() -> VilpelletConfig | None:
+    """The configured Vilpellet protocol, or ``None`` when the file is unusable.
+
+    Returns:
+        The validated configuration, or ``None`` when ``segmentation_vilpellet.yaml``
+        is missing, unreadable, or describes a model the decoder would reject.
+    """
+    from ..analysis.segmentation.vilpellet import config as vilpellet_config
+
+    path = Path(vilpellet_config.DEFAULT_VILPELLET_CONFIG_PATH)
+    try:
+        mtime = path.stat().st_mtime_ns
+    except OSError:
+        return None
+    try:
+        return _load_vilpellet_config(str(path), mtime)
+    except (OSError, KeyError, TypeError, ValueError):
+        return None
+
+
+def load_vilpellet_phases(
+    cleaned_fixes: pd.DataFrame,
+    discipline: Discipline,
+    *,
+    enforce_flight_guard: bool = True,
+    config: VilpelletConfig | None = None,
+) -> PhaseTrack | None:
+    """Label the selected cleaned flight with the transcribed Vilpellet segmenter.
+
+    The mirror image of :func:`load_flight_phases` for the second segmenter
+    (:mod:`soaring.analysis.segmentation.vilpellet`).  It reads no archive at all: the
+    fitted parameters live in ``configs/segmentation_vilpellet.yaml``, and the decode
+    runs over the ``FlightResult.fixes`` table already in memory, about a tenth of a
+    second for a 21,000-fix flight.  The returned object is the same
+    :class:`PhaseTrack` the Chapter 4 loader returns, so the drawing code treats the
+    two segmentations identically.
+
+    Args:
+        cleaned_fixes: One retained, fully preprocessed flight.
+        discipline: Its selected viewer discipline; names the straightness threshold.
+        enforce_flight_guard: Apply the author's own minimum-flight-length guard.
+            Switching it off decodes a flight the guard would leave entirely
+            unlabelled, and changes no label of a flight that passes it.
+        config: An already-loaded protocol, for callers that want to vary it.  The
+            configured one is loaded and cached when this is omitted.
+
+    Returns:
+        A phase track, or ``None`` when the configuration cannot be read.  A flight
+        the eligibility gate rejects still returns a track: every fix is
+        ``unclassified`` and ``coverage["fixes_by_reason"]`` names the guard that
+        stopped it.
+    """
+    from ..analysis.segmentation.coverage import native_coverage_summary
+    from ..analysis.segmentation.vilpellet import segment_flight
+
+    protocol = _vilpellet_config() if config is None else config
+    if protocol is None:
+        return None
+    track = segment_flight(
+        cleaned_fixes,
+        protocol,
+        discipline=discipline.name,
+        enforce_flight_guard=enforce_flight_guard,
+    )
+    return PhaseTrack(
+        fixes=track.fixes,
+        mapping_method="vilpellet-fitted-2019",
+        coverage=native_coverage_summary(track.fixes),
     )
 
 
