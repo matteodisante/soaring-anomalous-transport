@@ -282,6 +282,30 @@ def load_vilpellet_phases(
     )
 
 
+def climb_only(fixes: pd.DataFrame) -> pd.DataFrame:
+    """The climb fixes of a labelled track, with every thermal kept apart.
+
+    ``phase_run`` is carried through untouched, so each thermal remains its own line
+    group.  ``track_run`` is renumbered one value per retained run: with the
+    intervening search and transition fixes no longer displayed, two thermals are no
+    longer two parts of one continuous displayed track, and the drawing code must not
+    close the edge between them.
+
+    Args:
+        fixes: A labelled fix table carrying a ``phase`` column.
+
+    Returns:
+        A copy holding only the fixes labelled ``climb``.  An unlabelled table yields
+        an empty result with the same columns.
+    """
+    if "phase" not in fixes.columns:
+        return fixes.iloc[:0].copy()
+    kept = fixes.loc[fixes["phase"] == "climb"].copy()
+    if "track_run" in kept.columns and "phase_run" in kept.columns:
+        kept["track_run"] = pd.factorize(kept["phase_run"])[0]
+    return kept
+
+
 def phases_on_cleaned_fixes(
     cleaned: pd.DataFrame, points: pd.DataFrame, *, decision_step_s: float
 ) -> pd.DataFrame:

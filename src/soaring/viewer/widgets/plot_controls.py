@@ -60,6 +60,7 @@ class PlotControls(QWidget):
     view_changed = pyqtSignal()
     reset_view_requested = pyqtSignal()
     save_pdf_requested = pyqtSignal()
+    fullscreen_requested = pyqtSignal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Build the frame/axis/DMS/visibility controls and the Save PDF button."""
@@ -113,6 +114,12 @@ class PlotControls(QWidget):
         self._color_combo.addItem("Flight phase (HMM)", "phase")
         self._color_combo.addItem("Preprocessing segment", "segment")
         self._color_combo.addItem("Single discipline colour", "single")
+        self._segmentation_combo = QComboBox()
+        self._segmentation_combo.addItem("Chapter 4 HMM (this work)", "own")
+        self._segmentation_combo.addItem("Vilpellet (Jérémie)", "vilpellet")
+        self._segmentation_combo.addItem("Compare side by side", "compare")
+        self._chk_climb_only = QCheckBox("Thermals only (climb)")
+        self._btn_fullscreen = QPushButton("Full screen")
         self._btn_save_pdf = QPushButton("Save PDF…")
 
         display_row = QHBoxLayout()
@@ -120,7 +127,10 @@ class PlotControls(QWidget):
         display_row.addWidget(self._chk_raw)
         display_row.addWidget(self._chk_cleaned)
         display_row.addWidget(_labeled("Cleaned colour", self._color_combo))
+        display_row.addWidget(_labeled("Segmentation", self._segmentation_combo))
+        display_row.addWidget(self._chk_climb_only)
         display_row.addStretch(1)
+        display_row.addWidget(self._btn_fullscreen)
         display_row.addWidget(self._btn_save_pdf)
 
         layout = QVBoxLayout(self)
@@ -131,6 +141,7 @@ class PlotControls(QWidget):
 
         self._populate_axes()
         self._on_3d_toggled(False)
+        self._sync_phase_controls()
 
         self._frame_combo.currentIndexChanged.connect(self._on_frame_changed)
         self._chk_3d.toggled.connect(self._on_3d_toggled)
@@ -140,7 +151,11 @@ class PlotControls(QWidget):
         self._chk_dms.toggled.connect(self.changed.emit)
         self._chk_raw.toggled.connect(self.changed.emit)
         self._chk_cleaned.toggled.connect(self.changed.emit)
+        self._color_combo.currentIndexChanged.connect(self._sync_phase_controls)
         self._color_combo.currentIndexChanged.connect(self.changed.emit)
+        self._segmentation_combo.currentIndexChanged.connect(self.changed.emit)
+        self._chk_climb_only.toggled.connect(self.changed.emit)
+        self._btn_fullscreen.clicked.connect(self.fullscreen_requested.emit)
         self._btn_save_pdf.clicked.connect(self.save_pdf_requested.emit)
 
         for slider, label, suffix in (
@@ -206,6 +221,23 @@ class PlotControls(QWidget):
         return self._color_combo.currentData()
 
     @property
+    def segmentation_source(self) -> str:
+        """Which segmentation colours the phases: ``own``, ``vilpellet``, ``compare``.
+
+        ``own`` is the Chapter 4 Gaussian HMM of :mod:`soaring.analysis.segmentation`,
+        ``vilpellet`` the transcribed binary-feature model of
+        :mod:`soaring.analysis.segmentation.vilpellet`, and ``compare`` puts the two
+        of them in adjacent panels.  The value only means anything while
+        ``color_mode`` is ``phase``, which is when the combo is enabled.
+        """
+        return self._segmentation_combo.currentData()
+
+    @property
+    def climb_only(self) -> bool:
+        """Whether to keep only the climb fixes, hiding the rest of the flight."""
+        return self._chk_climb_only.isChecked()
+
+    @property
     def azim_deg(self) -> int:
         """3D camera azimuth, in degrees (only meaningful when ``is_3d``)."""
         return self._slider_azim.value()
@@ -266,3 +298,9 @@ class PlotControls(QWidget):
     def _on_3d_toggled(self, checked: bool) -> None:
         self._z_combo.setEnabled(checked)
         self._box_3d_view.setVisible(checked)
+
+    def _sync_phase_controls(self) -> None:
+        """Enable the phase-only inputs exactly while phase colouring is selected."""
+        phase = self.color_mode == "phase"
+        self._segmentation_combo.setEnabled(phase)
+        self._chk_climb_only.setEnabled(phase)

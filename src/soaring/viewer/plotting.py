@@ -9,8 +9,8 @@ module is importable -- and testable -- without Qt or a display at all
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import TYPE_CHECKING, Literal
+from collections.abc import Iterable, Mapping, Sequence
+from typing import TYPE_CHECKING, Literal, cast
 
 from soaring.reporting.style import DISCIPLINE_COLORS, UNCLASSIFIED_COLOR
 from soaring.reporting.style import PHASE_COLORS as _MANUSCRIPT_PHASE_COLORS
@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     import pandas as pd
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
+    from mpl_toolkits.mplot3d import Axes3D
 
 # Deterministic PDF metadata, the same convention as scripts/reporting/**/generate_*.py:
 # committing (or diffing) an exported figure produces a clean diff.
@@ -44,19 +45,111 @@ _AXIS_UNITS = {
 PHASE_COLORS = {**_MANUSCRIPT_PHASE_COLORS, "unclassified": UNCLASSIFIED_COLOR}
 
 
-def make_axes(fig: Figure, *, is_3d: bool) -> Axes:
-    """A fresh (2D or 3D) ``Axes`` on ``fig``, replacing whatever was there.
+def make_axes(fig: Figure, *, is_3d: bool, panels: int = 1) -> Axes | list[Axes]:
+    """Fresh (2D or 3D) axes on ``fig``, replacing whatever was there.
 
     Matplotlib cannot switch an existing ``Axes`` between 2D and 3D in place, so every
     redraw that might change dimensionality clears the figure and starts over.
+
+    Args:
+        fig: The figure to draw on; it is cleared first.
+        is_3d: Whether the axes carry a third dimension.
+        panels: How many axes to place side by side.  Two of them compare two
+            segmentations of one flight, so their limits are tied together: in 2D
+            through matplotlib's own ``sharex``/``sharey``, in 3D through
+            :func:`link_3d_axes`, which mplot3d has no built-in equivalent for.
+
+    Returns:
+        One ``Axes`` when ``panels`` is 1, otherwise the list of axes left to right.
+
+    Raises:
+        ValueError: If ``panels`` is below one.
     """
+    if panels < 1:
+        raise ValueError("a figure needs at least one panel")
     fig.clf()
     if is_3d:
-        return fig.add_subplot(111, projection="3d")
-    return fig.add_subplot(111)
+        axes = [
+            fig.add_subplot(1, panels, index + 1, projection="3d")
+            for index in range(panels)
+        ]
+    else:
+        first = fig.add_subplot(1, panels, 1)
+        axes = [first]
+        axes += [
+            fig.add_subplot(1, panels, index + 1, sharex=first, sharey=first)
+            for index in range(1, panels)
+        ]
+    return axes[0] if panels == 1 else axes
 
 
-def center_message(ax: Axes, text: str, *, is_3d: bool) -> None:
+def link_3d_axes(axes: Sequence[Axes], source: Axes | None = None) -> None:
+    """Give every 3D panel the limits and the camera of one of them.
+
+    ``Axes3D`` has no ``sharex``/``sharey`` equivalent and no camera sharing at all, so
+    two 3D panels drift apart as soon as the user drags either one.  Copying the three
+    limits and the three camera angles across after every draw and every drag keeps a
+    side-by-side comparison showing the same volume from the same viewpoint.
+
+    Args:
+        axes: The panels to tie together.  Panels without a z-axis are skipped, so
+            calling this on a 2D figure does nothing.
+        source: The panel the others follow; the first one by default.
+    """
+    if not axes:
+        return
+    origin = axes[0] if source is None else source
+    if not hasattr(origin, "get_zlim"):
+        return
+    origin3d = cast("Axes3D", origin)
+    xlim, ylim = origin3d.get_xlim(), origin3d.get_ylim()
+    zlim = origin3d.get_zlim()
+    elev, azim, roll = origin3d.elev, origin3d.azim, origin3d.roll
+    for ax in axes:
+        if ax is origin or not hasattr(ax, "get_zlim"):
+            continue
+        ax3d = cast("Axes3D", ax)
+        ax3d.set_xlim(xlim)
+        ax3d.set_ylim(ylim)
+        ax3d.set_zlim(zlim)
+        ax3d.view_init(elev=elev, azim=azim, roll=roll)
+
+
+def equalise_limits(axes: Sequence[Axes]) -> None:
+    """Frame every panel on the union of the data ranges of all of them.
+
+    Two panels showing one flight under two segmentations must be drawn at one scale.
+    Panels scaled independently make the same trajectory look like two different
+    flights, and any difference the comparison is meant to show becomes unreadable.
+    Empty panels take the union too, so a segmenter that labelled nothing still shows
+    the frame the other one filled.
+
+    Args:
+        axes: The panels to frame alike.
+    """
+    drawn = [ax for ax in axes if ax.lines or ax.collections]
+    if not drawn:
+        return
+    xlim = _union(ax.get_xlim() for ax in drawn)
+    ylim = _union(ax.get_ylim() for ax in drawn)
+    has_z = all(hasattr(ax, "get_zlim") for ax in axes)
+    zlim = (
+        _union(cast("Axes3D", ax).get_zlim() for ax in drawn) if has_z else None
+    )
+    for ax in axes:
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        if zlim is not None:
+            cast("Axes3D", ax).set_zlim(zlim)
+
+
+def _union(limits: Iterable[tuple[float, float]]) -> tuple[float, float]:
+    """The smallest interval containing every ``(low, high)`` pair of ``limits``."""
+    pairs = list(limits)
+    return min(low for low, _ in pairs), max(high for _, high in pairs)
+
+
+def center_message(ax: Axes | Sequence[Axes], text: str, *, is_3d: bool) -> None:
     """A status message centred on ``ax`` (e.g. "pick a flight"), instead of a plot.
 
     Not a plain ``ax.text(0.5, 0.5, text, transform=ax.transAxes)`` throughout: on an
@@ -65,27 +158,36 @@ def center_message(ax: Axes, text: str, *, is_3d: bool) -> None:
     silently reinterprets ``text`` as a z-coordinate and then raises on the missing
     ``s``). ``Axes3D.text2D`` is the one already meant for axes-fraction placement
     regardless of the 3D projection, so this dispatches to it there.
+
+    Args:
+        ax: One axes, or the several a side-by-side comparison holds.  Every panel
+            gets the message, so a two-panel layout never shows one empty frame with
+            no explanation of why it is empty.
+        text: The message.
+        is_3d: Whether the axes carry a third dimension.
     """
-    if is_3d:
-        ax.text2D(  # type: ignore[attr-defined]
-            0.5,
-            0.5,
-            text,
-            ha="center",
-            va="center",
-            transform=ax.transAxes,
-            wrap=True,
-        )
-    else:
-        ax.text(
-            0.5,
-            0.5,
-            text,
-            ha="center",
-            va="center",
-            transform=ax.transAxes,
-            wrap=True,
-        )
+    targets = list(ax) if isinstance(ax, Sequence) else [ax]
+    for target in targets:
+        if is_3d:
+            target.text2D(  # type: ignore[attr-defined]
+                0.5,
+                0.5,
+                text,
+                ha="center",
+                va="center",
+                transform=target.transAxes,
+                wrap=True,
+            )
+        else:
+            target.text(
+                0.5,
+                0.5,
+                text,
+                ha="center",
+                va="center",
+                transform=target.transAxes,
+                wrap=True,
+            )
 
 
 def plot_trajectory(
@@ -225,6 +327,7 @@ def save_pdf(fig: Figure, path: str | Path) -> None:
 
 
 def _axis_label(col: str, dms: bool) -> str:
+    """The axis label for one plotted column, honouring the DMS toggle."""
     if col == "lat":
         return "latitude" if dms else "latitude [deg]"
     if col == "lon":
@@ -233,6 +336,7 @@ def _axis_label(col: str, dms: bool) -> str:
 
 
 def _maybe_dms_ticks(axis, col: str, dms: bool) -> None:
+    """Switch one matplotlib axis to degrees-minutes-seconds tick labels, if asked."""
     if not dms or col not in ("lat", "lon"):
         return
     from matplotlib.ticker import FuncFormatter
@@ -258,6 +362,11 @@ def _draw_grouped(
     group_by,
     color_map,
 ):
+    """Draw ``table`` as one line per ``group_by`` value, coloured by ``color_by``.
+
+    Falls back to a single undivided line when ``group_by`` is absent or missing from
+    ``table``; see :func:`plot_trajectory` for what each grouping is used for.
+    """
     if group_by is None or group_by not in table.columns:
         _draw(ax, table, x, y, z, color=color, ls=ls, lw=lw, alpha=alpha, label=label)
         return
@@ -322,6 +431,7 @@ def _mark_endpoint(ax, table, x, y, z, *, row, marker, color, label):
 
 
 def _draw(ax, table, x, y, z, *, color, ls, lw, alpha, label, marker=None):
+    """Plot one unbroken line of ``table``, in 2D or 3D depending on ``z``."""
     xs, ys = table[x].to_numpy(), table[y].to_numpy()
     if z is None:
         ax.plot(
