@@ -11,11 +11,13 @@ from typing import TYPE_CHECKING, cast
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QEvent, Qt
+from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QFileDialog,
     QMainWindow,
     QMessageBox,
+    QPushButton,
     QSplitter,
     QTabWidget,
     QVBoxLayout,
@@ -28,6 +30,7 @@ from . import data, plotting
 from .widgets.flight_picker import FlightPicker
 from .widgets.map_view import MapView
 from .widgets.plot_controls import PlotControls
+from .widgets.thermal_plane import ThermalPlane
 
 if TYPE_CHECKING:
     from mpl_toolkits.mplot3d import Axes3D
@@ -35,7 +38,6 @@ if TYPE_CHECKING:
     from ..analysis.preproc.enu import LocalFrame
     from ..analysis.preproc.pipeline import FlightResult
     from ..reporting.disciplines import Discipline
-
 
 class MainWindow(QMainWindow):
     """The whole application: a flight picker beside a redrawable plot."""
@@ -90,11 +92,24 @@ class MainWindow(QMainWindow):
         self._tabs = QTabWidget()
         self._tabs.addTab(trajectory_tab, "Trajectory")
         self._tabs.addTab(self._map_view, "Map")
+        self._thermal_plane = ThermalPlane()
+        self._tabs.addTab(self._thermal_plane, "Thermal planes")
         # The map's take-off points are only read from disk the first time this tab is
         # actually shown, not at startup: a full catalog + flights_meta read for both
         # disciplines is seconds of work the app should not pay before its window
         # even appears, for a tab the user may never open.
         self._tabs.currentChanged.connect(self._on_tab_changed)
+        self._fullscreen_button = QPushButton("Full screen")
+        self._fullscreen_button.setToolTip(
+            "Enlarge the active view and hide the flight picker. Esc to return."
+        )
+        self._fullscreen_button.clicked.connect(self._toggle_full_screen)
+        self._tabs.setCornerWidget(self._fullscreen_button)
+        self._fullscreen_state = None
+        self._escape_fullscreen = QShortcut(QKeySequence("Esc"), self)
+        self._escape_fullscreen.activated.connect(self._exit_full_screen)
+        self._fullscreen_shortcut = QShortcut(QKeySequence("F11"), self)
+        self._fullscreen_shortcut.activated.connect(self._toggle_full_screen)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(self._picker)
@@ -102,19 +117,82 @@ class MainWindow(QMainWindow):
         splitter.setStretchFactor(0, 0)
         splitter.setStretchFactor(1, 1)
         splitter.setSizes([340, 960])
+        self._splitter = splitter
         self.setCentralWidget(splitter)
 
         self._redraw()
 
+    def _toggle_full_screen(self):
+        """Enlarge the active tab, preserving every scientific control and result."""
+        if self.isFullScreen() or self._fullscreen_state is not None:
+            self._exit_full_screen()
+        else:
+            self._fullscreen_state = (
+                self.windowState(),
+                self.geometry(),
+                self._splitter.sizes(),
+                not self._picker.isHidden(),
+            )
+            self.showFullScreen()
+
+    def _exit_full_screen(self):
+        """Return to the previous window size and picker layout with Escape."""
+        if self.isFullScreen() or self._fullscreen_state is not None:
+            state = self._fullscreen_state
+            self.setWindowState(state[0] if state else Qt.WindowState.WindowNoState)
+            if (
+                state
+                and state[1] is not None
+                and not state[0] & Qt.WindowState.WindowMaximized
+            ):
+                self.setGeometry(state[1])
+            self._restore_full_screen_layout(state)
+
+    def _restore_full_screen_layout(self, state):
+        """Restore the sidebar even if a resize already cleared the Qt window flag."""
+        if state:
+            self._picker.setVisible(state[3])
+            self._splitter.setSizes(state[2])
+        self._fullscreen_state = None
+        self._fullscreen_button.setText("Full screen")
+
+    def changeEvent(self, event):  # noqa: N802
+        """Handle the button and native macOS full-screen transitions alike."""
+        super().changeEvent(event)
+        if event.type() != QEvent.Type.WindowStateChange or not hasattr(
+            self, "_splitter"
+        ):
+            return
+        if self.isFullScreen():
+            if self._fullscreen_state is None:
+                self._fullscreen_state = (
+                    event.oldState(),
+                    None,
+                    self._splitter.sizes(),
+                    not self._picker.isHidden(),
+                )
+            self._picker.hide()
+            self._fullscreen_button.setText("Exit full screen (Esc)")
+        else:
+            self._restore_full_screen_layout(self._fullscreen_state)
+
     def _on_tab_changed(self, index: int) -> None:
         if self._tabs.widget(index) is self._map_view:
             self._map_view.ensure_loaded()
+        elif self._tabs.widget(index) is self._thermal_plane:
+            self._thermal_plane.ensure_loaded()
+
+    def closeEvent(self, event) -> None:  # noqa: N802
+        """Cancel archive work before Qt destroys the thermal-plane worker."""
+        self._thermal_plane.shutdown()
+        super().closeEvent(event)
 
     def _on_folders_changed(self) -> None:
         # The map cached takeoff_points() per discipline on its own (catalog_index's
         # cache was already cleared by the picker); without this it would keep
         # showing whichever root was current when it last loaded, silently stale.
         self._map_view.invalidate()
+        self._thermal_plane.invalidate()
         if self._tabs.currentWidget() is self._map_view:
             self._map_view.ensure_loaded()
 

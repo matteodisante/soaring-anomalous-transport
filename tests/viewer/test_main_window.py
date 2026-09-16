@@ -77,3 +77,53 @@ def test_3d_zoom_preserves_mouse_rotation_and_orientation_preserves_pan(window):
     assert ax.get_xlim() == pytest.approx((3.225, 3.275))
     window._controls._btn_reset_view.click()
     assert window._figure.axes[0].get_xlim()[0] < 3.1
+
+
+def test_fullscreen_hides_picker_and_restores_layout_without_redraw(
+    window, qapp, monkeypatch
+):
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtTest import QTest
+
+    window.show()
+    qapp.processEvents()
+    geometry = window.geometry()
+    sizes = window._splitter.sizes()
+    axes = window._figure.axes[0]
+    monkeypatch.setattr(window, "_redraw", lambda: pytest.fail("fullscreen redraw"))
+    window._fullscreen_button.click()
+    qapp.processEvents()
+    assert window.isFullScreen()
+    assert window._picker.isHidden()
+    assert not window._controls.isHidden()
+    assert "Exit" in window._fullscreen_button.text()
+    QTest.keyClick(window, Qt.Key.Key_Escape)
+    qapp.processEvents()
+    assert not window.isFullScreen()
+    assert not window._picker.isHidden()
+    assert window.geometry() == geometry
+    assert window._splitter.sizes() == sizes
+    assert window._figure.axes[0] is axes
+    assert window._fullscreen_button.text() == "Full screen"
+
+
+def test_fullscreen_exit_after_resize_and_single_map_focus(window, qapp, monkeypatch):
+    view = window._thermal_plane
+    monkeypatch.setattr(view, "ensure_loaded", lambda: None)
+    window._tabs.setCurrentWidget(view)
+    view._mode.setCurrentIndex(1)
+    window.show()
+    qapp.processEvents()
+    window._fullscreen_button.click()
+    qapp.processEvents()
+    view._view.setCurrentIndex(view._view.findData("midday"))
+    window.resize(1920, 1080)
+    qapp.processEvents()
+    # Qt can clear its fullscreen flag on resize without a WindowStateChange event.
+    window._fullscreen_button.click()
+    qapp.processEvents()
+    assert not window.isFullScreen()
+    assert not window._picker.isHidden()
+    assert window._fullscreen_state is None
+    assert view._view.currentData() == "midday"
+    assert view._panel_indices == [1]

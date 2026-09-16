@@ -19,6 +19,7 @@ and thermal-route questions.
 | Read the processed tables | [SSD layout and schemas](guide/data-on-disk.md) |
 | Measure motion before segmentation | [Global transport](guide/global-transport.md) |
 | Infer and evaluate flight phases | [Segmentation](guide/flight-phase-segmentation.md) |
+| Inspect climb intersections by cell, time and height | [Thermal planes](guide/thermal-planes.md) |
 | Rebuild the scientific results | [Complete workflow](guide/rebuilding.md) |
 | Trace a figure or numerical value | [Generated provenance](guide/provenance.md) |
 
