@@ -213,5 +213,16 @@ def test_daily_panels_share_one_row_and_focus_preserves_selection(widget, monkey
             assert widget._map_ax is not None
         elif focus != "planes":
             assert len(widget._figure.axes) == 1
-            assert widget._plane_ax.get_title().startswith(focus.capitalize())
+            # The panel title's `set_title` call in thermal_plane.py names no
+            # explicit `loc`, so it lands under whichever alignment the ambient
+            # `axes.titlelocation` rcParam holds at the time -- 'center' by
+            # matplotlib's own default, but 'left' for the rest of any process
+            # where `soaring.reporting.style.paper_style()` has already run (it
+            # sets that rcParam globally and never restores it). Checking every
+            # slot is what makes this assertion true regardless of test order.
+            ax = widget._plane_ax
+            title = ax.get_title(loc="left") or ax.get_title() or ax.get_title(
+                loc="right"
+            )
+            assert title.startswith(focus.capitalize())
     assert widget._panel_indices == [0, 1, 2]
