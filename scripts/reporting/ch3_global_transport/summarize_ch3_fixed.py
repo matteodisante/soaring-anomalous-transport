@@ -126,18 +126,42 @@ def reduce_discipline(directory):
     m_lags = msd["lags"]
     common = np.searchsorted(m_lags, LAGS)
     m = msd["curves"]
+    flight_msd = np.load(directory / "flight-msd.npy", mmap_mode="r")
+    labels = tab.cluster.to_numpy()
+    group_support = np.array(
+        [
+            [
+                len(np.unique(labels[np.isfinite(flight_msd[:, c, j])]))
+                for j in range(len(m_lags))
+            ]
+            for c in range(4)
+        ]
+    )
+    msd_band = summary(m)
+    for key in ("low", "high"):
+        msd_band[key][group_support < 20] = np.nan
     output = {
         "eligible_flights": len(tab),
+        "eligible_task_counts": tab.task.value_counts().to_dict(),
         "bootstrap_groups": draws.shape[1],
         "resamples": len(draws) - 1,
         "lags": LAGS,
         "msd_lags": m_lags,
-        "msd": summary(m),
+        "msd": msd_band,
         "msd_support": msd["support"],
+        "msd_group_support": group_support,
         "cohorts": {},
         "groups": {},
         "fits": {},
     }
+    audit = json.loads((directory / "input-audit.json").read_text())
+    if audit["status"] != "passed":
+        raise ValueError("Full coordinate verification is required before publication")
+    for record in audit["inputs"].values():
+        stat = Path(record["path"]).stat()
+        if (stat.st_size, stat.st_mtime_ns) != (record["size"], record["mtime_ns"]):
+            raise ValueError(f"Input changed since coordinate audit: {record['path']}")
+    output["input_audit"] = audit
     for c, limit in enumerate((100, 1000, 10000), 1):
         manifest = json.loads((directory / f"cohort-{limit}.json").read_text())
         frame = tab.loc[tab[f"cohort_{limit}"]]
@@ -287,13 +311,22 @@ def reduce_discipline(directory):
     assert np.all(index >= 0)
     short_draws = bootstrap_means(short[index], tab.cluster.to_numpy(), draws)
     general = np.concatenate((short_draws, m[:, 0]), axis=1)
+    general_groups = np.r_[
+        [len(np.unique(labels[np.isfinite(short[index, j])])) for j in range(9)],
+        group_support[0],
+    ]
+    general_band = summary(general)
+    for key in ("low", "high"):
+        general_band[key][general_groups < 20] = np.nan
     output["general"] = {
         "lags": GENERAL_LAGS,
         "retained_flights": len(ids),
         "ensemble_mean": mean,
         "ensemble_p5_median_p95": scatter,
         "ensemble_support": np.isfinite(launch).sum(axis=0),
-        "tamsd": summary(general),
+        "tamsd": general_band,
+        "tamsd_group_support": general_groups,
+        "minimum_groups_for_descriptive_band": 20,
         "tamsd_support": np.r_[
             np.isfinite(short[index]).sum(axis=0), msd["support"][0]
         ],
@@ -327,7 +360,7 @@ def main():
         "probabilities": PROBABILITIES,
         "fit_ranges_s": FIT_RANGES,
         "bootstrap": {
-            "resamples": 1000,
+            "resamples": results["para"]["resamples"],
             "seed": 20260917,
             "unit": "catalog date and normalized takeoff site + department",
             "percentiles": [5, 95],

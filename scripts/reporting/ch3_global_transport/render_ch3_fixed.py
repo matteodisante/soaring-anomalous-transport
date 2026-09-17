@@ -13,6 +13,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+from write_ch3_text import write_text
 
 COLORS = ("#0072B2", "#D55E00", "#009E73", "#CC79A7")
 NAMES = {"para": "Paragliders", "hang": "Hang gliders"}
@@ -103,6 +104,15 @@ def figures(report, out):
             mfc="white",
             lw=0.8,
             label="Median",
+        )
+        origin_fit = g["ensemble_global_fit"]
+        ax.plot(
+            lags,
+            10 ** origin_fit["intercept"] * lags ** origin_fit["slope"] / 1e6,
+            "--",
+            color="0.2",
+            lw=1,
+            label=f"Mean fit: H = {origin_fit['slope'] / 2:.3f}",
         )
         ax.set_title(f"{NAMES[slug]}: from post-trim origin")
         ax.set_ylabel(r"Squared distance (km$^2$)")
@@ -479,6 +489,7 @@ def main():
     out.mkdir(exist_ok=True)
     figures(report, out)
     tables(report, out)
+    write_text(report, out)
     if args.publish:
         args.publish.mkdir(parents=True, exist_ok=True)
         for path in out.glob("ch3_transport_*.*"):

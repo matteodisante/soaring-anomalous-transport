@@ -320,6 +320,8 @@ def main():
             scaling_lag(frames, tab, draws, cohort, int(lag), out, args.bins)
     sources = [
         Path(__file__),
+        Path(__file__).with_name("prepare_ch3_native.py"),
+        Path(__file__).with_name("audit_ch3_inputs.py"),
         ROOT / "src/soaring/analysis/observables/fixed_transport.py",
         ROOT / "src/soaring/analysis/observables/fixed_bootstrap.py",
     ]
