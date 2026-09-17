@@ -64,3 +64,8 @@ Il renderer continua a usare il solo `report.json`. Il nuovo rapporto e i prodot
 pronti da ridisegnare sono conservati sia in `thesis/generated/` sia nella directory
 SSD della pubblicazione. `RELEASE.json` registra hash e verifiche di questa revisione;
 il manifest originale resta in `revisions/ch3-implementation-2026-09-17/`.
+
+Verificato anche il commit `7193433` in una copia isolata estratta da Git:
+13 test passati, tutti i 30 prodotti del ridisegno identici byte per byte e compilazione
+di entrambi i volumi senza riferimenti mancanti, overflow o destinazioni duplicate.
+Il rapporto sullo SSD coincide con quello committato. Log: `clean-reproduction.log`.
