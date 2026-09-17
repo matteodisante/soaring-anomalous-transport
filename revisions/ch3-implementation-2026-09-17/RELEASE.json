@@ -510,7 +510,13 @@
     "lags_per_discipline": 33,
     "bootstrap_replicates": 1000,
     "publication_identity_checks": "cohort IDs; R2=E2+N2; direct moments equal FFT MSD in all draws; quantile-ratio log slope equals slope difference",
-    "chapter2_source_unchanged_from_start": true
+    "chapter2_source_unchanged_from_start": true,
+    "clean_committed_reproduction": {
+      "commit": "653a88ed61b0330a6929580d844f6157b74f14ba",
+      "new_tests_passed": 10,
+      "offline_figures_and_numeric_fragments_byte_identical": true,
+      "both_pdfs_compiled_without_missing_references_or_overflows": true
+    }
   },
   "total_bytes": 668455608
 }

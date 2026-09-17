@@ -58,3 +58,12 @@ riportano provenienza e identità dei file sorgente.
 I commit della tesi conservano lo stato corrente dei sorgenti e degli input del
 volume sperimentale, compresa la separazione dei due volumi già presente all'inizio.
 Le modifiche di codice preesistenti estranee alla nuova pipeline restano nel workspace.
+
+## Riproduzione da soli file committati
+
+Verificato il commit `653a88e` in una directory isolata estratta da Git.
+I dieci nuovi test passano anche lì. Il ridisegno offline dal solo rapporto
+versionato riproduce byte per byte tutte le figure e i frammenti numerici
+(4,7 secondi). Entrambi i PDF compilano senza riferimenti mancanti, overflow
+o destinazioni duplicate. Nessuna dipendenza dalle modifiche di codice
+preesistenti lasciate nel workspace.
