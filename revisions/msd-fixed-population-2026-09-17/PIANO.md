@@ -3,7 +3,8 @@
 Aggiornato il 17 settembre 2026. Questo file consolida la conversazione e sostituisce
 le proposte precedenti su origini comuni, soglia 0.5 e confronti estesi di cadenza.
 La chat resta la fonte delle richieste; questo documento è il riferimento operativo.
-Stato: implementazione autorizzata. Il 17 settembre l’utente richiede anche il fit
+Stato: implementazione completata il 18 settembre 2026; risultati e verifiche in
+`../ch3-implementation-2026-09-17/ESITO.md`. Il 17 settembre l’utente richiede anche il fit
 log--log globale 10--10000 s, risultati elaborati su SSD per ridisegno immediato e
 commit del lavoro. I numeri dei vecchi risultati restano provvisori.
 
@@ -354,7 +355,7 @@ Il preventivo iniziale è conservato come documento storico.
    nella sezione 10. Progettare i nuovi calcoli con memoria e file temporanei
    limitati, senza ricreare automaticamente tutte le vecchie cache ritirate.
 
-### Verifiche iniziali ancora da eseguire
+### Verifiche iniziali completate (lista conservata come riferimento)
 
 - Censire voli, segmenti e gruppi sito--giorno delle coorti e delle otto celle
   circuito × quota prima di valutare la precisione ottenibile nei confronti.

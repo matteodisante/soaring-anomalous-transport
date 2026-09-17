@@ -51,7 +51,11 @@ def axes_style(ax, *, logy=False, lag=True):
 
 def save(fig, out, name):
     """Write one reusable vector figure."""
-    fig.savefig(out / f"ch3_transport_{name}.pdf", bbox_inches="tight")
+    fig.savefig(
+        out / f"ch3_transport_{name}.pdf",
+        bbox_inches="tight",
+        metadata={"CreationDate": None, "ModDate": None},
+    )
     plt.close(fig)
 
 
@@ -67,7 +71,7 @@ def figures(report, out):
             "font.size": 9,
             "axes.titlesize": 10,
             "axes.labelsize": 9,
-            "legend.fontsize": 7,
+            "legend.fontsize": 8,
             "pdf.fonttype": 42,
         }
     )
@@ -466,7 +470,9 @@ def tables(report, out):
                 {k: s[field][k][c] for k in ("point", "low", "high")}
                 for field in ("H25_minus_H90", "H4_minus_H025")
             ]
-            rows.append([NAMES[slug], name, interval(vals[0]), interval(vals[1])])
+            rows.append(
+                [NAMES[slug], name, interval(vals[0]), interval(vals[1], digits=4)]
+            )
     write(
         "scaling_table",
         "llrr",
@@ -493,10 +499,12 @@ def main():
     if args.publish:
         args.publish.mkdir(parents=True, exist_ok=True)
         for path in out.glob("ch3_transport_*.*"):
-            shutil.copy2(path, args.publish / path.name)
-        shutil.copy2(
-            args.data / "report.json", args.publish / "ch3_transport_report.json"
-        )
+            target = args.publish / path.name
+            shutil.copyfile(path, target)
+            target.chmod(0o644)
+        target = args.publish / "ch3_transport_report.json"
+        shutil.copyfile(args.data / "report.json", target)
+        target.chmod(0o644)
     print(f"Redraw complete in {time.monotonic() - started:.1f}s: {out}")
 
 

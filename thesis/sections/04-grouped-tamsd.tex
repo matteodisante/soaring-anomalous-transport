@@ -18,7 +18,7 @@ that fallback nor the instantaneous altitude along the route. These historical l
 do not measure local slope, relief or terrain exposure. A record beginning airborne
 can enter a high-altitude band over a low launch region.
 
-\subsection{Flight weighting and a fixed-segment control}
+\subsection{Flight weighting and the fixed cohort}
 
 The measurement reuses the identified native-grid segment TA-MSDs for all
 \num{\StatGroupedParaFlights} paraglider and \num{\StatGroupedHangFlights}
@@ -40,25 +40,24 @@ and $\tau\ge\Delta t_{fs}$. The 59 requested lags span 10--10,000~s; the nearest
 one to 1000~s is \SI{\StatGroupedReferenceLagS}{\second}. This grid must not be
 relabeled as the exact decade grid used later for PCA and regional differences.
 
-The main curve uses every segment where it supports the lag. A second calculation
-keeps only segments supporting the maximum requested lag, \SI{10000}{\second},
-and uses this same segment and flight set throughout. It fixes membership and
-between-flight weights while the available origins and the segment weights within
-a flight still change with lag. It is conditional on long continuous records,
-not a replacement for the archive-wide comparison. The native rounding rule can
-admit slightly different boundary cases from the exact common-grid controls.
+Every curve below keeps only the segments that support the maximum requested lag,
+\SI{10000}{\second}, and reuses that same segment and flight set at all 59 lags.
+Membership and between-flight weights are therefore independent of $\tau$, which is
+what allows curves measured at different lags to be read as one population. The
+available origins and the segment weights within a flight still change with lag.
+The comparison is conditional on long continuous records. The native rounding rule
+can admit slightly different boundary cases from the exact common-grid controls.
 
 For Figs.~\ref{fig:tamsd-regions} and~\ref{fig:tamsd-altitude}, five hundred
-complete site--day bootstrap draws are paired across lags and the
-two controls within each group. Shading gives pointwise 95\% percentile intervals
-for the available-segment curve; at least 20 contributing groups and 90\% finite
-replicates are required. Three paraglider flights have missing cluster keys and
+complete site--day bootstrap draws are paired across lags within each group.
+Shading gives pointwise 95\% percentile intervals; at least 20 contributing groups
+and 90\% finite replicates are required. Three paraglider flights have missing cluster keys and
 become singleton groups. No missing origin-altitude labels remain in this eligible
 population. The bands neither match weather or pilots nor calibrate simultaneous
 between-group tests. Displayed curves require at least eight flights, and their
 support is shown explicitly.
 
-\subsection{Regional contrasts and changing population}
+\subsection{Regional contrasts in the fixed cohort}
 
 \begin{figure}[htbp]
  \centering
@@ -66,45 +65,41 @@ support is shown explicitly.
  \caption{Horizontal flight TA-MSD by take-off region, separately for the two
  disciplines. Top: squared-displacement mean. Middle: its square root divided
  by the requested lag, the RMS magnitude of the interval-mean ground velocity
- up to native-grid rounding. Bottom: contributing flights. Solid curves use
- available segments; dashed curves retain the same long segments over the full
- lag range. Shading is the pointwise site--day interval for the solid curve.
- Fixed-segment hang-glider curves for the Pyrenees and coast are omitted because
- each contains only two flights; their support remains shown.}
+ up to native-grid rounding. Bottom: contributing flights, which are constant in
+ $\tau$ because every curve retains the same long segments over the full lag range.
+ Shading is the pointwise site--day interval. Hang-glider curves for the Pyrenees
+ and coast are omitted because the cohort contains only two flights in each;
+ their support remains shown.}
  \label{fig:tamsd-regions}
 \end{figure}
 
 At \SI{\StatGroupedReferenceLagS}{\second}, the paraglider RMS displacements
-$\sqrt{M_g}$ are \SI{\StatGroupedParaAlpsRmsKm}{\kilo\metre} in the Alps,
-\SI{\StatGroupedParaPyreneesRmsKm}{\kilo\metre} in the Pyrenees and
-\SI{\StatGroupedParaChannelCoastRmsKm}{\kilo\metre} on the coast
-(Fig.~\ref{fig:tamsd-regions}). With fixed long segments, they become
-\SI{\StatGroupedParaAlpsRmsKmFixed}{\kilo\metre},
-\SI{\StatGroupedParaPyreneesRmsKmFixed}{\kilo\metre} and
-\SI{\StatGroupedParaChannelCoastRmsKmFixed}{\kilo\metre}.
-The coastal ordering survives this control, while the Alpine--Pyrenean separation
-becomes smaller. Long-flight selection also raises the amplitude within each region;
-the conditional long-flight population already travels farther at intermediate lags.
+$\sqrt{M_g}$ are \SI{\StatGroupedParaAlpsRmsKmFixed}{\kilo\metre} in the Alps,
+\SI{\StatGroupedParaPyreneesRmsKmFixed}{\kilo\metre} in the Pyrenees and
+\SI{\StatGroupedParaChannelCoastRmsKmFixed}{\kilo\metre} on the coast
+(Fig.~\ref{fig:tamsd-regions}), over
+\num{\StatGroupedParaAlpsFlightsFixed}, \num{\StatGroupedParaPyreneesFlightsFixed}
+and \num{\StatGroupedParaChannelCoastFlightsFixed} flights. The coast leads the two
+mountain regions, whose mutual separation is small. These amplitudes belong to the
+long-flight cohort, which travels farther at intermediate lags than the archive as
+a whole.
 
 The middle panels make a change of scaling easier to see than parallel-looking
 log--log curves. A constant $\sqrt{M_g}/\tau$ would correspond to quadratic growth
-of this moment. The available coastal curve turns upward at long lag. Its
-descriptive 1000--10,000-s log-slope is
-\num{\StatGroupedParaChannelCoastSlopeLong}; retaining fixed segments gives
-\num{\StatGroupedParaChannelCoastSlopeLongFixed}. The apparent excess over
-ballistic growth therefore does not persist in that fitted fixed-population
-comparison. The support loss is part of the explanation, rather than evidence
-for an intrinsic superballistic process. These fitted slopes describe separate
+of this moment. In the fixed cohort the coastal 1000--10,000-s log-slope is
+\num{\StatGroupedParaChannelCoastSlopeLongFixed}, against
+\num{\StatGroupedParaAlpsSlopeLongFixed} in the Alps and
+\num{\StatGroupedParaPyreneesSlopeLongFixed} in the Pyrenees. The coastal curve
+stays close to quadratic growth over the last decade while the two mountain regions
+fall well below it, and no region exceeds two. These fitted slopes describe separate
 ranges of a bending curve; they are not Hurst estimates or calibrated hypothesis tests.
 
-Hang gliders show the same regional amplitude ordering near the reference lag:
-\SI{\StatGroupedHangAlpsRmsKm}{\kilo\metre},
-\SI{\StatGroupedHangPyreneesRmsKm}{\kilo\metre} and
-\SI{\StatGroupedHangChannelCoastRmsKm}{\kilo\metre}.
-However, the coastal mean contains only
-\num{\StatGroupedHangChannelCoastFlights} flights there. The two-flight
-long-segment controls in both coastal and Pyrenean groups cannot establish the
-regional ordering in the long-flight population.
+Hang gliders supply no regional comparison in this cohort. Only the Alps retain
+enough flights, \num{\StatGroupedHangAlpsFlightsFixed}, giving
+\SI{\StatGroupedHangAlpsRmsKmFixed}{\kilo\metre} near the reference lag. The
+Pyrenean and coastal groups contain two flights each, below the eight required for
+display, so the regional ordering of Fig.~\ref{fig:tamsd-regions} is a paraglider
+result alone.
 
 \subsection{Initial-altitude bands and their regional composition}
 
@@ -114,38 +109,42 @@ regional ordering in the long-flight population.
  \caption{The same TA-MSD estimators grouped by cleaned GNSS origin altitude.
  The names Plains, Hills, Low mountains and High mountains denote the stated
  altitude bands, not measured terrain classes. All eligible regions enter this
- grouping. Lines, shading and support conventions match Fig.~\ref{fig:tamsd-regions}.}
+ grouping. Lines, shading and support conventions match Fig.~\ref{fig:tamsd-regions},
+ including the fixed cohort.}
  \label{fig:tamsd-altitude}
 \end{figure}
 
-The available paraglider RMS displacements at the reference lag are
-\SI{\StatGroupedParaPlainsRmsKm}{\kilo\metre},
-\SI{\StatGroupedParaHillsRmsKm}{\kilo\metre},
-\SI{\StatGroupedParaLowMountainsRmsKm}{\kilo\metre} and
-\SI{\StatGroupedParaHighMountainsRmsKm}{\kilo\metre}, in increasing altitude-band
-order. This is not monotonic: High mountains lies above Low mountains.
-With fixed long segments, Plains and Hills remain above both mountain-labelled
-groups, but their mutual separation becomes smaller. The apparent long-lag
-growth above two in the available Plains and Hills curves is reduced from
-\num{\StatGroupedParaPlainsSlopeLong} and \num{\StatGroupedParaHillsSlopeLong}
-to \num{\StatGroupedParaPlainsSlopeLongFixed} and
-\num{\StatGroupedParaHillsSlopeLongFixed}, respectively, in the fixed control.
+The paraglider RMS displacements at the reference lag are
+\SI{\StatGroupedParaPlainsRmsKmFixed}{\kilo\metre},
+\SI{\StatGroupedParaHillsRmsKmFixed}{\kilo\metre},
+\SI{\StatGroupedParaLowMountainsRmsKmFixed}{\kilo\metre} and
+\SI{\StatGroupedParaHighMountainsRmsKmFixed}{\kilo\metre}, in increasing
+altitude-band order. The two lower bands lie above both mountain-labelled groups,
+and the ranking is not monotonic in altitude: High mountains lies above Low
+mountains. The long-lag behaviour separates the same way. Over the last decade the
+Plains and Hills slopes are \num{\StatGroupedParaPlainsSlopeLongFixed} and
+\num{\StatGroupedParaHillsSlopeLongFixed}, against
+\num{\StatGroupedParaLowMountainsSlopeLongFixed} and
+\num{\StatGroupedParaHighMountainsSlopeLongFixed} in the two mountain bands.
 
-For hang gliders the available reference-lag values decrease across the four
-bands: \SI{\StatGroupedHangPlainsRmsKm}{\kilo\metre},
-\SI{\StatGroupedHangHillsRmsKm}{\kilo\metre},
-\SI{\StatGroupedHangLowMountainsRmsKm}{\kilo\metre} and
-\SI{\StatGroupedHangHighMountainsRmsKm}{\kilo\metre}.
-Yet the Plains/Hills ordering reverses in the fixed long-segment control.
-Neither the band label nor one pooled ranking identifies an effect of altitude
-on a pilot's dynamics.
+For hang gliders the four bands hold
+\num{\StatGroupedHangPlainsFlightsFixed}, \num{\StatGroupedHangHillsFlightsFixed},
+\num{\StatGroupedHangLowMountainsFlightsFixed} and
+\num{\StatGroupedHangHighMountainsFlightsFixed} flights, giving
+\SI{\StatGroupedHangPlainsRmsKmFixed}{\kilo\metre},
+\SI{\StatGroupedHangHillsRmsKmFixed}{\kilo\metre},
+\SI{\StatGroupedHangLowMountainsRmsKmFixed}{\kilo\metre} and
+\SI{\StatGroupedHangHighMountainsRmsKmFixed}{\kilo\metre}. Hills leads and High
+mountains trails, so the two disciplines do not share one band ranking. Neither the
+band label nor one pooled ranking identifies an effect of altitude on a pilot's
+dynamics.
 
 \begin{figure}[htbp]
  \centering
  \includegraphics[width=\linewidth]{generated/ch3_tamsd_region_altitude}
  \caption{Descriptive cross-classification at the requested
- \SI{\StatGroupedReferenceLagS}{\second} lag. Each cell gives
- $\sqrt{M_g}$ and its contributing flight count on available-segment support.
+ \SI{\StatGroupedReferenceLagS}{\second} lag, within the same fixed cohort. Each
+ cell gives $\sqrt{M_g}$ and its contributing flight count.
  Values with fewer than eight flights are suppressed; counts remain visible.
  The same colour scale applies to both disciplines. These cells carry no
  calibrated intervals and do not standardise task, weather or pilot identity.}
@@ -153,17 +152,18 @@ on a pilot's dynamics.
 \end{figure}
 
 Figure~\ref{fig:tamsd-region-altitude} shows why the two groupings are not
-independent environmental controls. The coastal sample is concentrated in Plains,
+independent environmental controls. The coastal cohort is concentrated in Plains,
 while Alpine and Pyrenean records mostly occupy the two higher bands. Within the
-Alpine paraglider sample, the four altitude-band amplitudes are much closer than
-the corresponding pooled altitude comparison, and there is no monotonic decline.
-Within the Pyrenees, the higher of the two mountain-labelled bands again has a
-larger amplitude. The sparse coastal high-altitude cells cannot support a general
-mountain-versus-coast interpretation. Logged origin altitude and regional membership
-describe selection as well as possible environmental constraints.
+Alpine paraglider cohort the four band amplitudes lie much closer together than in
+the pooled altitude comparison above, and they do not decline with altitude. The
+Pyrenees supply only the two mountain bands, whose amplitudes are nearly equal.
+The coastal cells above Hills are empty in this cohort, so no general
+mountain-versus-coast interpretation follows. For hang gliders only three Alpine
+cells survive. Logged origin altitude and regional membership describe selection
+as well as possible environmental constraints.
 
 The larger coastal transport amplitude can be compared qualitatively with the
-smaller changes of interval-mean velocity measured later in
+smaller changes of interval-mean velocity measured in
 Sec.~\ref{sec:regional-variations}. Greater net progress with smaller velocity
 changes is compatible with more persistent advancement and less turning, or an
 added mean motion; it does not identify wind as the cause. The native-grid
@@ -172,6 +172,9 @@ nearby, rather than identical, reference lags, so this is not an exact paired
 decomposition. A quantitative mechanism test should align those observations and
 add independent wind, route, terrain and pilot information.
 
+% TRANSFERRED TO MAIN: original text preserved.
+\begingroup\color{red!70!black}
+\noindent\textit{Reworked in thesis Section~\ref{sec:fixed-circuit}. Original analysis retained below.}\par
 \subsection{Paraglider scaling by altitude and circuit type}
 \label{sec:altitude-hurst}
 
@@ -190,7 +193,7 @@ Within each circuit class, we fit all
 \num{\StatAltitudeHurstLags} requested lags from
 \SI{\StatAltitudeHurstFitLow}{\second} to
 \SI{\StatAltitudeHurstFitHigh}{\second}, including both endpoints. For each
-circuit class, altitude band and segment control, an unweighted least-squares fit in
+circuit class and altitude band, an unweighted least-squares fit in
 logarithmic coordinates gives
 \begin{equation}
  \log\!\left[\frac{M_g(\tau)}{\SI{1}{\metre\squared}}\right]
@@ -208,9 +211,9 @@ stationary increments or an intrinsic Hurst parameter for these flights.
  \includegraphics[width=.94\linewidth]{generated/ch3_altitude_hurst}
  \caption{Paraglider horizontal flight TA-MSD by initial GNSS altitude, with
  separate open- and closed-circuit fits over the full 10--10,000-s range.
- Columns distinguish the declared circuit classes; the
- upper row uses available segments and the lower row fixes the segments
- supporting the maximum lag. Solid lines show measured means and dashed lines
+ Columns distinguish the declared circuit classes. Every panel uses the fixed
+ cohort of segments supporting the maximum lag, so flight membership does not
+ change with $\tau$. Solid lines show measured means and dashed lines
  the fitted power laws. Legends give $H_{\mathrm{eff}}$ and its marginal 95\%
  site--day bootstrap interval. Ribbons give pointwise 95\% intervals for the
  means. Both use \num{\StatAltitudeHurstResamples} complete cluster draws within
@@ -222,7 +225,7 @@ stationary increments or an intrinsic Hurst parameter for these flights.
 Uncertainty is estimated by \num{\StatAltitudeHurstResamples} bootstrap draws
 of whole site--day groups within each circuit--altitude stratum. Each draw retains all
 flights in every selected group and uses the same cluster multiplicities at
-every lag and in both segment controls. We recompute the equal-flight mean and
+every lag. We recompute the equal-flight mean and
 refit Eq.~\eqref{eq:altitude-effective-hurst} on the same lag grid. The 2.5th and
 97.5th percentiles of the resulting $H_{\mathrm{eff}}$ values form the reported
 interval. This preserves the observed dependence between lags and within a
@@ -235,29 +238,28 @@ site--day groups at each lag and all
  \centering
  \caption{Paraglider effective exponents $H_{\mathrm{eff}}$ from the full
  10--10,000-s fit, separately for declared open and closed circuits.
- Brackets give marginal 95\% site--day bootstrap intervals. Flight counts show
- available support at 10 and 10,000~s; the fixed control retains the latter
- flight set throughout. Weighting and controls match Fig.~\ref{fig:altitude-hurst}.}
+ Brackets give marginal 95\% site--day bootstrap intervals. Flight counts give the
+ fixed cohort, which contributes the same flights at every lag. Weighting matches
+ Fig.~\ref{fig:altitude-hurst}.}
  \label{tab:altitude-hurst}
  \small
  \input{generated/ch3_altitude_hurst_table}
 \end{table}
 
 Table~\ref{tab:altitude-hurst} and Fig.~\ref{fig:altitude-hurst} separate the
-altitude comparison from the mixture of declared task types. With available
-segments, open circuits have larger fitted exponents than closed circuits in
-each altitude band. The altitude ordering also changes with circuit class:
-Plains and Hills lie above both mountain-labelled groups for open circuits,
-whereas both mountain-labelled groups lie above Plains and Hills for closed
-circuits. Flight support
-differs substantially between strata. In particular, the fixed closed-circuit
-Plains control contains only
+altitude comparison from the mixture of declared task types. Open circuits have
+larger fitted exponents than closed circuits in every altitude band. The altitude
+ordering also changes with circuit class: for open circuits Plains and Hills lie
+about 0.05 above both mountain-labelled groups, whereas the four closed-circuit
+exponents fall within 0.025 of one another and follow no altitude order, with High
+mountains highest and Hills lowest. Flight support differs substantially between
+strata. In particular, the closed-circuit Plains stratum contains only
 \num{\StatAltitudeHurstClosedPlainsFixedFlights} flights in
 \num{\StatAltitudeHurstClosedPlainsFixedClusters} site--day groups. Its interval
-should be read alongside this small population. The fixed controls condition
-on long continuous records; they do not match the open and closed groups by
-duration, region, weather or pilot. Differences between their fitted exponents
-can therefore reflect both route geometry and population composition.
+should be read alongside this small population. The cohort conditions on long
+continuous records; it does not match the open and closed groups by duration,
+region, weather or pilot. Differences between their fitted exponents can therefore
+reflect both route geometry and population composition.
 
 These intervals assume independently resampleable site--day groups. Repeated
 pilots or weather shared across groups can leave dependence unaccounted for.
@@ -271,3 +273,5 @@ causal altitude effect. Directional moments are needed next because a scalar
 TA-MSD does not describe the orientation of motion.
 
 \FloatBarrier
+\FloatBarrier
+\endgroup

@@ -61,30 +61,32 @@ and mixtures of flight behaviours can produce similar second moments. Random-wal
 frameworks offer competing explanations of anomalous transport~\cite{metzler2000}.
 The purpose here is to discriminate between such explanations using more than one curve.
 
-Chapter~\ref{ch:global} therefore measures displacement quantiles, the spectrum of
-moments, the shape of the increment distribution, directional anisotropy and velocity
-correlations alongside the MSD. Their roles are complementary: quantile ratios test
-whether the distribution changes shape as the lag increases, while higher moments
-compare the growth of ordinary and large displacements; velocity correlations resolve
-persistence in time. Open and closed tasks help expose the effect of the flight's intended
-geometry. A model is challenged where its predictions disagree with these observations
-under a comparable measurement protocol.
+The empirical programme therefore calls for measurements of the MSD, displacement
+quantiles and directional anisotropy, and how each depends on route, duration and
+equipment.
+Quantile ratios test whether the distribution changes shape as the lag increases. Open
+and closed tasks help expose the effect of the flight's intended geometry. These
+measurements, together with the spectrum of moments, the shape of the increment
+distribution and velocity correlations, must be compared with explicit model predictions: higher
+moments compare the growth of ordinary and large displacements, while velocity correlations
+resolve persistence in time. A model is challenged where its predictions disagree with these
+observations under a comparable measurement protocol.
 
 This logic also sets the limit of an exclusion. A discrepancy with a homogeneous Gaussian
 model for pooled flights need not exclude Gaussian fluctuations within a flight: different
 conditions can create a non-Gaussian mixture. Similarly, evidence against a particular
 constant-speed renewal L\'evy walk is not a theorem against every process with finite-speed
-legs~\cite{zaburdaev2015}. The chapter specifies the hypotheses being tested and leaves
-unsupported exclusions open.
+legs~\cite{zaburdaev2015}. Each comparison must specify the hypotheses being tested
+and leave unsupported exclusions open.
 
 \subsection{How do the flight phases generate global transport?}
 
 Although an unsegmented flight supplies constraints on the whole process, it does not
 identify which behaviour generates a long displacement, a change of heading or a period
 of persistence.
-Chapter~\ref{ch:phases} addresses this missing link with a probabilistic segmentation into
-transition, search and climb. It states the mathematical model, displays its behaviour on
-readable trajectory excerpts, and distinguishes internal consistency from accuracy against
+A probabilistic segmentation into transition, search and climb can address this
+missing link. It requires an explicit mathematical model, readable trajectory
+examples, and a distinction between internal consistency and accuracy against
 independent annotations.
 
 The next step will be a chapter devoted to observables conditioned on phase: episode
@@ -149,11 +151,10 @@ spatial dependence, altitude and the pilot's information.
 \section{Structure and current scope}
 
 Figure~\ref{fig:thesis-structure} shows how the measurements support the later modelling.
-The present document develops the data, global transport and segmentation chapters. The
-chapters on conditional observables, social flight, stochastic modelling and route
-optimisation form the research programme; their results are not claimed here. The immediate
-priority is to consolidate Chapters~\ref{ch:global} and~\ref{ch:phases}, then undertake the
-solo--group comparison with the necessary observables conditioned on phase.
+The present document contains the introduction, the data chapter and the analysis of
+horizontal transport and displacement scaling, together with the two appendices
+cited in Chapter~2. Flight-phase segmentation, conditional observables, social flight,
+stochastic modelling and route optimisation form the subsequent research programme.
 
 \begin{figure}[H]
   \centering
@@ -170,9 +171,9 @@ solo--group comparison with the necessary observables conditioned on phase.
     \hyphenpenalty=10000 \exhyphenpenalty=10000
     \node[done] (data) {{\bfseries Chapter 2: trustworthy trajectories}\\[2pt]
       {\footnotesize\color{black!70} Recorder channels, cleaning, coverage and retained uncertainty}};
-    \node[done, below=of data] (global) {{\bfseries Chapter 3: global observables}\\[2pt]
-      {\footnotesize\color{black!70} Scaling, distribution shape, memory and environmental geometry}};
-    \node[done, below=of global] (phases) {{\bfseries Chapter 4: flight phases}\\[2pt]
+    \node[done, below=of data] (global) {{\bfseries Chapter 3: horizontal transport and scaling}\\[2pt]
+      {\footnotesize\color{black!70} Scaling, quantile shape and environmental geometry}};
+    \node[future, below=of global] (phases) {{\bfseries Flight phases}\\[2pt]
       {\footnotesize\color{black!70} Explicit segmentation model, diagnostic figures and independent validation}};
     \node[future, below=of phases] (conditional)
       {{\bfseries Observables conditioned on phase; solo--group comparison}\\[2pt]
@@ -188,26 +189,25 @@ solo--group comparison with the necessary observables conditioned on phase.
       \draw[->, black!45, line width=0.7pt] (\a) -- (\b);
     % Group labels in the left margin of the float, set against the brace they span.
     \draw[decorate, decoration={brace, amplitude=4pt}, black!45, line width=0.6pt]
-      ($(data.north west)+(-3mm,0)$) -- ($(phases.south west)+(-3mm,0)$);
+      ($(data.north west)+(-3mm,0)$) -- ($(global.south west)+(-3mm,0)$);
     \node[fig note, rotate=90, anchor=south]
-      at ($($(data.north west)!0.5!(phases.south west)$)+(-6mm,0)$) {this document};
+      at ($($(data.north west)!0.5!(global.south west)$)+(-6mm,0)$) {this document};
     \draw[decorate, decoration={brace, amplitude=4pt}, black!45, line width=0.6pt]
-      ($(conditional.north west)+(-3mm,0)$) -- ($(routes.south west)+(-3mm,0)$);
+      ($(phases.north west)+(-3mm,0)$) -- ($(routes.south west)+(-3mm,0)$);
     \node[fig note, rotate=90, anchor=south]
-      at ($($(conditional.north west)!0.5!(routes.south west)$)+(-6mm,0)$) {subsequent work};
+      at ($($(phases.north west)!0.5!(routes.south west)$)+(-6mm,0)$) {subsequent work};
   \end{tikzpicture}
-  \caption{Logical structure of the thesis. Solid boxes are developed in this document;
+  \caption{Logical structure of the thesis. The solid boxes are developed in this document;
   dashed boxes describe subsequent work. Model comparison must return to the measured
   observables, not stop at a fitted trajectory or a single exponent.}
   \label{fig:thesis-structure}
 \end{figure}
 
 Chapter~\ref{ch:dataset} follows the records from acquisition to retained trajectories,
-including the treatment of missing or inconsistent channels. Chapter~\ref{ch:global}
-then asks what can be learned without assigning phases. Chapter~\ref{ch:phases} introduces
-that assignment and identifies what must be checked before its labels can support physical
-claims. The two appendices state the spectral conventions and the geodetic
-transformation used by the measurements.
+including the treatment of missing or inconsistent channels. The two appendices
+state the spectral conventions and the geodetic transformation used in that chapter.
+Chapter~\ref{ch:fixed-transport} measures horizontal transport and distributional scaling
+with fixed flight populations, and resolves circuit and launch-altitude differences.
 
 \section{Chapter summary}
 The thesis asks which stochastic description can account for soaring trajectories while
@@ -216,5 +216,5 @@ from observations to a model begins with reliable trajectories and global transp
 statistics, then uses validated flight phases to identify the mechanisms mixed by those
 statistics. Comparisons between solitary and interacting flights, followed by simulation
 and thermal-landscape modelling, extend this programme. Their conclusions remain future
-work: the present chapters establish the empirical measurements and validation needed
-to make those comparisons meaningful.
+work: the present document establishes the cleaned trajectories and the global
+transport statistics that those comparisons must explain.

@@ -154,7 +154,7 @@ the consulted 2012 final draft; the 2013 standard and later amendments were not
 compared. FAI hang-glider classes distinguish design and control
 systems~\cite{fai_sc7_2024}.
 
-Chapter~\ref{ch:global} uses two operational equipment proxies:
+Two operational equipment proxies are defined:
 \[
  \text{beginners}:\ \mathrm{EN\ A/B},\qquad
  \text{experts}:\ \mathrm{EN\ C/D/CCC}.
@@ -1637,8 +1637,7 @@ It applies to both missing raw readings and values invalidated by cleaning
 recorded as rejected segment candidates. Sacrificing their horizontal coverage
 avoids constructing long unsupported three-dimensional paths.
 
-Three flags record reconstruction for the phase analysis
-(Chapter~\ref{ch:phases}):
+Three flags record reconstruction for subsequent phase analysis:
 \begin{center}
 \begin{tabularx}{\linewidth}{@{}l X@{}}
 \toprule
@@ -2283,8 +2282,6 @@ estimator inputs are documented in \path{docs/guide/data-on-disk.md}.
 \label{sec:prelim}
 This section describes the retained flights: their duration, path length, recording
 interval and geographical coverage. These measurements require no phase segmentation.
-Directional differences and their relation to geography are examined with the transport
-observables in Sec.~\ref{sec:transport-anisotropy}.
 
 \Needspace{13\baselineskip}
 \paragraph{Trajectory statistics.}
@@ -2455,8 +2452,7 @@ on Fig.~\ref{fig:prelim-map}a; membership is assigned from the first recorded po
   }
   \caption{Take-off sites of the retained ensemble, on three frames, pooling both
   disciplines throughout.
-  (a)~Metropolitan France, density on a \SI{0.15}{\degree} cell; the dashed boxes are the orographic groups used as strata in
-  Fig.~\ref{fig:regional-pca} (Sec.~\ref{sec:transport-anisotropy}). (b)~La~R\'eunion, on a \SI{0.01}{\degree} cell, the one
+  (a)~Metropolitan France, density on a \SI{0.15}{\degree} cell; the dashed boxes delimit the orographic groups. (b)~La~R\'eunion, on a \SI{0.01}{\degree} cell, the one
   overseas department with a substantial share. (c)~Everything else, one marker per
   \SI{0.5}{\degree} cell with the area set by its count.}
   \label{fig:prelim-map}
@@ -2516,5 +2512,5 @@ coordinates and explicit reconstruction flags. Phase features can exclude flagge
 vertical support, although plausible unflagged defects remain possible.
 Geography, cadence and flight duration also vary across the archive.
 
-Chapter~\ref{ch:global} defines each transport observable together with its
+Any transport observable computed from these trajectories must specify its
 weights, lag support and contributing population.

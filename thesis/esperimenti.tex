@@ -1,0 +1,71 @@
+% Experiments companion: Chapters 3--7 and their appendix.
+% Build from thesis/: latexmk -pdf -halt-on-error esperimenti.tex
+\input{preamble}
+\externaldocument[][nocite]{main}
+% Retain available measurements; mark the unpublished scaling extension as pending.
+\input{generated/ch3_pooled_moment_values}
+\newif\ifscalingresultsready
+\scalingresultsreadytrue
+\newcommand{\requirescalingmacro}[1]{\ifcsdef{#1}{}{\scalingresultsreadyfalse}}
+\forcsvlist{\requirescalingmacro}{StatSSFullWorstRmsDex,StatSSReferenceFitMinS,StatSSReferenceFitMaxS,StatSSReferenceLagCount,StatSSReferenceDecades,StatSSReferenceWorstRmsDex,StatSSParaReferenceRankDifference,StatSSParaReferenceRankDifferenceLow,StatSSParaReferenceRankDifferenceHigh,StatSSHangReferenceRankDifference,StatSSHangReferenceRankDifferenceLow,StatSSHangReferenceRankDifferenceHigh,StatSSParaSpectrumNuLow,StatSSParaSpectrumNuHigh,StatSSHangSpectrumNuLow,StatSSHangSpectrumNuHigh,StatSSParaSpectrumSpan,StatSSParaSpectrumSpanLow,StatSSParaSpectrumSpanHigh,StatSSHangSpectrumSpan,StatSSHangSpectrumSpanLow,StatSSHangSpectrumSpanHigh,StatSSParaSpectrumZetaTwo,StatSSHangSpectrumZetaTwo,StatSSParaSpectrumLevyBeta,StatSSHangSpectrumLevyBeta,StatSSParaSpectrumLevyNu,StatSSHangSpectrumLevyNu}
+\IfFileExists{generated/ch3_window_sensitivity.tex}{}{\scalingresultsreadyfalse}
+\IfFileExists{generated/ch3_spectrum_table.tex}{}{\scalingresultsreadyfalse}
+\IfFileExists{generated/ch3_fixed_spectrum.pdf}{}{\scalingresultsreadyfalse}
+\hypersetup{pdftitle={Esperimenti -- Anomalous Transport in Soaring Flights}}
+\title{Esperimenti\\[0.8em]\Large Anomalous Transport in Soaring Flights}
+\author{Matteo Di Sante}
+\date{Working draft --- \today}
+
+\begin{document}
+\hypersetup{pageanchor=false}
+\maketitle
+\pagenumbering{roman}
+\hypersetup{pageanchor=true}
+\chapter*{Scope}
+This volume collects the experimental and modelling chapters following Chapter~2
+of the thesis. The introduction, dataset description, and Appendices 2.A and 2.B
+are in the companion thesis volume, \emph{Anomalous Transport in Soaring Flights}
+(\texttt{main.pdf}). Cross-references to that material point to the thesis PDF.
+The original chapter numbering, 3--7, is retained.
+
+\paragraph{Material incorporated into the thesis.}
+Passages printed in \textcolor{red!70!black}{red} have been incorporated, with revised
+estimators and newly measured results, into Chapter~\ref{ch:fixed-transport} of the
+thesis. Their original wording and numerical results are retained here as a record
+of the exploratory analysis; the current definitions and estimates are in the thesis.
+Unmarked material, including the anisotropy and PCA analyses, has not been transferred.
+
+\ifscalingresultsready\else
+\paragraph{Historical calculations not regenerated.}
+The fixed-origin scaling extension of the exploratory analysis has not been
+regenerated. Its affected passages in Chapters~4 and~7 remain marked as pending.
+The current fixed-segment analysis is complete in thesis Chapter~\ref{ch:fixed-transport}
+and uses a separate numerical report. Earlier available measurements remain here.
+\fi
+
+\begingroup
+\small
+\tableofcontents
+\endgroup
+\clearpage
+\pagenumbering{arabic}
+\setcounter{chapter}{2}
+
+\begingroup
+\raggedbottom
+\setlength{\parskip}{4pt plus 1pt minus 1pt}
+\input{sections/04-global-observables}
+\input{sections/04-global-transport}
+\endgroup
+\input{sections/05-flight-phases}
+\input{sections/06-vilpellet-segmentation}
+\input{sections/07-stochastic-models-comparison}
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\appendix
+\renewcommand{\thechapter}{4.\Alph{chapter}}
+\renewcommand{\theHchapter}{4.\Alph{chapter}}
+\input{appendices/C-displacement-squares}
+\end{document}
