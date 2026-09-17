@@ -109,15 +109,6 @@ def figures(report, out):
             lw=0.8,
             label="Median",
         )
-        origin_fit = g["ensemble_global_fit"]
-        ax.plot(
-            lags,
-            10 ** origin_fit["intercept"] * lags ** origin_fit["slope"] / 1e6,
-            "--",
-            color="0.2",
-            lw=1,
-            label=f"Mean fit: H = {origin_fit['slope'] / 2:.3f}",
-        )
         ax.set_title(f"{NAMES[slug]}: from post-trim origin")
         ax.set_ylabel(r"Squared distance (km$^2$)")
         axes_style(ax, logy=True)
@@ -125,13 +116,18 @@ def figures(report, out):
         ax = axs[row, 1]
         band(ax, x, g["tamsd"], COLORS[row], "Equal-flight TA-MSD", scale=1e6)
         fit = g["tamsd_global_fit"]
+        fit_x = array(fit["interval_s"])
+        h = fit["hurst"]
         ax.plot(
-            lags,
-            10 ** fit["intercept"]["point"] * lags ** fit["exponent"]["point"] / 1e6,
+            fit_x,
+            10 ** fit["intercept"]["point"] * fit_x ** fit["exponent"]["point"] / 1e6,
             "--",
             color="0.2",
             lw=1,
-            label=f"10-10000 s fit: H = {fit['hurst']['point']:.3f}",
+            label=(
+                f"10-30000 s fit\n"
+                f"H = {h['point']:.3f} [{h['low']:.3f}, {h['high']:.3f}]"
+            ),
         )
         ax.set_title(f"{NAMES[slug]}: available population")
         ax.set_ylabel(r"MSD (km$^2$)")
@@ -188,18 +184,33 @@ def figures(report, out):
         axs[0, col].set_ylabel(r"MSD (km$^2$)")
         axes_style(axs[0, col], logy=True)
         axs[0, col].legend(loc="upper left")
-        for c, color, label in (
-            (1, COLORS[2], "C100 / C10000"),
-            (2, COLORS[1], "C1000 / C10000"),
-            (0, "0.45", "Available / C10000"),
-        ):
-            band(axs[1, col], x, d["cohort_ratios"][str(c)], color, label)
-        axs[1, col].axhline(1, color="0.4", lw=0.8, ls=":")
-        axs[1, col].set_ylabel("MSD ratio")
-        axes_style(axs[1, col])
-        axs[1, col].legend(loc="best")
-        for ax in axs[:, col]:
-            ax.set_xlim(8, 12500)
+        ax = axs[1, col]
+        for j, comparison in enumerate(d["cohort_h_comparisons"].values()):
+            for offset, limit, color in (
+                (-0.13, "100", COLORS[2]),
+                (0.0, "1000", COLORS[1]),
+                (0.13, "10000", COLORS[0]),
+            ):
+                if limit not in comparison["fits"]:
+                    continue
+                h = comparison["fits"][limit]["hurst"]
+                ax.errorbar(
+                    j + offset,
+                    h["point"],
+                    yerr=[[h["point"] - h["low"]], [h["high"] - h["point"]]],
+                    fmt="o",
+                    color=color,
+                    mfc="white",
+                    ms=4,
+                    capsize=3,
+                    lw=1,
+                )
+        ax.set_xticks([0, 1], ["10-100", "10-1000"])
+        ax.set_xlabel("Common fit interval (s)")
+        ax.set_ylabel("Effective H")
+        ax.set_xlim(-0.4, 1.4)
+        axes_style(ax, lag=False)
+        axs[0, col].set_xlim(8, 12500)
     save(fig, out, "cohorts")
 
     fig, axs = plt.subplots(1, 2, figsize=(7.1, 3.4), layout="constrained", sharey=True)
@@ -446,20 +457,45 @@ def tables(report, out):
     )
     rows = []
     for slug, d in r.items():
-        for limit in ("100", "1000"):
-            c = d["cohorts"][limit]
+        for key, comparison in d["cohort_h_comparisons"].items():
             rows.append(
                 [
                     NAMES[slug],
-                    "10--" + limit,
-                    interval(c["fit"]["hurst"]),
-                    interval(c["main_fit_on_same_range"]["hurst"]),
+                    key.replace("-", "--"),
+                    *[
+                        interval(comparison["fits"][limit]["hurst"])
+                        if limit in comparison["fits"]
+                        else "---"
+                        for limit in ("100", "1000", "10000")
+                    ],
                 ]
             )
     write(
         "cohort_fit_table",
-        "llrr",
-        r"Discipline & Fit range (s) & Dedicated cohort $H$ & Main cohort $H$",
+        "llrrr",
+        (
+            r"Discipline & Fit range (s) & $H_{\mathcal C_{100}}$ "
+            r"& $H_{\mathcal C_{1000}}$ & $H_{\mathcal C_{10000}}$"
+        ),
+        rows,
+    )
+    rows = []
+    for slug, d in r.items():
+        for key, comparison in d["cohort_h_comparisons"].items():
+            for pair, difference in comparison["contrasts"].items():
+                a, b = pair.split("_minus_")
+                rows.append(
+                    [
+                        NAMES[slug],
+                        key.replace("-", "--"),
+                        rf"$H_{{\mathcal C_{{{a}}}}}-H_{{\mathcal C_{{{b}}}}}$",
+                        interval(difference, digits=5),
+                    ]
+                )
+    write(
+        "cohort_contrast_table",
+        "lllr",
+        r"Discipline & Fit range (s) & Contrast & $\Delta H$ [5--95\%]",
         rows,
     )
     rows = []

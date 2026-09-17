@@ -28,6 +28,18 @@ recompute quantiles or rerun the bootstrap. A copy of the report is versioned as
 when placed as `report.json` in a separate output directory. The renderer refuses
 reports not marked complete.
 
+To update only fits and the general local-slope estimates from the already saved
+MSD bootstrap curves, without reading trajectories or drawing a new bootstrap:
+
+```bash
+.venv/bin/python scripts/reporting/ch3_global_transport/summarize_ch3_fixed.py \
+  --data /Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917 \
+  --refresh-fits-only
+```
+
+Then use the redraw command above. This refresh also verifies that the saved MSD
+point estimates and bootstrap count agree with the report being extended.
+
 ## Reproduce measurements
 
 Use a fresh output directory after changing cleaning, inputs or the statistical
@@ -92,6 +104,16 @@ the published paraglider lags. Each process retains at most one scratch incremen
 - All global fits use equal weight per evaluated log-lag. MSD exponent is half the
   fitted slope; quantile exponent is the fitted slope; moment spectrum is zeta(q).
   Three decade fits reuse the main cohort, never reselect it.
+  Figure 3.1's descriptive available-population fit uses 10--30000 s (48 evaluated
+  lags, ending at 28440 s); its origin-distance panels have no global fit.
+  The main fixed-cohort fit remains 10--10000 s.
+- Figure 3.3 compares all three cohorts' H on 10--100 s and the two longer cohorts
+  on 10--1000 s. Differences use paired bootstrap draws; their intervals distinguish
+  a resolved selection effect from overlap of separate confidence intervals.
+- Local slopes use a +/-0.25-decade window. Only for the general curves, sparse
+  interior windows expand to the three nearest log-lags, with at least two measured
+  lags on each side of the centre. This fills the estimate at 20 s using the existing
+  MSD values at 10, 20 and 30 s. Endpoints and fixed-cohort slopes are unchanged.
 - `R^2 = E^2 + N^2`, agreement with FFT MSD, flight/segment identities and the equality
   of quantile-ratio slope and slope difference are checked before publication.
 

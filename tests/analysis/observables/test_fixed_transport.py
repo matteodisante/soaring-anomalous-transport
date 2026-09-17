@@ -8,10 +8,12 @@ from soaring.analysis.observables.fixed_bootstrap import (
     mixture_quantiles,
 )
 from soaring.analysis.observables.fixed_transport import (
+    GENERAL_LAGS,
     centred_excess,
     cohort_manifest,
     increments,
     launch_curve,
+    local_slopes,
     log_fit,
     native_short_msd,
     selected_segments,
@@ -69,6 +71,17 @@ def test_global_fit_and_radial_second_moment_identity():
         np.mean(np.linalg.norm(xy, axis=1) ** 2),
         np.mean(xy[:, 0] ** 2) + np.mean(xy[:, 1] ** 2),
     )
+
+
+def test_sparse_local_window_repairs_interior_gap_without_changing_other_slopes():
+    curves = np.stack([3 * GENERAL_LAGS**1.6, 7 * GENERAL_LAGS**2])
+    original = local_slopes(GENERAL_LAGS, curves)
+    repaired = local_slopes(GENERAL_LAGS, curves, expand_sparse=True)
+    changed = ~np.isfinite(original[0]) & np.isfinite(repaired[0])
+    np.testing.assert_array_equal(GENERAL_LAGS[changed], [20])
+    np.testing.assert_allclose(repaired[:, changed].ravel(), [1.6, 2])
+    np.testing.assert_array_equal(original[:, ~changed], repaired[:, ~changed])
+    assert np.isnan(repaired[:, :2]).all()
 
 
 def test_signed_kurtosis_centres_the_mixture_not_each_flight():

@@ -30,53 +30,115 @@ def write_text(report, out):
     def save(name, paragraphs):
         (out / f"ch3_transport_{name}.tex").write_text("\n\n".join(paragraphs) + "\n")
 
-    paragraphs = []
-    for slug, d in results.items():
-        s = d["cluster_diagnostics"]
-        spatial = s["same_day_nearest_km"]
-        temporal = s["previous_observed_day_gap"]
-        p10, med, p90 = spatial["p10_median_p90"]
-        t10, tmed, t90 = temporal["p10_median_p90"]
-        sizes = s["size_min_median_p95_max"]
-        paragraphs.append(
-            f"For {names[slug]}, the main cohort spans {s['sites']:,} catalogue sites and "
-            f"{s['dates']:,} dates; group size has median {sizes[1]:.0f}, "
-            f"the 95th percentile {sizes[2]:.0f}, and the largest group {sizes[3]:.0f} "
-            f"({100 * s['largest_group_flight_fraction']:.2f}\\% of flights). "
-            f"Where another site is represented on the same day ({spatial['n']:,} of "
-            f"{s['groups']:,} groups), its nearest distance has median {med:.1f} km "
-            f"and 10--90\\% range {p10:.2f}--{p90:.0f} km. "
-            f"The gap from the previous observed date at the same site is "
-            f"{tmed:.0f} days (10--90\\%: {t10:.0f}--{t90:.0f}; "
-            f"{temporal['n']:,} comparisons). "
-            f"Missing group keys affect {s['missing_key_flights']:,} main-cohort flights."
-        )
-    save("cluster_context", paragraphs)
+    general = [
+        results[slug]["general"]["tamsd_global_fit"] for slug in ("para", "hang")
+    ]
+    save(
+        "general_fit",
+        [
+            "The available-population fits give $H="
+            + interval(general[0]["hurst"])
+            + "$ for paragliders and $H="
+            + interval(general[1]["hurst"])
+            + "$ for hang gliders. These summarise growth with changing flight support. "
+            f"The hang-glider fit reaches a tail supported by only {general[1]['minimum_group_support']} "
+            f"groups; its interval uses {general[1]['valid_bootstrap_replicates']} replicates with complete lag support."
+        ],
+    )
 
-    paragraphs = []
+    diagnostics = [results[slug]["cluster_diagnostics"] for slug in ("para", "hang")]
+
+    def median_range(item, key, spatial=False):
+        low, median, high = item[key]["p10_median_p90"]
+        if spatial:
+            return f"{median:.1f} [{low:.2f}, {high:.0f}]"
+        return f"{median:.0f} [{low:.0f}, {high:.0f}]"
+
+    rows = [
+        ("Catalogue sites", [f"{s['sites']:,}" for s in diagnostics]),
+        ("Calendar dates", [f"{s['dates']:,}" for s in diagnostics]),
+        (
+            "Flights per group: median / P95 / max",
+            [
+                " / ".join(f"{v:.0f}" for v in s["size_min_median_p95_max"][1:])
+                for s in diagnostics
+            ],
+        ),
+        (
+            r"Largest group (\% of flights)",
+            [f"{100 * s['largest_group_flight_fraction']:.2f}" for s in diagnostics],
+        ),
+        (
+            "Nearest same-day site (km)",
+            [median_range(s, "same_day_nearest_km", True) for s in diagnostics],
+        ),
+        (
+            "Spatial comparisons",
+            [f"{s['same_day_nearest_km']['n']:,}" for s in diagnostics],
+        ),
+        (
+            "Prior observed date at same site: gap (days)",
+            [median_range(s, "previous_observed_day_gap") for s in diagnostics],
+        ),
+        (
+            "Temporal comparisons",
+            [f"{s['previous_observed_day_gap']['n']:,}" for s in diagnostics],
+        ),
+        (
+            "Flights with missing site/date keys",
+            [f"{s['missing_key_flights']:,}" for s in diagnostics],
+        ),
+    ]
+    lines = [
+        r"\begin{tabular}{lrr}",
+        r"\toprule",
+        r"Quantity & Paragliders & Hang gliders \\",
+        r"\midrule",
+    ]
+    lines.extend(
+        label + " & " + " & ".join(entries) + r" \\" for label, entries in rows
+    )
+    lines.extend([r"\bottomrule", r"\end{tabular}"])
+    save("cluster_context", ["\n".join(lines)])
+
+    fractions = []
     for slug, d in results.items():
         start = d["cohorts"]["100"]
         main = d["cohorts"]["10000"]
         a = 100 * start["task_counts"].get("closed", 0) / start["flights"]
         b = 100 * main["task_counts"].get("closed", 0) / main["flights"]
-        paragraphs.append(
-            f"The closed-route fraction changes from {a:.1f}\\% in $\\mathcal C_{{100}}$ "
-            f"to {b:.1f}\\% in $\\mathcal C_{{10000}}$ for {names[slug]}. "
-            "Thus duration selection measurably changes circuit composition."
-        )
-    save("cohort_composition", paragraphs)
+        fractions.append(f"{a:.1f}\\% to {b:.1f}\\% for {names[slug]}")
+    save(
+        "cohort_composition",
+        [
+            "From $\\mathcal C_{100}$ to $\\mathcal C_{10000}$, the closed-route fraction "
+            "rises from " + " and from ".join(fractions) + "."
+        ],
+    )
     paragraphs = []
-    for slug, d in results.items():
-        x = np.asarray(d["msd_lags"])
-        i = int(np.flatnonzero(x == 100)[0])
-        j = int(np.flatnonzero(x == 1000)[0])
-        short = interval(d["cohort_ratios"]["1"], i)
-        medium = interval(d["cohort_ratios"]["2"], j)
+    main_contrasts = []
+    for d in results.values():
+        comparisons = d["cohort_h_comparisons"]
+        broad = comparisons["10-100"]["contrasts"]["100_minus_1000"]
+        assert abs(broad["point"]) < 1e-4, (
+            "Update the cohort effect-size interpretation"
+        )
+        main_contrasts.extend(
+            contrast
+            for comparison in comparisons.values()
+            for key, contrast in comparison["contrasts"].items()
+            if key.endswith("minus_10000")
+        )
+    paragraphs.append(
+        "On 10--100 s, $\\mathcal C_{100}$ and $\\mathcal C_{1000}$ differ in $H$ by "
+        "less than $10^{-4}$ in both disciplines. The paired interval resolves this tiny "
+        "difference for paragliders; for hang gliders it includes zero. "
+        "The extensive overlap of these cohorts makes the paired comparison particularly precise."
+    )
+    if all(contrast["high"] < 0 for contrast in main_contrasts):
         paragraphs.append(
-            f"For {names[slug]}, the dedicated-to-main MSD ratio is {short} at 100 s "
-            f"and {medium} at 1000 s. The long-flight requirement therefore selects "
-            "larger mean displacements at shared lags, with differences exceeding "
-            "the paired bootstrap variability."
+            "The main cohort has a larger effective exponent in both matched fit intervals "
+            "and both disciplines; every paired comparison with a broader cohort excludes zero."
         )
     save("cohort_effect", paragraphs)
 
@@ -84,53 +146,50 @@ def write_text(report, out):
     paragraphs = []
     for label, counts, n in (
         (
-            "The eligible common-grid population",
+            "Eligible flights",
             d["eligible_task_counts"],
             d["eligible_flights"],
         ),
         (
-            "The main cohort",
+            "Main-cohort flights",
             d["cohorts"]["10000"]["task_counts"],
             d["cohorts"]["10000"]["flights"],
         ),
     ):
         paragraphs.append(
-            f"{label} contains {counts['open']:,} open flights "
-            f"({100 * counts['open'] / n:.1f}\\%), {counts['closed']:,} closed flights "
+            f"{label}: {counts['open']:,} open "
+            f"({100 * counts['open'] / n:.1f}\\%), {counts['closed']:,} closed "
             f"({100 * counts['closed'] / n:.1f}\\%), and {counts.get('unknown', 0):,} "
-            "without a recognised circuit class."
+            "unclassified."
         )
     save("task_composition", paragraphs)
     contrasts = d["hurst_contrasts"]
-    direct = [interval(contrasts[f"open_minus_closed_{i}"]) for i in range(4)]
+    direct = [contrasts[f"open_minus_closed_{i}"]["point"] for i in range(4)]
     save(
         "task_contrasts",
         [
-            "The paired contrasts $H_{\\rm open}-H_{\\rm closed}$ are "
-            + ", ".join(direct)
-            + ", in ascending altitude-band order. "
-            "Each interval lies above zero under the adopted cluster resampling."
+            f"The paired contrasts $H_{{\\rm open}}-H_{{\\rm closed}}$ range from "
+            f"{min(direct):.3f} to {max(direct):.3f}; all four 90\\% intervals exclude zero."
         ],
     )
 
-    paragraphs = []
+    minima = []
     for slug, d in results.items():
         g = d["general"]
         x = np.asarray(g["lags"])
         h = np.asarray(g["ensemble_local_h"], dtype=float)
         keep = np.flatnonzero((x >= 20) & (x <= 2000) & np.isfinite(h))
         j = keep[np.argmin(h[keep])]
-        paragraphs.append(
-            f"For {names[slug]}, the origin-distance mean has an early local-slope "
-            f"minimum at the evaluated lag {x[j]:.0f} s, with $H_{{\\rm loc}}={h[j]:.2f}$ "
-            "(search interval 20--2000 s)."
-        )
-    paragraphs.append(
-        "Both curves are approximately ballistic at the earliest resolved lags and "
-        "recover towards $H_{\\rm loc}\\simeq1$ around 600--700 s "
-        "(Fig.~\\ref{fig:fixed-general-slopes})."
+        minima.append(f"{x[j]:.0f} s ($H_{{\\rm loc}}={h[j]:.2f}$) for {names[slug]}")
+    save(
+        "launch_interpretation",
+        [
+            "The origin-distance means are approximately ballistic at the earliest resolved lags. "
+            "Their local slopes reach minima at "
+            + " and ".join(minima)
+            + " within 20--2000 s, then recover towards $H_{\\rm loc}\\simeq1$ around 600--700 s."
+        ],
     )
-    save("launch_interpretation", paragraphs)
 
     paragraphs = []
     for slug, d in results.items():
@@ -141,42 +200,28 @@ def write_text(report, out):
         # The early minimum is followed by a broad maximum before long-lag decline.
         late = np.flatnonzero((x >= 200) & (x <= 5000))
         k = late[np.argmax(ratio[late])]
-        contrast = interval(d["scaling_fits"]["10-10000"]["H25_minus_H90"], 2)
         rms = np.asarray(d["scaling_fits"]["10-10000"]["quantile_rms_dex"]["point"])
         paragraphs.append(
-            f"For {names[slug]}, the radial ratio is {ratio[0]:.3f} at 10 s, "
-            f"has an early minimum of {ratio[j]:.3f} at {x[j]:.0f} s, "
-            f"and takes the value {ratio[k]:.3f} at {x[k]:.0f} s before "
-            f"ending at {ratio[-1]:.3f} at 10000 s. "
-            f"The global radial contrast $H_{{25}}-H_{{90}}$ is {contrast}. "
+            f"For {names[slug]}, the radial ratio falls from {ratio[0]:.3f} at 10 s "
+            f"to {ratio[j]:.3f} at {x[j]:.0f} s, rises to {ratio[k]:.3f} at {x[k]:.0f} s, "
+            f"then falls to {ratio[-1]:.3f} at 10000 s. "
             f"Quantile-fit RMS residuals span {rms.min():.3f}--{rms.max():.3f} dex."
         )
     paragraphs.append(
-        "The nonmonotonic ratios show changes of distributional shape across scales. "
-        "A global positive ratio slope summarises all fitted lags and need not imply "
-        "a net increase between the two endpoints. The effective quantile exponents "
-        "must therefore be read together with the curves."
+        "A positive global slope of these nonmonotonic ratios can coexist with a net endpoint decrease."
     )
     save("quantile_findings", paragraphs)
 
     paragraphs = []
     for slug, d in results.items():
         s = d["scaling_fits"]["10-10000"]
-        h = interval(d["fits"]["10-10000"]["hurst"])
         contrast = interval(s["H4_minus_H025"], 2, digits=4)
         rms = np.asarray(s["moment_rms_dex"]["point"])
         paragraphs.append(
-            f"The single global MSD exponent is $H={h}$ for {names[slug]}. "
-            f"The radial contrast $\\zeta(4)/4-\\zeta(0.25)/0.25$ is {contrast}; "
-            f"across all three amplitudes and orders, moment-fit RMS residuals range "
-            f"from {rms.min():.3f} to {rms.max():.3f} dex."
+            f"For {names[slug]}, the radial contrast "
+            f"$\\zeta(4)/4-\\zeta(0.25)/0.25$ is {contrast}. "
+            f"Moment-fit RMS residuals span {rms.min():.3f}--{rms.max():.3f} dex across all amplitudes and orders."
         )
-    paragraphs.append(
-        "The decade fits and local slopes expose crossovers within the full interval. "
-        "Accordingly, a small departure of the fitted spectrum from $qH$ is evidence "
-        "against a common effective exponent on these scales, rather than a measurement "
-        "of an asymptotic multifractal law."
-    )
     save("moment_findings", paragraphs)
 
     paragraphs = []
@@ -185,19 +230,13 @@ def write_text(report, out):
         paragraphs.append(
             f"For {names[slug]}, $(K_E,K_N)$ changes from "
             f"$({a[0, 0]:.2f},{a[0, 1]:.2f})$ at 10 s to "
-            f"$({a[-1, 0]:.2f},{a[-1, 1]:.2f})$ at 10000 s. "
-            "The short-lag negative excess and long-lag positive excess show a change "
-            "in standardised fourth-moment shape."
+            f"$({a[-1, 0]:.2f},{a[-1, 1]:.2f})$ at 10000 s."
         )
     save("kurtosis_findings", paragraphs)
     save(
         "scaling_conclusion",
         [
-            "The finite-range evidence does not support one common displacement scale "
-            "exponent over 10--10000 s: quantile ratios vary, fitted quantile slopes differ, "
-            "and standardised fourth moments change with lag. The global MSD exponent remains "
-            "a useful summary of net growth. Approximate linearity of a moment spectrum "
-            "alone does not establish monofractal scaling across an interval containing "
-            "these crossovers."
+            "Over 10--10000 s, a single self-similar model with stationary increments "
+            "does not adequately describe the pooled displacement law."
         ],
     )

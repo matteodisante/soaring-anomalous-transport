@@ -65,6 +65,93 @@ def fit_summary(lags, curves, interval):
     }
 
 
+def cohort_h_comparisons(lags, curves):
+    """Compare cohort exponents only on identical lag sets, with paired draws."""
+    comparisons = {}
+    for upper, cohorts in ((100, (100, 1000, 10000)), (1000, (1000, 10000))):
+        fitted = {}
+        slopes = {}
+        for limit in cohorts:
+            index = (100, 1000, 10000).index(limit) + 1
+            selected = curves[:, index]
+            fitted[str(limit)] = fit_summary(lags, selected, (10, upper))
+            slopes[limit] = log_fit(lags, selected, (10, upper))["slope"] / 2
+        contrasts = {
+            f"{a}_minus_{b}": summary(slopes[a] - slopes[b])
+            for i, a in enumerate(cohorts)
+            for b in cohorts[i + 1 :]
+        }
+        comparisons[f"10-{upper}"] = {
+            "interval_s": [10, upper],
+            "fits": fitted,
+            "contrasts": contrasts,
+        }
+    return comparisons
+
+
+def available_population_fit(lags, curves, group_support):
+    """Fit the descriptive general TA-MSD, retaining its actual lag support."""
+    interval = (10, 30000)
+    use = (lags >= interval[0]) & (lags <= interval[1])
+    result = fit_summary(lags, curves, interval)
+    slope = log_fit(lags, curves, interval)["slope"]
+    result.update(
+        evaluated_lag_bounds_s=[int(lags[use][0]), int(lags[use][-1])],
+        minimum_group_support=int(np.min(np.asarray(group_support)[use])),
+        valid_bootstrap_replicates=int(np.isfinite(slope[1:]).sum()),
+    )
+    return result
+
+
+def refresh_fits(report, directory):
+    """Extend a validated report from stored MSD replicates, without remeasurement."""
+    for slug, result in report["results"].items():
+        with np.load(directory / slug / "msd.npz") as saved:
+            lags = saved["lags"]
+            curves = saved["curves"]
+        np.testing.assert_array_equal(lags, result["msd_lags"])
+        np.testing.assert_allclose(
+            curves[0], np.asarray(result["msd"]["point"], dtype=float), equal_nan=True
+        )
+        if len(curves) - 1 != result["resamples"]:
+            raise ValueError("Saved MSD replicates differ from the report bootstrap")
+        result["cohort_h_comparisons"] = cohort_h_comparisons(lags, curves)
+        result["general"]["tamsd_global_fit"] = available_population_fit(
+            lags, curves[:, 0], result["msd_group_support"][0]
+        )
+        general = result["general"]
+        general_lags = np.asarray(general["lags"])
+        for source, target in (
+            (general["ensemble_mean"], "ensemble_local_h"),
+            (general["ensemble_p5_median_p95"][1], "ensemble_median_local_h"),
+        ):
+            general[target] = (
+                local_slopes(
+                    general_lags, np.asarray(source, dtype=float), expand_sparse=True
+                )
+                / 2
+            )
+        # Only missing common-grid interior estimates need repair; native bootstrap
+        # curves are unnecessary because the repaired window is entirely >=10 s.
+        common = np.searchsorted(general_lags, lags)
+        general_draws = np.full((len(curves), len(general_lags)), np.nan)
+        general_draws[:, common] = curves[:, 0]
+        repaired = local_slopes(general_lags, general_draws, expand_sparse=True) / 2
+        nominal = local_slopes(general_lags, general_draws[0]) / 2
+        replace = ~np.isfinite(nominal) & np.isfinite(repaired[0])
+        repair_summary = summary(repaired)
+        for key in ("point", "low", "high"):
+            updated = np.asarray(general["tamsd_local_h"][key], dtype=float)
+            updated[replace] = repair_summary[key][replace]
+            general["tamsd_local_h"][key] = updated
+        general["local_slope_sparse_window_rule"] = (
+            "If fewer than 3 lags lie within +/-0.25 decades, use the nearest 3 "
+            "in log time, only with at least 2 observed lags on each side."
+        )
+        general["local_slope_repaired_lags_s"] = general_lags[replace]
+    return report
+
+
 def clusters_info(frame):
     """Describe cluster size and observed separation without asserting independence."""
     groups = frame.groupby("cluster", sort=True)
@@ -178,6 +265,7 @@ def reduce_discipline(directory):
         with np.errstate(divide="ignore", invalid="ignore"):
             ratio = m[:, c] / m[:, 3]
         output.setdefault("cohort_ratios", {})[str(c)] = summary(ratio)
+    output["cohort_h_comparisons"] = cohort_h_comparisons(m_lags, m)
     for interval in FIT_RANGES:
         key = f"{interval[0]}-{interval[1]}"
         output["fits"][key] = fit_summary(m_lags, m[:, 3], interval)
@@ -330,10 +418,23 @@ def reduce_discipline(directory):
         "tamsd_support": np.r_[
             np.isfinite(short[index]).sum(axis=0), msd["support"][0]
         ],
-        "ensemble_local_h": local_slopes(GENERAL_LAGS, mean) / 2,
-        "ensemble_median_local_h": local_slopes(GENERAL_LAGS, scatter[1]) / 2,
-        "tamsd_local_h": summary(local_slopes(GENERAL_LAGS, general) / 2),
-        "tamsd_global_fit": fit_summary(GENERAL_LAGS, general, (10, 10000)),
+        "ensemble_local_h": local_slopes(GENERAL_LAGS, mean, expand_sparse=True) / 2,
+        "ensemble_median_local_h": local_slopes(
+            GENERAL_LAGS, scatter[1], expand_sparse=True
+        )
+        / 2,
+        "tamsd_local_h": summary(
+            local_slopes(GENERAL_LAGS, general, expand_sparse=True) / 2
+        ),
+        "local_slope_sparse_window_rule": (
+            "If fewer than 3 lags lie within +/-0.25 decades, use the nearest 3 "
+            "in log time, only with at least 2 observed lags on each side."
+        ),
+        "local_slope_repaired_lags_s": GENERAL_LAGS[
+            ~np.isfinite(local_slopes(GENERAL_LAGS, general[0]))
+            & np.isfinite(local_slopes(GENERAL_LAGS, general[0], expand_sparse=True))
+        ],
+        "tamsd_global_fit": available_population_fit(m_lags, m[:, 0], group_support[0]),
         "ensemble_global_fit": log_fit(GENERAL_LAGS, mean),
     }
     for limit in (100, 1000):
@@ -347,7 +448,26 @@ def main():
     """Write plotting-ready strict JSON and retain the full bootstrap draws on SSD."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data", type=Path, required=True)
+    parser.add_argument("--refresh-fits-only", action="store_true")
+    parser.add_argument(
+        "--report", type=Path, help="Existing validated report to extend"
+    )
+    parser.add_argument(
+        "--output", type=Path, help="Output report; defaults to DATA/report.json"
+    )
     args = parser.parse_args()
+    if args.refresh_fits_only:
+        report = json.loads((args.report or args.data / "report.json").read_text())
+        if report["status"] != "complete":
+            raise ValueError("Fit refresh requires a complete, validated report")
+        report = refresh_fits(report, args.data)
+        target = args.output or args.data / "report.json"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        temp = target.with_suffix(".tmp")
+        temp.write_text(json.dumps(portable(report), indent=2, allow_nan=False) + "\n")
+        temp.replace(target)
+        print("Refitted stored MSD replicates:", target, flush=True)
+        return
     results = {slug: reduce_discipline(args.data / slug) for slug in ("para", "hang")}
     report = {
         "status": "complete",
@@ -368,7 +488,8 @@ def main():
         },
         "results": results,
     }
-    target = args.data / "report.json"
+    target = args.output or args.data / "report.json"
+    target.parent.mkdir(parents=True, exist_ok=True)
     temp = target.with_suffix(".tmp")
     temp.write_text(json.dumps(portable(report), indent=2, allow_nan=False) + "\n")
     temp.replace(target)

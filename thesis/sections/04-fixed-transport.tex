@@ -3,11 +3,10 @@
 \label{ch:fixed-transport}
 \input{generated/ch3_transport_values}
 
-Horizontal displacement measures how efficiently a flight converts time into spatial
-exploration. We first describe its second moment, then resolve the contribution of
-circuit type and initial altitude. Quantiles, moments of different orders and kurtosis
-probe whether the growth of the second moment reflects a common rescaling of the
-whole displacement distribution. Paragliders and hang gliders are analysed separately.
+Horizontal transport depends on both the distance covered and its growth with time.
+We measure the mean-square displacement (MSD), its dependence on circuit type and
+initial altitude, and the scaling of the displacement distribution. Paragliders and
+hang gliders are analysed separately.
 
 \section{Mean-square displacement}
 \label{sec:fixed-msd}
@@ -16,25 +15,26 @@ whole displacement distribution. Paragliders and hang gliders are analysed separ
 Let $\boldsymbol{x}_f(t)=(E_f(t),N_f(t))$ be the cleaned horizontal trajectory of flight
 $f$. Within its retained continuous segments, define
 $\Delta\boldsymbol{x}_{fi}(\tau)=\boldsymbol{x}_f(t_i+\tau)-\boldsymbol{x}_f(t_i)$
-and $R_{fi}(\tau)=|\Delta\boldsymbol{x}_{fi}(\tau)|$. With $n_f(\tau)$ valid origins,
+and $R_{fi}(\tau)=|\Delta\boldsymbol{x}_{fi}(\tau)|$. For the contributing flights
+$\mathcal C(\tau)$, let $N(\tau)=|\mathcal C(\tau)|$ and $n_f(\tau)$ be the number
+of valid increments. The time-averaged MSD of a flight and its population mean are
 \begin{equation}
  m_f(\tau)=\frac{1}{n_f(\tau)}\sum_{i=1}^{n_f(\tau)}R_{fi}(\tau)^2,
- \qquad M_2(\tau)=\frac{1}{N}\sum_{f=1}^{N}m_f(\tau).
+ \qquad M_2(\tau)=\frac{1}{N(\tau)}\sum_{f\in\mathcal C(\tau)}m_f(\tau).
  \label{eq:fixed-msd}
 \end{equation}
-We use this \emph{equal-flight} average because the statistical unit of interest is a
-flight: each contributes total weight $1/N$, irrespective of its duration or recorder
-cadence. Within a flight, the temporal average pools valid overlapping increments
-from its selected segments. Segment boundaries never form artificial adjacent fixes.
+This \emph{equal-flight} average gives each flight total weight $1/N(\tau)$, so long
+flights and frequent recorder fixes do not dominate the population mean. Within each
+flight we pool the increments from its selected continuous segments. No increment
+crosses a segment boundary.
 
 For $10\leq\tau\leq10000$ s, positions lie on a 10 s grid starting at each segment's
-first fix. Records with native cadence above 10 s are excluded. A common grid gives
-identical physical lags across recorder cadences and limits the cost of the calculation.
-Positions at missing grid times are linearly interpolated within a segment. For example,
-a native 8 s cadence requires interpolation between 8 and 16 s for the position at
-10 s. No interpolation crosses a segment boundary. The 33 measured lags are approximately
-logarithmic multiples of 10 s, including exactly 100 and 1000 s. Markers in every figure
-identify these evaluations; connecting lines guide the eye.
+first fix. Records with native cadence above 10 s are excluded. This grid provides
+common physical lags at a moderate computational cost. Missing positions are linearly
+interpolated within segments: with an 8 s cadence, for example, the 10 s position
+lies between the fixes at 8 and 16 s. The 33 evaluated lags are multiples of 10 s,
+approximately logarithmically spaced and including 100 and 1000 s. Figure markers
+show the evaluations; lines connect them.
 
 \begin{table}[htbp]
  \centering\small
@@ -54,50 +54,64 @@ in Chapter~2.
 \subsection{General transport and uncertainty}
 \label{sec:fixed-general}
 
-Figure~\ref{fig:fixed-general} compares Eq.~\eqref{eq:fixed-msd} with displacement
-from the trajectory origin after trimming the take-off phase. For the latter, elapsed
-time is measured on the retained parent clock, including gaps; a gap gives missing
-support, rather than resetting the origin. Positions at requested elapsed times are
-linearly interpolated within segments, with native cadence no larger than that time.
-At each elapsed time we average the squared
-ENU distance over available flights, and also report its median and 5th--95th percentile
-range. This is an empirical ensemble over the archive's mixture of sites, days and
-flight conditions. It is a meaningful ensemble of that mixture, although it does not
-represent repeated launches under identical conditions. Changing duration support can
-also change the mixture with elapsed time.
+Figure~\ref{fig:fixed-general} compares the TA-MSD with squared distance from the
+trajectory origin after trimming the take-off phase. The latter retains the parent
+clock: gaps give missing support without resetting time or position. At each elapsed
+time we report the mean, median and 5--95\% range across available flights. Positions
+are interpolated only within segments whose native cadence resolves that elapsed time.
+This empirical ensemble represents the archive's mixture of sites, days and flight
+conditions; changing support alters that mixture with elapsed time.
 
-The shaded range in the origin-distance panels describes \emph{scatter among flights}.
-All other shaded bands in this chapter are pointwise bootstrap intervals for the
-plotted statistic. We group flights by catalogue take-off site and calendar date;
-site names are normalised and disambiguated by department. Missing site/date keys
-produce singleton groups. From the $G$ groups in the eligible archive, each of
-$B=1000$ replicates samples $G$ groups with replacement and retains every flight
-in each selected group. The replicate is then restricted to the relevant cohort.
-If group $g$ is drawn $b_g$ times, its equal-flight mean is
+The origin-distance shading shows \emph{scatter among flights}. Other bands are
+pointwise 90\% bootstrap intervals for the plotted statistic. Flights are grouped by
+catalogue take-off site and calendar date, retaining dependence within each site--day.
+Site names are normalised and disambiguated by department; missing keys give singleton
+groups. From the eligible archive's $G$ site--day groups, each of $B=1000$ replicates
+draws $G$ groups with replacement, then restricts them to the population being analysed.
+If $b_g$ is the number
+of times group $g$ is drawn, the weights are
 \begin{equation}
- M_2^{(b)}(\tau)=
- \frac{\sum_{f\in\mathcal C}b_{g(f)}m_f(\tau)}
-      {\sum_{f\in\mathcal C}b_{g(f)}}.
+ \begin{aligned}
+ N_b(\tau)&=\sum_{f\in\mathcal C(\tau)}b_{g(f)},&
+ w^{(b)}_{fi}(\tau)&=\frac{b_{g(f)}}{N_b(\tau)n_f(\tau)},\\
+ M_2^{(b)}(\tau)&=\sum_{f\in\mathcal C(\tau)}\sum_i
+ w^{(b)}_{fi}(\tau)R_{fi}(\tau)^2.
+ \end{aligned}
  \label{eq:fixed-bootstrap}
 \end{equation}
-The same group multiplicities are used across lags, observables and cohort comparisons;
-ratios and fits are recomputed in each replicate. The 5th and 95th percentiles of the
-replicate estimates define a nominal 90\% confidence interval at each lag. Under the
-sampling assumptions, its repeated-sample coverage is approximately 90\%; it neither
-contains 90\% of flights nor gives simultaneous coverage of an entire curve.
-For the sparsely supported tail of the general TA-MSD, bands are omitted below
-20 contributing site--day groups; the descriptive points remain visible.
+The same draws are used across lags, observables and cohort comparisons. Quantiles,
+ratios and fits are recomputed in each replicate. For an estimate $\widehat\theta$,
+\begin{equation}
+ I_{90}(\theta)=
+ \left[\operatorname{perc}_{5}\{\widehat\theta^{(b)}\}_{b=1}^{1000},\,
+       \operatorname{perc}_{95}\{\widehat\theta^{(b)}\}_{b=1}^{1000}\right].
+ \label{eq:fixed-ci}
+\end{equation}
+Percentiles are linearly interpolated between ordered replicates; estimates lacking
+the required lag support are omitted.
+This is a nominal 90\% confidence interval: under the sampling assumptions, repeated
+samples would yield intervals covering the population statistic about 90\% of the
+time. Coverage is pointwise, not simultaneous over a curve.
 
-Cluster resampling permits dependence between flights in a group and between
-increments of a flight. Its justification requires sufficiently many approximately
-independent groups, a relevant sampling population, and stable statistics; independence
-alone is insufficient~\cite{cameron_miller2015}. The archive is observational, so inference
-concerns its represented flight population. Table~\ref{tab:fixed-cohorts} gives group
-counts for each cohort. \input{generated/ch3_transport_cluster_context}
-Nearby sites and consecutive flying days can share weather, so geographical and temporal
-separation support only an approximate independence assumption. The intervals quantify
-sampling variability under this grouping; residual dependence and the selection of
-uploaded flights are not included.
+Cluster bootstrap requires many approximately independent groups and sufficiently
+stable statistics~\cite{cameron_miller2015}; flights within a group need not be
+independent. Table~\ref{tab:fixed-clusters} describes their spatial and temporal
+separation. Nearby sites and successive days can share weather, so these distances
+do not verify independence. Residual dependence may make the bands too narrow;
+upload selection also limits inference to the population represented by the archive.
+General TA-MSD bands are omitted below 20 contributing groups, an operational
+support threshold rather than a guarantee of coverage.
+
+\begin{table}[htbp]
+ \centering\small\setlength{\tabcolsep}{4pt}
+ \input{generated/ch3_transport_cluster_context}
+ \caption{Site--day diagnostics in the main cohort. Distances refer to the nearest
+ other catalogue site represented on the same date; time gaps refer to the previous
+ observed date at the same site. Distances and time gaps are reported as median
+ [10th, 90th percentile].
+ Cohort group counts are in Table~\ref{tab:fixed-cohorts}.}
+ \label{tab:fixed-clusters}
+\end{table}
 
 \begin{figure}[htbp]
  \centering
@@ -105,10 +119,11 @@ uploaded flights are not included.
  \caption{General horizontal transport. Left: squared distance from the post-trim
  origin, with equal-flight mean, median and the empirical 5--95\% flight range.
  Right: equal-flight TA-MSD over the population available at each lag, with
- pointwise 90\% cluster-bootstrap intervals. Dashed lines give global 10--10000 s
- fits of the means in both columns. Native short-lag support differs from common-grid support.}
+ pointwise 90\% cluster-bootstrap intervals and a log--log fit over 10--30000 s
+ (evaluated lags: 10--28440 s). Native short-lag support differs from common-grid support.}
  \label{fig:fixed-general}
 \end{figure}
+\input{generated/ch3_transport_general_fit}
 \begin{table}[htbp]
  \centering\small
  \input{generated/ch3_transport_support_table}
@@ -120,20 +135,28 @@ uploaded flights are not included.
  \label{tab:fixed-support}
 \end{table}
 
-For any second-moment curve we define an effective exponent
-$H_{\rm loc}(\tau)=\tfrac12\,d\log M_2/d\log\tau$. Numerically, this is the slope of
-a local least-squares fit within $\pm0.25$ decades of each lag, using at least three
-points, divided by two. A single summary exponent is obtained from
+\Needspace{20\baselineskip}
+For a second-moment curve the local growth exponent is
 \begin{equation}
- \log_{10}\!\left[M_2(\tau)/(1\,\mathrm{m}^2)\right]
- =a+2H\log_{10}\!\left[\tau/(1\,\mathrm{s})\right]
- \quad (10\leq\tau\leq10000\,\mathrm{s}).
+ H_{\rm loc}(\tau)=\frac12\frac{d\log M_2(\tau)}{d\log\tau}.
+ \label{eq:fixed-local-h}
+\end{equation}
+We estimate this derivative by a local log--log least-squares slope, divided by two,
+within $\pm0.25$ decades of each lag and using at least three points.
+In the general curves, a sparse interior window expands to the three nearest
+log-lags: the estimate at 20 s uses the values at 10, 20 and 30 s.
+For a single exponent over a specified interval, write $x_k=\log_{10}(\tau_k/1\,\mathrm{s})$.
+The equal-weight least-squares slope of a dimensionless logarithmic ordinate $z_k$ is
+\begin{equation}
+ \mathcal B[z]=\frac{\sum_k(x_k-\bar x)z_k}{\sum_k(x_k-\bar x)^2},\qquad
+ H=\frac12\mathcal B\!\left[\log_{10}\frac{M_2}{1\,\mathrm{m}^2}\right].
  \label{eq:fixed-fit}
 \end{equation}
-Ordinary least squares gives each evaluated lag equal weight. Correlated lags are
-handled by refitting the coupled bootstrap curves. We report the root-mean-square
-logarithmic residual in dex to distinguish an effective global slope from an accurate
-single power law.
+We fit the controlled analysis over 10--10000 s and refit every bootstrap curve to
+propagate dependence between lags. The RMS logarithmic residual, in dex, measures
+the departure from a single power law. Here $H$ denotes an effective growth exponent;
+its identification with a process's self-similarity exponent is tested in
+Section~\ref{sec:fixed-scaling}.
 
 \begin{figure}[htbp]
  \centering
@@ -144,34 +167,38 @@ single power law.
  \label{fig:fixed-general-slopes}
 \end{figure}
 \input{generated/ch3_transport_launch_interpretation}
-A renewed increase of the local slope after its minimum is consistent with the
-resumption of gliding after the initial search for lift and climb. The minimum thus
-provides a rough timescale for the completion of that combined phase in the aggregate;
-identifying a mean duration for individual flights would require phase labels. The
-mean exceeds the median because large displacements contribute disproportionately.
-Pointwise flight percentiles do not track a fixed subset of trajectories through time.
+The reduced growth after the initial ballistic regime is consistent with searching
+for lift and climbing in a thermal, followed by renewed gliding. Under this
+interpretation, the minimum marks a rough transition time towards completion of the
+initial search-and-climb phase. It is distinct from the later recovery towards
+$H_{\rm loc}=1$ and does not estimate a mean duration measured on individual flights.
+The mean lies above the median, showing the influence of large displacements;
+the pointwise percentiles do not track the same flights through time.
+
 \FloatBarrier
 
 \subsection{Fixed population and the effect of duration selection}
 \label{sec:fixed-population}
 
-At larger lags, short flights and short segments leave the average. This can alter
-its slope through a changing proportion of local flights, distance flights and launch
-sites, even before any change in their own displacement scaling. We therefore hold
-both flights and segment identities fixed for the controlled comparisons.
-For a maximum lag $\tau_{\max}$, select segments satisfying
+As lag increases, short flights and segments leave the general average. A changing
+mix of circuit types and launch sites can then alter its slope. For controlled
+comparisons we select the segments once, using
 \begin{equation}
- \tau_{\max}\leq0.8T_s,
+ \tau_{\max}\leq0.8T_s,\qquad
+ \mathcal C_{\tau_{\max}}=\{f:\exists s\in f,\ T_s\geq\tau_{\max}/0.8\},
  \label{eq:fixed-support}
 \end{equation}
-where $T_s$ is the elapsed duration on the actual 10 s grid. A flight enters if at least
-one of its segments qualifies. The main cohort, $\mathcal C_{10000}$, therefore uses
-segments of at least 12500 s. This leaves at least one fifth of each segment's duration
-available for origins at the largest lag. In a flight with segments of 14000 and
-3000 s, only the 14000 s segment contributes, including at a lag of 10 s. Thus the
-short segment cannot enter at small lags and disappear at large ones. The ordinary
-number $n_f(\tau)$ of within-segment increments still decreases with lag; the flight's
-total weight remains $1/N$.
+where $T_s$ is the segment's elapsed duration on the 10 s grid. This leaves at least
+one fifth of that duration available for origins at the largest lag. The main cohort,
+$\mathcal C_{10000}$, uses segments lasting at least 12500 s. If a flight has segments
+of 14000 and 3000 s, only the first contributes, even at $\tau=10$ s.
+Flights and selected segments therefore remain the same at every lag. The number of
+increments still decreases with lag; dividing the flight's mass between them gives
+\begin{equation}
+ w_{fi}(\tau)=\frac{1}{Nn_f(\tau)},\qquad
+ \sum_iw_{fi}(\tau)=\frac1N,\qquad N=|\mathcal C_{10000}|.
+ \label{eq:fixed-weights}
+\end{equation}
 
 \begin{table}[htbp]
  \centering\small
@@ -183,34 +210,33 @@ total weight remains $1/N$.
  \label{tab:fixed-cohorts}
 \end{table}
 
-To measure the effect of this selection immediately, we repeat the MSD in
-$\mathcal C_{100}$ and $\mathcal C_{1000}$. These include the main cohort's long segments,
-additional shorter segments of its flights, and additional flights. Comparisons use
-only shared lags and paired bootstrap replicates. \input{generated/ch3_transport_cohort_composition}
+We assess duration selection with the nested cohorts $\mathcal C_{100}$ and
+$\mathcal C_{1000}$. They contain the main cohort's segments, additional shorter
+segments of its flights, and additional flights. We compare fitted $H$ over the same
+lag interval, using paired bootstrap draws. \input{generated/ch3_transport_cohort_composition}
 
 \begin{figure}[htbp]
  \centering
  \includegraphics[width=\textwidth]{generated/ch3_transport_cohorts.pdf}
  \caption{Effect of duration selection. Top: MSD in the three nested cohorts;
- dashed lines fit the main cohort over 10--10000 s. Bottom: ratios to the main cohort,
- including the general available-population curve. Bands use paired cluster draws.
- Each dedicated cohort is evaluated only up to its own maximum lag.}
+ dashed lines fit the main cohort over 10--10000 s. Bottom: effective $H$ with 90\%
+ intervals, fitted over 10--100 s for all three cohorts and 10--1000 s for the two
+ longer cohorts. Fits within each comparison use identical lag values.}
  \label{fig:fixed-cohorts}
 \end{figure}
 \begin{table}[htbp]
  \centering\small
- \input{generated/ch3_transport_cohort_fit_table}
- \caption{Selection effects on the effective exponent. Each row fits the dedicated
- and main cohorts over exactly the same lag interval. Brackets are 5--95\% bootstrap
- intervals. The main population is unchanged when its fit interval is shortened.}
+ \input{generated/ch3_transport_cohort_contrast_table}
+ \caption{Paired differences of the cohort exponents in Fig.~\ref{fig:fixed-cohorts}.
+ Each comparison uses identical lags and bootstrap draws. A 90\% interval excluding
+ zero resolves a difference under the adopted resampling; inclusion of zero alone
+ would not establish absence of selection bias.}
  \label{tab:fixed-cohort-fits}
 \end{table}
 \input{generated/ch3_transport_cohort_effect}
-The ratios and matched-range exponents quantify the cost of conditioning on long
-flights. Fixing the cohort removes changing membership as an explanation of subsequent
-crossovers; the resulting dynamics remain conditional on sufficient uninterrupted
-flight duration. Short-scale observations from the broader cohorts remain relevant
-to the general archive and are kept separate from this controlled scaling analysis.
+The resulting estimates remain conditional on long uninterrupted flight segments;
+the shorter cohorts describe a broader flight population.
+
 \FloatBarrier
 
 \section{Transport by circuit type and initial altitude}
@@ -248,24 +274,27 @@ the distinction involves the rate of growth as well as the displacement reached 
 10000 s. Closed routes have smaller $H$ than open routes in every altitude class.
 \input{generated/ch3_transport_task_contrasts}
 The closed-route exponents also differ between altitude classes: the present intervals
-do not support a common value across them. A return objective can suppress net
+do not support a common value across them.
+
+A return objective can suppress net
 horizontal advance on scales approaching a circuit's duration, although the declared
-class does not guarantee exact closure of the trimmed trajectory. Greater persistence
+class does not guarantee exact closure of the trimmed trajectory. Faster displacement growth
 in low-altitude open flights is consistent with fewer topographic constraints on
 horizontal progression. This observational comparison does not isolate orography
 from weather, route selection, pilots or equipment.
 
-The overall MSD combines these distinct behaviours. For an exhaustive partition
-into groups with $p_g=N_g/N$, including unclassified flights,
+Within the fixed cohort the group fractions $p_g=N_g/N$ are constant. For an
+exhaustive partition, including unclassified flights,
 \begin{equation}
  M_2(\tau)=\sum_g p_g M_{2,g}(\tau),\qquad
  H_{\rm loc}(\tau)=\sum_g
  \frac{p_gM_{2,g}(\tau)}{M_2(\tau)}H_{{\rm loc},g}(\tau).
  \label{eq:fixed-mixture}
 \end{equation}
-The effective slope is therefore weighted by each group's contribution to the second
-moment. It is not the arithmetic mean of the fitted exponents. The sizeable open and
-closed populations make this mixture physically relevant to the general curve.
+The derivative slope weights each group by its contribution to the second moment.
+Equation~\eqref{eq:fixed-mixture} describes the main-cohort MSD; the plotted local
+regressions approximate its derivatives. Both circuit classes contribute substantially
+to this aggregate, with distinct growth rates.
 
 Wind can contribute to both amplitude and apparent scaling. For an additive constant
 velocity $\boldsymbol u$, write $\Delta\boldsymbol x=\Delta\boldsymbol y+\boldsymbol u\tau$:
@@ -290,53 +319,83 @@ PCA results remain in the experiments volume; they are not updated in this chapt
 \section{Scaling of displacement distributions}
 \label{sec:fixed-scaling}
 
-A superdiffusive MSD alone does not determine the displacement law. We now ask whether
-small and large displacements grow at the same rate, and whether a common exponent
-accounts for moments of different orders. Every observable below uses exactly the
-main cohort's flights, segments, lag grid and equal-flight measure.
+The MSD measures one moment of the displacement law. To test whether the whole law
+rescales with one exponent, we use quantiles, a spectrum of moments and excess kurtosis.
+All use the main cohort's flights, segments and weights in Eq.~\eqref{eq:fixed-weights}.
+
+\subsection{Self-similarity and its observable consequences}
+\label{sec:fixed-selfsimilar-definition}
+
+A process $\boldsymbol X(t)$, with $\boldsymbol X(0)=0$, is $H$-self-similar if,
+for some $H>0$,
+\begin{equation}
+ \bigl(\boldsymbol X(at_1),\ldots,\boldsymbol X(at_m)\bigr)
+ \overset d= a^H\bigl(\boldsymbol X(t_1),\ldots,\boldsymbol X(t_m)\bigr)
+ \quad(a>0).
+ \label{eq:fixed-selfsimilar}
+\end{equation}
+This identity must hold for every $m\geq1$ and $t_1,\ldots,t_m\geq0$.
+Equality in distribution concerns positions at any collection of times, including
+their dependence~\cite{embrechts_maejima_selfsimilar}. Gaussianity and independence
+of increments are not required.
+
+To infer a lag-only scaling law, we additionally assume stationary increments:
+their joint laws must be unchanged by shifting the origin.
+Self-similarity alone does not impose this condition. With stationary increments,
+each amplitude $Y\in\{|\Delta E|,|\Delta N|,R\}$ obeys
+\begin{equation}
+ Y(\tau)\overset d=(\tau/\tau_0)^H Y(\tau_0),\qquad
+ \begin{aligned}
+ Q_{Y,p}(\tau)&=(\tau/\tau_0)^H Q_{Y,p}(\tau_0),\\
+ M_{q,Y}(\tau)&=(\tau/\tau_0)^{qH}M_{q,Y}(\tau_0).
+ \end{aligned}
+ \label{eq:fixed-scale-family}
+\end{equation}
+Here $Q_{Y,p}$ is a population quantile and $M_{q,Y}$ a finite moment of order $q$;
+below, the same symbols denote their equal-flight estimates.
+Thus every quantile has the same exponent, quantile ratios are constant, and the
+moment spectrum is $\zeta_Y(q)=qH$. Signed-component excess kurtosis is also constant
+when the fourth moment exists and variance is nonzero; it need not vanish. These are
+necessary consequences for the lag distributions. A finite selection of such
+statistics cannot establish the joint-law identity in Eq.~\eqref{eq:fixed-selfsimilar}.
 
 \subsection{A common empirical distribution}
 
-At lag $\tau$, an increment has weight
-$w_{fi}(\tau)=1/[Nn_f(\tau)]$. This divides a flight's fixed total weight among its
-available origins. For an amplitude $Y\in\{|\Delta E|,|\Delta N|,R\}$, define
+With the weights in Eq.~\eqref{eq:fixed-weights}, the common empirical distribution is
 \begin{equation}
  \widehat F_{Y,\tau}(y)=\frac1N\sum_{f=1}^N\frac1{n_f(\tau)}
  \sum_{i=1}^{n_f(\tau)}\mathbf1\{Y_{fi}(\tau)\leq y\},\qquad
  Q_{Y,p}(\tau)=\inf\{y:\widehat F_{Y,\tau}(y)\geq p\}.
  \label{eq:fixed-cdf}
 \end{equation}
-Operationally, we calculate the fraction below $y$ within each flight and average
-these fractions across flights, then invert the resulting weighted empirical CDF.
-The quantile is an observed displacement amplitude at the first threshold crossing;
-no interpolation between ranks is applied. Averaging individual-flight quantiles
-would not invert this mixture distribution.
+We average the within-flight fractions below $y$, then invert the resulting CDF.
+The quantile is the first observed amplitude at which the cumulative weight reaches
+$p$, without interpolation between ranks. This order of operations defines the
+quantile of the equal-flight mixture.
 
-Absolute components resolve displacement amplitudes along east and north, while
-$R=(\Delta E^2+\Delta N^2)^{1/2}$ is invariant under rotation and characterises the
-full horizontal displacement without assuming isotropy. In particular,
-$\Pr(|\Delta E|\leq a)=\Pr(-a\leq\Delta E\leq a)$: small absolute quantiles describe
-proximity to zero displacement, which need not be the centre of a drifting signed law.
+Absolute components measure amplitudes along east and north. For example,
+$\Pr(|\Delta E|\leq a)=\Pr(-a\leq\Delta E\leq a)$, so small absolute quantiles
+measure proximity to zero displacement. The radius $R=(\Delta E^2+\Delta N^2)^{1/2}$
+is invariant under rotation and measures horizontal displacement without assuming
+isotropy.
 
 \subsection{Quantiles, growth exponents and relative spread}
 \label{sec:fixed-quantiles}
 
-A scale family $Y(\tau)\overset{d}{=}\tau^H Y(1)$ predicts
-$Q_{Y,p}(\tau)\propto\tau^H$ for every $p$. We measure $p=0.25,0.50,0.75,0.90$ and fit
-each logarithmic quantile curve on the same 33 lags. Its slope is $H_{Y,p}$; no factor
-of two enters because the observable is a length. The ratio $Q_{Y,0.25}/Q_{Y,0.90}$
-compares the growth of small amplitudes with that of large ones. Its logarithmic
-slope satisfies
+We evaluate $p=0.25,0.50,0.75,0.90$ and fit each quantile over the same 33 lags.
+Using the slope operator in Eq.~\eqref{eq:fixed-fit},
 \begin{equation}
- \frac{d\log(Q_{Y,0.25}/Q_{Y,0.90})}{d\log\tau}
- =H_{Y,0.25}(\tau)-H_{Y,0.90}(\tau).
+ H_{Y,p}=\mathcal B\!\left[\log_{10}\frac{Q_{Y,p}}{1\,\mathrm m}\right],\qquad
+ \mathcal B\!\left[\log_{10}\frac{Q_{Y,0.25}}{Q_{Y,0.90}}\right]
+ =H_{Y,0.25}-H_{Y,0.90}.
  \label{eq:fixed-ratio}
 \end{equation}
-The same identity holds for the fitted slopes when both logarithmic curves use the
-same lags and least-squares weights. Ratio drift and unequal quantile exponents
-therefore express the same comparison in complementary forms.
+No factor of two enters a length exponent. The ratio compares small and large
+amplitudes at each lag, while the fitted exponents summarise their growth across
+10--10000 s. The equality follows from linearity of least squares on identical lags;
+ratio drift and the exponent difference are therefore linked diagnostics.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
  \centering
  \includegraphics[width=\textwidth]{generated/ch3_transport_quantiles_para.pdf}
  \caption{Paraglider equal-flight displacement quantiles and their relative spread,
@@ -365,23 +424,22 @@ therefore express the same comparison in complementary forms.
 \subsection{Moment spectrum and finite-range scaling}
 \label{sec:fixed-moments}
 
-Using the same empirical measure, the moment of order $q$ is
+For each amplitude and order we calculate
 \begin{equation}
  M_{q,Y}(\tau)=\frac1N\sum_f\frac1{n_f(\tau)}\sum_iY_{fi}(\tau)^q,
- \qquad \log M_{q,Y}(\tau)\simeq a_{q,Y}+\zeta_Y(q)\log\tau.
+ \qquad \zeta_Y(q)=\mathcal B\!\left[\log_{10}\frac{M_{q,Y}}{(1\,\mathrm m)^q}\right].
  \label{eq:fixed-moments}
 \end{equation}
-For each order $q\in\{0.25,0.5,0.75,1,1.5,2,2.5,3,3.5,4\}$, we first calculate
-$M_{q,Y}$ at every lag, then fit its logarithm against $\log\tau$. Plotting the resulting
-slope against $q$ constructs the moment spectrum. A common scale family with finite
-moments predicts $\zeta_Y(q)=qH$; the reference line in Fig.~\ref{fig:fixed-spectrum}
-is fitted through the origin with equal weight for the ten orders. Larger $q$ gives
-more weight to rare large displacements. The radial spectrum includes the MSD itself:
+We use $q\in\{0.25,0.5,0.75,1,1.5,2,2.5,3,3.5,4\}$. Each point of the spectrum is
+obtained by first computing a moment at all lags, then fitting its log--log slope.
+The reference $\zeta=qH$ is fitted through the origin with equal weight for the ten
+orders. Higher orders emphasise large displacements. The radial spectrum contains
+the MSD, with the identity
 \begin{equation}
- M_{2,R}(\tau)=M_{2,|\Delta E|}(\tau)+M_{2,|\Delta N|}(\tau)=M_2(\tau).
+ M_{2,R}=M_{2,|\Delta E|}+M_{2,|\Delta N|}=M_2
  \label{eq:fixed-second-identity}
 \end{equation}
-This identity is checked for both the measured curves and every bootstrap replicate.
+verified at every lag and in every bootstrap replicate.
 
 \begin{table}[htbp]
  \centering\small
@@ -420,23 +478,19 @@ This identity is checked for both the measured curves and every bootstrap replic
 \subsection{Excess kurtosis of the signed components}
 \label{sec:fixed-kurtosis}
 
-To assess departures from Gaussian marginal increments, we retain the signs of east
-and north displacements. With the same weighted average $\langle\cdot\rangle_\tau$
-as above, set $\bar X_j=\langle\Delta x_j\rangle_\tau$ and
+Departures from Gaussian shape are assessed on the signed components: taking an
+absolute value or a radius changes even a Gaussian law. With the equal-flight mean
+$\langle A\rangle_\tau=\sum_{f,i}w_{fi}(\tau)A_{fi}$, define
 \begin{equation}
- K_j(\tau)=
- \frac{\langle(\Delta x_j-\bar X_j)^4\rangle_\tau}
-      {\langle(\Delta x_j-\bar X_j)^2\rangle_\tau^2}-3,
- \qquad j\in\{E,N\}.
+ \mu_j(\tau)=\langle\Delta x_j\rangle_\tau,\qquad
+ K_j(\tau)=\frac{\langle(\Delta x_j-\mu_j)^4\rangle_\tau}
+ {\langle(\Delta x_j-\mu_j)^2\rangle_\tau^2}-3,\qquad j\in\{E,N\}.
  \label{eq:fixed-kurtosis}
 \end{equation}
-Centring uses the mean of the full equal-flight mixture at each lag. This Fisher
-excess has Gaussian reference zero~\cite{nist_kurtosis}. Folding a Gaussian component
-into its absolute value, or taking the radius of a Gaussian vector, changes its law
-and removes that zero reference. Signed components therefore answer the intended
-question directly. A nonzero excess excludes a Gaussian marginal when reliably
-estimated; zero excess alone does not establish Gaussianity, and Gaussian marginals
-do not establish a Gaussian joint process.
+Centring uses the mean of the full mixture at each lag. A Gaussian marginal has
+$K_j=0$~\cite{nist_kurtosis}; nonzero excess measures a departure in its standardised
+fourth moment. Zero excess alone does not establish Gaussianity. For self-similarity,
+the relevant prediction is constancy with lag, regardless of the value.
 
 \begin{figure}[htbp]
  \centering
@@ -447,21 +501,37 @@ do not establish a Gaussian joint process.
  \label{fig:fixed-kurtosis}
 \end{figure}
 \input{generated/ch3_transport_kurtosis_findings}
-Mixing flights with different conditional means and variances can itself generate
-excess kurtosis. These measurements characterise the empirical mixture; attributing
-its shape to a universal within-flight mechanism requires further conditioning.
+Different flight means and variances can themselves produce nonzero excess in the
+mixture. The measured kurtosis therefore characterises the pooled displacement law.
 
-\subsection{Implications for self-similarity}
+\subsection{Assessment of self-similarity}
+
+The quantile curves and the nearly straight moment spectra can be reconciled through
+\begin{equation}
+ M_{q,Y}(\tau)=\int_0^1 Q_{Y,p}(\tau)^q\,dp.
+ \label{eq:fixed-moment-quantile}
+\end{equation}
+Each moment averages over probability levels; the order $q$ controls the emphasis
+on larger amplitudes. Fitting its slope
+across three decades further averages over crossovers. Changes in different parts
+of the distribution can consequently leave the fitted spectrum nearly linear.
+Moreover, Table~\ref{tab:fixed-scaling} resolves small departures from $\zeta=qH$;
+the spectrum is not exactly linear under the adopted bootstrap.
+
+For these data, the lag-dependent quantile ratios provide the more direct evidence
+against a fixed distributional shape. Their large, nonmonotonic changes are visible
+without fitting a power law, and their estimation does not require finite high-order
+moments. Unequal fitted quantile exponents support this reading, but the curved
+quantile trajectories limit their interpretation as constant exponents. The change
+in kurtosis supplies complementary evidence. Visual linearity of ten fitted moment
+slopes is therefore insufficient to outweigh the observed shape changes.
 
 \input{generated/ch3_transport_scaling_conclusion}
-For a stochastic process, self-similarity requires equality of all finite-dimensional
-laws, $\{\boldsymbol X(at)\}_t\overset{d}{=}\{a^H\boldsymbol X(t)\}_t$~\cite{embrechts_maejima_selfsimilar}.
-Part of the observed scale dependence can arise from mixing circuit classes with
-different growth rates. Here, the observables concern the distribution of increments
-at one lag, averaged
-over available origins. Constant quantile ratios and a linear moment spectrum would
-support a common scale family on the measured range; they would not determine its
-multi-time laws or establish stationarity of increments. The fixed population makes
-this comparison interpretable by removing a change of flight membership from the
-lag dependence.
+Approximate scaling over narrower intervals remains possible. Fixed flights and
+segments remove changing membership, but the available origins still change with lag
+and may sample flight phases differently. The present analysis does not separate
+this effect from within-flight dynamics or determine multi-time laws. It therefore
+does not exclude every nonstationary self-similar process, nor establish an asymptotic
+multifractal law.
+
 \FloatBarrier
