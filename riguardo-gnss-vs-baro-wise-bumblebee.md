@@ -13,7 +13,7 @@ Two coupled changes to the pre-processing, plus the end-to-end re-run they force
 flight (`adopt_alt_channel`, [altchannel.py:114-141](src/soaring/analysis/preproc/altchannel.py#L114-L141)):
 barometric when present and alive, GNSS otherwise. Today that leaves ~70 % of paraglider and
 ~82 % of hang-glider flights on baro (`\StatPipeParaBaroPct 69.6`, `\StatPipeHangBaroPct 82.5`)
-and the rest on GNSS. §2.7.1 ([03-dataset.tex:276-387](thesis/sections/03-dataset.tex#L276-L387))
+and the rest on GNSS. §2.7.1 ([03-dataset.tex:276-387](thesis/tesi/03-dataset.tex#L276-L387))
 argues for that mixture. The new position: the median high-frequency floors of the two channels
 coincide, so the typical flight loses nothing on GNSS, and a single channel for the whole
 population removes both the two-channel apparatus and any `alt_source`-correlated selection
@@ -245,7 +245,7 @@ not silently reused.
 
 ## Part C — Thesis
 
-### C1. §2.7.1, `sec:altchannel` — rewritten ([03-dataset.tex:276-387](thesis/sections/03-dataset.tex#L276-L387))
+### C1. §2.7.1, `sec:altchannel` — rewritten ([03-dataset.tex:276-387](thesis/tesi/03-dataset.tex#L276-L387))
 
 New argument, in this order:
 
@@ -289,9 +289,9 @@ line 354, the contraction at line 324, trailing whitespace at 284/291/302.
 ### C3. Elsewhere (consistency sweep)
 
 `03-dataset.tex` lines 28-33, 221-224, 566-568, 750, 881-883, 928-929, 1245-1256, 1537-1556,
-1643-1646, 1911-1918, 2136-2141, 2196-2199; `sections/03-dataset.tex`
-(`sec:altchannel` + `sec:altchannel`); `appendices/B-psd.tex:54-57`;
-`appendices/geodesy.tex:176-177` (says "the vertical coordinate is the barometric altitude
+1643-1646, 1911-1918, 2136-2141, 2196-2199; `tesi/03-dataset.tex`
+(`sec:altchannel` + `sec:altchannel`); `tesi/B-psd.tex:54-57`;
+`tesi/geodesy.tex:176-177` (says "the vertical coordinate is the barometric altitude
 itself" — now simply wrong).
 
 Per the standing preference, do **not** reintroduce `\begin{revblock}` / `\rev{}` into

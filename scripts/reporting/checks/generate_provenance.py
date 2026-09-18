@@ -26,9 +26,10 @@ OUT_MD = ROOT / "docs" / "guide" / "provenance.md"
 # The thesis sources that may quote a macro or include a figure.
 SOURCES = sorted(
     [
-        *THESIS.glob("sections/*.tex"),
-        *THESIS.glob("appendices/**/*.tex"),
+        *THESIS.glob("tesi/*.tex"),
+        *THESIS.glob("esperimenti/*.tex"),
         THESIS / "main.tex",
+        THESIS / "esperimenti.tex",
     ]
 )
 

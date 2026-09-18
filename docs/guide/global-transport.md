@@ -2,7 +2,7 @@
 
 Chapter 3 measures transport before phase segmentation: displacement moments and
 quantiles, a constant-velocity control, geographical anisotropy and velocity memory.
-The revised chapter is `thesis/sections/04-global-transport.tex` (printed Chapter 3).
+The revised chapter is `thesis/esperimenti/04-global-transport.tex` (printed Chapter 3).
 The scientific programme and sequencing are recorded in [the thesis roadmap](../thesis-roadmap.md).
 
 ## Current numerical products
