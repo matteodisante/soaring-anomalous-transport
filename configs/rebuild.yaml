@@ -19,6 +19,7 @@ stages:
   - {id: terrain, script: scripts/reporting/ch2_dataset/generate_terrain_figure.py}
   - {id: msd_measure, script: scripts/reporting/ch3_global_transport/measure_msd.py, args: [--out, '{audit_dir}']}
   - {id: msd_figure, script: scripts/reporting/ch3_global_transport/generate_msd_figure.py, args: [--audit-dir, '{audit_dir}']}
+  - {id: msd_weights, script: scripts/reporting/ch3_global_transport/generate_msd_weights.py, args: [--audit-dir, '{audit_dir}']}
   - {id: duration_equipment, script: scripts/reporting/ch3_global_transport/generate_duration_equipment.py, args: [--audit-dir, '{audit_dir}']}
   - {id: grouped_tamsd, script: scripts/reporting/ch3_global_transport/generate_grouped_tamsd.py, args: [--audit-dir, '{audit_dir}']}
   - id: altitude_hurst

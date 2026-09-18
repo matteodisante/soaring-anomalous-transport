@@ -519,3 +519,76 @@ def test_fft_msd_preserves_small_motion_far_from_coordinate_origin():
     fast = time_averaged_msd(east, north, 1)
     assert fast[0] == 0
     np.testing.assert_allclose(fast, direct, rtol=1e-10, atol=1e-9)
+
+
+def _segment_population(spans, rng, dt_s=1.0):
+    """Independent random walks of the requested lengths, as stored segment curves."""
+    from soaring.analysis.observables.transport import TAMSDAccumulator
+
+    lags = np.array([2.0, 5.0, 10.0, 25.0, 50.0])
+    accumulator = TAMSDAccumulator(lags)
+    for n in spans:
+        steps = rng.normal(size=(2, n))
+        accumulator.add(np.cumsum(steps[0]), np.cumsum(steps[1]), dt_s)
+    return lags, accumulator.stacked_samples()
+
+
+def test_the_three_weightings_agree_when_every_segment_is_alike():
+    """Equal-length segments, one per flight: the conventions cannot separate."""
+    from soaring.analysis.observables.transport import population_tamsd
+
+    rng = np.random.default_rng(20260917)
+    spans = [400] * 12
+    lags, samples = _segment_population(spans, rng)
+    curves = population_tamsd(
+        samples, lags, spans, np.full(len(spans), 1.0), np.arange(len(spans))
+    )
+
+    np.testing.assert_allclose(curves["segment"].msd, curves["flight"].msd, rtol=1e-12)
+    np.testing.assert_allclose(curves["segment"].msd, curves["window"].msd, rtol=1e-12)
+    assert curves["segment"].n_flights.tolist() == [12] * lags.size
+    assert curves["flight"].n_flights.tolist() == [12] * lags.size
+
+
+def test_the_window_average_needs_no_flight_grouping():
+    """The flight denominators cancel, so grouping cannot change the window average."""
+    from soaring.analysis.observables.transport import (
+        admissible_windows,
+        population_tamsd,
+    )
+
+    rng = np.random.default_rng(20260918)
+    spans = [120, 400, 260, 900, 150, 310]
+    lags, samples = _segment_population(spans, rng)
+    dt_s = np.full(len(spans), 1.0)
+    # Two flights, split unevenly, against one segment per flight.
+    grouped = population_tamsd(samples, lags, spans, dt_s, [0, 0, 0, 1, 1, 1])
+    ungrouped = population_tamsd(samples, lags, spans, dt_s, np.arange(len(spans)))
+    np.testing.assert_allclose(grouped["window"].msd, ungrouped["window"].msd)
+
+    # And it is the window-count-weighted mean the thesis writes it as.
+    weights = admissible_windows(lags, spans, dt_s)
+    direct = np.nansum(np.nan_to_num(samples) * weights, axis=0) / weights.sum(axis=0)
+    np.testing.assert_allclose(grouped["window"].msd, direct)
+    # The other two conventions do notice the grouping, which is why it is stated.
+    assert not np.allclose(grouped["flight"].msd, ungrouped["flight"].msd)
+
+
+def test_splitting_one_flight_reweights_the_segment_average_alone():
+    """A gap-split flight enters the segment average once per piece, the flight once."""
+    from soaring.analysis.observables.transport import population_tamsd
+
+    rng = np.random.default_rng(20260919)
+    spans = [400, 400, 400, 400]
+    lags, samples = _segment_population(spans, rng)
+    dt_s = np.full(4, 1.0)
+    # The same four segment curves read as four flights, then as two: one whole flight
+    # against one that three gaps cut into three pieces.
+    apart = population_tamsd(samples, lags, spans, dt_s, [0, 1, 2, 3])
+    split = population_tamsd(samples, lags, spans, dt_s, [0, 1, 1, 1])
+
+    np.testing.assert_allclose(apart["segment"].msd, split["segment"].msd)
+    assert apart["segment"].n_flights.tolist() == split["segment"].n_flights.tolist()
+    # The split flight now carries half the population weight instead of a quarter.
+    assert split["flight"].n_flights.tolist() == [2] * lags.size
+    assert not np.allclose(apart["flight"].msd, split["flight"].msd)

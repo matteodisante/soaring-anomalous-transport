@@ -538,3 +538,107 @@ class TAMSDAccumulator:
             p50=percentiles[1],
             p90=percentiles[2],
         )
+
+
+def admissible_windows(
+    lags: np.ndarray, n_fixes: np.ndarray, dt_s: np.ndarray
+) -> np.ndarray:
+    """``n_fs(tau)``: the window origins each segment offers at each lag.
+
+    A segment of ``N`` fixes answers lag ``k dt`` from ``N - k`` starting points, the
+    count :func:`time_averaged_msd` averages over. The support rule is
+    :meth:`TAMSDAccumulator.add_curve`'s, so a weight never claims a lag the stored
+    curve left as ``nan``.
+
+    Args:
+        lags: The lag grid, in seconds.
+        n_fixes: Fixes in each segment.
+        dt_s: Native step of each segment, in seconds.
+
+    Returns:
+        One row per segment and one column per lag, zero outside that segment's support.
+    """
+    lags = np.asarray(lags, dtype=float)[None, :]
+    n_fixes = np.asarray(n_fixes, dtype=float)[:, None]
+    dt_s = np.asarray(dt_s, dtype=float)[:, None]
+    index = np.rint(lags / dt_s)
+    supported = (lags >= dt_s) & (index >= 1) & (index <= n_fixes // 2)
+    return np.where(supported, np.maximum(n_fixes - index, 0.0), 0.0)
+
+
+def population_tamsd(
+    samples: np.ndarray,
+    lags: np.ndarray,
+    n_fixes: np.ndarray,
+    dt_s: np.ndarray,
+    flight_ids: np.ndarray,
+) -> dict[str, MSDResult]:
+    r"""The three population averages of one set of segment TAMSDs (sec:estimator).
+
+    The segment curves, their lag support and the population behind them are shared,
+    so the weights are the only thing separating the returned curves:
+
+    * ``segment`` gives every retained segment equal weight (eq:segment-msd). A flight
+      split by gaps enters once per segment.
+    * ``flight`` pools a flight's segments by their admissible-origin counts
+      (eq:flight-msd) and then gives every contributing flight equal weight.
+    * ``window`` gives every admissible window equal weight (eq:weights-global), which
+      weights longer flights more strongly.
+
+    The window average needs no flight grouping. Writing the flight mean as
+    ``sum_s n_fs delta2_fs / n_f``, the denominators cancel against the outer weights
+    ``n_f``, leaving the window-count-weighted mean over segments directly.
+
+    Args:
+        samples: One row per segment, one column per lag, ``nan`` outside that
+            segment's support, as :meth:`TAMSDAccumulator.stacked_samples` stores them.
+        lags: The lag grid the columns sit on, in seconds.
+        n_fixes: Fixes in each segment.
+        dt_s: Native step of each segment, in seconds.
+        flight_ids: Parent flight of each segment. Rows need not be contiguous.
+
+    Returns:
+        ``{"segment": ..., "flight": ..., "window": ...}``. Each result counts its own
+        sampling units in ``n_flights``: segments, flights and windows respectively.
+
+    Raises:
+        ValueError: If the curve rows and the segment metadata do not line up.
+    """
+    samples = np.asarray(samples, dtype=float)
+    lags = np.asarray(lags, dtype=float)
+    flight_ids = np.asarray(flight_ids)
+    if samples.ndim != 2 or samples.shape[1] != lags.size:
+        raise ValueError("Each segment curve must cover the whole lag grid")
+    if not len(samples) == len(n_fixes) == len(dt_s) == len(flight_ids):
+        raise ValueError("Segment metadata and curve rows differ")
+
+    finite = np.isfinite(samples)
+    values = np.where(finite, samples, 0.0)
+    weights = np.where(finite, admissible_windows(lags, n_fixes, dt_s), 0.0)
+    weighted = values * weights
+
+    # One bincount per lag rather than a scatter-add over the whole matrix: the archive
+    # brings ~10^5 segments, where `np.add.at` on every cell costs seconds and this
+    # costs milliseconds. Flight codes, not row order, so callers need not sort.
+    _, codes = np.unique(flight_ids, return_inverse=True)
+    n_flights = int(codes.max()) + 1 if codes.size else 0
+    per_flight = np.full((n_flights, lags.size), np.nan)
+    for j in range(lags.size):
+        total = np.bincount(codes, weighted[:, j], n_flights)
+        support = np.bincount(codes, weights[:, j], n_flights)
+        np.divide(total, support, out=per_flight[:, j], where=support > 0)
+
+    def curve(total: np.ndarray, count: np.ndarray) -> MSDResult:
+        mean = np.divide(total, count, out=np.full(lags.size, np.nan), where=count > 0)
+        return MSDResult(
+            t=lags, msd=mean, n_flights=count, sem=np.full(lags.size, np.nan)
+        )
+
+    return {
+        "segment": curve(values.sum(axis=0), finite.sum(axis=0).astype(float)),
+        "flight": curve(
+            np.nansum(per_flight, axis=0),
+            np.isfinite(per_flight).sum(axis=0).astype(float),
+        ),
+        "window": curve(weighted.sum(axis=0), weights.sum(axis=0)),
+    }
