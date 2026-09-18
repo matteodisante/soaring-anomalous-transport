@@ -8,7 +8,7 @@ import numpy as np
 MODULE = runpy.run_path(
     str(
         Path(__file__).resolve().parents[2]
-        / "scripts/reporting/ch3_global_transport/summarize_ch3_fixed.py"
+        / "scripts/tesi/ch03_fixed_transport/summarize_ch3_fixed.py"
     )
 )
 

@@ -3,8 +3,8 @@
 # silently stage files: these actions would invalidate the reviewed run identity
 # and interfere with splitting a scientific revision into coherent commits.
 #
-# Rebuild explicitly with scripts/rebuild_thesis.py; review subsequent manuscript
-# edits with scripts/review_thesis.py. This hook checks whitespace only. It does
+# Rebuild explicitly with scripts/pipeline/rebuild_thesis.py; review subsequent manuscript
+# edits with scripts/pipeline/review_thesis.py. This hook checks whitespace only. It does
 # not certify scientific correctness, output freshness, or source/PDF agreement.
 # Enable with: git config core.hooksPath .githooks
 set -euo pipefail

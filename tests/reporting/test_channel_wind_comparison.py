@@ -6,7 +6,7 @@ import pytest
 
 PATH = (
     Path(__file__).resolve().parents[2]
-    / "scripts/reporting/ch3_global_transport/generate_channel_wind_comparison.py"
+    / "scripts/esperimenti/ch03_global_observables/generate_channel_wind_comparison.py"
 )
 spec = importlib.util.spec_from_file_location("channel_wind", PATH)
 wind = importlib.util.module_from_spec(spec)

@@ -17,7 +17,7 @@ from soaring.reporting.snapshot import current_cleaning
 
 ROOT=Path(__file__).resolve().parents[1]
 OUT=Path(__file__).resolve().parent/'assets'
-SOURCE=ROOT/'scripts/reporting/ch2_dataset/generate_cleaning_explainers.py'
+SOURCE=ROOT/'scripts/tesi/ch02_dataset/generate_cleaning_explainers.py'
 
 
 def plotted_data(axes):

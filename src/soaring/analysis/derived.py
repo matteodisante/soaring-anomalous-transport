@@ -1,10 +1,10 @@
 """Reading the processed tables back: whole flights, out of a file read in pieces.
 
-``scripts/preprocess.py`` writes ``fixes.parquet`` one batch of flights at a time, and
-the table is far too large to load (~10^9 rows over the full archive), so every
-consumer streams it. Streaming a Parquet file means reading it row group by row group --
-and a row group is a unit of *storage*, chosen by the writer's buffering, with no
-relation to where one flight ends and the next begins.
+``scripts/pipeline/preprocess.py`` writes ``fixes.parquet`` one batch of flights at a
+time, and the table is far too large to load (~10^9 rows over the full archive), so
+every consumer streams it. Streaming a Parquet file means reading it row group by row
+group -- and a row group is a unit of *storage*, chosen by the writer's buffering, with
+no relation to where one flight ends and the next begins.
 
 That distinction is the reason this module exists. Reading a row group and grouping its
 rows by ``flight_id`` looks like it iterates over flights, and does, right up to the

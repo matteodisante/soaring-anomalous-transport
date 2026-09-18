@@ -18,7 +18,7 @@ _ROOT = Path(__file__).resolve().parents[2]
 def _script(name: str):
     spec = importlib.util.spec_from_file_location(
         name,
-        _ROOT / "scripts/reporting/ch4_flight_phases" / f"{name}.py",
+        _ROOT / "scripts/esperimenti/ch05_flight_phases" / f"{name}.py",
     )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

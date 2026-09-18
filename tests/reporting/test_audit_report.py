@@ -11,7 +11,7 @@ import pytest
 _ROOT = Path(__file__).resolve().parents[2]
 _spec = importlib.util.spec_from_file_location(
     "audit_msd_report",
-    _ROOT / "scripts" / "reporting" / "ch3_global_transport" / "audit_msd_report.py",
+    _ROOT / "scripts" / "tesi" / "ch02_dataset" / "audit_msd_report.py",
 )
 amr = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(amr)

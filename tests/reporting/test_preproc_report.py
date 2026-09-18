@@ -11,7 +11,7 @@ import pandas as pd
 SPEC = importlib.util.spec_from_file_location(
     "preproc_report",
     Path(__file__).resolve().parents[2]
-    / "scripts/reporting/ch2_dataset/generate_preproc_figure.py",
+    / "scripts/tesi/ch02_dataset/generate_preproc_figure.py",
 )
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)

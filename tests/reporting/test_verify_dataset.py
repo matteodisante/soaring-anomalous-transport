@@ -10,7 +10,8 @@ import pandas as pd
 import pytest
 
 SPEC = importlib.util.spec_from_file_location(
-    "verify_dataset", Path(__file__).resolve().parents[2] / "scripts/verify_dataset.py"
+    "verify_dataset",
+    Path(__file__).resolve().parents[2] / "scripts/pipeline/verify_dataset.py",
 )
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)

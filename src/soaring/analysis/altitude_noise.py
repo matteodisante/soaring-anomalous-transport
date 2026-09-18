@@ -488,10 +488,10 @@ def save_psd_cache(acc: _Accumulator, disc: str, cache_path: Path) -> None:
     """Cache one discipline's slice of a :func:`_collect_psd` result.
 
     A single ``.npz`` per discipline, on the same footing as the Chapter 3 position
-    stacks in ``derived-audit/audit_positions_*.npz`` (:mod:`scripts.reporting
-    .ch3_global_transport.audit_msd`): the PSD ensemble is fixed-width (every flight's
-    Welch spectrum shares the same frequency grid), so a 2-D array is the natural
-    format, unlike the ragged fix-level sample (:func:`soaring.analysis.census
+    stacks in ``derived-audit/audit_positions_*.npz``
+    (``scripts/condivisi/audit_msd.py``): the PSD ensemble is fixed-width (every
+    flight's Welch spectrum shares the same frequency grid), so a 2-D array is the
+    natural format, unlike the ragged fix-level sample (:func:`soaring.analysis.census
     .load_or_scan_fixlevel`), which cannot use one. Holds ``freqs`` (shared grid),
     ``baro``/``gnss`` (one row per qualifying flight), ``target_dt``, and -- kept in the
     same file since a discipline has at most one -- the representative flight's raw

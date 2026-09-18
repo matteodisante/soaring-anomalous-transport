@@ -8,8 +8,8 @@ _SPEC = importlib.util.spec_from_file_location(
     "generate_segmentation_report",
     _ROOT
     / "scripts"
-    / "reporting"
-    / "ch4_flight_phases"
+    / "esperimenti"
+    / "ch05_flight_phases"
     / "generate_segmentation_report.py",
 )
 report = importlib.util.module_from_spec(_SPEC)

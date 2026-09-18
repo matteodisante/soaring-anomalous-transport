@@ -12,7 +12,8 @@ ROOT = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location(
     "kinematic_report",
     ROOT
-    / "scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py",
+    / "scripts/esperimenti/ch03_global_observables"
+    / "generate_kinematic_isotropy_figure.py",
 )
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)

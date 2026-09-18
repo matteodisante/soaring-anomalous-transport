@@ -51,7 +51,7 @@ if action != "leave-old":
 
 @pytest.fixture
 def rebuild_workspace(tmp_path, monkeypatch):
-    driver = runpy.run_path(str(ROOT / "scripts/rebuild_thesis.py"))
+    driver = runpy.run_path(str(ROOT / "scripts/pipeline/rebuild_thesis.py"))
     main = driver["main"]
     root = tmp_path / "workspace"
     generated = root / "thesis/generated"
@@ -272,7 +272,7 @@ def test_snapshot_must_still_be_valid_after_the_final_stage(rebuild_workspace, a
 def test_bounded_results_keeps_source_lazy_and_yields_in_input_order(
     monkeypatch, max_pending
 ):
-    module = runpy.run_path(str(ROOT / "scripts/preprocess.py"))
+    module = runpy.run_path(str(ROOT / "scripts/pipeline/preprocess.py"))
     bounded = module["_bounded_results"]
     size = 11
     state = {"pulled": 0, "delivered": 0}

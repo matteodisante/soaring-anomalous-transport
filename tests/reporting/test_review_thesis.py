@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-REVIEW = runpy.run_path(str(ROOT / "scripts/review_thesis.py"))
+REVIEW = runpy.run_path(str(ROOT / "scripts/pipeline/review_thesis.py"))
 
 
 @pytest.fixture

@@ -10,7 +10,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location(
     "duration_equipment",
-    ROOT / "scripts/reporting/ch3_global_transport/generate_duration_equipment.py",
+    ROOT / "scripts/esperimenti/ch04_global_transport/generate_duration_equipment.py",
 )
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)

@@ -14,7 +14,7 @@ from soaring.analysis.observables.fixed_transport import LAGS, cohort_manifest
 MODULE = runpy.run_path(
     str(
         Path(__file__).resolve().parents[2]
-        / "scripts/reporting/ch3_global_transport/check_bootstrap_reliability.py"
+        / "scripts/tesi/ch03_fixed_transport/check_bootstrap_reliability.py"
     )
 )
 
@@ -111,9 +111,7 @@ def test_daily_report_preserves_estimator_and_redraws_all_diagnostics(
     reference["results"]["hang"] = reference["results"]["para"]
     (path / "report.json").write_text(json.dumps(reference))
     shutil.copytree(path / "para", path / "hang")
-    scripts = (
-        Path(__file__).resolve().parents[2] / "scripts/reporting/ch3_global_transport"
-    )
+    scripts = Path(__file__).resolve().parents[2] / "scripts/tesi/ch03_fixed_transport"
     monkeypatch.syspath_prepend(str(scripts))
     module = runpy.run_path(str(scripts / "check_daily_dependence.py"))
     output = tmp_path / "daily"
@@ -162,9 +160,7 @@ def test_grid_report_keeps_all_flights_and_exports_reusable_cells(
     (path / "report.json").write_text(json.dumps(reference))
     shutil.copytree(path / "para", path / "hang")
     before = source.read_bytes()
-    scripts = (
-        Path(__file__).resolve().parents[2] / "scripts/reporting/ch3_global_transport"
-    )
+    scripts = Path(__file__).resolve().parents[2] / "scripts/tesi/ch03_fixed_transport"
     monkeypatch.syspath_prepend(str(scripts))
     module = runpy.run_path(str(scripts / "check_grid_bootstrap.py"))
     output = tmp_path / "grid"

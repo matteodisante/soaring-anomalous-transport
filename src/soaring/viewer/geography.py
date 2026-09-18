@@ -1,6 +1,6 @@
 """Drawing a basemap and a take-off density mesh on it: matplotlib only.
 
-Not imported from ``scripts/reporting/ch2_dataset/generate_prelim_figure.py`` (which
+Not imported from ``scripts/condivisi/generate_prelim_figure.py`` (which
 draws the equivalent static, three-panel thesis figure): that script is thesis-figure
 generation, not a library, so this instead mirrors its two small drawing helpers
 (``_draw_land``, ``_density``) rather than reaching into a script or moving its code.

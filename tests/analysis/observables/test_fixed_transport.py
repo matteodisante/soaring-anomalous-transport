@@ -143,7 +143,7 @@ def test_saved_scaling_matches_direct_weighted_ballistic_mixture(tmp_path):
     from soaring.analysis.observables.fixed_transport import ORDERS, PROBABILITIES
 
     path = Path(__file__).resolve().parents[3] / (
-        "scripts/reporting/ch3_global_transport/measure_ch3_fixed.py"
+        "scripts/tesi/ch03_fixed_transport/measure_ch3_fixed.py"
     )
     spec = importlib.util.spec_from_file_location("measure_ch3_fixed_test", path)
     module = importlib.util.module_from_spec(spec)

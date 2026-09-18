@@ -54,9 +54,9 @@ def test_commit_checks_index_without_regeneration_or_staging(
 
 
 def test_convenience_compilation_does_not_regenerate_statistics(tmp_path):
-    (tmp_path / "scripts").mkdir()
-    helper = tmp_path / "scripts/build_docs.sh"
-    shutil.copyfile(ROOT / "scripts/build_docs.sh", helper)
+    (tmp_path / "scripts/pipeline").mkdir(parents=True)
+    helper = tmp_path / "scripts/pipeline/build_docs.sh"
+    shutil.copyfile(ROOT / "scripts/pipeline/build_docs.sh", helper)
     (tmp_path / "thesis/generated").mkdir(parents=True)
     statistics = tmp_path / "thesis/generated/stats.tex"
     statistics.write_text("reviewed numbers\n")

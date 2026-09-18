@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = runpy.run_path(str(ROOT / "scripts/check_reproducible.py"))
+SCRIPT = runpy.run_path(str(ROOT / "scripts/pipeline/check_reproducible.py"))
 
 
 def frame():

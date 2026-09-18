@@ -19,7 +19,7 @@ from soaring.reporting.style import (
     paper_style,
 )
 
-GENERATOR = "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py"
+GENERATOR = "scripts/esperimenti/ch04_global_transport/generate_revision_diagnostics.py"
 LABELS = (r"$|X_E|$", r"$|X_N|$", r"$R$")
 NAMES = {"paragliders": "Paragliders", "hang gliders": "Hang gliders"}
 RADIAL = 2

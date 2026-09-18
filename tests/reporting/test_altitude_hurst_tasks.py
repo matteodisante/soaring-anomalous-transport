@@ -10,7 +10,8 @@ import pytest
 @pytest.fixture
 def attach_tasks(monkeypatch):
     scripts = (
-        Path(__file__).resolve().parents[2] / "scripts/reporting/ch3_global_transport"
+        Path(__file__).resolve().parents[2]
+        / "scripts/esperimenti/ch04_global_transport"
     )
     monkeypatch.syspath_prepend(str(scripts))
     return runpy.run_path(str(scripts / "generate_altitude_hurst.py"))[

@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
     from mpl_toolkits.mplot3d import Axes3D
 
-# Deterministic PDF metadata, the same convention as scripts/reporting/**/generate_*.py:
+# Deterministic PDF metadata, the same convention as scripts/**/generate_*.py:
 # committing (or diffing) an exported figure produces a clean diff.
 PDF_METADATA = {
     "Creator": "soaring.viewer",

@@ -12,7 +12,8 @@ def test_equal_flight_variation_and_pooled_moment_have_distinct_weights():
     report = runpy.run_path(
         str(
             root
-            / "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py"
+            / "scripts/esperimenti/ch04_global_transport"
+            / "generate_revision_diagnostics.py"
         )
     )
     frames = []
@@ -38,7 +39,8 @@ def test_measurement_cache_rejects_changed_estimator_or_any_source(tmp_path):
     report = runpy.run_path(
         str(
             root
-            / "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py"
+            / "scripts/esperimenti/ch04_global_transport"
+            / "generate_revision_diagnostics.py"
         )
     )
     contract = report["measurement_contract"](24, 12, 40)
@@ -78,7 +80,8 @@ def test_fixed_population_quantiles_do_not_confuse_survival_with_scaling():
     report = runpy.run_path(
         str(
             root
-            / "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py"
+            / "scripts/esperimenti/ch04_global_transport"
+            / "generate_revision_diagnostics.py"
         )
     )
     # Every flight is exactly ballistic. Short fast flights disappear at large lag.

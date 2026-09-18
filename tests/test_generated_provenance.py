@@ -6,9 +6,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-PROVENANCE = runpy.run_path(
-    str(ROOT / "scripts/reporting/checks/generate_provenance.py")
-)
+PROVENANCE = runpy.run_path(str(ROOT / "scripts/checks/generate_provenance.py"))
 DECLARED_OUTPUTS = PROVENANCE["declared_outputs"]
 
 

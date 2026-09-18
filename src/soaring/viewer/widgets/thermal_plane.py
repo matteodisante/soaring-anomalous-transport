@@ -267,7 +267,7 @@ class ThermalPlane(QWidget):
             self._draw_plane()
             self._status.setText(
                 "Prepared thermal-planes.sqlite3 not found. Connect the SSD. "
-                "Prepare separately with scripts/prepare_thermal_planes.py."
+                "Prepare separately with scripts/pipeline/prepare_thermal_planes.py."
             )
         else:
             self._index_ready(index)

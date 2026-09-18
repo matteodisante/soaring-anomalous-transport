@@ -10,7 +10,7 @@ import pytest
 REPORT = runpy.run_path(
     str(
         Path(__file__).resolve().parents[2]
-        / "scripts/reporting/ch2_dataset/generate_dataset_stats.py"
+        / "scripts/tesi/ch02_dataset/generate_dataset_stats.py"
     )
 )
 

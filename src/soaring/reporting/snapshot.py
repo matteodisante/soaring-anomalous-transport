@@ -29,7 +29,7 @@ def source_hash(root: Path, *, preprocessing_only: bool = False) -> str:
             root / "src/soaring/analysis/census.py",
             root / "src/soaring/analysis/config.py",
             root / "src/soaring/acquisition/ffvl/naming.py",
-            root / "scripts/preprocess.py",
+            root / "scripts/pipeline/preprocess.py",
             root / "src/soaring/reporting/snapshot.py",
         ]
     else:

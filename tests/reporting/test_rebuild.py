@@ -16,7 +16,7 @@ from soaring.reporting.snapshot import (
 )
 
 ROOT = Path(__file__).resolve().parents[2]
-DRIVER = runpy.run_path(str(ROOT / "scripts/rebuild_thesis.py"))
+DRIVER = runpy.run_path(str(ROOT / "scripts/pipeline/rebuild_thesis.py"))
 
 
 @pytest.fixture

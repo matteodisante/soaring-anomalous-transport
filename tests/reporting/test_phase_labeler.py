@@ -12,7 +12,7 @@ matplotlib.use("Agg")
 
 _ROOT = Path(__file__).resolve().parents[2]
 _SPEC = importlib.util.spec_from_file_location(
-    "label_flight_phases", _ROOT / "scripts" / "label_flight_phases.py"
+    "label_flight_phases", _ROOT / "scripts" / "pipeline" / "label_flight_phases.py"
 )
 labeler = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(labeler)

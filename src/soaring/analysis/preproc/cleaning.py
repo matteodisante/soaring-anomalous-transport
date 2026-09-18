@@ -528,8 +528,8 @@ def _largest_boundary_jump(fixes: pd.DataFrame) -> float:
     paraglider flights is thousands of kilometres while their largest retained extent is
     555 km, which is exactly such a ground-phase jump. The quantity that matters is the
     displacement across a boundary of a *retained* segment, and it is measured where it
-    can be measured honestly -- on the written table, by ``scripts/verify_dataset.py``,
-    which streams it anyway.
+    can be measured honestly -- on the written table, by
+    ``scripts/pipeline/verify_dataset.py``, which streams it anyway.
 
     No rule is applied to either: the effect is small and bounding it is worth more than
     guessing at it. On a sample of the archive the median such displacement is 20 m for

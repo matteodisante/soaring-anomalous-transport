@@ -26,7 +26,7 @@ from soaring.analysis.observables.self_similarity import (
 def reporter():
     path = (
         Path(__file__).resolve().parents[3]
-        / "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py"
+        / "scripts/esperimenti/ch04_global_transport/generate_revision_diagnostics.py"
     )
     spec = importlib.util.spec_from_file_location("revision_report", path)
     module = importlib.util.module_from_spec(spec)
