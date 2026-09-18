@@ -161,6 +161,10 @@
 % (a plain \textcolor argument must not contain \section&c.).
 \newenvironment{revblock}{\ifrevmode\color{revblue}\fi}{}
 \newenvironment{flowblock}{\ifrevmode\color{revorange}\fi}{}
+% ---- Work in progress: material whose result is not yet trustworthy. Always red,
+% ---- independent of \ifrevmode, so it stays flagged in the clean build until it
+% ---- is either settled or removed.
+\newenvironment{wipblock}{\color{errorred}}{}
 
 % Subtle, navigable hyperlinks in the figure palette (dark blue for internal refs and URLs,
 % dark green for citations), plus PDF metadata and numbered bookmarks. Set after the colours
