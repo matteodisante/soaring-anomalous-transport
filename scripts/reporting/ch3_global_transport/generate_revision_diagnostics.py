@@ -929,9 +929,12 @@ def main():
             "ResidualTwo": f"{s['fit_residual_dex'][1]:.3f}",
             "FixedAlphaOne": f"{s['fixed_alpha'][0]:.3f}",
             "FixedAlphaTwo": f"{s['fixed_alpha'][1]:.3f}",
-            "MomentZetaTwo": f"{s['zeta'][int(np.flatnonzero(Q == 2)[0])]:.3f}",
-            "MomentNuMin": f"{np.min(np.array(s['zeta']) / Q):.3f}",
-            "MomentNuMax": f"{np.max(np.array(s['zeta']) / Q):.3f}",
+            # Pooled over the population that changes with lag. The chapter's scaling
+            # claims use the fixed-population spectrum written by the self-similarity
+            # reporter; these stay available only as the uncontrolled comparison.
+            "PooledMomentZetaTwo": f"{s['zeta'][int(np.flatnonzero(Q == 2)[0])]:.3f}",
+            "PooledMomentNuMin": f"{np.min(np.array(s['zeta']) / Q):.3f}",
+            "PooledMomentNuMax": f"{np.max(np.array(s['zeta']) / Q):.3f}",
             "MardiaMin": f"{np.nanmin(s['mardia']):.2f}",
             "MardiaMedian": f"{np.nanmedian(s['mardia']):.2f}",
             "MardiaMax": f"{np.nanmax(s['mardia']):.2f}",

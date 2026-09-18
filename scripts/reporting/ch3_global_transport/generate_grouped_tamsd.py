@@ -40,6 +40,8 @@ GENERATED_OUTPUTS = (
     "ch3_grouped_tamsd_values.tex",
     "ch3_grouped_tamsd.json",
 )
+# Index of the fixed-segment control inside every stored per-group array.
+FIXED = 1
 COLORS = {
     "Alps": "#207f86",
     "Pyrenees": "#a04c42",
@@ -303,27 +305,20 @@ def render(report, out):
             for name, row in entry[category].items():
                 means = np.asarray(row["mean_m2"], dtype=float)
                 counts = np.asarray(row["n_flights"])
-                for control, style in enumerate(("-", "--")):
-                    curve = np.where(
-                        counts[control] >= MIN_FLIGHTS, means[control], np.nan
-                    )
-                    axes[0, column].loglog(
-                        lags,
-                        curve,
-                        style,
-                        color=COLORS[name],
-                        label=name if control == 0 else None,
-                    )
-                    axes[1, column].semilogx(
-                        lags, np.sqrt(curve) / lags, style, color=COLORS[name]
-                    )
-                    axes[2, column].loglog(
-                        lags,
-                        np.where(counts[control] > 0, counts[control], np.nan),
-                        style,
-                        color=COLORS[name],
-                    )
-                bounds = np.asarray(row["pointwise_95_m2"], dtype=float)[:, 0]
+                # Only the fixed-cohort control is drawn: membership and between-flight
+                # weights must not change with lag for these curves to be comparable.
+                curve = np.where(counts[FIXED] >= MIN_FLIGHTS, means[FIXED], np.nan)
+                axes[0, column].loglog(lags, curve, "-", color=COLORS[name], label=name)
+                axes[1, column].semilogx(
+                    lags, np.sqrt(curve) / lags, "-", color=COLORS[name]
+                )
+                axes[2, column].loglog(
+                    lags,
+                    np.where(counts[FIXED] > 0, counts[FIXED], np.nan),
+                    "-",
+                    color=COLORS[name],
+                )
+                bounds = np.asarray(row["pointwise_95_m2"], dtype=float)[:, FIXED]
                 axes[0, column].fill_between(
                     lags, *bounds, color=COLORS[name], alpha=0.15
                 )
@@ -348,9 +343,9 @@ def render(report, out):
         counts = np.zeros((3, 4), dtype=int)
         for row in entry["region_altitude"]:
             i, k = list(REGIONS).index(row["region"]), bands.index(row["altitude_band"])
-            counts[i, k] = row["n_flights"][0][j]
+            counts[i, k] = row["n_flights"][FIXED][j]
             if counts[i, k] >= MIN_FLIGHTS:
-                matrix[i, k] = np.sqrt(row["mean_m2"][0][j]) / 1000
+                matrix[i, k] = np.sqrt(row["mean_m2"][FIXED][j]) / 1000
         artist = ax.imshow(matrix, cmap="viridis", vmin=0, vmax=12, aspect="auto")
         for i in range(3):
             for k in range(4):

@@ -34,6 +34,9 @@ from soaring.reporting import DISCIPLINES, PARAGLIDERS
 from soaring.reporting.style import PDF_METADATA, paper_style
 
 CONTROL_NAMES = ("available segments", "fixed long segments")
+# Only the fixed cohort is reported: the thesis compares exponents across lags,
+# which requires flight membership and weights that do not change with lag.
+FIXED = 1
 GENERATED_OUTPUTS = (
     "ch3_altitude_hurst.pdf",
     "ch3_altitude_hurst_table.tex",
@@ -327,19 +330,17 @@ def render(report, out):
         (fit["actual_lags_s"][0], fit["actual_lags_s"][-1]) for fit in main_fits
     }
     actual_note = ", ".join(f"{a:g}-{b:g} s" for a, b in sorted(actual_ranges))
-    fig, axes = plt.subplots(2, 2, figsize=(6.1, 7.6))
-    fig.subplots_adjust(
-        left=0.10, right=0.98, bottom=0.15, top=0.90, wspace=0.30, hspace=0.33
-    )
+    fig, axes = plt.subplots(1, 2, figsize=(6.1, 4.4))
+    fig.subplots_adjust(left=0.10, right=0.98, bottom=0.27, top=0.82, wspace=0.30)
     title = (
         "Paragliders: TA-MSD by initial GNSS altitude"
         if report["contract"].get("discipline") == "paragliders"
         else "Horizontal TA-MSD by initial GNSS altitude"
     )
-    fig.suptitle(title, fontsize=11, y=0.98)
+    fig.suptitle(title, fontsize=11, y=0.985)
     fig.text(
         0.5,
-        0.947,
+        0.915,
         r"$M(\tau)\propto\tau^{2H_{\rm eff}}$: " f"fit over {low:g}-{high:g} s",
         ha="center",
         fontsize=9,
@@ -347,8 +348,8 @@ def render(report, out):
     for column, (discipline, entry) in enumerate(report["results"].items()):
         heading = entry.get("label", discipline.capitalize())
         lags = np.asarray(entry["lags_s"])
-        for control in range(2):
-            ax = axes[control, column]
+        for control in (FIXED,):
+            ax = axes[column]
             if main_range != [10, 10000]:
                 ax.axvspan(low, high, color="0.94", zorder=0)
             for name, row in entry["altitude_band"].items():
@@ -374,7 +375,7 @@ def render(report, out):
                     linewidth=1.5,
                     color=COLORS[name],
                 )
-            population = "available" if control == 0 else "fixed long segments"
+            population = CONTROL_NAMES[control]
             ax.set(
                 title=f"{heading}: {population}",
                 xlim=(10, 10000),
@@ -573,15 +574,12 @@ def save_thesis_assets(report, figures, out):
         "generate_altitude_hurst.py\n"
     )
     task_split = "population" in report
-    n_columns = 4 if task_split else 3
-    columns = "lccc" if task_split else "lcc"
+    n_columns = 3 if task_split else 2
+    columns = "lcc" if task_split else "lc"
     titles = (
-        (
-            r"Altitude band & Available segments & Flights: $10\to10000$ s "
-            r"& Fixed long segments \\"
-        )
+        (r"Altitude band & Fixed cohort & Flights \\")
         if task_split
-        else (r"Initial-altitude band & Available segments & Fixed long segments \\")
+        else (r"Initial-altitude band & Fixed cohort \\")
     )
     lines = [
         header.rstrip(),
@@ -601,21 +599,22 @@ def save_thesis_assets(report, figures, out):
         )
         for name, row in entry["altitude_band"].items():
             cells = []
-            for control in range(2):
-                fit = next(
-                    f
-                    for f in row["fits"]
-                    if f["control_index"] == control
-                    and f["requested_range_s"] == main_range
-                )
-                if fit["status"] != "ok":
-                    raise ValueError("Thesis exponent table requires supported fits")
-                lag_counts.add(fit["n_lags"])
-                lo, hi = fit["h_eff_percentile_95"]
-                cells.append(rf"${fit['h_eff']:.4f}\;[{lo:.4f},\,{hi:.4f}]$")
-                if task_split and control == 0:
-                    first, last = fit["n_flights"][0], fit["n_flights"][-1]
-                    cells.append(rf"$\num{{{first}}}\to\num{{{last}}}$")
+            fit = next(
+                f
+                for f in row["fits"]
+                if f["control_index"] == FIXED
+                and f["requested_range_s"] == main_range
+            )
+            if fit["status"] != "ok":
+                raise ValueError("Thesis exponent table requires supported fits")
+            lag_counts.add(fit["n_lags"])
+            lo, hi = fit["h_eff_percentile_95"]
+            cells.append(rf"${fit['h_eff']:.4f}\;[{lo:.4f},\,{hi:.4f}]$")
+            if task_split:
+                counts = set(fit["n_flights"])
+                if len(counts) != 1:
+                    raise ValueError("The fixed cohort must not change with lag")
+                cells.append(rf"$\num{{{counts.pop()}}}$")
             lines.append(name + " & " + " & ".join(cells) + r" \\")
         lines.append(r"\addlinespace[3pt]")
     lines.extend([r"\bottomrule", r"\end{tabular}"])
