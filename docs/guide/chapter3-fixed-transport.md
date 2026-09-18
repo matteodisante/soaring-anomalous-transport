@@ -117,6 +117,241 @@ the published paraglider lags. Each process retains at most one scratch incremen
 - `R^2 = E^2 + N^2`, agreement with FFT MSD, flight/segment identities and the equality
   of quantile-ratio slope and slope difference are checked before publication.
 
+## Cell, altitude and month-of-year bootstrap
+
+The current requested grouping assigns **each flight by its initial position** to
+one fixed 50 x 50 km metric cell, then crosses that cell with its initial-altitude
+class and **month of the year, pooling all years**. July 2005 and July 2020 share a
+group when cell and altitude class agree. Site names and distances between launch
+sites do not enter. Every main-cohort flight remains in the analysis.
+
+The globally defined grid uses WGS84 UTM coordinates within regular six-degree
+longitude zones and hemispheres. A cell has key `(EPSG, floor(E/50000), floor(N/50000))`,
+origin `(0,0)` and half-open boundaries. Squares are clipped to their zone and
+hemisphere. Sizes are in projected metres (small UTM ground-scale distortion),
+not degrees or Web Mercator distances. This covers all archived flight origins,
+including those outside France; invalid coordinates or positions outside the UTM
+latitude domain fail explicitly. See the [PROJ UTM definition](https://proj.org/en/stable/operations/projections/utm.html).
+
+The terrain proxy retains the chapter's initial-altitude thresholds: Plains below
+300 m, Hills from 300 to 800 m, Low mountains from 800 to 1500 m, High mountains
+from 1500 m upward. It is not a DEM-derived description of the full flight path.
+
+```bash
+MPLCONFIGDIR=/private/tmp/soaring-mpl-cache VECLIB_MAXIMUM_THREADS=2 \
+  .venv/bin/python scripts/reporting/ch3_global_transport/check_grid_bootstrap.py \
+  --data /Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917 \
+  --out revisions/bootstrap-reliability-2026-09-18/run-grid \
+  --publish thesis/generated
+```
+
+The check validates the original cache identities and reconstructs its site-day
+bootstrap before changing labels. It compares the MSD at 100, 1000 and 10000 s
+and H fitted over 10–10000 s. Each partition has 1000 draws, common to all lags,
+with two seeds. Group sampling uses occupied archive groups followed by restriction
+to the fixed cohort, preserving the baseline convention and the equal-flight mean.
+Missing dates/classes remain singleton archive units; any in the main cohort cause
+failure. No flight is dropped to improve group sizes.
+
+Sensitivity configurations use 10, 25 and 50 km cells and translations of half a
+cell along either/both axes. **No cell exceeds 50 km per side.** Separate checks
+merge 2 or 3 adjacent months with each possible cyclic boundary offset, or pool
+altitude classes within the same 50 km cell and calendar month. These alternatives
+challenge the baseline assumptions; the baseline always keeps the four classes
+and twelve months separate. The figure's denominators are the median baseline SEs
+across the two seeds, not the original site-day SEs. Its bars are ranges across
+partitions/seeds, not confidence intervals. SE need not increase monotonically
+with block size, particularly with uneven, heterogeneous groups.
+
+Portable outputs are `thesis/generated/ch3_transport_grid_bootstrap*`:
+
+- `.json`, `.csv`: complete statistics, percentile intervals, support, configurations
+  and provenance. These are a validation run; other chapter bands are not rerun.
+- `.pdf`, `_support.tex`, `_values.tex`: figure, composition table and numeric macros.
+- `_grid.json`, `_cells.csv`: reusable grid definition and the 477 occupied archive
+  cells, with EPSG identifiers and projected bounds. The rule defines the entire
+  territory independently of these observed cells; future flights use the same rule.
+
+The separate run directory retains `{para,hang}-membership.parquet` (one row per
+eligible flight and its new group), `*-groups.csv`, canonical `*-cluster-draws.npy`
+and complete `*-replicates.npz`. Cluster labels are local to each discipline;
+cell identities and the geometric grid are shared. Group size-balance indices are
+not estimates of the number of independent groups. A larger group or fewer
+singletons is not by itself evidence of independence.
+
+Offline redraw needs only `OUT/report.json`:
+
+```bash
+MPLCONFIGDIR=/private/tmp/soaring-mpl-cache .venv/bin/python \
+  scripts/reporting/ch3_global_transport/check_grid_bootstrap.py \
+  --out OUT --redraw --publish thesis/generated
+```
+
+The earlier all-sites calendar blocking and daily correlograms below remain
+reproducible historical diagnostics. Their chronological blocks differ from the
+new groups, which pool the same month across years.
+
+## Earlier calendar-block check
+
+The supplementary blocking check reuses `flight-msd.npy`, `flights.parquet`,
+`msd.npz`, `cluster-draws.npy`, `cohort-10000.json`, and the published `report.json`.
+It checks flight/manifest identities and reconstructs **every baseline replicate**
+before changing the resampling unit. It never reads trajectories or changes the
+published run. Use a separate local output directory:
+
+```bash
+MPLCONFIGDIR=/private/tmp/soaring-mpl-cache VECLIB_MAXIMUM_THREADS=2 \
+  .venv/bin/python scripts/reporting/ch3_global_transport/check_bootstrap_reliability.py \
+  --data /Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917 \
+  --out revisions/bootstrap-reliability-2026-09-18/run-64 \
+  --block-days 1 2 4 8 16 32 64 \
+  --publish thesis/generated
+```
+
+The default exploration stops at 16 days; the published diagnostic extends to 64
+because no common plateau appeared. Blocks are non-overlapping intervals of real
+calendar dates containing **all sites**. Their boundaries are anchored to
+2000-01-01 and shifted by `0`, `floor(L/3)`, and `floor(2L/3)` days (unique shifts
+only). Empty periods are not sampled, but dates are never compressed to an index
+of flight days. Sampling occupied blocks of the eligible archive and then
+restricting to the fixed cohort follows the baseline sampling-frame convention.
+Missing cohort dates cause an error; no flight is silently dropped. Invalid dates
+outside the cohort remain singleton archive units and their count is recorded.
+
+Each partition uses 1000 replicates, with two independently seeded repetitions.
+Every draw acts jointly on all 33 lags. The MSD at 100, 1000 and 10000 s and the
+10--10000 s fitted H are recomputed from the **equal-flight** mean, including the
+resampled flight-count denominator. Days are not equally weighted observations.
+The report records standard errors, percentile intervals, ratios to the archived
+site-day SE, valid replicate counts, contributing blocks, largest block fraction,
+size balance, source hashes and seeds. The size-balance index is not an effective
+number of independent observations. Figure bars span partitions and seeds; they
+are **not confidence intervals**. Monte Carlo errors of the estimated bootstrap SD
+are recorded separately and do not measure uncertainty in the diagnostic itself.
+
+The report and CSV show sensitivity, not a test proving independence or coverage.
+There is no automatic plateau detector or automatic replacement of manuscript
+intervals. Seasonal composition and persistent site/pilot effects remain possible.
+This MSD/H check does not validate quantile or kurtosis bands.
+
+To redraw offline without caches, put the diagnostic JSON at `OUT/report.json`:
+
+```bash
+MPLCONFIGDIR=/private/tmp/soaring-mpl-cache .venv/bin/python \
+  scripts/reporting/ch3_global_transport/check_bootstrap_reliability.py \
+  --out OUT --redraw --publish thesis/generated
+```
+
+Published inputs are `thesis/generated/ch3_transport_bootstrap_reliability.{json,csv,pdf}`
+and its `_values.tex` macro file. Replicate arrays remain in the separate run folder.
+
+### Locate daily dependence
+
+The complementary correlogram uses the same validated caches and every flight in
+the fixed cohort. It requires no annual resampling or discarded date intervals:
+
+```bash
+MPLCONFIGDIR=/private/tmp/soaring-mpl-cache VECLIB_MAXIMUM_THREADS=2 \
+  .venv/bin/python scripts/reporting/ch3_global_transport/check_daily_dependence.py \
+  --data /Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917 \
+  --out revisions/bootstrap-reliability-2026-09-18/run-daily \
+  --max-days 64 --publish thesis/generated
+```
+
+For MSD at lag `tau`, the flight contribution is `m_f(tau)/M_2(tau) - 1`.
+Scaling by `M_2` cancels from the correlogram. For H it is the derivative of the
+fit to the population curve: sum over fit lags of the relative MSD contribution
+times `(log(tau) - mean(log(tau))) / (2 * sum((log(tau)-mean(log(tau)))**2))`.
+It is not a mean of flight-specific H estimates. Contributions are **summed**
+within each day, so unequal daily flight counts do not change the estimator.
+Empty dates contribute zero to the observed estimator; no flight value is imputed.
+
+For each actual calendar separation `h`, compute
+`rho(h) = sum(U[d]*U[d+h]) / sum(U[d]**2)`. Use a common denominator rather than
+normalising separately over occupied pairs; otherwise the contributions no longer
+sum consistently in a variance calculation. The CSV records occupied pair counts
+and every separation for all three MSDs and H. The compact thesis figure shows
+MSD at 1000 s and H. No white-noise significance bands or automatic decorrelation
+threshold are applied to this sparse, heterogeneous archive.
+
+The only adjustment subtracts the flight-weighted mean contribution within each
+**month of the year**, pooled across years, before daily aggregation. It retains
+every flight and is solely a sensitivity check for mean seasonal composition.
+It cannot remove year-specific, site, pilot, or all seasonal effects; it never
+changes the reported point estimates or confidence bands.
+
+For audit, the report also saves
+`1 + 2*sum((1-h/L)*rho(h), h=1,...,L-1)`, the Bartlett-weighted covariance
+contribution relative to independent **days**, not site-days. Its square root is
+comparable to changing from one-day to longer blocks, but is not a calibrated SE
+correction. The correlogram and blocking results use the same data and related
+second moments; agreement is not independent validation or a coverage test.
+
+The portable `ch3_transport_daily_dependence.{json,csv,pdf}` and `_values.tex`
+are published in `thesis/generated`. The run directory retains full daily vectors,
+counts, calendar dates, and monthly means in `{para,hang}-daily.npz`. Offline
+redrawing uses the same command with `--out OUT --redraw --publish thesis/generated`,
+without `--data`; `OUT/report.json` suffices.
+
+## Test increment stationarity by origin position
+
+Pooling every admissible origin inside a segment estimates one population law
+only if the increment law does not depend on the origin. The diagnostic splits
+each selected segment's admissible origins into three contiguous blocks of equal
+size and measures the same equal-flight radial moments in each. The early and
+late blocks hold identical origin counts in every segment, so each cohort flight
+contributes to both and the late/early ratio is paired inside the saved site-day
+draws. Under stationary increments that ratio is one at every lag.
+
+This check reads trajectories, so it needs both the published run and the
+coordinate store named in its `measurement-provenance.json`:
+
+```bash
+MPLCONFIGDIR=/private/tmp/soaring-mpl-cache VECLIB_MAXIMUM_THREADS=2 \
+  .venv/bin/python scripts/reporting/ch3_global_transport/check_origin_dependence.py \
+  --data /Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917 \
+  --coords /Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays \
+  --out revisions/origin-dependence-2026-09-18/run \
+  --publish thesis/generated
+```
+
+Before any contrast is reported, pooling the three blocks must reproduce the
+archived `lag-*.npz` equal-flight radial M1 and M2 to `rtol=1e-9` at every lag.
+That identity ties the diagnostic to the published estimator; a mismatch raises
+rather than warns. `--disciplines hang` runs the small cohort alone for a quick
+check, and `--lags` restricts the grid, though the per-decade H fits need at
+least three lags in each published fit range.
+
+The published run takes about one minute for both disciplines. The portable
+`ch3_transport_origin_dependence.{json,csv,pdf}` and `_values.tex` go to
+`thesis/generated`; `{para,hang}-replicates.npz` keeps the block means, ratios
+and per-flight lever arms locally. Offline redrawing uses `--out OUT --redraw
+--publish thesis/generated` without `--data` or `--coords`.
+
+Read the result as a falsification of increment stationarity for these segments.
+It does not identify a mechanism, and its direction is opposite to the ageing of
+a subordinated walk, so it is not evidence for one.
+
+## Where the chapter text lives
+
+Every sentence of the chapter is in `thesis/tesi/04-fixed-transport.tex`, which is
+one file for the whole chapter. No script writes prose any more. The reporting
+scripts emit only the numbers the prose cites, as `\newcommand` definitions:
+
+- `ch3_transport_values.tex` from `write_ch3_text.py`
+- `ch3_transport_bootstrap_reliability_values.tex` from `check_bootstrap_reliability.py`
+- `ch3_transport_daily_dependence_values.tex` from `check_daily_dependence.py`
+- `ch3_transport_origin_dependence_values.tex` from `check_origin_dependence.py`
+- `ch3_transport_grid_bootstrap_values.tex` from `check_grid_bootstrap.py`
+
+All four are `\input` at the top of the chapter. Edit the wording in the chapter
+and rerun the script to refresh a number. Sentences whose wording depends on a
+comparison holding, such as the cohort-effect paragraph, are guarded: if the
+comparison stops holding, `write_ch3_text.py` raises instead of quietly leaving a
+false claim in place, and the sentence must be rewritten by hand.
+
+Tables stay generated, because their bodies are data rather than prose.
+
 ## Files retained on SSD
 
 - `report.json`, `figures/`: everything needed for immediate redraw.
