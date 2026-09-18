@@ -1,7 +1,7 @@
 # Altitude-band effective exponents: full 10-10000 s fit
 
-Now integrated into the thesis in section 3.4.4, figure 3.20 (printed page 77)
-and table 3.9 (page 78). See the
+Now integrated into the `esperimenti` volume, section 4.4.4 (page 53),
+figure 4.17 (page 55) and table 4.8 (page 54) of the current build. See the
 [compiled manuscript review](../altitude-hurst-thesis-2026-09-15/README.md).
 
 User-requested update of the [100-1000 s analysis](../altitude-hurst-2026-09-15/README.md).
@@ -11,9 +11,9 @@ It is fitted directly to the full curve, not averaged from the three decade fits
 
 ## Outputs
 
-- [Main curves and full-range fits](../../output/pdf/altitude-hurst-10-10000/altitude_msd_hurst.pdf),
+- [Main curves and full-range fits](figures/altitude_msd_hurst.pdf),
   for both disciplines and available/fixed long-segment controls.
-- [Decade sensitivity and flight support](../../output/pdf/altitude-hurst-10-10000/altitude_hurst_sensitivity.pdf).
+- [Decade sensitivity and flight support](figures/altitude_hurst_sensitivity.pdf).
 - `altitude_hurst_estimates.csv`: 16 new full-range fits plus 48 decade fits.
 - `altitude_tamsd_curves.csv`: curves, pointwise intervals and flight/site-day support.
 - `report.json`, `measurement-source.py.txt`, `figure-manifest.json`: numerical
@@ -57,7 +57,7 @@ OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1 \
 MPLCONFIGDIR=/tmp/soaring-altitude-mpl XDG_CACHE_HOME=/tmp/soaring-altitude-cache \
 .venv/bin/python scripts/reporting/ch3_global_transport/generate_altitude_hurst.py \
   --record-dir /tmp/new-altitude-hurst-full-range \
-  --out output/pdf/altitude-hurst-10-10000 \
+  --out revisions/altitude-hurst-10-10000-2026-09-15/figures \
   --fit-range 10 10000 --resamples 2000
 ```
 

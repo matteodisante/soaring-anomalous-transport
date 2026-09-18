@@ -669,7 +669,11 @@ def main():
         help="Byte-identical copy of the parent paraglider catalogue",
     )
     parser.add_argument("--record-dir", type=Path, required=True)
-    parser.add_argument("--out", type=Path, default=ROOT / "output/pdf")
+    parser.add_argument(
+        "--out",
+        type=Path,
+        help="Figure directory (default: a figures/ folder inside --record-dir)",
+    )
     parser.add_argument(
         "--thesis-out",
         type=Path,
@@ -687,6 +691,8 @@ def main():
     )
     parser.add_argument("--render-only", action="store_true")
     args = parser.parse_args()
+    if args.out is None:
+        args.out = args.record_dir / "figures"
     if not 10 <= args.fit_range[0] < args.fit_range[1] <= 10000:
         parser.error("--fit-range must satisfy 10 <= LOW_S < HIGH_S <= 10000")
     target = args.record_dir / "report.json"

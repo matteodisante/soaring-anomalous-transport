@@ -92,7 +92,7 @@ def main():
         MEASUREMENT / "report.json"
     )
     assert digest(ROOT / "thesis/generated/ch3_altitude_hurst.pdf") == digest(
-        ROOT / "output/pdf/altitude-hurst-10-10000/altitude_msd_hurst.pdf"
+        MEASUREMENT / "figures/altitude_msd_hurst.pdf"
     )
     table = (ROOT / "thesis/generated/ch3_altitude_hurst_table.tex").read_text()
     fits = []

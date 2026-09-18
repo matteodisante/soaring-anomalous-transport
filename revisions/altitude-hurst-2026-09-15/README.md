@@ -7,10 +7,10 @@ or the completed parent measurement.
 
 ## Figures and data
 
-- [TA-MSD curves with effective exponents](../../output/pdf/altitude_msd_hurst.pdf):
+- [TA-MSD curves with effective exponents](figures/altitude_msd_hurst.pdf):
   both disciplines, available segments and fixed long segments. Legends give
   H_eff and its marginal 95% interval for the requested 100-1000 s range.
-- [Lag-range and population sensitivity](../../output/pdf/altitude_hurst_sensitivity.pdf):
+- [Lag-range and population sensitivity](figures/altitude_hurst_sensitivity.pdf):
   all three fitted decades, both controls, and contributing flight counts.
 - `altitude_hurst_estimates.csv`: all 48 fits, intervals, bootstrap standard
   errors, actual fitted limits, flight/cluster support, and validity status.
