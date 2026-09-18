@@ -102,6 +102,13 @@ QUANTILE_COLORS = {0.25: "#482878", 0.50: "#31688E", 0.75: "#26828E", 0.90: "#35
 # Regional PCA: one stable colour per physical lag, including the longest lag.
 PCA_LAG_COLORS = {10: "#482878", 100: "#31688E", 1000: "#26828E", 10000: "#35A779"}
 
+# Retained flight duration, in disjoint bands. Duration is an ordered quantity, so
+# it takes a ramp rather than a categorical set. It is kept apart from CONTROL_GREYS
+# because those are nested controls: these bands share no flights, and they are drawn
+# over one another in a ratio panel, so the ramp needs more contrast than a nested
+# series does.
+DURATION_COLORS = ("#BDBDBD", "#878787", "#4D4D4D", "#1A1A1A")
+
 # Ordered series that are nested rather than categorical -- successive sampling
 # controls, or the parts of one stacked total. A ramp says "more of the same
 # quantity" where a categorical set would wrongly suggest unrelated groups.
@@ -123,6 +130,7 @@ PALETTE_FAMILIES = {
     "quantile": QUANTILE_COLORS,
     "pca_lag": PCA_LAG_COLORS,
     "sampling_control": dict(enumerate(CONTROL_COLORS)),
+    "duration": dict(enumerate(DURATION_COLORS)),
     "lag": dict(enumerate(LAG_COLORS)),
 }
 RESERVED_FAMILIES = ("discipline", "equipment")

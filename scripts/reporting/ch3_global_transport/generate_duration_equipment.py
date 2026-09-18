@@ -33,6 +33,7 @@ from soaring.reporting.glider_class import (  # noqa: E402
     equipment_group,
 )
 from soaring.reporting.style import (  # noqa: E402
+    DURATION_COLORS,
     EQUIPMENT_COLORS,
     PDF_METADATA,
     paper_style,
@@ -44,11 +45,23 @@ GENERATED_OUTPUTS = (
     "ch3_duration_composition.pdf",
     "duration_equipment.tex",
     "duration_equipment_table.tex",
+    "duration_bands_table.tex",
     "duration_equipment.json",
 )
 OUT = ROOT / "thesis/generated"
 THRESHOLDS = (0, 3600, 7200, 14400)
 COHORT_NAMES = ("All durations", "T ≥ 1 h", "T ≥ 2 h", "T ≥ 4 h")
+# Disjoint duration bands for the duration figure. Nested thresholds answer whether a
+# pooled exponent survives restriction; they cannot show how transport depends on
+# duration, because consecutive cohorts share most of their flights -- all durations and
+# T >= 1 h overlap by 96% -- and each is a subset of the previous, so only a monotone
+# progression can appear. Bands are near-independent samples and admit a non-monotone
+# dependence. The equipment comparison below keeps the nested thresholds.
+BANDS = ((0, 3600), (3600, 7200), (7200, 14400), (14400, np.inf))
+BAND_NAMES = ("T < 1 h", "1 ≤ T < 2 h", "2 ≤ T < 4 h", "T ≥ 4 h")
+BAND_TEX = (r"$T<1$ h", r"$1\le T<2$ h", r"$2\le T<4$ h", r"$T\ge4$ h")
+BAND_TAGS = ("BandUnderOneH", "BandOneToTwoH", "BandTwoToFourH", "BandOverFourH")
+REFERENCE_LAG_S = 1000.0
 LINESTYLES = ("-", "--", "-.", ":")
 MIN_FLIGHTS = 30
 
@@ -223,32 +236,112 @@ def main():
     paper_style()
     loaded = {name: load(g, args.audit_dir) for name, g in DISCIPLINES.items()}
     macros, records = {}, {}
-    fig, axes = plt.subplots(1, 2, figsize=(6.1, 3.3), layout="constrained")
-    for ax, (name, (lags, frame, values)) in zip(axes, loaded.items(), strict=True):
+    fig, axes = plt.subplots(2, 2, figsize=(6.1, 5.2), layout="constrained")
+    for column, (name, (lags, frame, values)) in enumerate(loaded.items()):
         glider = DISCIPLINES[name]
-        cohorts = []
-        for threshold, label, linestyle in zip(
-            THRESHOLDS, COHORT_NAMES, LINESTYLES, strict=True
+        duration = frame.total_retained_duration_s.to_numpy()
+        pooled, _ = mean_curve(values, np.ones(len(duration), dtype=bool))
+        reference = int(np.argmin(abs(lags - REFERENCE_LAG_S)))
+        bands = []
+        for (low, high), label, tag, color, linestyle in zip(
+            BANDS, BAND_NAMES, BAND_TAGS, DURATION_COLORS, LINESTYLES, strict=True
         ):
-            selected = frame.total_retained_duration_s.to_numpy() >= threshold
+            selected = (duration >= low) & (duration < high)
             curve, count = mean_curve(values, selected)
-            cohorts.append(
+            _line(axes[0, column], lags, curve, count, color, linestyle, label, low)
+            # A band holds its membership only out to half its lower edge, which is
+            # why the curves end at different lags. The lowest band has no such range.
+            valid = (count >= MIN_FLIGHTS) & np.isfinite(curve) & (curve > 0)
+            if low:
+                valid &= lags <= low / 2
+            axes[1, column].plot(
+                lags,
+                np.where(valid, curve / pooled, np.nan),
+                linestyle,
+                color=color,
+            )
+            bands.append(
                 {
-                    "threshold_s": threshold,
+                    "low_s": low,
+                    "high_s": high if np.isfinite(high) else None,
                     "flights": int(selected.sum()),
                     "curve": curve,
                     "support": count,
+                    "valid": valid,
                 }
             )
-            _line(ax, lags, curve, count, glider.color, linestyle, label, threshold)
-        _axis(ax, name.capitalize())
-        ax.legend(
+            macros[f"StatDuration{glider.tag}{tag}Flights"] = str(int(selected.sum()))
+            macros[f"StatDuration{glider.tag}{tag}RmsKm"] = (
+                f"{np.sqrt(curve[reference]) / 1000:.2f}"
+            )
+            macros[f"StatDuration{glider.tag}{tag}Ratio"] = (
+                f"{curve[reference] / pooled[reference]:.2f}"
+            )
+        _axis(axes[0, column], name.capitalize())
+        axes[0, column].legend(
             loc="best", fontsize=7, frameon=True, framealpha=0.85, edgecolor="none"
         )
+        axes[1, column].axhline(1.0, color=".75", lw=0.6)
+        _axis(axes[1, column], f"Ratio, {name}", ratio=True)
         macros[f"StatDuration{glider.tag}Flights"] = str(len(frame))
-        records[name] = {"lags_s": lags, "cohorts": cohorts}
+        records[name] = {"lags_s": lags, "bands": bands, "pooled": pooled}
+    shared_lags = loaded["paragliders"][0]
+    if not all(np.array_equal(shared_lags, lags) for lags, _, _ in loaded.values()):
+        raise ValueError("Disciplines must share one lag grid to be tabulated together")
+    macros["StatDurationReferenceLagS"] = (
+        f"{shared_lags[int(np.argmin(abs(shared_lags - REFERENCE_LAG_S)))]:.0f}"
+    )
     fig.savefig(OUT / "ch3_duration.pdf", metadata=PDF_METADATA)
     plt.close(fig)
+
+    # Every band is read over one lag range, the intersection of their supports across
+    # both disciplines. Each band ends at its own T_0/2, so fitting each on its own span
+    # would compare different parts of a bending curve and report the difference as an
+    # effect of duration. The all-duration curve is refitted here for the same reason.
+    common = np.ones(shared_lags.size, dtype=bool)
+    for entry in records.values():
+        for band in entry["bands"]:
+            common &= band["valid"]
+    if common.sum() < 4:
+        raise ValueError("No common lag range supports every duration band")
+    band_table = [
+        "% Generated by scripts/reporting/ch3_global_transport/"
+        "generate_duration_equipment.py",
+        r"\begin{tabular}{@{}llrrrr@{}}",
+        r"\toprule",
+        r"Discipline & Duration & Flights & $b$ & $H=b/2$ & RMS residual (dex) \\",
+        r"\midrule",
+    ]
+    for name, entry in records.items():
+        glider = DISCIPLINES[name]
+        rows = [("All durations", entry["pooled"], len(loaded[name][1]))]
+        rows += [
+            (label, band["curve"], band["flights"])
+            for label, band in zip(BAND_TEX, entry["bands"], strict=True)
+        ]
+        slopes = {}
+        for (label, curve, flights), tag in zip(
+            rows, ("Pooled", *BAND_TAGS), strict=True
+        ):
+            slope, residual = log_slope(shared_lags[common], curve[common])
+            slopes[tag] = slope
+            macros[f"StatDuration{glider.tag}{tag}Exponent"] = f"{slope:.3f}"
+            macros[f"StatDuration{glider.tag}{tag}Hurst"] = f"{slope / 2:.3f}"
+            macros[f"StatDuration{glider.tag}{tag}ResidualDex"] = f"{residual:.3f}"
+            band_table.append(
+                f"{name.capitalize()} & {label} & {flights:,} "
+                f"& {slope:.3f} & {slope / 2:.3f} & {residual:.3f}" + r" \\"
+            )
+        # Evaluated here rather than typeset as a subtraction of two macros.
+        band_only = [slopes[tag] for tag in BAND_TAGS]
+        macros[f"StatDuration{glider.tag}BandHurstSpread"] = (
+            f"{(max(band_only) - min(band_only)) / 2:.3f}"
+        )
+        band_table.append(r"\addlinespace")
+    band_table += [r"\bottomrule", r"\end{tabular}"]
+    (OUT / "duration_bands_table.tex").write_text("\n".join(band_table) + "\n")
+    macros["StatDurationBandFitMinS"] = f"{shared_lags[common][0]:.0f}"
+    macros["StatDurationBandFitMaxS"] = f"{shared_lags[common][-1]:.0f}"
 
     lags, frame, values = loaded["paragliders"]
     reference, cohorts = composition_control(values, frame)
