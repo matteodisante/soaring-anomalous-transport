@@ -12,6 +12,7 @@ from soaring.analysis.observables import self_similarity as analysis
 from soaring.reporting.macros import write_macros
 from soaring.reporting.style import (
     COMPONENT_COLORS,
+    DISCIPLINE_COLORS,
     LAG_COLORS,
     PDF_METADATA,
     QUANTILE_COLORS,
@@ -21,6 +22,60 @@ from soaring.reporting.style import (
 GENERATOR = "scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py"
 LABELS = (r"$|X_E|$", r"$|X_N|$", r"$R$")
 NAMES = {"paragliders": "Paragliders", "hang gliders": "Hang gliders"}
+RADIAL = 2
+# Residual tolerances scanned for the reference window, in dex of the fitted curve.
+TOLERANCES = (0.01, 0.02, 0.03, 0.05, 0.08)
+
+
+def window_row(results, window):
+    """Worst fit residual and the radial contrasts that one lag window implies.
+
+    The residual is the worst over every quantile, every moment order, every quantity
+    and both disciplines, so a row reports the tolerance its window actually achieves.
+    """
+    lags_s = np.asarray(next(iter(results.values()))["lags_s"])
+    worst, exponents, kept = 0.0, {}, None
+    for discipline, result in results.items():
+        quantiles = analysis.fit_quantiles(lags_s, result["quantiles_m"], window)
+        spectrum = analysis.fit_moments(lags_s, result["moments_mq"], window)
+        worst = max(
+            worst,
+            float(np.max(quantiles["rms_log10"])),
+            float(np.max(spectrum["rms_log10"])),
+        )
+        kept = quantiles["lags_s"]
+        exponents[discipline] = (
+            float(quantiles["h"][RADIAL, 3] - quantiles["h"][RADIAL, 0]),
+            float(spectrum["nu"][RADIAL, -1] - spectrum["nu"][RADIAL, 0]),
+        )
+    return {
+        "lags_s": (float(kept[0]), float(kept[-1])),
+        "decades": float(np.log10(kept[-1] / kept[0])),
+        "worst_rms_log10": worst,
+        "exponents": exponents,
+    }
+
+
+def reference_window_scan(results, tolerances=TOLERANCES):
+    """Candidate windows, widest first, closing with the chapter's full lag range.
+
+    Quantiles and moments of both disciplines must clear the same tolerance, so a
+    window is a property of the archive rather than of one discipline or one family.
+    The full range closes the table because it is the choice the scan rejects.
+    """
+    lags_s = np.asarray(next(iter(results.values()))["lags_s"])
+    families = [
+        np.asarray(result[key])
+        for result in results.values()
+        for key in ("quantiles_m", "moments_mq")
+    ]
+    windows = []
+    for row in analysis.widest_windows(lags_s, families, tolerances):
+        window = row["lags_s"] and tuple(row["lags_s"])
+        if window and window not in windows:
+            windows.append(window)
+    windows.append((float(lags_s[0]), float(lags_s[-1])))
+    return [window_row(results, window) for window in windows]
 
 
 def jsonable(value):
@@ -106,7 +161,7 @@ def draw(results, out):
     )
     save(fig, out, "ch3_fixed_quantiles.pdf")
 
-    fig, axes = plt.subplots(2, 2, figsize=(6.1, 5.5), layout="constrained")
+    fig, axes = plt.subplots(3, 2, figsize=(6.1, 7.8), layout="constrained")
     for col, (discipline, result) in enumerate(results.items()):
         fit = result["fits"]["full"]
         for k, color in enumerate(COMPONENT_COLORS.values()):
@@ -126,6 +181,13 @@ def draw(results, out):
             axes[1, col].semilogx(
                 result["lags_s"], curves[:, 3] / curves[:, 0], color=color
             )
+            tau = result["lags_s"]
+            kurtosis = result["kurtosis"][:, k]
+            interval_k = result["kurtosis_ci95"][:, :, k]
+            axes[2, col].semilogx(tau, kurtosis, color=color, label=LABELS[k])
+            axes[2, col].fill_between(
+                tau, interval_k[0], interval_k[1], color=color, alpha=0.2, lw=0
+            )
         axes[0, col].set(
             title=NAMES[discipline],
             xlabel="Percentile",
@@ -135,6 +197,8 @@ def draw(results, out):
         )
         axes[0, col].legend(ncol=3)
         axes[1, col].set(xlabel=r"Lag $\tau$ [s]", ylabel=r"$Q_{0.90}/Q_{0.25}$")
+        axes[2, col].axhline(0, color="black", lw=0.6)
+        axes[2, col].set(xlabel=r"Lag $\tau$ [s]", ylabel=r"Excess kurtosis")
     save(fig, out, "ch3_fixed_exponents.pdf")
 
     for discipline, result in results.items():
@@ -210,6 +274,59 @@ def draw(results, out):
             )
 
 
+def draw_spectrum(results, out):
+    """Draw the fixed-population moment spectrum over the reference window.
+
+    A single rescaling exponent predicts a horizontal line in panel (b), so the
+    bootstrap band is what decides whether the spectrum is linear.
+    """
+    import matplotlib.pyplot as plt
+
+    from soaring.analysis.observables.global_diagnostics import levy_walk_spectrum
+
+    orders = np.asarray(next(iter(results.values()))["moment_orders"])
+    fig, axes = plt.subplots(1, 2, figsize=(6.1, 3.0), layout="constrained")
+    axes[0].plot(orders, orders / 2, ":", color=".5", label="Brownian")
+    axes[0].plot(
+        orders,
+        levy_walk_spectrum(orders, 1.5),
+        "--",
+        color=".25",
+        label=r"L\'evy walk, $\beta=1.5$",
+    )
+    for discipline, result in results.items():
+        color = DISCIPLINE_COLORS[discipline]
+        fit = result["fits"]["reference"]
+        axes[0].plot(
+            orders,
+            fit["zeta"][RADIAL],
+            "o-",
+            ms=2.5,
+            color=color,
+            label=NAMES[discipline],
+        )
+        axes[1].plot(orders, fit["nu"][RADIAL], "o-", ms=2.5, color=color)
+        axes[1].fill_between(
+            orders,
+            fit["nu_ci95"][0][RADIAL],
+            fit["nu_ci95"][1][RADIAL],
+            color=color,
+            alpha=0.25,
+            lw=0,
+        )
+    window = np.asarray(next(iter(results.values()))["fits"]["reference"]["lags_s"])
+    axes[0].set(
+        title="(a) Moment spectrum", xlabel="Moment order $q$", ylabel=r"$\zeta(q)$"
+    )
+    axes[1].set(
+        title=f"(b) Per unit order, {window[0]:.0f}--{window[-1]:.0f} s",
+        xlabel="Moment order $q$",
+        ylabel=r"$\nu(q)=\zeta(q)/q$",
+    )
+    fig.legend(loc="outside lower center", ncol=4, frameon=False, fontsize=8)
+    save(fig, out, "ch3_fixed_spectrum.pdf")
+
+
 def write_tables(results, out):
     """Write manuscript tables directly from the numerical report."""
     lines = [
@@ -250,19 +367,22 @@ def write_tables(results, out):
         lines.append(r"\addlinespace")
     lines += [r"\bottomrule", r"\end{tabular}"]
     (out / "ch3_self_similarity_collapse.tex").write_text("\n".join(lines) + "\n")
+    ranges = ("reference", "full", "intermediate", "late_intermediate")
+    sample = next(iter(results.values()))["fits"]
+    headers = " & ".join(
+        f"{sample[name]['lags_s'][0]:.0f}--{sample[name]['lags_s'][-1]:.0f} s"
+        for name in ranges
+    )
     lines = [
         f"% Generated by {GENERATOR} -- do not edit.",
-        r"\begin{tabular}{@{}llrrr@{}}",
+        r"\begin{tabular}{@{}llrrrr@{}}",
         r"\toprule",
-        r"Discipline & Quantity & 10--10000 s & 60--1970 s & 210--1970 s \\",
+        f"Discipline & Quantity & {headers}" + r" \\",
         r"\midrule",
     ]
     for discipline, result in results.items():
         for k in range(3):
-            cells = [
-                f"{result['fits'][name]['common_h'][k]:.3f}"
-                for name in ("full", "intermediate", "late_intermediate")
-            ]
+            cells = [f"{result['fits'][name]['common_h'][k]:.3f}" for name in ranges]
             lines.append(
                 f"{NAMES[discipline] if k == 0 else ''} & {LABELS[k]} & "
                 + " & ".join(cells)
@@ -271,9 +391,73 @@ def write_tables(results, out):
         lines.append(r"\addlinespace")
     lines += [r"\bottomrule", r"\end{tabular}"]
     (out / "ch3_self_similarity_ranges.tex").write_text("\n".join(lines) + "\n")
+
+    orders = np.asarray(next(iter(results.values()))["moment_orders"])
+    lines = [
+        f"% Generated by {GENERATOR} -- do not edit.",
+        r"\begin{tabular}{@{}lrrrr@{}}",
+        r"\toprule",
+        r" & \multicolumn{2}{c}{Paragliders} & \multicolumn{2}{c}{Hang gliders} \\",
+        r"\cmidrule(lr){2-3}\cmidrule(lr){4-5}",
+        r"$q$ & $\nu(q)$ & 95\% interval & $\nu(q)$ & 95\% interval \\",
+        r"\midrule",
+    ]
+    for j, order in enumerate(orders):
+        cells = []
+        for result in results.values():
+            fit = result["fits"]["reference"]
+            low, high = fit["nu_ci95"][0][RADIAL][j], fit["nu_ci95"][1][RADIAL][j]
+            cells += [f"{fit['nu'][RADIAL][j]:.3f}", f"$[{low:.3f}, {high:.3f}]$"]
+        lines.append(f"{order:g} & " + " & ".join(cells) + r" \\")
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    (out / "ch3_spectrum_table.tex").write_text("\n".join(lines) + "\n")
+
+    lines = [
+        f"% Generated by {GENERATOR} -- do not edit.",
+        r"\begin{tabular}{@{}lrrrrrr@{}}",
+        r"\toprule",
+        r" & & & \multicolumn{2}{c}{Paragliders} & \multicolumn{2}{c}{Hang gliders} \\",
+        r"\cmidrule(lr){4-5}\cmidrule(lr){6-7}",
+        r"Window (s) & Decades & Worst rms & $H_{.90}-H_{.25}$ & $\nu(4)-\nu(0.25)$"
+        r" & $H_{.90}-H_{.25}$ & $\nu(4)-\nu(0.25)$ \\",
+        r"\midrule",
+    ]
+    for row in reference_window_scan(results):
+        cells = [
+            f"{value:+.3f}"
+            for discipline in results
+            for value in row["exponents"][discipline]
+        ]
+        lines.append(
+            f"{row['lags_s'][0]:.0f}--{row['lags_s'][1]:.0f} & "
+            f"{row['decades']:.2f} & {row['worst_rms_log10']:.3f} & "
+            + " & ".join(cells)
+            + r" \\"
+        )
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    (out / "ch3_window_sensitivity.tex").write_text("\n".join(lines) + "\n")
+
     macros = {}
+    reference = next(iter(results.values()))["fits"]["reference"]["lags_s"]
+    macros["StatSSReferenceFitMinS"] = f"{reference[0]:.0f}"
+    macros["StatSSReferenceFitMaxS"] = f"{reference[-1]:.0f}"
+    macros["StatSSReferenceDecades"] = f"{np.log10(reference[-1] / reference[0]):.2f}"
+    macros["StatSSReferenceLagCount"] = str(len(reference))
+    for name, label in (("reference", "Reference"), ("full", "Full")):
+        window = analysis.REFERENCE_RANGE if name == "reference" else (10, 10000)
+        macros[f"StatSS{label}WorstRmsDex"] = (
+            f"{window_row(results, window)['worst_rms_log10']:.3f}"
+        )
     for discipline, result in results.items():
         tag = "Para" if discipline == "paragliders" else "Hang"
+        tau = result["lags_s"]
+        short, long = int(np.argmin(tau)), int(np.argmax(tau))
+        for k, quantity in enumerate(("East", "North", "Radial")):
+            for end, index in (("Short", short), ("Long", long)):
+                prefix = f"StatSSKurtosis{tag}{quantity}{end}"
+                macros[prefix] = f"{result['kurtosis'][index, k]:.2f}"
+                macros[prefix + "Low"] = f"{result['kurtosis_ci95'][0, index, k]:.2f}"
+                macros[prefix + "High"] = f"{result['kurtosis_ci95'][1, index, k]:.2f}"
         fit = result["fits"]["full"]
         for k, quantity in enumerate(("East", "North", "Radial")):
             contrast = fit["contrasts"]["p90_minus_p25"]
@@ -281,6 +465,36 @@ def write_tables(results, out):
             macros[prefix] = f"{contrast['estimate'][k]:.3f}"
             macros[prefix + "Low"] = f"{contrast['ci95'][0][k]:.3f}"
             macros[prefix + "High"] = f"{contrast['ci95'][1][k]:.3f}"
+        spectrum = result["fits"]["reference"]
+        for label, j in (("Low", 0), ("High", len(orders) - 1)):
+            macros[f"StatSS{tag}SpectrumNu{label}"] = f"{spectrum['nu'][RADIAL][j]:.3f}"
+        two = int(np.flatnonzero(orders == 2)[0])
+        macros[f"StatSS{tag}SpectrumZetaTwo"] = f"{spectrum['zeta'][RADIAL][two]:.3f}"
+        macros[f"StatSS{tag}SpectrumRmsMax"] = (
+            f"{np.max(spectrum['moment_rms_log10'][RADIAL]):.3f}"
+        )
+        # The leg-tail index a standard Levy walk would need to match this second
+        # moment, with the growth per unit order it then predicts below its knee.
+        # Chapter 7 compares both against the measured spectrum.
+        beta = 3 - spectrum["zeta"][RADIAL][two]
+        macros[f"StatSS{tag}SpectrumLevyBeta"] = f"{beta:.3f}"
+        macros[f"StatSS{tag}SpectrumLevyNu"] = f"{1 / beta:.3f}"
+        span = spectrum["contrasts"]["nu_top_minus_bottom"]
+        macros[f"StatSS{tag}SpectrumSpan"] = f"{span['estimate'][RADIAL]:.3f}"
+        macros[f"StatSS{tag}SpectrumSpanLow"] = f"{span['ci95'][0][RADIAL]:.3f}"
+        macros[f"StatSS{tag}SpectrumSpanHigh"] = f"{span['ci95'][1][RADIAL]:.3f}"
+        rank = spectrum["contrasts"]["p90_minus_p25"]
+        macros[f"StatSS{tag}ReferenceRankDifference"] = (
+            f"{rank['estimate'][RADIAL]:.3f}"
+        )
+        macros[f"StatSS{tag}ReferenceRankDifferenceLow"] = (
+            f"{rank['ci95'][0][RADIAL]:.3f}"
+        )
+        macros[f"StatSS{tag}ReferenceRankDifferenceHigh"] = (
+            f"{rank['ci95'][1][RADIAL]:.3f}"
+        )
+        for p, label in enumerate(("Lower", "Median", "Upper", "Ninetieth")):
+            macros[f"StatSS{tag}Reference{label}"] = f"{spectrum['h'][RADIAL][p]:.3f}"
         contrast = fit["contrasts"]["north_minus_east"]
         for p, rank in enumerate(("Lower", "Median", "Upper", "Ninetieth")):
             prefix = f"StatSS{tag}NorthEast{rank}"
@@ -314,7 +528,15 @@ def write_report(
     ).hexdigest()
     report_path = out / "ch3_self_similarity.json"
     previous = json.loads(report_path.read_text()) if report_path.exists() else {}
-    if previous.get("measurement_sha256") == signature:
+    # The signature covers the estimator's source, which a concurrent run can already
+    # have changed on disk while holding an older import. Requiring the keys this
+    # reporter reads keeps such a stamp from being mistaken for a usable measurement.
+    reusable = previous.get("measurement_sha256") == signature and all(
+        {"moments_mq", "moment_orders"} <= result.keys()
+        and "reference" in result["fits"]
+        for result in previous.get("results", {}).values()
+    )
+    if reusable:
         results = previous["results"]
         # Numerical arrays are kept in a private recursive conversion only where
         # plotting and fitting need them; dictionaries/lists of laws retain shape.
@@ -324,10 +546,24 @@ def write_report(
                 "quantiles_m",
                 "dense_probabilities",
                 "dense_quantiles_m",
+                "kurtosis",
+                "kurtosis_ci95",
+                "moment_orders",
+                "moments_mq",
             ):
                 result[key] = np.asarray(result[key])
             for fit in result["fits"].values():
-                for key in ("h", "h_ci95", "intercept_at_1000s", "common_h"):
+                for key in (
+                    "h",
+                    "h_ci95",
+                    "intercept_at_1000s",
+                    "common_h",
+                    "lags_s",
+                    "zeta",
+                    "nu",
+                    "nu_ci95",
+                    "moment_rms_log10",
+                ):
                     fit[key] = np.asarray(fit[key])
             for law in result["laws"]:
                 for key in ("edges_m", "mass"):
@@ -380,5 +616,6 @@ def write_report(
         json.dumps(jsonable(report), indent=2, allow_nan=False) + "\n"
     )
     draw(results, out)
+    draw_spectrum(results, out)
     write_tables(results, out)
     return report

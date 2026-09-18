@@ -17,6 +17,16 @@ from .segment_support import increment_starts
 
 PROBABILITIES = np.array([0.25, 0.50, 0.75, 0.90])
 
+# The chapter's moment orders. Fractional orders below one resolve the small
+# displacements that positive moments otherwise cannot weigh.
+MOMENT_ORDERS = np.array([0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0])
+
+# Reference fit window, in seconds: the widest window of the chapter's lag grid whose
+# quantile and moment fits stay within 0.03 dex for both disciplines. Below it the
+# lower quantiles measure circling inside one thermal; above it displacement saturates
+# on closed circuits. :func:`widest_windows` reproduces the choice from the curves.
+REFERENCE_RANGE = (60, 2960)
+
 
 def recover_positions(measured, lags_s, grid_s=10):
     """Recover saved paths from every successive first-grid increment, with checks.
@@ -157,12 +167,45 @@ def blocked_quantiles(ordered, who, sizes, flight_counts, probabilities, blocks=
     return result
 
 
-def fit_quantiles(lags_s, curves, fit_range):
-    """Fit separate log slopes and one common slope with rank-specific intercepts.
+def excess_kurtosis(values, owners, sizes, counts):
+    r"""Weighted Fisher excess kurtosis of each coordinate, for every bootstrap draw.
 
-    Leading axes are arbitrary; the final axes are lag, coordinate, probability.
-    A shared exponent uses equal weights for every lag and probability level.
-    It is a candidate scaling factor, not evidence of an exact scaling law.
+    ``counts[d, f] / sizes[f]`` is flight ``f``'s per-origin weight on draw ``d``, the
+    same convention :func:`paired_quantiles` uses. Every origin of a flight shares that
+    weight, so the weighted raw moments reduce to a flight-level sum of power sums,
+    computed once with :func:`numpy.bincount` (not :func:`numpy.add.at`, which
+    scatter-adds the whole matrix and costs seconds rather than milliseconds here) and
+    reused across all draws by one matrix product.
+
+    Args:
+        values: ``(n_origins, K)`` coordinate magnitudes at one lag.
+        owners: Parent-flight index of each origin, in ``0..len(sizes)-1``.
+        sizes: Origins per flight.
+        counts: ``(n_draws, len(sizes))`` whole-flight multiplicities; row 0 is
+            conventionally the all-ones empirical draw.
+
+    Returns:
+        ``(n_draws, K)`` excess kurtosis, ``mu4/mu2**2 - 3``, biased population moments.
+    """
+    n_flights = len(sizes)
+    sums = np.empty((n_flights, values.shape[1], 4))
+    for k in range(values.shape[1]):
+        for p in range(1, 5):
+            sums[:, k, p - 1] = np.bincount(owners, values[:, k] ** p, n_flights)
+    weight = counts / sizes
+    moments = np.einsum("df,fkp->dkp", weight, sums) / counts.sum(axis=1)[:, None, None]
+    m1, m2, m3, m4 = (moments[..., p] for p in range(4))
+    mu2 = m2 - m1**2
+    mu4 = m4 - 4 * m1 * m3 + 6 * m1**2 * m2 - 3 * m1**4
+    return mu4 / mu2**2 - 3
+
+
+def log_slopes(lags_s, curves, fit_range):
+    """Least-squares log-log slopes over one lag window, with residuals in dex.
+
+    Leading axes are arbitrary; the final axes are lag, coordinate and rank or order.
+    Quantiles and moments share this core so that one window and one residual
+    convention govern both families of exponents.
     """
     lags_s = np.asarray(lags_s)
     keep = (lags_s >= fit_range[0]) & (lags_s <= fit_range[1])
@@ -171,9 +214,110 @@ def fit_quantiles(lags_s, curves, fit_range):
         raise ValueError("Fits require at least three common positive supported lags")
     x = np.log(lags_s[keep] / 1000.0)
     xc = x - x.mean()
-    h = np.sum(y * xc[:, None, None], axis=-3) / np.sum(xc**2)
-    intercept = y.mean(axis=-3) - x.mean() * h
-    residual = y - intercept[..., None, :, :] - x[:, None, None] * h[..., None, :, :]
+    slope = np.sum(y * xc[:, None, None], axis=-3) / np.sum(xc**2)
+    intercept = y.mean(axis=-3) - x.mean() * slope
+    residual = (
+        y - intercept[..., None, :, :] - x[:, None, None] * slope[..., None, :, :]
+    )
+    return {
+        "lags_s": lags_s[keep],
+        "log_lags": x,
+        "log_curves": y,
+        "slope": slope,
+        "intercept_at_1000s": intercept,
+        "rms_log10": np.sqrt(np.mean(residual**2, axis=-3)) / np.log(10),
+    }
+
+
+def fit_moments(lags_s, curves, fit_range, orders=MOMENT_ORDERS):
+    """Fit the displacement moment spectrum over one lag window.
+
+    Leading axes are arbitrary; the final axes are lag, coordinate, moment order.
+    ``zeta`` is the log-log slope of the moment itself and ``nu`` is ``zeta/q``, the
+    growth exponent per unit order. A constant ``nu`` is what one exponent predicts;
+    the residual says whether a power law describes the moment at all.
+    """
+    fit = log_slopes(lags_s, curves, fit_range)
+    return {
+        "lags_s": fit["lags_s"],
+        "zeta": fit["slope"],
+        "nu": fit["slope"] / np.asarray(orders),
+        "intercept_at_1000s": fit["intercept_at_1000s"],
+        "rms_log10": fit["rms_log10"],
+    }
+
+
+def widest_windows(lags_s, families, tolerances, *, min_lags=5):
+    """Widest lag window whose every fitted curve stays within each residual tolerance.
+
+    ``families`` are arrays sharing the leading lag axis, from any number of
+    disciplines and of both kinds. One window must serve all of them, so the criterion
+    is the worst root-mean-square residual over every curve, in dex. The scan reports
+    the choice a tolerance implies; it does not certify that a power law holds.
+    """
+    lags_s = np.asarray(lags_s)
+    scanned = []
+    for start in range(len(lags_s)):
+        for stop in range(start + min_lags - 1, len(lags_s)):
+            window = (lags_s[start], lags_s[stop])
+            worst = max(
+                float(np.max(log_slopes(lags_s, curves, window)["rms_log10"]))
+                for curves in families
+            )
+            scanned.append((window, stop - start + 1, worst))
+    rows = []
+    for tolerance in tolerances:
+        allowed = [row for row in scanned if row[2] <= tolerance]
+        if not allowed:
+            rows.append({"tolerance_dex": tolerance, "lags_s": None})
+            continue
+        window, n_lags, worst = max(allowed, key=lambda row: row[0][1] / row[0][0])
+        rows.append(
+            {
+                "tolerance_dex": tolerance,
+                "lags_s": window,
+                "n_lags": n_lags,
+                "decades": float(np.log10(window[1] / window[0])),
+                "worst_rms_log10": worst,
+            }
+        )
+    return rows
+
+
+def flight_power_means(values, offsets, sizes, orders=MOMENT_ORDERS):
+    """Per-flight mean of each coordinate magnitude raised to each moment order.
+
+    Equal-weight and bootstrap moments are both linear in these means, the same way
+    :func:`excess_kurtosis` reuses per-flight power sums, so one pass over the origins
+    serves every draw. Origins arrive grouped by flight, so contiguous reductions
+    replace one scatter-add per order.
+
+    Args:
+        values: ``(n_origins, K)`` coordinate magnitudes at one lag.
+        offsets: Index in ``values`` where each flight's origins begin.
+        sizes: Origins per flight.
+        orders: Moment orders, all strictly positive.
+
+    Returns:
+        ``(len(sizes), K, len(orders))`` per-flight means.
+    """
+    means = np.empty((len(sizes), values.shape[1], len(orders)))
+    for k in range(values.shape[1]):
+        for j, order in enumerate(orders):
+            means[:, k, j] = np.add.reduceat(values[:, k] ** order, offsets) / sizes
+    return means
+
+
+def fit_quantiles(lags_s, curves, fit_range):
+    """Fit separate log slopes and one common slope with rank-specific intercepts.
+
+    Leading axes are arbitrary; the final axes are lag, coordinate, probability.
+    A shared exponent uses equal weights for every lag and probability level.
+    It is a candidate scaling factor, not evidence of an exact scaling law.
+    """
+    fit = log_slopes(lags_s, curves, fit_range)
+    x, y, h = fit["log_lags"], fit["log_curves"], fit["slope"]
+    intercept = fit["intercept_at_1000s"]
     common = h.mean(axis=-1)
     common_intercept = y.mean(axis=-3) - x.mean() * common[..., :, None]
     common_residual = (
@@ -182,10 +326,10 @@ def fit_quantiles(lags_s, curves, fit_range):
         - x[:, None, None] * common[..., None, :, None]
     )
     return {
-        "lags_s": lags_s[keep],
+        "lags_s": fit["lags_s"],
         "h": h,
         "intercept_at_1000s": intercept,
-        "rms_log10": np.sqrt(np.mean(residual**2, axis=-3)) / np.log(10),
+        "rms_log10": fit["rms_log10"],
         "common_h": common,
         "joint_common_h": common.mean(axis=-1),
         "common_intercept_at_1000s": common_intercept,
@@ -241,7 +385,12 @@ def measure_scaling(frames, lags_s, *, n_resamples=400, seed=20260911, progress=
     )
     # The leading all-ones draw is the original equal-flight empirical law.
     counts = np.vstack((np.ones(len(fixed), dtype=int), counts))
+    offsets = np.r_[0, np.cumsum(sizes)][:-1]
+    replications = counts.astype(float)
+    totals = replications.sum(axis=1)[:, None]
     all_quantiles = np.empty((len(counts), len(lags_s), 3, 4))
+    moment_draws = np.empty((len(counts), len(lags_s), 3, len(MOMENT_ORDERS)))
+    kurtosis_draws = np.empty((len(counts), len(lags_s), 3))
     dense_probabilities = np.unique(np.r_[np.linspace(0.01, 0.99, 99), PROBABILITIES])
     dense = np.empty((len(lags_s), 3, len(dense_probabilities)))
     chosen = np.unique(
@@ -258,6 +407,11 @@ def measure_scaling(frames, lags_s, *, n_resamples=400, seed=20260911, progress=
         )
         values = np.column_stack((np.abs(xy), np.linalg.norm(xy, axis=1)))
         all_quantiles[:, j] = paired_quantiles(values, owners, counts)
+        means = flight_power_means(values, offsets, sizes)
+        moment_draws[:, j] = (
+            replications @ means.reshape(len(fixed), -1) / totals
+        ).reshape(len(counts), 3, len(MOMENT_ORDERS))
+        kurtosis_draws[:, j] = excess_kurtosis(values, owners, sizes, counts)
         for coordinate in range(3):
             order = np.argsort(values[:, coordinate], kind="stable")
             dense[j, coordinate] = ordered_quantiles(
@@ -281,7 +435,9 @@ def measure_scaling(frames, lags_s, *, n_resamples=400, seed=20260911, progress=
                 f"lag {tau:g} s: {len(fixed)} flights, {len(owners)} fixed origins"
             )
     curves = all_quantiles[0]
+    moments = moment_draws[0]
     fit_ranges = {
+        "reference": REFERENCE_RANGE,
         "full": (10, 10000),
         "intermediate": (60, 2000),
         "late_intermediate": (200, 2000),
@@ -290,8 +446,14 @@ def measure_scaling(frames, lags_s, *, n_resamples=400, seed=20260911, progress=
     for name, limits in fit_ranges.items():
         fit = fit_quantiles(lags_s, curves, limits)
         boot = fit_quantiles(lags_s, all_quantiles[1:], limits)
+        spectrum = fit_moments(lags_s, moments, limits)
+        spectrum_boot = fit_moments(lags_s, moment_draws[1:], limits)
         fit["h_ci95"] = np.quantile(boot["h"], [0.025, 0.975], axis=0)
         fit["common_h_ci95"] = np.quantile(boot["common_h"], [0.025, 0.975], axis=0)
+        fit["zeta"] = spectrum["zeta"]
+        fit["nu"] = spectrum["nu"]
+        fit["nu_ci95"] = np.quantile(spectrum_boot["nu"], [0.025, 0.975], axis=0)
+        fit["moment_rms_log10"] = spectrum["rms_log10"]
         # Paired differences, not visual comparisons of marginal intervals.
         contrasts = {
             "north_minus_east": (
@@ -309,6 +471,12 @@ def measure_scaling(frames, lags_s, *, n_resamples=400, seed=20260911, progress=
             "p90_minus_p25": (
                 fit["h"][:, 3] - fit["h"][:, 0],
                 boot["h"][:, :, 3] - boot["h"][:, :, 0],
+            ),
+            # A flat spectrum is what a single exponent predicts, so the span of nu
+            # is the paired statistic that a linear spectrum sends to zero.
+            "nu_top_minus_bottom": (
+                spectrum["nu"][:, -1] - spectrum["nu"][:, 0],
+                spectrum_boot["nu"][:, :, -1] - spectrum_boot["nu"][:, :, 0],
             ),
         }
         fit["contrasts"] = {
@@ -369,6 +537,11 @@ def measure_scaling(frames, lags_s, *, n_resamples=400, seed=20260911, progress=
         "n_origins": len(owners),
         "quantiles_m": curves,
         "quantiles_m2": curves**2,
+        "moment_orders": MOMENT_ORDERS,
+        "moments_mq": moments,
+        "moments_ci95": np.quantile(moment_draws[1:], [0.025, 0.975], axis=0),
+        "kurtosis": kurtosis_draws[0],
+        "kurtosis_ci95": np.quantile(kurtosis_draws[1:], [0.025, 0.975], axis=0),
         "dense_probabilities": dense_probabilities,
         "dense_quantiles_m": dense,
         "fits": fits,
