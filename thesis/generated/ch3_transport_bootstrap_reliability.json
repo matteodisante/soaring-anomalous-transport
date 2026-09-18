@@ -1,0 +1,4398 @@
+{
+  "status": "complete",
+  "scope": "Sensitivity only; published intervals are not replaced",
+  "source_report": {
+    "path": "/Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917/report.json",
+    "bytes": 745342,
+    "sha256": "d8128d3f998c1911cdc4eea40b02d04fc3eea40348dbc610c410b7b2471d6f0b"
+  },
+  "calendar_anchor": "2000-01-01",
+  "block_days": [
+    1,
+    2,
+    4,
+    8,
+    16,
+    32,
+    64
+  ],
+  "seeds": [
+    20260918,
+    20260919
+  ],
+  "offset_rule": "unique offsets 0, floor(L/3), floor(2L/3)",
+  "spatial_grouping": "all sites in each calendar interval",
+  "sampling_frame": "occupied blocks in eligible archive, then fixed cohort",
+  "empty_calendar_intervals": "not resampled; date differences preserve gaps",
+  "cohort": "10000 s; fixed flights and retained segments",
+  "statistics": [
+    "msd_100",
+    "msd_1000",
+    "msd_10000",
+    "hurst"
+  ],
+  "fit_interval_s": [
+    10,
+    10000
+  ],
+  "units": {
+    "msd": "m^2",
+    "hurst": "dimensionless"
+  },
+  "results": {
+    "para": {
+      "provenance": {
+        "flights.parquet": {
+          "path": "/Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917/para/flights.parquet",
+          "bytes": 5052344,
+          "sha256": "2127f81da11c0723db888dab02a5f7228d9d4ae1784a1fa381ee6f90d7727d6d"
+        },
+        "flight-msd.npy": {
+          "path": "/Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917/para/flight-msd.npy",
+          "bytes": 267987008,
+          "sha256": "dd6bad7fafb4770d891028a2cf7ce6a84e6a828dbdbadfdef704ffe631321f49"
+        },
+        "msd.npz": {
+          "path": "/Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917/para/msd.npz",
+          "bytes": 2888836,
+          "sha256": "0b066c1c0a73e00ee7133ae7cf9276d4bac228d015131efeb0df5964fee005e0"
+        },
+        "cluster-draws.npy": {
+          "path": "/Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917/para/cluster-draws.npy",
+          "bytes": 165503466,
+          "sha256": "76f142fdf736cf20f0a2f60d90d25ca4f4ddaaabbfd972c6280385000cacd003"
+        },
+        "cohort-10000.json": {
+          "path": "/Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917/para/cohort-10000.json",
+          "bytes": 10348814,
+          "sha256": "339b0bfaf38c3d860abc7bce6f97979fdbbaec10a44a29eefbdc6df60283f4d5"
+        },
+        "cohort_sha256": "7c0016eca65d04a1787ada51229032293d77abc5cfdd6863314a9085a01c5215"
+      },
+      "resamples": 1000,
+      "baseline": {
+        "support": {
+          "archive_blocks": 82669,
+          "contributing_blocks": 25682,
+          "cohort_flights": 46273,
+          "flights_per_block_median": 1.0,
+          "flights_per_block_p95": 5.0,
+          "largest_block_fraction": 0.0010157111058284529,
+          "size_balance_index": 9746.373447250913
+        },
+        "statistics": {
+          "msd_100": {
+            "point": 614697.1473775381,
+            "se": 1449.1097186439574,
+            "se_monte_carlo": 33.81075630829389,
+            "low": 612302.4096878341,
+            "high": 617125.4148394295,
+            "valid_replicates": 1000,
+            "invalid_replicates": 0
+          },
+          "msd_1000": {
+            "point": 38415664.97888091,
+            "se": 139085.0101823091,
+            "se_monte_carlo": 3280.9916849611777,
+            "low": 38197268.30729045,
+            "high": 38657633.69937909,
+            "valid_replicates": 1000,
+            "invalid_replicates": 0
+          },
+          "msd_10000": {
+            "point": 1444562811.0101824,
+            "se": 15707070.048988706,
+            "se_monte_carlo": 363894.90664340026,
+            "low": 1419444243.357916,
+            "high": 1470705816.0374694,
+            "valid_replicates": 1000,
+            "invalid_replicates": 0
+          },
+          "hurst": {
+            "point": 0.8822765078884937,
+            "se": 0.0005182601431522443,
+            "se_monte_carlo": 1.2178810195290614e-05,
+            "low": 0.8814560484165418,
+            "high": 0.8831537990842846,
+            "valid_replicates": 1000,
+            "invalid_replicates": 0
+          }
+        }
+      },
+      "configurations": [
+        {
+          "days": 1,
+          "offset_days": 0,
+          "seed": 20260918,
+          "rng_seed": 366913783,
+          "support": {
+            "archive_blocks": 6086,
+            "contributing_blocks": 3642,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 4.0,
+            "flights_per_block_p95": 57.94999999999982,
+            "largest_block_fraction": 0.005597216519352538,
+            "size_balance_index": 829.5519419512533
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775379,
+              "se": 2396.0045215497694,
+              "se_monte_carlo": 52.58439630615399,
+              "low": 610834.3865885527,
+              "high": 618848.4503124942,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.6534320974618082
+            },
+            "msd_1000": {
+              "point": 38415664.97888111,
+              "se": 230406.00233728814,
+              "se_monte_carlo": 5073.817557058731,
+              "low": 38038924.04889597,
+              "high": 38823600.67728441,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.6565839987736837
+            },
+            "msd_10000": {
+              "point": 1444562811.0101764,
+              "se": 22063309.628657144,
+              "se_monte_carlo": 502675.13164822606,
+              "low": 1411335924.780979,
+              "high": 1483201165.1500745,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.4046737908371194
+            },
+            "hurst": {
+              "point": 0.8822765078884933,
+              "se": 0.0007368312634435882,
+              "se_monte_carlo": 1.6692126507288117e-05,
+              "low": 0.8811685460432178,
+              "high": 0.8835327778295574,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.4217401688694713
+            }
+          },
+          "replicate_key": "days_1_offset_0_seed_20260918"
+        },
+        {
+          "days": 1,
+          "offset_days": 0,
+          "seed": 20260919,
+          "rng_seed": 3674443743,
+          "support": {
+            "archive_blocks": 6086,
+            "contributing_blocks": 3642,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 4.0,
+            "flights_per_block_p95": 57.94999999999982,
+            "largest_block_fraction": 0.005597216519352538,
+            "size_balance_index": 829.5519419512533
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775379,
+              "se": 2475.7899876951287,
+              "se_monte_carlo": 56.427057340143385,
+              "low": 610602.9999488108,
+              "high": 618856.9720273318,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.708490361938856
+            },
+            "msd_1000": {
+              "point": 38415664.97888111,
+              "se": 240556.3017668082,
+              "se_monte_carlo": 5498.356701425386,
+              "low": 38016374.33119012,
+              "high": 38821287.30482597,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.7295631028210237
+            },
+            "msd_10000": {
+              "point": 1444562811.0101764,
+              "se": 22861121.477393515,
+              "se_monte_carlo": 515142.1800205613,
+              "low": 1409173445.33838,
+              "high": 1484580160.5265195,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.4554669588976221
+            },
+            "hurst": {
+              "point": 0.8822765078884933,
+              "se": 0.0007729116812816521,
+              "se_monte_carlo": 1.752170696938979e-05,
+              "low": 0.8810363494209088,
+              "high": 0.8836282676592936,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.491358522344639
+            }
+          },
+          "replicate_key": "days_1_offset_0_seed_20260919"
+        },
+        {
+          "days": 2,
+          "offset_days": 0,
+          "seed": 20260918,
+          "rng_seed": 1260699777,
+          "support": {
+            "archive_blocks": 3438,
+            "contributing_blocks": 2413,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 5.0,
+            "flights_per_block_p95": 90.0,
+            "largest_block_fraction": 0.007736693103969918,
+            "size_balance_index": 547.5564632380901
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775363,
+              "se": 2706.6412971456834,
+              "se_monte_carlo": 57.73140580505883,
+              "low": 610229.2823568017,
+              "high": 619102.3051546612,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.8677959731568803
+            },
+            "msd_1000": {
+              "point": 38415664.97888111,
+              "se": 256098.39831779728,
+              "se_monte_carlo": 5428.02327353302,
+              "low": 37995701.7450971,
+              "high": 38826051.85545919,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.8413084054285216
+            },
+            "msd_10000": {
+              "point": 1444562811.010176,
+              "se": 25033204.77255572,
+              "se_monte_carlo": 580987.7117527849,
+              "low": 1403837891.7456567,
+              "high": 1486019915.7458389,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.5937539397532308
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.0008343303004405375,
+              "se_monte_carlo": 1.9590458151690943e-05,
+              "low": 0.8809107301291221,
+              "high": 0.8836091119791774,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.6098677690432472
+            }
+          },
+          "replicate_key": "days_2_offset_0_seed_20260918"
+        },
+        {
+          "days": 2,
+          "offset_days": 0,
+          "seed": 20260919,
+          "rng_seed": 3780788155,
+          "support": {
+            "archive_blocks": 3438,
+            "contributing_blocks": 2413,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 5.0,
+            "flights_per_block_p95": 90.0,
+            "largest_block_fraction": 0.007736693103969918,
+            "size_balance_index": 547.5564632380901
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775363,
+              "se": 2609.2616134277487,
+              "se_monte_carlo": 59.21064627106495,
+              "low": 610405.2906957201,
+              "high": 619022.5007940576,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.8005963108641863
+            },
+            "msd_1000": {
+              "point": 38415664.97888111,
+              "se": 251807.68750470437,
+              "se_monte_carlo": 5626.931479976485,
+              "low": 37994552.22455347,
+              "high": 38831918.51301793,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.8104588494090141
+            },
+            "msd_10000": {
+              "point": 1444562811.010176,
+              "se": 25115215.588444006,
+              "se_monte_carlo": 592321.338842661,
+              "low": 1403406267.6843495,
+              "high": 1486328520.997725,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.5989752073500838
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.0008399473059126604,
+              "se_monte_carlo": 1.9740550538623693e-05,
+              "low": 0.8808056218092161,
+              "high": 0.8836258598163638,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.6207059659340177
+            }
+          },
+          "replicate_key": "days_2_offset_0_seed_20260919"
+        },
+        {
+          "days": 2,
+          "offset_days": 1,
+          "seed": 20260918,
+          "rng_seed": 3581531793,
+          "support": {
+            "archive_blocks": 3434,
+            "contributing_blocks": 2368,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 5.0,
+            "flights_per_block_p95": 88.65000000000009,
+            "largest_block_fraction": 0.008687571586022087,
+            "size_balance_index": 535.3946725343968
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775362,
+              "se": 2650.3007415561287,
+              "se_monte_carlo": 59.027514779124765,
+              "low": 610160.2162899845,
+              "high": 619116.5798034968,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.8289165461095778
+            },
+            "msd_1000": {
+              "point": 38415664.97888108,
+              "se": 253793.32999817087,
+              "se_monte_carlo": 5720.712254662903,
+              "low": 37987989.71891497,
+              "high": 38853588.690505035,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.8247353159445794
+            },
+            "msd_10000": {
+              "point": 1444562811.0101771,
+              "se": 24689032.659072977,
+              "se_monte_carlo": 571666.9898267998,
+              "low": 1406344779.2888565,
+              "high": 1487505785.6369298,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.5718420164976963
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.0008289277354509815,
+              "se_monte_carlo": 1.9267062316752744e-05,
+              "low": 0.8809500704113434,
+              "high": 0.8836638879846084,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.599443342119935
+            }
+          },
+          "replicate_key": "days_2_offset_1_seed_20260918"
+        },
+        {
+          "days": 2,
+          "offset_days": 1,
+          "seed": 20260919,
+          "rng_seed": 1167879531,
+          "support": {
+            "archive_blocks": 3434,
+            "contributing_blocks": 2368,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 5.0,
+            "flights_per_block_p95": 88.65000000000009,
+            "largest_block_fraction": 0.008687571586022087,
+            "size_balance_index": 535.3946725343968
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775362,
+              "se": 2763.4645471532654,
+              "se_monte_carlo": 62.41832258665185,
+              "low": 610233.2090653164,
+              "high": 619502.3612610464,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.9070084974236803
+            },
+            "msd_1000": {
+              "point": 38415664.97888108,
+              "se": 262563.32646119205,
+              "se_monte_carlo": 5923.678694664804,
+              "low": 37985608.89880858,
+              "high": 38867491.10173216,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.8877902522854957
+            },
+            "msd_10000": {
+              "point": 1444562811.0101771,
+              "se": 25920893.753747195,
+              "se_monte_carlo": 578302.551903551,
+              "low": 1403634769.7462444,
+              "high": 1487789660.765548,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.6502691891551158
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.0008555180326102995,
+              "se_monte_carlo": 1.8903568626540153e-05,
+              "low": 0.8809495797821467,
+              "high": 0.8836600570469502,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.6507501954650259
+            }
+          },
+          "replicate_key": "days_2_offset_1_seed_20260919"
+        },
+        {
+          "days": 4,
+          "offset_days": 0,
+          "seed": 20260918,
+          "rng_seed": 1808375059,
+          "support": {
+            "archive_blocks": 1863,
+            "contributing_blocks": 1476,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 8.0,
+            "flights_per_block_p95": 148.25,
+            "largest_block_fraction": 0.009487173945929591,
+            "size_balance_index": 381.63463918238705
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775364,
+              "se": 2904.6343176342393,
+              "se_monte_carlo": 62.91565599204588,
+              "low": 609657.1847846521,
+              "high": 619329.5334585777,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.004426773393203
+            },
+            "msd_1000": {
+              "point": 38415664.97888116,
+              "se": 277726.7308716198,
+              "se_monte_carlo": 5871.7654050238425,
+              "low": 37940312.942347474,
+              "high": 38866934.88141753,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.996812816187615
+            },
+            "msd_10000": {
+              "point": 1444562811.010181,
+              "se": 26776889.677763917,
+              "se_monte_carlo": 594738.4581808848,
+              "low": 1402146387.9115088,
+              "high": 1487736666.849064,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.7047666811346485
+            },
+            "hurst": {
+              "point": 0.8822765078884938,
+              "se": 0.000905822280396349,
+              "se_monte_carlo": 2.0161575407513648e-05,
+              "low": 0.8808247577495514,
+              "high": 0.8837037466221122,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.7478138968719699
+            }
+          },
+          "replicate_key": "days_4_offset_0_seed_20260918"
+        },
+        {
+          "days": 4,
+          "offset_days": 0,
+          "seed": 20260919,
+          "rng_seed": 3341015763,
+          "support": {
+            "archive_blocks": 1863,
+            "contributing_blocks": 1476,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 8.0,
+            "flights_per_block_p95": 148.25,
+            "largest_block_fraction": 0.009487173945929591,
+            "size_balance_index": 381.63463918238705
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775364,
+              "se": 2894.3064819166393,
+              "se_monte_carlo": 72.26895738846393,
+              "low": 610015.977926258,
+              "high": 619465.286925328,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.9972997521713283
+            },
+            "msd_1000": {
+              "point": 38415664.97888116,
+              "se": 278737.1800267626,
+              "se_monte_carlo": 6851.338898347859,
+              "low": 37960739.766454004,
+              "high": 38889134.949496575,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.004077791426991
+            },
+            "msd_10000": {
+              "point": 1444562811.010181,
+              "se": 27800459.889454767,
+              "se_monte_carlo": 658623.3284127567,
+              "low": 1400778925.900747,
+              "high": 1491117721.5705614,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.769932890268398
+            },
+            "hurst": {
+              "point": 0.8822765078884938,
+              "se": 0.0009419485116042494,
+              "se_monte_carlo": 2.1941602976544213e-05,
+              "low": 0.8807800434237042,
+              "high": 0.8838086730097396,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.8175206487517646
+            }
+          },
+          "replicate_key": "days_4_offset_0_seed_20260919"
+        },
+        {
+          "days": 4,
+          "offset_days": 1,
+          "seed": 20260918,
+          "rng_seed": 874283251,
+          "support": {
+            "archive_blocks": 1848,
+            "contributing_blocks": 1465,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 9.0,
+            "flights_per_block_p95": 146.0,
+            "largest_block_fraction": 0.011432152659218119,
+            "size_balance_index": 363.45556739429963
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775369,
+              "se": 2848.468849597777,
+              "se_monte_carlo": 62.9200540199393,
+              "low": 609933.2688787173,
+              "high": 619451.9172733218,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.965668170567034
+            },
+            "msd_1000": {
+              "point": 38415664.97888113,
+              "se": 271970.8600361019,
+              "se_monte_carlo": 5972.921308484567,
+              "low": 37965390.26891544,
+              "high": 38868496.18207818,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.9554289831780534
+            },
+            "msd_10000": {
+              "point": 1444562811.0101788,
+              "se": 25560337.744233586,
+              "se_monte_carlo": 555798.9569158728,
+              "low": 1403946195.6418893,
+              "high": 1487899625.346506,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.6273141753690263
+            },
+            "hurst": {
+              "point": 0.8822765078884935,
+              "se": 0.0008552394017874985,
+              "se_monte_carlo": 1.857097581767319e-05,
+              "low": 0.8808940103223017,
+              "high": 0.8837108434454192,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.6502125681238486
+            }
+          },
+          "replicate_key": "days_4_offset_1_seed_20260918"
+        },
+        {
+          "days": 4,
+          "offset_days": 1,
+          "seed": 20260919,
+          "rng_seed": 154321361,
+          "support": {
+            "archive_blocks": 1848,
+            "contributing_blocks": 1465,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 9.0,
+            "flights_per_block_p95": 146.0,
+            "largest_block_fraction": 0.011432152659218119,
+            "size_balance_index": 363.45556739429963
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775369,
+              "se": 2883.2387510584867,
+              "se_monte_carlo": 65.01831088181488,
+              "low": 609873.5179846155,
+              "high": 619359.6675737968,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.9896621449454865
+            },
+            "msd_1000": {
+              "point": 38415664.97888113,
+              "se": 273014.2174957689,
+              "se_monte_carlo": 6041.708851966815,
+              "low": 37961701.9014174,
+              "high": 38862705.01722359,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.9629305641054258
+            },
+            "msd_10000": {
+              "point": 1444562811.0101788,
+              "se": 26392478.831690926,
+              "se_monte_carlo": 556103.2248453799,
+              "low": 1404393133.3608963,
+              "high": 1488178693.7384503,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.6802929349251994
+            },
+            "hurst": {
+              "point": 0.8822765078884935,
+              "se": 0.0008764127809701578,
+              "se_monte_carlo": 1.800554244231992e-05,
+              "low": 0.8809242849172875,
+              "high": 0.88369266407055,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.6910672999847154
+            }
+          },
+          "replicate_key": "days_4_offset_1_seed_20260919"
+        },
+        {
+          "days": 4,
+          "offset_days": 2,
+          "seed": 20260918,
+          "rng_seed": 3391436378,
+          "support": {
+            "archive_blocks": 1854,
+            "contributing_blocks": 1477,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 8.0,
+            "flights_per_block_p95": 142.20000000000005,
+            "largest_block_fraction": 0.013377131372506646,
+            "size_balance_index": 352.1751134845408
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775373,
+              "se": 3022.5070018929637,
+              "se_monte_carlo": 68.88794292762611,
+              "low": 609628.8768326223,
+              "high": 619638.8980534569,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.085768222382329
+            },
+            "msd_1000": {
+              "point": 38415664.9788811,
+              "se": 287472.0123509198,
+              "se_monte_carlo": 6526.84607142075,
+              "low": 37936054.11553071,
+              "high": 38882992.68002718,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.066879902975229
+            },
+            "msd_10000": {
+              "point": 1444562811.0101771,
+              "se": 26973923.022094958,
+              "se_monte_carlo": 623499.9976608261,
+              "low": 1400336172.952422,
+              "high": 1488988219.930343,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.717310926733383
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.0009136124097059524,
+              "se_monte_carlo": 2.1163227173257694e-05,
+              "low": 0.8808121424421214,
+              "high": 0.8837234041063481,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.7628452077156342
+            }
+          },
+          "replicate_key": "days_4_offset_2_seed_20260918"
+        },
+        {
+          "days": 4,
+          "offset_days": 2,
+          "seed": 20260919,
+          "rng_seed": 2030735225,
+          "support": {
+            "archive_blocks": 1854,
+            "contributing_blocks": 1477,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 8.0,
+            "flights_per_block_p95": 142.20000000000005,
+            "largest_block_fraction": 0.013377131372506646,
+            "size_balance_index": 352.1751134845408
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775373,
+              "se": 2859.0305640433576,
+              "se_monte_carlo": 64.18345307734842,
+              "low": 609869.3821898333,
+              "high": 619431.8859338984,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.9729565865576906
+            },
+            "msd_1000": {
+              "point": 38415664.9788811,
+              "se": 275536.15945402614,
+              "se_monte_carlo": 6309.646451491169,
+              "low": 37974462.42822266,
+              "high": 38869853.37932424,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.9810629419580177
+            },
+            "msd_10000": {
+              "point": 1444562811.0101771,
+              "se": 26504732.088182606,
+              "se_monte_carlo": 641785.3500339101,
+              "low": 1402608268.0397,
+              "high": 1488052720.15968,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.6874396055736127
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.0008871001441596566,
+              "se_monte_carlo": 2.126419582106515e-05,
+              "low": 0.8808975249458859,
+              "high": 0.8837297228390207,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.7116889189355657
+            }
+          },
+          "replicate_key": "days_4_offset_2_seed_20260919"
+        },
+        {
+          "days": 8,
+          "offset_days": 0,
+          "seed": 20260918,
+          "rng_seed": 4114073569,
+          "support": {
+            "archive_blocks": 972,
+            "contributing_blocks": 844,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 16.0,
+            "flights_per_block_p95": 234.8499999999999,
+            "largest_block_fraction": 0.016834871307241803,
+            "size_balance_index": 246.10782850948593
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775365,
+              "se": 3165.4322958253324,
+              "se_monte_carlo": 74.90909357008637,
+              "low": 609654.6095789438,
+              "high": 619963.3613910566,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.1843979479949036
+            },
+            "msd_1000": {
+              "point": 38415664.97888114,
+              "se": 301006.16794696584,
+              "se_monte_carlo": 7092.489168150723,
+              "low": 37936587.4597576,
+              "high": 38905099.13542102,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.1641884165117045
+            },
+            "msd_10000": {
+              "point": 1444562811.0101793,
+              "se": 28568871.660343505,
+              "se_monte_carlo": 597743.0096159341,
+              "low": 1397865537.2221029,
+              "high": 1489895960.4039743,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.8188542848055167
+            },
+            "hurst": {
+              "point": 0.8822765078884935,
+              "se": 0.0009653617645373482,
+              "se_monte_carlo": 2.052815573473962e-05,
+              "low": 0.8806816902875401,
+              "high": 0.8837858630783623,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.862697290719042
+            }
+          },
+          "replicate_key": "days_8_offset_0_seed_20260918"
+        },
+        {
+          "days": 8,
+          "offset_days": 0,
+          "seed": 20260919,
+          "rng_seed": 1540111235,
+          "support": {
+            "archive_blocks": 972,
+            "contributing_blocks": 844,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 16.0,
+            "flights_per_block_p95": 234.8499999999999,
+            "largest_block_fraction": 0.016834871307241803,
+            "size_balance_index": 246.10782850948593
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775365,
+              "se": 3225.8970840122483,
+              "se_monte_carlo": 70.00656102487345,
+              "low": 609474.964470711,
+              "high": 620131.4409802809,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.2261234208207274
+            },
+            "msd_1000": {
+              "point": 38415664.97888114,
+              "se": 308074.27055510844,
+              "se_monte_carlo": 6751.306316581859,
+              "low": 37912456.02359921,
+              "high": 38924138.77916273,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.21500699573083
+            },
+            "msd_10000": {
+              "point": 1444562811.0101793,
+              "se": 28459089.38157904,
+              "se_monte_carlo": 615361.6049807493,
+              "low": 1398126125.5713258,
+              "high": 1490531652.2431126,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.811864930430572
+            },
+            "hurst": {
+              "point": 0.8822765078884935,
+              "se": 0.0009658128580631831,
+              "se_monte_carlo": 2.1072377721246548e-05,
+              "low": 0.8807157626550488,
+              "high": 0.8837941668978476,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.8635676905207539
+            }
+          },
+          "replicate_key": "days_8_offset_0_seed_20260919"
+        },
+        {
+          "days": 8,
+          "offset_days": 2,
+          "seed": 20260918,
+          "rng_seed": 2858605360,
+          "support": {
+            "archive_blocks": 970,
+            "contributing_blocks": 846,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 16.0,
+            "flights_per_block_p95": 241.0,
+            "largest_block_fraction": 0.017828971538478164,
+            "size_balance_index": 240.79740697427138
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775374,
+              "se": 3175.854132059764,
+              "se_monte_carlo": 70.01276413043594,
+              "low": 609310.0730531254,
+              "high": 619814.926414123,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.1915898369873976
+            },
+            "msd_1000": {
+              "point": 38415664.978881136,
+              "se": 302051.83185097843,
+              "se_monte_carlo": 6645.384216301102,
+              "low": 37902056.537257105,
+              "high": 38906889.22014087,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.1717065804219775
+            },
+            "msd_10000": {
+              "point": 1444562811.010177,
+              "se": 28188545.019221384,
+              "se_monte_carlo": 612095.8377732002,
+              "low": 1399815753.7892654,
+              "high": 1491790313.7711854,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.79464056194467
+            },
+            "hurst": {
+              "point": 0.8822765078884937,
+              "se": 0.0009497481449901342,
+              "se_monte_carlo": 2.0693918114156495e-05,
+              "low": 0.8807452805166194,
+              "high": 0.8838359591950171,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.8325702980233536
+            }
+          },
+          "replicate_key": "days_8_offset_2_seed_20260918"
+        },
+        {
+          "days": 8,
+          "offset_days": 2,
+          "seed": 20260919,
+          "rng_seed": 2033010628,
+          "support": {
+            "archive_blocks": 970,
+            "contributing_blocks": 846,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 16.0,
+            "flights_per_block_p95": 241.0,
+            "largest_block_fraction": 0.017828971538478164,
+            "size_balance_index": 240.79740697427138
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775374,
+              "se": 3267.7409751046957,
+              "se_monte_carlo": 73.39149879503641,
+              "low": 609192.2756466508,
+              "high": 619991.2319911959,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.254999005984564
+            },
+            "msd_1000": {
+              "point": 38415664.978881136,
+              "se": 307323.5926864487,
+              "se_monte_carlo": 6782.169621043788,
+              "low": 37886933.652696125,
+              "high": 38913723.2217227,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.2096097364023395
+            },
+            "msd_10000": {
+              "point": 1444562811.010177,
+              "se": 27210630.699394487,
+              "se_monte_carlo": 609327.2555743979,
+              "low": 1398808016.2150812,
+              "high": 1485937024.5294735,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.7323810624468714
+            },
+            "hurst": {
+              "point": 0.8822765078884937,
+              "se": 0.0009214253973326031,
+              "se_monte_carlo": 2.0620563512251156e-05,
+              "low": 0.8807167959831282,
+              "high": 0.8836309317199794,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.7779206244342138
+            }
+          },
+          "replicate_key": "days_8_offset_2_seed_20260919"
+        },
+        {
+          "days": 8,
+          "offset_days": 5,
+          "seed": 20260918,
+          "rng_seed": 1608382120,
+          "support": {
+            "archive_blocks": 970,
+            "contributing_blocks": 842,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 15.0,
+            "flights_per_block_p95": 240.94999999999993,
+            "largest_block_fraction": 0.011972424524020487,
+            "size_balance_index": 244.04783470416137
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775373,
+              "se": 3234.422127454398,
+              "se_monte_carlo": 69.73472193598958,
+              "low": 609582.7697333337,
+              "high": 619802.0436946691,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.232006373182766
+            },
+            "msd_1000": {
+              "point": 38415664.97888108,
+              "se": 304715.82865830645,
+              "se_monte_carlo": 6600.073836264809,
+              "low": 37921993.65258888,
+              "high": 38906307.774872705,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.190860310963005
+            },
+            "msd_10000": {
+              "point": 1444562811.0101788,
+              "se": 26833003.95877438,
+              "se_monte_carlo": 586964.1983449821,
+              "low": 1399169389.1054156,
+              "high": 1488893608.6614895,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.7083392303647371
+            },
+            "hurst": {
+              "point": 0.8822765078884937,
+              "se": 0.000910195361850592,
+              "se_monte_carlo": 2.0175009770880176e-05,
+              "low": 0.8807746087548232,
+              "high": 0.883757069634798,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.7562519014378704
+            }
+          },
+          "replicate_key": "days_8_offset_5_seed_20260918"
+        },
+        {
+          "days": 8,
+          "offset_days": 5,
+          "seed": 20260919,
+          "rng_seed": 2893241583,
+          "support": {
+            "archive_blocks": 970,
+            "contributing_blocks": 842,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 15.0,
+            "flights_per_block_p95": 240.94999999999993,
+            "largest_block_fraction": 0.011972424524020487,
+            "size_balance_index": 244.04783470416137
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775373,
+              "se": 3342.2079905252726,
+              "se_monte_carlo": 72.00721263990243,
+              "low": 608926.0337064158,
+              "high": 619986.2393823032,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.306387119984836
+            },
+            "msd_1000": {
+              "point": 38415664.97888108,
+              "se": 309053.6077814913,
+              "se_monte_carlo": 6610.469191364142,
+              "low": 37897332.08851279,
+              "high": 38903389.52855714,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.2220482809498425
+            },
+            "msd_10000": {
+              "point": 1444562811.0101788,
+              "se": 26906676.094395544,
+              "se_monte_carlo": 569422.1375540383,
+              "low": 1401424460.8339074,
+              "high": 1490809102.4508622,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.713029610899833
+            },
+            "hurst": {
+              "point": 0.8822765078884937,
+              "se": 0.0009032571833148357,
+              "se_monte_carlo": 1.892412890473361e-05,
+              "low": 0.8808492599111293,
+              "high": 0.8838267299718128,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.742864457646504
+            }
+          },
+          "replicate_key": "days_8_offset_5_seed_20260919"
+        },
+        {
+          "days": 16,
+          "offset_days": 0,
+          "seed": 20260918,
+          "rng_seed": 414785720,
+          "support": {
+            "archive_blocks": 502,
+            "contributing_blocks": 457,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 30.0,
+            "flights_per_block_p95": 408.4,
+            "largest_block_fraction": 0.01886629351889871,
+            "size_balance_index": 153.8739202026672
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.147377537,
+              "se": 3697.9456328861356,
+              "se_monte_carlo": 81.0603403026467,
+              "low": 608250.8592912364,
+              "high": 620618.7390348308,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.5518741509418525
+            },
+            "msd_1000": {
+              "point": 38415664.97888112,
+              "se": 345350.3269123948,
+              "se_monte_carlo": 7756.441687928066,
+              "low": 37839050.62951583,
+              "high": 38974032.29731914,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.483016152924879
+            },
+            "msd_10000": {
+              "point": 1444562811.010179,
+              "se": 29842892.766182017,
+              "se_monte_carlo": 658499.0337918169,
+              "low": 1395065964.0973299,
+              "high": 1495007350.6771185,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.8999655997652751
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.0010161400613124423,
+              "se_monte_carlo": 2.2850094398912698e-05,
+              "low": 0.8806537064010724,
+              "high": 0.8839830804900074,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.96067568524933
+            }
+          },
+          "replicate_key": "days_16_offset_0_seed_20260918"
+        },
+        {
+          "days": 16,
+          "offset_days": 0,
+          "seed": 20260919,
+          "rng_seed": 546560792,
+          "support": {
+            "archive_blocks": 502,
+            "contributing_blocks": 457,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 30.0,
+            "flights_per_block_p95": 408.4,
+            "largest_block_fraction": 0.01886629351889871,
+            "size_balance_index": 153.8739202026672
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.147377537,
+              "se": 3757.794452098066,
+              "se_monte_carlo": 83.24425802461278,
+              "low": 608170.7963397078,
+              "high": 620503.0777612253,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.593174556592251
+            },
+            "msd_1000": {
+              "point": 38415664.97888112,
+              "se": 346871.5307763397,
+              "se_monte_carlo": 7577.605149343952,
+              "low": 37830760.95640017,
+              "high": 38963533.04967149,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.4939533765836397
+            },
+            "msd_10000": {
+              "point": 1444562811.010179,
+              "se": 29990581.37458063,
+              "se_monte_carlo": 691548.8633554578,
+              "low": 1395563316.394647,
+              "high": 1494544710.5395691,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.909368283266271
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.0010197079732955853,
+              "se_monte_carlo": 2.3377741382036444e-05,
+              "low": 0.8806029184364578,
+              "high": 0.8839640052950585,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.9675600888259617
+            }
+          },
+          "replicate_key": "days_16_offset_0_seed_20260919"
+        },
+        {
+          "days": 16,
+          "offset_days": 5,
+          "seed": 20260918,
+          "rng_seed": 1027023416,
+          "support": {
+            "archive_blocks": 503,
+            "contributing_blocks": 456,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 30.5,
+            "flights_per_block_p95": 435.0,
+            "largest_block_fraction": 0.02163248546668684,
+            "size_balance_index": 145.4470549524255
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775373,
+              "se": 3768.778702477187,
+              "se_monte_carlo": 79.66683637943434,
+              "low": 608665.6905540491,
+              "high": 620962.434655596,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.600754555703291
+            },
+            "msd_1000": {
+              "point": 38415664.9788811,
+              "se": 353766.9236052019,
+              "se_monte_carlo": 7270.903612175468,
+              "low": 37852704.830932446,
+              "high": 38996607.76732877,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.543530198843809
+            },
+            "msd_10000": {
+              "point": 1444562811.0101776,
+              "se": 30688778.59382096,
+              "se_monte_carlo": 640479.697295433,
+              "low": 1394578855.290638,
+              "high": 1496741147.7072556,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.9538194264179045
+            },
+            "hurst": {
+              "point": 0.8822765078884937,
+              "se": 0.001033248198876208,
+              "se_monte_carlo": 2.1361361976834036e-05,
+              "low": 0.8805849353453623,
+              "high": 0.883980397818637,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.9936863996363323
+            }
+          },
+          "replicate_key": "days_16_offset_5_seed_20260918"
+        },
+        {
+          "days": 16,
+          "offset_days": 5,
+          "seed": 20260919,
+          "rng_seed": 818194704,
+          "support": {
+            "archive_blocks": 503,
+            "contributing_blocks": 456,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 30.5,
+            "flights_per_block_p95": 435.0,
+            "largest_block_fraction": 0.02163248546668684,
+            "size_balance_index": 145.4470549524255
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775373,
+              "se": 3685.120893475719,
+              "se_monte_carlo": 85.02142380681862,
+              "low": 608656.9164314148,
+              "high": 621010.4936731213,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.543024069236226
+            },
+            "msd_1000": {
+              "point": 38415664.9788811,
+              "se": 345476.2484494857,
+              "se_monte_carlo": 7871.7839973748505,
+              "low": 37857516.55202469,
+              "high": 39009375.882191084,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.4839215095619878
+            },
+            "msd_10000": {
+              "point": 1444562811.0101776,
+              "se": 30441308.73466992,
+              "se_monte_carlo": 682357.866210126,
+              "low": 1395401437.9659233,
+              "high": 1494852843.7040048,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.9380641099661915
+            },
+            "hurst": {
+              "point": 0.8822765078884937,
+              "se": 0.0010241257632240448,
+              "se_monte_carlo": 2.307297910283287e-05,
+              "low": 0.8805765666675732,
+              "high": 0.8839740377579862,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.9760843598640332
+            }
+          },
+          "replicate_key": "days_16_offset_5_seed_20260919"
+        },
+        {
+          "days": 16,
+          "offset_days": 10,
+          "seed": 20260918,
+          "rng_seed": 4091072338,
+          "support": {
+            "archive_blocks": 505,
+            "contributing_blocks": 454,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 31.0,
+            "flights_per_block_p95": 417.9999999999993,
+            "largest_block_fraction": 0.01828279990491215,
+            "size_balance_index": 157.0281771926931
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775369,
+              "se": 3693.803702235865,
+              "se_monte_carlo": 82.40049802941901,
+              "low": 608477.4707318696,
+              "high": 620803.354626296,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.549015892110943
+            },
+            "msd_1000": {
+              "point": 38415664.97888112,
+              "se": 343913.3640171861,
+              "se_monte_carlo": 7694.253745096373,
+              "low": 37840791.361438274,
+              "high": 38969725.91686649,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.4726846089768637
+            },
+            "msd_10000": {
+              "point": 1444562811.0101783,
+              "se": 29152077.32549298,
+              "se_monte_carlo": 663997.5377155883,
+              "low": 1397841642.418085,
+              "high": 1493284241.6119273,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.8559844219558903
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.0009962077239060651,
+              "se_monte_carlo": 2.3058198077598013e-05,
+              "low": 0.8806127854063658,
+              "high": 0.8838663674370992,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.9222155843333273
+            }
+          },
+          "replicate_key": "days_16_offset_10_seed_20260918"
+        },
+        {
+          "days": 16,
+          "offset_days": 10,
+          "seed": 20260919,
+          "rng_seed": 2101115637,
+          "support": {
+            "archive_blocks": 505,
+            "contributing_blocks": 454,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 31.0,
+            "flights_per_block_p95": 417.9999999999993,
+            "largest_block_fraction": 0.01828279990491215,
+            "size_balance_index": 157.0281771926931
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775369,
+              "se": 3803.8472747378787,
+              "se_monte_carlo": 84.24030881064743,
+              "low": 608507.3868310985,
+              "high": 620907.6553386024,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.6249546364904854
+            },
+            "msd_1000": {
+              "point": 38415664.97888112,
+              "se": 355466.39184938575,
+              "se_monte_carlo": 7714.80266112197,
+              "low": 37826365.589992784,
+              "high": 38987845.10993707,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.555749116194832
+            },
+            "msd_10000": {
+              "point": 1444562811.0101783,
+              "se": 30422047.985689733,
+              "se_monte_carlo": 642359.633442901,
+              "low": 1396060289.861731,
+              "high": 1495703345.5446155,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.936837862873633
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.0010262355027430402,
+              "se_monte_carlo": 2.1998750850827018e-05,
+              "low": 0.8805971310665186,
+              "high": 0.8839543160967924,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.9801551716886956
+            }
+          },
+          "replicate_key": "days_16_offset_10_seed_20260919"
+        },
+        {
+          "days": 32,
+          "offset_days": 0,
+          "seed": 20260918,
+          "rng_seed": 3193813798,
+          "support": {
+            "archive_blocks": 262,
+            "contributing_blocks": 237,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 60.0,
+            "flights_per_block_p95": 716.3999999999996,
+            "largest_block_fraction": 0.024636397034988006,
+            "size_balance_index": 89.3778933413801
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.147377537,
+              "se": 4568.678446180585,
+              "se_monte_carlo": 100.06837114238158,
+              "low": 607368.4117450415,
+              "high": 622073.9134661242,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 3.1527484685257967
+            },
+            "msd_1000": {
+              "point": 38415664.97888109,
+              "se": 422587.2653564707,
+              "se_monte_carlo": 8978.782354921295,
+              "low": 37718046.13253755,
+              "high": 39098359.680539355,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 3.038337954626124
+            },
+            "msd_10000": {
+              "point": 1444562811.010179,
+              "se": 34517022.09586201,
+              "se_monte_carlo": 737724.3674447202,
+              "low": 1388653426.0799387,
+              "high": 1501783659.7740805,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.1975468364377972
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.0011770785781841566,
+              "se_monte_carlo": 2.44271698710273e-05,
+              "low": 0.8803479330785541,
+              "high": 0.8842733567951642,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.2712118493711326
+            }
+          },
+          "replicate_key": "days_32_offset_0_seed_20260918"
+        },
+        {
+          "days": 32,
+          "offset_days": 0,
+          "seed": 20260919,
+          "rng_seed": 3226073026,
+          "support": {
+            "archive_blocks": 262,
+            "contributing_blocks": 237,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 60.0,
+            "flights_per_block_p95": 716.3999999999996,
+            "largest_block_fraction": 0.024636397034988006,
+            "size_balance_index": 89.3778933413801
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.147377537,
+              "se": 4519.817630702489,
+              "se_monte_carlo": 93.79296345433413,
+              "low": 607286.1668805985,
+              "high": 621752.3733312797,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 3.119030652097225
+            },
+            "msd_1000": {
+              "point": 38415664.97888109,
+              "se": 416713.4936478154,
+              "se_monte_carlo": 8853.376567595998,
+              "low": 37717473.36059599,
+              "high": 39089989.33189695,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.996106432329393
+            },
+            "msd_10000": {
+              "point": 1444562811.010179,
+              "se": 34515152.9467274,
+              "se_monte_carlo": 775779.9443307027,
+              "low": 1385696591.8326287,
+              "high": 1501049452.1026776,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.1974278359412835
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.0011729692966831536,
+              "se_monte_carlo": 2.7038751402018583e-05,
+              "low": 0.8802482846801536,
+              "high": 0.8841418820569428,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.2632828554955684
+            }
+          },
+          "replicate_key": "days_32_offset_0_seed_20260919"
+        },
+        {
+          "days": 32,
+          "offset_days": 10,
+          "seed": 20260918,
+          "rng_seed": 3027208726,
+          "support": {
+            "archive_blocks": 260,
+            "contributing_blocks": 238,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 59.0,
+            "flights_per_block_p95": 751.3999999999992,
+            "largest_block_fraction": 0.023707129427527934,
+            "size_balance_index": 88.21288357087927
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.147377537,
+              "se": 4205.692356380356,
+              "se_monte_carlo": 87.42842395812451,
+              "low": 607549.4405872717,
+              "high": 621754.938176276,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.9022594371363013
+            },
+            "msd_1000": {
+              "point": 38415664.97888112,
+              "se": 388301.72935277404,
+              "se_monte_carlo": 8121.237713333411,
+              "low": 37773169.270702064,
+              "high": 39050737.08624296,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.7918301824459584
+            },
+            "msd_10000": {
+              "point": 1444562811.0101795,
+              "se": 32448668.098294858,
+              "se_monte_carlo": 712607.8521538398,
+              "low": 1389960814.166824,
+              "high": 1498015318.3747106,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.0658638432941894
+            },
+            "hurst": {
+              "point": 0.8822765078884935,
+              "se": 0.0010883593611759664,
+              "se_monte_carlo": 2.38885860347349e-05,
+              "low": 0.8804799562482161,
+              "high": 0.8840527491005307,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.1000252007730595
+            }
+          },
+          "replicate_key": "days_32_offset_10_seed_20260918"
+        },
+        {
+          "days": 32,
+          "offset_days": 10,
+          "seed": 20260919,
+          "rng_seed": 4158093623,
+          "support": {
+            "archive_blocks": 260,
+            "contributing_blocks": 238,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 59.0,
+            "flights_per_block_p95": 751.3999999999992,
+            "largest_block_fraction": 0.023707129427527934,
+            "size_balance_index": 88.21288357087927
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.147377537,
+              "se": 4259.627268842662,
+              "se_monte_carlo": 91.4181078299918,
+              "low": 607540.6470293269,
+              "high": 621149.753349948,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.9394787806879936
+            },
+            "msd_1000": {
+              "point": 38415664.97888112,
+              "se": 394106.88120418985,
+              "se_monte_carlo": 8744.348046594023,
+              "low": 37739572.28561172,
+              "high": 39019214.97326141,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.833568338439955
+            },
+            "msd_10000": {
+              "point": 1444562811.0101795,
+              "se": 32092644.301398456,
+              "se_monte_carlo": 783009.5711397545,
+              "low": 1392190855.7202528,
+              "high": 1496767248.1024451,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.043197375532474
+            },
+            "hurst": {
+              "point": 0.8822765078884935,
+              "se": 0.0010807250918715748,
+              "se_monte_carlo": 2.6124721819411496e-05,
+              "low": 0.88042851801363,
+              "high": 0.883949309524457,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.0852946269381567
+            }
+          },
+          "replicate_key": "days_32_offset_10_seed_20260919"
+        },
+        {
+          "days": 32,
+          "offset_days": 21,
+          "seed": 20260918,
+          "rng_seed": 835601224,
+          "support": {
+            "archive_blocks": 261,
+            "contributing_blocks": 241,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 57.0,
+            "flights_per_block_p95": 762.0,
+            "largest_block_fraction": 0.024960560153869427,
+            "size_balance_index": 87.18072915447307
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775372,
+              "se": 4322.0301735234425,
+              "se_monte_carlo": 101.1398983617652,
+              "low": 607654.5676812608,
+              "high": 621617.744346908,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.982541706757647
+            },
+            "msd_1000": {
+              "point": 38415664.97888109,
+              "se": 396089.3141604653,
+              "se_monte_carlo": 9181.63926807199,
+              "low": 37775380.86139102,
+              "high": 39051101.1486557,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.8478217288928653
+            },
+            "msd_10000": {
+              "point": 1444562811.0101788,
+              "se": 33154743.168735884,
+              "se_monte_carlo": 718068.3035984354,
+              "low": 1394493828.5926766,
+              "high": 1500733842.2215757,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.11081653454971
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.001121830174814959,
+              "se_monte_carlo": 2.4942135088205077e-05,
+              "low": 0.8805468464927838,
+              "high": 0.8841620305734086,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.164608237074889
+            }
+          },
+          "replicate_key": "days_32_offset_21_seed_20260918"
+        },
+        {
+          "days": 32,
+          "offset_days": 21,
+          "seed": 20260919,
+          "rng_seed": 2697268677,
+          "support": {
+            "archive_blocks": 261,
+            "contributing_blocks": 241,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 57.0,
+            "flights_per_block_p95": 762.0,
+            "largest_block_fraction": 0.024960560153869427,
+            "size_balance_index": 87.18072915447307
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775372,
+              "se": 4257.568921322417,
+              "se_monte_carlo": 91.56362336465664,
+              "low": 607350.6291416287,
+              "high": 621562.6804383488,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.938058358553105
+            },
+            "msd_1000": {
+              "point": 38415664.97888109,
+              "se": 390049.2864233778,
+              "se_monte_carlo": 8366.181393599316,
+              "low": 37755504.84602202,
+              "high": 39010733.60667395,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.8043948511209877
+            },
+            "msd_10000": {
+              "point": 1444562811.0101788,
+              "se": 33505209.304794796,
+              "se_monte_carlo": 711549.3657704615,
+              "low": 1388896508.4701,
+              "high": 1499245063.088267,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.1331291705133775
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.0011232798135173104,
+              "se_monte_carlo": 2.4082376126543208e-05,
+              "low": 0.8803556785588116,
+              "high": 0.8841079415695037,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.1674053626526617
+            }
+          },
+          "replicate_key": "days_32_offset_21_seed_20260919"
+        },
+        {
+          "days": 64,
+          "offset_days": 0,
+          "seed": 20260918,
+          "rng_seed": 3970097434,
+          "support": {
+            "archive_blocks": 136,
+            "contributing_blocks": 125,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 139.0,
+            "flights_per_block_p95": 1342.8,
+            "largest_block_fraction": 0.034750286344088346,
+            "size_balance_index": 50.38818225287519
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775371,
+              "se": 4837.652074476082,
+              "se_monte_carlo": 112.5840423818898,
+              "low": 606736.4752450378,
+              "high": 622980.4387716509,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 3.338361486529151
+            },
+            "msd_1000": {
+              "point": 38415664.978881106,
+              "se": 436713.8707655639,
+              "se_monte_carlo": 10164.52058376276,
+              "low": 37694685.84039181,
+              "high": 39144102.96865933,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 3.139906091915516
+            },
+            "msd_10000": {
+              "point": 1444562811.0101788,
+              "se": 34562601.616111994,
+              "se_monte_carlo": 779628.800119942,
+              "low": 1384500668.7847087,
+              "high": 1498369587.0811548,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.200448683829311
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.0011744540052599306,
+              "se_monte_carlo": 2.6656271244310748e-05,
+              "low": 0.8802754644745509,
+              "high": 0.8840553248455606,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.2661476495500494
+            }
+          },
+          "replicate_key": "days_64_offset_0_seed_20260918"
+        },
+        {
+          "days": 64,
+          "offset_days": 0,
+          "seed": 20260919,
+          "rng_seed": 1136593524,
+          "support": {
+            "archive_blocks": 136,
+            "contributing_blocks": 125,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 139.0,
+            "flights_per_block_p95": 1342.8,
+            "largest_block_fraction": 0.034750286344088346,
+            "size_balance_index": 50.38818225287519
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775371,
+              "se": 4552.849274141365,
+              "se_monte_carlo": 99.10549034773531,
+              "low": 607050.0864370649,
+              "high": 622286.4303958912,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 3.141825091340781
+            },
+            "msd_1000": {
+              "point": 38415664.978881106,
+              "se": 415569.01308968465,
+              "se_monte_carlo": 9236.36599211561,
+              "low": 37737365.72682161,
+              "high": 39086505.13928714,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.987877791754606
+            },
+            "msd_10000": {
+              "point": 1444562811.0101788,
+              "se": 32719800.30424686,
+              "se_monte_carlo": 708739.6651960232,
+              "low": 1389945900.3329163,
+              "high": 1498042670.0266428,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.0831256371937754
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.001107907718174988,
+              "se_monte_carlo": 2.444645813080921e-05,
+              "low": 0.8805060568882506,
+              "high": 0.8841403652602169,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.13774439885787
+            }
+          },
+          "replicate_key": "days_64_offset_0_seed_20260919"
+        },
+        {
+          "days": 64,
+          "offset_days": 21,
+          "seed": 20260918,
+          "rng_seed": 3176555120,
+          "support": {
+            "archive_blocks": 136,
+            "contributing_blocks": 126,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 136.5,
+            "flights_per_block_p95": 1311.25,
+            "largest_block_fraction": 0.04049877898558555,
+            "size_balance_index": 48.396659824607205
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.147377537,
+              "se": 5209.706526824945,
+              "se_monte_carlo": 115.78243705076699,
+              "low": 605909.9688878498,
+              "high": 622578.2165622701,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 3.5951084033168073
+            },
+            "msd_1000": {
+              "point": 38415664.97888111,
+              "se": 464512.8567562839,
+              "se_monte_carlo": 10238.417733028224,
+              "low": 37599710.239323355,
+              "high": 39152487.10576934,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 3.3397765592957303
+            },
+            "msd_10000": {
+              "point": 1444562811.0101783,
+              "se": 35961341.77692926,
+              "se_monte_carlo": 815930.7811856668,
+              "low": 1384172239.1199868,
+              "high": 1501218839.022726,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.2895003119467603
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.0011900959935013714,
+              "se_monte_carlo": 2.6950872701755768e-05,
+              "low": 0.8802650530517437,
+              "high": 0.8841840115637596,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.2963293805747442
+            }
+          },
+          "replicate_key": "days_64_offset_21_seed_20260918"
+        },
+        {
+          "days": 64,
+          "offset_days": 21,
+          "seed": 20260919,
+          "rng_seed": 147586278,
+          "support": {
+            "archive_blocks": 136,
+            "contributing_blocks": 126,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 136.5,
+            "flights_per_block_p95": 1311.25,
+            "largest_block_fraction": 0.04049877898558555,
+            "size_balance_index": 48.396659824607205
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.147377537,
+              "se": 5349.925971411589,
+              "se_monte_carlo": 130.43982393513951,
+              "low": 606142.511849414,
+              "high": 623496.130211403,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 3.6918708794651676
+            },
+            "msd_1000": {
+              "point": 38415664.97888111,
+              "se": 474642.9216728988,
+              "se_monte_carlo": 11672.236460577646,
+              "low": 37669975.836262286,
+              "high": 39178183.56500487,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 3.4126101802828996
+            },
+            "msd_10000": {
+              "point": 1444562811.0101783,
+              "se": 35511238.17345544,
+              "se_monte_carlo": 802465.1754370447,
+              "low": 1386138067.6332629,
+              "high": 1506328581.4357007,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.260844197084473
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.0011655349840847618,
+              "se_monte_carlo": 2.5872927871204582e-05,
+              "low": 0.8803066562583705,
+              "high": 0.8842055183444365,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.2489381047046364
+            }
+          },
+          "replicate_key": "days_64_offset_21_seed_20260919"
+        },
+        {
+          "days": 64,
+          "offset_days": 42,
+          "seed": 20260918,
+          "rng_seed": 3015733775,
+          "support": {
+            "archive_blocks": 136,
+            "contributing_blocks": 125,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 122.0,
+            "flights_per_block_p95": 1234.8,
+            "largest_block_fraction": 0.03609016056879822,
+            "size_balance_index": 50.872495646464515
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775371,
+              "se": 4984.169196968608,
+              "se_monte_carlo": 120.22898254130676,
+              "low": 605707.0676058199,
+              "high": 621988.5117846542,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 3.4394698571428224
+            },
+            "msd_1000": {
+              "point": 38415664.9788811,
+              "se": 450624.4615465198,
+              "se_monte_carlo": 10435.814477881893,
+              "low": 37631633.1724366,
+              "high": 39066207.578743845,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 3.2399211169906277
+            },
+            "msd_10000": {
+              "point": 1444562811.010179,
+              "se": 35782959.53939949,
+              "se_monte_carlo": 769470.8673154588,
+              "low": 1383792683.236351,
+              "high": 1500744313.5489454,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.2781435002069887
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.0012084806506817267,
+              "se_monte_carlo": 2.571022674524862e-05,
+              "low": 0.8801682353505063,
+              "high": 0.8841081202537141,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.3318031815669125
+            }
+          },
+          "replicate_key": "days_64_offset_42_seed_20260918"
+        },
+        {
+          "days": 64,
+          "offset_days": 42,
+          "seed": 20260919,
+          "rng_seed": 2211860846,
+          "support": {
+            "archive_blocks": 136,
+            "contributing_blocks": 125,
+            "cohort_flights": 46273,
+            "flights_per_block_median": 122.0,
+            "flights_per_block_p95": 1234.8,
+            "largest_block_fraction": 0.03609016056879822,
+            "size_balance_index": 50.872495646464515
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 614697.1473775371,
+              "se": 5082.883854476819,
+              "se_monte_carlo": 115.09882896886893,
+              "low": 606344.6417417368,
+              "high": 622693.9541596567,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 3.5075907566428173
+            },
+            "msd_1000": {
+              "point": 38415664.9788811,
+              "se": 463468.2055842992,
+              "se_monte_carlo": 10719.099851337223,
+              "low": 37650587.67904483,
+              "high": 39137032.14403288,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 3.3322656767742034
+            },
+            "msd_10000": {
+              "point": 1444562811.010179,
+              "se": 37192554.18252679,
+              "se_monte_carlo": 869301.9566900685,
+              "low": 1381631806.0044398,
+              "high": 1501352606.6269777,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.367886185426506
+            },
+            "hurst": {
+              "point": 0.8822765078884934,
+              "se": 0.001253258158168528,
+              "se_monte_carlo": 2.8624859306883878e-05,
+              "low": 0.8801252556980884,
+              "high": 0.8841576466562576,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.4182028557043993
+            }
+          },
+          "replicate_key": "days_64_offset_42_seed_20260919"
+        }
+      ],
+      "missing_archive_dates": 3,
+      "missing_cohort_dates": 0
+    },
+    "hang": {
+      "provenance": {
+        "flights.parquet": {
+          "path": "/Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917/hang/flights.parquet",
+          "bytes": 269386,
+          "sha256": "cc2f8ebddab6b768293894f5e2b1b8a7d058e24fa74252fc1f21233afc64f567"
+        },
+        "flight-msd.npy": {
+          "path": "/Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917/hang/flight-msd.npy",
+          "bytes": 10471808,
+          "sha256": "cd3c3be790fee5168ad41b1b92c9f3b2ff128a396bbf6579ea5d816c05725065"
+        },
+        "msd.npz": {
+          "path": "/Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917/hang/msd.npz",
+          "bytes": 2892682,
+          "sha256": "68c86a7a5fd85e8495df2929e6a2d0850d62abd4c47210d8ff07d3b2d7b44c04"
+        },
+        "cluster-draws.npy": {
+          "path": "/Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917/hang/cluster-draws.npy",
+          "bytes": 8536656,
+          "sha256": "627deda8229110a21de442521a1759080ce54c2c6d385da2fa2de71cb46d1a91"
+        },
+        "cohort-10000.json": {
+          "path": "/Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917/hang/cohort-10000.json",
+          "bytes": 515250,
+          "sha256": "858017858b8960385e00e2cd505907fb3d31107d3722764414d447ec8d727a35"
+        },
+        "cohort_sha256": "20c65317ba5058f859d8d710baf7be70e2ed196daf391ae1e745cda77f1320af"
+      },
+      "resamples": 1000,
+      "baseline": {
+        "support": {
+          "archive_blocks": 4264,
+          "contributing_blocks": 1768,
+          "cohort_flights": 2326,
+          "flights_per_block_median": 1.0,
+          "flights_per_block_p95": 3.0,
+          "largest_block_fraction": 0.005588993981083405,
+          "size_balance_index": 1230.7270245677887
+        },
+        "statistics": {
+          "msd_100": {
+            "point": 1542699.1148747394,
+            "se": 15536.86779656639,
+            "se_monte_carlo": 316.0743808036249,
+            "low": 1517909.4996335255,
+            "high": 1569031.5973930594,
+            "valid_replicates": 1000,
+            "invalid_replicates": 0
+          },
+          "msd_1000": {
+            "point": 86537905.27886862,
+            "se": 1122361.0075672176,
+            "se_monte_carlo": 23263.15752933741,
+            "low": 84787687.93525508,
+            "high": 88410970.14159966,
+            "valid_replicates": 1000,
+            "invalid_replicates": 0
+          },
+          "msd_10000": {
+            "point": 2121003932.6302078,
+            "se": 78958847.0956659,
+            "se_monte_carlo": 1860529.3830530075,
+            "low": 1995400307.6070714,
+            "high": 2258420486.6360183,
+            "valid_replicates": 1000,
+            "invalid_replicates": 0
+          },
+          "hurst": {
+            "point": 0.8518430396421116,
+            "se": 0.001606139374777948,
+            "se_monte_carlo": 3.707269815677379e-05,
+            "low": 0.8491487385657572,
+            "high": 0.8545092040692838,
+            "valid_replicates": 1000,
+            "invalid_replicates": 0
+          }
+        }
+      },
+      "configurations": [
+        {
+          "days": 1,
+          "offset_days": 0,
+          "seed": 20260918,
+          "rng_seed": 366913783,
+          "support": {
+            "archive_blocks": 1881,
+            "contributing_blocks": 1017,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 1.0,
+            "flights_per_block_p95": 7.0,
+            "largest_block_fraction": 0.006878761822871883,
+            "size_balance_index": 534.5066192452085
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747413,
+              "se": 16063.929075885135,
+              "se_monte_carlo": 355.09153164895025,
+              "low": 1516903.0017509828,
+              "high": 1568810.4535257837,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.033923264728765
+            },
+            "msd_1000": {
+              "point": 86537905.27886848,
+              "se": 1136565.8152795031,
+              "se_monte_carlo": 25435.24319949534,
+              "low": 84731577.01391335,
+              "high": 88462249.63242547,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0126561842548996
+            },
+            "msd_10000": {
+              "point": 2121003932.630214,
+              "se": 81513590.69845572,
+              "se_monte_carlo": 1787932.0119455277,
+              "low": 1993650608.1220844,
+              "high": 2259493061.3279653,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0323553812746848
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.00162932091352276,
+              "se_monte_carlo": 3.473659157498226e-05,
+              "low": 0.8491496418337803,
+              "high": 0.8545355236178704,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0144330804093615
+            }
+          },
+          "replicate_key": "days_1_offset_0_seed_20260918"
+        },
+        {
+          "days": 1,
+          "offset_days": 0,
+          "seed": 20260919,
+          "rng_seed": 3674443743,
+          "support": {
+            "archive_blocks": 1881,
+            "contributing_blocks": 1017,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 1.0,
+            "flights_per_block_p95": 7.0,
+            "largest_block_fraction": 0.006878761822871883,
+            "size_balance_index": 534.5066192452085
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747413,
+              "se": 15849.979057556977,
+              "se_monte_carlo": 346.17801830908763,
+              "low": 1515504.3501503454,
+              "high": 1566534.15101714,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0201527917396442
+            },
+            "msd_1000": {
+              "point": 86537905.27886848,
+              "se": 1122094.4471645725,
+              "se_monte_carlo": 24372.89121983114,
+              "low": 84617504.21838725,
+              "high": 88280663.74528734,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 0.99976250029995
+            },
+            "msd_10000": {
+              "point": 2121003932.630214,
+              "se": 82069646.0932212,
+              "se_monte_carlo": 1961212.4876434577,
+              "low": 1995261960.3325448,
+              "high": 2261653161.6390343,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0393977256758358
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0016419717114893096,
+              "se_monte_carlo": 3.778695050826199e-05,
+              "low": 0.8492018141128992,
+              "high": 0.8545081792416032,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0223096060491734
+            }
+          },
+          "replicate_key": "days_1_offset_0_seed_20260919"
+        },
+        {
+          "days": 2,
+          "offset_days": 0,
+          "seed": 20260918,
+          "rng_seed": 1260699777,
+          "support": {
+            "archive_blocks": 1368,
+            "contributing_blocks": 812,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 2.0,
+            "flights_per_block_p95": 9.0,
+            "largest_block_fraction": 0.009458297506448839,
+            "size_balance_index": 397.3469447708579
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.114874739,
+              "se": 16649.347434371677,
+              "se_monte_carlo": 366.0522624757296,
+              "low": 1516581.1537437274,
+              "high": 1570896.2097363728,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0716025683150334
+            },
+            "msd_1000": {
+              "point": 86537905.27886847,
+              "se": 1167531.051558725,
+              "se_monte_carlo": 25746.029514954105,
+              "low": 84701540.64020176,
+              "high": 88523732.35676374,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0402455570774114
+            },
+            "msd_10000": {
+              "point": 2121003932.630212,
+              "se": 83234872.98952654,
+              "se_monte_carlo": 1804502.2868613696,
+              "low": 1987728414.8518686,
+              "high": 2252695169.2026763,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0541551206881206
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0016721554244693178,
+              "se_monte_carlo": 3.589323010086289e-05,
+              "low": 0.8489745394275514,
+              "high": 0.8544721660152961,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0411023169770037
+            }
+          },
+          "replicate_key": "days_2_offset_0_seed_20260918"
+        },
+        {
+          "days": 2,
+          "offset_days": 0,
+          "seed": 20260919,
+          "rng_seed": 3780788155,
+          "support": {
+            "archive_blocks": 1368,
+            "contributing_blocks": 812,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 2.0,
+            "flights_per_block_p95": 9.0,
+            "largest_block_fraction": 0.009458297506448839,
+            "size_balance_index": 397.3469447708579
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.114874739,
+              "se": 16664.957139451828,
+              "se_monte_carlo": 373.3172192874228,
+              "low": 1515280.5670907164,
+              "high": 1569031.2922362513,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0726072563438265
+            },
+            "msd_1000": {
+              "point": 86537905.27886847,
+              "se": 1180692.506529002,
+              "se_monte_carlo": 27174.95906168462,
+              "low": 84560306.08090957,
+              "high": 88488564.99159521,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0519721360315442
+            },
+            "msd_10000": {
+              "point": 2121003932.630212,
+              "se": 84655942.3474028,
+              "se_monte_carlo": 1891938.8595705861,
+              "low": 1990983599.598133,
+              "high": 2269066989.9234667,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0721527157664086
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0016732277623357976,
+              "se_monte_carlo": 3.758497305339982e-05,
+              "low": 0.8492303152201243,
+              "high": 0.8547016163795117,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0417699663001692
+            }
+          },
+          "replicate_key": "days_2_offset_0_seed_20260919"
+        },
+        {
+          "days": 2,
+          "offset_days": 1,
+          "seed": 20260918,
+          "rng_seed": 3581531793,
+          "support": {
+            "archive_blocks": 1365,
+            "contributing_blocks": 797,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 2.0,
+            "flights_per_block_p95": 9.0,
+            "largest_block_fraction": 0.010318142734307825,
+            "size_balance_index": 373.5862449937854
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747401,
+              "se": 18894.64891571652,
+              "se_monte_carlo": 420.76933622849685,
+              "low": 1513359.7566150401,
+              "high": 1575137.6522652758,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.2161169910895548
+            },
+            "msd_1000": {
+              "point": 86537905.27886851,
+              "se": 1290537.5474609453,
+              "se_monte_carlo": 28453.35653572467,
+              "low": 84529532.68481614,
+              "high": 88822392.99111086,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1498417521277402
+            },
+            "msd_10000": {
+              "point": 2121003932.6302106,
+              "se": 81969395.6711391,
+              "se_monte_carlo": 1882004.4915060734,
+              "low": 1996754266.2722816,
+              "high": 2268296586.945988,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0381280715994454
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0016296050585325526,
+              "se_monte_carlo": 3.794748605655162e-05,
+              "low": 0.8492616813304379,
+              "high": 0.8545691667575711,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0146099922105756
+            }
+          },
+          "replicate_key": "days_2_offset_1_seed_20260918"
+        },
+        {
+          "days": 2,
+          "offset_days": 1,
+          "seed": 20260919,
+          "rng_seed": 1167879531,
+          "support": {
+            "archive_blocks": 1365,
+            "contributing_blocks": 797,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 2.0,
+            "flights_per_block_p95": 9.0,
+            "largest_block_fraction": 0.010318142734307825,
+            "size_balance_index": 373.5862449937854
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747401,
+              "se": 18399.440204293114,
+              "se_monte_carlo": 407.1224546237265,
+              "low": 1513976.153281272,
+              "high": 1574504.2994427478,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1842438543732312
+            },
+            "msd_1000": {
+              "point": 86537905.27886851,
+              "se": 1294198.9921745928,
+              "se_monte_carlo": 29222.103055358573,
+              "low": 84544229.08641471,
+              "high": 88832247.65610974,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1531040221896554
+            },
+            "msd_10000": {
+              "point": 2121003932.6302106,
+              "se": 82656233.66921236,
+              "se_monte_carlo": 1917921.2580048628,
+              "low": 1990343305.439843,
+              "high": 2263424520.7254095,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.046826754816553
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0016310853853501665,
+              "se_monte_carlo": 3.788355955144179e-05,
+              "low": 0.8491490693260022,
+              "high": 0.8546201268501358,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0155316599318582
+            }
+          },
+          "replicate_key": "days_2_offset_1_seed_20260919"
+        },
+        {
+          "days": 4,
+          "offset_days": 0,
+          "seed": 20260918,
+          "rng_seed": 1808375059,
+          "support": {
+            "archive_blocks": 936,
+            "contributing_blocks": 604,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 2.0,
+            "flights_per_block_p95": 11.850000000000023,
+            "largest_block_fraction": 0.015047291487532245,
+            "size_balance_index": 279.0528161749536
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747394,
+              "se": 19846.223934726906,
+              "se_monte_carlo": 432.7891385075898,
+              "low": 1510334.496149545,
+              "high": 1574913.1631693612,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.2773632494390454
+            },
+            "msd_1000": {
+              "point": 86537905.27886856,
+              "se": 1373101.787571712,
+              "se_monte_carlo": 29716.29351786895,
+              "low": 84292256.62498827,
+              "high": 88795230.45853478,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.2234047497319864
+            },
+            "msd_10000": {
+              "point": 2121003932.630212,
+              "se": 88480734.08002514,
+              "se_monte_carlo": 1855342.4154303577,
+              "low": 1974201322.7460551,
+              "high": 2266910608.036432,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1205930346579478
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0017594253743498465,
+              "se_monte_carlo": 3.686482677562199e-05,
+              "low": 0.8488872062737632,
+              "high": 0.8545027701583611,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0954375454453265
+            }
+          },
+          "replicate_key": "days_4_offset_0_seed_20260918"
+        },
+        {
+          "days": 4,
+          "offset_days": 0,
+          "seed": 20260919,
+          "rng_seed": 3341015763,
+          "support": {
+            "archive_blocks": 936,
+            "contributing_blocks": 604,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 2.0,
+            "flights_per_block_p95": 11.850000000000023,
+            "largest_block_fraction": 0.015047291487532245,
+            "size_balance_index": 279.0528161749536
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747394,
+              "se": 18445.13628169723,
+              "se_monte_carlo": 428.0906593890461,
+              "low": 1514218.5560164992,
+              "high": 1572172.931637676,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1871849927031985
+            },
+            "msd_1000": {
+              "point": 86537905.27886856,
+              "se": 1263681.1369603432,
+              "se_monte_carlo": 31621.66320367156,
+              "low": 84569034.57958291,
+              "high": 88661022.53802875,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1259132564658898
+            },
+            "msd_10000": {
+              "point": 2121003932.630212,
+              "se": 83473603.43336359,
+              "se_monte_carlo": 1944598.3686092682,
+              "low": 1991269028.5095606,
+              "high": 2261891516.4032254,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0571786000399377
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0016786364978887364,
+              "se_monte_carlo": 3.8596383867795624e-05,
+              "low": 0.8491128230971057,
+              "high": 0.8546490044205634,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0451375044091744
+            }
+          },
+          "replicate_key": "days_4_offset_0_seed_20260919"
+        },
+        {
+          "days": 4,
+          "offset_days": 1,
+          "seed": 20260918,
+          "rng_seed": 874283251,
+          "support": {
+            "archive_blocks": 950,
+            "contributing_blocks": 596,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 2.0,
+            "flights_per_block_p95": 11.25,
+            "largest_block_fraction": 0.014617368873602751,
+            "size_balance_index": 266.38483505662236
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747404,
+              "se": 19616.214945286454,
+              "se_monte_carlo": 449.3772173120681,
+              "low": 1508670.45931601,
+              "high": 1574098.1228639353,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.2625591722947909
+            },
+            "msd_1000": {
+              "point": 86537905.27886848,
+              "se": 1347029.7863733724,
+              "se_monte_carlo": 31637.80348932749,
+              "low": 84223413.76894847,
+              "high": 88621977.01878086,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.2001751462242416
+            },
+            "msd_10000": {
+              "point": 2121003932.63021,
+              "se": 85099336.14936666,
+              "se_monte_carlo": 2065265.186972542,
+              "low": 1977454821.000753,
+              "high": 2246909049.5047455,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0777682207829224
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.001708187590284611,
+              "se_monte_carlo": 4.1036413827733554e-05,
+              "low": 0.8489045156591315,
+              "high": 0.8544620345927069,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.063536338819146
+            }
+          },
+          "replicate_key": "days_4_offset_1_seed_20260918"
+        },
+        {
+          "days": 4,
+          "offset_days": 1,
+          "seed": 20260919,
+          "rng_seed": 154321361,
+          "support": {
+            "archive_blocks": 950,
+            "contributing_blocks": 596,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 2.0,
+            "flights_per_block_p95": 11.25,
+            "largest_block_fraction": 0.014617368873602751,
+            "size_balance_index": 266.38483505662236
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747404,
+              "se": 19285.64325452658,
+              "se_monte_carlo": 414.01178556621,
+              "low": 1513091.524292618,
+              "high": 1575408.1198963115,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.2412825742643354
+            },
+            "msd_1000": {
+              "point": 86537905.27886848,
+              "se": 1335840.162923124,
+              "se_monte_carlo": 28948.830924309194,
+              "low": 84440935.7771001,
+              "high": 88795903.43363875,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1902054275911054
+            },
+            "msd_10000": {
+              "point": 2121003932.63021,
+              "se": 86366683.82458737,
+              "se_monte_carlo": 1912110.0506147463,
+              "low": 1986815978.9992158,
+              "high": 2272387042.9200373,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0938189576140365
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0017177695618162312,
+              "se_monte_carlo": 3.873800494162036e-05,
+              "low": 0.8492646024908175,
+              "high": 0.8547773770386732,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0695021794442443
+            }
+          },
+          "replicate_key": "days_4_offset_1_seed_20260919"
+        },
+        {
+          "days": 4,
+          "offset_days": 2,
+          "seed": 20260918,
+          "rng_seed": 3391436378,
+          "support": {
+            "archive_blocks": 933,
+            "contributing_blocks": 606,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 2.0,
+            "flights_per_block_p95": 12.0,
+            "largest_block_fraction": 0.012467755803955288,
+            "size_balance_index": 271.21896932023265
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747401,
+              "se": 19949.402677811187,
+              "se_monte_carlo": 441.37529426433014,
+              "low": 1510039.3428494441,
+              "high": 1576884.65420592,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.2840041467186813
+            },
+            "msd_1000": {
+              "point": 86537905.27886847,
+              "se": 1400903.906927629,
+              "se_monte_carlo": 31255.470549574795,
+              "low": 84287942.52978133,
+              "high": 88884705.69618438,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.248175852049751
+            },
+            "msd_10000": {
+              "point": 2121003932.6302116,
+              "se": 89911488.60893314,
+              "se_monte_carlo": 2093053.5628530297,
+              "low": 1982106292.7520537,
+              "high": 2269966020.60702,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1387132907348192
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0017707141314254706,
+              "se_monte_carlo": 4.118291915688579e-05,
+              "low": 0.8488814862440008,
+              "high": 0.8546853553786756,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1024660494798437
+            }
+          },
+          "replicate_key": "days_4_offset_2_seed_20260918"
+        },
+        {
+          "days": 4,
+          "offset_days": 2,
+          "seed": 20260919,
+          "rng_seed": 2030735225,
+          "support": {
+            "archive_blocks": 933,
+            "contributing_blocks": 606,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 2.0,
+            "flights_per_block_p95": 12.0,
+            "largest_block_fraction": 0.012467755803955288,
+            "size_balance_index": 271.21896932023265
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747401,
+              "se": 20095.38609842534,
+              "se_monte_carlo": 467.37194304242354,
+              "low": 1509521.544333704,
+              "high": 1574233.2974068834,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.2934000830506116
+            },
+            "msd_1000": {
+              "point": 86537905.27886847,
+              "se": 1393772.4382741416,
+              "se_monte_carlo": 32482.879048346076,
+              "low": 84287810.53037678,
+              "high": 88721468.43135406,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.241821863800511
+            },
+            "msd_10000": {
+              "point": 2121003932.6302116,
+              "se": 88447343.51371281,
+              "se_monte_carlo": 2003370.4733457337,
+              "low": 1976241557.457481,
+              "high": 2270577007.0383096,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.120170148970776
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0017825885423048502,
+              "se_monte_carlo": 4.028045923285016e-05,
+              "low": 0.8489380452198474,
+              "high": 0.8548542176815912,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1098591879993582
+            }
+          },
+          "replicate_key": "days_4_offset_2_seed_20260919"
+        },
+        {
+          "days": 8,
+          "offset_days": 0,
+          "seed": 20260918,
+          "rng_seed": 4114073569,
+          "support": {
+            "archive_blocks": 596,
+            "contributing_blocks": 411,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 3.0,
+            "flights_per_block_p95": 17.5,
+            "largest_block_fraction": 0.017196904557179708,
+            "size_balance_index": 185.9456970030245
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.114874741,
+              "se": 22184.79122834069,
+              "se_monte_carlo": 487.93555391328755,
+              "low": 1505405.3085757333,
+              "high": 1579836.4126751001,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.42788054315835
+            },
+            "msd_1000": {
+              "point": 86537905.27886857,
+              "se": 1530527.982611129,
+              "se_monte_carlo": 34005.912025299614,
+              "low": 84038374.43001106,
+              "high": 89049720.14521405,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.3636681711962153
+            },
+            "msd_10000": {
+              "point": 2121003932.63021,
+              "se": 88103181.51806964,
+              "se_monte_carlo": 1883808.9173940793,
+              "low": 1975500655.0265942,
+              "high": 2265291634.9595947,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1158113974400428
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0017567636997793455,
+              "se_monte_carlo": 3.712968474971478e-05,
+              "low": 0.8488531015398457,
+              "high": 0.8546350357130161,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0937803576493614
+            }
+          },
+          "replicate_key": "days_8_offset_0_seed_20260918"
+        },
+        {
+          "days": 8,
+          "offset_days": 0,
+          "seed": 20260919,
+          "rng_seed": 1540111235,
+          "support": {
+            "archive_blocks": 596,
+            "contributing_blocks": 411,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 3.0,
+            "flights_per_block_p95": 17.5,
+            "largest_block_fraction": 0.017196904557179708,
+            "size_balance_index": 185.9456970030245
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.114874741,
+              "se": 21355.37948811935,
+              "se_monte_carlo": 474.54271729483185,
+              "low": 1507568.1067487625,
+              "high": 1578955.8224379523,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.3744970844663322
+            },
+            "msd_1000": {
+              "point": 86537905.27886857,
+              "se": 1472496.584764296,
+              "se_monte_carlo": 32364.1702757621,
+              "low": 84171204.03600815,
+              "high": 89073278.1467024,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.3119634189323963
+            },
+            "msd_10000": {
+              "point": 2121003932.63021,
+              "se": 91709517.80923684,
+              "se_monte_carlo": 1993764.8775503614,
+              "low": 1977191823.951497,
+              "high": 2280775765.020934,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.16148501634177
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0018492266625609653,
+              "se_monte_carlo": 3.911121736727871e-05,
+              "low": 0.8489238375883158,
+              "high": 0.8550029658017234,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1513488129363771
+            }
+          },
+          "replicate_key": "days_8_offset_0_seed_20260919"
+        },
+        {
+          "days": 8,
+          "offset_days": 2,
+          "seed": 20260918,
+          "rng_seed": 2858605360,
+          "support": {
+            "archive_blocks": 595,
+            "contributing_blocks": 424,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 3.0,
+            "flights_per_block_p95": 17.849999999999966,
+            "largest_block_fraction": 0.021926053310404127,
+            "size_balance_index": 180.5712569254389
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747408,
+              "se": 22349.959425683763,
+              "se_monte_carlo": 476.29504246188685,
+              "low": 1504981.8592795427,
+              "high": 1578492.19498748,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.438511269988604
+            },
+            "msd_1000": {
+              "point": 86537905.2788685,
+              "se": 1528317.519491841,
+              "se_monte_carlo": 32825.20217367142,
+              "low": 83945967.30841948,
+              "high": 88956612.10603324,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.3616986951502865
+            },
+            "msd_10000": {
+              "point": 2121003932.630211,
+              "se": 95767899.51323217,
+              "se_monte_carlo": 2042718.9343235153,
+              "low": 1969864184.8269022,
+              "high": 2280994901.236408,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.2128837113996935
+            },
+            "hurst": {
+              "point": 0.8518430396421118,
+              "se": 0.001911329582410112,
+              "se_monte_carlo": 4.1265846114536716e-05,
+              "low": 0.8487729805980545,
+              "high": 0.8550027590972913,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.190014772332169
+            }
+          },
+          "replicate_key": "days_8_offset_2_seed_20260918"
+        },
+        {
+          "days": 8,
+          "offset_days": 2,
+          "seed": 20260919,
+          "rng_seed": 2033010628,
+          "support": {
+            "archive_blocks": 595,
+            "contributing_blocks": 424,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 3.0,
+            "flights_per_block_p95": 17.849999999999966,
+            "largest_block_fraction": 0.021926053310404127,
+            "size_balance_index": 180.5712569254389
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747408,
+              "se": 22150.04217016149,
+              "se_monte_carlo": 490.38765145486764,
+              "low": 1508128.7915634338,
+              "high": 1580441.8637474538,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.4256439882340117
+            },
+            "msd_1000": {
+              "point": 86537905.2788685,
+              "se": 1534675.13059854,
+              "se_monte_carlo": 33393.22784057708,
+              "low": 84100829.75364561,
+              "high": 89133128.94931151,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.367363192637133
+            },
+            "msd_10000": {
+              "point": 2121003932.630211,
+              "se": 98065647.00370537,
+              "se_monte_carlo": 2380206.836965426,
+              "low": 1967185983.8645847,
+              "high": 2287756915.9441833,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.2419842818232874
+            },
+            "hurst": {
+              "point": 0.8518430396421118,
+              "se": 0.001961470501393817,
+              "se_monte_carlo": 4.7302912657245854e-05,
+              "low": 0.8487118164878802,
+              "high": 0.8551335711655211,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.2212330587219395
+            }
+          },
+          "replicate_key": "days_8_offset_2_seed_20260919"
+        },
+        {
+          "days": 8,
+          "offset_days": 5,
+          "seed": 20260918,
+          "rng_seed": 1608382120,
+          "support": {
+            "archive_blocks": 603,
+            "contributing_blocks": 414,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 3.0,
+            "flights_per_block_p95": 18.0,
+            "largest_block_fraction": 0.019776440240756664,
+            "size_balance_index": 184.21096356826695
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747404,
+              "se": 20620.344854446288,
+              "se_monte_carlo": 464.11331392035186,
+              "low": 1509770.1463852327,
+              "high": 1576623.1146587199,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.3271880229941413
+            },
+            "msd_1000": {
+              "point": 86537905.2788685,
+              "se": 1389680.9226510075,
+              "se_monte_carlo": 30491.65200814088,
+              "low": 84311412.3421177,
+              "high": 88839509.82897015,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.2381764096235144
+            },
+            "msd_10000": {
+              "point": 2121003932.6302094,
+              "se": 88621823.23842596,
+              "se_monte_carlo": 1984184.1403470992,
+              "low": 1979284131.7250745,
+              "high": 2268734662.296096,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1223799041930345
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0017524941115708715,
+              "se_monte_carlo": 4.071461196635707e-05,
+              "low": 0.8489758226572414,
+              "high": 0.8547067562654198,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0911220651776607
+            }
+          },
+          "replicate_key": "days_8_offset_5_seed_20260918"
+        },
+        {
+          "days": 8,
+          "offset_days": 5,
+          "seed": 20260919,
+          "rng_seed": 2893241583,
+          "support": {
+            "archive_blocks": 603,
+            "contributing_blocks": 414,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 3.0,
+            "flights_per_block_p95": 18.0,
+            "largest_block_fraction": 0.019776440240756664,
+            "size_balance_index": 184.21096356826695
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747404,
+              "se": 21501.71096818295,
+              "se_monte_carlo": 473.3575218177622,
+              "low": 1509106.1726661313,
+              "high": 1580082.1104774147,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.3839154229615558
+            },
+            "msd_1000": {
+              "point": 86537905.2788685,
+              "se": 1435633.8595032569,
+              "se_monte_carlo": 30963.827182339926,
+              "low": 84329012.21490002,
+              "high": 88955178.28705561,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.2791195077376007
+            },
+            "msd_10000": {
+              "point": 2121003932.6302094,
+              "se": 85147256.03704427,
+              "se_monte_carlo": 1856396.1530678165,
+              "low": 1988575733.0315619,
+              "high": 2272965317.6332335,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0783751177861114
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0016866357604258515,
+              "se_monte_carlo": 3.819636545064874e-05,
+              "low": 0.849045807919713,
+              "high": 0.8546877358762296,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0501179330461483
+            }
+          },
+          "replicate_key": "days_8_offset_5_seed_20260919"
+        },
+        {
+          "days": 16,
+          "offset_days": 0,
+          "seed": 20260918,
+          "rng_seed": 414785720,
+          "support": {
+            "archive_blocks": 357,
+            "contributing_blocks": 260,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 5.0,
+            "flights_per_block_p95": 30.0,
+            "largest_block_fraction": 0.027944969905417026,
+            "size_balance_index": 118.16441707072032
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747408,
+              "se": 21927.836987903855,
+              "se_monte_carlo": 498.9289950320249,
+              "low": 1508875.5574266878,
+              "high": 1579041.8886057169,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.4113421878217856
+            },
+            "msd_1000": {
+              "point": 86537905.2788685,
+              "se": 1467961.8056933847,
+              "se_monte_carlo": 33023.58450599458,
+              "low": 84295332.30525279,
+              "high": 89009102.53009872,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.307923026366781
+            },
+            "msd_10000": {
+              "point": 2121003932.6302087,
+              "se": 84041717.58269279,
+              "se_monte_carlo": 1925396.8589137637,
+              "low": 1988354122.6648662,
+              "high": 2261947015.8825397,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0643736664603083
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0017440922388784947,
+              "se_monte_carlo": 4.033226303690467e-05,
+              "low": 0.848932972544407,
+              "high": 0.8548246807138777,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0858909670399053
+            }
+          },
+          "replicate_key": "days_16_offset_0_seed_20260918"
+        },
+        {
+          "days": 16,
+          "offset_days": 0,
+          "seed": 20260919,
+          "rng_seed": 546560792,
+          "support": {
+            "archive_blocks": 357,
+            "contributing_blocks": 260,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 5.0,
+            "flights_per_block_p95": 30.0,
+            "largest_block_fraction": 0.027944969905417026,
+            "size_balance_index": 118.16441707072032
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747408,
+              "se": 23720.36782751798,
+              "se_monte_carlo": 532.4312095153886,
+              "low": 1504854.6380232705,
+              "high": 1584077.6567604404,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.5267149169384144
+            },
+            "msd_1000": {
+              "point": 86537905.2788685,
+              "se": 1568233.0511980741,
+              "se_monte_carlo": 35892.90869619497,
+              "low": 84052427.0792428,
+              "high": 89293378.76245606,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.3972625925390174
+            },
+            "msd_10000": {
+              "point": 2121003932.6302087,
+              "se": 84794508.66368416,
+              "se_monte_carlo": 1875982.4122366332,
+              "low": 1985516116.2597337,
+              "high": 2261874653.9106894,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.073907633946932
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0017632654367915573,
+              "se_monte_carlo": 3.8845806406080446e-05,
+              "low": 0.8490779695951342,
+              "high": 0.8547413242597134,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0978284104611609
+            }
+          },
+          "replicate_key": "days_16_offset_0_seed_20260919"
+        },
+        {
+          "days": 16,
+          "offset_days": 5,
+          "seed": 20260918,
+          "rng_seed": 1027023416,
+          "support": {
+            "archive_blocks": 360,
+            "contributing_blocks": 259,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 5.0,
+            "flights_per_block_p95": 31.099999999999994,
+            "largest_block_fraction": 0.02407566638005159,
+            "size_balance_index": 113.82386602709754
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747418,
+              "se": 22207.169226703892,
+              "se_monte_carlo": 461.9105302736539,
+              "low": 1503937.75147179,
+              "high": 1577172.6680567053,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.429320859099517
+            },
+            "msd_1000": {
+              "point": 86537905.27886845,
+              "se": 1486869.8549909866,
+              "se_monte_carlo": 31800.023059803993,
+              "low": 84014329.72591396,
+              "high": 89053776.09470105,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.3247696997366856
+            },
+            "msd_10000": {
+              "point": 2121003932.6302104,
+              "se": 90402294.51400852,
+              "se_monte_carlo": 2076918.2424882653,
+              "low": 1981622389.5981777,
+              "high": 2269863769.0196095,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1449292617517304
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0018788303208237386,
+              "se_monte_carlo": 4.172304381233168e-05,
+              "low": 0.8490252753248312,
+              "high": 0.855002153918458,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.169780375431921
+            }
+          },
+          "replicate_key": "days_16_offset_5_seed_20260918"
+        },
+        {
+          "days": 16,
+          "offset_days": 5,
+          "seed": 20260919,
+          "rng_seed": 818194704,
+          "support": {
+            "archive_blocks": 360,
+            "contributing_blocks": 259,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 5.0,
+            "flights_per_block_p95": 31.099999999999994,
+            "largest_block_fraction": 0.02407566638005159,
+            "size_balance_index": 113.82386602709754
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747418,
+              "se": 23648.927657269578,
+              "se_monte_carlo": 534.7053926488646,
+              "low": 1506624.6148326306,
+              "high": 1583703.543126426,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.5221168106029668
+            },
+            "msd_1000": {
+              "point": 86537905.27886845,
+              "se": 1547445.5114727805,
+              "se_monte_carlo": 35883.54400455802,
+              "low": 84146051.33328718,
+              "high": 89183148.77643754,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.378741332814972
+            },
+            "msd_10000": {
+              "point": 2121003932.6302104,
+              "se": 86713718.71568164,
+              "se_monte_carlo": 1959794.8078037822,
+              "low": 1989996700.231066,
+              "high": 2279656639.7858853,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0982140938636047
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.001758556553026092,
+              "se_monte_carlo": 3.857101837293921e-05,
+              "low": 0.8490989449428454,
+              "high": 0.8549453702612972,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0948966077549878
+            }
+          },
+          "replicate_key": "days_16_offset_5_seed_20260919"
+        },
+        {
+          "days": 16,
+          "offset_days": 10,
+          "seed": 20260918,
+          "rng_seed": 4091072338,
+          "support": {
+            "archive_blocks": 354,
+            "contributing_blocks": 268,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 5.0,
+            "flights_per_block_p95": 27.299999999999955,
+            "largest_block_fraction": 0.02536543422184007,
+            "size_balance_index": 118.09219889116862
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747408,
+              "se": 23653.62274969794,
+              "se_monte_carlo": 567.2980296383079,
+              "low": 1505783.3346954926,
+              "high": 1583313.2379963084,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.5224190010116025
+            },
+            "msd_1000": {
+              "point": 86537905.27886851,
+              "se": 1615085.5245305465,
+              "se_monte_carlo": 36868.19139307503,
+              "low": 84089991.65100843,
+              "high": 89365147.13770533,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.439007158696058
+            },
+            "msd_10000": {
+              "point": 2121003932.6302087,
+              "se": 98165316.89894213,
+              "se_monte_carlo": 2284722.882367213,
+              "low": 1973056594.5316699,
+              "high": 2298188906.4856777,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.2432465836286315
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.00197353178290841,
+              "se_monte_carlo": 4.592240718038548e-05,
+              "low": 0.8487582070469512,
+              "high": 0.85540758366728,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.2287425449495968
+            }
+          },
+          "replicate_key": "days_16_offset_10_seed_20260918"
+        },
+        {
+          "days": 16,
+          "offset_days": 10,
+          "seed": 20260919,
+          "rng_seed": 2101115637,
+          "support": {
+            "archive_blocks": 354,
+            "contributing_blocks": 268,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 5.0,
+            "flights_per_block_p95": 27.299999999999955,
+            "largest_block_fraction": 0.02536543422184007,
+            "size_balance_index": 118.09219889116862
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747408,
+              "se": 24890.006565496125,
+              "se_monte_carlo": 537.0911170468594,
+              "low": 1503052.7759804365,
+              "high": 1587148.4535218452,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.601996418544332
+            },
+            "msd_1000": {
+              "point": 86537905.27886851,
+              "se": 1684364.742178313,
+              "se_monte_carlo": 36750.06472830947,
+              "low": 83777379.32077512,
+              "high": 89492070.50579926,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.5007334813147786
+            },
+            "msd_10000": {
+              "point": 2121003932.6302087,
+              "se": 97908348.25221345,
+              "se_monte_carlo": 2218358.343872511,
+              "low": 1966505067.2391164,
+              "high": 2285956708.9393883,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.239992120624412
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0019547546810469107,
+              "se_monte_carlo": 4.39170313549988e-05,
+              "low": 0.8486774391497718,
+              "high": 0.8549817570442466,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.2170517152766767
+            }
+          },
+          "replicate_key": "days_16_offset_10_seed_20260919"
+        },
+        {
+          "days": 32,
+          "offset_days": 0,
+          "seed": 20260918,
+          "rng_seed": 3193813798,
+          "support": {
+            "archive_blocks": 208,
+            "contributing_blocks": 156,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 9.0,
+            "flights_per_block_p95": 49.25,
+            "largest_block_fraction": 0.043852106620808254,
+            "size_balance_index": 69.24178355687519
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.114874741,
+              "se": 26981.11048492708,
+              "se_monte_carlo": 629.5706706759754,
+              "low": 1499614.37942869,
+              "high": 1585206.9192504608,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.7365862179048626
+            },
+            "msd_1000": {
+              "point": 86537905.27886842,
+              "se": 1749202.1230054095,
+              "se_monte_carlo": 40451.40956992383,
+              "low": 83713071.73400219,
+              "high": 89292877.2487766,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.558502220953761
+            },
+            "msd_10000": {
+              "point": 2121003932.63021,
+              "se": 88005415.35721357,
+              "se_monte_carlo": 1875334.484931922,
+              "low": 1978209772.577245,
+              "high": 2271465725.563177,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1145732060979427
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0018292322057060042,
+              "se_monte_carlo": 3.8406896586348965e-05,
+              "low": 0.8488632818982758,
+              "high": 0.8549100992423497,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1389000446856608
+            }
+          },
+          "replicate_key": "days_32_offset_0_seed_20260918"
+        },
+        {
+          "days": 32,
+          "offset_days": 0,
+          "seed": 20260919,
+          "rng_seed": 3226073026,
+          "support": {
+            "archive_blocks": 208,
+            "contributing_blocks": 156,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 9.0,
+            "flights_per_block_p95": 49.25,
+            "largest_block_fraction": 0.043852106620808254,
+            "size_balance_index": 69.24178355687519
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.114874741,
+              "se": 27016.98369263167,
+              "se_monte_carlo": 602.9169080929952,
+              "low": 1498483.1461965535,
+              "high": 1588814.7204645977,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.7388951265069243
+            },
+            "msd_1000": {
+              "point": 86537905.27886842,
+              "se": 1755394.271289263,
+              "se_monte_carlo": 39338.105979079184,
+              "low": 83638716.06636538,
+              "high": 89510744.25131997,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.5640192945531683
+            },
+            "msd_10000": {
+              "point": 2121003932.63021,
+              "se": 86906327.70873375,
+              "se_monte_carlo": 2011402.0753506932,
+              "low": 1989865961.1547158,
+              "high": 2265067462.0754533,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1006534531011927
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0018650493599337455,
+              "se_monte_carlo": 4.200638651592998e-05,
+              "low": 0.8488512603118787,
+              "high": 0.8550362295530366,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1612001979539244
+            }
+          },
+          "replicate_key": "days_32_offset_0_seed_20260919"
+        },
+        {
+          "days": 32,
+          "offset_days": 10,
+          "seed": 20260918,
+          "rng_seed": 3027208726,
+          "support": {
+            "archive_blocks": 209,
+            "contributing_blocks": 157,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 9.0,
+            "flights_per_block_p95": 50.599999999999966,
+            "largest_block_fraction": 0.037403267411865865,
+            "size_balance_index": 68.1171908443079
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.114874741,
+              "se": 25773.076780895317,
+              "se_monte_carlo": 594.4725887485196,
+              "low": 1499629.805032143,
+              "high": 1584294.0654583843,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.6588334996704486
+            },
+            "msd_1000": {
+              "point": 86537905.27886847,
+              "se": 1661083.1289249908,
+              "se_monte_carlo": 38597.23852380686,
+              "low": 83783116.05460073,
+              "high": 89355668.77459559,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.4799900546487128
+            },
+            "msd_10000": {
+              "point": 2121003932.6302104,
+              "se": 87203045.06689337,
+              "se_monte_carlo": 1984113.6297213226,
+              "low": 1981004083.2147937,
+              "high": 2265803046.3340483,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1044113265893925
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.001809792364320242,
+              "se_monte_carlo": 3.950078853584769e-05,
+              "low": 0.8489491738584342,
+              "high": 0.8548299168928838,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1267965861122415
+            }
+          },
+          "replicate_key": "days_32_offset_10_seed_20260918"
+        },
+        {
+          "days": 32,
+          "offset_days": 10,
+          "seed": 20260919,
+          "rng_seed": 4158093623,
+          "support": {
+            "archive_blocks": 209,
+            "contributing_blocks": 157,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 9.0,
+            "flights_per_block_p95": 50.599999999999966,
+            "largest_block_fraction": 0.037403267411865865,
+            "size_balance_index": 68.1171908443079
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.114874741,
+              "se": 25821.482049184255,
+              "se_monte_carlo": 571.1237957260649,
+              "low": 1503701.9843087378,
+              "high": 1585829.3519002113,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.6619490097541243
+            },
+            "msd_1000": {
+              "point": 86537905.27886847,
+              "se": 1638746.0116213432,
+              "se_monte_carlo": 36901.45596202092,
+              "low": 84014316.89905056,
+              "high": 89373094.87384842,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.4600881539652024
+            },
+            "msd_10000": {
+              "point": 2121003932.6302104,
+              "se": 86573054.48619975,
+              "se_monte_carlo": 2383862.3287190027,
+              "low": 1986971785.5900066,
+              "high": 2268669759.114784,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0964326059790177
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.001806397333584082,
+              "se_monte_carlo": 4.632731413286154e-05,
+              "low": 0.8488904934176968,
+              "high": 0.8548576169704825,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1246828027199196
+            }
+          },
+          "replicate_key": "days_32_offset_10_seed_20260919"
+        },
+        {
+          "days": 32,
+          "offset_days": 21,
+          "seed": 20260918,
+          "rng_seed": 835601224,
+          "support": {
+            "archive_blocks": 204,
+            "contributing_blocks": 154,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 9.0,
+            "flights_per_block_p95": 52.349999999999994,
+            "largest_block_fraction": 0.03353396388650043,
+            "size_balance_index": 69.23469492219492
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.114874741,
+              "se": 26761.79326819073,
+              "se_monte_carlo": 613.025728637461,
+              "low": 1498407.0217980463,
+              "high": 1589162.5730908294,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.722470295724922
+            },
+            "msd_1000": {
+              "point": 86537905.27886842,
+              "se": 1702448.5506611054,
+              "se_monte_carlo": 39757.834105615606,
+              "low": 83819651.94933489,
+              "high": 89451706.14330581,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.516845773492489
+            },
+            "msd_10000": {
+              "point": 2121003932.6302104,
+              "se": 87258820.69520126,
+              "se_monte_carlo": 1913965.7829515934,
+              "low": 1984002573.9302332,
+              "high": 2270584295.674616,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1051177151748326
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0017983136638277796,
+              "se_monte_carlo": 3.847870506756583e-05,
+              "low": 0.8490080246530545,
+              "high": 0.8548921593862127,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.119649821222022
+            }
+          },
+          "replicate_key": "days_32_offset_21_seed_20260918"
+        },
+        {
+          "days": 32,
+          "offset_days": 21,
+          "seed": 20260919,
+          "rng_seed": 2697268677,
+          "support": {
+            "archive_blocks": 204,
+            "contributing_blocks": 154,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 9.0,
+            "flights_per_block_p95": 52.349999999999994,
+            "largest_block_fraction": 0.03353396388650043,
+            "size_balance_index": 69.23469492219492
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.114874741,
+              "se": 26967.58931329744,
+              "se_monte_carlo": 585.9608783640402,
+              "low": 1498377.847925338,
+              "high": 1586603.2160648666,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.7357159542322431
+            },
+            "msd_1000": {
+              "point": 86537905.27886842,
+              "se": 1742555.030820375,
+              "se_monte_carlo": 39307.825389751924,
+              "low": 83694836.6588754,
+              "high": 89494319.19135667,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.5525798019279589
+            },
+            "msd_10000": {
+              "point": 2121003932.6302104,
+              "se": 89209246.48459911,
+              "se_monte_carlo": 2059291.7375518626,
+              "low": 1987577918.466599,
+              "high": 2277548620.589602,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1298195169505694
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0018494009733923931,
+              "se_monte_carlo": 4.224089304663657e-05,
+              "low": 0.8490743512518762,
+              "high": 0.8549503743365844,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1514573407728557
+            }
+          },
+          "replicate_key": "days_32_offset_21_seed_20260919"
+        },
+        {
+          "days": 64,
+          "offset_days": 0,
+          "seed": 20260918,
+          "rng_seed": 3970097434,
+          "support": {
+            "archive_blocks": 117,
+            "contributing_blocks": 94,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 15.0,
+            "flights_per_block_p95": 87.04999999999987,
+            "largest_block_fraction": 0.055460017196904556,
+            "size_balance_index": 41.0846711115836
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.114874741,
+              "se": 29950.494743217518,
+              "se_monte_carlo": 653.2128083737131,
+              "low": 1495678.0156827408,
+              "high": 1591932.3054297129,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.9277048073895888
+            },
+            "msd_1000": {
+              "point": 86537905.27886845,
+              "se": 1842131.3129857134,
+              "se_monte_carlo": 40396.218154188544,
+              "low": 83712891.6376689,
+              "high": 89680649.7279136,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.641300170413653
+            },
+            "msd_10000": {
+              "point": 2121003932.6302094,
+              "se": 79751561.56410412,
+              "se_monte_carlo": 1864931.0619505413,
+              "low": 2002302980.2375517,
+              "high": 2254409717.617538,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0100395902118198
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0018289527813586724,
+              "se_monte_carlo": 4.550031583328082e-05,
+              "low": 0.8490069904769411,
+              "high": 0.8549084975359081,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.138726072020698
+            }
+          },
+          "replicate_key": "days_64_offset_0_seed_20260918"
+        },
+        {
+          "days": 64,
+          "offset_days": 0,
+          "seed": 20260919,
+          "rng_seed": 1136593524,
+          "support": {
+            "archive_blocks": 117,
+            "contributing_blocks": 94,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 15.0,
+            "flights_per_block_p95": 87.04999999999987,
+            "largest_block_fraction": 0.055460017196904556,
+            "size_balance_index": 41.0846711115836
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.114874741,
+              "se": 30543.608002134293,
+              "se_monte_carlo": 724.0658237244575,
+              "low": 1495338.1116342454,
+              "high": 1595411.947928119,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.9658793781385175
+            },
+            "msd_1000": {
+              "point": 86537905.27886845,
+              "se": 1879458.4514938171,
+              "se_monte_carlo": 45675.212264972695,
+              "low": 83622042.80902019,
+              "high": 89768023.345943,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.6745578640224255
+            },
+            "msd_10000": {
+              "point": 2121003932.6302094,
+              "se": 78609368.53186621,
+              "se_monte_carlo": 1785082.9803543736,
+              "low": 1987454200.3400044,
+              "high": 2246012262.8470645,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 0.9955739150626621
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0017496078486730043,
+              "se_monte_carlo": 3.660241453995818e-05,
+              "low": 0.8488303594666601,
+              "high": 0.8546933321611797,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0893250462245165
+            }
+          },
+          "replicate_key": "days_64_offset_0_seed_20260919"
+        },
+        {
+          "days": 64,
+          "offset_days": 21,
+          "seed": 20260918,
+          "rng_seed": 3176555120,
+          "support": {
+            "archive_blocks": 119,
+            "contributing_blocks": 94,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 11.5,
+            "flights_per_block_p95": 76.49999999999994,
+            "largest_block_fraction": 0.05331040412725709,
+            "size_balance_index": 41.105897369660674
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.114874741,
+              "se": 31831.457835616853,
+              "se_monte_carlo": 771.513985221842,
+              "low": 1493936.9502537088,
+              "high": 1597098.1052490782,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.0487693048821285
+            },
+            "msd_1000": {
+              "point": 86537905.27886845,
+              "se": 1992641.4944018826,
+              "se_monte_carlo": 47521.26185925716,
+              "low": 83568431.05133604,
+              "high": 90147002.45977527,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.7754015695191054
+            },
+            "msd_10000": {
+              "point": 2121003932.63021,
+              "se": 86405177.0287694,
+              "se_monte_carlo": 2062845.6528511,
+              "low": 1993813489.661431,
+              "high": 2266624255.353037,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.0943064673181155
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0018474704151481805,
+              "se_monte_carlo": 4.1997743045392405e-05,
+              "low": 0.8489481348288377,
+              "high": 0.855030302023886,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.150255354024676
+            }
+          },
+          "replicate_key": "days_64_offset_21_seed_20260918"
+        },
+        {
+          "days": 64,
+          "offset_days": 21,
+          "seed": 20260919,
+          "rng_seed": 147586278,
+          "support": {
+            "archive_blocks": 119,
+            "contributing_blocks": 94,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 11.5,
+            "flights_per_block_p95": 76.49999999999994,
+            "largest_block_fraction": 0.05331040412725709,
+            "size_balance_index": 41.105897369660674
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.114874741,
+              "se": 31224.037535119172,
+              "se_monte_carlo": 709.6950292337366,
+              "low": 1492512.5028592332,
+              "high": 1599119.7890004045,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.009673889483671
+            },
+            "msd_1000": {
+              "point": 86537905.27886845,
+              "se": 1927946.6896330176,
+              "se_monte_carlo": 42526.668473010846,
+              "low": 83505935.75548555,
+              "high": 89898978.01099272,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.7177598621427108
+            },
+            "msd_10000": {
+              "point": 2121003932.63021,
+              "se": 88235211.334517,
+              "se_monte_carlo": 2077386.2081699518,
+              "low": 1984648276.0195074,
+              "high": 2270130337.3625684,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1174835319924559
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0019478561041602674,
+              "se_monte_carlo": 4.6338510344679205e-05,
+              "low": 0.8486597518386579,
+              "high": 0.8550407183261954,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.2127565856042615
+            }
+          },
+          "replicate_key": "days_64_offset_21_seed_20260919"
+        },
+        {
+          "days": 64,
+          "offset_days": 42,
+          "seed": 20260918,
+          "rng_seed": 3015733775,
+          "support": {
+            "archive_blocks": 115,
+            "contributing_blocks": 94,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 15.0,
+            "flights_per_block_p95": 80.0,
+            "largest_block_fraction": 0.049011177987962166,
+            "size_balance_index": 43.1022131578528
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747404,
+              "se": 30166.158724834295,
+              "se_monte_carlo": 675.621437108275,
+              "low": 1493111.700787686,
+              "high": 1597409.4734913157,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.9415855962616186
+            },
+            "msd_1000": {
+              "point": 86537905.27886848,
+              "se": 1842280.0863170517,
+              "se_monte_carlo": 41513.68304227369,
+              "low": 83649142.50764427,
+              "high": 89730599.81188756,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.6414327243159492
+            },
+            "msd_10000": {
+              "point": 2121003932.6302104,
+              "se": 88156434.4632847,
+              "se_monte_carlo": 1998159.4617760377,
+              "low": 1986319667.8221786,
+              "high": 2268591351.8786616,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1164858366849642
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0019443900133289632,
+              "se_monte_carlo": 4.530772973061016e-05,
+              "low": 0.8488852101155882,
+              "high": 0.8550852851140606,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.2105985594169117
+            }
+          },
+          "replicate_key": "days_64_offset_42_seed_20260918"
+        },
+        {
+          "days": 64,
+          "offset_days": 42,
+          "seed": 20260919,
+          "rng_seed": 2211860846,
+          "support": {
+            "archive_blocks": 115,
+            "contributing_blocks": 94,
+            "cohort_flights": 2326,
+            "flights_per_block_median": 15.0,
+            "flights_per_block_p95": 80.0,
+            "largest_block_fraction": 0.049011177987962166,
+            "size_balance_index": 43.1022131578528
+          },
+          "statistics": {
+            "msd_100": {
+              "point": 1542699.1148747404,
+              "se": 31118.261562061383,
+              "se_monte_carlo": 707.8437103488226,
+              "low": 1492061.4858367457,
+              "high": 1594531.0734907354,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 2.002865826594627
+            },
+            "msd_1000": {
+              "point": 86537905.27886848,
+              "se": 1900679.8587058824,
+              "se_monte_carlo": 43043.834160396866,
+              "low": 83526843.9044946,
+              "high": 89789357.46464205,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.693465690531887
+            },
+            "msd_10000": {
+              "point": 2121003932.6302104,
+              "se": 88222964.95108716,
+              "se_monte_carlo": 1941438.5522979365,
+              "low": 1975895618.9646242,
+              "high": 2271305570.4639397,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.1173284336864358
+            },
+            "hurst": {
+              "point": 0.8518430396421116,
+              "se": 0.0019485741858165614,
+              "se_monte_carlo": 4.358507793868384e-05,
+              "low": 0.8486690870270274,
+              "high": 0.8550894029717583,
+              "valid_replicates": 1000,
+              "invalid_replicates": 0,
+              "se_ratio": 1.21320367112347
+            }
+          },
+          "replicate_key": "days_64_offset_42_seed_20260919"
+        }
+      ],
+      "missing_archive_dates": 0,
+      "missing_cohort_dates": 0
+    }
+  },
+  "code": {
+    "path": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/scripts/reporting/ch3_global_transport/check_bootstrap_reliability.py",
+    "bytes": 15046,
+    "sha256": "b8292c7a0b4407b25baec31811fef58a8333d3973ee2feaf4cc359dc29140a70"
+  },
+  "analysis_code": {
+    "path": "/Users/matteodisante/local_master_thesis/soaring-anomalous-transport/src/soaring/analysis/observables/bootstrap_reliability.py",
+    "bytes": 5172,
+    "sha256": "b5d401e59eb61ee0b593677a2b3f87b42b697ad9301958775549b6233f241706"
+  }
+}
