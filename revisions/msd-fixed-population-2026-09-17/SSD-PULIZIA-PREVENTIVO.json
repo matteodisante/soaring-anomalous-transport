@@ -1,0 +1,868 @@
+{
+  "date": "2026-09-17",
+  "status": "stima, nessuna cancellazione",
+  "scope": "solo SSD; preservare capitolo 2, raw, pulizia, segmentazione, PCA e anisotropia",
+  "free_bytes_now": 27194425344,
+  "candidate_allocated_bytes": 13542752256,
+  "free_bytes_after_estimated": 40737177600,
+  "conditions": [
+    "separare il caricatore PCA dal caricatore generale che apre vectors/owners",
+    "conservare coordinate, indice voli, audit cinemativo, dati ambientali e risultati PCA",
+    "conservare codice, configurazioni, risultati finali e provenienza nel repository",
+    "verificare processi e riferimenti prima della rimozione effettiva"
+  ],
+  "candidate_files": [
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/shape_hang.npz",
+      "category": "cache generale di esperimenti non PCA",
+      "logical_bytes": 8620,
+      "allocated_bytes": 131072
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/shape_para.npz",
+      "category": "cache generale di esperimenti non PCA",
+      "logical_bytes": 8624,
+      "allocated_bytes": 131072
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/variation_flights_hang.parquet",
+      "category": "cache generale di esperimenti non PCA",
+      "logical_bytes": 225255,
+      "allocated_bytes": 262144
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/variation_flights_para.parquet",
+      "category": "cache generale di esperimenti non PCA",
+      "logical_bytes": 3414817,
+      "allocated_bytes": 3538944
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/variations_hang.npz",
+      "category": "cache generale di esperimenti non PCA",
+      "logical_bytes": 4702248,
+      "allocated_bytes": 4718592
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/variations_para.npz",
+      "category": "cache generale di esperimenti non PCA",
+      "logical_bytes": 117704435,
+      "allocated_bytes": 117833728
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/propagator_para.npz",
+      "category": "cache generale di esperimenti non PCA",
+      "logical_bytes": 1049688,
+      "allocated_bytes": 1179648
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/propagator_hang.npz",
+      "category": "cache generale di esperimenti non PCA",
+      "logical_bytes": 519722,
+      "allocated_bytes": 524288
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/msd_para.npz",
+      "category": "cache generale di esperimenti non PCA",
+      "logical_bytes": 228253517,
+      "allocated_bytes": 228327424
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/msd_hang.npz",
+      "category": "cache generale di esperimenti non PCA",
+      "logical_bytes": 8187401,
+      "allocated_bytes": 8257536
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/ch3_revision_sample.pkl",
+      "category": "cache generale di esperimenti non PCA",
+      "logical_bytes": 110368051,
+      "allocated_bytes": 110493696
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/msd_para.npz",
+      "category": "curve MSD e identit\u00e0 segmenti",
+      "logical_bytes": 235036039,
+      "allocated_bytes": 235143168
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/msd_segments_para.parquet",
+      "category": "curve MSD e identit\u00e0 segmenti",
+      "logical_bytes": 2013379,
+      "allocated_bytes": 2097152
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/msd_hang.npz",
+      "category": "curve MSD e identit\u00e0 segmenti",
+      "logical_bytes": 8556480,
+      "allocated_bytes": 8650752
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/msd_segments_hang.parquet",
+      "category": "curve MSD e identit\u00e0 segmenti",
+      "logical_bytes": 118834,
+      "allocated_bytes": 131072
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/scaling-values-0.npy",
+      "category": "array di visualizzazione delle distribuzioni",
+      "logical_bytes": 521738888,
+      "allocated_bytes": 521797632
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-0.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 2743563248,
+      "allocated_bytes": 2743599104
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-1.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 1371026112,
+      "allocated_bytes": 1371144192
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-2.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 913513712,
+      "allocated_bytes": 913571840
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-3.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 684750576,
+      "allocated_bytes": 684851200
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-4.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 547491264,
+      "allocated_bytes": 547618816
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-5.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 455990944,
+      "allocated_bytes": 455999488
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-6.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 341612208,
+      "allocated_bytes": 341704704
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-7.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 303491968,
+      "allocated_bytes": 303562752
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-8.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 248027664,
+      "allocated_bytes": 248119296
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-9.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 194545648,
+      "allocated_bytes": 194641920
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-10.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 159936896,
+      "allocated_bytes": 160038912
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-11.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 129185296,
+      "allocated_bytes": 129236992
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-12.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 104052208,
+      "allocated_bytes": 104071168
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-13.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 84250400,
+      "allocated_bytes": 84279296
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-14.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 68863632,
+      "allocated_bytes": 68943872
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-15.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 56891344,
+      "allocated_bytes": 57016320
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-16.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 45822480,
+      "allocated_bytes": 45875200
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-17.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 37164240,
+      "allocated_bytes": 37224448
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-18.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 30064096,
+      "allocated_bytes": 30146560
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-19.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 24180272,
+      "allocated_bytes": 24248320
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-20.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 19488080,
+      "allocated_bytes": 19529728
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-21.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 15595152,
+      "allocated_bytes": 15597568
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-22.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 12495760,
+      "allocated_bytes": 12582912
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-23.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 9973856,
+      "allocated_bytes": 10092544
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-24.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 7873024,
+      "allocated_bytes": 7995392
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-25.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 6195968,
+      "allocated_bytes": 6291456
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-26.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 4802976,
+      "allocated_bytes": 4849664
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-27.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 3665296,
+      "allocated_bytes": 3670016
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-28.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 2734928,
+      "allocated_bytes": 2752512
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-29.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 1973968,
+      "allocated_bytes": 2097152
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/vectors-30.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 1359952,
+      "allocated_bytes": 1441792
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-0.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 685890812,
+      "allocated_bytes": 685899776
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-1.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 342756528,
+      "allocated_bytes": 342884352
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-2.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 228378428,
+      "allocated_bytes": 228458496
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-3.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 171187644,
+      "allocated_bytes": 171311104
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-4.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 136872816,
+      "allocated_bytes": 136970240
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-5.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 113997736,
+      "allocated_bytes": 114032640
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-6.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 85403052,
+      "allocated_bytes": 85458944
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-7.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 75872992,
+      "allocated_bytes": 75890688
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-8.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 62006916,
+      "allocated_bytes": 62128128
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-9.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 48636412,
+      "allocated_bytes": 48758784
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-10.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 39984224,
+      "allocated_bytes": 40108032
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-11.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 32296324,
+      "allocated_bytes": 32374784
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-12.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 26013052,
+      "allocated_bytes": 26083328
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-13.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 21062600,
+      "allocated_bytes": 21102592
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-14.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 17215908,
+      "allocated_bytes": 17301504
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-15.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 14222836,
+      "allocated_bytes": 14286848
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-16.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 11455620,
+      "allocated_bytes": 11534336
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-17.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 9291060,
+      "allocated_bytes": 9306112
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-18.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 7516024,
+      "allocated_bytes": 7602176
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-19.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 6045068,
+      "allocated_bytes": 6160384
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-20.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 4872020,
+      "allocated_bytes": 4980736
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-21.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 3898788,
+      "allocated_bytes": 3932160
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-22.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 3123940,
+      "allocated_bytes": 3145728
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-23.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 2493464,
+      "allocated_bytes": 2621440
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-24.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 1968256,
+      "allocated_bytes": 2097152
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-25.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 1548992,
+      "allocated_bytes": 1572864
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-26.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 1200744,
+      "allocated_bytes": 1310720
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-27.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 916324,
+      "allocated_bytes": 917504
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-28.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 683732,
+      "allocated_bytes": 786432
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-29.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 493492,
+      "allocated_bytes": 524288
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/owners-30.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 339988,
+      "allocated_bytes": 393216
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/scaling-values-6.npy",
+      "category": "array di visualizzazione delle distribuzioni",
+      "logical_bytes": 521738888,
+      "allocated_bytes": 521797632
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-para/scaling-values-13.npy",
+      "category": "array di visualizzazione delle distribuzioni",
+      "logical_bytes": 521738888,
+      "allocated_bytes": 521797632
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-0.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 116704224,
+      "allocated_bytes": 116785152
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-1.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 58321104,
+      "allocated_bytes": 58327040
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-2.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 38861792,
+      "allocated_bytes": 38928384
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-3.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 29130752,
+      "allocated_bytes": 29229056
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-4.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 23292800,
+      "allocated_bytes": 23330816
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-5.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 19399792,
+      "allocated_bytes": 19529728
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-6.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 14534976,
+      "allocated_bytes": 14548992
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-7.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 12914080,
+      "allocated_bytes": 12976128
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-8.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 10553728,
+      "allocated_bytes": 10616832
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-9.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 8278944,
+      "allocated_bytes": 8388608
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-10.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 6807120,
+      "allocated_bytes": 6815744
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-11.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 5498912,
+      "allocated_bytes": 5505024
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-12.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 4430016,
+      "allocated_bytes": 4456448
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-13.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 3587696,
+      "allocated_bytes": 3670016
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-14.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 2933072,
+      "allocated_bytes": 3014656
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-15.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 2423776,
+      "allocated_bytes": 2490368
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-16.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 1952992,
+      "allocated_bytes": 1966080
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-17.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 1584576,
+      "allocated_bytes": 1703936
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-18.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 1282864,
+      "allocated_bytes": 1310720
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-19.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 1032688,
+      "allocated_bytes": 1048576
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-20.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 833248,
+      "allocated_bytes": 917504
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-21.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 666672,
+      "allocated_bytes": 786432
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-22.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 535376,
+      "allocated_bytes": 655360
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-23.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 428368,
+      "allocated_bytes": 524288
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-24.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 338960,
+      "allocated_bytes": 393216
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-25.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 267648,
+      "allocated_bytes": 393216
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-26.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 207664,
+      "allocated_bytes": 262144
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-27.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 160272,
+      "allocated_bytes": 262144
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-28.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 121520,
+      "allocated_bytes": 131072
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-29.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 88832,
+      "allocated_bytes": 131072
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/vectors-30.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 62720,
+      "allocated_bytes": 131072
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-0.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 29176056,
+      "allocated_bytes": 29229056
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-1.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 14580276,
+      "allocated_bytes": 14680064
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-2.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 9715448,
+      "allocated_bytes": 9830400
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-3.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 7282688,
+      "allocated_bytes": 7340032
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-4.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 5823200,
+      "allocated_bytes": 5898240
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-5.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 4849948,
+      "allocated_bytes": 4980736
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-6.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 3633744,
+      "allocated_bytes": 3670016
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-7.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 3228520,
+      "allocated_bytes": 3276800
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-8.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 2638432,
+      "allocated_bytes": 2752512
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-9.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 2069736,
+      "allocated_bytes": 2097152
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-10.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 1701780,
+      "allocated_bytes": 1703936
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-11.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 1374728,
+      "allocated_bytes": 1441792
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-12.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 1107504,
+      "allocated_bytes": 1179648
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-13.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 896924,
+      "allocated_bytes": 917504
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-14.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 733268,
+      "allocated_bytes": 786432
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-15.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 605944,
+      "allocated_bytes": 655360
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-16.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 488248,
+      "allocated_bytes": 524288
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-17.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 396144,
+      "allocated_bytes": 524288
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-18.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 320716,
+      "allocated_bytes": 393216
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-19.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 258172,
+      "allocated_bytes": 262144
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-20.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 208312,
+      "allocated_bytes": 262144
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-21.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 166668,
+      "allocated_bytes": 262144
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-22.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 133844,
+      "allocated_bytes": 262144
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-23.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 107092,
+      "allocated_bytes": 131072
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-24.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 84740,
+      "allocated_bytes": 131072
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-25.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 66912,
+      "allocated_bytes": 131072
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-26.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 51916,
+      "allocated_bytes": 131072
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-27.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 40068,
+      "allocated_bytes": 131072
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-28.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 30380,
+      "allocated_bytes": 131072
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-29.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 22208,
+      "allocated_bytes": 131072
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays/ch3-full-hang/owners-30.bin",
+      "category": "incrementi e proprietari: PCA usa direttamente le coordinate",
+      "logical_bytes": 15680,
+      "allocated_bytes": 131072
+    }
+  ]
+}
