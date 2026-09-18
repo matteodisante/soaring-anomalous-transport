@@ -85,9 +85,9 @@ processed time. Refit, reapply, recompute coverage and regenerate every report. 
 canonical per-discipline stages are:
 
 ```bash
-uv run python scripts/segment_flights.py train --discipline paragliders
-uv run python scripts/segment_flights.py apply --discipline paragliders
-uv run python scripts/segment_flights.py coverage --discipline paragliders
+uv run python scripts/pipeline/segment_flights.py train --discipline paragliders
+uv run python scripts/pipeline/segment_flights.py apply --discipline paragliders
+uv run python scripts/pipeline/segment_flights.py coverage --discipline paragliders
 ```
 
 Repeat with `--discipline "hang gliders"`. `train` persists the current configuration;
@@ -98,8 +98,8 @@ snapshot without checking their processed-clock and segment correspondence.
 Then regenerate the chapter reports in this order:
 
 ```bash
-uv run python scripts/reporting/ch4_flight_phases/generate_segmentation_report.py
-uv run python scripts/reporting/ch4_flight_phases/generate_decoder_audit.py
+uv run python scripts/esperimenti/ch05_flight_phases/generate_segmentation_report.py
+uv run python scripts/esperimenti/ch05_flight_phases/generate_decoder_audit.py
 ```
 
 The audit first reproduces the saved archive using its own decoder configuration.
@@ -121,9 +121,9 @@ The existing 40-flight pack belongs to the earlier cleaning snapshot. Preserve i
 record. After the rebuild, prepare a **new** pack tied to that snapshot:
 
 ```bash
-uv run python scripts/reporting/ch4_flight_phases/prepare_annotation_pack.py \
+uv run python scripts/esperimenti/ch05_flight_phases/prepare_annotation_pack.py \
   --output-dir annotations/phase_labeling/<snapshot-id>
-uv run python scripts/label_flight_phases.py \
+uv run python scripts/pipeline/label_flight_phases.py \
   --pack-dir annotations/phase_labeling/<snapshot-id> \
   --annotator "Matteo Di Sante" --split train
 ```
@@ -152,9 +152,9 @@ claims require grouped holdouts.
 For the freshly rebuilt canonical archive, evaluate one stage explicitly:
 
 ```bash
-uv run python scripts/segment_flights.py calibrate --discipline paragliders \
+uv run python scripts/pipeline/segment_flights.py calibrate --discipline paragliders \
   --annotations annotations/phase_labeling/<snapshot-id>/phase_annotations.csv
-uv run python scripts/segment_flights.py evaluate --discipline paragliders \
+uv run python scripts/pipeline/segment_flights.py evaluate --discipline paragliders \
   --annotations annotations/phase_labeling/<snapshot-id>/phase_annotations.csv \
   --split validation
 ```

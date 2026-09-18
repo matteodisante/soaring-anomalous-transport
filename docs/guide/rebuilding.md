@@ -3,7 +3,7 @@
 Use one command from the repository root, with both archives mounted:
 
 ```bash
-uv run python scripts/rebuild_thesis.py --clean --jobs 1
+uv run python scripts/pipeline/rebuild_thesis.py --clean --jobs 1
 ```
 
 The default uses one worker, one native numerical-library thread, and low process
@@ -25,15 +25,15 @@ or configuration during the run.
 To inspect the commands without processing data or writing outputs:
 
 ```bash
-uv run python scripts/rebuild_thesis.py --clean --dry-run
+uv run python scripts/pipeline/rebuild_thesis.py --clean --dry-run
 ```
 
 `--no-build` stops after regenerating and checking the numerical products. Without
 `--clean`, the driver requires complete tables produced by the current cleaning
 code and configuration. It then recomputes downstream products. The compatibility
-entry point `scripts/regenerate.sh` accepts the same options.
+entry point `scripts/pipeline/regenerate.sh` accepts the same options.
 
-Running `scripts/preprocess.py` directly still performs **only cleaning**. Use
+Running `scripts/pipeline/preprocess.py` directly still performs **only cleaning**. Use
 the combined command above when the purpose is to update the thesis as well.
 Do not use a `--limit` sample as a replacement for the complete derived archive:
 the standalone cleaner writes into that archive's `derived/` directory, and the
@@ -43,7 +43,7 @@ The Git pre-commit hook checks staged whitespace without changing files or the i
 It does not regenerate statistics, compile the PDF or certify scientific results.
 Perform the complete rebuild and manuscript review explicitly before staging the
 finished revision. This keeps the reviewed output identities intact when changes
-are divided into several commits. `scripts/build_docs.sh thesis` is only a convenience
+are divided into several commits. `scripts/pipeline/build_docs.sh thesis` is only a convenience
 compiler for existing inputs; it does not replace either provenance-aware command.
 
 ## Where the results go
@@ -140,7 +140,7 @@ Fresh numbers must be interpreted before the prose is final. After changing auth
 text only, compile with:
 
 ```bash
-uv run python scripts/review_thesis.py --run /Volumes/SSD_DISANTE/derived-audit/runs/<run-id>
+uv run python scripts/pipeline/review_thesis.py --run /Volumes/SSD_DISANTE/derived-audit/runs/<run-id>
 ```
 
 This requires a completed numerical run and verifies its code/configuration hash,
@@ -175,7 +175,7 @@ the newly generated full coordinate stores. It needs no additional raw-data pass
 For a focused measurement from the verified September 12 stores:
 
 ```bash
-.venv/bin/python scripts/reporting/ch3_global_transport/measure_regional_variations.py \
+.venv/bin/python scripts/esperimenti/ch03_global_observables/measure_regional_variations.py \
   --out /path/to/a/new/regional-variation-run
 ```
 
@@ -207,7 +207,7 @@ The final run manifest links the manuscript review to its immutable input manife
 `executed_pdf_sha256` preserves the original execution PDF identity, while
 `pdf_sha256` identifies the final reviewed PDF.
 
-Offline compilation with `scripts/build_docs.sh thesis` can support manuscript and
+Offline compilation with `scripts/pipeline/build_docs.sh thesis` can support manuscript and
 layout review, but cannot close the source-archive check. While the SSD is unavailable,
 keep that review pending and preserve the original execution PDF for reconciliation
 when the archive is mounted again.

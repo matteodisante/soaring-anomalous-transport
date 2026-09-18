@@ -249,23 +249,23 @@ or by the end of the flight. The lower-level entry points `build_observation_fra
 `observation_matrix`, `viterbi`, `rolling_majority`, `emission_probabilities` and
 `segment_eligibility` are exported for tests and for inspecting one stage at a time.
 
-`scripts/segment_flights_vilpellet.py` is the command line around the same calls. It
+`scripts/pipeline/segment_flights_vilpellet.py` is the command line around the same calls. It
 has three actions.
 
 ```bash
 # One file, decoded and reported without writing anything
-uv run python scripts/segment_flights_vilpellet.py flight \
+uv run python scripts/pipeline/segment_flights_vilpellet.py flight \
   --igc /Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/raw/igc/2021-2022/2021-09-01_20308851.igc
 
 # The same file on the reference implementation's own input
-uv run python scripts/segment_flights_vilpellet.py flight \
+uv run python scripts/pipeline/segment_flights_vilpellet.py flight \
   --igc <path>.igc --input raw_gnss --out /tmp/one-flight
 
 # A whole archive, appended flight by flight, across several worker processes
-uv run python scripts/segment_flights_vilpellet.py apply --discipline paragliders
+uv run python scripts/pipeline/segment_flights_vilpellet.py apply --discipline paragliders
 
 # Re-read what apply wrote and rewrite the coverage record from it
-uv run python scripts/segment_flights_vilpellet.py coverage --discipline paragliders
+uv run python scripts/pipeline/segment_flights_vilpellet.py coverage --discipline paragliders
 ```
 
 The `flight` action prints the composition of one flight:
@@ -323,7 +323,7 @@ divides by every fix seen; the `time_fraction` divides by summed run duration, w
 run spans its first fix to its last one and so counts one logging step less than the
 time it occupies. Neither quantity measures classification accuracy.
 
-`scripts/reporting/ch5_vilpellet/generate_vilpellet_report.py` decodes one named flight
+`scripts/esperimenti/ch06_vilpellet_segmentation/generate_vilpellet_report.py` decodes one named flight
 with both segmenters on identical cleaned geometry and writes the chapter's comparison
 figure, its timeline, its numerical macros and a JSON provenance record.
 

@@ -117,7 +117,7 @@ Every supported PCA lag has an ellipse, ratio marker, axis annotation and flight
 The focused PCA command reads only the preserved coordinate stores and flight indexes:
 
 ```bash
-uv run python scripts/reporting/ch3_global_transport/generate_regional_pca.py \
+uv run python scripts/esperimenti/ch03_global_observables/generate_regional_pca.py \
   --audit-dir /Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays \
   --output-dir output/regional-pca
 ```
@@ -354,9 +354,9 @@ Candidate-specific finite-record simulations remain necessary for formal rejecti
 ## Reproduction
 
 ```bash
-uv run python scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py --jobs 8 --audit-dir /Volumes/SSD_DISANTE/derived-audit
-uv run python scripts/reporting/ch3_global_transport/generate_scaling_schematics.py
-uv run python scripts/reporting/checks/check_generated_macros.py
+uv run python scripts/esperimenti/ch04_global_transport/generate_revision_diagnostics.py --jobs 8 --audit-dir /Volumes/SSD_DISANTE/derived-audit
+uv run python scripts/esperimenti/ch04_global_transport/generate_scaling_schematics.py
+uv run python scripts/checks/check_generated_macros.py
 ```
 
 The first command accesses the external source snapshot; use its manifest to reproduce
@@ -370,8 +370,8 @@ analytical schematics, not synthetic flight-data evidence.
 Additional current figures can be redrawn from retained caches with:
 
 ```bash
-uv run python scripts/reporting/ch3_global_transport/generate_msd_figure.py --redraw
-uv run python scripts/reporting/ch3_global_transport/generate_kinematic_isotropy_figure.py --audit-dir /Volumes/SSD_DISANTE/derived-audit --terrain-only
+uv run python scripts/condivisi/generate_msd_figure.py --redraw
+uv run python scripts/esperimenti/ch03_global_observables/generate_kinematic_isotropy_figure.py --audit-dir /Volumes/SSD_DISANTE/derived-audit --terrain-only
 ```
 
 These redraws do not update source trajectories or recompute the archive MSD. The legacy
@@ -475,7 +475,7 @@ corresponding ECDF distances remain unchanged.
 To extend a completed saved sample while raw cleaning is running:
 
 ```bash
-uv run python scripts/reporting/ch3_global_transport/generate_revision_diagnostics.py \
+uv run python scripts/esperimenti/ch04_global_transport/generate_revision_diagnostics.py \
   --saved-snapshot /Volumes/SSD_DISANTE/derived-audit/runs/20260910T221820Z-05d36ab4/arrays/ch3_revision_sample.pkl
 ```
 

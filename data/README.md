@@ -16,13 +16,13 @@ without the SSD. Recomputing cleaned-data statistics and empirical figures requi
 their external source tables or compatible analysis arrays.
 
 The canonical indexes are written next to each SSD catalogue by the acquisition
-commands. `scripts/reporting/tools/refresh_seasons_index.py` copies reachable indexes
+commands. `scripts/tools/refresh_seasons_index.py` copies reachable indexes
 here; the pre-commit hook runs it. If a discipline's SSD root is unavailable, its
 versioned index is preserved. A refresh does not rebuild the cleaned archive.
 
 `basemap.json` contains simplified Natural Earth country polygons for metropolitan
 France, La Réunion and the world panel. The source is public domain. The builder is
-`scripts/reporting/tools/build_basemap.py`; it needs network access. Drawing the stored
+`scripts/tools/build_basemap.py`; it needs network access. Drawing the stored
 geometry requires no download, but displaying flight density still needs measured
 positions.
 

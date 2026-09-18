@@ -17,7 +17,7 @@ change after cleaning, so each rebuild creates a separate pack.
 Start from the repository root with the training candidates:
 
 ```bash
-uv run python scripts/label_flight_phases.py \
+uv run python scripts/pipeline/label_flight_phases.py \
   --pack-dir annotations/phase_labeling/20260910T221820Z-05d36ab4 \
   --annotator "Matteo Di Sante" --split train
 ```

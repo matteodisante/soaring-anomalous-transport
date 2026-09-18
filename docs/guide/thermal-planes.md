@@ -28,7 +28,7 @@ interpolation until upgraded offline.
 Preparation is a separate offline command:
 
 ```bash
-uv run --group viewer python scripts/prepare_thermal_planes.py --workers 4
+uv run --group viewer python scripts/pipeline/prepare_thermal_planes.py --workers 4
 ```
 
 The command resumes intermediate `thermal-cells.sqlite3` and
@@ -208,7 +208,7 @@ To enrich an existing prepared file without rescanning IGC/parquet or rerunning
 segmentation:
 
 ```bash
-uv run --group viewer python scripts/prepare_thermal_daily.py
+uv run --group viewer python scripts/pipeline/prepare_thermal_daily.py
 ```
 
 The full `prepare_thermal_planes.py` workflow also includes this enrichment.

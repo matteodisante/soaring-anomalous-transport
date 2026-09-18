@@ -3,7 +3,7 @@
 Raw flight recordings and large processed tables live on the external SSD. The
 repository keeps small season summaries, map geometry, numerical reports and annotation
 packs. The disk's root `README.md` is generated from its actual directory entries,
-file sizes and Parquet metadata by `scripts/reporting/tools/write_ssd_readme.py`.
+file sizes and Parquet metadata by `scripts/tools/write_ssd_readme.py`.
 It is refreshed by the combined rebuild. This page describes the schema and conventions;
 it does not preserve obsolete example counts from an earlier cleaning run.
 
@@ -149,7 +149,7 @@ for flight in stream_flights(root / "derived" / "fixes.parquet",
 To inspect current shapes, types and example rows without loading the full table:
 
 ```bash
-uv run python scripts/reporting/tools/show_dataset.py --discipline "hang gliders"
+uv run python scripts/tools/show_dataset.py --discipline "hang gliders"
 ```
 
 ## Diagnostics, segmentation and human labels

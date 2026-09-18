@@ -20,7 +20,7 @@ latexmk -pdf -interaction=nonstopmode -halt-on-error esperimenti.tex
 
 Keep the PDFs together for links from experiments to the thesis to work. Rebuild
 experiments after changes to the thesis labels or numbering. The usual command
-`scripts/build_docs.sh thesis` from the repository root still compiles the thesis.
+`scripts/pipeline/build_docs.sh thesis` from the repository root still compiles the thesis.
 These commands reuse existing figures and measurements; they do not rerun the
 analysis pipeline.
 
@@ -45,7 +45,7 @@ a placeholder in the thesis.
 For immediate redraw from saved SSD data, from the repository root:
 
 ```bash
-uv run python scripts/reporting/ch3_global_transport/run_ch3_fixed.py \
+uv run python scripts/tesi/ch03_fixed_transport/run_ch3_fixed.py \
   --data /Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917 --redraw
 ```
 

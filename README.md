@@ -57,7 +57,7 @@ regional equipment comparison. They were assembled after the thesis review.
 Install the environment with `uv sync` and mount both archives. Then run:
 
 ```bash
-uv run python scripts/rebuild_thesis.py --clean --jobs 8 --full-speed
+uv run python scripts/pipeline/rebuild_thesis.py --clean --jobs 8 --full-speed
 ```
 
 This command uses up to eight workers at normal scheduling priority. Native numerical
@@ -68,7 +68,7 @@ The driver cleans both complete archives, verifies the tables, independently rep
 a sample, recomputes analyses and figures, refits and applies segmentation, prepares a
 new annotation pack, updates the SSD inventory and builds the PDF. The order is defined
 in [configs/rebuild.yaml](configs/rebuild.yaml). It takes multiple passes over the SSD.
-A standalone `scripts/preprocess.py` run performs cleaning only; after it completes,
+A standalone `scripts/pipeline/preprocess.py` run performs cleaning only; after it completes,
 run the driver without `--clean` to regenerate all downstream results.
 
 Every rebuild has a separate directory under `derived-audit/runs/` on the SSD, containing
@@ -86,7 +86,7 @@ build. See [the rebuild guide](https://matteodisante.github.io/soaring-anomalous
 | `src/soaring/analysis/segmentation/` | Features, Gaussian HMM fitting, decoding and evaluation |
 | `src/soaring/analysis/stats/` | Cluster resampling and statistical diagnostics |
 | `src/soaring/reporting/` | Shared paths, numerical macros, provenance and figure style |
-| `scripts/` | Command-line workflows; reporting is grouped by chapter |
+| `scripts/` | Command-line workflows, split into `tesi/` and `esperimenti/` with one folder per chapter; see [the scripts guide](docs/guide/scripts.md) |
 | `configs/` | Acquisition paths, cleaning rules, segmentation settings and rebuild order |
 | `thesis/` | LaTeX sources, bibliography, generated figures and numerical fragments |
 | `annotations/phase_labeling/` | Annotation instructions and packs with source provenance; preserve human labels |

@@ -1,7 +1,7 @@
 # The preprocessing pipeline
 
 `soaring.analysis.preproc.pipeline.run_flight` transforms one parsed IGC recording;
-`scripts/preprocess.py` applies it to an archive and writes four Parquet tables.
+`scripts/pipeline/preprocess.py` applies it to an archive and writes four Parquet tables.
 Chapter 2 explains the scientific choices. `configs/preprocessing.yaml` supplies the
 working thresholds, loaded by `load_preproc_config`.
 
@@ -268,7 +268,7 @@ Fields unavailable for a source stay `null`. Run-level fingerprints belong to `r
 
 ## Rebuilding and verification
 
-Use `uv run python scripts/rebuild_thesis.py --clean --jobs 8 --full-speed` to
+Use `uv run python scripts/pipeline/rebuild_thesis.py --clean --jobs 8 --full-speed` to
 regenerate the complete current dataset and manuscript. For low-priority processing,
 use `--jobs 1` and omit `--full-speed`. The [rebuild guide](rebuilding.md) explains
 locks, incomplete-run markers, version checks, logs and the independent reprocessing

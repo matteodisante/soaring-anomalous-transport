@@ -11,10 +11,10 @@ The published run is on SSD:
 ## Change a figure without measuring again
 
 Edit colours, markers or layout in
-`scripts/reporting/ch3_global_transport/render_ch3_fixed.py`, then run from the repo:
+`scripts/tesi/ch03_fixed_transport/render_ch3_fixed.py`, then run from the repo:
 
 ```bash
-uv run python scripts/reporting/ch3_global_transport/run_ch3_fixed.py \
+uv run python scripts/tesi/ch03_fixed_transport/run_ch3_fixed.py \
   --data /Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917 --redraw
 cd thesis
 latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
@@ -32,7 +32,7 @@ To update only fits and the general local-slope estimates from the already saved
 MSD bootstrap curves, without reading trajectories or drawing a new bootstrap:
 
 ```bash
-.venv/bin/python scripts/reporting/ch3_global_transport/summarize_ch3_fixed.py \
+.venv/bin/python scripts/tesi/ch03_fixed_transport/summarize_ch3_fixed.py \
   --data /Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917 \
   --refresh-fits-only
 ```
@@ -48,7 +48,7 @@ Parquet archive, verifies it, measures both disciplines, reduces and renders:
 
 ```bash
 VECLIB_MAXIMUM_THREADS=2 uv run python \
-  scripts/reporting/ch3_global_transport/run_ch3_fixed.py \
+  scripts/tesi/ch03_fixed_transport/run_ch3_fixed.py \
   --data /Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-NEW
 ```
 
@@ -58,7 +58,7 @@ fixes and checked for exact agreement (maximum error: zero). The equivalent comm
 
 ```bash
 VECLIB_MAXIMUM_THREADS=2 uv run python \
-  scripts/reporting/ch3_global_transport/run_ch3_fixed.py \
+  scripts/tesi/ch03_fixed_transport/run_ch3_fixed.py \
   --data /Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917 \
   --reuse-coordinates /Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays
 ```
@@ -67,7 +67,7 @@ Completed lag files are reused only after checking their cohort fingerprint and
 bootstrap dimensions. Input timestamps and sizes must still match the successful
 full coordinate audit. A changed analysis convention requires a fresh run directory;
 resume is intended for the same calculation interrupted between lag files.
-The historical `scripts/rebuild_thesis.py` graph remains available for the experiments
+The historical `scripts/pipeline/rebuild_thesis.py` graph remains available for the experiments
 and earlier reports; this dedicated command is the entry point for the new Chapter 3.
 
 Stages can also be run separately:
@@ -139,7 +139,7 @@ from 1500 m upward. It is not a DEM-derived description of the full flight path.
 
 ```bash
 MPLCONFIGDIR=/private/tmp/soaring-mpl-cache VECLIB_MAXIMUM_THREADS=2 \
-  .venv/bin/python scripts/reporting/ch3_global_transport/check_grid_bootstrap.py \
+  .venv/bin/python scripts/tesi/ch03_fixed_transport/check_grid_bootstrap.py \
   --data /Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917 \
   --out revisions/bootstrap-reliability-2026-09-18/run-grid \
   --publish thesis/generated
@@ -183,7 +183,7 @@ Offline redraw needs only `OUT/report.json`:
 
 ```bash
 MPLCONFIGDIR=/private/tmp/soaring-mpl-cache .venv/bin/python \
-  scripts/reporting/ch3_global_transport/check_grid_bootstrap.py \
+  scripts/tesi/ch03_fixed_transport/check_grid_bootstrap.py \
   --out OUT --redraw --publish thesis/generated
 ```
 
@@ -201,7 +201,7 @@ published run. Use a separate local output directory:
 
 ```bash
 MPLCONFIGDIR=/private/tmp/soaring-mpl-cache VECLIB_MAXIMUM_THREADS=2 \
-  .venv/bin/python scripts/reporting/ch3_global_transport/check_bootstrap_reliability.py \
+  .venv/bin/python scripts/tesi/ch03_fixed_transport/check_bootstrap_reliability.py \
   --data /Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917 \
   --out revisions/bootstrap-reliability-2026-09-18/run-64 \
   --block-days 1 2 4 8 16 32 64 \
@@ -238,7 +238,7 @@ To redraw offline without caches, put the diagnostic JSON at `OUT/report.json`:
 
 ```bash
 MPLCONFIGDIR=/private/tmp/soaring-mpl-cache .venv/bin/python \
-  scripts/reporting/ch3_global_transport/check_bootstrap_reliability.py \
+  scripts/tesi/ch03_fixed_transport/check_bootstrap_reliability.py \
   --out OUT --redraw --publish thesis/generated
 ```
 
@@ -252,7 +252,7 @@ the fixed cohort. It requires no annual resampling or discarded date intervals:
 
 ```bash
 MPLCONFIGDIR=/private/tmp/soaring-mpl-cache VECLIB_MAXIMUM_THREADS=2 \
-  .venv/bin/python scripts/reporting/ch3_global_transport/check_daily_dependence.py \
+  .venv/bin/python scripts/tesi/ch03_fixed_transport/check_daily_dependence.py \
   --data /Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917 \
   --out revisions/bootstrap-reliability-2026-09-18/run-daily \
   --max-days 64 --publish thesis/generated
@@ -308,7 +308,7 @@ coordinate store named in its `measurement-provenance.json`:
 
 ```bash
 MPLCONFIGDIR=/private/tmp/soaring-mpl-cache VECLIB_MAXIMUM_THREADS=2 \
-  .venv/bin/python scripts/reporting/ch3_global_transport/check_origin_dependence.py \
+  .venv/bin/python scripts/tesi/ch03_fixed_transport/check_origin_dependence.py \
   --data /Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917 \
   --coords /Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays \
   --out revisions/origin-dependence-2026-09-18/run \
