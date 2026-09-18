@@ -13,10 +13,11 @@ weighting and lag-support conventions:
 | Product | Source | Scope |
 |---|---|---|
 | `msd.pdf` | identified `msd_<slug>.npz` from `measure_msd.py` | descriptive launch average and equal-segment time average |
+| `ch3_msd_weights.pdf`, `.tex`, `.csv` | the same stored segment curves and their identity table | equal-segment, equal-flight and equal-window averages on one segment set |
 | `kinematic_isotropy_terrain.pdf` | archive regional kinematics cache | paired uncentred E/N second-moment ratios at 10–10,000 s since launch |
 | `kinematic_isotropy_terrain_level.pdf`, `kinematic_isotropy_flat_level.pdf` | same regional kinematics cache | equipment contrasts within mountain/coastal and low-relief launch boxes |
 | `ch3_scaling.pdf` | `generate_revision_diagnostics.py` | equal-flight V1/V2, local slopes, open/closed tasks, support |
-| `ch3_quantiles.pdf`, `ch3_quantile_control.pdf` | same full eligible archive | quantiles; fixed flight, weight and origin controls |
+| `ch3_quantiles.pdf`, `ch3_quantile_control.pdf` | same full eligible archive | quantiles; fixed flight, weight and origin controls. Still produced by the reporter, no longer included in the manuscript: the thesis reports the fixed population only |
 | `ch3_fixed_quantiles.pdf`, `ch3_fixed_exponents.pdf` | all eligible long flights in that archive | fixed common origins, equal flight weights and paired whole-flight intervals |
 | `ch3_absolute_laws_*.pdf`, `ch3_squared_laws_*.pdf` | same fixed long-flight cohort | distributions before and after rescaling; squared-law counterparts |
 | `ch3_joint_para.pdf`, `ch3_joint_hang.pdf` | same fixed long-flight cohort | signed East–North distributions on shared bins after one scalar rescaling |
@@ -24,7 +25,7 @@ weighting and lag-support conventions:
 | `ch3_models.pdf` | same full eligible archive | pooled moment spectrum and centred Mardia excess |
 | `ch3_velocity_memory.pdf` | same full eligible archive | positive coarse VACF on log–log axes, with signed companion panels |
 | `ch3_pca.pdf` | same full eligible archive | centred regional displacement covariance, eigenvalue ratio and axis at exactly 10, 100, 1000 and 10,000 s |
-| `ch3_tamsd_regions.pdf`, `ch3_tamsd_altitude.pdf`, `ch3_tamsd_region_altitude.pdf` | `generate_grouped_tamsd.py` | native-grid equal-flight TAMSD by region and initial GNSS altitude, fixed-segment controls and cross-classification |
+| `ch3_tamsd_regions.pdf`, `ch3_tamsd_altitude.pdf`, `ch3_tamsd_region_altitude.pdf` | `generate_grouped_tamsd.py` | native-grid equal-flight TAMSD by region and initial GNSS altitude, drawn for the fixed-segment cohort only, plus the cross-classification |
 | `ch3_regional_variations.pdf`, `ch3_variation_axes.pdf` | `generate_regional_variations.py` | RMS interval-mean velocity changes and covariance geometry of three difference orders |
 | `ch3_variation_controls.pdf`, `ch3_variation_distributions.pdf` | same regional measurement | shared origins, context standardisation, regional ratios and full-support magnitude distributions |
 | `ch3_variation_orders.pdf`, `ch3_variation_support.pdf`, `ch3_regional_variations_values.tex` | same regional measurement | order-three comparison, contributing flights/site-days and generated values |
@@ -113,6 +114,21 @@ contribute to changes in the covariance geometry. The regional table uses 1000 s
 the duration-cohort diagnostic retains its separate reference on its own lag grid.
 Every supported PCA lag has an ellipse, ratio marker, axis annotation and flight count.
 
+The focused PCA command reads only the preserved coordinate stores and flight indexes:
+
+```bash
+uv run python scripts/reporting/ch3_global_transport/generate_regional_pca.py \
+  --audit-dir /Volumes/SSD_DISANTE/derived-audit/runs/20260911T213634Z-7b7367f1/arrays \
+  --output-dir output/regional-pca
+```
+
+It validates flight identities against `thesis/generated/ch3_revision.json`, records
+coordinate hashes and writes only PCA products to the requested directory. The
+transport `vectors-*`, `owners-*`, MSD and scaling caches were retired on 17 September
+2026. The general `generate_revision_diagnostics.py --reuse` path requires those
+caches to be regenerated; the focused PCA command does not. Raw data, preprocessing,
+segmentation, viewer products and the kinematic audit arrays remain available.
+
 The focused correction and its data/source identities are recorded in
 `revisions/regional-pca-lags-2026-09-12/numerical-update.json`. It recomputes only
 regional covariances and preserves the completed cleaning and all other Chapter 3
@@ -151,10 +167,12 @@ wind-only environments.
 The preceding thesis section, `04-grouped-tamsd.tex`, first compares scalar
 TA-MSD magnitude across these regions and four initial-altitude bands. It uses
 the identified native segment curves, with origin-weighted pooling within a
-flight followed by equal flight weights. The all-eligible population comprises
-155,085 paragliders and 6,060 hang gliders. A control retains the same long
-segments and flights across all 59 requested lags from 10 to 10,000 s, but does
-not fix time origins. The requested reference is 1049 s, with native-step
+flight followed by equal flight weights. The measurement still reduces the
+all-eligible population of 155,085 paragliders and 6,060 hang gliders, but the
+rendered figures and the manuscript use only the cohort that retains the same long
+segments and flights across all 59 requested lags from 10 to 10,000 s. That cohort
+does not fix time origins. `FIXED = 1` in the renderer selects it; index 0 holds the
+available-segment control, which the report keeps and nothing plots. The requested reference is 1049 s, with native-step
 rounding; it is not the exact 1000-s PCA or variation measurement.
 
 Plains, Hills, Low mountains and High mountains use cleaned GNSS origin-altitude
@@ -168,15 +186,17 @@ velocity-change diagnostic below is smaller. Persistent net advancement is a
 possible interpretation, but the origins and lag grids differ and no wind
 mechanism is identified. Fixing the native segments reduces the coastal
 long-lag TAMSD slope from 2.20 to 1.98; analogous excesses in Plains and Hills
-also diminish. The report at `revisions/grouped-tamsd-2026-09-12/` retains
+also diminish. Only the fixed value reaches the manuscript; the 2.20 figure is
+recorded here and in the report. The report at `revisions/grouped-tamsd-2026-09-12/` retains
 membership, full curves, support, pointwise site-day intervals and descriptive
 slopes. The eight-flight display minimum is not an uncertainty guarantee.
 
 Section 3.4.4 fits paraglider altitude-band curves separately for declared open
 and closed circuits over all 59 lags from 10 to 10000 s. Figure 3.20 and Table 3.9
 report H_eff = slope/2 with marginal 95% intervals from 2000 whole-site-day
-bootstrap draws within each circuit-altitude stratum, separately for available
-and fixed long segments. The FFVL task mapping is the same as in the earlier
+bootstrap draws within each circuit-altitude stratum, for the fixed long-segment
+cohort. The report still stores both controls; the figure and the exported table
+show the fixed one. The FFVL task mapping is the same as in the earlier
 open/closed route comparison; 275 non-classifiable declarations are excluded.
 The two groups contain 67003 open and 87807 closed flights. The table includes
 support at the first and last lag. These are effective moment exponents conditional
@@ -400,7 +420,9 @@ The quantile reporter compares the available pooled sample with (1) fixed flight
 having at least one segment lasting 20,000 s, but pooled windows, (2) the same flights with equal flight
 weights, and (3) the same flights and every 10-s starting time eligible at the maximum
 10,000-s lag. The last convention keeps the identities, origins and weights unchanged
-at every lag. Within a flight, each origin has equal weight; each flight then has the
+at every lag, and it is the only one the manuscript reports: the first three remain in
+`ch3_revision.json` and in `ch3_quantile_control.pdf` as a record of the sampling
+effect they were built to expose. Within a flight, each origin has equal weight; each flight then has the
 same total weight. These windows overlap and must not be treated as independent.
 Shorter segments of the selected flights also contribute wherever they support the
 required stencil. The 20,000 s condition is a flight-selection criterion, not a
@@ -433,6 +455,13 @@ weighted mixture, retaining the same multiplicity across all coordinates and
 lags. Pointwise percentile intervals and paired differences are conditional on
 independent flights; shared site/day conditions are not modelled. Overlapping
 origins are never treated as independent bootstrap units.
+
+The same 400 whole-flight draws also give the weighted Fisher excess kurtosis of
+$|X_E|$, $|X_N|$ and $R$ at every lag (`kurtosis`/`kurtosis_ci95` in
+`ch3_self_similarity.json`, the bottom row of `ch3_fixed_exponents.pdf`, and the
+`StatSSKurtosis*Short`/`*Long` macros at the shortest and longest lag). Per-flight
+sums of the first four powers are computed once per lag and reused across all draws
+by one matrix product, so this adds no new pass over the fixed population.
 
 Six lag distributions are shown before and after power rescaling. A second
 comparison divides each distribution by its own median to remove any single

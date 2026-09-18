@@ -75,11 +75,13 @@ These scripts are under `scripts/reporting/ch3_global_transport/`.
 |---|---|---|
 | `measure_msd.py` | Streams the complete cleaned archive | `msd_<slug>.npz`: launch and segment curves; `msd_segments_<slug>.parquet`: row identities and support |
 | `generate_msd_figure.py` | Reduces those arrays; `--redraw` uses the existing curve CSV | `msd.pdf`, `msd.tex`, `msd_curve.csv` |
+| `generate_msd_weights.py` | Reweights the same stored segment curves three ways | `ch3_msd_weights.pdf`, `.tex`, `.csv` |
 | `generate_duration_equipment.py` | Identified full-archive segment curves and EN catalogue classes | Duration, equipment and class-mixture figures, slopes, counts and JSON |
 | `audit_msd.py` | Streams the archive and keeps flight identities and per-time position/velocity/acceleration samples | `audit_positions_<slug>.npz`, `audit_flights_<slug>.parquet` |
 | `audit_msd_report.py` | Reduces the audit arrays | `audit.tex` |
 | `generate_kinematic_isotropy_figure.py` | Paired component ratios by discipline, region and EN equipment class | Five kinematic figures, values and per-time support in JSON |
 | `generate_revision_diagnostics.py` | All eligible flights and segments; disk-backed arrays and bounded parallel workers; `--sample` is development only | Transport, component/radial and signed joint-law figures, values, JSON and a checked cache |
+| `generate_regional_pca.py` | Preserved `positions.bin` and `flights.json`; checks identities against the reference report | PCA figure, macros and JSON in an explicit `--output-dir`; works without transport increment caches |
 | `generate_scaling_schematics.py` | Analytical scaling examples | Quantile, closed-loop and Lévy-walk moment-spectrum schematics |
 
 `<slug>` is `para` or `hang`. Measurements take `--out`; array reductions take
