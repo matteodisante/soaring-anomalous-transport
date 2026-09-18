@@ -1,0 +1,80 @@
+% --- merged from sections/04-bootstrap-reliability.tex ---
+\Needspace{12\baselineskip}
+\paragraph{Reliability of bootstrap uncertainty estimates.}
+\label{sec:fixed-bootstrap-reliability}
+
+Site--day grouping can miss dependence between sites and successive days. We
+assess its effect by enlarging bootstrap blocks while keeping the main cohort
+and equal-flight estimator fixed~\cite{cameron_miller2015}. Each block contains
+all sites over $L=1,2,4,8,16,32,64$ consecutive calendar days. One-day blocks
+allow dependence across sites; longer blocks also allow dependence across days.
+For each duration, 1000 block-bootstrap replicates give standard errors of the
+MSD at 100, 1000 and 10000 s and of $H$ fitted over 10--10000 s. Shifting block
+boundaries and using two seeds checks partition sensitivity and Monte Carlo noise
+(Fig.~\ref{fig:fixed-bootstrap-reliability}).
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_bootstrap_reliability.pdf}
+ \caption{Bootstrap standard errors relative to the site--day baseline (dashed
+ line). Markers show medians across boundary offsets and two seeds; vertical bars
+ span their minimum and maximum, not confidence intervals. The flight population
+ and estimator are unchanged.}
+ \label{fig:fixed-bootstrap-reliability}
+\end{figure}
+
+For paragliders, grouping all sites in 1-day blocks multiplies the standard error of
+$H$ by \ChThreeParaBlockHurstShort; 64-day blocks give \ChThreeParaBlockHurstLong. At
+64 days, the factors across the three MSD diagnostics span \ChThreeParaBlockMsdSpan.
+There are \ChThreeParaBlockCount{} contributing blocks, with at most
+\ChThreeParaBlockMaxPct\% of the cohort in one block.
+
+For hang gliders, grouping all sites in 1-day blocks multiplies the standard error of
+$H$ by \ChThreeHangBlockHurstShort; 64-day blocks give \ChThreeHangBlockHurstLong. At
+64 days, the factors across the three MSD diagnostics span \ChThreeHangBlockMsdSpan.
+There are \ChThreeHangBlockCount{} contributing blocks, with at most
+\ChThreeHangBlockMaxPct\% of the cohort in one block.
+
+To locate the dependence directly, we sum centred flight contributions within
+each calendar day $d$ and examine their autocovariance:
+\begin{equation}
+ U_d(\tau)=\sum_{f\in\mathcal C_d}\bigl[m_f(\tau)-M_2(\tau)\bigr],
+ \qquad
+ \widehat\rho_\tau(h)=
+ \frac{\sum_d U_d(\tau)U_{d+h}(\tau)}{\sum_d U_d(\tau)^2}.
+ \label{eq:fixed-daily-dependence}
+\end{equation}
+Here $\mathcal C_d$ contains the cohort flights recorded on day $d$; empty dates
+contribute zero. Summing rather than averaging within days preserves equal-flight
+weighting. For $H$, we use its first-order per-flight contributions to the fitted
+slope~\cite{wolff2004}. As a seasonal sensitivity check, we repeat after subtracting
+the flight-weighted mean contribution for each calendar month, pooled across years.
+This centring affects only the diagnostic.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_daily_dependence.pdf}
+ \caption{Daily dependence for the MSD at 1000 s and fitted $H$. Solid curves use
+ the original contributions; dashed curves subtract month-of-year means.
+ Separations are actual calendar days. These are descriptive correlograms,
+ without significance bands.}
+ \label{fig:fixed-daily-dependence}
+\end{figure}
+
+For paragliders, the MSD at 1000 s gives $\widehat{\rho}(1)=\ChThreeParaDailyRho$
+(\ChThreeParaDailyRhoCentred{} after monthly centring); the mean over 17--64 days is
+\ChThreeParaDailyTail{} (\ChThreeParaDailyTailCentred).
+
+For hang gliders, the MSD at 1000 s gives $\widehat{\rho}(1)=\ChThreeHangDailyRho$
+(\ChThreeHangDailyRhoCentred{} after monthly centring); the mean over 17--64 days is
+\ChThreeHangDailyTail{} (\ChThreeHangDailyTailCentred).
+
+Monthly centring does not remove the MSD tail. The weaker long-separation
+contributions for $H$ agree with its greater stability under wider blocks, but
+neither check identifies a common decorrelation scale. We therefore retain the
+site--day intervals as conditional baseline estimates. Persistent changes in
+site, pilot or seasonal composition remain possible; the checks establish neither
+independence nor coverage, and do not validate quantile or kurtosis intervals.
+
+\FloatBarrier
+\FloatBarrier

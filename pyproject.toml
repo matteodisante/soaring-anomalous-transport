@@ -46,6 +46,7 @@ dev = [
 analysis = [
     "matplotlib>=3.7",  # figure di diagnostica (pre-processing); numpy/pandas sono gia' core
     "scipy>=1.11",      # signal.welch per la PSD (analisi del rumore delle quote baro/GNSS)
+    "pyproj>=3.6",      # metric cells for spatial/seasonal bootstrap groups
     "pyarrow>=14.0",    # DataFrame.to_parquet/read_parquet per la cache dello scan tracce
     "hmmlearn>=0.3.3",  # Gaussian HMM per la segmentazione delle fasi di volo
     "joblib>=1.4",      # riavvii HMM indipendenti in parallelo, con array condivisi via mmap
