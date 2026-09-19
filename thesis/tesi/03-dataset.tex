@@ -154,12 +154,17 @@ the consulted 2012 final draft; the 2013 standard and later amendments were not
 compared. FAI hang-glider classes distinguish design and control
 systems~\cite{fai_sc7_2024}.
 
-Two operational equipment proxies are defined:
+For the conditional transport analysis, two operational equipment proxies are defined:
 \[
- \text{beginners}:\ \mathrm{EN\ A/B},\qquad
- \text{experts}:\ \mathrm{EN\ C/D/CCC}.
+ \text{beginners}:\ \mathrm{EN\ A/B/C},\qquad
+ \text{experts}:\ \mathrm{EN\ D/CCC}.
 \]
-Neither measures individual experience or assumes equally spaced performance.
+These names distinguish the recorded wing classes, not measured pilot experience:
+an experienced pilot may fly an A, B or C wing, and a C label does not identify a
+novice. Comparisons between the groups therefore combine equipment differences
+with any differences in the pilots who select them. Tandem, non-certified and
+unclassified entries enter neither group. No equally spaced performance scale is
+assumed.
 The harmonization does not reassess certificates, and a tandem label alone does
 not establish EN certification.
 
@@ -2435,11 +2440,39 @@ launches:
         over low-relief terrain (Normandy, Picardy, the coastal Nord), not one
         carved out by excluding the other three.
   \item \textbf{Outside the massifs.} \SI{\StatPrelimParaGroupOutsideMassifsPct}{\percent}:
-        everywhere else in metropolitan France, a residual defined by exclusion and not a
-        terrain claim.
+        everywhere else in metropolitan France, including the Champagne-Lorraine
+        window used below; this is a residual defined by exclusion, not a terrain claim.
 \end{itemize}
-These groups are longitude and latitude boxes, drawn
-on Fig.~\ref{fig:prelim-map}a; membership is assigned from the first recorded position.
+The geographic selections are longitude--latitude boxes, drawn in
+Figure~\ref{fig:prelim-map}a and defined numerically in Table~\ref{tab:regional-boxes}.
+For initial longitude $\lambda_0$ and latitude $\varphi_0$, membership requires
+\[
+ (\lambda_0,\varphi_0)\in
+ [\lambda_{\min},\lambda_{\max}]\times[\varphi_{\min},\varphi_{\max}],
+\]
+including the four boundaries. The Champagne-Lorraine box provides the second
+lowland region for the transport comparison; it extends beyond Champagne itself
+and is included in the residual share quoted above. These windows define
+reproducible geographic selections, not administrative boundaries or homogeneous
+terrain polygons.
+
+\begin{table}[htbp]
+ \centering\small
+ \input{generated/regional_boxes_table}
+ \caption{Geographic boxes shown in Figure~\ref{fig:prelim-map}. Coordinates are
+ decimal degrees: $\lambda$ is longitude, positive east and negative west;
+ $\varphi$ is latitude, positive north. The lower-left corner is
+ $(\lambda_{\min},\varphi_{\min})$ and the upper-right corner is
+ $(\lambda_{\max},\varphi_{\max})$.}
+ \label{tab:regional-boxes}
+\end{table}
+
+A flight can lie inside a mountain-region box while starting in a lowland setting.
+For the regional comparisons of Section~\ref{sec:conditional-orography}, geographic
+membership is therefore crossed with the initial cleaned altitude used in that
+chapter: Alps and Pyrenees retain only Low/High mountains ($z_0\geq800$ m), while
+Channel Coast and Champagne-Lorraine retain only Plains/Hills ($z_0<800$ m).
+The map itself shows the full retained ensemble, before this additional selection.
 
 \begin{figure}[htbp]
   \centering
@@ -2452,7 +2485,8 @@ on Fig.~\ref{fig:prelim-map}a; membership is assigned from the first recorded po
   }
   \caption{Take-off sites of the retained ensemble, on three frames, pooling both
   disciplines throughout.
-  (a)~Metropolitan France, density on a \SI{0.15}{\degree} cell; the dashed boxes delimit the orographic groups. (b)~La~R\'eunion, on a \SI{0.01}{\degree} cell, the one
+  (a)~Metropolitan France, density on a \SI{0.15}{\degree} cell; the dashed boxes mark the geographic windows in Table~\ref{tab:regional-boxes},
+  including Champagne-Lorraine; no altitude preselection is applied to this map. (b)~La~R\'eunion, on a \SI{0.01}{\degree} cell, the one
   overseas department with a substantial share. (c)~Everything else, one marker per
   \SI{0.5}{\degree} cell with the area set by its count.}
   \label{fig:prelim-map}

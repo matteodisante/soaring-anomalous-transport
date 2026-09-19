@@ -368,3 +368,73 @@ Tables stay generated, because their bodies are data rather than prose.
 The original experiment passages transferred into the new chapter are red in
 `esperimenti.pdf`. Their older estimates and definitions remain historical; the
 current results are in `main.pdf`. Anisotropy/PCA has only a placeholder in Chapter 3.
+
+## Conditional MSD (Section 3.2)
+
+The extension uses **paragliders only**, the same `C_10000` flight/segment cohort,
+33 lags and archived 1000 paired site-day bootstrap draws as the main report.
+It reads the saved flight-level MSD cache rather than remeasuring trajectories.
+Before stratifying, it validates flight identities and reconstructs every baseline
+bootstrap curve; it also checks the existing circuit-by-altitude point estimates.
+
+```bash
+MPLCONFIGDIR=/private/tmp/soaring-mpl-cache VECLIB_MAXIMUM_THREADS=2 \
+  .venv/bin/python scripts/tesi/ch03_fixed_transport/conditional_ch3_transport.py \
+  --data /Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917 \
+  --out revisions/conditional-transport-2026-09-19/run-terrain \
+  --publish thesis/generated
+```
+
+Use a fresh output directory for a new measurement. To redraw the existing run,
+replace `--data ...` with `--redraw`. An offline redraw needs only `OUT/report.json`;
+the portable copy is `thesis/generated/ch3_conditional.json`. No archived source
+file is modified. `--conditional-out OUT` on `run_ch3_fixed.py` includes this
+extension in the main workflow (measurement for a fresh output, redraw otherwise).
+
+The comparisons are:
+
+- Open versus closed, pooling altitude, alongside the existing circuit-by-altitude
+  figure. Unknown declarations enter neither named circuit.
+- Four initial-altitude classes, pooling circuits and equipment.
+- Alps versus Pyrenees and Channel Coast versus Champagne-Lorraine, selected
+  **by geographic box and broad altitude setting**: Low/High mountains for the
+  mountain pair, Plains/Hills for the lowland pair. The classes in each pair are
+  pooled. Champagne-Lorraine is broader than Champagne. The report records box
+  counts, exclusions and retained counts separately.
+- Beginners **EN A/B/C** versus experts **EN D/CCC**, first pooled and then within
+  each of the four altitude classes. Tandem, non-certified and unknown entries
+  are excluded only from these equipment comparisons. The labels are equipment
+  proxies and do not certify pilot experience. Historical experiments retain
+  their older A/B versus C/D/CCC split; their saved outputs are not relabelled.
+
+Every curve legend gives its actual fixed flight count, fitted H and nominal 90%
+interval. H is half the OLS slope of the group mean, never the average of flight
+exponents. Contrasts and altitude interactions use paired replicates. Intervals
+are pointwise, not multiplicity-adjusted, and retain the dependence limitations
+of the original site-day bootstrap.
+
+The versioned report records group support, MSD bands, H intervals, circuit
+composition, all paired H contrasts, source hashes and selection rules. The local
+run additionally retains `membership.parquet` and `replicates.npz`. Generated
+CSV files expose every curve and fit; six vector PDFs, two contrast tables and
+numerical macros supply the thesis. The interpretation stays in
+`thesis/tesi/04-fixed-transport.tex`.
+
+Section 3.2 palettes live in `conditional_plot_style.py`. Circuit, altitude,
+region and equipment categories have semantic colours distinct from the
+paraglider/hang-glider pair; the existing circuit-by-altitude renderer imports
+the same altitude palette as the new extension.
+
+The map, Chapter 2 coordinate table and regional selections share
+`src/soaring/analysis/regions.py`. Regenerate the map and table directly from the
+retained-flight metadata (no trajectory/MSD cache required):
+
+```bash
+MPLCONFIGDIR=/private/tmp/soaring-mpl-cache .venv/bin/python \
+  scripts/condivisi/generate_prelim_figure.py --map-only
+```
+
+The map contains the entire retained ensemble before altitude preselection.
+The earlier Chapter 2 census partition remains unchanged: Champagne-Lorraine
+lies inside its outside-massifs residual, as stated in the text. The regional
+MSD comparison uses the new geography-plus-altitude intersection.
