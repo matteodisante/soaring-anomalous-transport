@@ -22,6 +22,20 @@ def interval(stats, index=None, digits=3):
     return f"{values[0]:.{digits}f} [{values[1]:.{digits}f}, {values[2]:.{digits}f}]"
 
 
+def general_fit_residuals(result):
+    """Lags and residuals (dex) of the general TA-MSD fit, at its fitted lags."""
+    fit = result["general"]["tamsd_global_fit"]
+    tau = np.asarray(result["msd_lags"], dtype=float)
+    first, last = fit["interval_s"]
+    use = (tau >= first) & (tau <= last)
+    point = np.asarray(result["msd"]["point"], dtype=float)[0][use]
+    line = fit["intercept"]["point"] + fit["exponent"]["point"] * np.log10(tau[use])
+    resid = np.log10(point) - line
+    if not np.isclose(np.sqrt(np.mean(resid**2)), fit["rms_dex"]["point"]):
+        raise ValueError("Residuals disagree with the reported RMS")
+    return tau[use], resid
+
+
 class Macros:
     """Collect uniquely named LaTeX definitions for the chapter to cite."""
 
@@ -68,8 +82,38 @@ def write_text(report, out):
 
     general = [results[s]["general"]["tamsd_global_fit"] for s in SLUGS]
     m.per_discipline("GeneralHurst", [interval(g["hurst"]) for g in general])
+    m.per_discipline("GeneralRms", [f"{g['rms_dex']['point']:.3f}" for g in general])
+    # A residual of r dex means the curve sits a factor 10^r away from the fitted line.
+    m.per_discipline(
+        "GeneralRmsRatio", [f"{10 ** g['rms_dex']['point']:.2f}" for g in general]
+    )
+    # The chapter says the residuals change sign three times and peak at the longest lags.
+    for s in SLUGS:
+        resid = general_fit_residuals(results[s])[1]
+        flips = int(np.sum(np.diff(np.sign(resid)) != 0))
+        if flips != 3 or np.argmax(np.abs(resid)) < len(resid) - 3:
+            raise ValueError(f"Rewrite the residual-pattern sentence: {s} changed")
     m.add("ChThreeHangGeneralGroups", general[1]["minimum_group_support"])
     m.add("ChThreeHangGeneralReplicates", general[1]["valid_bootstrap_replicates"])
+
+    # The chapter says both fits share one requested range and one last grid lag.
+    requested = {tuple(g["interval_s"]) for g in general}
+    evaluated = {tuple(g["evaluated_lag_bounds_s"]) for g in general}
+    if len(requested) != 1 or len(evaluated) != 1:
+        raise ValueError("Rewrite the general-fit range sentence: disciplines differ")
+    (fit_min, fit_max), (first_lag, last_lag) = requested.pop(), evaluated.pop()
+    if first_lag != fit_min:
+        raise ValueError("Rewrite the general-fit range sentence: first lag is not 10 s")
+    m.add("ChThreeGeneralFitLagMin", fit_min)
+    m.add("ChThreeGeneralFitLagMax", fit_max)
+    m.add("ChThreeGeneralLastFitLag", last_lag)
+    # Same rule as the support table: the last lag with any TA-MSD flight.
+    last_support = []
+    for s in SLUGS:
+        g = results[s]["general"]
+        last = np.flatnonzero(np.asarray(g["tamsd_support"]) > 0)[-1]
+        last_support.append(int(g["lags"][last]))
+    m.per_discipline("LastSupportLag", last_support)
 
     def save(name, paragraphs):
         (out / f"ch3_transport_{name}.tex").write_text("\n\n".join(paragraphs) + "\n")

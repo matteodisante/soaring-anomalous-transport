@@ -134,23 +134,68 @@ Section~\ref{sec:fixed-population} instead fix the population once for all lags.
  \caption{General horizontal transport. Left: squared distance from the post-trim
  origin, with equal-flight mean, median and the empirical 5--95\% flight range.
  Right: equal-flight TA-MSD over the population available at each lag, with
- pointwise 90\% cluster-bootstrap intervals and a log--log fit over 10--30000 s
- (evaluated lags: 10--28440 s). Native short-lag support differs from common-grid support.}
+ pointwise 90\% cluster-bootstrap intervals and a log--log fit over
+ \ChThreeGeneralFitLagMin--\ChThreeGeneralFitLagMax{} s (evaluated lags:
+ \ChThreeGeneralFitLagMin--\ChThreeGeneralLastFitLag{} s). Native short-lag support
+ differs from common-grid support.}
  \label{fig:fixed-general}
 \end{figure}
+
 \begin{figure}[p]
  \centering
  \includegraphics[width=\textwidth]{generated/ch3_transport_general_slopes.pdf}
  \caption{Local slopes of the general curves. The origin-distance mean and median
  have no confidence band here; the TA-MSD band is obtained by refitting bootstrap
- curves. The dotted reference is ballistic growth, $H=1$.}
+ curves. The horizontal coordinate is elapsed time $t$ from trimming for the
+ origin-distance curves and lag $\tau$ for the TA-MSD. The dotted reference is
+ ballistic growth, $H=1$.}
  \label{fig:fixed-general-slopes}
 \end{figure}
+We summarise the growth of the TA-MSD by an analytical linear fit in logarithmic scale ($\log_{10}M_2$ against
+$\log_{10}\tau$). A power law $M_2\propto\tau^{2H}$ appears in this plane as a line of
+slope $2H$, so we define $H$ as half the fitted slope.\\
+It's imporant to highlight that here $H$ denotes an effective growth exponent: its identification with a process's
+self-similarity exponent is tested in Section~\ref{sec:fixed-scaling}.  The
+interval for $H$ comes from repeating the fit on the TA-MSD recomputed for each
+bootstrap replicate, a resampling of site--day groups described in the paragraph
+``\nameref{par:fixed-uncertainty}'' below.
+The fits to the TA-MSD of the available population (Figure~\ref{fig:fixed-general},
+right) are requested over
+\ChThreeGeneralFitLagMin--\ChThreeGeneralFitLagMax{} s but the last lag of the grid inside
+that range is \ChThreeGeneralLastFitLag{} s, so they span
+\ChThreeGeneralFitLagMin--\ChThreeGeneralLastFitLag{} s.
+In the right panels of Figure~\ref{fig:fixed-general}, the TA-MSD over the fitted lags
+lies close to a straight line in logarithmic scale. Figure~\ref{fig:fixed-general-residuals}
+shows the fit residuals: they
+fall on both sides of zero over the whole fitted range, and their RMS say that a
+typical measured value lies within a factor \ChThreeParaGeneralRmsRatio{} and
+\ChThreeHangGeneralRmsRatio{} of the fitted line, respectively for paragliders and hang gliders.
+Such ratios, close to
+unity over a curve that grows by about six decades, combined with the fact that the residuals
+are evenly distributed above and below the fitted curve, make the line an adequate
+description of the measured growth. The residuals are nevertheless not scattered at random.
+In fact, they change sign three times as
+the lag grows, so the departure from a single power law is a smooth curvature, largest
+at the longest lags where the contributing population has shrunk most
+(Table~\ref{tab:fixed-support}). The fit therefore summarises the growth as one
+effective exponent, and the local exponent below (Figure~\ref{fig:fixed-general-slopes})
+shows how the slope varies with lag.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_general_residuals.pdf}
+ \caption{Residuals of the log--log fit of the general TA-MSD at the fitted lags, in dex:
+ $\log_{10}M_2$ minus the fitted line. A residual of $r$ dex means the measured curve
+ sits a factor $10^{r}$ from the line, so $0$ dex is a point lying on it. Dotted lines
+ mark plus and minus the RMS residual.}
+ \label{fig:fixed-general-residuals}
+\end{figure}
+
 The available-population fits give $H=\ChThreeParaGeneralHurst$ for paragliders and
-$H=\ChThreeHangGeneralHurst$ for hang gliders. These summarise growth with changing
-flight support. The hang-glider fit reaches a tail supported by only
-\ChThreeHangGeneralGroups{} groups; its interval uses \ChThreeHangGeneralReplicates{}
-replicates with complete lag support.
+$H=\ChThreeHangGeneralHurst$ for hang gliders and, since the flights contributing at each lag
+change as $\tau$ grows (Table~\ref{tab:fixed-support}), these values summarise the
+growth of a curve whose population shrinks with lag.
+
 \begin{table}[htbp]
  \centering\small
  \input{generated/ch3_transport_support_table}
@@ -163,64 +208,90 @@ replicates with complete lag support.
 \end{table}
 
 \Needspace{20\baselineskip}
-For a second-moment curve the local growth exponent is
+To see how the growth changes with lag, we also compute a local exponent. For a
+second-moment curve it is
 \begin{equation}
  H_{\rm loc}(\tau)=\frac12\frac{d\log M_2(\tau)}{d\log\tau}.
  \label{eq:fixed-local-h}
 \end{equation}
-We estimate this derivative by a local log--log least-squares slope, divided by two,
-within $\pm0.25$ decades of each lag and using at least three points.
+We estimate this derivative with the same closed-form least-squares slope, divided by
+two, computed at each lag on the points within $\pm0.25$ decades of it, provided the
+window contains at least three points.
 In the general curves, a sparse interior window expands to the three nearest
 log-lags: the estimate at 20 s uses the values at 10, 20 and 30 s.
-For a single exponent over a specified interval, write $x_k=\log_{10}(\tau_k/1\,\mathrm{s})$.
-The equal-weight least-squares slope of a dimensionless logarithmic ordinate $z_k$ is
-\begin{equation}
- \mathcal B[z]=\frac{\sum_k(x_k-\bar x)z_k}{\sum_k(x_k-\bar x)^2},\qquad
- H=\frac12\mathcal B\!\left[\log_{10}\frac{M_2}{1\,\mathrm{m}^2}\right].
- \label{eq:fixed-fit}
-\end{equation}
-We fit the controlled analysis over 10--10000 s and refit every bootstrap curve to
-propagate dependence between lags. The RMS logarithmic residual, in dex, measures
-the departure from a single power law. Here $H$ denotes an effective growth exponent;
-its identification with a process's self-similarity exponent is tested in
-Section~\ref{sec:fixed-scaling}. Figure~\ref{fig:fixed-general-slopes} shows the
-resulting local slopes of both general curves.
+The band of the TA-MSD in Figure~\ref{fig:fixed-general-slopes} comes from repeating
+this local fit on every bootstrap replicate of the curve: at each lag it is the
+pointwise 5--95\% range of the resulting local slopes.
+For the origin-distance mean and median, we apply the same local slope to each
+squared-distance curve as a function of elapsed time $t$.
 
-The origin-distance means are approximately ballistic at the earliest resolved lags.
-Their local slopes reach minima at \ChThreeParaLocalMinLag{} s
+Figures~\ref{fig:fixed-general} and~\ref{fig:fixed-general-slopes} show two linked
+features of the origin-distance curves. After the approximately ballistic regime
+at $t\lesssim10$ s, the mean rises visibly above the median, with a marked
+separation at $t\sim10^2$--$10^3$ s. The mean's local slopes reach minima at \ChThreeParaLocalMinLag{} s
 ($H_{\rm loc}=\ChThreeParaLocalMinH$) for paragliders and \ChThreeHangLocalMinLag{} s
 ($H_{\rm loc}=\ChThreeHangLocalMinH$) for hang gliders within 20--2000 s, then recover
 towards $H_{\rm loc}\simeq1$ around 600--700 s.
-The reduced growth after the initial ballistic regime is consistent with searching
-for lift and climbing in a thermal, followed by renewed gliding. Under this
-interpretation, the minimum marks a rough transition time towards completion of the
-initial search-and-climb phase. It is distinct from the later recovery towards
-$H_{\rm loc}=1$ and does not estimate a mean duration measured on individual flights.
-The mean lies above the median, showing the influence of large displacements;
-the pointwise percentiles do not track the same flights through time.
+The median has a deeper minimum near $10^2$ s. When its local exponent is below
+the mean's, the mean-to-median ratio increases; when it exceeds the mean's during
+the recovery, that ratio decreases.
 
-\paragraph{Uncertainty.} The shading around the origin-distance curves of
+A possible physical explanation is the asynchronous alternation of gliding,
+search and climb. At the same elapsed time, some pilots glide while others search
+for lift or circle in a thermal, making less net horizontal progress. At short
+elapsed times, an episode lasting a few hundred seconds can greatly reduce the
+displacement relative to a flight that keeps gliding. The latter pulls the mean
+above the median, especially because displacement is squared. Meanwhile, the
+slow horizontal progress of flights in search and climb lowers the growth rates,
+with a stronger dip in the median's $H_{\rm loc}$.
+
+The duration distributions in Vilpellet et al.~\cite[Fig.~4f,i]{vilpellet2026}
+support this timescale: search times have heavy tails, whereas climb times have
+an exponential tail. Their survival probabilities remain of order $10^{-3}$ at
+durations of several hundred seconds. An archive with many thousands of episodes
+can therefore contain several such long events alongside much shorter ones;
+$10^2$--$10^3$ s is a range of observable durations, not a strict upper limit.
+
+Search and climb continue throughout the flight, at different times for different
+pilots. At $t\sim10^3$--$10^4$ s, however, many flights have already reached much
+larger distances from the origin. The extra displacement gained by gliding rather
+than searching or climbing during one interval of $10^2$--$10^3$ s can then be
+smaller relative to that distance, and so have a smaller relative effect on
+squared distance. The same alternation of phases can thus produce a weaker contrast between
+flights at long elapsed times. This is consistent with the recovery of the local
+exponents and the narrowing of the early mean--median gap, even though the phases
+remain asynchronous.
+
+\paragraph{Uncertainty.}\label{par:fixed-uncertainty} The shading around the origin-distance curves of
 Figure~\ref{fig:fixed-general} is the empirical 5--95\% range across flights, a
 measure of scatter among flights. Every other shaded band in this chapter is a
 pointwise 90\% bootstrap interval. Flights are grouped by
 catalogue take-off site (the one declared in the FFVL catalogue metadata
 (Section~\ref{sec:catalog}, Table~\ref{tab:catalogfields})) and calendar date, retaining dependence within each site--day.
 Missing keys give singleton groups.
-From the eligible archive's $G$ site--day groups, each of $B=1000$ replicates
-draws $G$ groups with replacement, then restricts them to the population being analysed.
-If $b_g$ is the number
-of times group $g$ is drawn, the weights are
+A \emph{replicate} is one resampled version of the archive. Writing $G$ for the number of
+site--day groups in the eligible archive, a replicate draws $G$ of those groups with
+replacement, so a group may come out several times or not at all. We build $B=1000$
+replicates. They are drawn once, over the whole eligible archive; an analysis of a
+sub-population, such as a duration cohort, reuses the same draws and keeps only the
+flights that belong to it.
+Let $g(f)$ be the group of flight $f$, and $c^{(b)}_g$ the number of times group $g$ is
+drawn in replicate $b$. The replicate replaces the equal weight $1/N(\tau)$ of
+Eq.~\eqref{eq:fixed-msd} by a weight proportional to the multiplicity of the flight's
+group:
 \begin{equation}
- \begin{aligned}
- N_b(\tau)&=\sum_{f\in\mathcal C(\tau)}b_{g(f)},&
- w^{(b)}_{fi}(\tau)&=\frac{b_{g(f)}}{N_b(\tau)n_f(\tau)},\\
- M_2^{(b)}(\tau)&=\sum_{f\in\mathcal C(\tau)}\sum_{i\in\mathcal I_f(\tau)}
- w^{(b)}_{fi}(\tau)R_{fi}(\tau)^2.
- \end{aligned}
+ M_2^{(b)}(\tau)=\frac{1}{N^{(b)}(\tau)}
+ \sum_{f\in\mathcal C(\tau)}c^{(b)}_{g(f)}\,m_f(\tau),
+ \qquad
+ N^{(b)}(\tau)=\sum_{f\in\mathcal C(\tau)}c^{(b)}_{g(f)}.
  \label{eq:fixed-bootstrap}
 \end{equation}
-The same draws are used across lags, observables and cohort comparisons. Quantiles,
-ratios and fits are recomputed in each replicate. For an estimate $\widehat\theta$,
+Setting every $c^{(b)}_g=1$ recovers Eq.~\eqref{eq:fixed-msd}. A group drawn twice
+counts its flights twice; a group never drawn contributes nothing.
+The multiplicities are drawn once and then held fixed: the same $c^{(b)}_g$ serve every
+lag, observable and cohort comparison, which keeps the replicates paired. Only the
+normalisation $N^{(b)}(\tau)$ changes with lag, because $\mathcal C(\tau)$ shrinks as
+$\tau$ grows. Quantiles, ratios and fits are recomputed in each replicate. For an estimate $\widehat\theta$,
 the 5th and 95th percentiles of the bootstrap replicates $\{\widehat\theta^{(b)}\}_{b=1}^{1000}$ give a pointwise 90\% confidence interval
 \begin{equation}
  I_{90}(\theta)=
@@ -658,7 +729,8 @@ isotropy.
 \label{sec:fixed-quantiles}
 
 We evaluate $p=0.25,0.50,0.75,0.90$ and fit each quantile over the same 33 lags.
-Using the slope operator in Eq.~\eqref{eq:fixed-fit},
+Writing $\mathcal B$ for the least-squares slope against $\log_{10}\tau$
+used in Section~\ref{sec:fixed-general},
 \begin{equation}
  H_{Y,p}=\mathcal B\!\left[\log_{10}\frac{Q_{Y,p}}{1\,\mathrm m}\right],\qquad
  \mathcal B\!\left[\log_{10}\frac{Q_{Y,0.25}}{Q_{Y,0.90}}\right]

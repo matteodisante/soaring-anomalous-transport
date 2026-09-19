@@ -13,7 +13,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
-from write_ch3_text import write_text
+from write_ch3_text import general_fit_residuals, write_text
 
 COLORS = ("#0072B2", "#D55E00", "#009E73", "#CC79A7")
 NAMES = {"para": "Paragliders", "hang": "Hang gliders"}
@@ -112,6 +112,7 @@ def figures(report, out):
         ax.set_title(f"{NAMES[slug]}: from post-trim origin")
         ax.set_ylabel(r"Squared distance (km$^2$)")
         axes_style(ax, logy=True)
+        ax.set_xlabel(r"Elapsed time from trimming $t$ (s)")
         ax.legend(loc="upper left")
         ax = axs[row, 1]
         band(ax, x, g["tamsd"], COLORS[row], "Equal-flight TA-MSD", scale=1e6)
@@ -159,8 +160,33 @@ def figures(report, out):
         ax.set_title(NAMES[slug])
         ax.set_ylabel(r"Local $H=\frac{1}{2}d\log M_2/d\log\tau$")
         axes_style(ax)
+        ax.set_xlabel(r"Elapsed time $t$ / lag $\tau$ (s)")
         ax.legend(loc="lower left")
     save(fig, out, "general_slopes")
+
+    fig, axs = plt.subplots(1, 2, figsize=(7.1, 2.8), layout="constrained")
+    for row, (ax, (slug, d)) in enumerate(zip(axs, results.items(), strict=True)):
+        tau, resid = general_fit_residuals(d)
+        rms = d["general"]["tamsd_global_fit"]["rms_dex"]["point"]
+        ax.axhline(0, color="0.3", lw=0.8)
+        for sign in (1, -1):
+            ax.axhline(sign * rms, color="0.5", ls=":", lw=0.8)
+        ax.plot(
+            tau,
+            resid,
+            "o-",
+            color=COLORS[row],
+            ms=3.1,
+            lw=1.0,
+            mew=0.6,
+            mfc="white",
+            label=f"RMS = {rms:.3f} dex",
+        )
+        ax.set_title(NAMES[slug])
+        ax.set_ylabel(r"Residual $\log_{10}M_2-$fit (dex)")
+        axes_style(ax)
+        ax.legend(loc="best")
+    save(fig, out, "general_residuals")
 
     fig, axs = plt.subplots(2, 2, figsize=(7.1, 5.7), layout="constrained")
     for col, (slug, d) in enumerate(results.items()):
