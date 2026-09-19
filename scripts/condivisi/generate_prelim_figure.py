@@ -49,6 +49,7 @@ if _SRC not in sys.path:
 
 # The sys.path line above is what makes this resolvable when the script is run
 # directly, so the import cannot move to the top of the file.
+from soaring.analysis.regions import REGIONAL_BOXES  # noqa: E402
 from soaring.analysis.stats.bootstrap import (  # noqa: E402
     cluster_bootstrap,
     cluster_labels,
@@ -60,7 +61,7 @@ from soaring.reporting import (  # noqa: E402
     unreachable_reason,
     write_macros,
 )
-from soaring.reporting.style import REGION_COLORS
+from soaring.reporting.style import REGION_COLORS  # noqa: E402
 
 OUT_MAP = ROOT / "thesis" / "generated" / "prelim_map.pdf"
 OUT_ENSEMBLE = ROOT / "thesis" / "generated" / "prelim_ensemble.pdf"
@@ -128,6 +129,16 @@ FLAT_CONTROL = {
 # Every box that ``orographic_group`` and the map panel draw from, massifs and the flat
 # control alike.
 REGIONS = {**OROGRAPHY, **FLAT_CONTROL}
+# Draw the conditional-study windows too, without changing the historical census
+# partition (where Champagne-Lorraine belongs to the outside-massifs residual).
+MAP_REGIONS = {
+    **REGIONS,
+    **{
+        name: {"lon": (w, e), "lat": (s, n)}
+        for name, (w, e, s, n) in REGIONAL_BOXES.items()
+    },
+}
+BOX_COLORS = {**REGION_COLORS, "Champagne-Lorraine": "#817268"}
 # Where each box's label sits, and how it is anchored. The boxes overlap along their
 # edges, so a label placed at a fixed corner of each collides with its neighbour.
 _LABEL_ANCHOR = {
@@ -135,6 +146,7 @@ _LABEL_ANCHOR = {
     "Pyrenees": (-1.75, 42.15, "left"),
     "Massif Central": (1.95, 45.9, "left"),
     "Channel Coast": (-1.7, 50.6, "left"),
+    "Champagne-Lorraine": (2.25, 50.8, "left"),
 }
 
 _PDF_METADATA = {
@@ -168,6 +180,20 @@ def orographic_group(lat: pd.Series, lon: pd.Series) -> np.ndarray:
         labels[hit.to_numpy()] = name
     labels[~inside.to_numpy()] = "abroad"
     return labels
+
+
+def load_map(discipline: str):
+    """Read retained launch positions directly; maps need no MSD audit arrays."""
+    directory = DISCIPLINES[discipline].derived_dir("flights_meta.parquet")
+    if directory is None:
+        return None
+    meta = pd.read_parquet(directory / "flights_meta.parquet")
+    frame = meta.loc[meta.drop_reason.isna(), ["flight_id", "lat0", "lon0"]].copy()
+    if frame.flight_id.duplicated().any():
+        raise ValueError("Map flight identities must be unique")
+    if not np.isfinite(frame[["lat0", "lon0"]].to_numpy()).all():
+        raise ValueError("Every retained map flight needs finite coordinates")
+    return {"flights": frame}
 
 
 def load(discipline: str, audit_dir: Path):
@@ -381,14 +407,14 @@ def draw_maps(loaded: dict) -> object:
     mesh = _density(france_ax, lon[inside], lat[inside], extent, CELL_DEG)
     if mesh is not None:
         fig.colorbar(mesh, ax=france_ax, label="flights per cell", shrink=0.75)
-    for name, box in REGIONS.items():
+    for name, box in MAP_REGIONS.items():
         france_ax.add_patch(
             plt.Rectangle(
                 (box["lon"][0], box["lat"][0]),
                 box["lon"][1] - box["lon"][0],
                 box["lat"][1] - box["lat"][0],
                 fill=False,
-                edgecolor=REGION_COLORS[name],
+                edgecolor=BOX_COLORS[name],
                 lw=1.1,
                 ls="--",
                 zorder=3,
@@ -396,7 +422,7 @@ def draw_maps(loaded: dict) -> object:
         )
         x, y, align = _LABEL_ANCHOR[name]
         france_ax.text(
-            x, y, name, color=REGION_COLORS[name], fontsize=8.5, ha=align, zorder=4
+            x, y, name, color=BOX_COLORS[name], fontsize=8.5, ha=align, zorder=4
         )
     france_ax.set_title(
         f"(a) France \u2014 {100 * inside.mean():.1f}% of flights",
@@ -693,11 +719,39 @@ def macros(loaded: dict) -> dict[str, str]:
     return out
 
 
+def write_region_boxes():
+    """Publish map coordinates from the same definitions used by the analysis."""
+    lines = [
+        r"\begin{tabular}{@{}lrrrr@{}}",
+        r"\toprule",
+        r"Region & $\lambda_{\min}$ & $\lambda_{\max}$"
+        r" & $\varphi_{\min}$ & $\varphi_{\max}$ \\",
+        r"\midrule",
+    ]
+    for name, box in MAP_REGIONS.items():
+        west, east = box["lon"]
+        south, north = box["lat"]
+        lines.append(
+            f"{name} & ${west:.1f}$ & ${east:.1f}$ & "
+            f"${south:.1f}$ & ${north:.1f}$" + r" \\"
+        )
+    lines.extend([r"\bottomrule", r"\end{tabular}"])
+    (OUT_TEX.parent / "regional_boxes_table.tex").write_text("\n".join(lines) + "\n")
+
+
 def main() -> int:
+    """Regenerate diagnostics, or only the geographic map from flight metadata."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--audit-dir", type=Path, required=True)
+    parser.add_argument("--audit-dir", type=Path)
     parser.add_argument("--allow-partial", action="store_true")
+    parser.add_argument(
+        "--map-only",
+        action="store_true",
+        help="Redraw the geographic map and box table without other diagnostics",
+    )
     args = parser.parse_args()
+    if not args.map_only and args.audit_dir is None:
+        parser.error("--audit-dir is required unless --map-only is specified")
 
     import matplotlib
 
@@ -709,7 +763,9 @@ def main() -> int:
     loaded = {}
     missing = []
     for discipline in DISCIPLINES:
-        data = load(discipline, args.audit_dir)
+        data = (
+            load_map(discipline) if args.map_only else load(discipline, args.audit_dir)
+        )
         if data is None:
             missing.append(discipline)
         else:
@@ -730,6 +786,9 @@ def main() -> int:
         return 1
 
     draw_maps(loaded).savefig(OUT_MAP, metadata=_PDF_METADATA, bbox_inches="tight")
+    write_region_boxes()
+    if args.map_only:
+        return 0
     draw_ensemble(loaded).savefig(OUT_ENSEMBLE, metadata=_PDF_METADATA)
     draw_isotropy(loaded).savefig(OUT_ISOTROPY, metadata=_PDF_METADATA)
     draw_strata(loaded).savefig(OUT_STRATA, metadata=_PDF_METADATA)

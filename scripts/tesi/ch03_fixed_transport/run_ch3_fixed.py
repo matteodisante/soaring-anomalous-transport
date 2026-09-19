@@ -32,6 +32,11 @@ def main():
     parser.add_argument("--data", type=Path, required=True)
     parser.add_argument("--reuse-coordinates", type=Path)
     parser.add_argument("--redraw", action="store_true")
+    parser.add_argument(
+        "--conditional-out",
+        type=Path,
+        help="Also measure/redraw Section 3.2 in this separate output directory",
+    )
     parser.add_argument("--publish", type=Path, default=ROOT / "thesis/generated")
     args = parser.parse_args()
     if not args.redraw:
@@ -77,6 +82,18 @@ def main():
             )
         run("summarize_ch3_fixed.py", "--data", args.data)
     run("render_ch3_fixed.py", "--data", args.data, "--publish", args.publish)
+    if args.conditional_out:
+        conditional_args = [
+            "--out",
+            args.conditional_out,
+            "--publish",
+            args.publish,
+        ]
+        if args.redraw or (args.conditional_out / "report.json").exists():
+            conditional_args.append("--redraw")
+        else:
+            conditional_args.extend(["--data", args.data])
+        run("conditional_ch3_transport.py", *conditional_args)
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+from conditional_plot_style import ALTITUDE_COLORS
 from write_ch3_text import general_fit_residuals, write_text
 
 COLORS = ("#0072B2", "#D55E00", "#009E73", "#CC79A7")
@@ -243,7 +244,7 @@ def figures(report, out):
     d = results["para"]
     for ax, task in zip(axs, ("open", "closed"), strict=True):
         total = sum(d["groups"][f"{task}_{i}"]["flights"] for i in range(4))
-        for i, color in enumerate(COLORS):
+        for i, color in enumerate(ALTITUDE_COLORS.values()):
             group = d["groups"][f"{task}_{i}"]
             band(
                 ax,
