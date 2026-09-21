@@ -78,12 +78,21 @@ def test_trim_split_one_splits_the_combined_fraction_by_end(tmp_path):
 
     result = trim_split_one(path, "paragliders")
     assert result is not None
-    takeoff_trimmed_s, landing_trimmed_s, n_interior_excised = result
+    (
+        takeoff_trimmed_s,
+        landing_trimmed_s,
+        n_interior_excised,
+        alt_shift_m,
+        launch_alt_m,
+    ) = result
 
     # The ground stretch before/after the cruise is what gets trimmed at each end.
     assert takeoff_trimmed_s == pytest.approx(45.0, abs=2.0)
     assert landing_trimmed_s == pytest.approx(40.0, abs=2.0)
     assert n_interior_excised == 0
+    # alt = 1500 + 2 t: the first trimmed fix sits ~45 s (~90 m) above the first raw one.
+    assert alt_shift_m == pytest.approx(90.0, abs=4.0)
+    assert launch_alt_m == pytest.approx(1590.0, abs=4.0)
 
 
 def test_scan_trim_split_drops_flights_with_no_window(tmp_path):
@@ -99,6 +108,8 @@ def test_scan_trim_split_drops_flights_with_no_window(tmp_path):
         "takeoff_trimmed_s",
         "landing_trimmed_s",
         "n_interior_excised",
+        "takeoff_alt_shift_m",
+        "launch_alt_m",
     ]
 
 

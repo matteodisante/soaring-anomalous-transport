@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 r"""Regenerate the takeoff/landing trim-split and interior-excision figures.
 
-Writes two figures to ``thesis/generated/``:
+Writes three figures to ``thesis/generated/``:
 
 * ``trim_split_seconds.pdf`` -- per discipline, the distribution of the time cut from
   the start of the record to the estimated onset :math:`t_{\mathrm{on}}`, and
@@ -10,6 +10,9 @@ Writes two figures to ``thesis/generated/``:
   *combined* fraction of the recorded span, so this figure needs its own scan.
 * ``trim_interior_excisions.pdf`` -- the discrete distribution of how many interior
   ground stints (mid-flight landings) the same stage excised, per flight.
+* ``trim_alt_shift.pdf`` -- the distribution of the absolute GNSS-altitude difference between
+  the first fix of the trimmed track (the launch altitude :math:`z_0` that
+  sec:conditional-orography classifies by) and the first fix of the raw log.
 
 Both come from one full-census pass of :func:`soaring.analysis.trim_census
 .scan_trim_split`, which reruns stages (i)-(iii)
@@ -38,12 +41,14 @@ from pathlib import Path
 GENERATED_OUTPUTS = (
     "trim_split_seconds.pdf",
     "trim_interior_excisions.pdf",
+    "trim_alt_shift.pdf",
     "trim.tex",
 )
 
 ROOT = Path(__file__).resolve().parents[3]
 OUT_SPLIT = ROOT / "thesis" / "generated" / "trim_split_seconds.pdf"
 OUT_INTERIOR = ROOT / "thesis" / "generated" / "trim_interior_excisions.pdf"
+OUT_ALT_SHIFT = ROOT / "thesis" / "generated" / "trim_alt_shift.pdf"
 OUT_MACROS = ROOT / "thesis" / "generated" / "trim.tex"
 N_JOBS = max(
     1, min(int(os.environ.get("SOARING_MAX_WORKERS", "1")), os.cpu_count() or 1)
@@ -102,6 +107,29 @@ def _write_macros(scans: dict) -> None:
         pct = 100.0 * nonzero / len(n_interior) if len(n_interior) else 0.0
         w.put(f"{t}InteriorNonzeroPct", f"{pct:.2f}")
         w.put(f"{t}InteriorMax", int(n_interior.max()) if n_interior.size else 0)
+        shift = s["takeoff_alt_shift_m"].to_numpy(dtype=float)
+        launch = s["launch_alt_m"].to_numpy(dtype=float)
+        ok = np.isfinite(shift) & np.isfinite(launch)
+        shift, launch = shift[ok], launch[ok]
+        w.put(f"{t}AltShiftCount", len(shift))
+        big = np.abs(shift) > 500
+        w.put(f"{t}AltShiftBeyondFiveHundredPct", f"{100 * big.mean():.1f}")
+        w.put(f"{t}AltShiftBigPositivePct", f"{100 * (shift[big] > 0).mean():.0f}")
+        w.put(
+            f"{t}AltShiftBigTakeoffMedianS",
+            f"{np.median(s['takeoff_trimmed_s'].to_numpy(dtype=float)[ok][big]):.0f}",
+        )
+        w.put(f"{t}AltShiftAbsMedianM", f"{np.median(np.abs(shift)):.1f}")
+        w.put(f"{t}AltShiftAbsQNinetyM", f"{np.quantile(np.abs(shift), 0.9):.0f}")
+        w.put(f"{t}AltShiftWithinTenPct", f"{100 * np.mean(np.abs(shift) <= 10):.1f}")
+        w.put(
+            f"{t}AltShiftBeyondHundredPct", f"{100 * np.mean(np.abs(shift) > 100):.1f}"
+        )
+        # Launch-altitude class (thesis, sec:conditional-orography) of the trimmed
+        # start against the class the raw first fix would have given.
+        bands = [300.0, 800.0, 1500.0]
+        changed = np.digitize(launch, bands) != np.digitize(launch - shift, bands)
+        w.put(f"{t}AltShiftClassChangedPct", f"{100 * changed.mean():.1f}")
 
     n = write_macros(
         OUT_MACROS,
@@ -130,6 +158,7 @@ def main(argv: list[str] | None = None) -> int:
     from soaring.acquisition.ffvl.config import DELTA_CONFIG_PATH, PARA_CONFIG_PATH
     from soaring.analysis.figures.trimming import (
         make_interior_excision_figure,
+        make_takeoff_alt_shift_figure,
         make_trim_split_figure,
     )
     from soaring.analysis.trim_census import load_or_scan_trim_split
@@ -173,6 +202,10 @@ def main(argv: list[str] | None = None) -> int:
     fig = make_interior_excision_figure(scans)
     fig.savefig(OUT_INTERIOR, metadata=_PDF_METADATA, bbox_inches="tight")
     print(f"Wrote {OUT_INTERIOR}.")
+
+    fig = make_takeoff_alt_shift_figure(scans)
+    fig.savefig(OUT_ALT_SHIFT, metadata=_PDF_METADATA, bbox_inches="tight")
+    print(f"Wrote {OUT_ALT_SHIFT}.")
 
     _write_macros(scans)
     return 0

@@ -1060,6 +1060,48 @@ removed; the tails extend to hours.}
   \label{fig:trim-split}
 \end{figure}
 
+Trimming also moves the first altitude of the track. The launch altitude $z_0$ used
+to classify flights by orography in Section~\ref{sec:conditional-orography} is the
+GNSS altitude of the first fix of the trimmed track, not of the raw log. Let
+$z_{\mathrm{raw}}$ be the first finite GNSS altitude of the raw log and
+$z_{\mathrm{trim}}$ that of the trimmed track, so that $z_0=z_{\mathrm{trim}}$.
+Typically the two are close: the median of $|z_{\mathrm{trim}}-z_{\mathrm{raw}}|$ is
+\SI{\StatTrimParaAltShiftAbsMedianM}{\metre} for paragliders and
+\SI{\StatTrimHangAltShiftAbsMedianM}{\metre} for hang gliders, and
+\StatTrimParaAltShiftWithinTenPct\,\% and \StatTrimHangAltShiftWithinTenPct\,\% of
+flights differ by at most \SI{10}{\metre} (Fig.~\ref{fig:trim-alt-shift}).
+The tail is long: the difference exceeds \SI{100}{\metre} in
+\StatTrimParaAltShiftBeyondHundredPct\,\% of paraglider and
+\StatTrimHangAltShiftBeyondHundredPct\,\% of hang-glider flights, and
+\SI{500}{\metre} in \StatTrimParaAltShiftBeyondFiveHundredPct\,\% and
+\StatTrimHangAltShiftBeyondFiveHundredPct\,\%. These differences are almost always
+positive (\StatTrimParaAltShiftBigPositivePct\,\% and
+\StatTrimHangAltShiftBigPositivePct\,\%), and the time cut before onset is long for
+them (medians \SI{\StatTrimParaAltShiftBigTakeoffMedianS}{\second} and
+\SI{\StatTrimHangAltShiftBigTakeoffMedianS}{\second}, against
+\SI{\StatTrimParaTakeoffMedianS}{\second} and \SI{\StatTrimHangTakeoffMedianS}{\second}
+overall). The likely cause is a logger switched on at the bottom of the site and
+carried up to the launch by road, lift or on foot: the raw log then starts at the
+valley, and trimming removes that approach and starts at the launch. We inferred this
+from these statistics and a small sample of flights, not from inspecting each one.
+This is why $z_0$ is taken from the trimmed track.
+Using $z_{\mathrm{raw}}$ instead of $z_{\mathrm{trim}}$ would place
+\StatTrimParaAltShiftClassChangedPct\,\% of paraglider and
+\StatTrimHangAltShiftClassChangedPct\,\% of hang-glider flights in a different
+altitude class of Section~\ref{sec:conditional-orography}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=.85\linewidth]{generated/trim_alt_shift}
+  \caption{Absolute difference between the GNSS altitude of the first fix of the trimmed
+track and that of the first fix of the raw log, one observation per flight. Bins are
+logarithmic in whole metres, and the vertical axis is the fraction of flights per
+decade. Differences of \SI{0}{\metre} and \SI{1}{\metre} share the first bin, and values
+above \SI{5000}{\metre} are drawn in the last one. Dotted lines mark discipline
+medians.}
+  \label{fig:trim-alt-shift}
+\end{figure}
+
 \paragraph{Interior ground intervals.}
 A landing and relaunch in one log can imitate a long waiting episode. The detector
 requires sustained low horizontal speed on an interval $I$ containing at least

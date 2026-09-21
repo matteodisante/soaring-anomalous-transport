@@ -13,7 +13,10 @@ from the cached table, so this module reruns stages (i)-(iii)
 and keeps the three numbers the combined fraction discards: the takeoff-trimmed and
 landing-trimmed durations, and (for free, from the same pass) ``n_interior_excised``,
 so the mid-flight-landing count quoted beside them is read off the identical run rather
-than a second, possibly stale, source.
+than a second, possibly stale, source. It also keeps ``takeoff_alt_shift_m``, the GNSS
+altitude of the first trimmed fix minus that of the first fix of the raw log: the launch
+altitude the conditional transport analysis classifies by is the former (kept as
+``launch_alt_m``, so the class each end would give can be compared).
 
 A full census (every ``.igc`` file) is cheap relative to the full pipeline: no
 resampling, local-frame conversion or smoothing, so it costs roughly the fix-level
@@ -29,9 +32,22 @@ from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
-_SCAN_COLUMNS = ("takeoff_trimmed_s", "landing_trimmed_s", "n_interior_excised")
+_SCAN_COLUMNS = (
+    "takeoff_trimmed_s",
+    "landing_trimmed_s",
+    "n_interior_excised",
+    "takeoff_alt_shift_m",
+    "launch_alt_m",
+)
+
+
+def _first_finite(values: np.ndarray) -> float:
+    """First finite entry of ``values``, or ``nan`` if there is none."""
+    finite = values[np.isfinite(values)]
+    return float(finite[0]) if finite.size else float("nan")
 
 
 def trim_split_one(path: Path, discipline: str) -> tuple | None:
@@ -82,7 +98,20 @@ def trim_split_one(path: Path, discipline: str) -> tuple | None:
         return None
     takeoff_trimmed_s = trimmed.t_on - float(t[0])
     landing_trimmed_s = float(t[-1]) - trimmed.t_off
-    return (takeoff_trimmed_s, landing_trimmed_s, trimmed.n_interior_excised)
+    # The launch altitude z0 of sec:conditional-orography is the first altitude of the
+    # trimmed track (``to_local_frame``, first finite value); the shift is how far that
+    # sits from the first altitude the raw log carries.
+    launch_alt_m = _first_finite(trimmed.fixes["alt"].to_numpy(dtype=float))
+    takeoff_alt_shift_m = launch_alt_m - _first_finite(
+        with_alt["alt"].to_numpy(dtype=float)
+    )
+    return (
+        takeoff_trimmed_s,
+        landing_trimmed_s,
+        trimmed.n_interior_excised,
+        takeoff_alt_shift_m,
+        launch_alt_m,
+    )
 
 
 def scan_trim_split(
