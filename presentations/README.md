@@ -1,5 +1,19 @@
 # Presentazioni dei capitoli 2 e 3
 
+## EconophysicsLab offsite 2026
+
+[The statistics of soaring flight](offsite2026/offsite-2026.pdf) è il deck da
+seminario: **15 slide totali**, tutte in inglese, fino alla sezione 3.2 della tesi
+attuale, più una slide sul viewer con quattro spazi per le immagini dei piani
+termici in montagna e pianura a due quote. Due sole slide coprono cleaning e
+filtering. Sono disponibili anche
+la [versione con note in inglese](offsite2026/offsite-2026-notes.pdf) e le
+[istruzioni di ricostruzione](offsite2026/README.md). I grafici usano i report
+attuali del trasporto a popolazione fissa; il deck non segue la vecchia
+numerazione delle presentazioni estese riportate sotto.
+
+## Presentazioni estese per discussione
+
 Queste presentazioni raccontano la tesi revisionata il 14 settembre 2026, con
 cleaning 2.3.0 e risultati del run completo `20260912T133040Z-073601cb`, con
 PCA regionale calcolata a 10, 100, 1000 e 10.000 s e documentata nella revisione
