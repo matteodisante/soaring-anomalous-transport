@@ -420,17 +420,6 @@ CSV files expose every curve and fit; five vector PDFs, two contrast tables and
 numerical macros supply the thesis. The interpretation stays in
 `thesis/tesi/04-fixed-transport.tex`.
 
-The altitude-only comparison is descriptive: open-flight proportions are 91.1%
-and 71.1% in Plains/Hills, versus 33.5% and 35.0% in the mountain classes.
-Circuit-specific curves show larger H for open than closed flights in all four
-classes, but opposite lowland-minus-mountain contrasts for the two circuits.
-The manuscript therefore discusses relief mechanisms after this crossed
-comparison, without claiming a monotonic terrain effect or treating pooled
-H as an average of circuit H values. Regional comparisons remain descriptive
-within a broad altitude setting; they do not match circuit composition.
-The closed-route reversal has no established physical explanation in these
-measurements. The leg-duration/return-geometry explanation is a hypothesis.
-
 Section 3.2 palettes live in `conditional_plot_style.py`. Circuit, altitude,
 region and equipment categories have semantic colours distinct from the
 paraglider/hang-glider pair; the existing circuit-by-altitude renderer imports

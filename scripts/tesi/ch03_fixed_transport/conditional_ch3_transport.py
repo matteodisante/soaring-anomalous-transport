@@ -51,13 +51,12 @@ PANELS = {
     "equipment": [
         ("All initial altitudes", [("beginners", "Beginners"), ("experts", "Experts")])
     ],
-    "equipment_mountains": [
-        (BANDS[i], [(f"beginners_alt{i}", "Beginners"), (f"experts_alt{i}", "Experts")])
-        for i in (2, 3)
-    ],
-    "equipment_lowlands": [
-        (BANDS[i], [(f"beginners_alt{i}", "Beginners"), (f"experts_alt{i}", "Experts")])
-        for i in (0, 1)
+    "equipment_altitude": [
+        (
+            group.capitalize(),
+            [(f"{group}_alt{i}", band) for i, band in enumerate(BANDS)],
+        )
+        for group in ("beginners", "experts")
     ],
 }
 

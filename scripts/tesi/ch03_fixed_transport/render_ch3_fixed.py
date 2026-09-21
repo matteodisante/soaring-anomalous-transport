@@ -257,7 +257,10 @@ def figures(report, out):
                 lags,
                 group["curve"],
                 color,
-                f"{group['altitude']} (n={group['flights']:,})",
+                f"{group['altitude']} (n={group['flights']:,})\n"
+                f"H={group['fit']['hurst']['point']:.3f} "
+                f"[{group['fit']['hurst']['low']:.3f}, "
+                f"{group['fit']['hurst']['high']:.3f}]",
                 scale=1e6,
             )
             fit = group["fit"]
