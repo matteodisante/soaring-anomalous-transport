@@ -153,10 +153,10 @@ Section~\ref{sec:fixed-population} instead fix the population once for all lags.
  ballistic growth, $H=1$.}
  \label{fig:fixed-general-slopes}
 \end{figure}
-We summarise the growth of the TA-MSD by an analytical linear fit in logarithmic scale ($\log_{10}M_2$ against
-$\log_{10}\tau$). A power law $M_2\propto\tau^{2H}$ appears in this plane as a line of
-slope $2H$, so we define $H$ as half the fitted slope.\\
-It's imporant to highlight that here $H$ denotes an effective growth exponent: its identification with a process's
+We summarise the growth of the TA-MSD by an ordinary-least-squares linear fit of
+$\log_{10}M_2$ against $\log_{10}\tau$. A power law $M_2\propto\tau^{2H}$ has slope
+$2H$ in this plane, so $H$ is half the fitted slope.
+Here $H$ denotes an effective growth exponent: its identification with a process's
 self-similarity exponent is tested in Section~\ref{sec:fixed-scaling}.  The
 interval for $H$ comes from repeating the fit on the TA-MSD recomputed for each
 bootstrap replicate, a resampling of site--day groups described in the paragraph
@@ -193,8 +193,14 @@ shows how the slope varies with lag.
  \label{fig:fixed-general-residuals}
 \end{figure}
 
-The available-population fits give $H=\ChThreeParaGeneralHurst$ for paragliders and
-$H=\ChThreeHangGeneralHurst$ for hang gliders and, since the flights contributing at each lag
+The available-population fits give, with 90\% bootstrap intervals in brackets:
+\begin{itemize}
+      \item paragliders: $H=\ChThreeParaGeneralHurst$ over
+      \ChThreeGeneralFitLagMin--\ChThreeGeneralLastFitLag{} s;
+      \item hang gliders: $H=\ChThreeHangGeneralHurst$ over the same lags.
+\end{itemize}
+
+Since the flights contributing at each lag
 change as $\tau$ grows (Table~\ref{tab:fixed-support}), these values summarise the
 growth of a curve whose population shrinks with lag.
 
@@ -209,23 +215,22 @@ growth of a curve whose population shrinks with lag.
  \label{tab:fixed-support}
 \end{table}
 
-\Needspace{20\baselineskip}
-To see how the growth changes with lag, we also compute a local exponent. For a
-second-moment curve it is
+To describe how growth varies with lag, we also estimate the local exponent
 \begin{equation}
  H_{\rm loc}(\tau)=\frac12\frac{d\log M_2(\tau)}{d\log\tau}.
  \label{eq:fixed-local-h}
 \end{equation}
-We estimate this derivative with the same closed-form least-squares slope, divided by
-two, computed at each lag on the points within $\pm0.25$ decades of it, provided the
-window contains at least three points.
-In the general curves, a sparse interior window expands to the three nearest
-log-lags: the estimate at 20 s uses the values at 10, 20 and 30 s.
-The band of the TA-MSD in Figure~\ref{fig:fixed-general-slopes} comes from repeating
-this local fit on every bootstrap replicate of the curve: at each lag it is the
-pointwise 5--95\% range of the resulting local slopes.
-For the origin-distance mean and median, we apply the same local slope to each
-squared-distance curve as a function of elapsed time $t$.
+At each lag, we fit a straight line by ordinary least squares to the log--log curve
+within $\pm0.25$ decades and take half its slope. At least three lags are required.
+For sparse interior windows in the general curves, we use the three nearest lags
+in logarithmic distance; this fallback requires at least two available grid lags
+on each side of the target. Otherwise, windows with fewer than three lags are
+left unestimated.
+
+The TA-MSD band in Figure~\ref{fig:fixed-general-slopes} is the pointwise 5--95\%
+range obtained by repeating the local fits on the same bootstrap curves.
+The origin-distance mean and median use the same method with elapsed time $t$
+in place of lag $\tau$.
 
 Figures~\ref{fig:fixed-general} and~\ref{fig:fixed-general-slopes} show two linked
 features of the origin-distance curves. After the approximately ballistic regime
@@ -239,7 +244,7 @@ towards $H_{\rm loc}\simeq1$ around 600--700 s.
 A possible physical explanation is the asynchronous alternation of gliding,
 search and climb. At the same elapsed time, some pilots glide while others search
 for lift or circle in a thermal, making less net horizontal progress. At short
-elapsed times, an episode lasting a few hundred seconds can greatly reduce the
+elapsed times, an episode of searching or lifting lasting a few hundred seconds can greatly reduce the
 displacement relative to a flight that keeps gliding. The latter pulls the mean
 above the median, especially because displacement is squared. Meanwhile, the
 slow horizontal progress of flights in search and climb lowers the growth rates,
@@ -263,16 +268,30 @@ remain asynchronous.
 \paragraph{Uncertainty.}\label{par:fixed-uncertainty} The shading around the origin-distance curves of
 Figure~\ref{fig:fixed-general} is the empirical 5--95\% range across flights, a
 measure of scatter among flights. Every other shaded band in this chapter is a
-pointwise 90\% bootstrap interval. Flights are grouped by
+pointwise 90\% bootstrap interval: the interval is constructed separately at each
+lag, with nominal 90\% coverage at that lag, rather than simultaneous 90\% coverage
+of the entire curve. Flights are grouped by
 catalogue take-off site (the one declared in the FFVL catalogue metadata
 (Section~\ref{sec:catalog}, Table~\ref{tab:catalogfields})) and calendar date, retaining dependence within each site--day.
 Missing keys give singleton groups.
-A \emph{replicate} is one resampled version of the archive. Writing $G$ for the number of
-site--day groups in the eligible archive, a replicate draws $G$ of those groups with
-replacement, so a group may come out several times or not at all. We build $B=1000$
-replicates. They are drawn once, over the whole eligible archive; an analysis of a
-sub-population, such as a duration cohort, reuses the same draws and keeps only the
-flights that belong to it.
+A \emph{replicate} is one resampled version of the archive.\\\\
+Writing $G$ for the number of site--day groups in the eligible archive, we construct
+$B=1000$ replicates once, before evaluating the MSD at the different lags. Each
+replicate draws $G$ groups with replacement and retains all flights in each selected
+group. Thus $G$ counts group selections, including repetitions; the number of
+distinct groups and the total number of flights can vary between replicates.
+
+At each lag $\tau$, we evaluate the MSD using only the flights in that replicate
+that have admissible increments at $\tau$, namely those in $\mathcal C(\tau)$.
+As $\tau$ increases, flights with insufficient segment duration cease to contribute,
+but the original group draws remain fixed: no replacement flights or groups are
+drawn. A group selected twice still counts each of its contributing flights twice;
+if none of its flights supports that lag, it contributes nothing there.
+The MSD is divided by the number of contributing flights in that replicate at that
+lag, counting repetitions. This count can vary both between replicates and with
+$\tau$.
+An analysis of a sub-population, such as a duration cohort, reuses the same draws
+and keeps only the flights that belong to it.
 Let $g(f)$ be the group of flight $f$, and $c^{(b)}_g$ the number of times group $g$ is
 drawn in replicate $b$. The replicate replaces the equal weight $1/N(\tau)$ of
 Eq.~\eqref{eq:fixed-msd} by a weight proportional to the multiplicity of the flight's
@@ -284,12 +303,20 @@ group:
  N^{(b)}(\tau)=\sum_{f\in\mathcal C(\tau)}c^{(b)}_{g(f)}.
  \label{eq:fixed-bootstrap}
 \end{equation}
-Setting every $c^{(b)}_g=1$ recovers Eq.~\eqref{eq:fixed-msd}. A group drawn twice
-counts its flights twice; a group never drawn contributes nothing.
-The multiplicities are drawn once and then held fixed: the same $c^{(b)}_g$ serve every
-lag, observable and cohort comparison, which keeps the replicates paired. Only the
-normalisation $N^{(b)}(\tau)$ changes with lag, because $\mathcal C(\tau)$ shrinks as
-$\tau$ grows. Quantiles, ratios and fits are recomputed in each replicate. For an estimate $\widehat\theta$,
+Setting every $c^{(b)}_g=1$ recovers Eq.~\eqref{eq:fixed-msd}. The multiplicities
+$c^{(b)}_g$ have no lag dependence; the contributing set $\mathcal C(\tau)$ and
+normalisation $N^{(b)}(\tau)$ do. Each of the 1000 replicates uses its own group draw
+consistently across lags, observables and cohorts. For a comparison between two
+cohorts, we subtract their estimates within each replicate, producing 1000
+differences, one for each $b=1,\ldots,1000$. Their 5th and 95th percentiles give the
+interval for the difference, retaining the sampling fluctuations shared by the
+two cohorts. The point estimate itself is the difference between the estimates
+from the original archive. We use this procedure for the duration-cohort contrasts
+in Section~\ref{sec:fixed-population} and the open--closed circuit contrasts in
+Section~\ref{sec:conditional-circuit}.
+Quantiles and ratios are likewise recalculated within each replicate, and each fit
+uses points from that replicate's curve, preserving the dependence between lags.
+For an estimate $\widehat\theta$,
 the 5th and 95th percentiles of the bootstrap replicates $\{\widehat\theta^{(b)}\}_{b=1}^{1000}$ give a pointwise 90\% confidence interval
 \begin{equation}
  I_{90}(\theta)=
@@ -297,9 +324,8 @@ the 5th and 95th percentiles of the bootstrap replicates $\{\widehat\theta^{(b)}
        \operatorname{perc}_{95}\{\widehat\theta^{(b)}\}_{b=1}^{1000}\right].
  \label{eq:fixed-ci}
 \end{equation}
-Percentiles are linearly interpolated between ordered replicates.
-Furthermore, at a given lag, a replicate whose resampled flights provide no support there
-yields no estimate and is dropped from that lag's percentiles.
+Percentiles are linearly interpolated between ordered estimates, excluding any
+replicate with no contributing flights at the lag considered.\\\\
 
 Cluster bootstrap requires many approximately independent groups and sufficiently
 stable statistics~\cite{cameron_miller2015}; flights within a group need not be
@@ -308,8 +334,7 @@ separation. Nearby sites and successive days can share weather, so these distanc
 do not verify independence; the paragraph below checks MSD and fitted-exponent errors using geographic,
 altitude and seasonal groups. Residual dependence may make the bands
 too narrow; upload selection also limits inference to the population represented
-by the archive. General TA-MSD bands are omitted below 20 contributing groups, an
-operational support threshold rather than a guarantee of coverage.
+by the archive. General TA-MSD bands are omitted below 20 contributing groups.
 
 The statistical validity of these intervals is therefore not established at this
 stage. Independence between site--day groups is assumed and has never been verified,
@@ -437,39 +462,39 @@ where $T_s$ is the segment's elapsed duration on the 10 s grid. The condition
 $\tau_{\max}/T_s\leq0.8$ leaves $T_s-\tau_{\max}\geq0.2\,T_s$, one fifth of the
 segment, for the origins at the largest lag. The threshold 0.8 fixes how many origins
 remain there. For the main cohort, $\mathcal C_{10000}$, segments last at least
-12500 s, so each supplies at least 251 origins on the 10 s grid at $\tau=10000$ s;
-requiring only $T_s\geq\tau_{\max}$ would leave one. If a flight has segments of
+12500 s, so each supplies at least 251 origins on the 10 s grid at $\tau=10000$ s.
+If a flight has segments of
 14000 and 3000 s, only the first contributes, even at $\tau=10$ s. Flights and
 selected segments therefore remain the same at every lag.
 
 \paragraph{Weights.}
-For each cohort, $\mathcal I_f(\tau)$ and $n_f(\tau)$ refer only to its selected
-segments. Each flight of $\mathcal C_{10000}$ carries the same weight $1/N$ at every
-lag, because the cohort does not change with $\tau$. The number of admissible
-origins $n_f(\tau)$ still decreases with lag, so a flight's weight is divided evenly
-among them. The weight of origin $i$ of flight $f$ at lag $\tau$ is
+For the fixed cohort, $\mathcal I_f(\tau)$ and $n_f(\tau)$ refer only to its selected
+segments, and Eq.~\eqref{eq:fixed-msd} still applies once $\mathcal C(\tau)$ and
+$N(\tau)$ are replaced by the $\tau$-independent cohort and its size:
 \begin{equation}
- w_{fi}(\tau)=\frac{1}{Nn_f(\tau)},\qquad
- \sum_{i\in\mathcal I_f(\tau)}w_{fi}(\tau)=\frac1N,\qquad N=|\mathcal C_{10000}|.
+ m_f(\tau)=\frac1{n_f(\tau)}\sum_{i\in\mathcal I_f(\tau)}R_{fi}(\tau)^2,\qquad
+ M_2(\tau)=\frac1N\sum_{f\in\mathcal C_{10000}}m_f(\tau),\qquad N=|\mathcal C_{10000}|.
+ \label{eq:fixed-cohort-msd}
+\end{equation}
+Expanding the flight average $m_f(\tau)$ assigns every admissible origin of flight $f$
+the same explicit weight
+\begin{equation}
+ w_f(\tau)=\frac{1}{Nn_f(\tau)},\qquad
+ \sum_{i\in\mathcal I_f(\tau)}w_f(\tau)=\frac1N,
  \label{eq:fixed-weights}
 \end{equation}
-The origins of one flight therefore sum to that flight's share $1/N$, and the origins of
-all flights sum to one. This is the equal-flight average of Eq.~\eqref{eq:fixed-msd},
-applied to a population that does not change with $\tau$: it gives
-$M_2(\tau)=\sum_f\sum_{i}w_{fi}(\tau)R_{fi}(\tau)^2$, and the same weights define the
-mean $\langle A\rangle_\tau=\sum_f\sum_{i}w_{fi}(\tau)A_{fi}$ of any per-origin quantity
-$A_{fi}$, used from Eq.~\eqref{eq:fixed-kurtosis} onwards.
+so that $M_2(\tau)=\sum_f\sum_{i}w_f(\tau)R_{fi}(\tau)^2$.\\
+The same weights define the mean $\langle A\rangle_\tau=\sum_f\sum_{i}w_f(\tau)A_{fi}$ of any
+per-origin quantity $A_{fi}$ (e.g.\ the signed displacement $\Delta x_{j,fi}(\tau)$
+below), used from Eq.~\eqref{eq:fixed-kurtosis} onwards.
 
 \begin{table}[htbp]
  \centering\small
  \input{generated/ch3_transport_cohort_table}
  \caption{Nested duration cohorts and their site--day groups, the resampling
- units of Sec.~\ref{sec:fixed-general}. Minimum segment
- durations are 125, 1250 and 12500 s, rounded upward when required by the 10 s grid.
- Existing cleaning and segment-admission conditions also apply. The table gives only
- counts. The full membership of each cohort, every flight and the start and stop of
- each of its segments, is saved in a manifest file with a checksum, so that later
- analyses can reuse exactly the same population.}
+ units of Sec.~\ref{sec:fixed-general}. The nominal minimum durations
+ $\tau_{\max}/0.8$ are 125, 1250 and 12500 s; since $T_s$ only takes multiples of
+ 10 s, the effective cutoffs are 130, 1250 and 12500 s.}
  \label{tab:fixed-cohorts}
 \end{table}
 
@@ -477,38 +502,59 @@ $A_{fi}$, used from Eq.~\eqref{eq:fixed-kurtosis} onwards.
 We assess duration selection with the nested cohorts $\mathcal C_{100}$ and
 $\mathcal C_{1000}$. They contain the main cohort's segments, additional shorter
 segments of its flights, and additional flights. Selecting long segments also changes
-who is in the sample. The declared circuit class, open-distance flights against closed
-routes such as triangles and out-and-return flights (Sec.~\ref{sec:fixed-circuit}),
-shifts with the cohort: the share of closed routes rises from
+who is in the sample. For example, the declared circuit class, open-distance flights
+against closed routes such as triangles and out-and-return flights
+(Sec.~\ref{sec:fixed-circuit}), shifts with the cohort: the share of closed routes
+rises from
 \ChThreeParaClosedFracStart\% in $\mathcal C_{100}$ to \ChThreeParaClosedFracMain\% in
 $\mathcal C_{10000}$ for paragliders, and from \ChThreeHangClosedFracStart\% to
 \ChThreeHangClosedFracMain\% for hang gliders.
 
-We compare the fitted $H$ of two cohorts over the same lag interval, and the
-comparison is paired. Every bootstrap replicate draws the same site--day groups
-(Eq.~\eqref{eq:fixed-bootstrap}) for all cohorts, and the difference between two
-exponents is taken replicate by replicate. Sampling noise that the cohorts share
-cancels in the difference, so what remains isolates the effect of the selection
-(Figure~\ref{fig:fixed-cohorts}, Table~\ref{tab:fixed-cohort-fits}). The fit covers
-10--100 s for all three cohorts, and 10--1000 s for $\mathcal C_{1000}$ and
-$\mathcal C_{10000}$, because the broader cohorts have no support at longer lags.
+Duration selection can also change the mix of launch environments and seasons.
+The MSD and its fitted $H$ in $\mathcal C_{10000}$ could therefore differ from those
+in $\mathcal C_{100}$, which retains almost the entire eligible archive. We compare
+the cohorts to assess how much extending the accessible lag range changes the MSD
+curve and its effective growth exponent.
+
+We compare two cohorts $A$ and $B$ over the same lag interval. In each bootstrap
+replicate, both use the same site--day group draw: we compare $H_A^{(1)}$ with
+$H_B^{(1)}$, $H_A^{(2)}$ with $H_B^{(2)}$, and so on. This gives 1000 paired
+differences,
+\[
+ \Delta H^{(b)}=H_A^{(b)}-H_B^{(b)},\qquad b=1,\ldots,1000.
+\]
+The 5th and 95th percentiles of these differences form the interval in
+Table~\ref{tab:fixed-cohort-fits}.
+
+The cohorts share flights and site--day groups. Using the same draws gives each
+shared group the same multiplicity in both cohorts, preserving the dependence
+between their estimated exponents. When a draw shifts both exponents by similar
+amounts in the same direction, those shifts largely cancel in $\Delta H$. Independent
+draws would lose this cancellation and overestimate the uncertainty of the
+difference.
+
 
 \begin{figure}[htbp]
  \centering
  \includegraphics[width=\textwidth]{generated/ch3_transport_cohorts.pdf}
- \caption{Effect of duration selection. Top: MSD in the three nested cohorts;
- dashed lines fit the main cohort over 10--10000 s. Bottom: effective $H$ with 90\%
- intervals, fitted over 10--100 s for all three cohorts and 10--1000 s for the two
- longer cohorts. Fits within each comparison use identical lag values.}
+ \caption{Effect of duration selection. Top: MSD in the three nested cohorts, drawn
+ lightest to darkest as $\mathcal C_{100}$, $\mathcal C_{1000}$, $\mathcal C_{10000}$;
+ dashed lines fit the main cohort over 10--10000 s. The darkest curve is drawn on top
+ and hides the lighter cohorts wherever they coincide, which is almost the whole
+ visible range: the result below is that duration selection barely changes $H$.
+ Bottom: effective $H$ with 90\% intervals, fitted over 10--100 s for all three
+ cohorts and 10--1000 s for the two longer cohorts. Fits within each comparison use
+ identical lag values.}
  \label{fig:fixed-cohorts}
 \end{figure}
 \begin{table}[htbp]
  \centering\small
  \input{generated/ch3_transport_cohort_contrast_table}
- \caption{Paired differences of the cohort exponents in Fig.~\ref{fig:fixed-cohorts}.
- Each comparison uses identical lags and bootstrap draws. A 90\% interval excluding
- zero resolves a difference under the adopted resampling; inclusion of zero alone
- would not establish absence of selection bias.}
+ \caption{Paired differences of the cohort exponents, with 5--95\% bootstrap intervals.
+ Each comparison uses identical lags and draws. The $\mathcal C_{100}$--$\mathcal C_{1000}$
+ shift is negligible in magnitude ($|\Delta H|<10^{-4}$), although statistically
+ resolved for paragliders. Contrasts with $\mathcal C_{10000}$ exclude zero and
+ represent a larger, but still small, shift of about 2\% in $H$.}
  \label{tab:fixed-cohort-fits}
 \end{table}
 \paragraph{Result.}
@@ -517,8 +563,9 @@ $10^{-4}$ in both disciplines. The paired interval resolves this tiny difference
 paragliders; for hang gliders it includes zero. The two cohorts share
 \ChThreeParaCohortOverlapPct\% (paragliders) and \ChThreeHangCohortOverlapPct\% (hang
 gliders) of their flights, so in each replicate their exponents move together and
-their difference has a very narrow interval. That is why a difference this small is
-resolved at all.
+their difference has a very narrow interval.\\
+For the present analysis, we regard the two cohorts as having
+practically the same $H$ on this lag range.\\
 
 The main cohort behaves differently. Its effective exponent is larger than that of
 every broader cohort, in both fit intervals and both disciplines, and every one of
@@ -526,14 +573,21 @@ these paired differences excludes zero. The difference between the main cohort a
 broader one lies between \ChThreeCohortShiftMin{} and \ChThreeCohortShiftMax{} in $H$,
 which is \ChThreeCohortBiasMinPct--\ChThreeCohortBiasMaxPct\% of the exponent itself.
 
-We accept this bias and adopt $\mathcal C_{10000}$ for every analysis below that
+Two candidate explanations concern who, and under what conditions, flies long
+enough to enter the main cohort. One is that sustaining a segment of 12500 s,
+nearly four hours, selects more experienced pilots: that experience plausibly
+means locating and exploiting thermals more efficiently, cutting the time spent
+searching or climbing rather than gliding, which raises $H$. The other is that it
+selects better flying days, where stronger or more reliable lift shortens that same
+search time for any pilot. Both remain hypotheses: the comparison does not separate
+pilot experience, flight conditions and route choice.
+
+We accept this small bias and adopt $\mathcal C_{10000}$ for every analysis below that
 requires a fixed population. A shift of about 2\% in $H$ is small beside what the cohort
 provides: a population that stays the same over three decades of lag, 10--10000 s,
-against two for $\mathcal C_{1000}$ and one for $\mathcal C_{100}$. Two limits apply. The shift can be measured only
-where the broader cohorts have support, on 10--100 s and 10--1000 s. And every exponent reported below is
-conditional on flights with an uninterrupted segment of at least 12500 s.
+against two for $\mathcal C_{1000}$ and one for $\mathcal C_{100}$.
 
-\FloatBarrier
+
 
 \section{Conditional mean-square displacement}
 \label{sec:fixed-circuit}
@@ -1119,7 +1173,7 @@ For hang gliders, the radial contrast $\zeta(4)/4-\zeta(0.25)/0.25$ is
 
 Departures from Gaussian shape are assessed on the signed components: taking an
 absolute value or a radius changes even a Gaussian law. With the equal-flight mean
-$\langle A\rangle_\tau=\sum_f\sum_{i\in\mathcal I_f(\tau)}w_{fi}(\tau)A_{fi}$, define
+$\langle A\rangle_\tau=\sum_f\sum_{i\in\mathcal I_f(\tau)}w_f(\tau)A_{fi}$, define
 \begin{equation}
  \mu_j(\tau)=\langle\Delta x_j\rangle_\tau,\qquad
  K_j(\tau)=\frac{\langle(\Delta x_j-\mu_j)^4\rangle_\tau}
