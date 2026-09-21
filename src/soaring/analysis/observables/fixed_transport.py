@@ -156,14 +156,18 @@ def local_slopes(lags, curves, half_width_dex=0.25, *, expand_sparse=False):
     The fallback changes only windows containing fewer than three points. It uses
     the nearest three lags in log time and requires two available lags on either
     side of the target, so estimates near the domain boundaries remain unchanged.
+    Distances are rounded before ranking so that lags equally spaced in log time
+    (e.g. half and double the target) tie exactly instead of by float rounding
+    noise; the tie then breaks towards the lag nearer the start of the array.
     """
     x = np.log10(lags)
     y = np.asarray(curves)
     output = np.full_like(y, np.nan)
     for i in range(len(x)):
-        take = np.flatnonzero(np.abs(x - x[i]) <= half_width_dex + 1e-12)
+        distance = np.round(np.abs(x - x[i]), 9)
+        take = np.flatnonzero(distance <= half_width_dex + 1e-12)
         if len(take) < 3 and expand_sparse and 2 <= i < len(x) - 2:
-            take = np.sort(np.argsort(np.abs(x - x[i]), kind="stable")[:3])
+            take = np.sort(np.argsort(distance, kind="stable")[:3])
         if len(take) < 3:
             continue
         output[..., i] = log_fit(
