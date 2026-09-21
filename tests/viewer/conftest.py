@@ -30,7 +30,7 @@ collect_ignore = (
 
 @pytest.fixture(scope="session")
 def qapp():
-    from PyQt6.QtWidgets import QApplication
+    QApplication = pytest.importorskip("PyQt6.QtWidgets").QApplication
 
     app = QApplication.instance() or QApplication([])
     yield app

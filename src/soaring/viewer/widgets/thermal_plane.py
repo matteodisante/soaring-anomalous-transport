@@ -32,6 +32,7 @@ from .. import geography
 from ..thermal_daily import height_levels, local_bounds
 from ..thermal_geometry import plane_intersections, unproject
 from ..thermal_store import CancelledError, PlaneData, ThermalStore, load_store
+from .thermal_info import ThermalInfo
 
 
 class _Worker(QThread):
@@ -167,6 +168,10 @@ class ThermalPlane(QWidget):
         self._details = QPushButton("Cell details")
         self._details.setCheckable(True)
         self._details.toggled.connect(self._summary.setVisible)
+        self._info = QPushButton("Info")
+        self._info.setToolTip("How the cells, ground altitude and AGL are obtained")
+        self._info_panel: ThermalInfo | None = None
+        self._info.clicked.connect(self._show_info)
         self._summary.hide()
         top = QHBoxLayout()
         for widget in (self._mode, self._cells, self._source):
@@ -222,7 +227,13 @@ class ThermalPlane(QWidget):
         navigation.addWidget(QLabel("View"))
         navigation.addWidget(self._view)
         navigation.addStretch(1)
-        for button in (self._details, self._build, self._load, self._cancel):
+        for button in (
+            self._info,
+            self._details,
+            self._build,
+            self._load,
+            self._cancel,
+        ):
             navigation.addWidget(button)
         layout.addLayout(navigation)
         layout.addWidget(self._canvas, 1)
@@ -641,6 +652,13 @@ class ThermalPlane(QWidget):
         self._slider.setValue(index)
         self._slider.blockSignals(False)
         self._draw_plane()
+
+    def _show_info(self):
+        """Open the explanatory panel, creating it on first use."""
+        if self._info_panel is None:
+            self._info_panel = ThermalInfo(self)
+        self._info_panel.show()
+        self._info_panel.raise_()
 
     def _rank(self, cell):
         """Population rank is local to an altitude category, never across categories."""
