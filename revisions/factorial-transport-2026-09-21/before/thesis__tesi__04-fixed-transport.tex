@@ -1,0 +1,1403 @@
+% Fixed-population analysis. Numerical inputs: generated/ch3_transport_report.json.
+\chapter{Horizontal transport and displacement scaling}
+\label{ch:fixed-transport}
+\input{generated/ch3_transport_values}
+\input{generated/ch3_transport_grid_bootstrap_values}
+\input{generated/ch3_transport_origin_dependence_values}
+\input{generated/ch3_conditional_values}
+
+
+We measure the mean-square displacement (MSD), its dependence on circuit type,
+launch environment and equipment, and the scaling of the displacement distribution.
+The general analysis separates paragliders from hang gliders; the conditional
+comparisons use the larger paraglider population.
+
+\section{Mean-square displacement}
+\label{sec:fixed-msd}
+\subsection{Estimator and temporal resolution}
+
+Let $\boldsymbol{x}_f(t)=(E_f(t),N_f(t))$ be the cleaned horizontal trajectory of flight
+$f$, and let $s$ index its retained continuous segments. Within each segment, define
+$\Delta\boldsymbol{x}_{fi}(\tau)=\boldsymbol{x}_f(t_i+\tau)-\boldsymbol{x}_f(t_i)$
+and $R_{fi}(\tau)=|\Delta\boldsymbol{x}_{fi}(\tau)|$, defined whenever $t_i$ and
+$t_i+\tau$ lie in the same segment $s$; no increment crosses a segment boundary.
+Let $i$ index grid origins across the flight, and define the admissible index set
+\[
+ \mathcal I_f(\tau)=\{i:\ t_i\text{ and }t_i+\tau
+ \text{ lie in the same retained segment of flight }f\}.
+\]
+Let $n_{f,s}(\tau)$ count the admissible
+indices in segment $s$, so that $n_f(\tau)=|\mathcal I_f(\tau)|=\sum_s n_{f,s}(\tau)$
+is their total across the flight. Set
+\[
+ \mathcal C(\tau)=\{f : n_f(\tau)>0\}, \qquad N(\tau)=|\mathcal C(\tau)|.
+\]
+Let $m_f(\tau)$ be the time-averaged MSD of flight $f$, and
+$M_2(\tau)$ the mean of $m_f(\tau)$ over $\mathcal C(\tau)$. They are defined by
+\begin{equation}
+ m_f(\tau)=\frac{1}{n_f(\tau)}\sum_{i\in\mathcal I_f(\tau)}R_{fi}(\tau)^2,
+ \qquad M_2(\tau)=\frac{1}{N(\tau)}\sum_{f\in\mathcal C(\tau)}m_f(\tau).
+ \label{eq:fixed-msd}
+\end{equation}
+We first average the squared displacements within each flight, pooling the valid
+increments from all its retained segments. We then average these flight-level MSDs,
+giving each contributing flight the same weight $1/N(\tau)$, regardless of its
+number of increments or segments. This is the \emph{equal-flight} average.
+Two alternatives were rejected.
+\begin{itemize}
+ \item \emph{Equal-increment average}: pooling all increments directly, without
+ first averaging within flights,
+ \[
+  M_2^{\mathrm{incr}}(\tau)=\frac{1}{\sum_{g\in\mathcal C(\tau)}n_g(\tau)}
+  \sum_{f\in\mathcal C(\tau)}\sum_{i\in\mathcal I_f(\tau)}R_{fi}(\tau)^2
+  =\sum_{f\in\mathcal C(\tau)}\frac{n_f(\tau)}{\sum_{g\in\mathcal C(\tau)}n_g(\tau)}
+  m_f(\tau),
+ \]
+ would give flight $f$ weight $n_f(\tau)/\sum_{g\in\mathcal C(\tau)}n_g(\tau)$ in
+ the population TA-MSD: longer flights, which accumulate more valid increments,
+ would dominate the pooled statistic, which would then track long flights rather
+ than represent the population evenly.
+ \item \emph{Equal-segment average}: first computing a TA-MSD for each segment,
+ then averaging over every segment in $\mathcal C(\tau)$,
+ \[
+  m_{f,s}(\tau)=\frac{1}{n_{f,s}(\tau)}\sum_{i\in s}R_{fi}(\tau)^2, \qquad
+  M_2^{\mathrm{seg}}(\tau)=\frac{1}{S(\tau)}\sum_{f\in\mathcal C(\tau)}\sum_{s}
+  m_{f,s}(\tau),
+ \]
+ with $S(\tau)$ the total number of segments with $n_{f,s}(\tau)>0$ across
+ $\mathcal C(\tau)$, would give equal weight to every segment regardless of its
+ length: flights broken into many short segments, typically those with lower
+ signal quality, would then be overrepresented.
+\end{itemize}
+
+For $10\leq\tau\leq10000$ s we subsample each segment to a 10 s grid, starting at its
+first fix. This spacing sets the step between the origins $t_i$ from which the MSD
+at lag $\tau$ is computed within a segment, and it gives every flight the same
+physical lags to compare. Records with native cadence above 10 s are excluded.
+Missing positions are linearly interpolated within segments: with an 8 s cadence,
+for example, the 10 s position lies between the fixes at 8 and 16 s.
+Table~\ref{tab:fixed-interpolation} counts how often the grid requires this. The 33
+evaluated lags are multiples of 10 s, approximately logarithmically spaced and
+including 100 and 1000 s. Figure markers show the evaluations; lines connect them.
+
+The spacing itself is a trade-off. Finer sampling would raise the computational cost
+sharply without benefit once it resolves timescales below any actual change in the
+dynamics; coarser sampling would fail to resolve the fastest manoeuvres, which occur
+during the search and thermalling phases, where speed, acceleration and heading vary
+faster than during gliding. Vilpellet et al.~\cite{vilpellet2026} report that a
+single revolution while thermalling takes just under 30 s, so 10 s samples each turn
+about three times, resolving the fastest dynamics in the archive without
+oversampling the slower gliding phase.
+
+\begin{table}[htbp]
+ \centering\small
+ \input{generated/ch3_transport_interpolation_table}
+ \caption{Common-grid positions in the main fixed cohort. Coincidence is checked
+ against actual cleaned timestamps. The last two columns count interpolation added
+ by the 10 s grid, separately from reconstruction during cleaning.}
+ \label{tab:fixed-interpolation}
+\end{table}
+Among the coincident grid positions, \ChThreeParaPriorInterp{} paraglider fixes and
+\ChThreeHangPriorInterp{} hang-glider fixes already carry the cleaning interpolation
+flag. The short-lag detail at 1--9 s in the general TA-MSD uses only native segments that
+resolve the requested lag exactly.
+
+\subsection{General transport and uncertainty}
+\label{sec:fixed-general}
+
+Figure~\ref{fig:fixed-general} compares the TA-MSD, averaged over within-segment
+origins, with squared distance from the flight's single post-trim origin
+(Section~\ref{sec:trimming}). For the latter, $t$ is elapsed time from that origin.
+Gaps leave missing support without resetting either the clock or the reference
+position.
+
+A flight contributes at $t$ if a retained segment covers that time and its native
+sampling interval satisfies $dt\leq t$. Linear interpolation misses any curvature
+between consecutive fixes and its position error depends on motion within the local
+interval $dt$, so it doesn't improve as elapsed time $t$ increases.
+What can decrease is the error \emph{relative to the displacement from the origin}.
+At a characteristic speed $v$, unresolved motion has a spatial scale $v\,dt$,
+whereas approximately ballistic displacement grows as $v\,t$. Their ratio $dt/t$
+explains the cutoff: for $t<dt$, interpolation error can be comparable to the
+displacement; as $t$ grows beyond $dt$, its relative contribution can decrease.
+
+
+At each $t$ we report the mean, median and 5--95\% range across available flights.
+The contributing population changes as $t$ grows, since flights whose retained span
+is shorter than $t$ drop out, and the TA-MSD loses flights the same way as $\tau$
+grows; Table~\ref{tab:fixed-support} counts the flights that remain. These curves
+therefore describe a changing mixture of sites, days and flight
+conditions, which is why the controlled comparisons of
+Section~\ref{sec:fixed-population} instead fix the population once for all lags.
+
+\begin{figure}[p]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_general.pdf}
+ \caption{General horizontal transport. Left: squared distance from the post-trim
+ origin, with equal-flight mean, median and the empirical 5--95\% flight range.
+ Right: equal-flight TA-MSD over the population available at each lag, with
+ pointwise 90\% cluster-bootstrap intervals and a log--log fit over
+ \ChThreeGeneralFitLagMin--\ChThreeGeneralFitLagMax{} s (evaluated lags:
+ \ChThreeGeneralFitLagMin--\ChThreeGeneralLastFitLag{} s). Native short-lag support
+ differs from common-grid support.}
+ \label{fig:fixed-general}
+\end{figure}
+
+\begin{figure}[p]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_general_slopes.pdf}
+ \caption{Local slopes of the general curves. The origin-distance mean and median
+ have no confidence band here; the TA-MSD band is obtained by refitting bootstrap
+ curves. The horizontal coordinate is elapsed time $t$ from trimming for the
+ origin-distance curves and lag $\tau$ for the TA-MSD. The dotted reference is
+ ballistic growth, $H=1$.}
+ \label{fig:fixed-general-slopes}
+\end{figure}
+We summarise the growth of the TA-MSD by an ordinary-least-squares linear fit of
+$\log_{10}M_2$ against $\log_{10}\tau$. A power law $M_2\propto\tau^{2H}$ has slope
+$2H$ in this plane, so $H$ is half the fitted slope.
+Here $H$ denotes an effective growth exponent: its identification with a process's
+self-similarity exponent is tested in Section~\ref{sec:fixed-scaling}.  The
+interval for $H$ comes from repeating the fit on the TA-MSD recomputed for each
+bootstrap replicate, a resampling of site--day groups described in the paragraph
+``\nameref{par:fixed-uncertainty}'' below.
+The fits to the TA-MSD of the available population (Figure~\ref{fig:fixed-general},
+right) are requested over
+\ChThreeGeneralFitLagMin--\ChThreeGeneralFitLagMax{} s but the last lag of the grid inside
+that range is \ChThreeGeneralLastFitLag{} s, so they span
+\ChThreeGeneralFitLagMin--\ChThreeGeneralLastFitLag{} s.
+In the right panels of Figure~\ref{fig:fixed-general}, the TA-MSD over the fitted lags
+lies close to a straight line in logarithmic scale. Figure~\ref{fig:fixed-general-residuals}
+shows the fit residuals: they
+fall on both sides of zero over the whole fitted range, and their RMS say that a
+typical measured value lies within a factor \ChThreeParaGeneralRmsRatio{} and
+\ChThreeHangGeneralRmsRatio{} of the fitted line, respectively for paragliders and hang gliders.
+Such ratios, close to
+unity over a curve that grows by about six decades, combined with the fact that the residuals
+are evenly distributed above and below the fitted curve, make the line an adequate
+description of the measured growth. The residuals are nevertheless not scattered at random.
+In fact, they change sign three times as
+the lag grows, so the departure from a single power law is a smooth curvature, largest
+at the longest lags where the contributing population has shrunk most
+(Table~\ref{tab:fixed-support}). The fit therefore summarises the growth as one
+effective exponent, and the local exponent below (Figure~\ref{fig:fixed-general-slopes})
+shows how the slope varies with lag.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_general_residuals.pdf}
+ \caption{Residuals of the log--log fit of the general TA-MSD at the fitted lags, in dex:
+ $\log_{10}M_2$ minus the fitted line. A residual of $r$ dex means the measured curve
+ sits a factor $10^{r}$ from the line, so $0$ dex is a point lying on it. Dotted lines
+ mark plus and minus the RMS residual.}
+ \label{fig:fixed-general-residuals}
+\end{figure}
+
+The available-population fits give, with 90\% bootstrap intervals in brackets:
+\begin{itemize}
+      \item paragliders: $H=\ChThreeParaGeneralHurst$ over
+      \ChThreeGeneralFitLagMin--\ChThreeGeneralLastFitLag{} s;
+      \item hang gliders: $H=\ChThreeHangGeneralHurst$ over the same lags.
+\end{itemize}
+
+Since the flights contributing at each lag
+change as $\tau$ grows (Table~\ref{tab:fixed-support}), these values summarise the
+growth of a curve whose population shrinks with lag.
+
+\begin{table}[htbp]
+ \centering\small
+ \input{generated/ch3_transport_support_table}
+ \caption{Number of contributing flights in the general curves. The last row for
+ each discipline is the largest evaluated lag with TA-MSD support. The origin-distance
+ curve uses elapsed time; the TA-MSD requires a within-segment lag no larger than
+ $0.8T_s$. Their support sets therefore differ. Early origin-distance support can increase
+ when elapsed time exceeds an initial excluded interval or resolves a coarse cadence.}
+ \label{tab:fixed-support}
+\end{table}
+
+To describe how growth varies with lag, we also estimate the local exponent
+\begin{equation}
+ H_{\rm loc}(\tau)=\frac12\frac{d\log M_2(\tau)}{d\log\tau}.
+ \label{eq:fixed-local-h}
+\end{equation}
+At each lag, we fit a straight line by ordinary least squares to the log--log curve
+within $\pm0.25$ decades and take half its slope. At least three lags are required.
+For sparse interior windows in the general curves, we use the three nearest lags
+in logarithmic distance; this fallback requires at least two available grid lags
+on each side of the target. Otherwise, windows with fewer than three lags are
+left unestimated.
+
+The TA-MSD band in Figure~\ref{fig:fixed-general-slopes} is the pointwise 5--95\%
+range obtained by repeating the local fits on the same bootstrap curves.
+The origin-distance mean and median use the same method with elapsed time $t$
+in place of lag $\tau$.
+
+Figures~\ref{fig:fixed-general} and~\ref{fig:fixed-general-slopes} show two linked
+features of the origin-distance curves. After the approximately ballistic regime
+at $t\lesssim10$ s, the mean rises visibly above the median, with a marked
+separation at $t\sim10^2$--$10^3$ s. The mean's local slopes reach minima at \ChThreeParaLocalMinLag{} s
+($H_{\rm loc}=\ChThreeParaLocalMinH$) for paragliders and \ChThreeHangLocalMinLag{} s
+($H_{\rm loc}=\ChThreeHangLocalMinH$) for hang gliders within 20--2000 s, then recover
+towards $H_{\rm loc}\simeq1$ around 600--700 s.
+
+
+A possible physical explanation is the asynchronous alternation of gliding,
+search and climb. At the same elapsed time, some pilots glide while others search
+for lift or circle in a thermal, making less net horizontal progress. At short
+elapsed times, an episode of searching or lifting lasting a few hundred seconds can greatly reduce the
+displacement relative to a flight that keeps gliding. The latter pulls the mean
+above the median, especially because displacement is squared. Meanwhile, the
+slow horizontal progress of flights in search and climb lowers the growth rates,
+with a stronger dip in the median's $H_{\rm loc}$.
+
+The duration distributions in Vilpellet et al.~\cite[Fig.~4f,i]{vilpellet2026}
+support this timescale: search times and climb times have survival probabilities that remain of order $10^{-3}$ at
+durations of several hundred seconds. An archive with many thousands of flights
+can therefore contain several such long events alongside much shorter ones.
+
+Search and climb continue throughout the flight, at different times for different
+pilots. At $t\sim10^3$--$10^4$ s, however, many flights have already reached much
+larger distances from the origin. The extra displacement gained by gliding rather
+than searching or climbing during one interval of $10^2$--$10^3$ s can then be
+smaller relative to that distance, and so have a smaller relative effect on
+squared distance. The same alternation of phases can thus produce a weaker contrast between
+flights at long elapsed times. This is consistent with the recovery of the local
+exponents and the narrowing of the early mean--median gap, even though the phases
+remain asynchronous.
+
+\paragraph{Uncertainty.}\label{par:fixed-uncertainty} The shading around the origin-distance curves of
+Figure~\ref{fig:fixed-general} is the empirical 5--95\% range across flights, a
+measure of scatter among flights. Every other shaded band in this chapter is a
+pointwise 90\% bootstrap interval: the interval is constructed separately at each
+lag, with nominal 90\% coverage at that lag, rather than simultaneous 90\% coverage
+of the entire curve. Flights are grouped by
+catalogue take-off site (the one declared in the FFVL catalogue metadata
+(Section~\ref{sec:catalog}, Table~\ref{tab:catalogfields})) and calendar date, retaining dependence within each site--day.
+Missing keys give singleton groups.
+A \emph{replicate} is one resampled version of the archive.\\\\
+Writing $G$ for the number of site--day groups in the eligible archive, we construct
+$B=1000$ replicates once, before evaluating the MSD at the different lags. Each
+replicate draws $G$ groups with replacement and retains all flights in each selected
+group. Thus $G$ counts group selections, including repetitions; the number of
+distinct groups and the total number of flights can vary between replicates.
+
+At each lag $\tau$, we evaluate the MSD using only the flights in that replicate
+that have admissible increments at $\tau$, namely those in $\mathcal C(\tau)$.
+As $\tau$ increases, flights with insufficient segment duration cease to contribute,
+but the original group draws remain fixed: no replacement flights or groups are
+drawn. A group selected twice still counts each of its contributing flights twice;
+if none of its flights supports that lag, it contributes nothing there.
+The MSD is divided by the number of contributing flights in that replicate at that
+lag, counting repetitions. This count can vary both between replicates and with
+$\tau$.
+An analysis of a sub-population, such as a duration cohort, reuses the same draws
+and keeps only the flights that belong to it.
+Let $g(f)$ be the group of flight $f$, and $c^{(b)}_g$ the number of times group $g$ is
+drawn in replicate $b$. The replicate replaces the equal weight $1/N(\tau)$ of
+Eq.~\eqref{eq:fixed-msd} by a weight proportional to the multiplicity of the flight's
+group:
+\begin{equation}
+ M_2^{(b)}(\tau)=\frac{1}{N^{(b)}(\tau)}
+ \sum_{f\in\mathcal C(\tau)}c^{(b)}_{g(f)}\,m_f(\tau),
+ \qquad
+ N^{(b)}(\tau)=\sum_{f\in\mathcal C(\tau)}c^{(b)}_{g(f)}.
+ \label{eq:fixed-bootstrap}
+\end{equation}
+Setting every $c^{(b)}_g=1$ recovers Eq.~\eqref{eq:fixed-msd}. The multiplicities
+$c^{(b)}_g$ have no lag dependence; the contributing set $\mathcal C(\tau)$ and
+normalisation $N^{(b)}(\tau)$ do. Each of the 1000 replicates uses its own group draw
+consistently across lags, observables and cohorts. For a comparison between two
+cohorts, we subtract their estimates within each replicate, producing 1000
+differences, one for each $b=1,\ldots,1000$. Their 5th and 95th percentiles give the
+interval for the difference, retaining the sampling fluctuations shared by the
+two cohorts. The point estimate itself is the difference between the estimates
+from the original archive. We use this procedure for the duration-cohort contrasts
+in Section~\ref{sec:fixed-population} and the open--closed circuit contrasts in
+Section~\ref{sec:conditional-circuit}.
+Quantiles and ratios are likewise recalculated within each replicate, and each fit
+uses points from that replicate's curve, preserving the dependence between lags.
+For an estimate $\widehat\theta$,
+the 5th and 95th percentiles of the bootstrap replicates $\{\widehat\theta^{(b)}\}_{b=1}^{1000}$ give a pointwise 90\% confidence interval
+\begin{equation}
+ I_{90}(\theta)=
+ \left[\operatorname{perc}_{5}\{\widehat\theta^{(b)}\}_{b=1}^{1000},\,
+       \operatorname{perc}_{95}\{\widehat\theta^{(b)}\}_{b=1}^{1000}\right].
+ \label{eq:fixed-ci}
+\end{equation}
+Percentiles are linearly interpolated between ordered estimates, excluding any
+replicate with no contributing flights at the lag considered.\\\\
+
+Cluster bootstrap requires many approximately independent groups and sufficiently
+stable statistics~\cite{cameron_miller2015}; flights within a group need not be
+independent. Table~\ref{tab:fixed-clusters} describes their spatial and temporal
+separation. Nearby sites and successive days can share weather, so these distances
+do not verify independence; the paragraph below checks MSD and fitted-exponent errors using geographic,
+altitude and seasonal groups. Residual dependence may make the bands
+too narrow; upload selection also limits inference to the population represented
+by the archive. General TA-MSD bands are omitted below 20 contributing groups.
+
+The statistical validity of these intervals is therefore not established at this
+stage. Independence between site--day groups is assumed and has never been verified,
+and the size of the groups makes the assumption doubtful: their median size is one
+flight, the 95th percentile is five flights for paragliders and three for hang
+gliders, and even the largest group holds 47 and 13 flights
+(Table~\ref{tab:fixed-clusters}). A partition this fine absorbs little of the
+dependence it was introduced to capture. Flights that share one weather episode
+across neighbouring sites, or across consecutive days at the same site, fall into
+different groups and are resampled as if they carried independent information. The
+groups are then probably not independent, and Eq.~\eqref{eq:fixed-ci} probably
+understates the true uncertainty, so every band reported in this chapter should be
+read as a lower bound on the spread. The open question is whether bootstrap groups
+coarse enough to be approximately independent can be built at all. The paragraph
+below is a first attempt at it and has not answered it yet, which is why it is
+typeset in red.
+
+\begin{table}[htbp]
+ \centering\small\setlength{\tabcolsep}{4pt}
+ \input{generated/ch3_transport_cluster_context}
+ \caption{Site--day diagnostics in the main cohort. Distances refer to the nearest
+ other catalogue site represented on the same date; time gaps refer to the previous
+ observed date at the same site. Distances and time gaps are reported as median
+ [10th, 90th percentile].
+ Cohort group counts are in Table~\ref{tab:fixed-cohorts}.}
+ \label{tab:fixed-clusters}
+\end{table}
+
+\Needspace{12\baselineskip}
+\begin{wipblock}
+\paragraph{Reliability of bootstrap uncertainty estimates (work in progress, not
+working).}
+\label{sec:fixed-bootstrap-reliability}
+
+This paragraph is a working draft and no conclusion in it is settled. The grouping
+tried here does not yet produce approximately independent bootstrap groups, so its
+intervals validate nothing and its numbers are reported only to record where the
+attempt stands.
+
+We repeat the uncertainty check with groups defined by a fixed geographic cell,
+launch-altitude class and month of the year, pooling all years. Thus July flights
+from different years share a group when their initial positions lie in the same
+cell and altitude class. The grid is independent of the observed sites: each
+initial position belongs to one half-open $50\times50$ km square in its WGS84 UTM
+zone, with sides measured in projected metres. Cells are clipped at zone and
+hemisphere boundaries. The four altitude classes (plains, hills, low and high
+mountains) retain the existing thresholds of 300, 800 and 1500 m; they are a proxy
+for launch orography. This construction groups geographical and seasonal context,
+not necessarily a common weather episode.
+
+All main-cohort flights and their equal-flight weights are retained. We draw 1000
+bootstrap replicates, paired across lags, and repeat with two seeds. The archived
+site--day bootstrap provides the reference. Table~\ref{tab:fixed-grid-groups}
+compares group composition. Singleton groups remain, but contain only
+\ChThreeParaGridSingletonFlightPct\% of paraglider flights and
+\ChThreeHangGridSingletonFlightPct\% of hang-glider flights. The standard error of
+$H$ is \ChThreeParaGridHFactor{} and \ChThreeHangGridHFactor{} times the site--day
+value, respectively; point estimates are unchanged.
+
+\begin{table}[htbp]
+ \centering\small\setlength{\tabcolsep}{4pt}
+ \input{generated/ch3_transport_grid_bootstrap_support}
+ \caption{Bootstrap groups of the main cohort before and after cell--altitude--month
+ grouping. ``Before'' are the site--day groups that resample every other interval in
+ this chapter; ``after'' are the alternative groups introduced in this check, used only
+ here. Median size is the number of flights per new group. Singletons are expressed as
+ a percentage of new groups; maximum share is the largest group's percentage of
+ cohort flights. All years are pooled within each month.}
+ \label{tab:fixed-grid-groups}
+\end{table}
+
+We test sensitivity using 10, 25 and 50 km cells, shifting each grid by half a cell
+along either or both axes. Separately, we merge two or three adjacent months and
+shift the seasonal boundaries, retaining 50 km cells and the altitude classes
+(Fig.~\ref{fig:fixed-bootstrap-reliability}). These are alternative resampling
+partitions, not exclusions of flights.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_grid_bootstrap.pdf}
+ \caption{Standard errors relative to the unshifted 50 km, one-month grid baseline.
+ Left: cell size and boundary shifts. Right: adjacent-month unions with seasonal
+ boundary shifts. Markers are medians and bars span minima and maxima across
+ partitions and two seeds; they are not confidence intervals. Altitude classes
+ remain separate, and all years are pooled.}
+ \label{fig:fixed-bootstrap-reliability}
+\end{figure}
+
+The uncertainty has not stabilised across these choices. Merging three months
+multiplies the median standard error of $H$ by \ChThreeParaGridHThreeMonths{} for
+paragliders and \ChThreeHangGridHThreeMonths{} for hang gliders. For the latter,
+shifting the 50 km grid gives MSD errors at 1000 s ranging from
+\ChThreeHangGridMsdShiftRange{} times the unshifted value. Larger groups therefore
+do not by themselves validate independence or interval coverage. Neighbouring
+cells, months and altitude classes can still share conditions, while persistent
+geographical differences can also affect the comparison~\cite{cameron_miller2015}.
+The new intervals are conditional on this grouping; the archived site--day bands
+elsewhere remain the reference and are not replaced by this MSD/$H$ check.
+\end{wipblock}
+
+\FloatBarrier
+
+\subsection{Fixed population and the effect of duration selection}
+\label{sec:fixed-population}
+
+The general TA-MSD of Sec.~\ref{sec:fixed-general} averages over whichever flights
+support each lag, so its population shrinks as $\tau$ grows: short flights and short
+segments drop out one after another. The mix of circuit types and launch sites that
+remains then changes with $\tau$, and a change in the slope of $M_2(\tau)$ cannot be
+told apart from a change in the dynamics. Every statistic of the motion in the rest of
+this chapter is therefore measured on one population that does not depend on $\tau$.
+Such a population is limited by its shortest member: the longest lag it supports is
+fixed by how long its segments are. Selecting only long segments gives more lags, and
+loses flights. This subsection asks whether that selection changes the measured $H$
+enough to matter, and chooses the cohort accordingly.
+
+\paragraph{Cohorts.}
+We select the segments once, using
+\begin{equation}
+ \tau_{\max}\leq0.8T_s,\qquad
+ \mathcal C_{\tau_{\max}}=\{f:\exists s\in f,\ T_s\geq\tau_{\max}/0.8\},
+ \label{eq:fixed-support}
+\end{equation}
+where $T_s$ is the segment's elapsed duration on the 10 s grid. The condition
+$\tau_{\max}/T_s\leq0.8$ leaves $T_s-\tau_{\max}\geq0.2\,T_s$, one fifth of the
+segment, for the origins at the largest lag. The threshold 0.8 fixes how many origins
+remain there. For the main cohort, $\mathcal C_{10000}$, segments last at least
+12500 s, so each supplies at least 251 origins on the 10 s grid at $\tau=10000$ s.
+If a flight has segments of
+14000 and 3000 s, only the first contributes, even at $\tau=10$ s. Flights and
+selected segments therefore remain the same at every lag.
+
+\paragraph{Weights.}
+For the fixed cohort, $\mathcal I_f(\tau)$ and $n_f(\tau)$ refer only to its selected
+segments, and Eq.~\eqref{eq:fixed-msd} still applies once $\mathcal C(\tau)$ and
+$N(\tau)$ are replaced by the $\tau$-independent cohort and its size:
+\begin{equation}
+ m_f(\tau)=\frac1{n_f(\tau)}\sum_{i\in\mathcal I_f(\tau)}R_{fi}(\tau)^2,\qquad
+ M_2(\tau)=\frac1N\sum_{f\in\mathcal C_{10000}}m_f(\tau),\qquad N=|\mathcal C_{10000}|.
+ \label{eq:fixed-cohort-msd}
+\end{equation}
+Expanding the flight average $m_f(\tau)$ assigns every admissible origin of flight $f$
+the same explicit weight
+\begin{equation}
+ w_f(\tau)=\frac{1}{Nn_f(\tau)},\qquad
+ \sum_{i\in\mathcal I_f(\tau)}w_f(\tau)=\frac1N,
+ \label{eq:fixed-weights}
+\end{equation}
+so that $M_2(\tau)=\sum_f\sum_{i}w_f(\tau)R_{fi}(\tau)^2$.\\
+The same weights define the mean $\langle A\rangle_\tau=\sum_f\sum_{i}w_f(\tau)A_{fi}$ of any
+per-origin quantity $A_{fi}$ (e.g.\ the signed displacement $\Delta x_{j,fi}(\tau)$
+below), used from Eq.~\eqref{eq:fixed-kurtosis} onwards.
+
+\begin{table}[htbp]
+ \centering\small
+ \input{generated/ch3_transport_cohort_table}
+ \caption{Nested duration cohorts and their site--day groups, the resampling
+ units of Sec.~\ref{sec:fixed-general}. The nominal minimum durations
+ $\tau_{\max}/0.8$ are 125, 1250 and 12500 s; since $T_s$ only takes multiples of
+ 10 s, the effective cutoffs are 130, 1250 and 12500 s.}
+ \label{tab:fixed-cohorts}
+\end{table}
+
+\paragraph{Effect of the selection on $H$.}
+We assess duration selection with the nested cohorts $\mathcal C_{100}$ and
+$\mathcal C_{1000}$. They contain the main cohort's segments, additional shorter
+segments of its flights, and additional flights. Selecting long segments also changes
+who is in the sample. For example, the declared circuit class, open-distance flights
+against closed routes such as triangles and out-and-return flights
+(Sec.~\ref{sec:fixed-circuit}), shifts with the cohort: the share of closed routes
+rises from
+\ChThreeParaClosedFracStart\% in $\mathcal C_{100}$ to \ChThreeParaClosedFracMain\% in
+$\mathcal C_{10000}$ for paragliders, and from \ChThreeHangClosedFracStart\% to
+\ChThreeHangClosedFracMain\% for hang gliders.
+
+Duration selection can also change the mix of launch environments and seasons.
+The MSD and its fitted $H$ in $\mathcal C_{10000}$ could therefore differ from those
+in $\mathcal C_{100}$, which retains almost the entire eligible archive. We compare
+the cohorts to assess how much extending the accessible lag range changes the MSD
+curve and its effective growth exponent.
+
+We compare two cohorts $A$ and $B$ over the same lag interval. In each bootstrap
+replicate, both use the same site--day group draw: we compare $H_A^{(1)}$ with
+$H_B^{(1)}$, $H_A^{(2)}$ with $H_B^{(2)}$, and so on. This gives 1000 paired
+differences,
+\[
+ \Delta H^{(b)}=H_A^{(b)}-H_B^{(b)},\qquad b=1,\ldots,1000.
+\]
+The 5th and 95th percentiles of these differences form the interval in
+Table~\ref{tab:fixed-cohort-fits}.
+
+The cohorts share flights and site--day groups. Using the same draws gives each
+shared group the same multiplicity in both cohorts, preserving the dependence
+between their estimated exponents. When a draw shifts both exponents by similar
+amounts in the same direction, those shifts largely cancel in $\Delta H$. Independent
+draws would lose this cancellation and overestimate the uncertainty of the
+difference.
+
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_cohorts.pdf}
+ \caption{Effect of duration selection. Top: MSD in the three nested cohorts, drawn
+ lightest to darkest as $\mathcal C_{100}$, $\mathcal C_{1000}$, $\mathcal C_{10000}$;
+ dashed lines fit the main cohort over 10--10000 s. The darkest curve is drawn on top
+ and hides the lighter cohorts wherever they coincide, which is almost the whole
+ visible range: the result below is that duration selection barely changes $H$.
+ Bottom: effective $H$ with 90\% intervals, fitted over 10--100 s for all three
+ cohorts and 10--1000 s for the two longer cohorts. Fits within each comparison use
+ identical lag values.}
+ \label{fig:fixed-cohorts}
+\end{figure}
+\begin{table}[htbp]
+ \centering\small
+ \input{generated/ch3_transport_cohort_contrast_table}
+ \caption{Paired differences of the cohort exponents, with 5--95\% bootstrap intervals.
+ Each comparison uses identical lags and draws. The $\mathcal C_{100}$--$\mathcal C_{1000}$
+ shift is negligible in magnitude ($|\Delta H|<10^{-4}$), although statistically
+ resolved for paragliders. Contrasts with $\mathcal C_{10000}$ exclude zero and
+ represent a larger, but still small, shift of about 2\% in $H$.}
+ \label{tab:fixed-cohort-fits}
+\end{table}
+\paragraph{Result.}
+On 10--100 s, $\mathcal C_{100}$ and $\mathcal C_{1000}$ differ in $H$ by less than
+$10^{-4}$ in both disciplines. The paired interval resolves this tiny difference for
+paragliders; for hang gliders it includes zero. The two cohorts share
+\ChThreeParaCohortOverlapPct\% (paragliders) and \ChThreeHangCohortOverlapPct\% (hang
+gliders) of their flights, so in each replicate their exponents move together and
+their difference has a very narrow interval.\\
+For the present analysis, we regard the two cohorts as having
+practically the same $H$ on this lag range.\\
+
+The main cohort behaves differently. Its effective exponent is larger than that of
+every broader cohort, in both fit intervals and both disciplines, and every one of
+these paired differences excludes zero. The difference between the main cohort and a
+broader one lies between \ChThreeCohortShiftMin{} and \ChThreeCohortShiftMax{} in $H$,
+which is \ChThreeCohortBiasMinPct--\ChThreeCohortBiasMaxPct\% of the exponent itself.
+
+Two candidate explanations concern who, and under what conditions, flies long
+enough to enter the main cohort. One is that sustaining a segment of 12500 s,
+nearly four hours, selects more experienced pilots. Vilpellet et al.~\cite{vilpellet2026} find that,
+taking the class of the glider as a proxy for experience, the MSD exponent of the
+search phase grows with experience, and interpret this as skill enhancing the
+ability to probe, interpret and exploit atmospheric cues. Experienced pilots may
+therefore locate and exploit thermals more efficiently, cutting the time spent
+searching rather than gliding, which raises $H$. The other is that it
+selects better flying days, where stronger or more reliable lift shortens that same
+search time for any pilot.
+
+We accept this small bias and adopt $\mathcal C_{10000}$ for every analysis below that
+requires a fixed population. A shift of about 2\% in $H$ is small beside what the cohort
+provides: a population that stays the same over three decades of lag, 10--10000 s,
+against two for $\mathcal C_{1000}$ and one for $\mathcal C_{100}$.
+
+
+
+\section{Conditional mean-square displacement}
+\label{sec:fixed-circuit}
+
+The general MSD combines flights with different objectives, launch environments
+and equipment. Orography and wind are plausible main drivers of the differences
+in $H$: they shape both the available lift and the paths along which pilots can
+exploit it. The downloaded flight archive provides no wind measurements matched
+to the trajectories, so we take orography as the main environmental axis of this
+analysis, using initial altitude above sea level (ASL) as its proxy. This choice
+does not establish that terrain dominates wind; it lets us examine the part of
+the environmental dependence accessible through the available data.
+
+We ask which characteristics shape the displacement amplitude and which shape
+its growth rate $H$, through three questions:
+\begin{itemize}
+ \item \emph{Does the launch environment matter?} Initial altitude above sea level
+ serves as a proxy for broad orographic setting: plains, hills and mountains. Do
+ these classes differ in amplitude and in $H$
+ (Figure~\ref{fig:conditional-altitude})? And do regions of the same broad terrain
+ type, Alps and Pyrenees or Channel Coast and Champagne-Lorraine, also differ
+ (Figure~\ref{fig:conditional-regions})?
+ \item \emph{Does the declared circuit matter?} Do open and closed routes
+ (Figure~\ref{fig:conditional-circuit}) follow different transport laws, and does
+ that difference persist, or change sign, within each altitude class
+ (Figure~\ref{fig:fixed-task})?
+ \item \emph{Does the equipment group matter?} Do beginners (EN A/B/C) and experts
+ (EN D/CCC) differ (Figure~\ref{fig:conditional-equipment}), and does the
+ difference survive once the launch environment is held fixed
+ (Figure~\ref{fig:conditional-equipment-altitude})?
+\end{itemize}
+For circuit and equipment groups, we make both an \emph{aggregate comparison},
+pooling all initial altitudes, and an \emph{altitude-stratified comparison},
+keeping the four altitude classes separate. Both use the same fixed cohort.
+For example, experts could have a larger aggregate $H$ partly because they fly
+more often from lowland sites. Comparing experts and beginners within each
+altitude class tests whether a difference remains after removing that change
+in broad launch-environment composition.
+
+The metadata allow many further combinations: experts and beginners could be
+compared separately on open and closed circuits, then within each altitude class,
+region or season. The same construction extends to other recorded attributes,
+provided each intersection retains enough flights. Here we concentrate on
+orography and circuit type, together with the equipment proxy for experience;
+the comparisons below do not exhaust those possible combinations.
+
+These analyses use paragliders only. Their larger population leaves substantial
+support after stratification, whereas the smaller hang-glider sample would make
+several of the same comparisons less precise. Both disciplines alternate searching,
+thermalling and gliding, and both archives span heterogeneous sites, seasons and
+years. Because both disciplines share this flight structure and give similar general
+exponents in Section~\ref{sec:fixed-general}, we expect the dependences on
+launch altitude, circuit type and experience found for paragliders to hold
+qualitatively for hang gliders too, despite their higher typical speed. 
+
+\Needspace{8\baselineskip}
+Every group is a subset $\mathcal C_g$ of the same fixed population
+$\mathcal C_{10000}$, with the same retained segments throughout
+$10\leq\tau\leq10000$ s. We use
+\begin{equation}
+ M_{2,g}(\tau)=\frac{1}{N_g}\sum_{f\in\mathcal C_g}m_f(\tau),
+ \qquad N_g=|\mathcal C_g|,
+ \qquad M_{2,g}(\tau)\propto\tau^{2H_g},
+ \label{eq:conditional-msd}
+\end{equation}
+We reuse the same 1000 site--day
+bootstrap draws across all groups and lags, so differences in $H$ are evaluated
+on paired replicates. These intervals retain the dependence limitations discussed
+in Section~\ref{sec:fixed-general}; they are not simultaneous intervals for all
+comparisons.
+
+\subsection{Orography across altitude classes and geographic regions}
+\label{sec:conditional-orography}
+
+Initial cleaned GNSS altitude defines four classes: Plains ($z_0<300$ m), Hills
+($300\leq z_0<800$ m), Low mountains ($800\leq z_0<1500$ m), and High mountains
+($z_0\geq1500$ m). These are launch-altitude classes, not measurements of the
+terrain crossed later. We first compare the four classes directly, setting circuit
+type aside. All circuit declarations, including unclassified ones, contribute to
+Figure~\ref{fig:conditional-altitude}. This gives a broad view of how transport
+varies between lowland and mountain launch environments, before asking whether
+regions of the same general terrain type also differ.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_conditional_altitude.pdf}
+ \caption{Paraglider MSD by initial altitude, pooling circuit types and equipment
+ classes. The four groups partition the fixed cohort. The altitude thresholds
+ describe the initial cleaned fix, rather than the relief along the trajectory.}
+ \label{fig:conditional-altitude}
+\end{figure}
+
+Plains have the largest exponent, \CondAltZeroH{}, followed by Hills,
+\CondAltOneH{}. Both exceed Low mountains, \CondAltTwoH{}, and High mountains,
+\CondAltThreeH{}. The ordering is not monotonic in altitude: the high-mountain
+curve grows slightly faster than the low-mountain one. The lowland curves also
+reach larger MSD values at long lags. Thus the broad lowland--mountain distinction
+appears in both the displacement scale and its rate of growth.
+
+The Plains--Low mountains difference is \CondAltZeroAltTwoDelta{}, about 10\%
+of the smaller exponent. This spread motivates treating launch environment as
+a primary source of heterogeneity when comparing circuit or equipment groups.
+
+This aggregate ordering includes a change in circuit composition. Open flights
+account for \ChThreeConditionalPlainsOpenPct\% of Plains and
+\ChThreeConditionalHillsOpenPct\% of Hills, against
+\ChThreeConditionalLowMountainsOpenPct\% and
+\ChThreeConditionalHighMountainsOpenPct\% in the two mountain classes.
+Since open routes have larger $H$ within every altitude class
+(Section~\ref{sec:conditional-circuit}), their greater share
+in lowlands contributes to the pooled contrast. The altitude-only comparison
+therefore describes the transport associated with each launch environment; it
+does not measure an orographic effect at fixed flight objective.
+
+\paragraph{How relief could shape transport.}
+Orography affects where pilots expect to find lift and which routes they can
+follow between successive climbs. Two contrasting settings suggest a physical
+interpretation of Figure~\ref{fig:conditional-altitude}:
+\begin{itemize}
+ \item \emph{In mountains}, sunlit slopes and ridges can provide recognisable
+ locations for thermal development. Such cues may reduce the time spent searching
+ for the next thermal. Exploiting that lift can also lead pilots to follow a
+ sequence of ridges, so the relief defines preferred corridors for horizontal
+ motion. Turns and detours along those corridors can reduce net displacement
+ even while the glider continues to cover distance.
+ \item \emph{In plains}, thermal sources can be spread across the landscape:
+ fields with different crops or moisture, roads and heated roofs provide contrasts
+ in surface heating~\cite{faa_glider2024}. Their locations may be less predictable
+ than a prominent ridge, while offering more possible directions of travel.
+ This is a picture of more dispersed opportunities, not an assumption that
+ thermals are spatially uniform or randomly placed.
+\end{itemize}
+
+Safety considerations can further restrict mountain routes. Maintaining lateral
+clearance from rock faces and enough height to cross a ridge limits which paths
+are usable at a given altitude. These terrain-related constraints are weaker over
+plains, where pilots have more freedom to choose a heading between lift sources.
+
+The two mountain mechanisms can act in opposite directions: predictable lift
+could shorten search, whereas following the relief could limit horizontal advance.
+The smaller aggregate mountain $H$ is consistent with the latter contribution,
+but does not identify their separate effects. Nor does confinement to a ridge
+necessarily lower $H$: a long straight ridge could sustain persistent motion.
+The relevant hypothesis concerns the geometry of the routes available to pilots,
+including their bends, detours and repeated use.
+
+\paragraph{Differences within the same broad terrain type.}
+The regional comparison asks whether transport differs when the broad orographic
+setting is held fixed but the region changes. Within a mountain setting, we
+compare Alps with Pyrenees; within a lowland setting, Channel Coast with
+Champagne-Lorraine. The geographic boxes are defined in
+Table~\ref{tab:regional-boxes} and shown in Figure~\ref{fig:prelim-map}a.
+
+Geographic membership alone is insufficient. The Alpine and Pyrenean boxes also
+contain flights in the Plains and Hills classes, whose inclusion would mix the
+mountain comparison with a change in broad launch environment. We therefore
+retain only Low and High mountains in these two boxes, pooling the two classes.
+For the lowland comparison, we similarly retain only Plains and Hills in each
+box. Writing $\mathcal B$ for a geographic box, the selections are
+\begin{align}
+ \mathcal C_{\mathcal B,\mathrm{mountains}}
+ &=\{f\in\mathcal C_{10000}:
+ (\lambda_{0f},\varphi_{0f})\in\mathcal B,\ z_{0f}\geq800\,\mathrm{m}\},\notag\\
+ \mathcal C_{\mathcal B,\mathrm{lowlands}}
+ &=\{f\in\mathcal C_{10000}:
+ (\lambda_{0f},\varphi_{0f})\in\mathcal B,\ z_{0f}<800\,\mathrm{m}\}.
+ \label{eq:regional-preselection}
+\end{align}
+Here altitude is measured at the initial cleaned fix, as in the other comparisons
+of this section. It remains a proxy for the launch environment, rather than a
+measurement of relief along the full path.
+
+Within the fixed cohort, this removes \CondAlpsExcluded{} flights from the Alpine
+box and \CondPyreneesExcluded{} from the Pyrenean box. The lowland restriction also
+removes \CondChannelCoastExcluded{} flights from Channel Coast and
+\CondChampagneLorraineExcluded{} from Champagne-Lorraine; it is not redundant even
+in these predominantly lowland windows. Every legend reports the number remaining
+after both geographic and altitude selection.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_conditional_regions.pdf}
+ \caption{Regional paraglider MSDs. Left: Alps and Pyrenees. Right: Channel Coast
+ and Champagne-Lorraine. The left panel retains only Low/High mountains within
+ each box; the right retains only Plains/Hills. Circuit types and equipment
+ classes are pooled. Counts and fits refer to the preselected populations;
+ both panels share the same axes.}
+ \label{fig:conditional-regions}
+\end{figure}
+
+The Alpine exponent is \CondAlpsH{}, against \CondPyreneesH{} in the Pyrenees.
+Their paired difference is positive (Table~\ref{tab:conditional-regions}), and
+Alpine flights also reach a larger MSD at long lags. The common designation
+``mountain region'' therefore does not imply a common transport curve. By
+contrast, Channel Coast and Champagne-Lorraine give very similar exponents,
+\CondChannelCoastH{} and \CondChampagneLorraineH{}. Their paired interval includes
+zero. This does not establish identical dynamics: their MSD amplitudes differ,
+and a single fitted slope cannot capture every difference in curve shape.
+
+\begin{table}[htbp]
+ \centering\small
+ \input{generated/ch3_conditional_regional_table}
+ \caption{Paired regional contrasts in $H$, after the terrain preselection:
+ Low/High mountains for Alps--Pyrenees and Plains/Hills for the two lowland
+ regions. Intervals are nominal 90\% site--day bootstrap intervals.}
+ \label{tab:conditional-regions}
+\end{table}
+
+The mountain comparison is consistent with transport depending on the form and
+arrangement of relief, beyond the broad mountain--lowland distinction. Ridges,
+valleys and the spatial distribution of usable lift could constrain horizontal
+paths differently in the two massifs. In lowlands, the corresponding question
+concerns finer differences between hills and plains, including the location and
+nature of thermal triggers: differences in surface heating or local terrain
+could organise the available lift differently even without a mountain setting.
+The similar lowland exponents do not resolve such a difference in the global
+MSD growth rate.
+
+These mechanisms motivate the comparison but are not measured by the regional
+boxes. The preselection controls the broad altitude setting; it does not match
+the altitude distribution within that setting, weather, route choices, equipment
+or the periods represented in each region. The results therefore describe
+regional differences within a common broad environment, without assigning them
+uniquely to mountain shape or to the mechanisms that trigger thermals.
+
+\FloatBarrier
+\subsection{Circuit type and its dependence on initial altitude}
+\label{sec:conditional-circuit}
+
+The catalogue's declared circuit class separates open distance flights from closed
+routes such as triangles and out-and-return flights. Returning towards an earlier
+part of the route reduces net displacement over sufficiently long intervals, so
+we expect closed routes to have a smaller effective $H$. The declaration describes
+the flight objective; it does not guarantee that the recorded, trimmed trajectory
+ends at its starting point.
+
+We first pool all initial altitudes within each circuit class. The fixed cohort contains
+\ChThreeMainOpen{} open flights, \ChThreeMainClosed{} closed flights and
+\ChThreeMainUnknown{} unclassified flights; the last group enters neither curve
+in Figure~\ref{fig:conditional-circuit}.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_conditional_circuit.pdf}
+ \caption{Paraglider MSD by declared circuit, pooling initial altitudes. Solid
+ curves join the equal-flight estimates; dashed lines are fits over 10--10000 s.
+ Counts, effective exponents and 90\% intervals refer to the fixed groups.}
+ \label{fig:conditional-circuit}
+\end{figure}
+
+The open-route MSD grows faster and reaches a larger displacement amplitude at
+long lags. Its effective exponent is \CondOpenH{}, compared with \CondClosedH{}
+for closed routes. The paired difference $H_{\rm open}-H_{\rm closed}$ is
+\CondOpenClosedDelta{}, so the separation is resolved under the adopted bootstrap.
+Its magnitude is smaller than the roughly $0.084$ spread between altitude classes
+in Figure~\ref{fig:conditional-altitude}, although both are aggregate associations
+that mix route and environmental composition.
+
+\Needspace{9\baselineskip}
+\paragraph{Circuit geometry and the separation of the curves.}
+In an ideal out-and-return flight of duration $T$, with equal time on each leg,
+the pilot reverses direction at $T/2$, only $\log_{10}2\simeq0.30$ decades below
+$T$ on a logarithmic axis. Yet Figure~\ref{fig:conditional-circuit} shows visible
+separation around $\tau\sim10^3$ s, a full decade below the largest plotted lag,
+$10^4$ s.
+
+Triangular circuits offer one possible explanation for an earlier separation.
+In an ideal triangle with equal leg times, the first major turn occurs around
+$T/3$. Displacements spanning successive turns combine advances in different
+directions, reducing net distance relative to a straight continuation. This
+geometry can limit MSD growth before the halfway point of an out-and-return route.
+
+Here $\tau$ is a \emph{lag} averaged over origins along each segment, rather than
+time since take-off: even short increments can straddle a turn. Neither $T/2$
+nor $T/3$ sets an onset threshold, and their difference alone cannot explain a
+decade of separation. Also, $10^4$ s is the analysis limit, not a common flight
+duration. Testing the triangle hypothesis requires separating triangles from
+out-and-return flights and comparing lags with actual leg durations.
+
+\paragraph{Circuit contrasts within altitude classes.}
+The aggregate comparison averages over different launch environments. We next
+ask whether the contrast remains within a given altitude class.
+
+Figure~\ref{fig:fixed-task} crosses the four initial-altitude classes of
+Section~\ref{sec:conditional-orography} with circuit type; counts and fitted
+exponents are given in Table~\ref{tab:fixed-task}.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_task_altitude.pdf}
+ \caption{Paraglider transport by declared circuit and initial altitude, with fixed
+ flights and segments throughout 10--10000 s. Markers give MSD estimates, shaded
+ bands their pointwise 90\% intervals, and dashed lines the global log--log fits.
+ Legends report the flight count and the fitted $H$ with its 90\% interval. The
+ identical axes permit comparison of displacement amplitude and growth rate.}
+ \label{fig:fixed-task}
+\end{figure}
+\begin{table}[htbp]
+ \centering\footnotesize\setlength{\tabcolsep}{3.5pt}
+ \input{generated/ch3_transport_task_table}
+ \caption{Main-cohort flights $N$, site--day groups $G$, global effective exponents
+ and displacement amplitude at 10000 s. Intervals come from the coupled cluster
+ bootstrap. Even the smallest cell retains 165 flights from 157 groups.}
+ \label{tab:fixed-task}
+\end{table}
+
+For open routes, Plains and Hills have larger $H$ than either mountain class. Thus
+the distinction involves the rate of growth as well as the displacement reached at
+10000 s. Closed routes have smaller $H$ than open routes in every altitude class.
+The paired contrasts $H_{\rm open}-H_{\rm closed}$ range from \ChThreeTaskContrastMin{}
+to \ChThreeTaskContrastMax; all four 90\% intervals exclude zero. The two lowland
+classes carry the largest contrast, close to \ChThreeTaskContrastMax, and it falls to
+\ChThreeTaskContrastMin{} in High mountains.
+
+\Needspace{4\baselineskip}
+The closed-route exponents also differ between altitude classes: the present intervals
+do not support a common value across them. Their ordering reverses the open-route one.
+Paired lowland-minus-mountain contrasts, each lowland class against each mountain class
+within one circuit, are positive for open routes, between \ChThreeOpenAltShiftMin{} and
+\ChThreeOpenAltShiftMax{} in $H$, and negative for closed routes, with magnitudes between
+\ChThreeClosedAltShiftMin{} and \ChThreeClosedAltShiftMax; all eight intervals exclude
+zero. Launch altitude therefore enters $H$ with a sign that depends on the declared
+circuit.
+
+One possible reading connects the two orderings through the interaction between
+route geometry and terrain. The suppression associated with turns and return
+legs could be strongest where the planned circuit can be flown most directly.
+Lowland routes may be less constrained by ridges and valleys, making this easier.
+Figure~\ref{fig:fixed-task} shows the relevant change in curve shape: over the last
+decade of lag every closed curve bends below its fitted line, while the two
+lowland open curves remain close to theirs out to 10000 s.
+
+On an open route, which asks for distance without a return, the same freedom
+could instead sustain horizontal advance. Lowland open flights remain closer to
+ballistic growth over the fitted range, while both mountain classes have smaller
+slopes. This suggests that the association between launch environment and $H$
+may depend on what the declared circuit asks the pilot to do.
+
+The altitude classes describe the launch site rather than the terrain crossed
+later. The two lowland closed cells are the smallest in
+Table~\ref{tab:fixed-task} and have the widest intervals, although their contrasts
+against the mountain cells still exclude zero. The comparison is observational: it
+does not isolate orography from weather, route selection, pilots or equipment.
+
+Within the fixed cohort the group fractions $p_g=N_g/N$ are constant. For an
+exhaustive partition, including unclassified flights,
+\begin{equation}
+ M_2(\tau)=\sum_g p_g M_{2,g}(\tau),\qquad
+ H_{\rm loc}(\tau)=\sum_g
+ \frac{p_gM_{2,g}(\tau)}{M_2(\tau)}H_{{\rm loc},g}(\tau).
+ \label{eq:fixed-mixture}
+\end{equation}
+The derivative slope weights each group by its contribution to the second moment.
+Equation~\eqref{eq:fixed-mixture} describes the main-cohort MSD; the plotted local
+regressions approximate its derivatives. Both circuit classes contribute substantially
+to this aggregate, with distinct growth rates.
+
+Wind can contribute to both amplitude and apparent scaling. For an additive constant
+velocity $\boldsymbol u$, write $\Delta\boldsymbol x=\Delta\boldsymbol y+\boldsymbol u\tau$:
+\begin{equation}
+ \langle|\Delta\boldsymbol x|^2\rangle
+ =\langle|\Delta\boldsymbol y|^2\rangle
+ +2\tau\boldsymbol u\cdot\langle\Delta\boldsymbol y\rangle+|\boldsymbol u|^2\tau^2.
+ \label{eq:fixed-wind}
+\end{equation}
+Even uniform wind can change the slope through the ballistic term. Centring removes
+a common deterministic drift, but not necessarily differences in drift between
+flights; variable winds can also modify velocity correlations. Without wind data
+matched to these trajectories, these contributions remain mixed with the
+association with orography and circuit type.
+\FloatBarrier
+\subsection{Beginners and experts across launch environments}
+\label{sec:conditional-equipment}
+
+We use the equipment groups defined in Section~\ref{sec:glider}:
+\[
+ \text{beginners}:\ \mathrm{EN\ A/B/C},\qquad
+ \text{experts}:\ \mathrm{EN\ D/CCC}.
+\]
+Membership follows the harmonized catalogue class of the wing used for that
+flight. It is not a pilot-level classification: an experienced pilot can fly an
+A, B or C wing, and the same pilot could enter different groups on different
+flights. The labels provide an operational experience proxy while retaining
+an equipment contrast. We exclude tandem, non-certified and unclassified entries
+from this comparison: \num{\CondUnknownEquipment} fixed-cohort flights enter neither
+group. The retained groups contain \num{\CondBeginnersN} beginners flights and
+\num{\CondExpertsN} experts flights.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_conditional_equipment.pdf}
+ \caption{Paraglider MSD for beginners (EN A/B/C) and experts (EN D/CCC), pooling
+ regions, initial altitudes and circuit types. These names refer to equipment
+ proxies; individual pilot experience is not recorded by the grouping.}
+ \label{fig:conditional-equipment}
+\end{figure}
+
+Over all initial altitudes (Figure~\ref{fig:conditional-equipment}), the experts
+group reaches a larger MSD and has the
+larger effective exponent: \CondExpertsH{}, against \CondBeginnersH{} for
+beginners. The paired difference is \CondExpertsBeginnersDelta{}.
+A speed difference alone would multiply an otherwise identical MSD by a constant
+and leave its log--log slope unchanged. The observed separation in $H$ therefore
+also concerns the lag dependence of transport, although it cannot distinguish
+pilot decisions from equipment, route or environmental differences.
+
+We then retain the four altitude classes separately, as in
+Figure~\ref{fig:fixed-task}. Figure~\ref{fig:conditional-equipment-altitude}
+shows the four classes for the beginners group (left) and for the experts group
+(right). This holds the broad launch environment fixed without matching individual
+sites or flight conditions.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_conditional_equipment_altitude.pdf}
+ \caption{Paraglider MSD by initial altitude for beginners (left) and experts
+ (right), pooling regions and circuit types. Estimator, fit range, axes and
+ uncertainty convention are the same as in Figure~\ref{fig:fixed-task}; the number
+ of contributing flights is given for every curve.}
+ \label{fig:conditional-equipment-altitude}
+\end{figure}
+
+For both groups the altitude ordering is that of
+Figure~\ref{fig:conditional-altitude}: Plains and Hills have the larger $H$,
+followed by the two mountain classes. Comparing the two panels, the experts curve
+has the larger displacement amplitude at long lags and the larger $H$ in every
+altitude class. All four paired differences in
+Table~\ref{tab:conditional-equipment} exclude zero.
+
+The size of the contrast depends on the environment: it is largest in Low mountains, smaller in
+High mountains, and smaller again in Plains and Hills. The pooled difference is
+larger than any within-class difference, showing that the all-altitude comparison
+also incorporates the groups' different altitude composition and MSD amplitudes.
+
+\begin{table}[htbp]
+ \centering\small
+ \input{generated/ch3_conditional_equipment_table}
+ \caption{Experts-minus-beginners contrasts in the effective exponent, first
+ pooling all altitudes and then within each class. The same bootstrap draws
+ provide every contrast.}
+ \label{tab:conditional-equipment}
+\end{table}
+
+To assess whether those contrasts themselves differ, define
+\begin{equation}
+ \Delta H_a=H_{\mathrm{experts},a}-H_{\mathrm{beginners},a},
+ \qquad D_{ab}=\Delta H_a-\Delta H_b,
+ \label{eq:conditional-interaction}
+\end{equation}
+where $a$ and $b$ denote altitude classes. We compute $D_{ab}$ within each paired
+bootstrap replicate, rather than comparing the overlap of separate intervals.
+The Low mountains contrast exceeds those in Plains, Hills and High mountains
+with all three intervals excluding zero. The Plains--Hills difference is not
+resolved, and neither is the difference between High mountains and either
+lowland class at the adopted 90\% level. There is therefore evidence that the
+equipment-group separation changes with launch environment, but no monotonic
+increase of that separation with altitude.
+
+These results support a distinction between the two equipment groups that survives
+altitude stratification. They do not measure the effect of experience alone.
+Circuit composition, regional coverage and weather remain mixed within each cell,
+while the fixed-population rule restricts the comparison to flights with a long
+uninterrupted segment. In particular, the beginners group here describes long
+flights made on A/B/C wings, not the full population of novice pilots.
+\FloatBarrier
+
+\section{Anisotropy and principal directions}
+\label{sec:fixed-anisotropy}
+\emph{Reserved for the analysis of anisotropy and principal directions. The existing
+PCA results remain in the experiments volume; they are not updated in this chapter.}
+
+\section{Scaling of displacement distributions}
+\label{sec:fixed-scaling}
+
+The MSD measures one moment of the displacement law. To test whether the whole law
+rescales with one exponent, we use quantiles, a spectrum of moments and excess kurtosis.
+All use the main cohort's flights, segments and weights in Eq.~\eqref{eq:fixed-weights}.
+
+\subsection{Self-similarity and its observable consequences}
+\label{sec:fixed-selfsimilar-definition}
+
+A process $\boldsymbol X(t)$, with $\boldsymbol X(0)=0$, is $H$-self-similar if,
+for some $H>0$,
+\begin{equation}
+ \bigl(\boldsymbol X(at_1),\ldots,\boldsymbol X(at_m)\bigr)
+ \overset d= a^H\bigl(\boldsymbol X(t_1),\ldots,\boldsymbol X(t_m)\bigr)
+ \quad(a>0).
+ \label{eq:fixed-selfsimilar}
+\end{equation}
+This identity must hold for every $m\geq1$ and $t_1,\ldots,t_m\geq0$.
+Equality in distribution concerns positions at any collection of times, including
+their dependence~\cite{embrechts_maejima_selfsimilar}. Gaussianity and independence
+of increments are not required.
+
+Two separate hypotheses stand between this definition and a measurement, and each
+does different work. Stationary increments make a pooled lag statistic informative
+about $\boldsymbol X$ itself: with $\boldsymbol X(0)=0$ they give
+$\boldsymbol X(\tau)\overset d=\boldsymbol X(t+\tau)-\boldsymbol X(t)$, so
+displacements collected from many origins estimate the law of the position reached
+after an elapsed time $\tau$. The archive supplies no repeated releases from a common
+initial condition, which leaves this the only route from the increments we observe
+to the process we describe. Self-similarity then compresses the resulting family of
+laws: one exponent and one shape determine every lag, including elapsed times the
+cohort does not cover, and that exponent is the quantity stochastic transport
+models predict. Without it this chapter reports a separate
+propagator at each measured lag, with no relation between them. Testing
+Eq.~\eqref{eq:fixed-selfsimilar} is therefore a test of whether one anomalous
+exponent describes these flights at all, and the sections below report necessary
+consequences of that identity rather than a proof of it.
+
+To infer a lag-only scaling law, we additionally assume stationary increments:
+their joint laws must be unchanged by shifting the origin.
+Self-similarity alone does not impose this condition. With stationary increments,
+each amplitude $Y\in\{|\Delta E|,|\Delta N|,R\}$ obeys
+\begin{equation}
+ Y(\tau)\overset d=(\tau/\tau_0)^H Y(\tau_0),\qquad
+ \begin{aligned}
+ Q_{Y,p}(\tau)&=(\tau/\tau_0)^H Q_{Y,p}(\tau_0),\\
+ M_{q,Y}(\tau)&=(\tau/\tau_0)^{qH}M_{q,Y}(\tau_0).
+ \end{aligned}
+ \label{eq:fixed-scale-family}
+\end{equation}
+Here $Q_{Y,p}$ is a population quantile and $M_{q,Y}$ a finite moment of order $q$;
+below, the same symbols denote their equal-flight estimates.
+Thus every quantile has the same exponent, quantile ratios are constant, and the
+moment spectrum is $\zeta_Y(q)=qH$. Signed-component excess kurtosis is also constant
+when the fourth moment exists and variance is nonzero; it need not vanish. These are
+necessary consequences for the lag distributions. A finite selection of such
+statistics cannot establish the joint-law identity in Eq.~\eqref{eq:fixed-selfsimilar}.
+
+\subsection{A common empirical distribution}
+
+With the weights in Eq.~\eqref{eq:fixed-weights}, the common empirical distribution is
+\begin{equation}
+ \widehat F_{Y,\tau}(y)=\frac1N\sum_{f=1}^N\frac1{n_f(\tau)}
+ \sum_{i\in\mathcal I_f(\tau)}\mathbf1\{Y_{fi}(\tau)\leq y\},\qquad
+ Q_{Y,p}(\tau)=\inf\{y:\widehat F_{Y,\tau}(y)\geq p\}.
+ \label{eq:fixed-cdf}
+\end{equation}
+We average the within-flight fractions below $y$, then invert the resulting CDF.
+The quantile is the first observed amplitude at which the cumulative weight reaches
+$p$, without interpolation between ranks. This order of operations defines the
+quantile of the equal-flight mixture.
+
+Absolute components measure amplitudes along east and north. For example,
+$\Pr(|\Delta E|\leq a)=\Pr(-a\leq\Delta E\leq a)$, so small absolute quantiles
+measure proximity to zero displacement. The radius $R=(\Delta E^2+\Delta N^2)^{1/2}$
+is invariant under rotation and measures horizontal displacement without assuming
+isotropy.
+
+\subsection{Quantiles, growth exponents and relative spread}
+\label{sec:fixed-quantiles}
+
+We evaluate $p=0.25,0.50,0.75,0.90$ and fit each quantile over the same 33 lags.
+Writing $\mathcal B$ for the least-squares slope against $\log_{10}\tau$
+used in Section~\ref{sec:fixed-general},
+\begin{equation}
+ H_{Y,p}=\mathcal B\!\left[\log_{10}\frac{Q_{Y,p}}{1\,\mathrm m}\right],\qquad
+ \mathcal B\!\left[\log_{10}\frac{Q_{Y,0.25}}{Q_{Y,0.90}}\right]
+ =H_{Y,0.25}-H_{Y,0.90}.
+ \label{eq:fixed-ratio}
+\end{equation}
+No factor of two enters a length exponent. The ratio compares small and large
+amplitudes at each lag, while the fitted exponents summarise their growth across
+10--10000 s. The equality follows from linearity of least squares on identical lags;
+ratio drift and the exponent difference are therefore linked diagnostics.
+Figures~\ref{fig:fixed-quantiles-para} and~\ref{fig:fixed-quantiles-hang} give the
+quantile curves and their ratio for each discipline, and
+Figure~\ref{fig:fixed-quantile-h} collects the fitted quantile exponents.
+
+\begin{figure}[H]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_quantiles_para.pdf}
+ \caption{Paraglider equal-flight displacement quantiles and their relative spread,
+ on the fixed main cohort. Every panel uses the empirical measure in
+ Eq.~\eqref{eq:fixed-cdf}. Shading gives pointwise 90\% cluster-bootstrap intervals.}
+ \label{fig:fixed-quantiles-para}
+\end{figure}
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_quantiles_hang.pdf}
+ \caption{The same amplitude quantiles and ratio for hang gliders, with an independent
+ main cohort and the same sampling convention.}
+ \label{fig:fixed-quantiles-hang}
+\end{figure}
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_quantile_exponents.pdf}
+ \caption{Global quantile exponents from 10--10000 s fits. Error bars are the 5th--95th
+ percentiles of the refitted bootstrap slopes. A common scale exponent would give
+ a horizontal sequence within each panel.}
+ \label{fig:fixed-quantile-h}
+\end{figure}
+For paragliders, the radial ratio falls from \ChThreeParaQuantRatioStart{} at 10 s to
+\ChThreeParaQuantRatioMin{} at \ChThreeParaQuantRatioMinLag{} s, rises to
+\ChThreeParaQuantRatioMax{} at \ChThreeParaQuantRatioMaxLag{} s, then falls to
+\ChThreeParaQuantRatioEnd{} at 10000 s. Quantile-fit RMS residuals span
+\ChThreeParaQuantRmsMin--\ChThreeParaQuantRmsMax{} dex.
+
+For hang gliders, the radial ratio falls from \ChThreeHangQuantRatioStart{} at 10 s to
+\ChThreeHangQuantRatioMin{} at \ChThreeHangQuantRatioMinLag{} s, rises to
+\ChThreeHangQuantRatioMax{} at \ChThreeHangQuantRatioMaxLag{} s, then falls to
+\ChThreeHangQuantRatioEnd{} at 10000 s. Quantile-fit RMS residuals span
+\ChThreeHangQuantRmsMin--\ChThreeHangQuantRmsMax{} dex.
+
+A positive global slope of these nonmonotonic ratios can coexist with a net endpoint decrease.
+\FloatBarrier
+
+\subsection{Moment spectrum and finite-range scaling}
+\label{sec:fixed-moments}
+
+For each amplitude and order we calculate
+\begin{equation}
+ M_{q,Y}(\tau)=\frac1N\sum_f\frac1{n_f(\tau)}\sum_{i\in\mathcal I_f(\tau)}Y_{fi}(\tau)^q,
+ \qquad \zeta_Y(q)=\mathcal B\!\left[\log_{10}\frac{M_{q,Y}}{(1\,\mathrm m)^q}\right].
+ \label{eq:fixed-moments}
+\end{equation}
+We use $q\in\{0.25,0.5,0.75,1,1.5,2,2.5,3,3.5,4\}$. Each point of the spectrum is
+obtained by first computing a moment at all lags, then fitting its log--log slope.
+The reference $\zeta=qH$ is fitted through the origin with equal weight for the ten
+orders. Higher orders emphasise large displacements. The radial spectrum contains
+the MSD, with the identity
+\begin{equation}
+ M_{2,R}=M_{2,|\Delta E|}+M_{2,|\Delta N|}=M_2
+ \label{eq:fixed-second-identity}
+\end{equation}
+verified at every lag and in every bootstrap replicate.
+Table~\ref{tab:fixed-fits} reports the main-cohort MSD exponents,
+Figure~\ref{fig:fixed-local} compares their local and global values, and
+Figure~\ref{fig:fixed-spectrum} gives the moment spectra.
+Table~\ref{tab:fixed-scaling} collects the paired quantile and moment contrasts that
+test $\zeta=qH$.
+
+\begin{table}[htbp]
+ \centering\small
+ \input{generated/ch3_transport_fit_table}
+ \caption{Main-cohort MSD exponents: a single global fit and three common decade
+ intervals. RMS residuals are measured in $\log_{10}M_2$. Each fit retains the same
+ flight and segment population.}
+ \label{tab:fixed-fits}
+\end{table}
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_fixed_slopes.pdf}
+ \caption{Local and global effective MSD exponents on the fixed main cohort.
+ Bands are pointwise 90\% bootstrap intervals. The global fit compresses the full
+ curve into one number; the local slopes expose its scale dependence.}
+ \label{fig:fixed-local}
+\end{figure}
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_spectrum.pdf}
+ \caption{Moment spectra for the three displacement amplitudes. Each point is the
+ slope of a 10--10000 s log--log moment fit; shading gives its pointwise 90\% interval.
+ Dashed lines are constrained linear fits $\zeta=qH$.}
+ \label{fig:fixed-spectrum}
+\end{figure}
+\begin{table}[htbp]
+ \centering\small\setlength{\tabcolsep}{4pt}
+ \input{generated/ch3_transport_scaling_table}
+ \caption{Paired global-slope contrasts, with 5--95\% bootstrap intervals. A common
+ scale exponent predicts zero for both the quantile and moment contrasts.}
+ \label{tab:fixed-scaling}
+\end{table}
+For paragliders, the radial contrast $\zeta(4)/4-\zeta(0.25)/0.25$ is
+\ChThreeParaMomentContrast. Moment-fit RMS residuals span
+\ChThreeParaMomentRmsMin--\ChThreeParaMomentRmsMax{} dex across all amplitudes and orders.
+
+For hang gliders, the radial contrast $\zeta(4)/4-\zeta(0.25)/0.25$ is
+\ChThreeHangMomentContrast. Moment-fit RMS residuals span
+\ChThreeHangMomentRmsMin--\ChThreeHangMomentRmsMax{} dex across all amplitudes and orders.
+\FloatBarrier
+
+\subsection{Excess kurtosis of the signed components}
+\label{sec:fixed-kurtosis}
+
+Departures from Gaussian shape are assessed on the signed components: taking an
+absolute value or a radius changes even a Gaussian law. With the equal-flight mean
+$\langle A\rangle_\tau=\sum_f\sum_{i\in\mathcal I_f(\tau)}w_f(\tau)A_{fi}$, define
+\begin{equation}
+ \mu_j(\tau)=\langle\Delta x_j\rangle_\tau,\qquad
+ K_j(\tau)=\frac{\langle(\Delta x_j-\mu_j)^4\rangle_\tau}
+ {\langle(\Delta x_j-\mu_j)^2\rangle_\tau^2}-3,\qquad j\in\{E,N\}.
+ \label{eq:fixed-kurtosis}
+\end{equation}
+Centring uses the mean of the full mixture at each lag. A Gaussian marginal has
+$K_j=0$~\cite{nist_kurtosis}; nonzero excess measures a departure in its standardised
+fourth moment. Zero excess alone does not establish Gaussianity. For self-similarity,
+the relevant prediction is constancy with lag, regardless of the value.
+Figure~\ref{fig:fixed-kurtosis} shows $K_j(\tau)$ for both components.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_kurtosis.pdf}
+ \caption{Signed-component Fisher excess kurtosis at the same lags, with the same
+ flights, segments and weights as the quantiles and moments. The dashed line is the
+ Gaussian marginal reference. Bands use the coupled cluster bootstrap.}
+ \label{fig:fixed-kurtosis}
+\end{figure}
+For paragliders, $(K_E,K_N)$ changes from
+$(\ChThreeParaKurtEStart,\ChThreeParaKurtNStart)$ at 10 s to
+$(\ChThreeParaKurtEEnd,\ChThreeParaKurtNEnd)$ at 10000 s.
+
+For hang gliders, $(K_E,K_N)$ changes from
+$(\ChThreeHangKurtEStart,\ChThreeHangKurtNStart)$ at 10 s to
+$(\ChThreeHangKurtEEnd,\ChThreeHangKurtNEnd)$ at 10000 s.
+Different flight means and variances can themselves produce nonzero excess in the
+mixture. The measured kurtosis therefore characterises the pooled displacement law.
+
+\subsection{Assessment of self-similarity}
+
+The quantile curves and the nearly straight moment spectra can be reconciled through
+\begin{equation}
+ M_{q,Y}(\tau)=\int_0^1 Q_{Y,p}(\tau)^q\,dp.
+ \label{eq:fixed-moment-quantile}
+\end{equation}
+Each moment averages over probability levels; the order $q$ controls the emphasis
+on larger amplitudes. Fitting its slope
+across three decades further averages over crossovers. Changes in different parts
+of the distribution can consequently leave the fitted spectrum nearly linear.
+Moreover, Table~\ref{tab:fixed-scaling} resolves small departures from $\zeta=qH$;
+the spectrum is not exactly linear under the adopted bootstrap.
+
+For these data, the lag-dependent quantile ratios provide the more direct evidence
+against a fixed distributional shape. Their large, nonmonotonic changes are visible
+without fitting a power law, and their estimation does not require finite high-order
+moments. Unequal fitted quantile exponents support this reading, but the curved
+quantile trajectories limit their interpretation as constant exponents. The change
+in kurtosis supplies complementary evidence. Visual linearity of ten fitted moment
+slopes is therefore insufficient to outweigh the observed shape changes.
+
+Over 10--10000 s, a single self-similar model with stationary increments does not
+adequately describe the pooled displacement law.
+Approximate scaling over narrower intervals remains possible. Fixed flights and
+segments remove changing membership, and the contrast below measures how much of the
+remaining structure follows from where within a segment the origins fall. The present
+analysis does not determine multi-time laws. It therefore does not exclude every
+nonstationary self-similar process, nor establish an asymptotic multifractal law.
+
+% --- merged from sections/04-origin-dependence.tex ---
+\Needspace{12\baselineskip}
+\paragraph{Does the increment law depend on the origin?}
+\label{sec:fixed-origin-dependence}
+
+Equation~\eqref{eq:fixed-scale-family} reaches the lag distributions through
+stationary increments, and the estimators above pool every admissible origin inside
+a selected segment. That pooling estimates one population law only if the law of
+$\boldsymbol X(t+\tau)-\boldsymbol X(t)$ does not depend on $t$. We test this
+directly. Within each selected segment the admissible origins at lag $\tau$ are
+split into three contiguous blocks of equal size, and the same equal-flight
+amplitude statistics are measured separately in each. The early and late blocks
+receive identical origin counts in every segment, so each cohort flight contributes
+to both and the contrast is paired inside the site--day draws of
+Sec.~\ref{sec:fixed-bootstrap-reliability}. Under stationary increments the
+late-to-early ratio equals one at every lag. Pooling the three blocks returns the
+equal-flight moments of Sec.~\ref{sec:fixed-scaling} exactly, which fixes the
+diagnostic to the published measurement rather than to a separate estimator.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_origin_dependence.pdf}
+ \caption{Origin dependence of the increment law in the main cohort. Top: the ratio
+ of the late-block to the early-block radial moments, with 95\% paired bootstrap
+ bands and the stationary-increment value as a dashed line. Bottom left: the mean
+ separation between the two blocks of origins, which shrinks as the lag consumes the
+ segment. Bottom right: $H$ fitted in each block over 10--10000 s. Bands and bars are
+ pointwise.}
+ \label{fig:fixed-origin-dependence}
+\end{figure}
+
+For paragliders, the late-origin second moment differs from the early-origin one at
+\ChThreeParaOriginResolved{} of 33 lags. The largest departure is a ratio of
+\ChThreeParaOriginPeak{} (\ChThreeParaOriginPeakInterval) at
+$\tau=\SI{\ChThreeParaOriginPeakLag}{\second}$, where the two blocks are separated by
+\SI{\ChThreeParaOriginPeakLever}{\second} on average. Fitting $H$ over 10--10000 s in
+each block gives a late-minus-early difference of $\ChThreeParaOriginDeltaH$, with a
+95\% interval from $\ChThreeParaOriginDeltaHLow$ to $\ChThreeParaOriginDeltaHHigh$.
+
+For hang gliders, the late-origin second moment differs from the early-origin one at
+\ChThreeHangOriginResolved{} of 33 lags. The largest departure is a ratio of
+\ChThreeHangOriginPeak{} (\ChThreeHangOriginPeakInterval) at
+$\tau=\SI{\ChThreeHangOriginPeakLag}{\second}$, where the two blocks are separated by
+\SI{\ChThreeHangOriginPeakLever}{\second} on average. Fitting $H$ over 10--10000 s in
+each block gives a late-minus-early difference of $\ChThreeHangOriginDeltaH$, with a
+95\% interval from $\ChThreeHangOriginDeltaHLow$ to $\ChThreeHangOriginDeltaHHigh$.
+
+The ratio departs from one over the whole lag range in both disciplines, so the
+increments of these segments are not stationary. Displacements measured from late
+origins exceed those from early origins across most of the range, with the largest
+excess near $\tau\approx400$ s, and the excess closes at the longest lags. The two
+blocks are separated by about 12000 s at small lags and by roughly half that at
+$\tau=10000$ s, because the admissible origins shrink as the lag consumes the
+segment; the contrast at the longest lags therefore rests on a shorter lever arm and
+is not comparable in strength to the rest of the curve.
+
+Two consequences follow for this chapter. First, the amplitude of the displacement
+law is a property of the flight phase from which origins are drawn, so the pooled
+one-lag laws of Sec.~\ref{sec:fixed-scaling} describe a mixture over flight phases
+rather than one stationary increment law. Second, the fitted exponent is far less
+sensitive to this mixture than the amplitude: the block-to-block change in $H$ is
+resolved but small against the amplitude ratios in the same figure. Reading $H$ as a
+lag exponent of the pooled mixture survives the test; reading it as the
+self-similarity exponent of a stationary-increment position process does not.
+
+The sign of the effect does not match waiting-time ageing, which suppresses late
+displacements in a subordinated walk. Launch and initial circling confine the early
+part of a flight, while route-following occupies its later part, and this ordering
+alone produces the observed direction. The diagnostic separates origin position from
+lag; it does not identify the mechanism, and the flight-phase, wind and pilot
+explanations are not distinguished here.
+\FloatBarrier
