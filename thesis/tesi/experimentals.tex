@@ -1,0 +1,591 @@
+% Experimental extensions are kept after the appendices, with their own E prefix.
+\clearpage
+\setcounter{chapter}{0}
+\renewcommand{\thechapter}{E}
+\renewcommand{\theHchapter}{experimentals}
+\refstepcounter{chapter}
+\chapter*{Experimentals}
+\phantomsection
+\addcontentsline{toc}{part}{Experimentals}
+\markboth{Experimentals}{Experimentals}
+\label{ch:experimentals}
+
+\input{generated/ch3_transport_values}
+\input{generated/ch3_transport_grid_bootstrap_values}
+\input{generated/ch3_transport_origin_dependence_values}
+\input{generated/ch3_conditional_values}
+\input{generated/ch3_factorial_values}
+
+\section{Experimental: joint factorial analysis}
+\label{sec:conditional-factorial}
+
+\noindent\textbf{Experimental analysis.}
+This exploratory extension brings the altitude, circuit and equipment
+comparisons of Section~\ref{sec:fixed-circuit} into one table. Its purpose is to
+describe departures from additivity in the effective
+exponent; the coverage of its uncertainty intervals remains conditional on the
+resampling assumptions. We retain \num{\FactorialN} flights in
+$\mathcal C_{10000}$ with an open or closed circuit and an admitted equipment
+class, excluding \num{\FactorialExcludedN} other cohort members. The four
+initial-altitude classes, two circuits and two equipment groups define 16
+disjoint cells. Each $\widehat H_{ijk}$ is fitted to that cell's equal-flight MSD
+over 10--10000 s, with the estimator and retained segments of
+Eq.~\eqref{eq:conditional-msd}.
+
+\paragraph{Factorial model and additive projection.}
+We use the fixed-effects factorial decomposition into main effects, two-factor
+interactions and a three-factor interaction, with the sum-to-zero constraints
+of Mohr, Wilson and Freund~\cite[Sections~9.3.1 and~9.7]{mohr2022statistical}.
+Writing the empirical components without hats to simplify notation,
+\begin{equation}
+ \begin{aligned}
+ \widehat H_{ijk}={}&\mu+\alpha_i+\gamma_j+\eta_k\\
+ &+(\alpha\gamma)_{ij}+(\alpha\eta)_{ik}
+   +(\gamma\eta)_{jk}+(\alpha\gamma\eta)_{ijk},
+ \end{aligned}
+ \label{eq:factorial-decomposition}
+\end{equation}
+where $i$ indexes altitude, $j$ circuit and $k$ equipment. Every effect sums to
+zero over each of its own indices. These constraints make the decomposition
+unique. Bars below denote unweighted means of the fitted cell exponents:
+$\mu=\overline H_{\cdot\cdot\cdot}$,
+$\alpha_i=\overline H_{i\cdot\cdot}-\mu$, with analogous expressions for
+$\gamma_j$ and $\eta_k$; for example,
+$(\alpha\gamma)_{ij}=\overline H_{ij\cdot}
+-\overline H_{i\cdot\cdot}-\overline H_{\cdot j\cdot}+\mu$.
+The three-factor term is the remaining component.
+
+The flights are unbalanced across cells. As discussed in
+Section~9.3.7 of the same reference, balanced-design sums of squares cannot be
+applied unchanged to such flight-level data. Here equal weights instead define
+a descriptive projection of the \emph{16 estimated exponents}. They give the
+same importance to each combination, irrespective of flight count or precision.
+Consequently the marginal effects average cell exponents; they are generally
+different from fitting the MSD of a pooled or reweighted flight population.
+The logarithm of a mixture of MSDs does not equal a mixture of their logarithms.
+
+The additive approximation is the ordinary least-squares projection onto the
+grand mean and main effects under this equal-cell metric:
+\begin{equation}
+ \begin{aligned}
+ \widehat H^{\rm add}_{ijk}
+ &=\overline H_{i\cdot\cdot}+\overline H_{\cdot j\cdot}
+   +\overline H_{\cdot\cdot k}-2\overline H_{\cdot\cdot\cdot},\\
+ r_{ijk}&=\widehat H_{ijk}-\widehat H^{\rm add}_{ijk}.
+ \end{aligned}
+ \label{eq:factorial-additive}
+\end{equation}
+It has six free coefficients. The residual occupies the ten-dimensional
+interaction space: $3+3+1$ dimensions for the three pairs and three for the
+three-factor interaction. The complete decomposition reconstructs the observed
+table exactly, while sampling uncertainty remains in every estimated component.
+We do not use the residual as an estimate of a common error variance or apply
+the classical ANOVA $F$ tests. In particular, bootstrap draws are not independent
+experimental replications of a cell; the missing-error issue for an unreplicated
+factorial table is discussed in~\cite[Section~9.6]{mohr2022statistical}.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_factorial_cells.pdf}
+ \caption{Experimental factorial analysis. Top: the 16 effective exponents,
+ with flight counts $n$ and contributing site--day groups $G$. Bottom: residuals
+ from the equal-cell additive projection, on a colour scale centred at zero.
+ Residuals combine all interaction terms and sampling error; the colours carry
+ no cellwise significance declaration. Shared groups can contribute to more
+ than one cell, so group counts are not additive.}
+ \label{fig:factorial-cells}
+\end{figure}
+
+The orthogonal components partition the squared variation between the cell
+estimates. For each component $u$, Table~\ref{tab:factorial-decomposition}
+reports its share $\sum_{ijk}u_{ijk}^2/
+\sum_{ijk}(\widehat H_{ijk}-\mu)^2$ and its root-mean-square magnitude.
+The additive share is
+\begin{equation}
+ R^2_{\rm add}=1-
+ \frac{\sum_{ijk}r_{ijk}^2}
+      {\sum_{ijk}(\widehat H_{ijk}-\mu)^2},
+ \qquad
+ R_{\rm rms}=\sqrt{\frac{1}{16}\sum_{ijk}r_{ijk}^2}.
+ \label{eq:factorial-variation}
+\end{equation}
+These are descriptive summaries of estimated cell variation, which includes
+sampling noise. They do not measure a causal fraction of transport explained.
+
+\begin{table}[htbp]
+ \centering\small
+ \input{generated/ch3_factorial_decomposition}
+ \caption{Experimental partition of variation among the 16 fitted exponents,
+ using equal cell weights. The degrees of freedom give subspace dimensions;
+ no mean-square error or $F$ test is constructed. RMS values have the units of
+ $H$. Small shares do not establish the absence of an interaction.}
+ \label{tab:factorial-decomposition}
+\end{table}
+
+The additive terms account for \FactorialAddPct\% of this variation, with
+residual RMS \FactorialResidualRms{}. Altitude $\times$ circuit alone accounts
+for \FactorialAcPct\%, almost all of the nonadditive component. The altitude
+main effect contributes only \FactorialAltPct\%: this small marginal share
+reflects compensation between circuit-specific patterns, rather than an
+absence of altitude dependence. The residual map has opposite signs for open
+and closed circuits, reversing between lowlands and mountains in both equipment
+groups (Figure~\ref{fig:factorial-cells}).
+
+\paragraph{Simple effects and interaction contrasts.}
+Following the distinction between marginal comparisons and comparisons within
+interacting factors~\cite[Section~9.4]{mohr2022statistical}, we examine the
+simple effects
+\begin{equation}
+ \begin{aligned}
+ \Delta_C(i,k)&=\widehat H_{i,\mathrm{open},k}
+                 -\widehat H_{i,\mathrm{closed},k},\\
+ \Delta_E(i,j)&=\widehat H_{i,j,\mathrm{experts}}
+                 -\widehat H_{i,j,\mathrm{beginners}}.
+ \end{aligned}
+ \label{eq:factorial-simple}
+\end{equation}
+For a compact interaction contrast, let
+$D_k=\Delta_C(\mathrm{Plains},k)-\Delta_C(\mathrm{High\ mountains},k)$.
+This difference of differences measures how much the circuit separation
+decreases between the endpoint altitude classes at fixed equipment. Its change
+$D_{\rm E}-D_{\rm B}$ is one contrast in the three-factor interaction space;
+it does not exhaust that three-dimensional space. These are exploratory
+comparisons informed by the earlier stratified results, rather than hypotheses
+specified before examining the archive.
+
+For uncertainty we reaggregate the saved per-flight MSDs using the original
+1000 paired site--day cluster-bootstrap draws, then refit each cell in every
+draw. Each linear contrast is evaluated on the same draw across all cells.
+We construct \emph{single-step bootstrap simultaneous confidence intervals}
+using the maximum absolute standardized deviation, following the joint-region
+construction of Romano and Wolf~\cite[Sections~3--5]{romano_wolf2005}.
+For a declared family $\mathcal F$ of 19 contrasts---the eight $\Delta_C$,
+eight $\Delta_E$, two $D_k$ and $D_{\rm E}-D_{\rm B}$---our implementation is
+\begin{equation}
+ \begin{aligned}
+ q_{0.90}&=Q_{0.90}\!\left[
+  \max_{\ell\in\mathcal F}
+  \left|\frac{\widehat\theta_\ell^{(b)}-\widehat\theta_\ell}
+                  {\widehat s_\ell}\right|\right],\\
+ I_\ell&=\widehat\theta_\ell\pm q_{0.90}\widehat s_\ell,
+ \end{aligned}
+ \label{eq:factorial-simultaneous}
+\end{equation}
+where $\widehat s_\ell$ is the standard deviation across bootstrap draws.
+We use fixed marginal bootstrap scales, a first-order plug-in standardization,
+without recomputing a standard error inside each draw or performing stepdown
+testing. The nominal 90\% simultaneous level applies to this declared family
+within one fit window and resampling scheme; it does not cover all earlier or
+subsequently selected comparisons. Its population coverage still requires an
+adequate cluster-resampling model~\cite{cameron_miller2015}.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_factorial_contrasts.pdf}
+ \caption{Experimental simple-effect contrasts. Left: open minus closed within
+ each altitude and equipment group. Right: experts minus beginners within each
+ altitude and circuit. Bars are nominal 90\% simultaneous site--day bootstrap
+ intervals for the family of 19 contrasts in Eq.~\eqref{eq:factorial-simultaneous}.
+ Lines connect categorical levels for readability. The two panels use different
+ vertical scales.}
+ \label{fig:factorial-contrasts}
+\end{figure}
+
+All eight circuit contrasts remain positive under these simultaneous intervals.
+Their decrease from lowlands to mountains survives equipment stratification:
+$D_{\rm B}=$\FactorialDB{} and $D_{\rm E}=$\FactorialDE{}.
+The equipment contrasts are smaller. The intervals include zero for closed
+circuits in Plains and Hills, while the other six are positive under this
+resampling model. The endpoint three-factor contrast is
+$D_{\rm E}-D_{\rm B}=$\FactorialTriple{}; its interval includes zero, leaving
+the difference between the two endpoint attenuations unresolved.
+
+\paragraph{Sensitivity and experimental status.}
+We repeat the joint bootstrap using calendar days across all sites, three-day
+calendar blocks, and the 50 km cell $\times$ altitude $\times$ month-of-year
+groups of Section~\ref{sec:fixed-bootstrap-reliability}, pooling years in the
+last case. Each alternative uses 1000 draws and two seeds, with the whole
+eligible archive as sampling frame before selecting the fixed cohort and cells.
+The point estimates are unchanged. The endpoint contrasts stay positive and
+their equipment difference stays unresolved (Table~\ref{tab:factorial-sensitivity});
+the inclusion or exclusion of zero also remains unchanged for the 16 simple
+contrasts across these alternatives. These checks assess sensitivity, not
+independence of the clusters or nominal coverage. The smallest cell has 65
+flights in 64 site--day groups, falling to 44 contributing groups under the
+spatial/seasonal partition; support cannot be judged from flight count alone.
+
+\begin{table}[htbp]
+ \centering\small
+ \input{generated/ch3_factorial_sensitivity}
+ \caption{Experimental resampling sensitivity over 10--10000 s. Intervals use
+ the same family of 19 contrasts. For each alternative the displayed endpoints
+ enclose the two seed-specific simultaneous intervals; this envelope is a
+ sensitivity summary, not a separately calibrated confidence interval.}
+ \label{tab:factorial-sensitivity}
+\end{table}
+
+Finally, fitting each of the three lag decades separately, with exactly the
+same flights and segments, retains positive endpoint attenuations but changes
+their magnitude substantially (Table~\ref{tab:factorial-windows}). The larger
+long-lag contrasts show that the full-range $H$ compresses a scale-dependent
+pattern. The decomposition describes these fitted effective exponents; it does
+not establish an asymptotic scaling law. Geographic coverage, weather, wing
+performance and pilot decisions remain mixed within cells, so the factorial
+terms support conditional associations rather than causal attribution.
+
+\begin{table}[htbp]
+ \centering\small
+ \input{generated/ch3_factorial_windows}
+ \caption{Experimental fit-window sensitivity, keeping $\mathcal C_{10000}$
+ and its retained segments fixed. All entries are point estimates; RMS denotes
+ $R_{\rm rms}$. The endpoint interaction contrasts $D_{\rm B}$ and $D_{\rm E}$
+ are defined after Eq.~\eqref{eq:factorial-simple}.}
+ \label{tab:factorial-windows}
+\end{table}
+\FloatBarrier
+
+\section{Experimental: scaling of displacement distributions}
+\label{sec:fixed-scaling}
+
+\noindent\textbf{Experimental analysis.}
+This section was moved from Chapter~\ref{ch:fixed-transport}. Its results depend on
+the same cohort and resampling assumptions as the MSD analysis there, and they are
+not part of the main argument.
+
+The MSD measures one moment of the displacement law. To test whether the whole law
+rescales with one exponent, we use quantiles, a spectrum of moments and excess kurtosis.
+All use the main cohort's flights, segments and weights in Eq.~\eqref{eq:fixed-weights}.
+
+\subsection{Self-similarity and its observable consequences}
+\label{sec:fixed-selfsimilar-definition}
+
+A process $\boldsymbol X(t)$, with $\boldsymbol X(0)=0$, is $H$-self-similar if,
+for some $H>0$,
+\begin{equation}
+ \bigl(\boldsymbol X(at_1),\ldots,\boldsymbol X(at_m)\bigr)
+ \overset d= a^H\bigl(\boldsymbol X(t_1),\ldots,\boldsymbol X(t_m)\bigr)
+ \quad(a>0).
+ \label{eq:fixed-selfsimilar}
+\end{equation}
+This identity must hold for every $m\geq1$ and $t_1,\ldots,t_m\geq0$.
+Equality in distribution concerns positions at any collection of times, including
+their dependence~\cite{embrechts_maejima_selfsimilar}. Gaussianity and independence
+of increments are not required.
+
+Two separate hypotheses stand between this definition and a measurement, and each
+does different work. Stationary increments make a pooled lag statistic informative
+about $\boldsymbol X$ itself: with $\boldsymbol X(0)=0$ they give
+$\boldsymbol X(\tau)\overset d=\boldsymbol X(t+\tau)-\boldsymbol X(t)$, so
+displacements collected from many origins estimate the law of the position reached
+after an elapsed time $\tau$. The archive supplies no repeated releases from a common
+initial condition, which leaves this the only route from the increments we observe
+to the process we describe. Self-similarity then compresses the resulting family of
+laws: one exponent and one shape determine every lag, including elapsed times the
+cohort does not cover, and that exponent is the quantity stochastic transport
+models predict. Without it this chapter reports a separate
+propagator at each measured lag, with no relation between them. Testing
+Eq.~\eqref{eq:fixed-selfsimilar} is therefore a test of whether one anomalous
+exponent describes these flights at all, and the sections below report necessary
+consequences of that identity rather than a proof of it.
+
+To infer a lag-only scaling law, we additionally assume stationary increments:
+their joint laws must be unchanged by shifting the origin.
+Self-similarity alone does not impose this condition. With stationary increments,
+each amplitude $Y\in\{|\Delta E|,|\Delta N|,R\}$ obeys
+\begin{equation}
+ Y(\tau)\overset d=(\tau/\tau_0)^H Y(\tau_0),\qquad
+ \begin{aligned}
+ Q_{Y,p}(\tau)&=(\tau/\tau_0)^H Q_{Y,p}(\tau_0),\\
+ M_{q,Y}(\tau)&=(\tau/\tau_0)^{qH}M_{q,Y}(\tau_0).
+ \end{aligned}
+ \label{eq:fixed-scale-family}
+\end{equation}
+Here $Q_{Y,p}$ is a population quantile and $M_{q,Y}$ a finite moment of order $q$;
+below, the same symbols denote their equal-flight estimates.
+Thus every quantile has the same exponent, quantile ratios are constant, and the
+moment spectrum is $\zeta_Y(q)=qH$. Signed-component excess kurtosis is also constant
+when the fourth moment exists and variance is nonzero; it need not vanish. These are
+necessary consequences for the lag distributions. A finite selection of such
+statistics cannot establish the joint-law identity in Eq.~\eqref{eq:fixed-selfsimilar}.
+
+\subsection{A common empirical distribution}
+
+With the weights in Eq.~\eqref{eq:fixed-weights}, the common empirical distribution is
+\begin{equation}
+ \widehat F_{Y,\tau}(y)=\frac1N\sum_{f=1}^N\frac1{n_f(\tau)}
+ \sum_{i\in\mathcal I_f(\tau)}\mathbf1\{Y_{fi}(\tau)\leq y\},\qquad
+ Q_{Y,p}(\tau)=\inf\{y:\widehat F_{Y,\tau}(y)\geq p\}.
+ \label{eq:fixed-cdf}
+\end{equation}
+We average the within-flight fractions below $y$, then invert the resulting CDF.
+The quantile is the first observed amplitude at which the cumulative weight reaches
+$p$, without interpolation between ranks. This order of operations defines the
+quantile of the equal-flight mixture.
+
+Absolute components measure amplitudes along east and north. For example,
+$\Pr(|\Delta E|\leq a)=\Pr(-a\leq\Delta E\leq a)$, so small absolute quantiles
+measure proximity to zero displacement. The radius $R=(\Delta E^2+\Delta N^2)^{1/2}$
+is invariant under rotation and measures horizontal displacement without assuming
+isotropy.
+
+\subsection{Quantiles, growth exponents and relative spread}
+\label{sec:fixed-quantiles}
+
+We evaluate $p=0.25,0.50,0.75,0.90$ and fit each quantile over the same 33 lags.
+Writing $\mathcal B$ for the least-squares slope against $\log_{10}\tau$
+used in Section~\ref{sec:fixed-general},
+\begin{equation}
+ H_{Y,p}=\mathcal B\!\left[\log_{10}\frac{Q_{Y,p}}{1\,\mathrm m}\right],\qquad
+ \mathcal B\!\left[\log_{10}\frac{Q_{Y,0.25}}{Q_{Y,0.90}}\right]
+ =H_{Y,0.25}-H_{Y,0.90}.
+ \label{eq:fixed-ratio}
+\end{equation}
+No factor of two enters a length exponent. The ratio compares small and large
+amplitudes at each lag, while the fitted exponents summarise their growth across
+10--10000 s. The equality follows from linearity of least squares on identical lags;
+ratio drift and the exponent difference are therefore linked diagnostics.
+Figures~\ref{fig:fixed-quantiles-para} and~\ref{fig:fixed-quantiles-hang} give the
+quantile curves and their ratio for each discipline, and
+Figure~\ref{fig:fixed-quantile-h} collects the fitted quantile exponents.
+
+\begin{figure}[H]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_quantiles_para.pdf}
+ \caption{Paraglider equal-flight displacement quantiles and their relative spread,
+ on the fixed main cohort. Every panel uses the empirical measure in
+ Eq.~\eqref{eq:fixed-cdf}. Shading gives pointwise 90\% cluster-bootstrap intervals.}
+ \label{fig:fixed-quantiles-para}
+\end{figure}
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_quantiles_hang.pdf}
+ \caption{The same amplitude quantiles and ratio for hang gliders, with an independent
+ main cohort and the same sampling convention.}
+ \label{fig:fixed-quantiles-hang}
+\end{figure}
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_quantile_exponents.pdf}
+ \caption{Global quantile exponents from 10--10000 s fits. Error bars are the 5th--95th
+ percentiles of the refitted bootstrap slopes. A common scale exponent would give
+ a horizontal sequence within each panel.}
+ \label{fig:fixed-quantile-h}
+\end{figure}
+For paragliders, the radial ratio falls from \ChThreeParaQuantRatioStart{} at 10 s to
+\ChThreeParaQuantRatioMin{} at \ChThreeParaQuantRatioMinLag{} s, rises to
+\ChThreeParaQuantRatioMax{} at \ChThreeParaQuantRatioMaxLag{} s, then falls to
+\ChThreeParaQuantRatioEnd{} at 10000 s. Quantile-fit RMS residuals span
+\ChThreeParaQuantRmsMin--\ChThreeParaQuantRmsMax{} dex.
+
+For hang gliders, the radial ratio falls from \ChThreeHangQuantRatioStart{} at 10 s to
+\ChThreeHangQuantRatioMin{} at \ChThreeHangQuantRatioMinLag{} s, rises to
+\ChThreeHangQuantRatioMax{} at \ChThreeHangQuantRatioMaxLag{} s, then falls to
+\ChThreeHangQuantRatioEnd{} at 10000 s. Quantile-fit RMS residuals span
+\ChThreeHangQuantRmsMin--\ChThreeHangQuantRmsMax{} dex.
+
+A positive global slope of these nonmonotonic ratios can coexist with a net endpoint decrease.
+\FloatBarrier
+
+\subsection{Moment spectrum and finite-range scaling}
+\label{sec:fixed-moments}
+
+For each amplitude and order we calculate
+\begin{equation}
+ M_{q,Y}(\tau)=\frac1N\sum_f\frac1{n_f(\tau)}\sum_{i\in\mathcal I_f(\tau)}Y_{fi}(\tau)^q,
+ \qquad \zeta_Y(q)=\mathcal B\!\left[\log_{10}\frac{M_{q,Y}}{(1\,\mathrm m)^q}\right].
+ \label{eq:fixed-moments}
+\end{equation}
+We use $q\in\{0.25,0.5,0.75,1,1.5,2,2.5,3,3.5,4\}$. Each point of the spectrum is
+obtained by first computing a moment at all lags, then fitting its log--log slope.
+The reference $\zeta=qH$ is fitted through the origin with equal weight for the ten
+orders. Higher orders emphasise large displacements. The radial spectrum contains
+the MSD, with the identity
+\begin{equation}
+ M_{2,R}=M_{2,|\Delta E|}+M_{2,|\Delta N|}=M_2
+ \label{eq:fixed-second-identity}
+\end{equation}
+verified at every lag and in every bootstrap replicate.
+Table~\ref{tab:fixed-fits} reports the main-cohort MSD exponents,
+Figure~\ref{fig:fixed-local} compares their local and global values, and
+Figure~\ref{fig:fixed-spectrum} gives the moment spectra.
+Table~\ref{tab:fixed-scaling} collects the paired quantile and moment contrasts that
+test $\zeta=qH$.
+
+\begin{table}[htbp]
+ \centering\small
+ \input{generated/ch3_transport_fit_table}
+ \caption{Main-cohort MSD exponents: a single global fit and three common decade
+ intervals. RMS residuals are measured in $\log_{10}M_2$. Each fit retains the same
+ flight and segment population.}
+ \label{tab:fixed-fits}
+\end{table}
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_fixed_slopes.pdf}
+ \caption{Local and global effective MSD exponents on the fixed main cohort.
+ Bands are pointwise 90\% bootstrap intervals. The global fit compresses the full
+ curve into one number; the local slopes expose its scale dependence.}
+ \label{fig:fixed-local}
+\end{figure}
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_spectrum.pdf}
+ \caption{Moment spectra for the three displacement amplitudes. Each point is the
+ slope of a 10--10000 s log--log moment fit; shading gives its pointwise 90\% interval.
+ Dashed lines are constrained linear fits $\zeta=qH$.}
+ \label{fig:fixed-spectrum}
+\end{figure}
+\begin{table}[htbp]
+ \centering\small\setlength{\tabcolsep}{4pt}
+ \input{generated/ch3_transport_scaling_table}
+ \caption{Paired global-slope contrasts, with 5--95\% bootstrap intervals. A common
+ scale exponent predicts zero for both the quantile and moment contrasts.}
+ \label{tab:fixed-scaling}
+\end{table}
+For paragliders, the radial contrast $\zeta(4)/4-\zeta(0.25)/0.25$ is
+\ChThreeParaMomentContrast. Moment-fit RMS residuals span
+\ChThreeParaMomentRmsMin--\ChThreeParaMomentRmsMax{} dex across all amplitudes and orders.
+
+For hang gliders, the radial contrast $\zeta(4)/4-\zeta(0.25)/0.25$ is
+\ChThreeHangMomentContrast. Moment-fit RMS residuals span
+\ChThreeHangMomentRmsMin--\ChThreeHangMomentRmsMax{} dex across all amplitudes and orders.
+\FloatBarrier
+
+\subsection{Excess kurtosis of the signed components}
+\label{sec:fixed-kurtosis}
+
+Departures from Gaussian shape are assessed on the signed components: taking an
+absolute value or a radius changes even a Gaussian law. With the equal-flight mean
+$\langle A\rangle_\tau=\sum_f\sum_{i\in\mathcal I_f(\tau)}w_f(\tau)A_{fi}$, define
+\begin{equation}
+ \mu_j(\tau)=\langle\Delta x_j\rangle_\tau,\qquad
+ K_j(\tau)=\frac{\langle(\Delta x_j-\mu_j)^4\rangle_\tau}
+ {\langle(\Delta x_j-\mu_j)^2\rangle_\tau^2}-3,\qquad j\in\{E,N\}.
+ \label{eq:fixed-kurtosis}
+\end{equation}
+Centring uses the mean of the full mixture at each lag. A Gaussian marginal has
+$K_j=0$~\cite{nist_kurtosis}; nonzero excess measures a departure in its standardised
+fourth moment. Zero excess alone does not establish Gaussianity. For self-similarity,
+the relevant prediction is constancy with lag, regardless of the value.
+Figure~\ref{fig:fixed-kurtosis} shows $K_j(\tau)$ for both components.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_kurtosis.pdf}
+ \caption{Signed-component Fisher excess kurtosis at the same lags, with the same
+ flights, segments and weights as the quantiles and moments. The dashed line is the
+ Gaussian marginal reference. Bands use the coupled cluster bootstrap.}
+ \label{fig:fixed-kurtosis}
+\end{figure}
+For paragliders, $(K_E,K_N)$ changes from
+$(\ChThreeParaKurtEStart,\ChThreeParaKurtNStart)$ at 10 s to
+$(\ChThreeParaKurtEEnd,\ChThreeParaKurtNEnd)$ at 10000 s.
+
+For hang gliders, $(K_E,K_N)$ changes from
+$(\ChThreeHangKurtEStart,\ChThreeHangKurtNStart)$ at 10 s to
+$(\ChThreeHangKurtEEnd,\ChThreeHangKurtNEnd)$ at 10000 s.
+Different flight means and variances can themselves produce nonzero excess in the
+mixture. The measured kurtosis therefore characterises the pooled displacement law.
+
+\subsection{Assessment of self-similarity}
+
+The quantile curves and the nearly straight moment spectra can be reconciled through
+\begin{equation}
+ M_{q,Y}(\tau)=\int_0^1 Q_{Y,p}(\tau)^q\,dp.
+ \label{eq:fixed-moment-quantile}
+\end{equation}
+Each moment averages over probability levels; the order $q$ controls the emphasis
+on larger amplitudes. Fitting its slope
+across three decades further averages over crossovers. Changes in different parts
+of the distribution can consequently leave the fitted spectrum nearly linear.
+Moreover, Table~\ref{tab:fixed-scaling} resolves small departures from $\zeta=qH$;
+the spectrum is not exactly linear under the adopted bootstrap.
+
+For these data, the lag-dependent quantile ratios provide the more direct evidence
+against a fixed distributional shape. Their large, nonmonotonic changes are visible
+without fitting a power law, and their estimation does not require finite high-order
+moments. Unequal fitted quantile exponents support this reading, but the curved
+quantile trajectories limit their interpretation as constant exponents. The change
+in kurtosis supplies complementary evidence. Visual linearity of ten fitted moment
+slopes is therefore insufficient to outweigh the observed shape changes.
+
+Over 10--10000 s, a single self-similar model with stationary increments does not
+adequately describe the pooled displacement law.
+Approximate scaling over narrower intervals remains possible. Fixed flights and
+segments remove changing membership, and the contrast below measures how much of the
+remaining structure follows from where within a segment the origins fall. The present
+analysis does not determine multi-time laws. It therefore does not exclude every
+nonstationary self-similar process, nor establish an asymptotic multifractal law.
+
+% --- merged from sections/04-origin-dependence.tex ---
+\Needspace{12\baselineskip}
+\paragraph{Does the increment law depend on the origin?}
+\label{sec:fixed-origin-dependence}
+
+Equation~\eqref{eq:fixed-scale-family} reaches the lag distributions through
+stationary increments, and the estimators above pool every admissible origin inside
+a selected segment. That pooling estimates one population law only if the law of
+$\boldsymbol X(t+\tau)-\boldsymbol X(t)$ does not depend on $t$. We test this
+directly. Within each selected segment the admissible origins at lag $\tau$ are
+split into three contiguous blocks of equal size, and the same equal-flight
+amplitude statistics are measured separately in each. The early and late blocks
+receive identical origin counts in every segment, so each cohort flight contributes
+to both and the contrast is paired inside the site--day draws of
+Sec.~\ref{sec:fixed-bootstrap-reliability}. Under stationary increments the
+late-to-early ratio equals one at every lag. Pooling the three blocks returns the
+equal-flight moments of Sec.~\ref{sec:fixed-scaling} exactly, which fixes the
+diagnostic to the published measurement rather than to a separate estimator.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_transport_origin_dependence.pdf}
+ \caption{Origin dependence of the increment law in the main cohort. Top: the ratio
+ of the late-block to the early-block radial moments, with 95\% paired bootstrap
+ bands and the stationary-increment value as a dashed line. Bottom left: the mean
+ separation between the two blocks of origins, which shrinks as the lag consumes the
+ segment. Bottom right: $H$ fitted in each block over 10--10000 s. Bands and bars are
+ pointwise.}
+ \label{fig:fixed-origin-dependence}
+\end{figure}
+
+For paragliders, the late-origin second moment differs from the early-origin one at
+\ChThreeParaOriginResolved{} of 33 lags. The largest departure is a ratio of
+\ChThreeParaOriginPeak{} (\ChThreeParaOriginPeakInterval) at
+$\tau=\SI{\ChThreeParaOriginPeakLag}{\second}$, where the two blocks are separated by
+\SI{\ChThreeParaOriginPeakLever}{\second} on average. Fitting $H$ over 10--10000 s in
+each block gives a late-minus-early difference of $\ChThreeParaOriginDeltaH$, with a
+95\% interval from $\ChThreeParaOriginDeltaHLow$ to $\ChThreeParaOriginDeltaHHigh$.
+
+For hang gliders, the late-origin second moment differs from the early-origin one at
+\ChThreeHangOriginResolved{} of 33 lags. The largest departure is a ratio of
+\ChThreeHangOriginPeak{} (\ChThreeHangOriginPeakInterval) at
+$\tau=\SI{\ChThreeHangOriginPeakLag}{\second}$, where the two blocks are separated by
+\SI{\ChThreeHangOriginPeakLever}{\second} on average. Fitting $H$ over 10--10000 s in
+each block gives a late-minus-early difference of $\ChThreeHangOriginDeltaH$, with a
+95\% interval from $\ChThreeHangOriginDeltaHLow$ to $\ChThreeHangOriginDeltaHHigh$.
+
+The ratio departs from one over the whole lag range in both disciplines, so the
+increments of these segments are not stationary. Displacements measured from late
+origins exceed those from early origins across most of the range, with the largest
+excess near $\tau\approx400$ s, and the excess closes at the longest lags. The two
+blocks are separated by about 12000 s at small lags and by roughly half that at
+$\tau=10000$ s, because the admissible origins shrink as the lag consumes the
+segment; the contrast at the longest lags therefore rests on a shorter lever arm and
+is not comparable in strength to the rest of the curve.
+
+Two consequences follow for this chapter. First, the amplitude of the displacement
+law is a property of the flight phase from which origins are drawn, so the pooled
+one-lag laws of Sec.~\ref{sec:fixed-scaling} describe a mixture over flight phases
+rather than one stationary increment law. Second, the fitted exponent is far less
+sensitive to this mixture than the amplitude: the block-to-block change in $H$ is
+resolved but small against the amplitude ratios in the same figure. Reading $H$ as a
+lag exponent of the pooled mixture survives the test; reading it as the
+self-similarity exponent of a stationary-increment position process does not.
+
+The sign of the effect does not match waiting-time ageing, which suppresses late
+displacements in a subordinated walk. Launch and initial circling confine the early
+part of a flight, while route-following occupies its later part, and this ordering
+alone produces the observed direction. The diagnostic separates origin position from
+lag; it does not identify the mechanism, and the flight-phase, wind and pilot
+explanations are not distinguished here.
+\FloatBarrier
