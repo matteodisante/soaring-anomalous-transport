@@ -16,7 +16,13 @@ import numpy as np
 from conditional_plot_style import ALTITUDE_COLORS
 from write_ch3_text import general_fit_residuals, write_text
 
+from soaring.reporting.style import CONTROL_GREYS
+
 COLORS = ("#0072B2", "#D55E00", "#009E73", "#CC79A7")
+# The three duration cohorts are nested (C10000 subset of C1000 subset of C100), not
+# unrelated categories, and COLORS[0]/[1] already mean paraglider/hang glider
+# everywhere else in this figure family, so they reuse the grey nesting ramp instead.
+COHORT_COLORS = {"100": CONTROL_GREYS[0], "1000": CONTROL_GREYS[1], "10000": CONTROL_GREYS[2]}
 NAMES = {"para": "Paragliders", "hang": "Hang gliders"}
 COORDS = (r"$|\Delta E|$", r"$|\Delta N|$", r"$R$")
 
@@ -193,9 +199,9 @@ def figures(report, out):
     for col, (slug, d) in enumerate(results.items()):
         x = array(d["msd_lags"])
         for c, color, label in (
-            (1, COLORS[2], "C100"),
-            (2, COLORS[1], "C1000"),
-            (3, COLORS[0], "C10000"),
+            (1, COHORT_COLORS["100"], "C100"),
+            (2, COHORT_COLORS["1000"], "C1000"),
+            (3, COHORT_COLORS["10000"], "C10000"),
         ):
             band(axs[0, col], x, d["msd"], color, label, c, scale=1e6)
         fit = d["fits"]["10-10000"]
@@ -214,9 +220,9 @@ def figures(report, out):
         ax = axs[1, col]
         for j, comparison in enumerate(d["cohort_h_comparisons"].values()):
             for offset, limit, color in (
-                (-0.13, "100", COLORS[2]),
-                (0.0, "1000", COLORS[1]),
-                (0.13, "10000", COLORS[0]),
+                (-0.13, "100", COHORT_COLORS["100"]),
+                (0.0, "1000", COHORT_COLORS["1000"]),
+                (0.13, "10000", COHORT_COLORS["10000"]),
             ):
                 if limit not in comparison["fits"]:
                     continue
