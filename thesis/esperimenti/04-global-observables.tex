@@ -303,47 +303,52 @@ $\lambda_2>0$. The leading eigenvector describes the direction of greatest
 spread, modulo $180^\circ$; it is an axis, not a signed wind direction. The ratio
 $\lambda_1/\lambda_2$ measures anisotropy of the covariance. An axis becomes poorly
 determined when the eigenvalues are close. Covariances pool all supported
-baseline increment origins within each take-off box, so flights with more
-origins receive more weight. They use the eligible regional archive, independently
-of the fixed long-flight cohort. The four lags are exactly 10, 100, 1000 and
-10000~s, evaluated directly on the 10-s coordinate grid. Increment origins are
-spaced by the lag within each segment; no increment crosses a segment boundary.
-Each lag uses every flight with supported increments, so the contributing
-population can shrink as the lag increases. At least eight flights are required; this
-display condition supplies neither an uncertainty interval nor a precision guarantee.
+increment origins within each take-off box, so flights with more origins receive
+more weight. The four lags are exactly 10, 100, 1000 and 10000~s, evaluated
+directly on the 10-s coordinate grid. Increment origins are spaced by the lag
+within each segment; no increment crosses a segment boundary.
+
+The panels compare lags, so they use one fixed population: the flights and
+segments of the $C_{10000}$ cohort, which are supported at every lag. A change in
+shape across lags then cannot come from a change in who contributes. Measurements
+at a single lag, such as the terrain and wind comparisons that follow, need no such
+constraint and use every flight with a supported increment at that lag. At least
+eight flights are required for display; this condition supplies neither an
+uncertainty interval nor a precision guarantee.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\linewidth]{generated/ch3_pca}
-  \caption{Regional principal-axis diagnostics in the paraglider eligible archive. Covariances are
+  \includegraphics[width=\linewidth]{generated/ch3_pca_cohort}
+  \caption{Regional principal-axis diagnostics for the fixed $C_{10000}$ paraglider cohort. Covariances are
   centred before diagonalisation. The principal direction is an axis modulo
   $180^\circ$ and its interpretation depends on the separation of the two eigenvalues.
   Region counts and lag dependence delimit the evidence. These measurements describe
   displacement geometry and do not identify wind. Ellipses and matching coloured
   markers show all four lags: 10, 100, 1000 and 10000~s. Ellipses are normalised
   by the square root of the covariance trace, removing amplitude differences.
-  Legends give contributing-flight counts at each lag; angle labels accompany
-  the eigenvalue ratios. Changes across lags can also reflect changes in this population.}
+  Legends give the number of cohort flights, which is the same at every lag;
+  angle labels accompany the eigenvalue ratios.}
   \label{fig:regional-pca}
 \end{figure}
 
 \noindent\begin{minipage}{\linewidth}
-At \SI{\StatRevParaPcaReferenceLagS}{\second}, the regional comparison is
+At \SI{\StatPcaCohortReferenceLagS}{\second}, the regional comparison is
 \begin{center}
 \begin{tabular}{@{}lrrr@{}}
 \toprule
 \textbf{Region} & \textbf{Flights} & $\boldsymbol{\lambda_1/\lambda_2}$ & \textbf{Axis from east} \\
 \midrule
-Alps & \num{\StatRevParaPcaAlpsFlights} & \StatRevParaPcaAlpsRatio & \SI{\StatRevParaPcaAlpsAngle}{\degree} \\
-Pyrenees & \num{\StatRevParaPcaPyreneesFlights} & \StatRevParaPcaPyreneesRatio & \SI{\StatRevParaPcaPyreneesAngle}{\degree} \\
-Channel coast & \num{\StatRevParaPcaChannelCoastFlights} & \StatRevParaPcaChannelCoastRatio & \SI{\StatRevParaPcaChannelCoastAngle}{\degree} \\
+Alps & \num{\StatPcaCohortAlpsFlights} & \StatPcaCohortAlpsRatio & \SI{\StatPcaCohortAlpsAngle}{\degree} \\
+Pyrenees & \num{\StatPcaCohortPyreneesFlights} & \StatPcaCohortPyreneesRatio & \SI{\StatPcaCohortPyreneesAngle}{\degree} \\
+Channel coast & \num{\StatPcaCohortChannelCoastFlights} & \StatPcaCohortChannelCoastRatio & \SI{\StatPcaCohortChannelCoastAngle}{\degree} \\
 \bottomrule
 \end{tabular}
 \end{center}
 \end{minipage}\par\medskip
 Angles run counterclockwise from east. The Pyrenean axis lies closer to
-east--west; its eigenvalue ratio increases towards long lags as support falls,
-leaving both route geometry and selection as possible contributors. The coastal
+east--west; its eigenvalue ratio increases towards long lags, where
+few increments remain (Fig.~\ref{fig:regional-pca}), leaving both route geometry
+and sampling as possible contributors. The coastal
 comparison also has unequal principal variances, with thousands of flights at
 the reference lag. Its geographical label does not provide an isotropic control.
 
@@ -577,6 +582,96 @@ Pyrenean flights at this lag. Their increments can extend beyond the
 take-off box, and their tangent frames differ from the single regional terrain
 frame. This is an indicative regional comparison, not a measure of terrain
 exposure along individual tracks or a test of pilot skill.
+
+\paragraph{Alpine boxes chosen for a reliable terrain direction.}
+The Alpine box above contains a chain that does not run along a line. From the
+Maritime Alps to the Bernese Alps the ridge line turns through roughly a quarter
+of a turn, from a north--south trend in the south to an east--north-east trend in
+Switzerland. One terrain axis and one PCA axis cannot describe such a shape, and the
+Alpine row of the table above compares two averages taken over different bends. Asking
+whether the direction of motion follows the direction of the relief needs boxes in
+which the relief has one direction.
+
+The boxes are selected from the elevation map alone. A rectangle with edges on a
+grid of \SI{0.2}{\degree}, inside the Alpine take-off box, sides of at least
+\SI{0.8}{\degree} and an area of at least 1.5 square degrees, qualifies when
+its crest footprint, the cells at or above \SI{2000}{\metre}, meets all of the
+following.
+\begin{enumerate}[leftmargin=*,itemsep=0.25em,topsep=0.4em]
+ \item It has at least 400 cells and an elongation $\lambda_1/\lambda_2\ge2.5$.
+ \item Its axis moves by at most $10^\circ$ when the threshold is changed to 1500
+ and to \SI{2500}{\metre}. The spread is the largest deviation from the circular
+ mean of the three axes.
+ \item Its axis moves by at most $10^\circ$, in the same sense, when any one box edge
+ is shifted by $\pm\SI{0.2}{\degree}$. This measures the dependence on where the
+ rectangle happens to cut the chain.
+ \item Its bend is at most $10^\circ$. The footprint cells are cut into three groups
+ of equal size along the long axis and the bend is the angle between the segment
+ joining the centroids of the first two groups and the segment joining the last
+ two. It is zero for a straight band and large for a chain that turns inside the
+ box.
+\end{enumerate}
+A box must also contain at least 300 flight take-offs. This is the only condition that
+involves flights, and it involves no direction. Qualifying boxes are ranked by the
+largest of the three instabilities (threshold spread, edge spread, bend), then by
+area, and taken in that order when they share no area with a box already chosen.
+The whole Alpine box fails the last rule, with a bend of \StatAlpsWholeBend$^\circ$, and the
+selection was completed and stored before any flight axis was computed.
+
+The procedure returns \StatAlpsBoxCount{} boxes (Fig.~\ref{fig:alps-box-axes}). For each,
+the flight axis is the long axis of the centred \SI{10000}{\second} displacement
+covariance of the flights that took off inside it, computed with the regional-PCA
+estimator of Fig.~\ref{fig:regional-pca}: nonoverlapping origins inside a segment, each
+with equal weight. A single lag needs no fixed population, so every flight with a
+supported increment contributes.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\linewidth]{generated/ch3_alps_box_axes}
+  \caption{The three Alpine boxes selected from terrain alone, one panel each. Solid
+  dark line: axis of the crest footprint above \SI{2000}{\metre}. Dashed line: flight
+  PCA axis at \SI{10000}{\second}, translated to the same centre. Panel titles give
+  both angles counterclockwise from east. Thin contours mark \SI{2000}{\metre}; line
+  lengths carry no information. Panels have different scales. Elevation comes from
+  ETOPO 2022 \cite{noaa_etopo2022}.}
+  \label{fig:alps-box-axes}
+\end{figure}
+
+\noindent\begin{minipage}{\linewidth}
+Angles run counterclockwise from east, modulo $180^\circ$.
+\begin{center}
+\small
+\begin{tabular}{@{}llrrrrrr@{}}
+\toprule
+ & \textbf{Box} & \multicolumn{2}{c}{\textbf{Terrain}} & \multicolumn{3}{c}{\textbf{Flights}} & \textbf{Sep.}\\
+\cmidrule(lr){3-4}\cmidrule(lr){5-7}
+ & (E; N) & \textbf{Axis} & $\lambda_1/\lambda_2$ & \textbf{Number} & \textbf{Axis} & $\lambda_1/\lambda_2$ & \\
+\midrule
+A & \SIrange{\StatAlpsBoxAWest}{\StatAlpsBoxAEast}{\degree}; \SIrange{\StatAlpsBoxASouth}{\StatAlpsBoxANorth}{\degree} & \SI{\StatAlpsBoxATerrainAngle}{\degree} & \StatAlpsBoxATerrainRatio & \num{\StatAlpsBoxAFlights} & \SI{\StatAlpsBoxAFlightAngle}{\degree} & \StatAlpsBoxAFlightRatio & \SI{\StatAlpsBoxADifference}{\degree} \\
+B & \SIrange{\StatAlpsBoxBWest}{\StatAlpsBoxBEast}{\degree}; \SIrange{\StatAlpsBoxBSouth}{\StatAlpsBoxBNorth}{\degree} & \SI{\StatAlpsBoxBTerrainAngle}{\degree} & \StatAlpsBoxBTerrainRatio & \num{\StatAlpsBoxBFlights} & \SI{\StatAlpsBoxBFlightAngle}{\degree} & \StatAlpsBoxBFlightRatio & \SI{\StatAlpsBoxBDifference}{\degree} \\
+C & \SIrange{\StatAlpsBoxCWest}{\StatAlpsBoxCEast}{\degree}; \SIrange{\StatAlpsBoxCSouth}{\StatAlpsBoxCNorth}{\degree} & \SI{\StatAlpsBoxCTerrainAngle}{\degree} & \StatAlpsBoxCTerrainRatio & \num{\StatAlpsBoxCFlights} & \SI{\StatAlpsBoxCFlightAngle}{\degree} & \StatAlpsBoxCFlightRatio & \SI{\StatAlpsBoxCDifference}{\degree} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}\par\medskip
+In box~B, which covers the Mont Blanc massif and the Bernese Alps and holds most
+flights, the two axes lie \SI{\StatAlpsBoxBDifference}{\degree} apart. Terrain
+thresholds of 1500 and \SI{2500}{\metre} move its terrain axis to
+\SI{\StatAlpsBoxBTerrainLowAngle}{\degree} and \SI{\StatAlpsBoxBTerrainHighAngle}{\degree},
+so the agreement does not depend on one threshold. In box~A, the Écrins, the Vercors and
+Haute-Provence, the axes lie \SI{\StatAlpsBoxADifference}{\degree} apart. The terrain axis
+of this box moves by \SI{\StatAlpsBoxAEdgeSpread}{\degree} under edge shifts, which is of
+the same size as the separation. Box~C, the Cottian and Maritime Alps east of A, holds
+few flights and their covariance is almost round ($\lambda_1/\lambda_2=\StatAlpsBoxCFlightRatio$),
+so its flight axis is weakly determined and the \SI{\StatAlpsBoxCDifference}{\degree}
+separation is not evidence of misalignment. The reliability criteria concern the terrain
+axis only. They cannot make a flight axis well determined, and a box can have a clear
+terrain direction and a nearly isotropic set of flights.
+
+Two of three boxes therefore show flight axes within about $10^\circ$ of the terrain
+axis, against \SI{\StatTerrainAlpsDifference}{\degree} for the whole Alpine box. The
+comparison stays descriptive: it rests on three boxes, gives no uncertainty interval
+for either angle, and does not control for wind or route choice.
 
 % --- merged from sections/04-environment-wind.tex ---
 \subsubsection{An independent coastal wind reference}
