@@ -3,13 +3,15 @@
 ## EconophysicsLab offsite 2026
 
 [The statistics of soaring flight](offsite2026/offsite-2026.pdf) è il deck da
-seminario: **15 slide totali**, tutte in inglese, fino alla sezione 3.2 della tesi
+seminario: **15 slide totali**, inclusa un'appendice sul bootstrap, tutte in inglese, fino alla sezione 3.2 della tesi
 attuale, più una slide sul viewer con quattro spazi per le immagini dei piani
 termici in montagna e pianura a due quote. Due sole slide coprono cleaning e
-filtering. Sono disponibili anche
+filtering, con schemi per le sei fasi. Sono disponibili anche
 la [versione con note in inglese](offsite2026/offsite-2026-notes.pdf) e le
 [istruzioni di ricostruzione](offsite2026/README.md). I grafici usano i report
-attuali del trasporto a popolazione fissa; il deck non segue la vecchia
+attuali del trasporto a popolazione fissa. La slide 8 estende la MSD a 1 s con
+supporto crescente in base alla cadenza, usando l'intera coorte da 10 s in poi.
+Il deck non segue la vecchia
 numerazione delle presentazioni estese riportate sotto.
 
 ## Presentazioni estese per discussione

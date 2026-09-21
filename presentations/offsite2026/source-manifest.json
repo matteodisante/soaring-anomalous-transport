@@ -1,6 +1,6 @@
 {
   "scope": "Current thesis Chapters 1\u20132 and Sections 3.1\u20133.2, plus a qualitative thermal-viewer comparison",
-  "operation": "Redraw saved estimates and intervals; no refitting, new bootstrap or trajectory processing",
+  "operation": "Redraw saved estimates and intervals. Slide 8 extends C_10000 below 10 s with cadence-limited support, and densely evaluates the original estimator above 10 s. Original bootstrap draws and 10\u201310000 s fits are preserved; see cadence-support-report.json.",
   "inputs": [
     {
       "path": "thesis/tesi/01-introduction.tex",
@@ -12,7 +12,7 @@
     },
     {
       "path": "thesis/tesi/04-fixed-transport.tex",
-      "sha256": "a628e1baa0f398019b5916ce1595aab8f40ef7154a02bcc1ee9d341a71d0a3bb"
+      "sha256": "9308c2395d3ab0f01dbf3a819dbd66b4f3049f7d65c4b7875e91c27a2f5022d8"
     },
     {
       "path": "thesis/generated/ch3_transport_report.json",
@@ -35,12 +35,16 @@
       "sha256": "baa53b774ee17906f259e6cba14b1ff490dc42b2234f6f084d41dedd8ac8fb4d"
     },
     {
-      "path": "thesis/generated/cleaning_real_examples.pdf",
-      "sha256": "49612dd385d90136dc01f41fde3dad8934e2de864c02d8b7c6e95d98e7b1c180"
-    },
-    {
       "path": "presentations/theme.tex",
       "sha256": "a2541e91dbcb6c38714406534760a723003166f8fde1c4cd9c97fd67988689f6"
+    },
+    {
+      "path": "thesis/generated/ch3_transport_grid_bootstrap.json",
+      "sha256": "3614a94200c2e8074c11708932d7b27dddaab1b84268657aec6f7b87b91d2c97"
+    },
+    {
+      "path": "thesis/generated/ch3_transport_grid_bootstrap_values.tex",
+      "sha256": "86ad46db02703b8cd0d6c4896a395709158ead7353462ac2c93b76b5948a8062"
     },
     {
       "path": "docs/guide/thermal-planes.md",
@@ -49,6 +53,14 @@
     {
       "path": "src/soaring/viewer/widgets/thermal_plane.py",
       "sha256": "887a30b60dc002c872dbd854a6fab099e4fdd0dcdbdb86a953736a408804c154"
+    },
+    {
+      "path": "presentations/offsite2026/cadence-support-report.json",
+      "sha256": "f4b77dc82d86c64a7dc6fcdcac1b6298b5016e83c4959d192b7d561372e913a6"
+    },
+    {
+      "path": "presentations/offsite2026/measure_cadence_support.py",
+      "sha256": "cf3021dc51d484650362fb0795c05625c768eccf682d5d7f8863c86316a5f63d"
     }
   ]
 }

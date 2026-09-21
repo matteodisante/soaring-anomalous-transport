@@ -1,4 +1,4 @@
-"""Projection-sized figures from the current thesis reports; no new fits or resampling."""
+"""Projection-sized figures from thesis reports and the slide-8 cadence extension."""
 from pathlib import Path
 import hashlib
 import json
@@ -12,6 +12,7 @@ OUT = Path(__file__).resolve().parent / "assets"
 OUT.mkdir(parents=True, exist_ok=True)
 R = json.loads((ROOT / "thesis/generated/ch3_transport_report.json").read_text())
 C = json.loads((ROOT / "thesis/generated/ch3_conditional.json").read_text())
+CADENCE = json.loads((OUT.parent / "cadence-support-report.json").read_text())
 BLUE, RUST, STEEL, TEAL, GOLD, WINE = "#3477A8", "#B5482A", "#4A6079", "#2E7D8A", "#C98A1E", "#8E3B5C"
 ALT = [BLUE, TEAL, GOLD, WINE]
 NAMES = ["Plains", "Hills", "Low mountains", "High mountains"]
@@ -57,26 +58,49 @@ for ax,slug,title in zip(axs,["para","hang"],["Paragliders","Hang gliders"]):
 axs[0].set_ylabel("Effective exponent H");axs[0].legend(frameon=False,fontsize=10,loc="lower left")
 save(fig,"selection")
 
-# Fixed population, preserving both overall growth and curvature.
+# Full C_10000 from 10 s onward; increasing cadence-limited support below 10 s.
 fig,axs=plt.subplots(1,2,figsize=(11.8,4.1),layout="constrained")
+for ax in axs:
+    ax.axvspan(1,10,color="#E8EDF2",alpha=.75,zorder=-2)
+    ax.axvline(10,color="#A0ACBA",lw=.8,ls="--",zorder=-1)
 for slug,color,label in [("para",BLUE,"Paragliders"),("hang",RUST,"Hang gliders")]:
-    d=R["results"][slug];h=d["fits"]["10-10000"]["hurst"]
-    band(axs[0],a(d["msd_lags"]),d["msd"],color,f"{label}: H = {h['point']:.3f}",idx=3)
-    band(axs[1],a(R["lags_s"]),d["fixed_local_h"],color,label,scale=1)
-axs[0].set_ylabel(r"MSD (km$^2$)");style(axs[0]);axs[0].set_xlim(10,10000);axs[0].legend(frameon=False)
-axs[0].set_title("Equal flight weights; fixed flights and segments")
+    d=CADENCE["results"][slug];h=d["fit_10_10000"]
+    x=a(CADENCE["lags_s"])
+    for ax,field,scale,legend in [(axs[0],"msd",1e6,f"{label}: H = {h['point']:.3f}"),
+                                 (axs[1],"local_h",1,label)]:
+        p,l,u=[a(d[field][k])/scale for k in ["point","low","high"]]
+        ax.fill_between(x,l,u,color=color,alpha=.17,lw=0)
+        ax.plot(x,p,color=color,lw=1.7,label=legend)
+        # Explicit integer-second evaluations in the cadence-limited range.
+        short=x<=10
+        ax.plot(x[short],p[short],"o",color=color,ms=2.8,mfc="white")
+axs[0].set_ylabel(r"MSD (km$^2$)");style(axs[0]);axs[0].set_xlim(1,10000);axs[0].legend(frameon=False)
+axs[0].set_title("MSD; H fitted over 10–10,000 s")
 style(axs[1],logy=False);axs[1].set_ylabel(r"Local growth exponent $H_{\rm loc}$")
-axs[1].axhline(1,color="#999999",ls=":",lw=1);axs[1].text(11,1.01,"Ballistic",fontsize=11,color="#666666")
-axs[1].axhline(.5,color="#999999",ls=":",lw=1);axs[1].text(11,.515,"Diffusive",fontsize=11,color="#666666")
-axs[1].set_xlim(10,10000);axs[1].set_ylim(.26,1.06);axs[1].legend(frameon=False,loc="lower left")
-axs[1].set_title("The slope changes across scales")
+axs[1].axhline(1,color="#999999",ls=":",lw=1);axs[1].text(1.25,1.012,"Ballistic",fontsize=11,color="#666666")
+axs[1].axhline(.5,color="#999999",ls=":",lw=1);axs[1].text(1.25,.515,"Diffusive",fontsize=11,color="#666666")
+lower=min(min(CADENCE["results"][s]["local_h"]["low"]) for s in ["para","hang"])
+upper=max(max(CADENCE["results"][s]["local_h"]["high"]) for s in ["para","hang"])
+axs[1].set_xlim(1,10000);axs[1].set_ylim(min(.26,lower-.025),max(1.07,upper+.035));axs[1].legend(frameon=False,loc="lower left")
+axs[1].set_title("Local slope on a dense lag grid")
 save(fig,"fixed")
+
+cadence_tex=[]
+for slug,prefix in [("para","CadencePara"),("hang","CadenceHang")]:
+    d=CADENCE["results"][slug]
+    cadence_tex.append("\\newcommand{\\"+prefix+"Count}{"+f"{d['flights']:,}"+"}")
+    cadence_tex.append("\\newcommand{\\"+prefix+"StartCount}{"+f"{d['support'][0]:,}"+"}")
+    for suffix,key in [("H","point"),("Low","low"),("High","high")]:
+        cadence_tex.append("\\newcommand{\\"+prefix+suffix+"}{"+f"{d['fit_10_10000'][key]:.3f}"+"}")
+cadence_tex.append(r"\newcommand{\CadenceLagCount}{"+str(len(CADENCE["lags_s"]))+"}")
+(OUT.parent/"cadence-values.tex").write_text("\n".join(cadence_tex)+"\n")
 
 # Conditional curves, without re-fitting any saved result.
 fig,ax=plt.subplots(figsize=(7.4,4.2),layout="constrained")
 for i,(name,color) in enumerate(zip(NAMES,ALT)):
     g=C["groups"][f"alt{i}"]
-    curve(ax,f"alt{i}",color,f"{name}  H={g['fit']['hurst']['point']:.3f}")
+    interval=["<300 m","300–800 m","800–1,500 m","≥1,500 m"][i]
+    curve(ax,f"alt{i}",color,f"{name} ({interval})  H={g['fit']['hurst']['point']:.3f}")
 ax.legend(frameon=False,loc="upper left")
 save(fig,"altitude")
 
@@ -125,9 +149,11 @@ save(fig,"equipment")
 inputs=["thesis/tesi/01-introduction.tex","thesis/tesi/03-dataset.tex","thesis/tesi/04-fixed-transport.tex",
  "thesis/generated/ch3_transport_report.json","thesis/generated/ch3_conditional.json",
  "thesis/generated/stats.tex","thesis/generated/pipeline_census.tex",
- "thesis/generated/prelim_map.pdf","thesis/generated/cleaning_real_examples.pdf","presentations/theme.tex",
- "docs/guide/thermal-planes.md","src/soaring/viewer/widgets/thermal_plane.py"]
-manifest={"scope":"Current thesis Chapters 1–2 and Sections 3.1–3.2, plus a qualitative thermal-viewer comparison", "operation":"Redraw saved estimates and intervals; no refitting, new bootstrap or trajectory processing", "inputs":[]}
+ "thesis/generated/prelim_map.pdf","presentations/theme.tex",
+ "thesis/generated/ch3_transport_grid_bootstrap.json","thesis/generated/ch3_transport_grid_bootstrap_values.tex",
+ "docs/guide/thermal-planes.md","src/soaring/viewer/widgets/thermal_plane.py",
+ "presentations/offsite2026/cadence-support-report.json","presentations/offsite2026/measure_cadence_support.py"]
+manifest={"scope":"Current thesis Chapters 1–2 and Sections 3.1–3.2, plus a qualitative thermal-viewer comparison", "operation":"Redraw saved estimates and intervals. Slide 8 extends C_10000 below 10 s with cadence-limited support, and densely evaluates the original estimator above 10 s. Original bootstrap draws and 10–10000 s fits are preserved; see cadence-support-report.json.", "inputs":[]}
 for rel in inputs:
     p=ROOT/rel;manifest["inputs"].append({"path":rel,"sha256":hashlib.sha256(p.read_bytes()).hexdigest()})
 (OUT.parent/"source-manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
