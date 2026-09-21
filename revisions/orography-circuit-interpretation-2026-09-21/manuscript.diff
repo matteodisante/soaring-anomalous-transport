@@ -1,0 +1,246 @@
+--- before/04-fixed-transport.tex
++++ 04-fixed-transport.tex
+@@ -596,13 +596,14 @@
+ \label{sec:fixed-circuit}
+ 
+ The general MSD combines flights with different objectives, launch environments
+-and equipment. Orography and wind are plausible main drivers of the differences
+-in $H$: they shape both the available lift and the paths along which pilots can
+-exploit it. The downloaded flight archive provides no wind measurements matched
+-to the trajectories, so we take orography as the main environmental axis of this
+-analysis, using initial altitude above sea level (ASL) as its proxy. This choice
+-does not establish that terrain dominates wind; it lets us examine the part of
+-the environmental dependence accessible through the available data.
++and equipment. The available lift and the route chosen to exploit it can both
++influence transport. The downloaded flight archive provides no wind measurements
++matched to the trajectories, so we use initial altitude above sea level (ASL)
++as a proxy for broad launch environment. The circuit composition also changes
++between altitude classes: comparing their pooled MSDs cannot isolate a terrain
++effect. We therefore describe the aggregate patterns first, then cross altitude
++class with declared circuit to distinguish the corresponding conditional
++associations.
+ 
+ We ask which characteristics shape the displacement amplitude and which shape
+ its growth rate $H$, through three questions:
+@@ -669,72 +670,55 @@
+ (Section~\ref{sec:trimming}; Fig.~\ref{fig:trim-alt-shift} compares it with the first
+ raw fix). The classes are: Plains ($z_0<300$ m), Hills
+ ($300\leq z_0<800$ m), Low mountains ($800\leq z_0<1500$ m), and High mountains
+-($z_0\geq1500$ m).\\ 
++($z_0\geq1500$ m).
+ All circuit declarations, including unclassified ones, contribute to
+-Figure~\ref{fig:conditional-altitude}. This gives a broad view of how transport
+-varies between lowland and mountain launch environments, before asking whether
+-regions of the same general terrain type also differ (Figure~\ref{fig:conditional-regions}).
++Figure~\ref{fig:conditional-altitude}. These are descriptive comparisons of the
++flight populations launched in each setting, pooling their different circuit
++compositions. The regional comparison below asks a separate question: whether
++regions of the same broad terrain type also differ
++(Figure~\ref{fig:conditional-regions}).
+ 
+ \begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{generated/ch3_conditional_altitude.pdf}
+  \caption{Paraglider MSD by initial altitude, pooling circuit types and equipment
+  classes. The four groups partition the fixed cohort. The altitude thresholds
+- describe the initial cleaned fix.}
++ describe the initial cleaned fix. Circuit proportions differ between classes;
++ these curves do not isolate an orographic effect. Figure~\ref{fig:fixed-task}
++ separates open and closed circuits within each class.}
+  \label{fig:conditional-altitude}
+ \end{figure}
+ 
+ Plains have the largest exponent, \CondAltZeroH{}, followed by Hills,
+ \CondAltOneH{}. Both exceed Low mountains, \CondAltTwoH{}, and High mountains,
+ \CondAltThreeH{}. The ordering is not monotonic in altitude: the high-mountain
+-curve grows slightly faster than the low-mountain one. 
++curve grows slightly faster than the low-mountain one.
+ 
+ The Plains--Low mountains difference is \CondAltZeroAltTwoDelta{}, about 10\%
+-of the smaller exponent. This spread motivates treating launch environment as
+-a primary source of heterogeneity when comparing circuit or equipment groups.
+-
+-This aggregate ordering includes a change in circuit composition. Open flights
++of the smaller exponent. This quantifies a difference between the pooled
++populations, rather than the magnitude of an orographic effect.
++
++The circuit imbalance is substantial. Open flights
+ account for \ChThreeConditionalPlainsOpenPct\% of Plains and
+ \ChThreeConditionalHillsOpenPct\% of Hills, against
+ \ChThreeConditionalLowMountainsOpenPct\% and
+ \ChThreeConditionalHighMountainsOpenPct\% in the two mountain classes.
+-Since open routes have larger $H$ within every altitude class
+-(Section~\ref{sec:conditional-circuit}), their greater share
+-in lowlands contributes to the pooled contrast. The altitude-only comparison
+-therefore describes the transport associated with each launch environment; it
+-does not measure an orographic effect at fixed flight objective.
+-
+-\paragraph{How relief could shape transport.}
+-Orography affects where pilots expect to find lift and which routes they can
+-follow between successive climbs. Two contrasting settings suggest a physical
+-interpretation of Figure~\ref{fig:conditional-altitude}:
+-\begin{itemize}
+- \item \emph{In mountains}, sunlit slopes and ridges can provide recognisable
+- locations for thermal development. Such cues may reduce the time spent searching
+- for the next thermal. Exploiting that lift can also lead pilots to follow a
+- sequence of ridges, so the relief defines preferred corridors for horizontal
+- motion. Turns and detours along those corridors can reduce net displacement
+- even while the glider continues to cover distance.
+- \item \emph{In plains}, thermal sources can be spread across the landscape:
+- fields with different crops or moisture, roads and heated roofs provide contrasts
+- in surface heating~\cite{faa_glider2024}. Their locations may be less predictable
+- than a prominent ridge, while offering more possible directions of travel.
+- This is a picture of more dispersed opportunities, not an assumption that
+- thermals are spatially uniform or randomly placed.
+-\end{itemize}
+-
+-Safety considerations can further restrict mountain routes. Maintaining lateral
+-clearance from rock faces and enough height to cross a ridge limits which paths
+-are usable at a given altitude. These terrain-related constraints are weaker over
+-plains, where pilots have more freedom to choose a heading between lift sources.
+-
+-The two mountain mechanisms can act in opposite directions: predictable lift
+-could shorten search, whereas following the relief could limit horizontal advance.
+-The smaller aggregate mountain $H$ is consistent with the latter contribution,
+-but does not identify their separate effects. Nor does confinement to a ridge
+-necessarily lower $H$: a long straight ridge could sustain persistent motion.
+-The relevant hypothesis concerns the geometry of the routes available to pilots,
+-including their bends, detours and repeated use.
++Open routes have larger $H$ both in the pooled comparison
++(Figure~\ref{fig:conditional-circuit}) and within every altitude class
++(Figure~\ref{fig:fixed-task}). The lowland averages thus give much greater
++flight weight to the faster-growing open curves. A pooled MSD averages the
++circuit-specific MSDs, not their fitted exponents: its slope depends on both
++the flight fractions and the displacement amplitudes
++(Eq.~\eqref{eq:fixed-mixture}). Figure~\ref{fig:conditional-altitude} alone
++cannot separate this composition effect from differences within each circuit.
++
++The comparison needed for that distinction is Figure~\ref{fig:fixed-task},
++discussed in Section~\ref{sec:conditional-circuit}. It shows a larger $H$ in
++lowlands than in mountains for open routes, but the opposite ordering for
++closed routes. There is therefore no common monotonic relation between launch
++altitude and $H$ across circuit types. We defer the physical interpretation to
++that joint comparison; the pooled curves do not establish that mountain relief
++generally suppresses MSD growth.
+ 
+ \paragraph{Differences within the same broad terrain type.}
+ The regional comparison asks whether transport differs when the broad orographic
+@@ -798,10 +782,10 @@
+  \label{tab:conditional-regions}
+ \end{table}
+ 
+-The mountain comparison is consistent with transport depending on the form and
+-arrangement of relief, beyond the broad mountain--lowland distinction. Ridges,
+-valleys and the spatial distribution of usable lift could constrain horizontal
+-paths differently in the two massifs. In lowlands, the corresponding question
++The regional differences remain meaningful descriptive results even though
++the altitude-only curves mix circuit types. The form and arrangement of ridges,
++valleys and usable lift could contribute to the mountain contrast, but it does
++not identify that contribution. In lowlands, the corresponding question
+ concerns finer differences between hills and plains, including the location and
+ nature of thermal triggers: differences in surface heating or local terrain
+ could organise the available lift differently even without a mountain setting.
+@@ -809,9 +793,10 @@
+ MSD growth rate.
+ 
+ These mechanisms motivate the comparison but are not measured by the regional
+-boxes. The preselection controls the broad altitude setting; it does not match
+-the altitude distribution within that setting, weather, route choices, equipment
+-or the periods represented in each region. The results therefore describe
++boxes. The preselection restricts the broad altitude setting; it does not match
++the altitude distribution within that setting, the proportions of open and
++closed circuits, weather, equipment or the periods represented in each region.
++The results therefore describe
+ regional differences within a common broad environment, without assigning them
+ uniquely to mountain shape or to the mechanisms that trigger thermals.
+ 
+@@ -844,9 +829,10 @@
+ long lags. Its effective exponent is \CondOpenH{}, compared with \CondClosedH{}
+ for closed routes. The paired difference $H_{\rm open}-H_{\rm closed}$ is
+ \CondOpenClosedDelta{}, so the separation is resolved under the adopted bootstrap.
+-Its magnitude is smaller than the roughly $0.084$ spread between altitude classes
+-in Figure~\ref{fig:conditional-altitude}, although both are aggregate associations
+-that mix route and environmental composition.
++This pooled difference and the altitude contrasts in
++Figure~\ref{fig:conditional-altitude} mix different circuit and environmental
++compositions. Comparing their magnitudes cannot rank the respective importance
++of circuit type and orography.
+ 
+ \Needspace{9\baselineskip}
+ \paragraph{Circuit geometry and the separation of the curves.}
+@@ -870,8 +856,11 @@
+ out-and-return flights and comparing lags with actual leg durations.
+ 
+ \paragraph{Circuit contrasts within altitude classes.}
+-The aggregate comparison averages over different launch environments. We next
+-ask whether the contrast remains within a given altitude class.
++The aggregate comparisons change both launch environment and circuit composition.
++We next compare open and closed routes within each altitude class, and compare
++altitude classes within each circuit. These two readings of the same figure
++separate the conditional patterns that are combined in
++Figure~\ref{fig:conditional-altitude}.
+ 
+ Figure~\ref{fig:fixed-task} crosses the four initial-altitude classes of
+ Section~\ref{sec:conditional-orography} with circuit type; counts and fitted
+@@ -905,28 +894,43 @@
+ \ChThreeTaskContrastMin{} in High mountains.
+ 
+ \Needspace{4\baselineskip}
+-The closed-route exponents also differ between altitude classes: the present intervals
+-do not support a common value across them. Their ordering reverses the open-route one.
++For closed routes, both lowland classes instead have smaller $H$ than either
++mountain class.
+ Paired lowland-minus-mountain contrasts, each lowland class against each mountain class
+ within one circuit, are positive for open routes, between \ChThreeOpenAltShiftMin{} and
+ \ChThreeOpenAltShiftMax{} in $H$, and negative for closed routes, with magnitudes between
+ \ChThreeClosedAltShiftMin{} and \ChThreeClosedAltShiftMax; all eight intervals exclude
+-zero. Launch altitude therefore enters $H$ with a sign that depends on the declared
+-circuit.
+-
+-One possible reading connects the two orderings through the interaction between
+-route geometry and terrain. The suppression associated with turns and return
+-legs could be strongest where the planned circuit can be flown most directly.
+-Lowland routes may be less constrained by ridges and valleys, making this easier.
+-Figure~\ref{fig:fixed-task} shows the relevant change in curve shape: over the last
+-decade of lag every closed curve bends below its fitted line, while the two
+-lowland open curves remain close to theirs out to 10000 s.
+-
+-On an open route, which asks for distance without a return, the same freedom
+-could instead sustain horizontal advance. Lowland open flights remain closer to
+-ballistic growth over the fitted range, while both mountain classes have smaller
+-slopes. This suggests that the association between launch environment and $H$
+-may depend on what the declared circuit asks the pilot to do.
++zero. The lowland--mountain association with $H$ therefore changes sign with
++circuit type. This is an interaction in the observed associations, rather than
++a common terrain trend masked only by unequal circuit proportions. In
++particular, the pooled lowland advantage cannot be generalized to closed routes.
++
++\paragraph{How relief could shape transport.}
++The interpretation must account for both circuit-specific orderings.
++Terrain can organize slope lift, while uneven surface heating can generate
++thermal lift~\cite[Chapter~9]{faa_glider2024}.
++Following a sequence of ridges could introduce bends and detours that reduce
++horizontal advance on an open route. This is compatible with the smaller
++mountain $H$ among open flights, but does not establish the mechanism: accessible
++lift could also shorten search, and a long straight ridge could sustain
++persistent motion. These possibilities do not predict a universal sign for
++the altitude association.
++
++In particular, an explanation based only on mountain detours does not explain
++why the closed-route ordering is reversed. Closed circuits add a return
++constraint, whose effect over 10--10000 s can depend on circuit size, leg
++durations and turn geometry. For example, if lowland closed routes turn or
++return on shorter time scales than mountain closed routes, more increments
++in the fitted range could span changes of direction, reducing the effective
++$H$. This is a testable possibility, not a measured property of these flights.
++The downward bending of all four closed curves at long lags in
++Figure~\ref{fig:fixed-task} is compatible with return constraints, but does not
++identify why their altitude ordering differs from that of open routes.
++
++Distinguishing these explanations requires comparing circuit sizes and leg
++durations, separating triangles from out-and-return routes, and accounting
++for wind and the terrain actually crossed. The present curves establish the
++opposite conditional orderings, while their physical explanation remains open.
+ 
+ The altitude classes describe the launch site rather than the terrain crossed
+ later. The two lowland closed cells are the smallest in
