@@ -1,0 +1,51 @@
+% Shared layout for the paper-review decks. It reuses ../theme.tex and the
+% absolute-position slide macros of offsite2026/offsite-2026.tex (160 x 90 mm).
+\setbeamertemplate{frametitle}{}
+\setbeamertemplate{footline}{}
+\setbeamerfont{note page}{size=\small}
+\newcommand{\txt}[5][]{\node[anchor=north west,inner sep=0pt,text width=#4mm,align=left,font=\fontsize{10}{12}\selectfont,#1] at (#2,#3) {#5};}
+\newcommand{\smalltxt}[5][]{\txt[font=\fontsize{8}{10}\selectfont,#1]{#2}{#3}{#4}{#5}}
+\newcommand{\tinytxt}[5][]{\txt[font=\fontsize{7}{8.6}\selectfont,#1]{#2}{#3}{#4}{#5}}
+\newcommand{\head}[4]{\txt[text=pisablue,font=\bfseries\fontsize{10}{12}\selectfont]{#1}{#2}{#3}{#4}}
+% \figat{x}{y}{max width}{max height}{file}: top-left anchored, aspect kept.
+\newcommand{\figat}[5]{\node[anchor=north west,inner sep=0pt]at(#1,#2){\includegraphics[width=#3mm,height=#4mm,keepaspectratio]{#5}};}
+\newcommand{\bottomline}[1]{\fill[pisablight!33](7,74.7)rectangle(153,83);\txt[text=pisablue,font=\fontsize{10}{12}\selectfont]{10}{76.5}{140}{#1}}
+\newcommand{\credit}[1]{\txt[text=muted,font=\fontsize{6}{7}\selectfont]{7}{86}{146}{#1}}
+\newcommand{\startslide}[1]{\begin{tikzpicture}[remember picture,overlay,shift={(current page.north west)},x=1mm,y=-1mm]
+ \fill[white](0,0)rectangle(160,90);
+ \fill[pisablue](0,0)rectangle(160,12.5);
+ \txt[text=white,font=\fontsize{15}{17}\selectfont\bfseries]{7}{3.2}{143}{#1}
+ \node[anchor=east,inner sep=0pt,text=white,font=\fontsize{8}{9}\selectfont]at(155,6.6){\insertframenumber};
+}
+\newcommand{\finishslide}{\end{tikzpicture}}
+% Two kinds of boxed statement: what the paper says, and what we propose.
+% The node width is #3 mm plus 3 mm of padding.
+\newcommand{\paperbox}[4]{\node[anchor=north west,inner sep=1.5mm,fill=pisablight!22,draw=pisablue!55,line width=.4pt,text width=#3mm,align=left,font=\fontsize{7.5}{9.3}\selectfont]at(#1,#2){{\color{pisablue}\bfseries In the paper}\\[.8mm]#4};}
+\newcommand{\ideabox}[4]{\node[anchor=north west,inner sep=1.5mm,fill=expert!9,draw=expert,line width=.5pt,text width=#3mm,align=left,font=\fontsize{7.5}{9.3}\selectfont]at(#1,#2){{\color{expert!70!black}\bfseries Proposal, not in the paper}\\[.8mm]#4};}
+\newcommand{\ourtag}{{\color{expert!70!black}\bfseries[ours]}}
+% \coverslide{title}{authors}{journal}{question}{tikz decoration}{speaker note}
+\newcommand{\coverslide}[6]{%
+\begin{frame}[plain]
+\begin{tikzpicture}[remember picture,overlay,shift={(current page.north west)},x=1mm,y=-1mm]
+ \fill[pisablue](0,0)rectangle(160,90);
+ \fill[pisablight](0,73)rectangle(160,90);
+ \txt[text=white,font=\fontsize{21}{25}\selectfont\bfseries]{11}{12}{140}{#1}
+ \txt[text=pisablight,font=\fontsize{12}{15}\selectfont]{11}{37}{138}{#2}
+ \txt[text=white,font=\fontsize{9.5}{12}\selectfont]{11}{44}{138}{#3}
+ \txt[text=pisablight,font=\itshape\fontsize{10}{12.5}\selectfont]{11}{52}{80}{#4}
+ #5
+ \txt[text=pisablue,font=\fontsize{12}{14}\selectfont]{11}{78}{70}{Matteo Di Sante}
+ \txt[text=pisablue,font=\fontsize{9}{11}\selectfont,align=right]{88}{78.5}{61}{Paper review}
+\end{tikzpicture}
+\note{#6}
+\end{frame}}
+\newcommand{\notetext}[1]{\note{#1}}
+% Denser note pages than the offsite deck: the review notes explain whole sections.
+\setbeamertemplate{note page}{%
+  \vspace{3mm}\noindent%
+  \begin{minipage}{\linewidth}
+    {\fontsize{7}{8.4}\selectfont\color{pisablue}\TalkShort\quad|\quad Slide \insertframenumber}\par\smallskip
+    {\small\bfseries\insertframetitle}\par\smallskip
+    {\fontsize{7.3}{8.8}\selectfont\insertnote}
+  \end{minipage}
+}

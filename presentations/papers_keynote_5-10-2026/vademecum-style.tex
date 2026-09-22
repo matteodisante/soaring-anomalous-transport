@@ -1,0 +1,37 @@
+% Shared layout for the two reading guides (vademecum) that accompany the decks.
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{mathpazo}
+\usepackage{amsmath,amssymb,bm,booktabs,array,graphicx,microtype,xcolor}
+\usepackage[a4paper,left=14mm,right=14mm,top=11mm,bottom=14mm]{geometry}
+\usepackage{titlesec,enumitem,siunitx}
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{raster}
+\usepackage[colorlinks=true,urlcolor=accent,linkcolor=accent]{hyperref}
+\sisetup{group-separator={,},group-minimum-digits=4}
+\definecolor{pisablue}{RGB}{74,96,121}
+\definecolor{pisablight}{RGB}{192,206,220}
+\definecolor{accent}{RGB}{26,118,179}
+\definecolor{expert}{HTML}{C98A1E}
+\definecolor{muted}{HTML}{666666}
+\titleformat{\section}{\color{pisablue}\bfseries\normalsize}{\thesection}{.6em}{}
+\titlespacing*{\section}{0pt}{1.6ex plus .4ex}{.5ex}
+\titleformat{\subsection}[runin]{\color{pisablue}\bfseries\small}{}{0pt}{}[.]
+\titlespacing*{\subsection}{0pt}{.7ex}{.5em}
+\setlist{nosep,leftmargin=1.2em,topsep=.2ex}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{.45ex}
+\pagestyle{plain}
+\newtcolorbox{summarybox}{enhanced,colback=pisablight!22,colframe=pisablue!60,boxrule=.4pt,arc=0pt,left=5pt,right=5pt,top=3pt,bottom=3pt,fontupper=\small}
+\newtcolorbox{paperbox}[1][]{enhanced,colback=pisablight!18,colframe=pisablue!55,boxrule=.4pt,arc=0pt,left=5pt,right=5pt,top=2pt,bottom=3pt,fontupper=\small,
+ title={In the paper#1},fonttitle=\bfseries\small,coltitle=pisablue,colbacktitle=pisablight!18,titlerule=0pt,toptitle=2pt,bottomtitle=0pt}
+\newtcolorbox{ideabox}{enhanced,colback=expert!8,colframe=expert,boxrule=.5pt,arc=0pt,left=5pt,right=5pt,top=2pt,bottom=3pt,fontupper=\small,
+ title={Proposals, not in the paper},fonttitle=\bfseries\small,coltitle=expert!70!black,colbacktitle=expert!8,titlerule=0pt,toptitle=2pt,bottomtitle=0pt}
+% \vademecumheader{title}{authors}{journal}{doi, URL-encoded}{doi as printed}{companion deck}
+\newcommand{\vademecumheader}[6]{%
+ {\color{pisablue}\large\bfseries #1\par}\vspace{.6ex}
+ {\small #2\enspace\textperiodcentered\enspace #3\par}
+ {\footnotesize\href{https://doi.org/#4}{doi:#5}\par}
+ {\footnotesize\color{muted} Reading guide by Matteo Di Sante for the paper review; companion deck: #6. Equation, figure and section numbers are those of the paper.\par}\vspace{.8ex}}
+\newcommand{\ours}{{\color{expert!70!black}\bfseries[ours]}}

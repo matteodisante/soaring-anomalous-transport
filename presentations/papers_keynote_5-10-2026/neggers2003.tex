@@ -1,0 +1,115 @@
+\documentclass[aspectratio=169,10pt]{beamer}
+\newcommand{\TalkShort}{Paper review: Neggers et al.\ (2003)}
+\input{../theme.tex}
+\input{paper-review.tex}
+\hypersetup{pdftitle={Size statistics of cumulus cloud populations in LES},pdfsubject={Paper review: Neggers, Jonker and Siebesma (2003)}}
+\newcommand{\figdir}{assets/neggers2003}
+
+\begin{document}
+
+% 1 ------------------------------------------------------------------
+\coverslide{Size statistics of cumulus cloud\\populations in large-eddy simulations}
+{R. A. J. Neggers, H. J. J. Jonker, A. P. Siebesma}
+{J. Atmos. Sci. \textbf{60}, 1060--1074 (2003)}
+{How many clouds of each size are there, and which sizes carry the cloud cover and the vertical mass flux?}
+{% Stylised cloud field seen from above: many small clouds, few large ones.
+ \foreach \x/\y/\r in {103/57/.7,107/63/1.1,111/53/.5,115/60/2.3,120/53/.8,123/66/.9,
+  128/58/3.3,134/51/.6,136/65/1.4,140/58/.8,144/53/1.8,147/64/.6,150/58/1.1,
+  118/67/.5,131/67/.6,109/58/.45,139/62/.5,126/51/.5,152/52/.5}{
+  \fill[white,opacity=.85](\x,\y)circle(\r);}}
+{Neggers, Jonker and Siebesma use large-eddy simulation (LES) of shallow cumulus to measure how many clouds of each size occur, and which sizes contribute most to the projected cloud cover and to the vertical mass flux. The motivation is parameterization in general circulation models: radiation schemes need the geometry of broken cloud fields, and mass-flux convection schemes, such as Arakawa and Schubert (1974), need the vertical transport by clouds. It is a validation study: the simulated clouds are analysed with exactly the algorithm used on satellite and aircraft images, with a comparable number of clouds, so the simulated statistics can be compared with observed ones. The dots on the cover are decorative.}
+
+% 2 ------------------------------------------------------------------
+\begin{frame}[plain]\frametitle{Question, simulations and cloud statistics}\startslide{Question, simulations and cloud statistics}
+ \head{8}{16}{70}{Aims}
+ \smalltxt{8}{22}{70}{1\enspace Test LES cloud populations against observed ones, with the algorithm of satellite studies.\\[1mm]
+ 2\enspace Find a universal form of the cloud size density.\\[1mm]
+ 3\enspace Find which sizes dominate cover and mass flux.}
+ \head{8}{42}{70}{Simulations: KNMI LES}
+ \smalltxt{8}{48}{70}{$\Delta x=\Delta y=50$ m, $\Delta z=40$ m, 6.4 km domain;\\3D fields sampled every 5 min.}
+ \tinytxt{8}{57.5}{70}{\setlength{\tabcolsep}{2.5pt}\renewcommand{\arraystretch}{1.2}%
+  \begin{tabular}{@{}lll@{}}
+   \textbf{BOMEX} & ocean, trade-wind cumulus, steady & \num{36776} clouds\\
+   \textbf{SCMS} & Florida, land, deepening layer & \num{20268} clouds\\
+   \textbf{ARM SGP} & Oklahoma, land, diurnal cycle & \num{35137} clouds
+  \end{tabular}}
+ \head{84}{16}{46}{Cloud statistics}
+ \smalltxt{84}{22}{45}{Cloud $n$: connected saturated grid boxes, sized by the projected area $A_n^p$ (right).}
+ \figat{132}{15}{21}{18}{\figdir/fig3.png}
+ \txt[font=\fontsize{9}{11}\selectfont]{84}{36}{69}{$\ell_n=\sqrt{A_n^p}$,\qquad $N=\int_0^\infty\mathcal N(l)\,dl$}
+ \txt[font=\fontsize{9}{11}\selectfont]{84}{42.5}{69}{$\alpha^p(l)=\dfrac{l^2\,\mathcal N(l)}{L_xL_y}$,\qquad $a^p=\int_0^\infty\alpha^p(l)\,dl$}
+ \txt[font=\fontsize{9}{11}\selectfont]{84}{51}{69}{$\mu(l)=\dfrac{1}{h_c}\int_{h_c}\alpha(l,z)\,w(l,z)\,dz$,\qquad $m=\int_0^\infty\mu(l)\,dl$}
+ \txt[font=\fontsize{9}{11}\selectfont]{84}{59.5}{69}{$\mathcal N(l)=a\,l^{\,b}$,\qquad $\mathcal N^*(\log l)=l\ln10\,\mathcal N(l)\propto l^{\,b+1}$}
+ \tinytxt[text=muted]{84}{66}{69}{$\mathcal N^*$: logarithmic bins, log--log slope $b+1$. $\alpha(l,z)$: cloud fraction at height $z$; $w$: cloud-mean vertical velocity; $h_c$: cloud-layer depth.}
+ \bottomline{LES clouds are measured exactly as satellites measure real ones}
+ \credit{Neggers et al.\ (2003) \S2--3, Table 1 (clouds sampled per reference case), Fig.\ 3. $L_xL_y$: domain area.}
+\notetext{Three aims: validate LES cloud populations against observed ones, look for a universal functional form of the cloud size density, and find which cloud sizes dominate the cloud cover and the mass flux.\par\smallskip The KNMI LES solves filtered equations with a prognostic subgrid kinetic-energy scheme. The three cases come from field campaigns. BOMEX is steady trade-wind cumulus over the ocean, run ten times with randomized initial temperature profiles; the first three hours are discarded as spin-up. SCMS (Florida, 5 August 1995) has much stronger surface fluxes over land and a deepening cloud layer. ARM (Southern Great Plains, 21 June 1997) is a full diurnal cycle over land. Each reference case samples 2--4 $\times10^4$ clouds, comparable to the $\sim10^4$ of satellite studies.\par\smallskip A cloud is a connected set of saturated grid boxes. Its linear size is the square root of its vertically projected area, the only size a satellite image can see. $\mathcal N(l)$ counts clouds per unit size; $\alpha^p(l)$ weights them by their projected area and integrates to the projected cloud cover $a^p$. $\mu(l)$ is the mass flux carried by clouds of size $l$, averaged over the cloud layer; each cloud keeps its projected size at every height, so it stays in one bin. The fit is a power law $\mathcal N=a\,l^b$. Histograms are shown in logarithmic bins, $\mathcal N^*=l\ln10\,\mathcal N$, whose log--log slope is $b+1$.}
+\finishslide\end{frame}
+
+% 3 ------------------------------------------------------------------
+\begin{frame}[plain]\frametitle{A power law with a scale break, collapsed by one length}\startslide{A power law with a scale break, collapsed by one length}
+ \figat{6}{15}{47}{43}{\figdir/fig4a.png}
+ \figat{55}{15}{47}{43}{\figdir/fig6.png}
+ \tinytxt[text=muted]{6}{60}{47}{Fig.\ 4a: $\mathcal N^*/N$ for the three cases; fit $1.121-0.70\log l$ below the break.}
+ \tinytxt[text=muted]{55}{60}{47}{Fig.\ 6: the same densities against $l/\ell_d$; dotted line at the break.}
+ \head{106}{16}{48}{Below the break}
+ \smalltxt{106}{22}{48}{$b=-1.70$ (log-bin slope $-0.70$) over about one decade, from the grid spacing to $\ell_d$.\\[1mm] Observed: log-bin slope $-0.89$ (Cahalan \& Joseph 1989); mean $b=-1.98$ (Benner \& Curry 1998).}
+ \head{106}{47.5}{48}{Scale break $\ell_d$}
+ \smalltxt{106}{53.5}{48}{\setlength{\tabcolsep}{2pt}\renewcommand{\arraystretch}{1.1}%
+  \begin{tabular}{@{}lr@{}}
+   BOMEX & 700 m\\
+   SCMS & \num{1050} m\\
+   ARM, 15--16 UTC & 400 m\\
+   ARM, 19--20 UTC & \num{1250} m
+  \end{tabular}}
+ \tinytxt{106}{69.8}{48}{More sampled clouds: the same break.}
+ \bottomline{One exponent fits every case; only the break $\ell_d$ changes}
+ \credit{\S4a, Table 2, Figs.\ 4 and 6. $\ell_d$ grows through the ARM day (Fig.\ 4b); what sets the break is left open.}
+\notetext{Figure 4a shows the log-binned size density, normalised by the number of clouds. For sizes between the grid spacing and a break, all three cases collapse on one straight line of slope $-0.70$, that is $b=-1.70$. Lognormal and exponential forms would curve on these axes, so the power law is preferred in this range. The exponent is close to observed values: Cahalan and Joseph report a log-bin slope of $-0.89$ for remotely sensed clouds, and Benner and Curry an average $b$ of $-1.98$ for tropical shallow cumulus, with spread.\par\smallskip Above a size $\ell_d$ the density drops much faster. The break is not a sampling artefact: a convergence test with more clouds changes neither its position nor the histogram above it. Its value depends on the case (Table 2), and in ARM it moves from 400 m at 15--16 UTC to 1250 m at 19--20 UTC.\par\smallskip Figure 6 divides the size by $\ell_d$: the three cases then collapse over all sizes, including above the break, where another exponent or another functional form applies. So $\ell_d$ is the only case-dependent parameter. What controls it remains open. The authors mention the depth of the (sub)cloud layer (suggested by ARM), the largest convective cells of the boundary layer (Cahalan and Joseph), and humidity fluctuations in the subcloud layer (Jonker et al.\ 1999).}
+\finishslide\end{frame}
+
+% 4 ------------------------------------------------------------------
+\begin{frame}[plain]\frametitle{Intermediate clouds carry the cover and the mass flux}\startslide{Intermediate clouds carry the cover and the mass flux}
+ \figat{6}{15}{39}{37}{\figdir/fig7a.png}
+ \figat{47}{15}{39}{37}{\figdir/fig7b.png}
+ \figat{88}{15}{39}{37}{\figdir/fig7c.png}
+ \tinytxt[text=pisablue]{8}{52.5}{37}{(a) projected cover $\alpha^p(l)$}
+ \tinytxt[text=pisablue]{49}{52.5}{37}{(b) cloud-mean $w(l)$}
+ \tinytxt[text=pisablue]{90}{52.5}{37}{(c) mass flux $\mu(l)$}
+ \smalltxt{7}{57.5}{61}{Pure power law: $\alpha^p(l)\propto l^{\,b+2}$; the smallest clouds dominate if $b<-2$, the largest if $b>-2$. Here $b=-1.70$ below $\ell_d$, $b<-2$ above: $\alpha^p$ peaks near $\ell_d$.}
+ \smalltxt{72}{57.5}{54}{$\mu=\alpha w$ peaks at larger sizes, since $w$ grows with $l$. The smallest clouds carry almost no mass flux.}
+ \head{131}{16}{23}{Robustness}
+ \tinytxt{131}{22}{23}{\textbf{Grid} 25--100 m: same dominant and largest sizes.\\[1mm]
+ \textbf{Domain} 3.2 km: the largest clouds are missing; dominance moves to the largest size.\\[1mm]
+ \textbf{Shear} $\times0,1,2$: broader density, larger $\ell_d$; $a^p$ from 13 to 19\%, while $m\approx0.015$ m\,s$^{-1}$ in all three.}
+ \bottomline{The dominant size sits at the break, far above the grid scale, for cover and for transport}
+ \credit{\S4b--f, Figs.\ 7--11, Tables 3--4. Totals: $a^p=14$--27\%, $m=0.015$--0.060 m\,s$^{-1}$ across the three cases.}
+\notetext{Plotted on linear axes, the cover decomposition $\alpha^p(l)$ peaks at an intermediate size in every case, as in observed cumulus fields (Plank 1969; Wielicki and Welch 1986). The reason is Eq.\ (10). Since $\alpha^p\propto l^2\mathcal N$, a single power law would make either the smallest or the largest clouds dominate, depending on whether $b$ is below or above $-2$. The observed $b=-1.70$ below the break and $b<-2$ above it place the maximum at the break: knowing $\ell_d$ gives the dominant size, and vice versa. One-grid-box clouds cover somewhat too much area, probably a numerical effect.\par\smallskip The mass flux is area times velocity. Because the cloud-mean vertical velocity grows with cloud size (panel b), $\mu(l)$ peaks at larger sizes than $\alpha^p$ and is better defined. The smallest clouds carry close to nothing, apart from cloud base, where they are numerous (Fig.\ 8 of the paper).\par\smallskip Robustness. With grids of 25, 50 and 100 m, the dominant size and its amplitude do not move; the smallest-cloud cover tends to zero at finer resolution. The total mass flux grows somewhat at finer resolution, which the authors attribute to poorer statistics of the largest clouds. A 3.2 km domain truncates the spectrum. Shear tilts clouds and enlarges their projected area: the density broadens and the break moves up, but the total mass flux stays about constant (0.0145--0.0149 m/s). Brown (1999b) found shifts with resolution; the authors trace the difference to his method (cross-sections at one level) and possibly to his Smagorinsky subgrid model.}
+\finishslide\end{frame}
+
+% 5 ------------------------------------------------------------------
+\begin{frame}[plain]\frametitle{Limits, and a bridge to thermals}\startslide{Limits, and a bridge to thermals}
+ \head{7}{16}{46}{Limits}
+ \tinytxt{7}{22}{46}{\textbf{Stated in the paper}\\[.4mm]
+ One decade of scaling; 1--2 m grids needed to extend it.\\[.4mm]
+ The origin of the break is unexplained.\\[.4mm]
+ Small domains truncate the largest clouds.\\[.4mm]
+ Three cases; exponents compared with published values, not the same scenes.\\[1.4mm]
+ \textbf{Our reading} \ourtag\\[.4mm]
+ Snapshots: no cloud life cycle.\\[.4mm]
+ No error bar on $b$; least squares on binned histograms.\\[.4mm]
+ Only saturated air counts: dry thermals are invisible.}
+ \paperbox{57}{16}{41}{Large clouds root in the subcloud layer.\\[.6mm]
+ Suggested regimes: above $\ell_d$, coherent structures of subcloud turbulence; below, large clouds decaying into smaller ones.\\[.6mm]
+ Other ideas: the largest boundary-layer cells (Cahalan \& Joseph 1989); subcloud humidity (Jonker et al.\ 1999).\\[.6mm]
+ ARM: $\ell_d$ grows from 400 to \num{1250} m as the (sub)cloud layer deepens.}
+ \ideabox{105}{16}{45}{\textbf{1.} Same pipeline on climbs: patches of climb crossings on a height plane, $\ell=\sqrt{\text{area}}$, $\mathcal N(\ell)$ in log bins. Power law? Break? Collapse by boundary-layer depth?\\[.6mm]
+ \textbf{2.} Does the patch scale grow through the day, like $\ell_d$ in ARM?\\[.6mm]
+ \textbf{3.} Analogue of $\mu(\ell)$: climb rate $\times$ area against size.\\[.6mm]
+ Caveat: pilots select strong thermals and cross them sparsely.}
+ \bottomline{Climb data could test the size statistics found for clouds}
+ \credit{\S4a, \S4f, \S5. The gold box collects our proposals; they are not results of the paper.}
+\notetext{Limits the authors state. The power law is supported over about one decade, from the grid spacing to the break; they note that 1--2 m grids would be needed for another decade. The mechanism of the break is the key open question; shear and the depth of the (sub)cloud layer move it. Too small a domain limits the largest clouds. There are only three shallow-cumulus cases, and the comparison with nature goes through published exponents and dominant sizes, not the same scenes. The disagreement with Brown (1999b) is not settled.\par\smallskip Our reading, not in the paper. Clouds are counted in instantaneous snapshots, so nothing is said about how individual clouds grow and decay. No uncertainty is given for $b$, and the exponent comes from a least-squares fit to binned histograms. Finally, a cloud is saturated air: rising air that never condenses is invisible to this method.\par\smallskip What the paper says close to thermals. Most large clouds are rooted in the subcloud layer. The authors speculate that the two regimes reflect two processes: coherent structures of subcloud-layer turbulence above the break, and the decay of large clouds into smaller ones in the scaling range. The ARM break grows through the day as the (sub)cloud layer deepens.\par\smallskip Proposals, ours. The same pipeline could be applied to climb crossings on horizontal planes: define connected patches, size them by the square root of their area, histogram them in logarithmic bins, and test for a power law, a break, and a collapse when sizes are divided by the boundary-layer depth. The time-of-day dependence of that scale could be compared with the ARM result. An analogue of the mass-flux decomposition would weight patches by climb rate times area. The main caveat is sampling: pilots look for strong thermals and cross only part of each one.}
+\finishslide\end{frame}
+
+\end{document}
