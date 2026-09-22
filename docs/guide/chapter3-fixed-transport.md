@@ -431,6 +431,19 @@ within a broad altitude setting; they do not match circuit composition.
 The closed-route reversal has no established physical explanation in these
 measurements. The leg-duration/return-geometry explanation is a hypothesis.
 
+The regional interpretation distinguishes similar growth exponents in Channel
+Coast and Champagne-Lorraine from the lower Pyrenean H and long-lag MSD relative
+to the Alps. One proposed explanation is comparable spatial statistics of
+lowland thermal triggers, such as heated asphalt and dark ploughed fields,
+versus mountain lift tied to slope and ridge geometry. The Pyrenean result is
+interpreted as consistent with stronger constraints on net progress and fewer
+route choices than in the Alps. Neither a uniform trigger field nor a ranking
+of accessible routes is measured: H is not a direct measure of freedom, and
+weather, equipment, circuit mix and detailed launch altitude remain unmatched.
+The lowland inference concerns these two regions and H, with differing MSD
+amplitudes. SSA's lift-source guide and FAA Chapter 9 support the candidate
+mechanisms, not their attribution to the regional contrast.
+
 The spatial illustration uses viewer cells **High mountains #2 (H2)** in
 Chartreuse and **Plains #1 (P1)** in Suisse Normande, at **100 and 600 m**
 above the fixed cell reference. All available dates are pooled. The thesis
