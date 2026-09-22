@@ -1,0 +1,480 @@
+{
+  "source_store": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/viewer/thermal-planes/thermal-planes.sqlite3",
+  "store_size_bytes": 2036154368,
+  "store_mtime_ns": 1789573935580000000,
+  "store_metadata": {
+    "version": "2",
+    "disciplines": "[\"paragliders\", \"hang gliders\"]",
+    "archive_signature": "214e518be91ed49e826f554cabdf969f7d68f237baf91e070506b33595e01028",
+    "segmentation_signatures": "{\"own\": \"4bb659b8cd266cfffcc7feb0085258c5882983df7d5128a9fbe07907f3aa9685\", \"vilpellet\": \"bd44c5031fcc5909823c4e463b1a232d654001f0f5b4a391553c98590e6260a2\"}",
+    "launch_quality": "{\"policy\": \"31ce55a145ed46305d082a644e980bfdab24cc03d8ee3ffb01e1bfcded86b0dc\", \"excluded\": 3048, \"statuses\": {\"accepted\": 149279, \"altitude_jump\": 2449, \"unchecked\": 1105, \"position_jump\": 590, \"invalid_gnss\": 9}, \"eligible_cells\": 1689, \"visited_cells\": 20005}",
+    "ready": "1",
+    "point_lattice": "10m-v1"
+  },
+  "segmentation": "vilpellet",
+  "selection": "User-selected viewer ranks: High mountains #2 (H2) and Plains #1 (P1). Ranks follow descending all-time distinct crossing flights within each altitude band. Pool all available dates without a seasonal restriction.",
+  "date_selection": "Entire prepared archive, inclusive time extent; no month or year exclusion.",
+  "archive_time_extent_utc_s": [
+    946736956.4331654,
+    1782565038.8808224
+  ],
+  "height_selection": "Exact 100 and 600 m planes above each cell reference, as requested.",
+  "point_display": {
+    "selection": "All selected crossings, without subsampling.",
+    "colors": {
+      "paragliders": "#005CFF",
+      "hang gliders": "#E75A00"
+    },
+    "size_pt2": 8,
+    "alpha": 0.9,
+    "edge": "none"
+  },
+  "height_reference": "Fixed median screened raw starting altitude within each cell, not a terrain model.",
+  "panels": [
+    {
+      "name": "mountain-low",
+      "height_m": 100,
+      "points": 1856,
+      "flights": 1261,
+      "discipline_points": {
+        "paragliders": 1827,
+        "hang gliders": 29
+      },
+      "year_points": {
+        "2010": 5,
+        "2011": 10,
+        "2012": 20,
+        "2013": 26,
+        "2014": 48,
+        "2015": 113,
+        "2016": 109,
+        "2017": 73,
+        "2018": 113,
+        "2019": 181,
+        "2020": 137,
+        "2021": 109,
+        "2022": 269,
+        "2023": 247,
+        "2024": 139,
+        "2025": 152,
+        "2026": 105
+      },
+      "month_points": {
+        "2": 17,
+        "3": 407,
+        "4": 359,
+        "5": 389,
+        "6": 242,
+        "7": 165,
+        "8": 164,
+        "9": 109,
+        "10": 4
+      },
+      "first_crossing_local": "2010-04-17T14:18:08+02:00",
+      "last_crossing_local": "2026-06-21T14:35:12+02:00",
+      "points_sha256": "9fd2120bc1939ce64bbff0cdfce10bf9c6c5f10720bddf380901f1790d81d2c5",
+      "png_sha256": "90a424a78acf1ff12bf0552e8fbc4d987f714231b993f753b514c5d13b8a0c19"
+    },
+    {
+      "name": "mountain-high",
+      "height_m": 600,
+      "points": 1868,
+      "flights": 1452,
+      "discipline_points": {
+        "paragliders": 1848,
+        "hang gliders": 20
+      },
+      "year_points": {
+        "2007": 1,
+        "2008": 1,
+        "2010": 2,
+        "2011": 4,
+        "2012": 18,
+        "2013": 9,
+        "2014": 28,
+        "2015": 104,
+        "2016": 91,
+        "2017": 81,
+        "2018": 206,
+        "2019": 187,
+        "2020": 117,
+        "2021": 119,
+        "2022": 281,
+        "2023": 142,
+        "2024": 72,
+        "2025": 209,
+        "2026": 196
+      },
+      "month_points": {
+        "2": 13,
+        "3": 272,
+        "4": 630,
+        "5": 268,
+        "6": 206,
+        "7": 196,
+        "8": 220,
+        "9": 52,
+        "11": 11
+      },
+      "first_crossing_local": "2007-04-28T13:54:40+02:00",
+      "last_crossing_local": "2026-06-21T16:43:12+02:00",
+      "points_sha256": "4aebdd393941488e7a601f34f110ad82ec50db390d209336ce139b3d3b76491c",
+      "png_sha256": "b8c024a75f6cbe66f6d9b768add99807f290948fd23d71a65c26f8fb37060fc5"
+    },
+    {
+      "name": "plains-low",
+      "height_m": 100,
+      "points": 1441,
+      "flights": 734,
+      "discipline_points": {
+        "paragliders": 1439,
+        "hang gliders": 2
+      },
+      "year_points": {
+        "2009": 1,
+        "2011": 4,
+        "2012": 18,
+        "2013": 34,
+        "2014": 36,
+        "2015": 50,
+        "2016": 49,
+        "2017": 33,
+        "2018": 102,
+        "2019": 163,
+        "2020": 32,
+        "2021": 79,
+        "2022": 193,
+        "2023": 116,
+        "2024": 173,
+        "2025": 260,
+        "2026": 98
+      },
+      "month_points": {
+        "1": 3,
+        "2": 33,
+        "3": 168,
+        "4": 285,
+        "5": 287,
+        "6": 232,
+        "7": 149,
+        "8": 140,
+        "9": 118,
+        "10": 26
+      },
+      "first_crossing_local": "2009-09-26T15:13:36+02:00",
+      "last_crossing_local": "2026-06-24T14:07:28+02:00",
+      "points_sha256": "67b1d8c78004fe4584b224423667855aba330bfa99e7a95696f0cba983b3acdd",
+      "png_sha256": "fa85f5d107c8c211997fd2e220c5f4656cf0476a7c395c3e869f10847ad69a32"
+    },
+    {
+      "name": "plains-high",
+      "height_m": 600,
+      "points": 901,
+      "flights": 574,
+      "discipline_points": {
+        "paragliders": 901
+      },
+      "year_points": {
+        "2011": 3,
+        "2012": 13,
+        "2013": 4,
+        "2014": 20,
+        "2015": 19,
+        "2016": 31,
+        "2017": 40,
+        "2018": 34,
+        "2019": 92,
+        "2020": 17,
+        "2021": 59,
+        "2022": 143,
+        "2023": 106,
+        "2024": 103,
+        "2025": 163,
+        "2026": 54
+      },
+      "month_points": {
+        "3": 47,
+        "4": 107,
+        "5": 132,
+        "6": 184,
+        "7": 132,
+        "8": 173,
+        "9": 100,
+        "10": 26
+      },
+      "first_crossing_local": "2011-06-11T12:46:24+02:00",
+      "last_crossing_local": "2026-06-21T14:33:04+02:00",
+      "points_sha256": "9c2f2464880575d57a49d31928b27f75463db59b9f424395ddfee2e4c85e2bca",
+      "png_sha256": "17e70a16f3f64081695c7c7b6ef9e34b0cd47a62285c31a0a9f07dc160d8d6b7"
+    }
+  ],
+  "cells": [
+    {
+      "name": "mountain",
+      "viewer_id": "H2",
+      "viewer_rank": 2,
+      "ix": 185,
+      "iy": 1295,
+      "terrain": "High mountains",
+      "flights": 15840,
+      "launches": 5,
+      "ground_m": 1756.0,
+      "max_alt_m": 3908.988525390625,
+      "bounds_epsg2154": [
+        925000.0,
+        6475000.0,
+        930000.0,
+        6480000.0
+      ],
+      "centre_lon_lat": [
+        5.906364960971512,
+        45.35920896650851
+      ],
+      "region": "Alps",
+      "ranking_candidates": [
+        {
+          "ix": 183,
+          "iy": 1293,
+          "terrain": "High mountains",
+          "flights": 16315,
+          "launches": 9,
+          "ground_m": 1768.0,
+          "max_alt_m": 3814.938656730257
+        },
+        {
+          "ix": 185,
+          "iy": 1295,
+          "terrain": "High mountains",
+          "flights": 15840,
+          "launches": 5,
+          "ground_m": 1756.0,
+          "max_alt_m": 3908.988525390625
+        },
+        {
+          "ix": 184,
+          "iy": 1294,
+          "terrain": "High mountains",
+          "flights": 15213,
+          "launches": 224,
+          "ground_m": 1966.5,
+          "max_alt_m": 3925.8857421875
+        }
+      ],
+      "ranking_bands": [
+        "High mountains"
+      ],
+      "coverage": {
+        "selected": 15840,
+        "decoded": 15840,
+        "unclassified": 5586,
+        "unavailable": 0,
+        "unknown_clock": 0
+      },
+      "background_kind": "colour",
+      "background": {
+        "extent": [
+          925000.0,
+          6475000.0,
+          930000.0,
+          6480000.0
+        ],
+        "crs": "EPSG:2154",
+        "size": [
+          1500,
+          1500
+        ],
+        "attribution": "\u00a9 IGN / G\u00e9oplateforme \u00b7 Plan IGN",
+        "source_url": "https://data.geopf.fr/wms-r",
+        "layer": "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2",
+        "retrieved": "2026-09-16T12:52:06.986065+00:00",
+        "note": "Mosaic acquisition dates vary spatially and differ from flight dates."
+      },
+      "background_pixels_sha256": "8c4f3a56d14661e82f964555f5e1e76c609dd825bc82051536013c76332616e6",
+      "ridges": {
+        "count": 24,
+        "provenance": {
+          "source_url": "https://data.geopf.fr/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES&STYLES=normal&CRS=EPSG%3A2154&BBOX=924500.0%2C6474500.0%2C930500.0%2C6480500.0&WIDTH=240&HEIGHT=240&FORMAT=image%2Ftiff",
+          "dataset_url": "https://www.data.gouv.fr/datasets/rge-alti-r",
+          "layer": "ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES",
+          "attribution": "Crests derived from \u00a9 IGN RGE ALTI \u00b7 Licence Ouverte 2.0",
+          "licence": "Licence Ouverte 2.0",
+          "retrieved_utc": "2026-09-22T15:24:28.557881+00:00",
+          "derived_utc": "2026-09-22T15:29:06.952850+00:00",
+          "derivation_code_sha256": "097f79508273c65e26912088bd99b8e73fa7f20c2eed2ff01fec7fabbd3821be",
+          "response_bytes": 230534,
+          "response_sha256": "b398a93eda52edd034e4332359e6fdb1032c10fdb82d6a0398161ea331b7a81d",
+          "terrain_file": "ign-terrain-185-1295.tif",
+          "raster_bounds_epsg2154": [
+            924500.0,
+            6474500.0,
+            930500.0,
+            6480500.0
+          ],
+          "bounds_epsg2154": [
+            925000.0,
+            6475000.0,
+            930000.0,
+            6480000.0
+          ],
+          "parameters": {
+            "grid_m": 25,
+            "buffer_m": 500,
+            "gaussian_sigma_m": 50,
+            "minimum_transverse_curvature_per_m": 0.0003,
+            "transverse_probe_m": 200,
+            "minimum_drop_each_side_m": 5,
+            "minimum_line_length_m": 200
+          },
+          "terrain_height_range_m": [
+            234.40577697753906,
+            2025.4847412109375
+          ],
+          "method": "Gaussian-smoothed DEM; zero derivative along most concave Hessian eigenvector; negative curvature, two-sided drop and length filters. No flight coordinates used.",
+          "limitations": "Approximate, scale-dependent crests; not an official or exhaustive ridge network. Gaps remain at weak ridges, orientation transitions and junctions; no invented links."
+        },
+        "file_sha256": "a0be0bdecffed5da935c865f42b1118aadbb4436f56bcd574c4356b15195a079"
+      }
+    },
+    {
+      "name": "plains",
+      "viewer_id": "P1",
+      "viewer_rank": 1,
+      "ix": 89,
+      "iy": 1374,
+      "terrain": "Plains",
+      "flights": 2246,
+      "launches": 1165,
+      "ground_m": 185.0,
+      "max_alt_m": 2371.17138671875,
+      "bounds_epsg2154": [
+        445000.0,
+        6870000.0,
+        450000.0,
+        6875000.0
+      ],
+      "centre_lon_lat": [
+        -0.4454404131627175,
+        48.90291457007768
+      ],
+      "region": "Channel Coast",
+      "ranking_candidates": [
+        {
+          "ix": 89,
+          "iy": 1374,
+          "terrain": "Plains",
+          "flights": 2246,
+          "launches": 1165,
+          "ground_m": 185.0,
+          "max_alt_m": 2371.17138671875
+        },
+        {
+          "ix": 196,
+          "iy": 1312,
+          "terrain": "Plains",
+          "flights": 1596,
+          "launches": 1,
+          "ground_m": 188.0,
+          "max_alt_m": 3583.6572265625
+        },
+        {
+          "ix": 89,
+          "iy": 1375,
+          "terrain": "Plains",
+          "flights": 1463,
+          "launches": 1440,
+          "ground_m": 224.0,
+          "max_alt_m": 2335.257080078125
+        }
+      ],
+      "ranking_bands": [
+        "Plains"
+      ],
+      "coverage": {
+        "selected": 2246,
+        "decoded": 2246,
+        "unclassified": 744,
+        "unavailable": 0,
+        "unknown_clock": 0
+      },
+      "background_kind": "colour",
+      "background": {
+        "extent": [
+          445000.0,
+          6870000.0,
+          450000.0,
+          6875000.0
+        ],
+        "crs": "EPSG:2154",
+        "size": [
+          1500,
+          1500
+        ],
+        "attribution": "\u00a9 IGN / G\u00e9oplateforme \u00b7 Plan IGN",
+        "source_url": "https://data.geopf.fr/wms-r",
+        "layer": "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2",
+        "retrieved": "2026-09-16T12:42:53.285411+00:00",
+        "note": "Current mosaic; acquisition date differs by location and from flight dates."
+      },
+      "background_pixels_sha256": "bcf59cb3c95f992efb922bf76f8426aa562106e9c29dfb8fde44110b1dd57cd1",
+      "ridges": {
+        "count": 33,
+        "provenance": {
+          "source_url": "https://data.geopf.fr/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES&STYLES=normal&CRS=EPSG%3A2154&BBOX=444500.0%2C6869500.0%2C450500.0%2C6875500.0&WIDTH=240&HEIGHT=240&FORMAT=image%2Ftiff",
+          "dataset_url": "https://www.data.gouv.fr/datasets/rge-alti-r",
+          "layer": "ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES",
+          "attribution": "Crests derived from \u00a9 IGN RGE ALTI \u00b7 Licence Ouverte 2.0",
+          "licence": "Licence Ouverte 2.0",
+          "retrieved_utc": "2026-09-22T15:24:20.202399+00:00",
+          "derived_utc": "2026-09-22T15:29:06.358312+00:00",
+          "derivation_code_sha256": "097f79508273c65e26912088bd99b8e73fa7f20c2eed2ff01fec7fabbd3821be",
+          "response_bytes": 230534,
+          "response_sha256": "4a616d091f5d468a185d403aa11c961de47e5e15bf5ce478a33a9e87d63874e1",
+          "terrain_file": "ign-terrain-89-1374.tif",
+          "raster_bounds_epsg2154": [
+            444500.0,
+            6869500.0,
+            450500.0,
+            6875500.0
+          ],
+          "bounds_epsg2154": [
+            445000.0,
+            6870000.0,
+            450000.0,
+            6875000.0
+          ],
+          "parameters": {
+            "grid_m": 25,
+            "buffer_m": 500,
+            "gaussian_sigma_m": 50,
+            "minimum_transverse_curvature_per_m": 0.0003,
+            "transverse_probe_m": 200,
+            "minimum_drop_each_side_m": 5,
+            "minimum_line_length_m": 200
+          },
+          "terrain_height_range_m": [
+            31.681900024414062,
+            305.5207824707031
+          ],
+          "method": "Gaussian-smoothed DEM; zero derivative along most concave Hessian eigenvector; negative curvature, two-sided drop and length filters. No flight coordinates used.",
+          "limitations": "Approximate, scale-dependent crests; not an official or exhaustive ridge network. Gaps remain at weak ridges, orientation transitions and junctions; no invented links."
+        },
+        "file_sha256": "83f5544124b8f7168215619cd4b1459584639bd3f87faa7f3b64dd071776ee07"
+      }
+    }
+  ],
+  "code_sha256": {
+    "presentations/offsite2026/render_thermal_panels.py": "7f43877ba2e0eca872e3012fb7e84323a0a259176c7e0e0acfe80611fe9dd370",
+    "src/soaring/viewer/thermal_store.py": "be3da49f7f4ffe05c9c368c32e52ff7c0b2a3d11955a17120ac78486cb744e41",
+    "src/soaring/viewer/thermal_daily.py": "ad7ac1fb54b716b8b3e0989f64621a368b02559dd9a40c895764f4ab10c7f99a",
+    "src/soaring/viewer/thermal_geometry.py": "036a4d1448794f22cb382f8244b34481a7612ca315d0647155719e31883b1400",
+    "src/soaring/viewer/widgets/thermal_plane.py": "2fe9f27ca49e89e04b8b5baed57ec988ac2d627253603b5aab314ac1b0350119",
+    "src/soaring/viewer/geography.py": "b69d31374433f209d0574f7676ee4f870933e30591ad1b358dd25f265410d0f1",
+    "data/basemap.json": "7b5021aa211507d37793458760201bc75f0d03d58147e3d272b2bad83f7b654c",
+    "src/soaring/viewer/thermal_orography.py": "e346da777c13ab30d8a76341f3bdba355c233a7a7b3863062b6ff71e4b7a98e6",
+    "src/soaring/viewer/thermal_ridges.py": "097f79508273c65e26912088bd99b8e73fa7f20c2eed2ff01fec7fabbd3821be"
+  },
+  "locator": {
+    "basemap": "data/basemap.json",
+    "markers": "Geographic cell centres; marker sizes exaggerated for visibility."
+  }
+}
