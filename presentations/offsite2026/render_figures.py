@@ -7,6 +7,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = Path(__file__).resolve().parent / "assets"
@@ -25,11 +26,14 @@ plt.rcParams.update({"font.family":"serif", "font.serif":["Palatino","DejaVu Ser
  "ytick.labelsize":11, "axes.spines.top":False,"axes.spines.right":False,
  "pdf.fonttype":42,"axes.edgecolor":"#666666", "text.color":"#202A35"})
 plot_weights(compute_weights(C), OUT / "circuit-weights.pdf", colors=ALT,
-             figsize=(11.8, 3.5), fontsize=13)
+             figsize=(11.8, 3.5), fontsize=13, show_counts=True)
 
 def a(x): return np.asarray(x, dtype=float)
 def hci(h):
     return f"{h['point']:.3f} [{h['low']:.3f}, {h['high']:.3f}]"
+def group_label(key, name):
+    g = C["groups"][key]
+    return f"{name} (N={g['flights']:,})\nH={hci(g['fit']['hurst'])}"
 def save(fig, name):
     fig.savefig(OUT / f"{name}.pdf", bbox_inches="tight", pad_inches=.05, metadata={"CreationDate":None,"ModDate":None})
     fig.savefig(OUT / f"{name}.png", bbox_inches="tight", pad_inches=.05, dpi=180)
@@ -60,10 +64,12 @@ for ax,slug,title in zip(axs,["para","hang"],["Paragliders","Hang gliders"]):
     for j,ran in enumerate(["10-100","10-1000"]):
         fits=d["cohort_h_comparisons"][ran]["fits"]
         for key,offset,color in [("100",-.18,"#B5C0CD"),("1000",0,"#7C92AB"),("10000",.18,STEEL)]:
-            if key in fits: herror(ax,j+offset,fits[key]["hurst"],color,label=r"$C_{"+key+"}$" if j==0 else None)
+            label = rf"$C_{{{key}}}$: N={d['cohorts'][key]['flights']:,}"
+            if key in fits: herror(ax,j+offset,fits[key]["hurst"],color,label=label if j==0 else None)
     ax.set_title(title);ax.set_xticks([0,1],["10–100 s","10–1000 s"]);ax.set_xlabel("Same fit range")
     ax.grid(axis="y",color="#E2E7EC");ax.set_xlim(-.5,1.5)
-axs[0].set_ylabel("Effective exponent H");axs[0].legend(frameon=False,fontsize=10,loc="lower left")
+    ax.legend(frameon=False,fontsize=9.5,loc="lower left",handlelength=1)
+axs[0].set_ylabel("Effective exponent H")
 save(fig,"selection")
 
 # Full C_10000 from 10 s onward; increasing cadence-limited support below 10 s.
@@ -73,8 +79,9 @@ for ax in axs:
 for slug,color,label in [("para",BLUE,"Paragliders"),("hang",RUST,"Hang gliders")]:
     d=CADENCE["results"][slug];h=d["fit_10_10000"]
     x=a(CADENCE["lags_s"])
-    for ax,field,scale,legend in [(axs[0],"msd",1e6,f"{label}: H = {hci(h)}"),
-                                 (axs[1],"local_h",1,label)]:
+    population = f"{label} (N={d['flights']:,} from 10 s)"
+    for ax,field,scale,legend in [(axs[0],"msd",1e6,f"{population}\nH = {hci(h)}"),
+                                 (axs[1],"local_h",1,population)]:
         p,l,u=[a(d[field][k])/scale for k in ["point","low","high"]]
         ax.fill_between(x,l,u,color=color,alpha=.17,lw=0)
         ax.plot(x,p,color=color,lw=1.7,label=legend)
@@ -101,27 +108,42 @@ for slug,prefix in [("para","CadencePara"),("hang","CadenceHang")]:
 cadence_tex.append(r"\newcommand{\CadenceLagCount}{"+str(len(CADENCE["lags_s"]))+"}")
 (OUT.parent/"cadence-values.tex").write_text("\n".join(cadence_tex)+"\n")
 
+# Distinct flights, not crossings, for each coloured thermal-map category.
+thermal_report = json.loads((OUT / "screenshots/thermal-panels-report.json").read_text())
+thermal_counts = ["% Generated from the verified saved crossing CSVs by render_figures.py."]
+for panel in thermal_report["panels"]:
+    csv_path = OUT / "screenshots" / f"{panel['name']}-points.csv"
+    assert hashlib.sha256(csv_path.read_bytes()).hexdigest() == panel["points_sha256"]
+    points = pd.read_csv(csv_path)
+    distinct = points[["discipline", "flight_id"]].drop_duplicates()
+    assert len(points) == panel["points"] and len(distinct) == panel["flights"]
+    counts = distinct.discipline.value_counts()
+    prefix = "Thermal" + "".join(word.capitalize() for word in panel["name"].split("-"))
+    for discipline, suffix in [("paragliders", "ParaN"), ("hang gliders", "HangN")]:
+        thermal_counts.append(rf"\newcommand{{\{prefix}{suffix}}}{{{counts.get(discipline, 0):,}}}")
+(OUT / "screenshots/thermal-flight-counts.tex").write_text("\n".join(thermal_counts)+"\n")
+
 # Conditional curves, without re-fitting any saved result.
 fig,ax=plt.subplots(figsize=(7.4,4.2),layout="constrained")
 for i,(name,color) in enumerate(zip(NAMES,ALT)):
     g=C["groups"][f"alt{i}"]
     interval=["<300 m","300–800 m","800–1,500 m","≥1,500 m"][i]
-    curve(ax,f"alt{i}",color,f"{name} ({interval})\nH={hci(g['fit']['hurst'])}")
+    curve(ax,f"alt{i}",color,group_label(f"alt{i}",f"{name}, {interval}"))
 ax.legend(frameon=False,loc="upper left")
 save(fig,"altitude")
 
-fig,axs=plt.subplots(1,2,figsize=(11.8,4.1),layout="constrained",sharey=True)
+fig,axs=plt.subplots(1,2,figsize=(11.8,3.65),layout="constrained",sharey=True)
 for ax,title,keys in zip(axs,[r"Mountain launches: $z_0\geq800$ m",r"Lowland launches: $z_0<800$ m"],
  [[("alps","Alps",WINE),("pyrenees","Pyrenees",GOLD)],[("channel_coast","Channel Coast",TEAL),("champagne_lorraine","Champagne-Lorraine",STEEL)]]):
     for key,label,color in keys:
         h=C["groups"][key]["fit"]["hurst"]
-        curve(ax,key,color,f"{label}\nH={hci(h)}")
+        curve(ax,key,color,group_label(key,label))
     ax.set_title(title);ax.legend(frameon=False,loc="upper left")
 save(fig,"regions")
 
 fig,ax=plt.subplots(figsize=(7.4,4.2),layout="constrained")
 for key,color in [("open",BLUE),("closed",WINE)]:
-    g=C["groups"][key];curve(ax,key,color,f"{key.capitalize()}  H={hci(g['fit']['hurst'])}")
+    curve(ax,key,color,group_label(key,key.capitalize()))
 ax.legend(frameon=False,loc="upper left");save(fig,"circuit")
 
 # Interaction: display the fitted exponents with their archived intervals.
@@ -141,15 +163,20 @@ save(fig,"interaction")
 
 fig,axs=plt.subplots(1,2,figsize=(11.8,4.05),layout="constrained",gridspec_kw={"width_ratios":[1.1,1]})
 for key,label,color in [("beginners","Beginners",STEEL),("experts","Experts",GOLD)]:
-    g=C["groups"][key];curve(axs[0],key,color,f"{label}\nH={hci(g['fit']['hurst'])}")
+    curve(axs[0],key,color,group_label(key,label))
 axs[0].legend(frameon=False,loc="upper left");axs[0].set_title("All initial altitudes pooled")
 ax=axs[1];keys=["experts_beginners"]+[f"equipment_alt{i}" for i in range(4)]
 for i,(key,color) in enumerate(zip(keys,[STEEL]+ALT)):
     h=C["contrasts"][key]["hurst"]
     ax.errorbar(h["point"],4-i,xerr=[[h["point"]-h["low"]],[h["high"]-h["point"]]],fmt="o",color=color,ms=7,capsize=4)
-ax.axvline(0,ls=":",color="#888888");ax.set_yticks(range(5),list(reversed(["All altitudes"]+NAMES)))
+count_labels = []
+for label, suffix in zip(["All altitudes"]+NAMES, [""]+[f"_alt{i}" for i in range(4)]):
+    beginners = C["groups"]["beginners"+suffix]["flights"]
+    experts = C["groups"]["experts"+suffix]["flights"]
+    count_labels.append(f"{label}\nN: {beginners:,} B / {experts:,} E")
+ax.axvline(0,ls=":",color="#888888");ax.set_yticks(range(5),list(reversed(count_labels)),fontsize=10)
 ax.set_xlim(-.002,.031);ax.grid(axis="x",color="#E2E7EC");ax.set_xlabel(r"$\Delta H$: Experts minus Beginners")
-ax.set_title("The difference survives altitude stratification")
+ax.set_title("B: Beginners; E: Experts")
 save(fig,"equipment")
 
 inputs=["thesis/tesi/01-introduction.tex","thesis/tesi/03-dataset.tex","thesis/tesi/04-fixed-transport.tex",
@@ -157,12 +184,13 @@ inputs=["thesis/tesi/01-introduction.tex","thesis/tesi/03-dataset.tex","thesis/t
  "scripts/tesi/ch03_fixed_transport/write_ch3_text.py",
  "thesis/generated/ch3_transport_report.json","thesis/generated/ch3_conditional.json",
  "thesis/generated/stats.tex","thesis/generated/pipeline_census.tex",
- "thesis/generated/prelim_map.pdf","presentations/theme.tex",
+ "thesis/generated/prelim_map.pdf","thesis/generated/prelim.tex","presentations/theme.tex",
  "thesis/generated/ch3_transport_grid_bootstrap.json","thesis/generated/ch3_transport_grid_bootstrap_values.tex",
  "docs/guide/thermal-planes.md","src/soaring/viewer/widgets/thermal_plane.py",
  "presentations/offsite2026/cadence-support-report.json","presentations/offsite2026/measure_cadence_support.py",
  "scripts/tesi/ch03_fixed_transport/circuit_msd_weights.py", "thesis/references.bib",
  "presentations/offsite2026/offsite-2026.tex",
+ "presentations/offsite2026/render_figures.py",
  "presentations/offsite2026/preprocessing-global-frame.tex",
  "presentations/offsite2026/render_thermal_panels.py",
  "presentations/offsite2026/assets/screenshots/thermal-panels-report.json",
@@ -175,7 +203,15 @@ inputs=["thesis/tesi/01-introduction.tex","thesis/tesi/03-dataset.tex","thesis/t
  "scripts/pipeline/prepare_thermal_ridges.py",
  "data/thermal_orography/ign-ridges-185-1295.geojson",
  "data/thermal_orography/ign-ridges-89-1374.geojson"]
-manifest={"scope":"Current thesis Chapters 1–2 and Sections 3.1–3.2: marginal and stratified comparisons, within-altitude circuit MSD contributions, and motivation for future factorial/group-solo analysis; plus a qualitative thermal-viewer comparison", "operation":"Redraw saved estimates and intervals. Slide 9 extends C_10000 below 10 s with cadence-limited support, and densely evaluates the original estimator above 10 s. Original bootstrap draws and 10–10000 s fits are preserved; see cadence-support-report.json. Circuit weights use the full altitude-class MSD denominator and observed curves only.", "inputs":[]}
+inputs += [f"presentations/offsite2026/assets/screenshots/{p['name']}-points.csv" for p in thermal_report["panels"]]
+inputs.append("presentations/offsite2026/assets/screenshots/thermal-flight-counts.tex")
+# Preserve recorded artwork and logo sources when refreshing numerical figures.
+previous_manifest = OUT.parent / "source-manifest.json"
+if previous_manifest.exists():
+    for item in json.loads(previous_manifest.read_text())["inputs"]:
+        if item["path"] not in inputs:
+            inputs.append(item["path"])
+manifest={"scope":"Thesis Chapters 1–2 and Sections 3.1–3.2; thermal-plane topography; research agenda with a stochastic-flight schematic, sources and conclusions; factorial, directional-memory and bootstrap appendices (28 slides).", "operation":"Redraw saved estimates and intervals. Slide 9 extends C_10000 below 10 s with cadence-limited support, and densely evaluates the original estimator above 10 s. Original bootstrap draws and 10–10000 s fits are preserved; see cadence-support-report.json. Circuit weights use the full altitude-class MSD denominator and observed curves only. Every plotted category reports its flight count; thermal-map counts use distinct flights from verified crossing CSVs.", "inputs":[]}
 for rel in inputs:
     p=ROOT/rel;manifest["inputs"].append({"path":rel,"sha256":hashlib.sha256(p.read_bytes()).hexdigest()})
 (OUT.parent/"source-manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")

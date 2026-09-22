@@ -43,21 +43,28 @@ def compute_weights(report):
     return {"lags_s": report["lags_s"], "classes": rows}
 
 
-def plot_weights(data, path, *, colors=None, figsize=(7.1, 3.5), fontsize=9):
+def plot_weights(data, path, *, colors=None, figsize=(7.1, 3.5), fontsize=9,
+                 show_counts=False):
     colors = colors or list(ALTITUDE_COLORS.values())
     with plt.rc_context({"font.family": "serif", "font.size": fontsize, "pdf.fonttype": 42}):
         fig, axes = plt.subplots(1, 2, figsize=figsize, sharex=True, sharey=True, layout="constrained")
         for ax, circuit in zip(axes, ("open", "closed"), strict=True):
             for row, color in zip(data["classes"], colors, strict=True):
-                ax.plot(data["lags_s"], row[f"w_{circuit}"], color=color, lw=1.8, label=row["class"])
+                label = row["class"]
+                if show_counts:
+                    count = round(row[f"p_{circuit}"] * row["flights"])
+                    label += f" (N={count:,})"
+                ax.plot(data["lags_s"], row[f"w_{circuit}"], color=color, lw=1.8, label=label)
             ax.set(xscale="log", xlim=(10, 10000), ylim=(-0.02, 1.04),
                    xlabel=r"Lag $\tau$ (s)", title=f"{circuit.capitalize()} contribution within each altitude class")
             ax.set_title(ax.get_title(), fontsize=fontsize)
             ax.grid(alpha=0.22)
             ax.spines[["top", "right"]].set_visible(False)
         axes[0].set_ylabel(r"Share of the class MSD, $w_{c\mid a}(\tau)$")
-        axes[0].legend(loc="upper left", bbox_to_anchor=(0.015, 0.78),
-                       frameon=False, fontsize=fontsize - 1)
+        for ax in axes if show_counts else axes[:1]:
+            legend_top = 0.64 if show_counts and ax is axes[1] else 0.78
+            ax.legend(loc="upper left", bbox_to_anchor=(0.015, legend_top),
+                      frameon=False, fontsize=fontsize - (2 if show_counts else 1))
         fig.savefig(path, bbox_inches="tight", metadata={"CreationDate": None, "ModDate": None})
         plt.close(fig)
 

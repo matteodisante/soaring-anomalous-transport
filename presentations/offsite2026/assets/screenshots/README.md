@@ -38,6 +38,11 @@ not the full cell populations. The renderer does not impose the MSD cohort's
 duration restriction. Both disciplines contribute: blue is paragliders,
 orange is hang gliders.
 
+Slide 16 also reports distinct flights by discipline: 1,249 PG / 12 HG at
+H2 100 m, 1,434 / 18 at H2 600 m, 733 / 1 at P1 100 m, and 574 / 0 at P1
+600 m. `render_figures.py` verifies the saved crossing CSV hashes and exports
+these counts into `thermal-flight-counts.tex`; it needs no SSD access.
+
 Each map covers the same 5 × 5 km Lambert-93 square within its pair, north up.
 **The viewer's AGL is relative to a fixed cell reference, not local terrain.**
 A low horizontal plane can intersect hillsides, restricting possible airborne
@@ -78,6 +83,7 @@ Reproduce from the repository root, with the prepared SSD connected:
 
 ```bash
 MPLCONFIGDIR=/tmp/soaring-offsite-mpl .venv/bin/python presentations/offsite2026/render_thermal_panels.py
+MPLCONFIGDIR=/tmp/soaring-offsite-mpl .venv/bin/python presentations/offsite2026/render_figures.py
 python3 presentations/offsite2026/build.py
 ```
 

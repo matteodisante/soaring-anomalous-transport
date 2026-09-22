@@ -5,10 +5,12 @@
 \definecolor{climbgreen}{HTML}{00843D}
 \input{../../thesis/generated/stats.tex}
 \input{../../thesis/generated/pipeline_census.tex}
+\input{../../thesis/generated/prelim.tex}
 \input{../../thesis/generated/ch3_transport_values.tex}
 \input{../../thesis/generated/ch3_conditional_values.tex}
 \input{cadence-values.tex}
 \input{assets/screenshots/thermal-panel-values.tex}
+\input{assets/screenshots/thermal-flight-counts.tex}
 \hypersetup{pdftitle={The statistics of soaring flight},pdfsubject={EconophysicsLab offsite 2026}}
 \setbeamertemplate{frametitle}{}
 \setbeamertemplate{footline}{}
@@ -39,8 +41,7 @@
  \end{tikzpicture}}
 % Heights and counts are exported together by render_thermal_panels.py.
 \newcommand{\thermalpanel}[4]{%
- \fill[pisablight!12](#1,#2)rectangle({#1+33.5},{#2+33.5});
- \node[inner sep=0pt]at({#1+16.75},{#2+16.75}){\includegraphics[width=33.5mm,height=33.5mm,keepaspectratio]{assets/screenshots/#3.pdf}};
+ \node[inner sep=0pt]at({#1+16.75},{#2+15.25}){\includegraphics[width=30.5mm,height=30.5mm,keepaspectratio]{assets/screenshots/#3.pdf}};
 }
 
 \begin{document}
@@ -91,7 +92,7 @@
  \txt[text=hang,font=\fontsize{20}{23}\selectfont\bfseries]{90}{51}{63}{\num{\StatHangDownloaded}}
  \smalltxt[]{90}{60}{63}{Hang-glider tracklogs\\2001--2002 to 2025--2026}
  \bottomline{IGC trajectories + metadata: time, position, altitude, site, circuit and wing class}
- \credit{Thesis Ch. 2; map: retained flights, both disciplines. Colour = flights per 0.15$^\circ$ cell (log scale).}
+ \credit{France map: \num{\StatPrelimParaMetroFlights} paraglider and \num{\StatPrelimHangMetroFlights} hang-glider flights. Colour: flights per 0.15$^\circ$ cell (log scale). Thesis Ch. 2.}
 \notetext{The source is the FFVL Coupe F\'ed\'erale de Distance, with separate archives for paragliders and hang gliders. The verified downloads contain 186,052 and 6,716 tracklogs. Season names refer to their starting year. The IGC files supply time-stamped coordinates and altitude channels, while the catalogue supplies flight date, declared take-off site, route class and wing class. The map shows the retained population, not the raw downloads; both disciplines are pooled. About 94.8 percent of retained flights are in metropolitan France, with a strong Alpine concentration. Additional flights occur in La R\'eunion and elsewhere. This is a submitted cross-country archive with uneven geographic coverage, not a random sample of all free flight. Sources: thesis Chapter 2; generated/stats.tex, pipeline\_census.tex and prelim\_map.pdf.}
 \finishslide\end{frame}
 
@@ -174,7 +175,7 @@
   \draw[pisablight,line width=2pt](8,\y)--(48,\y);
   \draw[para,line width=2pt](\cutx,\y)--(48,\y);
   \draw[hang,line width=.9pt](\cutx,\y-1.7)--(\cutx,\y+1.7);
-  \smalltxt[text=muted,font=\fontsize{6.5}{8}\selectfont]{8}{\y+2}{44}{\fpeval{round(100*\drop/\entry,2)}\% excluded at this check}
+  \smalltxt[text=muted,font=\fontsize{6.5}{8}\selectfont]{8}{\y+2}{44}{\fpeval{round(100*\drop/\entry,2)}\% excluded ($N=\num{\entry}$)}
  }
  \smalltxt[text=muted,font=\fontsize{7}{8.5}\selectfont]{8}{70}{44}{Plus integrity and reach checks}
  % Global ellipsoid geometry is adapted directly from the thesis figure.
@@ -322,7 +323,7 @@
 \begin{frame}[plain]\frametitle{Displacement growth from 1 s to 10,000 s}\startslide{Displacement growth from 1 s to 10,000 s}
  \smalltxt[text=pisablue]{7}{15}{146}{$C_{10000}$: changing support below 10 s; the same flights at every lag from 10 to 10,000 s.}
  \figureat{7}{19.5}{146}{fixed}
- \smalltxt[text=muted,font=\fontsize{6.5}{8}\selectfont]{7}{71.5}{146}{Below 10 s the sample changes, so the local slope also reflects composition.}
+ \smalltxt[text=muted,font=\fontsize{6.5}{8}\selectfont]{7}{71.5}{146}{At 1 s: \CadenceParaStartCount\ paragliders, \CadenceHangStartCount\ hang gliders. Support grows to the legend counts at 10 s.}
  \bottomline{$H_{\rm PG}=\CadenceParaH\,[\CadenceParaLow,\CadenceParaHigh]$; $H_{\rm HG}=\CadenceHangH\,[\CadenceHangLow,\CadenceHangHigh]$ over 10--10,000 s}
  \bootstrapcredit
 \notetext{The parent population is the original C10000 cohort, with the same selected long segments. Below ten seconds, a segment contributes when its native logging interval is no larger than the lag. Thus the contributing population grows from \CadenceParaStartCount\ paragliders and \CadenceHangStartCount\ hang gliders at one second to the full \CadenceParaCount\ and \CadenceHangCount\ at ten seconds. It stays fixed thereafter, through 10,000 seconds.\par\medskip At short lags we use native origins and linearly interpolate endpoints when the lag is not a multiple of the logging interval, always within the selected segment span. This monotone admission rule differs from Figure 3.1: that figure uses the general population and requires exact native short-lag resolution, so its short-lag counts need not grow monotonically. From ten seconds, this slide uses the thesis's common ten-second grid and reproduces every original MSD point.\par\medskip There are \CadenceLagCount\ evaluated lags, including every second from one to ten. Local H is half the log--log slope in a plus/minus 0.25-decade window, expanded to the nearest three lags when sparse. The one-second estimate uses one to three seconds. Slopes below ten seconds, and windows crossing that boundary, combine dynamics with changing sample composition. Lines connect computed estimates.\par\medskip The original 10--10,000 second fits and 1,000 paired site--day bootstrap draws are preserved: H=\CadenceParaH\ [\CadenceParaLow,\CadenceParaHigh] and \CadenceHangH\ [\CadenceHangLow,\CadenceHangHigh]. Bands are pointwise 90 percent intervals. Sources: thesis Section 3.1; cadence-support-report.json and measure\_cadence\_support.py.}
@@ -387,7 +388,7 @@
  \fill[pisablight!33](7,74.7)rectangle(153,83);
  \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont]{10}{75.5}{140}{Low mountains: 33.5\% open flights supply 60.6\% of the MSD at 10,000 s.}
  \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{79.2}{140}{Changing MSD shares shape both the amplitude and fitted $H$ of the pooled curve.}
- \credit{Observed shares; each class has its own denominator, including unclassified flights. No confidence bands.}
+ \credit{$N$: circuit flights within each altitude class; denominator includes unclassified flights. Observed shares, no confidence bands.}
 \notetext{For a fixed altitude class a, multiply each circuit's mean-square displacement by its flight fraction and divide by the full class MSD. This is the within-class contribution, not the contribution of altitude classes to all open flights. Open, closed and unclassified shares sum to one within each class and lag; the four coloured curves within one panel do not sum to one.\par\medskip Open flights are numerous in Plains and Hills and have larger MSDs, producing 99.4 and 97.6 percent of their class MSD at 10000 s. In Low mountains, open flights are only 33.5 percent of flights but contribute 60.6 percent of the MSD at that lag. In High mountains, closed routes still supply about 51.9 percent. The unclassified contribution remains small and is explicitly retained.\par\medskip Flight fractions stay fixed, whereas MSD shares change with lag as circuit curves grow differently. These contributions shape the mixed MSD and its fitted H. A share is not an exact averaging weight for the H fitted over the whole interval. We retain no new local-exponent derivation. Source: thesis Section 3.2.2; circuit\_msd\_weights.py and ch3\_conditional.json.}
 \finishslide\end{frame}
 
@@ -403,11 +404,13 @@
 
 \begin{frame}[plain]\frametitle{Is launch altitude enough to describe transport?}\startslide{Is launch altitude enough to describe transport?}
  \figureat{7}{16}{146}{regions}
+ \smalltxt[text=pisablue,font=\fontsize{7.5}{9}\selectfont]{9}{63}{69}{\textbf{Mountain hypothesis:} slope-linked lift\\ties routes to ridge and valley geometry.}
+ \smalltxt[text=pisablue,font=\fontsize{7.5}{9}\selectfont]{86}{63}{68}{\textbf{Lowland hypothesis:} roads and dark fields\\may supply broadly distributed thermal triggers.}
  \fill[pisablight!33](7,74.7)rectangle(153,83);
  \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont]{10}{75.5}{140}{$\Delta H$: Alps--Pyrenees \CondMountainRegionsDelta{}; lowlands \CondLowlandRegionsDelta{}.}
- \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{79.2}{140}{Broad altitude classes do not capture all transport differences.}
+ \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{79.2}{140}{Similar lowland $H$; Pyrenees may constrain routes more than the Alps.}
  \bootstrapcredit
-\notetext{This comparison holds the broad altitude setting fixed within geographic boxes. The Alpine and Pyrenean groups retain only launches at or above 800 metres; the two lowland groups retain only launches below 800 metres. There are 32,790 Alpine flights, 2,257 Pyrenean flights, 1,068 Channel Coast flights and 798 Champagne-Lorraine flights. Alpine H is \CondAlpsH{} versus \CondPyreneesH{} in the Pyrenees; their paired difference is 0.037 [0.033,0.041]. The lowland exponents are \CondChannelCoastH{} and \CondChampagneLorraineH{}, with difference -0.002 [-0.005,0.001]. A similar exponent does not imply identical motion: displacement amplitudes and curve shapes can differ. These selections do not match weather, route composition, exact altitude, site or equipment. The regional contrast is descriptive and does not identify the effect of mountain geometry or thermal triggers. To examine the spatial mechanism directly, the next slide compares climb locations at two heights in selected mountain and plains cells. Source: thesis Section 3.2.3; ch3\_conditional.json.}
+\notetext{The regional selections hold broad launch altitude fixed: at least 800 m in the Alps and Pyrenees, below 800 m in Channel Coast and Champagne-Lorraine. Legends give the selected flight counts. Alps H is \CondAlpsH{} against \CondPyreneesH{} in the Pyrenees, with paired difference 0.037 [0.033,0.041]. The lowland difference is -0.002 [-0.005,0.001]: their growth exponents are similar, although MSD amplitudes differ.\par\medskip The identity of the plain may matter less for H when thermal triggers have comparable spatial statistics. Roads, asphalt and dark ploughed fields provide candidate heated patches distributed across lowland landscapes. Comparable spacing and availability are hypotheses; trigger locations are not mapped here.\par\medskip In mountains, thermally heated slopes and wind-driven slope lift link usable lift to ridge and valley geometry. We interpret lower H and smaller long-lag MSD in the Pyrenees as consistent with stronger constraints on net progress than in the Alps. Alpine terrain may offer more connected route choices. H alone does not count accessible directions. Circuit mix, equipment, weather and detailed launch altitude remain unmatched.\par\medskip Sources: thesis Section 3.2.3; ch3\_conditional.json; SSA, \href{https://www.ssa.org/lift-sources/}{Lift Sources}; FAA Glider Flying Handbook, Chapter 9.}
 \finishslide\end{frame}
 
 \begin{frame}[plain]\frametitle{How do climb locations change with height?}\startslide{How do climb locations change with height?}
@@ -424,14 +427,18 @@
  \thermalpanel{44.5}{37}{mountain-high}{}
  \thermalpanel{82}{37}{plains-low}{}
  \thermalpanel{119.5}{37}{plains-high}{}
- \smalltxt[align=center,font=\fontsize{6.5}{8}\selectfont]{7}{71.2}{33.5}{\ThermalMountainLowCounts}
- \smalltxt[align=center,font=\fontsize{6.5}{8}\selectfont]{44.5}{71.2}{33.5}{\ThermalMountainHighCounts}
- \smalltxt[align=center,font=\fontsize{6.5}{8}\selectfont]{82}{71.2}{33.5}{\ThermalPlainsLowCounts}
- \smalltxt[align=center,font=\fontsize{6.5}{8}\selectfont]{119.5}{71.2}{33.5}{\ThermalPlainsHighCounts}
+ \smalltxt[align=center,font=\fontsize{6.5}{8}\selectfont]{7}{68.5}{33.5}{\ThermalMountainLowCounts}
+ \smalltxt[align=center,font=\fontsize{6.5}{8}\selectfont]{44.5}{68.5}{33.5}{\ThermalMountainHighCounts}
+ \smalltxt[align=center,font=\fontsize{6.5}{8}\selectfont]{82}{68.5}{33.5}{\ThermalPlainsLowCounts}
+ \smalltxt[align=center,font=\fontsize{6.5}{8}\selectfont]{119.5}{68.5}{33.5}{\ThermalPlainsHighCounts}
+ \smalltxt[align=center,font=\fontsize{6.5}{8}\selectfont]{7}{71.5}{33.5}{PG: \ThermalMountainLowParaN\quad HG: \ThermalMountainLowHangN}
+ \smalltxt[align=center,font=\fontsize{6.5}{8}\selectfont]{44.5}{71.5}{33.5}{PG: \ThermalMountainHighParaN\quad HG: \ThermalMountainHighHangN}
+ \smalltxt[align=center,font=\fontsize{6.5}{8}\selectfont]{82}{71.5}{33.5}{PG: \ThermalPlainsLowParaN\quad HG: \ThermalPlainsLowHangN}
+ \smalltxt[align=center,font=\fontsize{6.5}{8}\selectfont]{119.5}{71.5}{33.5}{PG: \ThermalPlainsHighParaN\quad HG: \ThermalPlainsHighHangN}
  \fill[pisablight!33](7,74.7)rectangle(153,83);
  \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{75.5}{140}{100 to 600 m: P1 climbs spread out; H2 climbs stay near slopes and ridges.}
  \smalltxt[text=pisablue,font=\fontsize{8}{10}\selectfont]{10}{79.6}{140}{Observed lift use is less confined aloft in P1, supporting more spatial freedom for route choices.}
- \credit{Blue/orange: paragliders/hang gliders. Red: approximate IGN DEM-derived crests. AGL: fixed cell reference. \copyright\ IGN Plan IGN / RGE ALTI.}
+ \credit{PG/HG: distinct paraglider/hang-glider flights, blue/orange. Red: approximate crests. AGL: fixed cell reference. \copyright\ IGN Plan IGN / RGE ALTI.}
 \notetext{The two five-kilometre viewer cells are H2, High mountains number 2 near Aulp du Seuil in the Chartreuse, Alps; and P1, Plains number 1 in inland Suisse Normande within the Channel Coast box. P1 contains local slopes despite its low starting-altitude class. Both disciplines and all available dates through June 2026 contribute, without seasonal or MSD-duration cuts.\par\medskip Heights are offsets from fixed references: 1756 m ASL in H2, based on five screened starts, and 185 m in P1, based on 1165. They are not local terrain clearance. Red crests are independently derived from IGN RGE ALTI at 25 m sampling with 50 m smoothing. These scale-dependent traces include secondary ridges and retain gaps at weak or ambiguous junctions. They do not move with the flight plane.\par\medskip H2's two main bands at 100 m chiefly follow outer slopes of separate ridges: Lances de Malissard and Aulp du Seuil--Bellefont, enclosing the Vallon de Marcieu. They do not simply flank one central crest. In P1, crossings cluster near local slopes at 100 m and occupy a broader area at 600 m; H2 retains narrower terrain-associated corridors.\par\medskip This is observed lift use, not tracked thermal centres. Possible slope lift and different flights and weather contribute at each height. Source distribution and wind advection are proposed explanations on the next slide; neither wind profiles nor their contribution to H are measured here. Sources: prepared viewer intersections; IGN Plan IGN and RGE ALTI, Licence Ouverte 2.0.}
 \finishslide\end{frame}
 

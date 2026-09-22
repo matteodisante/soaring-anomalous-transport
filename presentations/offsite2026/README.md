@@ -14,6 +14,14 @@ Key messages use bold Palatino in the existing steel-blue takeaway bands.
 Two-line result bands distinguish the bold takeaway from supporting figures or
 interpretation in regular weight, without introducing new emphasis colours.
 
+Every empirical plot identifies the number of distinct flights in each plotted
+category. Curve legends include `N`, each equipment contrast gives both group
+sizes, and the thermal maps distinguish paraglider and hang-glider flights from
+crossing counts. Cohort legends are discipline-specific. On slide 9, the legends
+give the fixed counts from 10 s onward and the caption gives the smaller 1 s
+counts. `render_figures.py` reads these numbers from the existing reports and
+verified crossing CSVs, without remeasuring trajectories or changing fits.
+
 The cover's white lower band carries Econophysics Lab, CFM and Institut Louis
 Bachelier. It uses the high-resolution black/blue Lab wordmark, CFM without the
 tagline, and the wide ILB vector mark so its full name remains readable. Content
@@ -52,7 +60,7 @@ README for the source filenames.
 12. Plains > Hills > Mountains in pooled H; circuit composition motivates the within-altitude comparison.
 13. Circuit contributions depend on both flight fractions and MSD; changing shares affect amplitude and fitted H.
 14. The altitude ordering reverses by circuit: a quantified interaction.
-15. Regional comparisons show that a broad altitude label does not determine transport; the next maps examine local use of lift.
+15. Regional comparisons show similar H in the two lowlands and a lower H in the Pyrenees than in the Alps. The interpretation proposes broadly distributed lowland thermal triggers and stronger Pyrenean route constraints from terrain-linked lift; neither trigger uniformity nor route accessibility is measured here.
 16. Thermal-plane maps: requested viewer cells High mountains #2 (H2, Chartreuse, Alps) and Plains #1 (P1, Suisse Normande, Channel Coast), at 100 and 600 m above each cell reference. All dates and years are pooled. Coloured IGN maps, crossing/flight counts, approximate red crests derived from IGN RGE ALTI and a France locator also appear in the thesis.
 17. Scientific 3D perspective schematic: heated mountain slopes versus separated lowland heat sources, with possible wind profiles and advection. Source distribution plus variable wind may broaden pooled climb locations aloft; terrain guidance is a proposed explanation for the narrower circuit gap.
 18. Experts-versus-Beginners contrasts persist within altitude classes and vary across them; a constant speed multiplier cannot explain a difference in H.
