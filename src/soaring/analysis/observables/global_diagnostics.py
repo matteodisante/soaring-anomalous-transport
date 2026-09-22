@@ -8,17 +8,22 @@ import unicodedata
 import numpy as np
 
 
+def _normalized_task(task: str) -> str:
+    """Fold accents and case from a declared FFVL route-type label."""
+    return "".join(
+        char
+        for char in unicodedata.normalize("NFKD", str(task).lower())
+        if not unicodedata.combining(char)
+    ).strip()
+
+
 def declared_task_class(task: str) -> str:
     """Map explicit scored route types to open, closed or unknown.
 
     Out-and-return and quadrilateral courses are closed as well as triangles.
     Hike-and-fly labels alone do not identify route geometry.
     """
-    normalized = "".join(
-        char
-        for char in unicodedata.normalize("NFKD", str(task).lower())
-        if not unicodedata.combining(char)
-    ).strip()
+    normalized = _normalized_task(task)
     if normalized.startswith("triangle") or normalized in {
         "quadrilatere",
         "aller-retour",
@@ -27,6 +32,20 @@ def declared_task_class(task: str) -> str:
     if normalized in {"dist libre", "dist 1 pt", "dist 2 pts", "dist 3 pts"}:
         return "open"
     return "unknown"
+
+
+def closed_route_geometry(task: str) -> str:
+    """Split closed routes by declared geometry: triangle or out-and-return.
+
+    Quadrilateral courses are closed but match neither shape and are reported
+    as ``"other"``, alongside every open or unclassified label.
+    """
+    normalized = _normalized_task(task)
+    if normalized.startswith("triangle"):
+        return "triangle"
+    if normalized == "aller-retour":
+        return "out_and_return"
+    return "other"
 
 
 def log_slope(lags: np.ndarray, values: np.ndarray) -> tuple[float, float]:

@@ -6,6 +6,7 @@ their earlier A/B versus C/D/CCC convention in reporting.glider_class.
 
 import numpy as np
 
+from soaring.analysis.observables.global_diagnostics import closed_route_geometry
 from soaring.analysis.regions import region_box_masks
 from soaring.reporting.glider_class import canonical_wing_class
 
@@ -25,6 +26,17 @@ def strata(frame):
     groups = {"all": np.ones(len(frame), dtype=bool)}
     for task in ("open", "closed"):
         groups[task] = frame.task.eq(task).fillna(False).to_numpy(dtype=bool)
+    geometry = (
+        frame.flight_type.map(closed_route_geometry)
+        if "flight_type" in frame
+        else None
+    )
+    for shape in ("triangle", "out_and_return"):
+        groups[shape] = (
+            geometry.eq(shape).to_numpy(dtype=bool)
+            if geometry is not None
+            else np.zeros(len(frame), dtype=bool)
+        )
     for i, band in enumerate(BANDS):
         groups[f"alt{i}"] = (
             frame.altitude_band.eq(band).fillna(False).to_numpy(dtype=bool)

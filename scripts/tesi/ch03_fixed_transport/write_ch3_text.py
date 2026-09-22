@@ -87,7 +87,7 @@ def write_text(report, out):
     m.per_discipline(
         "GeneralRmsRatio", [f"{10 ** g['rms_dex']['point']:.2f}" for g in general]
     )
-    # The chapter says the residuals change sign three times and peak at the longest lags.
+    # The chapter says residuals change sign three times and peak at long lags.
     for s in SLUGS:
         resid = general_fit_residuals(results[s])[1]
         flips = int(np.sum(np.diff(np.sign(resid)) != 0))
@@ -103,7 +103,9 @@ def write_text(report, out):
         raise ValueError("Rewrite the general-fit range sentence: disciplines differ")
     (fit_min, fit_max), (first_lag, last_lag) = requested.pop(), evaluated.pop()
     if first_lag != fit_min:
-        raise ValueError("Rewrite the general-fit range sentence: first lag is not 10 s")
+        raise ValueError(
+            "Rewrite the general-fit range sentence: first lag is not 10 s"
+        )
     m.add("ChThreeGeneralFitLagMin", fit_min)
     m.add("ChThreeGeneralFitLagMax", fit_max)
     m.add("ChThreeGeneralLastFitLag", last_lag)
@@ -236,6 +238,8 @@ def write_text(report, out):
         m.add(f"ChThree{label}Unknown", f"{counts.get('unknown', 0):,}")
     contrasts = d["hurst_contrasts"]
     direct = [contrasts[f"open_minus_closed_{i}"] for i in range(4)]
+    for name, contrast in zip(("Plains", "Hills", "Low", "High"), direct, strict=True):
+        m.add(f"ChThreeTaskGap{name}", interval(contrast))
     # The chapter states that every open-minus-closed interval excludes zero.
     if not all(c["low"] > 0 for c in direct):
         raise ValueError(

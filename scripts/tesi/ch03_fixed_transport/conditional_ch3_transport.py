@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "src"))
 from check_bootstrap_reliability import load_inputs, signature
 from conditional_plot_style import CONDITIONAL_COLORS
+from circuit_msd_weights import publish_weights
 from render_ch3_fixed import axes_style, band
 from summarize_ch3_fixed import fit_summary, portable, summary
 
@@ -37,6 +38,12 @@ from soaring.analysis.regions import region_box_masks
 PREFIX = "ch3_conditional"
 PANELS = {
     "circuit": [("All initial altitudes", [("open", "Open"), ("closed", "Closed")])],
+    "circuit_geometry": [
+        (
+            "Closed routes",
+            [("triangle", "Triangle"), ("out_and_return", "Out-and-return")],
+        )
+    ],
     "altitude": [("All circuit types", [(f"alt{i}", b) for i, b in enumerate(BANDS)])],
     "regions": [
         ("Low + High mountains", [("alps", "Alps"), ("pyrenees", "Pyrenees")]),
@@ -118,6 +125,7 @@ def measure(data, out):
         comparisons[key] = {"terms": terms, "hurst": summary(differences)}
 
     contrast("open_closed", [("open", 1), ("closed", -1)])
+    contrast("triangle_out_and_return", [("triangle", 1), ("out_and_return", -1)])
     contrast("experts_beginners", [("experts", 1), ("beginners", -1)])
     for i in range(4):
         contrast(
@@ -333,6 +341,7 @@ def render(report, out):
     (out / f"{PREFIX}.json").write_text(
         json.dumps(report, indent=2, allow_nan=False) + "\n"
     )
+    publish_weights(report, out)
 
 
 def main():

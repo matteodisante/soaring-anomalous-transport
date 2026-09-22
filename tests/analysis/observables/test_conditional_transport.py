@@ -48,7 +48,37 @@ def test_equipment_and_terrain_intersections_keep_order_and_exclude_unknowns():
     ]
     assert not groups["open"][-1]
     assert not groups["lowlands"][-1]
+    assert not groups["triangle"].any()
+    assert not groups["out_and_return"].any()
     assert frame.index.tolist() == [19, 2, 7, 4, 100]
+
+
+def test_declared_geometry_keeps_row_order_and_excludes_other_routes():
+    frame = pd.DataFrame(
+        {
+            "wing_class": ["A ou 1"] * 6,
+            "task": ["closed", "closed", "closed", "closed", "open", None],
+            "flight_type": [
+                " Triangle FAI ",
+                "Triangle plat",
+                " ALLER-RETOUR ",
+                "Quadrilatère",
+                "Distance libre",
+                None,
+            ],
+            "altitude_band": ["Plains"] * 6,
+            "lon0": [1] * 6,
+            "lat0": [49] * 6,
+        },
+        index=[19, 2, 7, 4, 100, 3],
+    )
+    groups = strata(frame)
+    assert groups["triangle"].tolist() == [True, True, False, False, False, False]
+    assert groups["out_and_return"].tolist() == [
+        False, False, True, False, False, False
+    ]
+    assert groups["closed"].tolist() == [True, True, True, True, False, False]
+    assert frame.index.tolist() == [19, 2, 7, 4, 100, 3]
 
 
 def test_region_selection_requires_appropriate_terrain_within_box():

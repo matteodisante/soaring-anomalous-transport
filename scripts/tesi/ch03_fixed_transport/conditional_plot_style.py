@@ -1,6 +1,7 @@
 """Semantic palettes for Section 3.2, separate from discipline blue/orange."""
 
 CIRCUIT_COLORS = {"Open": "#7B3294", "Closed": "#008577"}
+GEOMETRY_COLORS = {"Triangle": "#D1495B", "Out-and-return": "#3D5A80"}
 ALTITUDE_COLORS = {
     "Plains": "#547A3B",
     "Hills": "#9B7A35",
@@ -16,6 +17,7 @@ REGION_COLORS = {
 EQUIPMENT_COLORS = {"Beginners": "#686868", "Experts": "#B83B83"}
 CONDITIONAL_COLORS = {
     **CIRCUIT_COLORS,
+    **GEOMETRY_COLORS,
     **ALTITUDE_COLORS,
     **REGION_COLORS,
     **EQUIPMENT_COLORS,
