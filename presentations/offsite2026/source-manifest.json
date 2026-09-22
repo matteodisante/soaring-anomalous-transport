@@ -1,6 +1,6 @@
 {
-  "scope": "Current thesis Chapters 1\u20132 and Sections 3.1\u20133.2, plus a qualitative thermal-viewer comparison",
-  "operation": "Redraw saved estimates and intervals. Slide 8 extends C_10000 below 10 s with cadence-limited support, and densely evaluates the original estimator above 10 s. Original bootstrap draws and 10\u201310000 s fits are preserved; see cadence-support-report.json.",
+  "scope": "Thesis Chapters 1\u20132 and Sections 3.1\u20133.2; thermal-plane topography; research agenda with a stochastic-flight schematic, sources and conclusions; factorial, directional-memory and bootstrap appendices (28 slides).",
+  "operation": "Redraw saved estimates and intervals. Slide 9 extends C_10000 below 10 s with cadence-limited support, and densely evaluates the original estimator above 10 s. Original bootstrap draws and 10\u201310000 s fits are preserved; see cadence-support-report.json. Circuit weights use the full altitude-class MSD denominator and observed curves only.",
   "inputs": [
     {
       "path": "thesis/tesi/01-introduction.tex",
@@ -12,7 +12,15 @@
     },
     {
       "path": "thesis/tesi/04-fixed-transport.tex",
-      "sha256": "9308c2395d3ab0f01dbf3a819dbd66b4f3049f7d65c4b7875e91c27a2f5022d8"
+      "sha256": "9b30552c7c9f4a5472156e0418ec1981966b473a8fc1f5d17366e86baef255a2"
+    },
+    {
+      "path": "thesis/generated/ch3_transport_values.tex",
+      "sha256": "53f293e93f76706e9d5a2631030a5ec5afe151ca9113d93f97b132f5ff502135"
+    },
+    {
+      "path": "scripts/tesi/ch03_fixed_transport/write_ch3_text.py",
+      "sha256": "9063963c532e07dc83b01c31a47d6b90568e0fbb81a95f00993f9411580935f5"
     },
     {
       "path": "thesis/generated/ch3_transport_report.json",
@@ -20,7 +28,7 @@
     },
     {
       "path": "thesis/generated/ch3_conditional.json",
-      "sha256": "13aa25322b1e3b262ae983461a13f69e539ac7ef91f5f83f347d0fb824abb2e4"
+      "sha256": "26426a6e69285f662b89296a47074305247ab6f31a8181cf84a462e69db5fc83"
     },
     {
       "path": "thesis/generated/stats.tex",
@@ -48,11 +56,11 @@
     },
     {
       "path": "docs/guide/thermal-planes.md",
-      "sha256": "c3b88222831406578575cff08d4411d5ed03da2c6d2fb2f84852d2c826b8e0fe"
+      "sha256": "ef70d7c7c6f1385a44c10d424ade3fcf7707d98217c6f8fe8d5ce98f989e0dfc"
     },
     {
       "path": "src/soaring/viewer/widgets/thermal_plane.py",
-      "sha256": "887a30b60dc002c872dbd854a6fab099e4fdd0dcdbdb86a953736a408804c154"
+      "sha256": "2fe9f27ca49e89e04b8b5baed57ec988ac2d627253603b5aab314ac1b0350119"
     },
     {
       "path": "presentations/offsite2026/cadence-support-report.json",
@@ -60,7 +68,71 @@
     },
     {
       "path": "presentations/offsite2026/measure_cadence_support.py",
-      "sha256": "cf3021dc51d484650362fb0795c05625c768eccf682d5d7f8863c86316a5f63d"
+      "sha256": "34beb005d96b253079bcccd75ae229cb1da50d0686339ced186a826d821202b9"
+    },
+    {
+      "path": "scripts/tesi/ch03_fixed_transport/circuit_msd_weights.py",
+      "sha256": "a56b6c7a67bc8256515851b33de55fbce41101ee761072459a01d820281b5d33"
+    },
+    {
+      "path": "thesis/references.bib",
+      "sha256": "4920094547167f24455c99adbd732b54e09a8828ec6252e88eb34da5030cdbb9"
+    },
+    {
+      "path": "presentations/offsite2026/offsite-2026.tex",
+      "sha256": "36eea3da0bf75dd9d381fc46dbdcfed7048994f52a353c7b3057ea21f578a533"
+    },
+    {
+      "path": "presentations/offsite2026/preprocessing-global-frame.tex",
+      "sha256": "750998fd8e83714e3a1b15f769b81fb3e73c55e0bdbd0af061dc2d5581e818cf"
+    },
+    {
+      "path": "presentations/offsite2026/render_thermal_panels.py",
+      "sha256": "7f43877ba2e0eca872e3012fb7e84323a0a259176c7e0e0acfe80611fe9dd370"
+    },
+    {
+      "path": "presentations/offsite2026/assets/screenshots/thermal-panels-report.json",
+      "sha256": "4765100c374ff7394a31fe73d7f0e8245cdfa80c64d1a69e2f361948ee9e6732"
+    },
+    {
+      "path": "presentations/offsite2026/assets/screenshots/thermal-panel-values.tex",
+      "sha256": "4399ec0716f10ad28196de65079e0d7c0f4b45be3630d478a2fabb781d77ec3c"
+    },
+    {
+      "path": "data/basemap.json",
+      "sha256": "7b5021aa211507d37793458760201bc75f0d03d58147e3d272b2bad83f7b654c"
+    },
+    {
+      "path": "presentations/offsite2026/assets/screenshots/cell-locator.pdf",
+      "sha256": "792713ac8922e201100fbbd6f6142ead055f9b385f6abd0d9f44a8ac27e46cc7"
+    },
+    {
+      "path": "presentations/offsite2026/assets/thermal-mechanism-3d.png",
+      "sha256": "6ba7b542defa7c28129565e3a1797d5ee9b8974b77e82aa560ff0a71740e8e34"
+    },
+    {
+      "path": "presentations/offsite2026/assets/thermal-mechanism-3d-prompt.txt",
+      "sha256": "cee828df3eaa1bfc57be5f55445e65bf7291755ba89b9dbd67e09c5b92f161f2"
+    },
+    {
+      "path": "src/soaring/viewer/thermal_orography.py",
+      "sha256": "e346da777c13ab30d8a76341f3bdba355c233a7a7b3863062b6ff71e4b7a98e6"
+    },
+    {
+      "path": "src/soaring/viewer/thermal_ridges.py",
+      "sha256": "097f79508273c65e26912088bd99b8e73fa7f20c2eed2ff01fec7fabbd3821be"
+    },
+    {
+      "path": "scripts/pipeline/prepare_thermal_ridges.py",
+      "sha256": "dc5a20f0616ac3af3f78e136a5396c5b2afcc87f764e51b3010e70bde3a80d13"
+    },
+    {
+      "path": "data/thermal_orography/ign-ridges-185-1295.geojson",
+      "sha256": "a0be0bdecffed5da935c865f42b1118aadbb4436f56bcd574c4356b15195a079"
+    },
+    {
+      "path": "data/thermal_orography/ign-ridges-89-1374.geojson",
+      "sha256": "83f5544124b8f7168215619cd4b1459584639bd3f87faa7f3b64dd071776ee07"
     }
   ]
 }

@@ -1,4 +1,4 @@
-"""Compile the fifteen-slide offsite deck and the companion speaker-notes PDF."""
+"""Compile the twenty-eight-slide offsite deck and the companion speaker-notes PDF."""
 from pathlib import Path
 import shutil
 import subprocess
@@ -21,5 +21,5 @@ for notes in (False, True):
     shutil.copy2(build / (stem + ".pdf"), ROOT / (stem + ".pdf"))
     info = subprocess.check_output(["pdfinfo", str(ROOT / (stem + ".pdf"))], text=True)
     pages = int(next(line.split(":")[1] for line in info.splitlines() if line.startswith("Pages:")))
-    assert pages == 15, (stem, pages)
+    assert pages == 28, (stem, pages)
     print(f"Built {stem}.pdf ({pages} pages)")

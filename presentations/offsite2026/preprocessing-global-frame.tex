@@ -1,0 +1,109 @@
+% Adapted from thesis/tesi/03-dataset.tex, fig:enu-rotation (a).
+% Oblate ellipsoid and normal geometry retained; flattening exaggerated.
+    \begin{tikzpicture}[reset cm,x=1cm,y=1cm,font=\fontsize{11}{12}\selectfont, scale=1.15, dot/.style={circle, fill, inner sep=1pt}]
+      % Orthographic projection M(az,el): world (x,y,z) -> screen
+      % (x*bXu+y*bYu+z*bZu, x*bXv+y*bYv+z*bZv), times \Rg. Drawn as an OBLATE ellipsoid
+      % (polar ratio \kk=b/a, flattening exaggerated); everything is true-to-ECEF, so U
+      % follows the geodetic normal, which does not pass through O (cf. Fig.~\ref{fig:ellipsoid}).
+      \def\az{25}\def\el{20}\def\Rg{2.55}
+      \def\lat{44}\def\lon{58}   % P0's geodetic latitude phi and longitude lambda
+      \def\La{0.64}              % ENU arrow length (world units, normalised)
+      \def\hs{0.22}              % tangent-square half-size (world units)
+      \def\kk{0.75}              % b/a (flattening grossly exaggerated; true WGS84 ~0.9967)
+      \pgfmathsetmacro{\eesq}{1-\kk*\kk}   % first eccentricity squared
+      \pgfmathsetmacro{\bXu}{-sin(\az)} \pgfmathsetmacro{\bXv}{-sin(\el)*cos(\az)}
+      \pgfmathsetmacro{\bYu}{cos(\az)}  \pgfmathsetmacro{\bYv}{-sin(\el)*sin(\az)}
+      \pgfmathsetmacro{\bZu}{0}         \pgfmathsetmacro{\bZv}{cos(\el)}
+      \def\PX#1#2#3{\Rg*((#1)*\bXu+(#2)*\bYu+(#3)*\bZu)}
+      \def\PY#1#2#3{\Rg*((#1)*\bXv+(#2)*\bYv+(#3)*\bZv)}
+
+      \pgfmathsetmacro{\cphi}{cos(\lat)} \pgfmathsetmacro{\sphi}{sin(\lat)}
+      \pgfmathsetmacro{\clam}{cos(\lon)} \pgfmathsetmacro{\slam}{sin(\lon)}
+      \pgfmathsetmacro{\Nrad}{1/sqrt(1-\eesq*\sphi*\sphi)}   % N(phi), with a=1
+      % P0 on the ellipsoid surface (true ECEF), and the geodetic normal = Up direction
+      \pgfmathsetmacro{\Px}{\Nrad*\cphi*\clam} \pgfmathsetmacro{\Py}{\Nrad*\cphi*\slam}
+      \pgfmathsetmacro{\Pz}{\Nrad*(1-\eesq)*\sphi}
+      \pgfmathsetmacro{\Ux}{\cphi*\clam} \pgfmathsetmacro{\Uy}{\cphi*\slam} \pgfmathsetmacro{\Uz}{\sphi}
+      % unit East, North tangent vectors at P0 (Up is the normal above, NOT radial)
+      \pgfmathsetmacro{\Ex}{-\slam} \pgfmathsetmacro{\Ey}{\clam}
+      \pgfmathsetmacro{\Nx}{-\sphi*\clam} \pgfmathsetmacro{\Ny}{-\sphi*\slam}
+      \pgfmathsetmacro{\Nz}{\cphi}
+      % G: where the normal crosses the equatorial plane (|OG| = e^2 N cos phi, along lambda)
+      \pgfmathsetmacro{\Gx}{\Nrad*\eesq*\cphi*\clam} \pgfmathsetmacro{\Gy}{\Nrad*\eesq*\cphi*\slam}
+      % silhouette basis: outline = image of the unit sphere under M.diag(1,1,kk); f1,f2 are
+      % an orthonormal basis of the plane perpendicular to that 2x3 map's null direction
+      \pgfmathsetmacro{\athree}{tan(\el)/\kk}
+      \pgfmathsetmacro{\nn}{sqrt(1+\athree*\athree)}
+      \pgfmathsetmacro{\fIx}{sin(\az)} \pgfmathsetmacro{\fIy}{-cos(\az)}
+      \pgfmathsetmacro{\fIIx}{\athree*cos(\az)/\nn} \pgfmathsetmacro{\fIIy}{\athree*sin(\az)/\nn}
+      \pgfmathsetmacro{\fIIz}{-1/\nn}
+      \coordinate (O)  at (0,0);
+      \coordinate (P0) at ({\PX{\Px}{\Py}{\Pz}},{\PY{\Px}{\Py}{\Pz}});
+      \coordinate (G)  at ({\PX{\Gx}{\Gy}{0}},{\PY{\Gx}{\Gy}{0}});
+      \coordinate (Et) at ({\PX{\Px+\La*\Ex}{\Py+\La*\Ey}{\Pz}},
+                           {\PY{\Px+\La*\Ex}{\Py+\La*\Ey}{\Pz}});
+      \coordinate (Nt) at ({\PX{\Px+\La*\Nx}{\Py+\La*\Ny}{\Pz+\La*\Nz}},
+                           {\PY{\Px+\La*\Nx}{\Py+\La*\Ny}{\Pz+\La*\Nz}});
+      \coordinate (Ut) at ({\PX{\Px+\La*\Ux}{\Py+\La*\Uy}{\Pz+\La*\Uz}},
+                           {\PY{\Px+\La*\Ux}{\Py+\La*\Uy}{\Pz+\La*\Uz}});
+      \coordinate (sa) at ({\PX{\Px+\hs*\Ex+\hs*\Nx}{\Py+\hs*\Ey+\hs*\Ny}{\Pz+\hs*\Nz}},
+                           {\PY{\Px+\hs*\Ex+\hs*\Nx}{\Py+\hs*\Ey+\hs*\Ny}{\Pz+\hs*\Nz}});
+      \coordinate (sb) at ({\PX{\Px-\hs*\Ex+\hs*\Nx}{\Py-\hs*\Ey+\hs*\Ny}{\Pz+\hs*\Nz}},
+                           {\PY{\Px-\hs*\Ex+\hs*\Nx}{\Py-\hs*\Ey+\hs*\Ny}{\Pz+\hs*\Nz}});
+      \coordinate (sc) at ({\PX{\Px-\hs*\Ex-\hs*\Nx}{\Py-\hs*\Ey-\hs*\Ny}{\Pz-\hs*\Nz}},
+                           {\PY{\Px-\hs*\Ex-\hs*\Nx}{\Py-\hs*\Ey-\hs*\Ny}{\Pz-\hs*\Nz}});
+      \coordinate (sd) at ({\PX{\Px+\hs*\Ex-\hs*\Nx}{\Py+\hs*\Ey-\hs*\Ny}{\Pz-\hs*\Nz}},
+                           {\PY{\Px+\hs*\Ex-\hs*\Nx}{\Py+\hs*\Ey-\hs*\Ny}{\Pz-\hs*\Nz}});
+
+      % ellipsoid: equator (back half dashed / front half solid) + exact projected outline
+      \draw[black!35, densely dashed, line width=0.5pt] plot[domain=115:295, samples=48, smooth, variable=\t]
+        ({\PX{cos(\t)}{sin(\t)}{0}},{\PY{cos(\t)}{sin(\t)}{0}});
+      \draw[black!55, line width=0.7pt] plot[domain=0:360, samples=96, smooth, variable=\t]
+        ({\PX{cos(\t)*\fIx+sin(\t)*\fIIx}{cos(\t)*\fIy+sin(\t)*\fIIy}{\kk*sin(\t)*\fIIz}},
+         {\PY{cos(\t)*\fIx+sin(\t)*\fIIx}{cos(\t)*\fIy+sin(\t)*\fIIy}{\kk*sin(\t)*\fIIz}});
+      \draw[black!45, line width=0.6pt] plot[domain=-65:115, samples=48, smooth, variable=\t]
+        ({\PX{cos(\t)}{sin(\t)}{0}},{\PY{cos(\t)}{sin(\t)}{0}});
+      % prime meridian (X--Z plane) and P0's meridian (equator up to the pole); z scaled by kk
+      \draw[black!30, line width=0.5pt] plot[domain=-68:112, samples=40, smooth, variable=\t]
+        ({\PX{cos(\t)}{0}{\kk*sin(\t)}},{\PY{cos(\t)}{0}{\kk*sin(\t)}});
+      \draw[black!30, line width=0.5pt] plot[domain=0:90, samples=30, smooth, variable=\t]
+        ({\PX{cos(\t)*\clam}{cos(\t)*\slam}{\kk*sin(\t)}},
+         {\PY{cos(\t)*\clam}{cos(\t)*\slam}{\kk*sin(\t)}});
+
+      % global ECEF axes (blue): dashed stub on the hidden side, solid arrow outward
+      \draw[para, densely dashed, line width=0.7pt] (O) -- ({\PX{-0.5}{0}{0}},{\PY{-0.5}{0}{0}});
+      \draw[para, ->, line width=0.7pt] (O) -- ({\PX{1.5}{0}{0}},{\PY{1.5}{0}{0}}) node[anchor=north, inner sep=3pt] {$X$};
+      \draw[para, densely dashed, line width=0.7pt] (O) -- ({\PX{0}{-0.5}{0}},{\PY{0}{-0.5}{0}});
+      \draw[para, ->, line width=0.7pt] (O) -- ({\PX{0}{1.55}{0}},{\PY{0}{1.55}{0}}) node[anchor=west, inner sep=3pt] {$Y$};
+      \draw[para, densely dashed, line width=0.7pt] (O) -- (0,{\PY{0}{0}{-0.62}});
+      \draw[para, ->, line width=0.7pt] (O) -- (0,{\PY{0}{0}{1.32}}) node[anchor=south, inner sep=3pt] {$Z$};
+      \node[dot, black!55] at (O) {};
+      \node[text=black!55, fill=white, inner sep=1pt, below left=-2pt] at (O) {$O$};
+
+      % local tangent plane (green square), drawn first so the normal/angles show on top
+      \draw[teal, fill=teal!8] (sa) -- (sb) -- (sc) -- (sd) -- cycle;
+
+      % locating angles (red): longitude lambda at O (equatorial plane); geodetic latitude
+      % phi at the foot G, between the equatorial direction and the normal G--P0 (= Up line)
+      \draw[hang, line width=0.7pt] (O) -- (G) -- (P0);
+      \draw[hang, line width=0.7pt] plot[domain=0:\lon, samples=24, smooth, variable=\t]
+        ({\PX{0.48*cos(\t)}{0.48*sin(\t)}{0}},{\PY{0.48*cos(\t)}{0.48*sin(\t)}{0}});
+      \node[hang, fill=white, inner sep=1pt]
+        at ({\PX{0.62*cos(\lon/2)}{0.62*sin(\lon/2)}{0}},
+            {\PY{0.62*cos(\lon/2)}{0.62*sin(\lon/2)}{0}}) {$\lambda_0$};
+      \draw[hang, line width=0.7pt] plot[domain=0:\lat, samples=24, smooth, variable=\t]
+        ({\PX{\Gx+0.5*cos(\t)*\clam}{\Gy+0.5*cos(\t)*\slam}{0.5*sin(\t)}},
+         {\PY{\Gx+0.5*cos(\t)*\clam}{\Gy+0.5*cos(\t)*\slam}{0.5*sin(\t)}});
+      \node[hang, fill=white, inner sep=1pt] at
+        ({\PX{\Gx+0.80*cos(\lat/2)*\clam}{\Gy+0.80*cos(\lat/2)*\slam}{0.80*sin(\lat/2)}},
+         {\PY{\Gx+0.80*cos(\lat/2)*\clam}{\Gy+0.80*cos(\lat/2)*\slam}{0.80*sin(\lat/2)}})
+        {$\varphi_0$};
+      \node[hang, fill=white, inner sep=1pt, below right=-2pt] at (G) {$G$};
+
+      % ENU triad at P0 (Up is the normal, drawn on top of the square and the red normal)
+      \draw[->, line width=1.2pt, teal] (P0) -- (Et) node[anchor=west, inner sep=2pt] {$E$};
+      \draw[->, line width=1.2pt, teal] (P0) -- (Nt) node[anchor=south east, inner sep=1pt] {$N$};
+      \draw[->, line width=1.2pt, teal] (P0) -- (Ut) node[anchor=south west, inner sep=1pt] {$U$};
+      \node[dot] at (P0) {};
+      \node[fill=white, inner sep=1pt, right=1pt] at (P0) {$P_0$};
+    \end{tikzpicture}

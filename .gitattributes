@@ -2,6 +2,9 @@
 revisions/**/*.txt -text
 revisions/**/*.json -text
 
+# PDF streams and original logos must not receive text diff or newline handling.
+*.pdf binary
+
 # These historical inputs contain original whitespace covered by their checksums.
 # Current source files and authored documentation retain normal whitespace checks.
 revisions/cleaner-documentation-2026-09-10/cleaning-after.py.txt -whitespace
