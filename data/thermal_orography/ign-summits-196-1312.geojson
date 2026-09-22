@@ -1,0 +1,95 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "detail_orographique.91163",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          983554.59977935,
+          6563764.80474048
+        ]
+      },
+      "geometry_name": "geometrie",
+      "properties": {
+        "cleabs": "PAIOROGR0000000067334865",
+        "nature": "Sommet",
+        "nature_detaillee": null,
+        "toponyme": "les Têtes",
+        "statut_du_toponyme": "Validé",
+        "importance": "3",
+        "date_creation": "2007-03-27T05:54:42.842Z",
+        "date_modification": "2019-09-20T16:10:23.317Z",
+        "date_d_apparition": null,
+        "date_de_confirmation": null,
+        "sources": null,
+        "identifiants_sources": null,
+        "methode_d_acquisition_planimetrique": "BDNyme",
+        "precision_planimetrique": 30,
+        "insee_commune": "74294",
+        "identifiant_voie_ban": null,
+        "id_ban_odonyme": null
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "detail_orographique.91164",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          981071.99978126,
+          6564257.90474047
+        ]
+      },
+      "geometry_name": "geometrie",
+      "properties": {
+        "cleabs": "PAIOROGR0000000067334866",
+        "nature": "Sommet",
+        "nature_detaillee": null,
+        "toponyme": "Montagne de Loex",
+        "statut_du_toponyme": "Validé",
+        "importance": "3",
+        "date_creation": "2007-03-27T05:54:42.842Z",
+        "date_modification": "2019-09-20T16:10:23.317Z",
+        "date_d_apparition": null,
+        "date_de_confirmation": null,
+        "sources": null,
+        "identifiants_sources": "",
+        "methode_d_acquisition_planimetrique": "BDNyme",
+        "precision_planimetrique": 30,
+        "insee_commune": "74276",
+        "identifiant_voie_ban": null,
+        "id_ban_odonyme": null
+      }
+    }
+  ],
+  "totalFeatures": 2,
+  "numberMatched": 2,
+  "numberReturned": 2,
+  "timeStamp": "2026-09-22T14:40:33.883Z",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:EPSG::2154"
+    }
+  },
+  "provenance": {
+    "source_url": "https://data.geopf.fr/wfs/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=BDTOPO_V3%3Adetail_orographique&SRSNAME=EPSG%3A2154&CQL_FILTER=BBOX%28geometrie%2C980000%2C6.56e%2B06%2C985000%2C6.565e%2B06%2C%27EPSG%3A2154%27%29+AND+nature+IN+%28%27Sommet%27%2C%27Pic%27%29&OUTPUTFORMAT=application%2Fjson&COUNT=1000",
+    "dataset_url": "https://www.data.gouv.fr/datasets/bd-topo-r",
+    "layer": "BDTOPO_V3:detail_orographique",
+    "attribution": "Summits: © IGN · BD TOPO · Licence Ouverte 2.0",
+    "licence": "Licence Ouverte 2.0",
+    "retrieved_utc": "2026-09-22T14:40:33.871386+00:00",
+    "response_sha256": "6d038474dad10f7925ad2980a65ef03bccc723a6f931b01a45e834abc8137b99",
+    "response_bytes": 1528,
+    "bounds_epsg2154": [
+      980000.0,
+      6560000.0,
+      985000.0,
+      6565000.0
+    ],
+    "selection": "IGN named relief points: nature Sommet or Pic only.",
+    "note": "Named summit locations, not a complete ridge network or DEM maxima."
+  }
+}

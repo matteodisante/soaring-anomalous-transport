@@ -14,6 +14,7 @@ from matplotlib.figure import Figure
 from matplotlib.patches import Polygon
 from PyQt6.QtCore import QDate, QDateTime, Qt, QThread, QTime, QTimeZone, pyqtSignal
 from PyQt6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QDateEdit,
     QDateTimeEdit,
@@ -31,6 +32,7 @@ from PyQt6.QtWidgets import (
 from .. import geography
 from ..thermal_daily import height_levels, local_bounds
 from ..thermal_geometry import plane_intersections, unproject
+from ..thermal_ridges import draw_ridges, load_ridges
 from ..thermal_store import CancelledError, PlaneData, ThermalStore, load_store
 from .thermal_info import ThermalInfo
 
@@ -112,6 +114,13 @@ class ThermalPlane(QWidget):
         self._background.addItem("Shaded relief", "relief")
         self._background.addItem("None", "none")
         self._background.setCurrentIndex(0)
+        self._ridges = QCheckBox("Crests · IGN DEM")
+        self._ridges.setChecked(True)
+        self._ridges.setToolTip(
+            "Show approximate crest lines derived from IGN terrain, "
+            "including secondary ridges. "
+            "These ground locations do not change with the plane height."
+        )
         self._image_info = QLabel()
         self._image_info.setWordWrap(True)
         self._mode = QComboBox()
@@ -190,6 +199,7 @@ class ThermalPlane(QWidget):
         heights.addWidget(self._height)
         heights.addWidget(self._background)
         heights.addWidget(self._relief_strength)
+        heights.addWidget(self._ridges)
         self._figure = Figure(figsize=(10, 5), layout="constrained")
         self._map_ax, self._plane_ax = self._figure.subplots(
             1, 2, width_ratios=[1, 1.5]
@@ -258,6 +268,7 @@ class ThermalPlane(QWidget):
         self._slider.valueChanged.connect(self._slider_changed)
         self._height.valueChanged.connect(self._height_changed)
         self._relief_strength.valueChanged.connect(self._relief_changed)
+        self._ridges.toggled.connect(self._draw_plane)
         self._canvas.mpl_connect("button_press_event", self._map_clicked)
         self._set_busy(False)
         self._draw_map()
@@ -861,6 +872,22 @@ class ThermalPlane(QWidget):
                 if self._background.currentData() != "none"
                 else ""
             )
+        ridges = None
+        if self._ridges.isChecked() and cell is not None and self._plane_axes:
+            try:
+                ridges = load_ridges(cell)
+                ridge_info = (
+                    f"Red crest lines: {len(ridges['features'])} pieces "
+                    "derived from terrain · "
+                    "© IGN RGE ALTI · Licence Ouverte 2.0"
+                    if ridges is not None
+                    else "IGN crest lines not prepared for this cell"
+                )
+            except (OSError, ValueError, KeyError) as exc:
+                ridge_info = f"IGN crest overlay unavailable: {exc}"
+            self._image_info.setText(
+                " · ".join(filter(None, (self._image_info.text(), ridge_info)))
+            )
         points = None
         if self._plane is not None and cell is not None and self._plane_axes:
             if self._plane.points is not None:
@@ -913,6 +940,8 @@ class ThermalPlane(QWidget):
                     bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.8},
                 )
             selected = points
+            if ridges is not None:
+                draw_ridges(ax, cell, ridges)
             if (
                 self._mode.currentIndex()
                 and selected is not None
@@ -945,7 +974,15 @@ class ThermalPlane(QWidget):
                         color=DISCIPLINES[discipline].color,
                         label=f"{discipline}: {len(group):,}",
                     )
-                ax.legend(fontsize=7, loc="upper right")
+                ax.legend(
+                    fontsize=7,
+                    loc="upper center",
+                    bbox_to_anchor=(0.5, -0.13),
+                    ncol=3,
+                    columnspacing=0.8,
+                    handletextpad=0.3,
+                    borderaxespad=0,
+                )
             else:
                 message = (
                     "No intersections at this height and time"

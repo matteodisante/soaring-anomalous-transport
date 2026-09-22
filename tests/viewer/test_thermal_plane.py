@@ -66,6 +66,56 @@ def test_height_slider_updates_points_without_reloading(widget):
     assert widget._plane_ax.get_ylim() == (0, 5)
 
 
+def test_crest_toggle_and_height_do_not_change_the_loaded_climbs(widget, monkeypatch):
+    from soaring.viewer.widgets import thermal_plane
+
+    cell = widget._cells.currentData()
+    west, south, _, _ = cell.bounds
+    payload = {
+        "features": [
+            {
+                "geometry": {
+                    "coordinates": [
+                        [west + 1000, south + 4000],
+                        [west + 1500, south + 4500],
+                    ]
+                },
+                "properties": {"method": "transverse height maximum"},
+            }
+        ]
+    }
+    monkeypatch.setattr(thermal_plane, "load_ridges", lambda _: payload)
+    widget._height.setValue(500)
+    loaded = widget._plane
+    edges = loaded.edges.copy()
+    widget._draw_plane()
+
+    def positions(label):
+        artist = next(c for c in widget._plane_ax.collections if c.get_label() == label)
+        return artist.get_offsets().tolist()
+
+    ridge = next(
+        line
+        for line in widget._plane_ax.lines
+        if line.get_label() == "IGN DEM-derived crests"
+    )
+    assert ridge.get_xydata().tolist() == [[1, 4], [1.5, 4.5]]
+    climb_positions = positions("paragliders: 1")
+    widget._ridges.setChecked(False)
+    assert len(widget._plane_ax.collections) == 1
+    assert positions("paragliders: 1") == climb_positions
+    widget._ridges.setChecked(True)
+    widget._height.setValue(600)
+    ridge = next(
+        line
+        for line in widget._plane_ax.lines
+        if line.get_label() == "IGN DEM-derived crests"
+    )
+    assert ridge.get_xydata().tolist() == [[1, 4], [1.5, 4.5]]
+    assert widget._plane is loaded
+    pd.testing.assert_frame_equal(widget._plane.edges, edges)
+
+
 def test_source_switch_hides_old_points_and_preserves_cell_and_height_range(widget):
     cell = widget._cells.currentData()
     assert widget._source.currentData() == "vilpellet"
@@ -221,8 +271,8 @@ def test_daily_panels_share_one_row_and_focus_preserves_selection(widget, monkey
             # sets that rcParam globally and never restores it). Checking every
             # slot is what makes this assertion true regardless of test order.
             ax = widget._plane_ax
-            title = ax.get_title(loc="left") or ax.get_title() or ax.get_title(
-                loc="right"
+            title = (
+                ax.get_title(loc="left") or ax.get_title() or ax.get_title(loc="right")
             )
             assert title.startswith(focus.capitalize())
     assert widget._panel_indices == [0, 1, 2]

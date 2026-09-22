@@ -1,0 +1,127 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "detail_orographique.22791",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          934147.69981935,
+          6499183.40474986
+        ]
+      },
+      "geometry_name": "geometrie",
+      "properties": {
+        "cleabs": "PAIOROGR0000000012527595",
+        "nature": "Sommet",
+        "nature_detaillee": null,
+        "toponyme": "Mont Saint-Michel",
+        "statut_du_toponyme": "Validé",
+        "importance": "3",
+        "date_creation": "2006-08-16T13:05:26.711Z",
+        "date_modification": "2021-06-03T10:29:25.128Z",
+        "date_d_apparition": null,
+        "date_de_confirmation": "2021-06-03Z",
+        "sources": null,
+        "identifiants_sources": null,
+        "methode_d_acquisition_planimetrique": "BDNyme",
+        "precision_planimetrique": 30,
+        "insee_commune": "73097",
+        "identifiant_voie_ban": null,
+        "id_ban_odonyme": null
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "detail_orographique.22794",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          934212.09981935,
+          6497267.60475001
+        ]
+      },
+      "geometry_name": "geometrie",
+      "properties": {
+        "cleabs": "PAIOROGR0000000012527598",
+        "nature": "Sommet",
+        "nature_detaillee": null,
+        "toponyme": "Mont Ronjou",
+        "statut_du_toponyme": "Validé",
+        "importance": "5",
+        "date_creation": "2006-08-16T13:05:26.711Z",
+        "date_modification": "2019-09-20T16:10:23.317Z",
+        "date_d_apparition": null,
+        "date_de_confirmation": null,
+        "sources": null,
+        "identifiants_sources": "",
+        "methode_d_acquisition_planimetrique": "BDNyme",
+        "precision_planimetrique": 30,
+        "insee_commune": "73084",
+        "identifiant_voie_ban": null,
+        "id_ban_odonyme": null
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "detail_orographique.22796",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          933046.09982024,
+          6497611.30475002
+        ]
+      },
+      "geometry_name": "geometrie",
+      "properties": {
+        "cleabs": "PAIOROGR0000000012527600",
+        "nature": "Sommet",
+        "nature_detaillee": null,
+        "toponyme": "la Roche",
+        "statut_du_toponyme": "Validé",
+        "importance": "5",
+        "date_creation": "2006-08-16T13:05:26.711Z",
+        "date_modification": "2019-09-20T16:10:23.317Z",
+        "date_d_apparition": null,
+        "date_de_confirmation": null,
+        "sources": null,
+        "identifiants_sources": null,
+        "methode_d_acquisition_planimetrique": "BDNyme",
+        "precision_planimetrique": 30,
+        "insee_commune": "73249",
+        "identifiant_voie_ban": null,
+        "id_ban_odonyme": null
+      }
+    }
+  ],
+  "totalFeatures": 3,
+  "numberMatched": 3,
+  "numberReturned": 3,
+  "timeStamp": "2026-09-22T14:43:18.618Z",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:EPSG::2154"
+    }
+  },
+  "provenance": {
+    "source_url": "https://data.geopf.fr/wfs/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=BDTOPO_V3%3Adetail_orographique&SRSNAME=EPSG%3A2154&CQL_FILTER=BBOX%28geometrie%2C930000%2C6.495e%2B06%2C935000%2C6.5e%2B06%2C%27EPSG%3A2154%27%29+AND+nature+IN+%28%27Sommet%27%2C%27Pic%27%29&OUTPUTFORMAT=application%2Fjson&COUNT=1000",
+    "dataset_url": "https://www.data.gouv.fr/datasets/bd-topo-r",
+    "layer": "BDTOPO_V3:detail_orographique",
+    "attribution": "Summits: © IGN · BD TOPO · Licence Ouverte 2.0",
+    "licence": "Licence Ouverte 2.0",
+    "retrieved_utc": "2026-09-22T14:43:18.620972+00:00",
+    "response_sha256": "7019dae3e88e9ae216a2c7ee15a2318f52cb73f316a53a39202bc13519202ba9",
+    "response_bytes": 2852,
+    "response_feature_count": 4,
+    "bounds_epsg2154": [
+      930000.0,
+      6495000.0,
+      935000.0,
+      6500000.0
+    ],
+    "selection": "Nature Sommet or Pic; exact client-side Lambert-93 cell bounds.",
+    "note": "Named summit locations; not a complete ridge network or DEM maxima."
+  }
+}

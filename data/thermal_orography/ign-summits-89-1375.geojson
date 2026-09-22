@@ -1,0 +1,95 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "detail_orographique.24468",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          447660.4002021,
+          6875593.60462927
+        ]
+      },
+      "geometry_name": "geometrie",
+      "properties": {
+        "cleabs": "PAIOROGR0000000013905287",
+        "nature": "Sommet",
+        "nature_detaillee": null,
+        "toponyme": "Mont du Père",
+        "statut_du_toponyme": "Validé",
+        "importance": "4",
+        "date_creation": "2006-08-25T13:32:02.985Z",
+        "date_modification": "2019-09-20T16:10:23.317Z",
+        "date_d_apparition": null,
+        "date_de_confirmation": null,
+        "sources": null,
+        "identifiants_sources": null,
+        "methode_d_acquisition_planimetrique": "BDNyme",
+        "precision_planimetrique": 30,
+        "insee_commune": "14635",
+        "identifiant_voie_ban": null,
+        "id_ban_odonyme": null
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "detail_orographique.24469",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          445364.60020394,
+          6875568.50462926
+        ]
+      },
+      "geometry_name": "geometrie",
+      "properties": {
+        "cleabs": "PAIOROGR0000000013905288",
+        "nature": "Sommet",
+        "nature_detaillee": null,
+        "toponyme": "le Pain de Sucre",
+        "statut_du_toponyme": "Validé",
+        "importance": "3",
+        "date_creation": "2006-08-25T13:32:02.985Z",
+        "date_modification": "2019-09-20T16:10:23.317Z",
+        "date_d_apparition": null,
+        "date_de_confirmation": null,
+        "sources": null,
+        "identifiants_sources": null,
+        "methode_d_acquisition_planimetrique": "BDNyme",
+        "precision_planimetrique": 30,
+        "insee_commune": "14656",
+        "identifiant_voie_ban": null,
+        "id_ban_odonyme": null
+      }
+    }
+  ],
+  "totalFeatures": 2,
+  "numberMatched": 2,
+  "numberReturned": 2,
+  "timeStamp": "2026-09-22T14:40:34.061Z",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:EPSG::2154"
+    }
+  },
+  "provenance": {
+    "source_url": "https://data.geopf.fr/wfs/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=BDTOPO_V3%3Adetail_orographique&SRSNAME=EPSG%3A2154&CQL_FILTER=BBOX%28geometrie%2C445000%2C6.875e%2B06%2C450000%2C6.88e%2B06%2C%27EPSG%3A2154%27%29+AND+nature+IN+%28%27Sommet%27%2C%27Pic%27%29&OUTPUTFORMAT=application%2Fjson&COUNT=1000",
+    "dataset_url": "https://www.data.gouv.fr/datasets/bd-topo-r",
+    "layer": "BDTOPO_V3:detail_orographique",
+    "attribution": "Summits: © IGN · BD TOPO · Licence Ouverte 2.0",
+    "licence": "Licence Ouverte 2.0",
+    "retrieved_utc": "2026-09-22T14:40:34.059720+00:00",
+    "response_sha256": "7252301050b6a08df2bd360cd523dabaa269b8eff45d672c101aea0455c6283d",
+    "response_bytes": 1532,
+    "bounds_epsg2154": [
+      445000.0,
+      6875000.0,
+      450000.0,
+      6880000.0
+    ],
+    "selection": "IGN named relief points: nature Sommet or Pic only.",
+    "note": "Named summit locations, not a complete ridge network or DEM maxima."
+  }
+}

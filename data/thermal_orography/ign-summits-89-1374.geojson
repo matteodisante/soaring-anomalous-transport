@@ -1,0 +1,64 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "detail_orographique.176264",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          446128.60020328,
+          6871161.60463168
+        ]
+      },
+      "geometry_name": "geometrie",
+      "properties": {
+        "cleabs": "PAIOROGR0000002201766117",
+        "nature": "Sommet",
+        "nature_detaillee": null,
+        "toponyme": "la Suisse Normande",
+        "statut_du_toponyme": "Collecté",
+        "importance": "2",
+        "date_creation": "2019-03-05T17:11:58.877Z",
+        "date_modification": "2025-11-06T14:41:07.245Z",
+        "date_d_apparition": null,
+        "date_de_confirmation": null,
+        "sources": null,
+        "identifiants_sources": null,
+        "methode_d_acquisition_planimetrique": "Calculé",
+        "precision_planimetrique": 20,
+        "insee_commune": "14162",
+        "identifiant_voie_ban": null,
+        "id_ban_odonyme": null
+      }
+    }
+  ],
+  "totalFeatures": 1,
+  "numberMatched": 1,
+  "numberReturned": 1,
+  "timeStamp": "2026-09-22T14:40:33.649Z",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:EPSG::2154"
+    }
+  },
+  "provenance": {
+    "source_url": "https://data.geopf.fr/wfs/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=BDTOPO_V3%3Adetail_orographique&SRSNAME=EPSG%3A2154&CQL_FILTER=BBOX%28geometrie%2C445000%2C6.87e%2B06%2C450000%2C6.875e%2B06%2C%27EPSG%3A2154%27%29+AND+nature+IN+%28%27Sommet%27%2C%27Pic%27%29&OUTPUTFORMAT=application%2Fjson&COUNT=1000",
+    "dataset_url": "https://www.data.gouv.fr/datasets/bd-topo-r",
+    "layer": "BDTOPO_V3:detail_orographique",
+    "attribution": "Summits: © IGN · BD TOPO · Licence Ouverte 2.0",
+    "licence": "Licence Ouverte 2.0",
+    "retrieved_utc": "2026-09-22T14:40:33.638764+00:00",
+    "response_sha256": "d249d3980ec68cca668f10275a3192e1e768d47eb9345dc13563017cb70205f9",
+    "response_bytes": 879,
+    "bounds_epsg2154": [
+      445000.0,
+      6870000.0,
+      450000.0,
+      6875000.0
+    ],
+    "selection": "IGN named relief points: nature Sommet or Pic only.",
+    "note": "Named summit locations, not a complete ridge network or DEM maxima."
+  }
+}

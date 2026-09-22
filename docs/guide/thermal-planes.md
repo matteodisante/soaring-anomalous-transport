@@ -123,6 +123,23 @@ All PNGs are embedded in `thermal-planes.sqlite3`; the viewer never requests til
 or contacts the service. The **% background** control adjusts both backgrounds without
 changing the selected data. Points use a contrasting colour and a white edge.
 
+The **Crests · IGN DEM** checkbox adds approximate red crest lines, including
+secondary ridges, derived from small IGN RGE ALTI windows in
+`data/thermal_orography/`. Enabled by default, it works with every background
+and in whole-interval or daily views. The viewer makes no network requests.
+Prepare the twelve saved cells with `scripts/pipeline/prepare_thermal_ridges.py`.
+A missing extract is distinguished from an empty derived trace.
+
+Source: [IGN RGE ALTI](https://www.data.gouv.fr/datasets/rge-alti-r), Licence
+Ouverte 2.0. The transverse-height maxima use a 25 m grid and 50 m Gaussian
+smoothing, independently of flight points. These are approximate scale-dependent
+crests, not an official or exhaustive ridge inventory. Positions stay fixed
+when the plane height changes; they are ground references, not intersections
+of terrain with that plane. The shared `thermal_ridges` module also draws the
+thesis and slide overlay. See `data/thermal_orography/README.md` for provenance,
+parameters and limitations. The earlier named-summit files are retained but
+triangles are no longer displayed.
+
 Source attribution: Esri, Vantor, Airbus DS, USGS, NGA, NASA, CGIAR, N Robinson,
 NCEAS, NLS, OS, NMA, Geodatastyrelsen, Rijkswaterstaat, GSA, Geoland, FEMA, Intermap,
 and the GIS user community. The hillshade is only a visual background: it does not

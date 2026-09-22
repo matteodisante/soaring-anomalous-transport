@@ -1,0 +1,65 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "detail_orographique.11322",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          923981.99982803,
+          6466020.90475223
+        ]
+      },
+      "geometry_name": "geometrie",
+      "properties": {
+        "cleabs": "PAIOROGR0000000007454539",
+        "nature": "Sommet",
+        "nature_detaillee": null,
+        "toponyme": "la Châtaigneraie",
+        "statut_du_toponyme": "Validé",
+        "importance": "5",
+        "date_creation": "2006-07-11T13:39:39.862Z",
+        "date_modification": "2019-09-20T16:10:23.317Z",
+        "date_d_apparition": null,
+        "date_de_confirmation": null,
+        "sources": null,
+        "identifiants_sources": null,
+        "methode_d_acquisition_planimetrique": "BDNyme",
+        "precision_planimetrique": 30,
+        "insee_commune": "38431",
+        "identifiant_voie_ban": null,
+        "id_ban_odonyme": null
+      }
+    }
+  ],
+  "totalFeatures": 1,
+  "numberMatched": 1,
+  "numberReturned": 1,
+  "timeStamp": "2026-09-22T14:44:31.751Z",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:EPSG::2154"
+    }
+  },
+  "provenance": {
+    "source_url": "https://data.geopf.fr/wfs/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=BDTOPO_V3%3Adetail_orographique&SRSNAME=EPSG%3A2154&CQL_FILTER=BBOX%28geometrie%2C920000%2C6.465e%2B06%2C925000%2C6.47e%2B06%2C%27EPSG%3A2154%27%29+AND+nature+IN+%28%27Sommet%27%2C%27Pic%27%29&OUTPUTFORMAT=application%2Fjson&COUNT=1000",
+    "dataset_url": "https://www.data.gouv.fr/datasets/bd-topo-r",
+    "layer": "BDTOPO_V3:detail_orographique",
+    "attribution": "Summits: © IGN · BD TOPO · Licence Ouverte 2.0",
+    "licence": "Licence Ouverte 2.0",
+    "retrieved_utc": "2026-09-22T14:44:31.729921+00:00",
+    "response_sha256": "e71bf9d0e55581544e1f148ebbe35a4c589ec5d3424c07a24aea169556ec4790",
+    "response_bytes": 873,
+    "response_feature_count": 1,
+    "bounds_epsg2154": [
+      920000.0,
+      6465000.0,
+      925000.0,
+      6470000.0
+    ],
+    "selection": "Sommet/Pic only; exact Lambert-93 cell bounds.",
+    "note": "Named summits; not a complete ridge network or DEM maxima."
+  }
+}
