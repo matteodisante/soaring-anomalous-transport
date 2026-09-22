@@ -5,7 +5,6 @@
 \input{generated/ch3_transport_grid_bootstrap_values}
 \input{generated/ch3_transport_origin_dependence_values}
 \input{generated/ch3_conditional_values}
-\input{generated/ch3_conditional_circuit_weights_values}
 
 
 We measure the mean-square displacement (MSD) and its dependence on circuit type,
@@ -596,76 +595,72 @@ against two for $\mathcal C_{1000}$ and one for $\mathcal C_{100}$.
 \section{Conditional mean-square displacement}
 \label{sec:fixed-circuit}
 
-We examine how MSD amplitude and its effective growth exponent $H$ vary with
-three recorded characteristics:
+The general MSD combines flights with different objectives, launch environments
+and equipment. The available lift and the route chosen to exploit it can both
+influence transport. We use the initial altitude above sea level (ASL) of a
+flight as a proxy for the broad orography of its launch site. The share of open
+and closed circuits also differs between altitude classes, so a difference in their
+pooled MSDs may come from the circuit mix as well as from the orography. We therefore describe the aggregate patterns first, then cross altitude
+class with declared circuit to distinguish the corresponding conditional
+associations.
+
+We ask which characteristics shape the displacement amplitude and which shape
+its growth rate $H$, through three questions:
 \begin{itemize}
- \item \emph{Circuit type}: open distance flights versus closed routes.
- \item \emph{Launch environment}: initial altitude as a proxy for plains,
- hills and mountains, followed by regional comparisons within these settings.
- \item \emph{Equipment}: wing class as a proxy for pilot experience.
+ \item \emph{Does the launch environment matter?} Initial altitude above sea level
+ serves as a proxy for broad orographic setting: plains, hills and mountains. Do
+ these classes differ in amplitude and in $H$
+ (Figure~\ref{fig:conditional-altitude})? And do regions of the same broad terrain
+ type, Alps and Pyrenees or Channel Coast and Champagne-Lorraine, also differ
+ (Figure~\ref{fig:conditional-regions})?
+ \item \emph{Does the declared circuit matter?} Do open and closed routes
+ (Figure~\ref{fig:conditional-circuit}) follow different transport laws, and does
+ that difference persist, or change sign, within each altitude class
+ (Figure~\ref{fig:fixed-task})?
+ \item \emph{Does the equipment group matter?} Do beginners (EN A/B/C) and experts
+ (EN D/CCC) differ (Figure~\ref{fig:conditional-equipment}), and does the
+ difference survive once the launch environment is held fixed
+ (Figure~\ref{fig:conditional-equipment-altitude})?
 \end{itemize}
-\emph{Marginal comparisons} pool the other characteristics; \emph{stratified
-comparisons} keep a selected category fixed, for example comparing circuits
-within each altitude class. This tests whether a contrast survives
-stratification and whether its magnitude depends on the other factor.
-These observational comparisons differ from a \emph{one-factor-at-a-time}
-(OFAT) experiment, which varies one input while holding the others at fixed
-settings and does not estimate interactions~\cite{nist_ofat}.
-Here the remaining flight conditions can still differ between groups.
+For circuit and equipment groups, we make both an \emph{aggregate comparison},
+pooling all initial altitudes, and an \emph{altitude-stratified comparison},
+keeping the four altitude classes separate. Both use the same fixed cohort.
+For example, experts could have a larger aggregate $H$ partly because they fly
+more often from lowland sites. Comparing experts and beginners within each
+altitude class tests whether a difference remains after removing that change
+in broad launch-environment composition.
+
+The experimental extension in Section~\ref{sec:conditional-factorial},
+in \emph{Experimentals} after the appendices, jointly crosses initial-altitude
+class, circuit and equipment group. It asks
+whether their associations with $H$ are additive and which contrasts change
+across the other factors. The comparisons below do not exhaust
+the combinations available in the metadata.
+
+These analyses use paragliders only. Their larger population leaves substantial
+support after stratification, whereas the smaller hang-glider sample would make
+several of the same comparisons less precise. Both disciplines alternate searching,
+thermalling and gliding, and both archives span heterogeneous sites, seasons and
+years. Because both disciplines share this flight structure and give similar general
+exponents in Section~\ref{sec:fixed-general}, we expect the dependences on
+launch altitude, circuit type and experience found for paragliders to hold
+qualitatively for hang gliders too, despite their higher typical speed.
 
 \Needspace{8\baselineskip}
-We use the larger paraglider population to retain support after stratification.
-Every group $\mathcal C_g$ belongs to the fixed cohort $\mathcal C_{10000}$,
-with the same retained segments throughout $10\leq\tau\leq10000$ s:
+Every group is a subset $\mathcal C_g$ of the same fixed population
+$\mathcal C_{10000}$, with the same retained segments throughout
+$10\leq\tau\leq10000$ s. We use
 \begin{equation}
  M_{2,g}(\tau)=\frac{1}{N_g}\sum_{f\in\mathcal C_g}m_f(\tau),
  \qquad N_g=|\mathcal C_g|,
  \qquad M_{2,g}(\tau)\propto\tau^{2H_g},
  \label{eq:conditional-msd}
 \end{equation}
-Differences in $H$ use the same 1000 site--day bootstrap draws across groups
-and lags, paired as in Section~\ref{sec:fixed-population}. The intervals retain
-the limitations discussed in Section~\ref{sec:fixed-bootstrap-reliability}.
+We reuse the same 1000 site--day
+bootstrap draws across all groups and lags, so differences in $H$ are evaluated
+on paired replicates.
 
-\subsection{Declared circuit: the marginal comparison}
-\label{sec:conditional-circuit}
-
-The catalogue separates open distance flights from closed routes, including
-triangles and out-and-return flights. The declaration describes the objective;
-the recorded, trimmed trajectory need not end at its starting point.
-
-We first pool all initial altitudes within each circuit class. The fixed cohort contains
-\ChThreeMainOpen{} open flights, \ChThreeMainClosed{} closed flights and
-\ChThreeMainUnknown{} unclassified flights; the last group enters neither curve
-in Figure~\ref{fig:conditional-circuit}.
-
-\begin{figure}[htbp]
- \centering
- \includegraphics[width=\textwidth]{generated/ch3_conditional_circuit.pdf}
- \caption{Paraglider MSD by declared circuit, pooling initial altitudes. Solid
- curves join the equal-flight estimates; dashed lines are fits over 10--10000 s.}
- \label{fig:conditional-circuit}
-\end{figure}
-
-The open-route MSD grows faster and reaches a larger displacement amplitude at
-long lags. Its effective exponent is \CondOpenH{}, compared with \CondClosedH{}
-for closed routes. The paired difference $H_{\rm open}-H_{\rm closed}$ is
-\CondOpenClosedDelta{}, so the separation is resolved under the adopted bootstrap.
-
-\Needspace{9\baselineskip}
-\paragraph{Circuit geometry and the separation of the curves.}
-Closed routes must reverse part of their outward progress. Intervals spanning
-turns or returns can therefore have smaller net displacements, consistent
-with the slower long-lag MSD growth. The relevant timescale depends on the
-route geometry and leg durations. For a flight of duration $T$ with equal
-leg times, the first major turn occurs at $T/2$ for an out-and-return flight
-and $T/3$ for a triangle. These are times along the route: even a short lag can straddle
-a turn, because the MSD averages over starting points along each segment.
-Testing the role of triangular geometry requires separating the two closed
-route types and comparing their actual leg durations.
-
-\FloatBarrier
-\subsection{Initial altitude, circuit composition and interaction}
+\subsection{Orography across altitude classes and geographic regions}
 \label{sec:conditional-orography}
 
 The launch altitude $z_0$ defines four classes. It is the GNSS altitude of the first
@@ -680,90 +675,255 @@ compositions.
 \begin{figure}[htbp]
  \centering
  \includegraphics[width=\textwidth]{generated/ch3_conditional_altitude.pdf}
- \caption{Paraglider MSD by initial altitude, pooling circuit types and equipment.
- The four groups partition the fixed cohort. These marginal curves combine
- launch environment with unequal circuit proportions; they do not isolate
- an orographic effect.}
+ \caption{Paraglider MSD by initial altitude, pooling circuit types and equipment
+ classes. The four groups partition the fixed cohort. The altitude thresholds
+ describe the initial cleaned fix. The curves combine launch environment with
+ unequal open/closed circuit proportions: Plains and Hills contain much larger
+ shares of open flights than the mountain classes. These curves therefore do
+ not isolate an orographic effect. Figure~\ref{fig:fixed-task}
+ separates open and closed circuits within each class.}
  \label{fig:conditional-altitude}
 \end{figure}
 
 Plains have the largest exponent, \CondAltZeroH{}, followed by Hills,
 \CondAltOneH{}. Both exceed Low mountains, \CondAltTwoH{}, and High mountains,
-\CondAltThreeH{}. The broad hierarchy is
-\textbf{Plains $>$ Hills $>$ Mountains}, with High mountains slightly above
-Low mountains.
+\CondAltThreeH{}. The ordering is not monotonic in altitude: the high-mountain
+curve grows slightly faster than the low-mountain one.
 
 The Plains--Low mountains difference is \CondAltZeroAltTwoDelta{}, about 10\%
-of the smaller exponent. Interpreting this gap requires accounting for the
-different circuit mixtures.
+of the smaller exponent. Plains and Low mountains also pool different shares
+of open and closed circuits. Since the pooled MSD combines their curves in
+proportion to their flight counts, part of the 10\% gap can come from this
+different circuit mix. The figure alone does not isolate an orographic effect.
 
-Open flights account for \ChThreeConditionalPlainsOpenPct\% of Plains and
+The circuit imbalance is substantial. Open flights
+account for \ChThreeConditionalPlainsOpenPct\% of Plains and
 \ChThreeConditionalHillsOpenPct\% of Hills, against
 \ChThreeConditionalLowMountainsOpenPct\% and
 \ChThreeConditionalHighMountainsOpenPct\% in the two mountain classes.
-The lowland averages therefore give much greater flight weight to open routes.
+Open routes have larger $H$ both in the pooled comparison
+(Figure~\ref{fig:conditional-circuit}) and within every altitude class
+(Figure~\ref{fig:fixed-task}). The lowland averages thus give much greater
+flight weight to the faster-growing open curves.
+\textbf{Figure~\ref{fig:conditional-altitude} combines differences in launch
+environment with a strongly unequal mix of open and closed routes.}
 
-\Needspace{8\baselineskip}
-To explain the altitude curves, the relevant groups are the circuit types
-\emph{within each altitude class}. Let $a$ denote that class and
-$c\in\{\mathrm{open},\mathrm{closed},\mathrm{unclassified}\}$ its circuit
-categories, omitting empty categories. With $N_{c,a}$ flights in each cell and $N_a=\sum_cN_{c,a}$,
-the equal-flight estimator gives
+To see how these proportions enter the pooled MSD, let $g$ label a partition
+of a fixed population into altitude classes, circuit types, equipment groups
+used as a proxy for experience, or combinations of these. Each flight must belong to exactly one
+group, including unclassified flights and any other equipment categories when
+partitioning the full cohort. If group $g$ contains $N_g$ of the
+$N=\sum_g N_g$ flights, its fraction $p_g=N_g/N$ is constant across lags.
+Because every flight has equal weight, the pooled MSD is
 \begin{equation}
- M_{2,a}(\tau)=\sum_c p_{c\mid a}M_{2,c,a}(\tau),
- \qquad p_{c\mid a}=\frac{N_{c,a}}{N_a},
- \qquad \sum_c p_{c\mid a}=1.
+ M_2(\tau)=\sum_g p_g M_{2,g}(\tau),
+ \qquad \sum_g p_g=1.
  \label{eq:fixed-mixture}
 \end{equation}
-The flight fractions $p_{c\mid a}$ stay fixed over the lag range. The fraction
-of the class MSD supplied by circuit $c$ is
+The contribution of group $g$ is the product $p_gM_{2,g}(\tau)$: it depends
+both on how many flights the group contains and on their mean-square
+displacement at that lag. Its share of the total MSD is therefore
 \begin{equation}
- w_{c\mid a}(\tau)=\frac{p_{c\mid a}M_{2,c,a}(\tau)}{M_{2,a}(\tau)},
- \qquad \sum_c w_{c\mid a}(\tau)=1.
+ w_g(\tau)=\frac{p_gM_{2,g}(\tau)}{M_2(\tau)},
+ \qquad \sum_g w_g(\tau)=1.
  \label{eq:fixed-msd-share}
 \end{equation}
-In Figure~\ref{fig:conditional-circuit-weights}, shares sum to one
-\emph{within each altitude class}, including its small unclassified component.
+\begin{itemize}
+ \item \textbf{At a fixed lag, a large MSD can compensate for few flights.}
+ The contribution $p_gM_{2,g}(\tau)$ can be substantial even when $p_g$ is
+ small. Plains and Hills together contain only \num{\CondLowlandsN} flights,
+ against \num{\CondMountainsN} in Low and High mountains, yet their MSDs are
+ larger at long lags (Figure~\ref{fig:conditional-altitude}). Their much larger
+ proportions of open routes contribute to this difference: at the same lag,
+ open routes reach a larger MSD than closed routes, especially at long lags
+ (Figure~\ref{fig:conditional-circuit}). Plains and Hills consequently supply
+ a larger share of the total MSD than their flight counts alone would suggest.
+
+ \item \textbf{The relative contributions change with lag, shaping both the
+ MSD and its fitted $H$.}
+ The flight fractions $p_g$ stay fixed, but the MSD shares $w_g(\tau)$ change
+ because the group curves grow at different rates. A group whose MSD grows
+ faster than the rest of the population gains a larger share as $\tau$
+ increases. Thus the amplitude at successive lags combines different relative
+ contributions, which also shape the growth of the pooled curve and its
+ fitted $H$. Here the faster-growing Plains and Hills curves gain influence
+ towards long lags despite their small flight counts.
+\end{itemize}
+The fitted $H$ summarises this combined growth over the fit interval.
+It is obtained from the log--log fit of the sum in
+Eq.~\eqref{eq:fixed-mixture}; in general, it cannot be recovered by averaging
+the fitted group exponents $H_g$ with the flight fractions $p_g$.
+
+Figure~\ref{fig:conditional-altitude} alone cannot tell whether the observed
+differences come from a different mix of circuits or from changes in the MSD
+within each circuit.
+
+Equipment composition also varies between altitude classes. Even if all group
+fractions $p_g$ were matched between classes, differences in the group curves
+$M_{2,g}(\tau)$ could still produce differences in the pooled MSD.
+The declared circuit is itself shaped by the launch environment, as
+\ChThreeConditionalPlainsOpenPct\% open routes in Plains against
+\ChThreeConditionalLowMountainsOpenPct\% in Low mountains indicate, so holding it
+fixed would close one of the paths by which orography reaches transport. Sites are
+nested inside altitude classes, which keeps the terrain flown, the prevailing
+weather and the local pilot population bound to the class whatever else is held
+fixed. Figure~\ref{fig:conditional-altitude} therefore records an association
+between launch environment and transport, and no adjustment available here converts
+it into an orographic effect.
+
+The comparison needed for that distinction is Figure~\ref{fig:fixed-task},
+discussed in Section~\ref{sec:conditional-circuit}. It shows a larger $H$ in
+lowlands than in mountains for open routes, but the opposite ordering for
+closed routes. There is therefore no common monotonic relation between launch
+altitude and $H$ across circuit types. We defer the physical interpretation to
+that joint comparison; the pooled curves do not establish that mountain relief
+generally suppresses MSD growth.
+
+\paragraph{Differences within the same broad terrain type.}
+The regional comparison asks whether transport differs when the broad orographic
+setting is held fixed but the region changes. Within a mountain setting, we
+compare Alps with Pyrenees; within a lowland setting, Channel Coast with
+Champagne-Lorraine. The geographic boxes are defined in
+Table~\ref{tab:regional-boxes} and shown in Figure~\ref{fig:prelim-map}a.
+
+Geographic membership alone is insufficient. The Alpine and Pyrenean boxes also
+contain flights in the Plains and Hills classes, whose inclusion would mix the
+mountain comparison with a change in broad launch environment. We therefore
+retain only Low and High mountains in these two boxes, pooling the two classes.
+For the lowland comparison, we similarly retain only Plains and Hills in each
+box. Writing $\mathcal B$ for a geographic box, the selections are
+\begin{align}
+ \mathcal C_{\mathcal B,\mathrm{mountains}}
+ &=\{f\in\mathcal C_{10000}:
+ (\lambda_{0f},\varphi_{0f})\in\mathcal B,\ z_{0f}\geq800\,\mathrm{m}\},\notag\\
+ \mathcal C_{\mathcal B,\mathrm{lowlands}}
+ &=\{f\in\mathcal C_{10000}:
+ (\lambda_{0f},\varphi_{0f})\in\mathcal B,\ z_{0f}<800\,\mathrm{m}\}.
+ \label{eq:regional-preselection}
+\end{align}
+Here altitude is measured at the initial cleaned fix, as in the other comparisons
+of this section. It remains a proxy for the launch environment, rather than a
+measurement of relief along the full path.
+
+Within the fixed cohort, this removes \CondAlpsExcluded{} flights from the Alpine
+box and \CondPyreneesExcluded{} from the Pyrenean box. The lowland restriction also
+removes \CondChannelCoastExcluded{} flights from Channel Coast and
+\CondChampagneLorraineExcluded{} from Champagne-Lorraine; it is not redundant even
+in these predominantly lowland windows. Every legend reports the number remaining
+after both geographic and altitude selection.
 
 \begin{figure}[htbp]
  \centering
- \includegraphics[width=\textwidth]{generated/ch3_conditional_circuit_weights.pdf}
- \caption{Circuit contributions to the MSD within each initial-altitude class.
- Left: $w_{\mathrm{open}\mid a}(\tau)$. Right:
- $w_{\mathrm{closed}\mid a}(\tau)$. The denominator is the full MSD of the
- indicated altitude class, including unclassified flights. Their unplotted
- contribution is at most \CircuitWeightUnknownMax\% over these curves.
- These are observed shares, without uncertainty bands.}
- \label{fig:conditional-circuit-weights}
+ \includegraphics[width=\textwidth]{generated/ch3_conditional_regions.pdf}
+ \caption{Regional paraglider MSDs. Left: Alps and Pyrenees. Right: Channel Coast
+ and Champagne-Lorraine. The left panel retains only Low/High mountains within
+ each box; the right retains only Plains/Hills. Circuit types and equipment
+ classes are pooled. Counts and fits refer to the preselected populations;
+ both panels share the same axes.}
+ \label{fig:conditional-regions}
 \end{figure}
 
-\begin{itemize}
- \item \textbf{A circuit's contribution depends on its MSD as well as its
- number of flights.}
- The larger open MSD amplifies the circuit imbalance in Plains and Hills.
- At $\tau=10000$ s, open routes supply
- \CircuitWeightPlainsOpenEnd\% and \CircuitWeightHillsOpenEnd\% of their
- respective class MSDs.
- In Low mountains, open flights are only
- \ChThreeConditionalLowMountainsOpenPct\% of the class, yet supply
- \CircuitWeightLowMountainsOpenEnd\% of its MSD at that lag: a minority of
- flights can contribute most of the MSD.
+The Alpine exponent is \CondAlpsH{}, against \CondPyreneesH{} in the Pyrenees.
+Their paired difference is positive (Table~\ref{tab:conditional-regions}), and
+Alpine flights also reach a larger MSD at long lags. The common designation
+``mountain region'' therefore does not imply a common transport curve. By
+contrast, Channel Coast and Champagne-Lorraine give very similar exponents,
+\CondChannelCoastH{} and \CondChampagneLorraineH{}. Their paired interval includes
+zero. This does not establish identical dynamics: their MSD amplitudes differ,
+and a single fitted slope cannot capture every difference in curve shape.
 
- \item \textbf{Circuit contributions change with lag and shape the pooled
- growth as well as its amplitude.}
- When open and closed MSDs grow at different rates, $w_{c\mid a}(\tau)$
- changes even though $p_{c\mid a}$ stays fixed. The open contribution rises
- towards long lags, particularly in the mountain classes. In High mountains,
- closed routes still supply \CircuitWeightHighMountainsClosedEnd\% at
- $10000$ s, whereas their contribution in Plains and Hills is already small.
- The exponent $H$ must therefore be fitted to the combined curve $M_{2,a}$;
- it is not generally a flight-count-weighted average of circuit exponents.
-\end{itemize}
+\begin{table}[htbp]
+ \centering\small
+ \input{generated/ch3_conditional_regional_table}
+ \caption{Paired regional contrasts in $H$, after the terrain preselection:
+ Low/High mountains for Alps--Pyrenees and Plains/Hills for the two lowland
+ regions. Intervals are nominal 90\% site--day bootstrap intervals.}
+ \label{tab:conditional-regions}
+\end{table}
+
+The regional differences remain meaningful descriptive results even though
+the altitude-only curves mix circuit types. The form and arrangement of ridges,
+valleys and usable lift could contribute to the mountain contrast, but it does
+not identify that contribution. In lowlands, the corresponding question
+concerns finer differences between hills and plains, including the location and
+nature of thermal triggers: differences in surface heating or local terrain
+could organise the available lift differently even without a mountain setting.
+The similar lowland exponents do not resolve such a difference in the global
+MSD growth rate.
+
+These mechanisms motivate the comparison but are not measured by the regional
+boxes. The preselection restricts the broad altitude setting; it does not match
+the altitude distribution within that setting, the proportions of open and
+closed circuits, weather, equipment or the periods represented in each region.
+The results therefore describe
+regional differences within a common broad environment, without assigning them
+uniquely to mountain shape or to the mechanisms that trigger thermals.
+
+\FloatBarrier
+\subsection{Circuit type and its dependence on initial altitude}
+\label{sec:conditional-circuit}
+
+The catalogue's declared circuit class separates open distance flights from closed
+routes such as triangles and out-and-return flights. Returning towards an earlier
+part of the route reduces net displacement over sufficiently long intervals, so
+we expect closed routes to have a smaller effective $H$. The declaration describes
+the flight objective; it does not guarantee that the recorded, trimmed trajectory
+ends at its starting point.
+
+We first pool all initial altitudes within each circuit class. The fixed cohort contains
+\ChThreeMainOpen{} open flights, \ChThreeMainClosed{} closed flights and
+\ChThreeMainUnknown{} unclassified flights; the last group enters neither curve
+in Figure~\ref{fig:conditional-circuit}.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_conditional_circuit.pdf}
+ \caption{Paraglider MSD by declared circuit, pooling initial altitudes. Solid
+ curves join the equal-flight estimates; dashed lines are fits over 10--10000 s.
+ Counts, effective exponents and 90\% intervals refer to the fixed groups.}
+ \label{fig:conditional-circuit}
+\end{figure}
+
+The open-route MSD grows faster and reaches a larger displacement amplitude at
+long lags. Its effective exponent is \CondOpenH{}, compared with \CondClosedH{}
+for closed routes. The paired difference $H_{\rm open}-H_{\rm closed}$ is
+\CondOpenClosedDelta{}, so the separation is resolved under the adopted bootstrap.
+This pooled difference and the altitude contrasts in
+Figure~\ref{fig:conditional-altitude} mix different circuit and environmental
+compositions. Comparing their magnitudes cannot rank the respective importance
+of circuit type and orography.
+
+\Needspace{9\baselineskip}
+\paragraph{Circuit geometry and the separation of the curves.}
+In an ideal out-and-return flight of duration $T$, with equal time on each leg,
+the pilot reverses direction at $T/2$, only $\log_{10}2\simeq0.30$ decades below
+$T$ on a logarithmic axis. Yet Figure~\ref{fig:conditional-circuit} shows visible
+separation around $\tau\sim10^3$ s, a full decade below the largest plotted lag,
+$10^4$ s.
+
+Triangular circuits offer one possible explanation for an earlier separation.
+In an ideal triangle with equal leg times, the first major turn occurs around
+$T/3$. Displacements spanning successive turns combine advances in different
+directions, reducing net distance relative to a straight continuation. This
+geometry can limit MSD growth before the halfway point of an out-and-return route.
+
+Here $\tau$ is a \emph{lag} averaged over origins along each segment, rather than
+time since take-off: even short increments can straddle a turn. Neither $T/2$
+nor $T/3$ sets an onset threshold, and their difference alone cannot explain a
+decade of separation. Also, $10^4$ s is the analysis limit, not a common flight
+duration. Testing the triangle hypothesis requires separating triangles from
+out-and-return flights and comparing lags with actual leg durations.
 
 \paragraph{Circuit contrasts within altitude classes.}
-Does the lowland advantage persist when circuit type is held fixed?
-Figure~\ref{fig:fixed-task} crosses circuit type with altitude class;
-Table~\ref{tab:fixed-task} reports counts, exponents and amplitudes.
+The aggregate comparisons change both launch environment and circuit composition.
+We next compare open and closed routes within each altitude class, and compare
+altitude classes within each circuit. These two readings of the same figure
+separate the conditional patterns that are combined in
+Figure~\ref{fig:conditional-altitude}.
+
+Figure~\ref{fig:fixed-task} crosses the four initial-altitude classes of
+Section~\ref{sec:conditional-orography} with circuit type; counts and fitted
+exponents are given in Table~\ref{tab:fixed-task}.
 
 \begin{figure}[htbp]
  \centering
@@ -784,219 +944,72 @@ Table~\ref{tab:fixed-task} reports counts, exponents and amplitudes.
  \label{tab:fixed-task}
 \end{table}
 
-\begin{itemize}
- \item \textbf{Open routes have larger $H$ than closed routes in every
- altitude class.} The paired gaps (nominal 90\% intervals) are
- \ChThreeTaskGapPlains{} in Plains, \ChThreeTaskGapHills{} in Hills,
- \ChThreeTaskGapLow{} in Low mountains and \ChThreeTaskGapHigh{} in High mountains.
- All exclude zero, and the gap is smaller in mountains. The pooled circuit contrast therefore cannot
- be explained solely by the open population's greater lowland share.
- \item \textbf{The altitude ordering reverses with circuit type.}
- Both lowland classes have larger $H$ than either mountain class for open
- routes, but smaller $H$ for closed routes. The four lowland-minus-mountain
- differences lie between \ChThreeOpenAltShiftMin{} and
- \ChThreeOpenAltShiftMax{} for open routes; for closed routes they are
- negative, with magnitudes between \ChThreeClosedAltShiftMin{} and
- \ChThreeClosedAltShiftMax. All eight paired intervals exclude zero.
-\end{itemize}
-This reversal quantifies an interaction: the association between launch
-environment and $H$ depends on circuit type. The predominance of open flights
-contributes to the pooled lowland advantage, but does not explain away the
-opposite within-circuit orderings. Mountain flights do not have smaller $H$
-in general.
+For open routes, Plains and Hills have larger $H$ than either mountain class. Thus
+the distinction involves the rate of growth as well as the displacement reached at
+10000 s. Closed routes have smaller $H$ than open routes in every altitude class.
+The paired contrasts $H_{\rm open}-H_{\rm closed}$ range from \ChThreeTaskContrastMin{}
+to \ChThreeTaskContrastMax; all four 90\% intervals exclude zero. The two lowland
+classes carry the largest contrast, close to \ChThreeTaskContrastMax, and it falls to
+\ChThreeTaskContrastMin{} in High mountains.
 
-\paragraph{Interpreting circuit choice and terrain constraints.}
-The return objective explains the expected sign of the circuit contrast;
-terrain may explain why its magnitude changes. Sun-heated mountain slopes
-can feed convection that rises along the slope and detaches near a crest;
-thermal sources need not lie on the crest itself. Access to lift and terrain
-clearance can channel both circuit types along slope-and-ridge
-corridors~\cite[Chapters~9--10]{faa_glider2024}. In plains, smaller physical
-barriers and separated heat sources, such as dry dark fields and paved
-areas~\cite{ssa_lift_sources}, may leave more route choices.
+\Needspace{4\baselineskip}
+For closed routes, both lowland classes instead have smaller $H$ than either
+mountain class.
+Paired lowland-minus-mountain contrasts, each lowland class against each mountain class
+within one circuit, are positive for open routes, between \ChThreeOpenAltShiftMin{} and
+\ChThreeOpenAltShiftMax{} in $H$, and negative for closed routes, with magnitudes between
+\ChThreeClosedAltShiftMin{} and \ChThreeClosedAltShiftMax; all eight intervals exclude
+zero. The lowland--mountain association with $H$ therefore changes sign with
+circuit type. This is an interaction in the observed associations, rather than
+a common terrain trend masked only by unequal circuit proportions. In
+particular, the pooled lowland advantage cannot be generalized to closed routes.
 
-\begin{itemize}
- \item \textbf{Open routes.} Following ridges and detouring between usable
- lift sources could interrupt outward progress, making mountain open
- flights less persistent than lowland open flights. This is consistent
- with their smaller $H$.
- \item \textbf{Closed routes.} The same terrain constraints can alter the
- size and timing of a return circuit. Longer legs or later returns could
- suppress MSD growth less over 10--10000 s, consistently with the larger
- mountain closed $H$. Terrain constraints alone do not guarantee that
- timing change; it must be tested against measured leg and return times.
-\end{itemize}
-Mountain open routes may thus appear ``less open'' and closed routes
-``less closed'' in their finite-lag statistics: their fitted exponents are
-closer, while their declared classes remain unchanged. This interpretation
-is a hypothesis; the conditional orderings are measured, but the proposed
-route changes have not yet been measured.
+\paragraph{How relief could shape transport.}
+The interpretation must account for both circuit-specific orderings.
+Terrain can organize slope lift, while uneven surface heating can generate
+thermal lift~\cite[Chapter~9]{faa_glider2024}.
+Following a sequence of ridges could introduce bends and detours that reduce
+horizontal advance on an open route. This is compatible with the smaller
+mountain $H$ among open flights, but does not establish the mechanism: accessible
+lift could also shorten search, and a long straight ridge could sustain
+persistent motion. These possibilities do not predict a universal sign for
+the altitude association.
 
-\paragraph{Observed climb locations in two viewer cells.}
-Figure~\ref{fig:conditional-climb-planes} compares two selected
-$5\times5$ km cells from the viewer: \textbf{High mountains \#2 (H2)}, in
-the Aulp du Seuil area of the Chartreuse (Alps), and \textbf{Plains \#1 (P1)},
-in Suisse Normande within the broad Channel Coast box. Their ranks refer to
-all-time distinct crossing flights within each altitude band: 15,840 for H2
-and 2,246 for P1.
-P1 is inland and contains local slopes despite its low starting-altitude
-classification.
+In particular, an explanation based only on mountain detours does not explain
+why the closed-route ordering is reversed. Closed circuits add a return
+constraint, whose effect over 10--10000 s can depend on circuit size, leg
+durations and turn geometry. For example, if lowland closed routes turn or
+return on shorter time scales than mountain closed routes, more increments
+in the fitted range could span changes of direction, reducing the effective
+$H$. This is a testable possibility, not a measured property of these flights.
+The downward bending of all four closed curves at long lags in
+Figure~\ref{fig:fixed-task} is compatible with return constraints, but does not
+identify why their altitude ordering differs from that of open routes.
 
-The maps pool \textbf{all available dates and years, without a seasonal
-restriction}, using the viewer's Vilpellet climb classification for both
-disciplines, without the MSD cohort's duration restriction.
-Each point marks a climb crossing at 100 or 600 m above a fixed cell
-reference: 1756 m ASL for H2 and 185 m for P1, estimated from five and 1165
-screened starts, respectively. The viewer labels this offset AGL; it is not
-clearance above the terrain beneath each point.
-Red lines trace approximate crests derived independently from the IGN RGE ALTI
-terrain model~\cite{ign_rge_alti}: local transverse height maxima on a 25 m
-grid, smoothed at 50 m. They include secondary ridges but are scale-dependent,
-not an exhaustive inventory; their ground positions stay fixed at both heights.
+Distinguishing these explanations requires comparing circuit sizes and leg
+durations, separating triangles from out-and-return routes, and accounting
+for wind and the terrain actually crossed. The present curves establish the
+opposite conditional orderings, while their physical explanation remains open.
 
-\input{generated/ch3_thermal_panel_values}
-\begin{figure}[p]
- \centering
- \begin{minipage}{.22\textwidth}\centering
-  \includegraphics[width=\linewidth]{generated/ch3_thermal_cell_locator.pdf}
- \end{minipage}\hspace{.04\textwidth}
- \begin{minipage}{.64\textwidth}\small
-  \textbf{H2: High mountains \#2, Chartreuse (Alps)}\\
-  \textbf{P1: Plains \#1, Suisse Normande (Channel Coast)}\\[4pt]
-  All available dates and years; no seasonal filter.\\
-  Locator markers show cell centres, enlarged for visibility.
- \end{minipage}\\[6pt]
- \begin{minipage}{.43\textwidth}\centering\small
-  \textbf{Alps: Chartreuse (H2)}\\[3pt]
-  $z_{\mathrm{AGL}}=\ThermalLower$\\[3pt]
-  \includegraphics[width=\linewidth]{generated/ch3_thermal_mountain-low.pdf}\\
-  \footnotesize\ThermalMountainLowCounts
- \end{minipage}\hfill
- \begin{minipage}{.43\textwidth}\centering\small
-  \textbf{Alps: Chartreuse (H2)}\\[3pt]
-  $z_{\mathrm{AGL}}=\ThermalUpper$\\[3pt]
-  \includegraphics[width=\linewidth]{generated/ch3_thermal_mountain-high.pdf}\\
-  \footnotesize\ThermalMountainHighCounts
- \end{minipage}\\[8pt]
- \begin{minipage}{.43\textwidth}\centering\small
-  \textbf{Channel Coast: Suisse Normande (P1)}\\[3pt]
-  $z_{\mathrm{AGL}}=\ThermalLower$\\[3pt]
-  \includegraphics[width=\linewidth]{generated/ch3_thermal_plains-low.pdf}\\
-  \footnotesize\ThermalPlainsLowCounts
- \end{minipage}\hfill
- \begin{minipage}{.43\textwidth}\centering\small
-  \textbf{Channel Coast: Suisse Normande (P1)}\\[3pt]
-  $z_{\mathrm{AGL}}=\ThermalUpper$\\[3pt]
-  \includegraphics[width=\linewidth]{generated/ch3_thermal_plains-high.pdf}\\
-  \footnotesize\ThermalPlainsHighCounts
- \end{minipage}
- \caption{Climb crossings in H2 and P1, at 100 and 600 m above each fixed cell
- reference, pooling all dates. Each pair covers the same $5\times5$ km
- footprint. Blue: paragliders; orange: hang gliders; red: approximate
- DEM-derived crests. Counts distinguish
- crossings from contributing flights, which differ between heights.
- Background: \copyright\ IGN/G\'eoplateforme, Plan IGN; terrain: RGE ALTI,
- Licence Ouverte 2.0.}
- \label{fig:conditional-climb-planes}
-\end{figure}
+The altitude classes describe the launch site rather than the terrain crossed
+later. The two lowland closed cells are the smallest in
+Table~\ref{tab:fixed-task} and have the widest intervals, although their contrasts
+against the mountain cells still exclude zero. The comparison is observational: it
+does not isolate orography from weather, route selection, pilots or equipment.
 
-\textbf{Climb locations spread out more visibly with height in P1 than in H2.}
-At 100 m, P1 crossings cluster near local slopes; at 600 m, gliders cross
-the plane while climbing over a much broader part of the cell. In H2, both
-heights retain concentrations near the same terrain corridors, despite some
-broadening at 600 m. The two main bands at 100 m follow mainly the outer
-slopes of separate ridges---Lances de Malissard to the west and Aulp du
-Seuil--Bellefont to the east of the Vallon de Marcieu---rather than opposite
-slopes of a single central ridge. Thus gliders exploit
-lift across a wider area aloft in P1, supporting greater spatial freedom
-for route choices, while repeatedly using narrower terrain-associated
-corridors in H2.
-
-\textbf{Distributed sources and wind advection could jointly explain the
-broader use of space aloft.} In an idealised steady plume, horizontal
-advection $\boldsymbol{u}_h$ and upward air speed $w>0$ give
-\[
- \Delta\boldsymbol{r}_h \simeq
- \frac{\boldsymbol{u}_h}{w}\,\Delta z.
-\]
-Drift therefore accumulates during ascent. Variation in wind direction,
-speed or updraft strength across flights and days can broaden the pooled
-crossing pattern with height. A common, constant wind and rise speed would
-instead translate the source pattern; inclination alone does not imply
-lift everywhere at a given height.
-
-One possible mountain profile combines sheltered, heated slopes with
-stronger winds above the crests: convection initially rises along or away
-from the slope, then tilts more strongly aloft; strong shear can disrupt
-it~\cite[Chapter~9]{faa_glider2024}. Exposed lowland sources may experience
-advection from lower heights. These are possible conditions, not a general
-wind hierarchy: valleys can also channel and accelerate
-flow~\cite{schroeder_buck1970}. The maps do not establish either profile,
-and the inland P1 cell cannot be assigned a coastal wind regime from its
-regional label.
-
-The maps show sampled climbs, including possible slope lift, rather than
-tracked thermal centres. Different flights and weather support each height,
-and low horizontal planes can intersect terrain. Their spatial contrast is
-observed; attributing it to wind requires following the same climbs across
-heights and matching wind profiles. Its contribution to $H$ and generality
-across sites remain to be quantified.
-\FloatBarrier
-\subsection{Regional differences within a broad launch environment}
-\label{sec:conditional-regions}
-We compare Alps with Pyrenees, retaining only Low/High mountains, and
-Channel Coast with Champagne-Lorraine, retaining only Plains/Hills.
-This restricts the broad launch environment within each geographic comparison.
-For a box $\mathcal B$ defined in Table~\ref{tab:regional-boxes} and
-Figure~\ref{fig:prelim-map}a, the selections are
-\begin{align}
- \mathcal C_{\mathcal B,\mathrm{mountains}}
- &=\{f\in\mathcal C_{10000}:
- (\lambda_{0f},\varphi_{0f})\in\mathcal B,\ z_{0f}\geq800\,\mathrm{m}\},\notag\\
- \mathcal C_{\mathcal B,\mathrm{lowlands}}
- &=\{f\in\mathcal C_{10000}:
- (\lambda_{0f},\varphi_{0f})\in\mathcal B,\ z_{0f}<800\,\mathrm{m}\}.
- \label{eq:regional-preselection}
-\end{align}
-Within the fixed cohort, this removes \CondAlpsExcluded{} flights from the Alpine
-box and \CondPyreneesExcluded{} from the Pyrenean box. The lowland restriction also
-removes \CondChannelCoastExcluded{} flights from Channel Coast and
-\CondChampagneLorraineExcluded{} from Champagne-Lorraine. Figure legends report
-the remaining counts.
-
-\begin{figure}[htbp]
- \centering
- \includegraphics[width=\textwidth]{generated/ch3_conditional_regions.pdf}
- \caption{Regional paraglider MSDs. Left: Alps and Pyrenees. Right: Channel Coast
- and Champagne-Lorraine. The left panel retains only Low/High mountains within
- each box; the right retains only Plains/Hills. Circuit types and equipment
- classes are pooled. Counts and fits refer to the preselected populations;
- both panels share the same axes.}
- \label{fig:conditional-regions}
-\end{figure}
-
-The Alpine exponent is \CondAlpsH{}, against \CondPyreneesH{} in the Pyrenees.
-Their paired difference is positive (Table~\ref{tab:conditional-regions}), and
-Alpine flights also reach a larger MSD at long lags. Channel Coast and
-Champagne-Lorraine instead give very similar exponents,
-\CondChannelCoastH{} and \CondChampagneLorraineH{}. Their paired interval includes
-zero, although their MSD amplitudes differ.
-
-\begin{table}[htbp]
- \centering\small
- \input{generated/ch3_conditional_regional_table}
- \caption{Paired regional contrasts in $H$, after the terrain preselection:
- Low/High mountains for Alps--Pyrenees and Plains/Hills for the two lowland
- regions. Intervals are nominal 90\% site--day bootstrap intervals.}
- \label{tab:conditional-regions}
-\end{table}
-
-The arrangement of ridges, valleys and usable lift could contribute to the
-mountain contrast. However, broad altitude selection still leaves different
-altitude distributions, circuit proportions, equipment and weather within
-each pair of regions. The regional contrast therefore cannot be assigned
-to terrain geometry alone.
-
+Wind can contribute to both amplitude and apparent scaling. For an additive constant
+velocity $\boldsymbol u$, write $\Delta\boldsymbol x=\Delta\boldsymbol y+\boldsymbol u\tau$:
+\begin{equation}
+ \langle|\Delta\boldsymbol x|^2\rangle
+ =\langle|\Delta\boldsymbol y|^2\rangle
+ +2\tau\boldsymbol u\cdot\langle\Delta\boldsymbol y\rangle+|\boldsymbol u|^2\tau^2.
+ \label{eq:fixed-wind}
+\end{equation}
+Even uniform wind can change the slope through the ballistic term. Centring removes
+a common deterministic drift, but not necessarily differences in drift between
+flights; variable winds can also modify velocity correlations. Without wind data
+matched to these trajectories, these contributions remain mixed with the
+association with orography and circuit type.
 \FloatBarrier
 \subsection{Beginners and experts across launch environments}
 \label{sec:conditional-equipment}
@@ -1006,9 +1019,11 @@ We use the equipment groups defined in Section~\ref{sec:glider}:
  \text{beginners}:\ \mathrm{EN\ A/B/C},\qquad
  \text{experts}:\ \mathrm{EN\ D/CCC}.
 \]
-Membership follows the catalogue wing class for each flight: an experienced
-pilot can fly an A/B/C wing, so these labels combine an experience proxy with
-equipment differences. We exclude tandem, non-certified and unclassified entries
+Membership follows the harmonized catalogue class of the wing used for that
+flight. It is not a pilot-level classification: an experienced pilot can fly an
+A, B or C wing, and the same pilot could enter different groups on different
+flights. The labels provide an operational experience proxy while retaining
+an equipment contrast. We exclude tandem, non-certified and unclassified entries
 from this comparison: \num{\CondUnknownEquipment} fixed-cohort flights enter neither
 group. The retained groups contain \num{\CondBeginnersN} beginners flights and
 \num{\CondExpertsN} experts flights.
@@ -1031,8 +1046,11 @@ and leave its log--log slope unchanged. The observed separation in $H$ therefore
 also concerns the lag dependence of transport, although it cannot distinguish
 pilot decisions from equipment, route or environmental differences.
 
-Figure~\ref{fig:conditional-equipment-altitude} separates altitude classes
-within the beginners group (left) and the experts group (right).
+We then retain the four altitude classes separately, as in
+Figure~\ref{fig:fixed-task}. Figure~\ref{fig:conditional-equipment-altitude}
+shows the four classes for the beginners group (left) and for the experts group
+(right). This holds the broad launch environment fixed without matching individual
+sites or flight conditions.
 
 \begin{figure}[htbp]
  \centering
@@ -1080,58 +1098,12 @@ lowland class at the adopted 90\% level. There is therefore evidence that the
 equipment-group separation changes with launch environment, but no monotonic
 increase of that separation with altitude.
 
-These contrasts concern long flights made on different wing classes. In
-particular, the beginners group does not represent the full population of
-novice pilots, and circuit composition remains mixed within each altitude cell.
-\FloatBarrier
-
-\subsection{From stratified comparisons to a joint analysis}
-\label{sec:conditional-synthesis}
-
-The comparisons reveal two features that a joint analysis must account for:
-\begin{itemize}
- \item \textbf{Unequal composition}: the factor proportions differ between
- groups, and each subgroup contributes according to both its abundance and
- its MSD (Eq.~\eqref{eq:fixed-msd-share}).
- \item \textbf{Interactions}: a contrast in $H$ changes with another
- factor's level, as observed for both circuit and equipment across altitude
- classes. This departure from additivity is distinct from unequal proportions.
-\end{itemize}
-The two-factor comparisons quantify these conditional patterns while pooling
-the remaining characteristics. They cannot yet separate circuit, launch
-environment and equipment jointly.
-
-\paragraph{Factorial analysis as the next stage.}
-A full \emph{factorial experiment} combines every selected level of each
-factor with every level of the others~\cite{nist_full_factorial}. This permits
-estimation of main effects, which summarise contrasts over specified settings
-of the other factors, and interactions, which describe how those contrasts
-change with the settings~\cite[Sections~9.3 and~9.7]{mohr2022statistical}.
-
-For this archive, the corresponding \emph{factorial analysis} would cross
-four altitude classes, two circuits and two equipment groups, giving 16
-cells, with $H$ fitted over the same lag range in each. It would test whether
-the circuit--altitude patterns persist at common equipment settings and
-quantify interactions among all three factors. The observational data require
-explicit weighting of unequal cells and uncertainty estimates that respect
-shared flight conditions. Unmeasured weather and route selection would still
-limit causal interpretation. The provisional implementation in
-Section~\ref{sec:conditional-factorial}, in \emph{Experimentals}, remains under
-review; none of its numerical results is used here.
-
-\paragraph{Why this matters for group versus solo flight.}
-Group flights could have a higher pooled $H$ because they contain more open
-routes or different terrain and equipment mixtures. Adding group/solo status
-as a fourth factor gives 32 cells and allows contrasts at common settings:
-\[
- \Delta H_{a,c,e}^{\rm social}
- =H_{\mathrm{group},a,c,e}-H_{\mathrm{solo},a,c,e},
-\]
-where $e$ denotes equipment class. Interactions with social status would test
-whether this contrast changes with circuit, altitude or equipment. Such joint
-comparisons are needed to distinguish the group/solo association from these
-composition effects; they require reliable social-flight labels and sufficient
-support in each compared cell.
+These results support a distinction between the two equipment groups that survives
+altitude stratification. They do not measure the effect of experience alone.
+Circuit composition, regional coverage and weather remain mixed within each cell,
+while the fixed-population rule restricts the comparison to flights with a long
+uninterrupted segment. In particular, the beginners group here describes long
+flights made on A/B/C wings, not the full population of novice pilots.
 \FloatBarrier
 
 \section{Anisotropy and principal directions}

@@ -431,6 +431,51 @@ within a broad altitude setting; they do not match circuit composition.
 The closed-route reversal has no established physical explanation in these
 measurements. The leg-duration/return-geometry explanation is a hypothesis.
 
+The spatial illustration uses viewer cells **High mountains #2 (H2)** in
+Chartreuse and **Plains #1 (P1)** in Suisse Normande, at **100 and 600 m**
+above the fixed cell reference. All available dates are pooled. The thesis
+and seminar deck share the four direct viewer-data exports and France locator;
+selection, counts and reproduction instructions are recorded in
+`presentations/offsite2026/assets/screenshots/README.md`. The mechanism slide uses a scientific 3D perspective to show heated slope sources, separated
+lowland heat sources and possible wind advection. The thesis distinguishes a
+translated source pattern under shared constant wind from broadening when wind
+or updraft strength varies across the pooled sample. Sheltered lower slopes and
+stronger wind aloft are a possible profile, not an inferred mountain/lowland wind
+hierarchy; P1 is inland. Both accounts distinguish observed spatial spread from
+its proposed mechanisms. Intersection markers are saturated and nearly opaque
+for visibility; coordinates, counts and selection are unchanged.
+
+Section 3.2 now presents the marginal circuit comparison first, then altitude
+composition and circuit-by-altitude interactions, regions, equipment, and a
+methodological synthesis. Marginal comparisons pool other characteristics;
+stratified comparisons fix selected categories. These observational comparisons
+are not controlled one-factor-at-a-time experiments. The existing paired
+interaction contrasts are retained as quantitative evidence. The factorial
+implementation in Experimentals remains provisional and does not supply results
+to the main chapter. Its motivation includes future group/solo comparisons
+at common circuit, altitude and equipment settings.
+
+The contribution figure `ch3_conditional_circuit_weights.pdf` shows
+`w_c|a(tau) = (N_c,a/N_a) M_c,a(tau) / M_a(tau)` for open and closed circuits
+**within each altitude class**. The full class, including unclassified flights,
+remains the denominator. Unclassified MSD is the residual to one and is bounded
+in the generated caption. Shares of different altitude classes do not sum to one
+within a panel. These are observed shares without uncertainty bands, and are
+not averaging weights for the exponents fitted over a lag interval.
+
+`conditional_ch3_transport.py` regenerates the weights during measurement/redraw.
+To update just this figure, its JSON record and its numeric macros offline:
+
+```bash
+MPLCONFIGDIR=/private/tmp/soaring-mpl-cache .venv/bin/python \
+  scripts/tesi/ch03_fixed_transport/circuit_msd_weights.py
+```
+
+The seminar deck uses the same computation with projection-sized typography.
+The separate composition-standardization diagnostic under
+`revisions/circuit-composition-2026-09-22/` remains a review artifact; its
+reference-dependent percentage reductions are not promoted to the main text.
+
 Section 3.2 palettes live in `conditional_plot_style.py`. Circuit, altitude,
 region and equipment categories have semantic colours distinct from the
 paraglider/hang-glider pair; the existing circuit-by-altitude renderer imports

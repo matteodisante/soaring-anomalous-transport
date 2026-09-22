@@ -33,6 +33,17 @@ licence was recorded.
 
 ## Scope of source checking
 
+The thermal-plane interpretation (22 September 2026) uses the FAA's
+[Glider Flying Handbook, Chapter 9](https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/glider_handbook/gfh_chapter_9.pdf),
+pp. 9-8 and 9-16, for plume tilt, shear disruption and possible differences
+between lower-slope and crest-level wind. The
+[SSA lift-source guide](https://www.ssa.org/lift-sources/) supports differential
+surface heating as a source of convection. Schroeder and Buck (1970),
+[Chapter 6, pp. 96–99](https://www.weather.gov/media/zhu/ZHU_Training_Page/winds/FireWx_General_Winds/FireWx_General_Winds.pdf),
+describes terrain shelter, channelled flow and acceleration through passes.
+These sources establish possible mechanisms, not measured wind differences
+between H2 and P1. The latter remain untested.
+
 The chapter reports document the checks of stochastic scaling, moment spectra,
 Gaussian/non-Gaussian diagnostics, HMM assumptions, filtering and coordinate
 transforms. Formulae were also derived or checked against implementation where
@@ -94,6 +105,15 @@ comparisons are recorded in
 These are issuing-body web sources, not downloaded paper PDFs in the inventory below.
 
 ## Inventory
+
+The conditional-transport methodology also cites two issuing-body pages checked
+on 22 September 2026: NIST/SEMATECH's
+[One variable at a time](https://www.itl.nist.gov/div898/handbook/pri/section2/pri212.htm)
+for the controlled OFAT definition and its interaction limitation, and
+[Full factorial designs](https://www.itl.nist.gov/div898/handbook/pri/section3/pri333.htm)
+for crossing all selected factor levels. These support the method definitions,
+not causal claims about the observational flight archive. Their BibTeX keys are
+`nist_ofat` and `nist_full_factorial`.
 
 “Registry” means publisher-deposited Crossref metadata were retrieved. “Primary”
 means a publisher, author or issuing-body record/document was inspected; exact
