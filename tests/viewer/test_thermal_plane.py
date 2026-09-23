@@ -276,3 +276,27 @@ def test_daily_panels_share_one_row_and_focus_preserves_selection(widget, monkey
             )
             assert title.startswith(focus.capitalize())
     assert widget._panel_indices == [0, 1, 2]
+
+
+def test_cell_flights_counts_every_visit_overlapping_the_paris_band(
+    widget, monkeypatch
+):
+    from soaring.viewer.thermal_daily import local_bounds
+
+    day = datetime(2024, 6, 15).date()
+
+    def at(hour):
+        return local_bounds(day, (hour, hour))[0]
+
+    spans = [(13.2, 13.8), (13.8, 14.2), (15, 15.5), (20, 20.2)]
+    visits = pd.DataFrame(
+        {"start": [at(a) for a, _ in spans], "end": [at(b) for _, b in spans]}
+    )
+    widget._plane = PlaneData(pd.DataFrame(), 4, 4, 0, 0, 0, visits=visits)
+    monkeypatch.setattr(widget, "_read_bounds", lambda: local_bounds(day))
+    assert widget._cell_flights() == 4
+    assert widget._cell_flights((13, 14)) == 2
+    assert widget._cell_flights((14, 18)) == 2
+    assert widget._cell_flights((18, 19)) == 0
+    widget._plane = PlaneData(pd.DataFrame(), 0, 0, 0, 0, 0)
+    assert widget._cell_flights() is None

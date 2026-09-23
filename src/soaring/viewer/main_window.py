@@ -30,6 +30,7 @@ from . import data, plotting
 from .widgets.flight_picker import FlightPicker
 from .widgets.map_view import MapView
 from .widgets.plot_controls import PlotControls
+from .widgets.thermal_density import ThermalDensity
 from .widgets.thermal_plane import ThermalPlane
 
 if TYPE_CHECKING:
@@ -125,6 +126,8 @@ class MainWindow(QMainWindow):
         self._tabs.addTab(self._map_view, "Map")
         self._thermal_plane = ThermalPlane()
         self._tabs.addTab(self._thermal_plane, "Thermal planes")
+        self._thermal_density = ThermalDensity()
+        self._tabs.addTab(self._thermal_density, "Thermal density")
         # The map's take-off points are only read from disk the first time this tab is
         # actually shown, not at startup: a full catalog + flights_meta read for both
         # disciplines is seconds of work the app should not pay before its window
@@ -186,6 +189,7 @@ class MainWindow(QMainWindow):
             self._splitter.setSizes(state[2])
         self._fullscreen_state = None
         self._fullscreen_button.setText("Full screen")
+        self._set_compact(False)
 
     def changeEvent(self, event):  # noqa: N802
         """Handle the button and native macOS full-screen transitions alike."""
@@ -204,8 +208,14 @@ class MainWindow(QMainWindow):
                 )
             self._picker.hide()
             self._fullscreen_button.setText("Exit full screen (Esc)")
+            self._set_compact(True)
         else:
             self._restore_full_screen_layout(self._fullscreen_state)
+
+    def _set_compact(self, compact: bool) -> None:
+        """Give the interactive plots the space of the status and provenance lines."""
+        self._thermal_plane.set_compact(compact)
+        self._thermal_density.set_compact(compact)
 
     def _on_tab_changed(self, index: int) -> None:
         """Load a tab's own data only the first time it is actually shown."""
@@ -213,10 +223,13 @@ class MainWindow(QMainWindow):
             self._map_view.ensure_loaded()
         elif self._tabs.widget(index) is self._thermal_plane:
             self._thermal_plane.ensure_loaded()
+        elif self._tabs.widget(index) is self._thermal_density:
+            self._thermal_density.ensure_loaded()
 
     def closeEvent(self, event) -> None:  # noqa: N802
         """Cancel archive work before Qt destroys the thermal-plane worker."""
         self._thermal_plane.shutdown()
+        self._thermal_density.shutdown()
         super().closeEvent(event)
 
     def _on_folders_changed(self) -> None:
@@ -226,6 +239,7 @@ class MainWindow(QMainWindow):
         # showing whichever root was current when it last loaded, silently stale.
         self._map_view.invalidate()
         self._thermal_plane.invalidate()
+        self._thermal_density.invalidate()
         if self._tabs.currentWidget() is self._map_view:
             self._map_view.ensure_loaded()
 
@@ -366,9 +380,7 @@ class MainWindow(QMainWindow):
         self._redraw()
 
     # -- drawing -----------------------------------------------------------------
-    def _panel_specs(
-        self, mode: str
-    ) -> list[tuple[str, data.PhaseTrack | None, str]]:
+    def _panel_specs(self, mode: str) -> list[tuple[str, data.PhaseTrack | None, str]]:
         """Which segmentation(s) to draw, one ``(key, phase_track, title)`` per panel.
 
         Args:
@@ -480,9 +492,7 @@ class MainWindow(QMainWindow):
             else DISCIPLINE_COLORS["paragliders"]
         )
         drawn_any = False
-        for ax, (source_key, phase_track, title) in zip(
-            axes, panel_specs, strict=True
-        ):
+        for ax, (source_key, phase_track, title) in zip(axes, panel_specs, strict=True):
             drawn_any |= self._draw_panel(
                 ax,
                 source_key=source_key,

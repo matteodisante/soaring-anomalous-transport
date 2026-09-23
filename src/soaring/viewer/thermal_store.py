@@ -36,6 +36,7 @@ class PlaneData:
     unknown_clock: int
     cached: int = 0
     points: pd.DataFrame | None = None
+    visits: pd.DataFrame | None = None
 
 
 @contextmanager
@@ -75,9 +76,9 @@ class ThermalStore:
                 for row in db.execute("SELECT payload FROM cells ORDER BY position")
             ]
 
-    def relief(self, cell=None):
+    def relief(self, cell=None, key=None):
         """Read prepared relief and its exact coordinates, without networking."""
-        key = "france" if cell is None else f"{cell.ix}/{cell.iy}"
+        key = key or ("france" if cell is None else f"{cell.ix}/{cell.iy}")
         with _connect(self.path) as db:
             if not db.execute(
                 "SELECT 1 FROM sqlite_master WHERE name='relief'"
@@ -94,11 +95,11 @@ class ThermalStore:
             row[0]
         )
 
-    def background(self, cell=None, kind="relief"):
+    def background(self, cell=None, kind="relief", key=None):
         """Read saved imagery, including the acquisition-date provenance."""
         if kind == "relief":
-            return self.relief(cell)
-        key = "france" if cell is None else f"{cell.ix}/{cell.iy}"
+            return self.relief(cell, key)
+        key = key or ("france" if cell is None else f"{cell.ix}/{cell.iy}")
         with _connect(self.path) as db:
             if not db.execute(
                 "SELECT 1 FROM sqlite_master WHERE name='backgrounds'"
@@ -161,6 +162,7 @@ class ThermalStore:
             raise ValueError("The end time precedes the start time")
         edges = []
         point_frames = []
+        visit_spans = []
         selected = decoded = unclassified = unavailable = 0
         with _connect(self.path) as db:
             unknown = db.execute(
@@ -178,14 +180,14 @@ class ThermalStore:
                 else ""
             )
             rows = db.execute(
-                f"""SELECT v.discipline,v.flight_id,c.status,{product}
+                f"""SELECT v.discipline,v.flight_id,c.status,{product},v.start,v.end
                 FROM visitors v LEFT JOIN climbs c
                 ON c.discipline=v.discipline AND c.flight_id=v.flight_id
                 AND c.ix=v.ix AND c.iy=v.iy AND c.source=?
                 {join} WHERE v.ix=? AND v.iy=? AND v.end>=? AND v.start<=?""",
                 (source, cell.ix, cell.iy, start, end),
             )
-            for discipline, fid, status, blob in rows:
+            for discipline, fid, status, blob, v_start, v_end in rows:
                 if cancel is not None and cancel.is_set():
                     raise CancelledError("Cancelled")
                 if status is None:
@@ -193,6 +195,7 @@ class ThermalStore:
                         "Missing saved product; rerun the offline preparation"
                     )
                 selected += 1
+                visit_spans.append((v_start, v_end))
                 decoded += status != "unavailable"
                 unclassified += status == "unclassified"
                 unavailable += status == "unavailable"
@@ -234,6 +237,7 @@ class ThermalStore:
             )
             if self.has_points
             else None,
+            pd.DataFrame(visit_spans, columns=["start", "end"], dtype=float),
         )
 
 

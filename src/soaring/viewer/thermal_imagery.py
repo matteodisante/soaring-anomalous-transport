@@ -6,6 +6,7 @@ import json
 import sqlite3
 import time
 from datetime import UTC, datetime
+from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import urlopen
@@ -139,5 +140,55 @@ def prepare_imagery(path, progress=print):
                 db.execute(
                     "INSERT INTO backgrounds VALUES (?,?,?,?)",
                     (kind, key, json.dumps(info), payload),
+                )
+                db.commit()
+
+
+def prepare_region_backgrounds(path, progress=print):
+    """Save a background of each regional box, all three kinds, into the store."""
+    from .thermal_regions import REGIONS, extent
+    from .thermal_relief import fetch_relief
+
+    with sqlite3.connect(path, timeout=120) as db:
+        db.execute("""CREATE TABLE IF NOT EXISTS backgrounds(
+            kind TEXT,key TEXT,metadata TEXT,image BLOB,PRIMARY KEY(kind,key))""")
+        db.execute("""CREATE TABLE IF NOT EXISTS relief(
+            key TEXT PRIMARY KEY,metadata TEXT,png BLOB)""")
+        for name, box in REGIONS.items():
+            lon_min, lat_min, lon_max, lat_max = extent(box)
+            key = f"region/{name}"
+            width = 4000
+            size = (width, round(width * (lat_max - lat_min) / (lon_max - lon_min)))
+            for kind in LAYERS:
+                if db.execute(
+                    "SELECT 1 FROM backgrounds WHERE kind=? AND key=?", (kind, key)
+                ).fetchone():
+                    continue
+                progress(f"Downloading IGN {kind}: {name}")
+                info, payload = fetch_image(
+                    Path(path).parent / "imagery",
+                    (lon_min, lat_min, lon_max, lat_max),
+                    "CRS:84",
+                    size,
+                    kind,
+                )
+                if kind == "aerial":
+                    info["acquisition_note"] = (
+                        "Multi-date mosaic; acquisition dates vary by location "
+                        "and differ from flight dates."
+                    )
+                db.execute(
+                    "INSERT INTO backgrounds VALUES (?,?,?,?)",
+                    (kind, key, json.dumps(info), payload),
+                )
+                db.commit()
+            if not db.execute("SELECT 1 FROM relief WHERE key=?", (key,)).fetchone():
+                progress(f"Downloading hillshade: {name}")
+                payload, info = fetch_relief(
+                    Path(path).parent, (lon_min, lat_min, lon_max, lat_max), 4326, size
+                )
+                db.execute(
+                    "INSERT INTO relief VALUES (?,?,?)",
+                    (key, json.dumps(info), payload),
                 )
                 db.commit()

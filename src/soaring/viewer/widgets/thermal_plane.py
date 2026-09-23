@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from itertools import pairwise
 from threading import Event
 
@@ -30,7 +30,7 @@ from PyQt6.QtWidgets import (
 )
 
 from .. import geography
-from ..thermal_daily import height_levels, local_bounds
+from ..thermal_daily import PARIS, height_levels, local_bounds
 from ..thermal_geometry import plane_intersections, unproject
 from ..thermal_ridges import draw_ridges, load_ridges
 from ..thermal_store import CancelledError, PlaneData, ThermalStore, load_store
@@ -273,6 +273,11 @@ class ThermalPlane(QWidget):
         self._set_busy(False)
         self._draw_map()
         self._draw_plane()
+
+    def set_compact(self, compact):
+        """Hide status and provenance lines so the plots fill a full-screen window."""
+        self._status.setVisible(not compact)
+        self._image_info.setVisible(not compact)
 
     def ensure_loaded(self):
         """Read saved data only; opening a tab never starts expensive preparation."""
@@ -537,7 +542,7 @@ class ThermalPlane(QWidget):
                 + clock.dt.microsecond / 3.6e9
             )
         self._status.setText(
-            f"{plane.selected} flights overlap the interval; "
+            f"{plane.selected} flights cross the cell in the interval, thermal or not; "
             f"{plane.cached} read from the prepared SSD file; "
             f"{plane.unclassified} entirely unclassified; "
             f"{plane.unavailable} unavailable. "
@@ -545,6 +550,28 @@ class ThermalPlane(QWidget):
             "Points are climb crossings; several may belong to the same thermal."
         )
         self._draw_plane()
+
+    def _cell_flights(self, hours=None):
+        """Distinct flights inside the cell in the window, thermal or not.
+
+        A flight counts when its time span in the cell overlaps the window, and
+        with ``hours`` (Paris clock) on at least one pooled day's band.
+        """
+        visits = getattr(self._plane, "visits", None)
+        if visits is None:
+            return None
+        if hours is None:
+            return len(visits)
+        first, last = self._read_bounds()
+        day = datetime.fromtimestamp(first, PARIS).date()
+        inside = np.zeros(len(visits), bool)
+        while local_bounds(day)[0] <= last:
+            lo, hi = local_bounds(day, hours)
+            inside |= (visits.end.to_numpy() >= max(lo, first)) & (
+                visits.start.to_numpy() < min(hi, last)
+            )
+            day += timedelta(days=1)
+        return int(inside.sum())
 
     def _utc_bounds(self):
         """UTC epoch seconds, independent of the computer's local timezone."""
@@ -1002,14 +1029,19 @@ class ThermalPlane(QWidget):
                     bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.85},
                 )
             prefix = ""
+            hours = None
             if self._mode.currentIndex():
                 prefix = (
                     f"{labels[i]} {self._bands[i].time().toString('HH:mm')}-"
                     f"{self._bands[i + 1].time().toString('HH:mm')} Paris\n"
                 )
+                hours = (bands[i], bands[i + 1]) if valid_bands else (0, 0)
+            crossing = self._cell_flights(hours)
+            if crossing is not None:
+                prefix += f"{crossing:,} flights cross the cell\n"
             ax.set_title(
                 f"{prefix}z = {self._height.value():g} m AGL · "
-                f"{count:,} points · {flights:,} flights",
+                f"{count:,} points · {flights:,} flights at this z",
                 fontsize=10,
             )
         if self._mode.currentIndex():
