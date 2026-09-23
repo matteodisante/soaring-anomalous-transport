@@ -40,7 +40,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from matplotlib.colors import LogNorm
+from matplotlib import patheffects
+from matplotlib.colors import LinearSegmentedColormap, LogNorm
 
 ROOT = Path(__file__).resolve().parents[2]
 _SRC = str(ROOT / "src")
@@ -82,6 +83,17 @@ CELL_ISLAND_DEG = 0.01
 # Map colours: land, sea and coastline. Muted, so that the take-off density on top
 # is what the eye reads.
 LAND, SEA, COAST = "#efece6", "#dce7ef", "#9aa5ae"
+
+# France density ramp: neutral grey, so the coloured region boxes are the only hue on
+# the panel. A multi-hue ramp (magma) shared its purples and oranges with the box
+# colours and swallowed them over the Alps. The ramp starts mid-grey so a single-flight
+# cell still reads against the pale land.
+DENSITY_CMAP = LinearSegmentedColormap.from_list(
+    "density_grey", ["#c4c4c4", "#7a7a7a", "#2b2b2b", "#000000"]
+)
+# A white rim under each box outline and label keeps them legible where they cross
+# dense cells.
+_HALO = [patheffects.withStroke(linewidth=3.2, foreground="white")]
 
 # The three map frames, (lon_min, lat_min, lon_max, lat_max). They must match the
 # panels build_basemap.py cropped the geometry to.
@@ -139,14 +151,16 @@ MAP_REGIONS = {
     },
 }
 BOX_COLORS = {**REGION_COLORS, "Champagne-Lorraine": "#817268"}
-# Where each box's label sits, and how it is anchored. The boxes overlap along their
-# edges, so a label placed at a fixed corner of each collides with its neighbour.
+# Where each box's label sits, and how it is anchored. Labels sit outside their boxes,
+# over sea or sparse cells, so none covers the take-offs it names; the boxes overlap
+# along their edges, so a label at a fixed corner of each would collide with its
+# neighbour.
 _LABEL_ANCHOR = {
-    "Alps": (9.85, 46.35, "right"),
-    "Pyrenees": (-1.75, 42.15, "left"),
-    "Massif Central": (1.95, 45.9, "left"),
-    "Channel Coast": (-1.7, 50.6, "left"),
-    "Champagne-Lorraine": (2.25, 50.8, "left"),
+    "Alps": (9.85, 46.7, "right", "bottom"),
+    "Pyrenees": (0.7, 41.85, "center", "top"),
+    "Massif Central": (3.2, 46.3, "center", "bottom"),
+    "Channel Coast": (-1.95, 50.75, "right", "center"),
+    "Champagne-Lorraine": (4.15, 50.7, "center", "bottom"),
 }
 
 _PDF_METADATA = {
@@ -154,6 +168,13 @@ _PDF_METADATA = {
     "Producer": "soaring.analysis",
     "CreationDate": None,
 }
+
+
+def _darken(color: str, amount: float = 0.35) -> tuple[float, float, float]:
+    """Mix ``color`` towards black by ``amount``, keeping its hue."""
+    from matplotlib.colors import to_rgb
+
+    return tuple((1 - amount) * c for c in to_rgb(color))
 
 
 def _within(lat, lon, extent):
@@ -404,7 +425,9 @@ def draw_maps(loaded: dict) -> object:
     if panels:
         _draw_land(france_ax, panels["france"]["rings"], extent)
     inside = _within(lat, lon, extent)
-    mesh = _density(france_ax, lon[inside], lat[inside], extent, CELL_DEG)
+    mesh = _density(
+        france_ax, lon[inside], lat[inside], extent, CELL_DEG, cmap=DENSITY_CMAP
+    )
     if mesh is not None:
         fig.colorbar(mesh, ax=france_ax, label="flights per cell", shrink=0.75)
     for name, box in MAP_REGIONS.items():
@@ -415,14 +438,25 @@ def draw_maps(loaded: dict) -> object:
                 box["lat"][1] - box["lat"][0],
                 fill=False,
                 edgecolor=BOX_COLORS[name],
-                lw=1.1,
-                ls="--",
+                lw=1.8,
                 zorder=3,
+                path_effects=_HALO,
             )
         )
-        x, y, align = _LABEL_ANCHOR[name]
+        x, y, align, valign = _LABEL_ANCHOR[name]
         france_ax.text(
-            x, y, name, color=BOX_COLORS[name], fontsize=8.5, ha=align, zorder=4
+            x,
+            y,
+            name,
+            # Same hue as the outline, darkened: the pale box colours are too light
+            # for text on white.
+            color=_darken(BOX_COLORS[name]),
+            fontsize=10,
+            fontweight="bold",
+            ha=align,
+            va=valign,
+            zorder=4,
+            bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.85, "pad": 1.5},
         )
     france_ax.set_title(
         f"(a) France \u2014 {100 * inside.mean():.1f}% of flights",
@@ -436,7 +470,14 @@ def draw_maps(loaded: dict) -> object:
     if panels:
         _draw_land(reunion_ax, panels["reunion"]["rings"], extent)
     on_island = _within(lat, lon, extent)
-    _density(reunion_ax, lon[on_island], lat[on_island], extent, CELL_ISLAND_DEG)
+    _density(
+        reunion_ax,
+        lon[on_island],
+        lat[on_island],
+        extent,
+        CELL_ISLAND_DEG,
+        cmap=DENSITY_CMAP,
+    )
     reunion_ax.set_title(
         f"(b) La R\u00e9union \u2014 {on_island.sum():,} flights",
         fontsize=10,

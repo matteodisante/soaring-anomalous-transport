@@ -549,8 +549,8 @@ No rejoin within $w$ & Keep the block, split at its first fix and re-anchor on t
 \bottomrule
 \end{tabularx}
 \end{center}
-The cap starts at the pending block's first fix. It reuses the Hampel half-window
-without a shared calibration. Gaps left by deletion are bridged or split at
+The cap starts at the pending block's first fix. It reuses the Hampel half-window,
+$w=\SI{\PreprocHampelWindowS}{\second}$, without a shared calibration. Gaps left by deletion are bridged or split at
 resampling (Sec.~\ref{sec:uniform}).
 
 Figure~\ref{fig:reach-gate} compares a spike, a moderate offset and a large offset.
@@ -565,7 +565,7 @@ which branch contains the true positions.
 \SI{12}{\metre\per\second}, sampled every second. Northward offsets are
 \SI{700}{\metre} for one fix (a,b), \SI{400}{\metre} for \SI{60}{\second} (c,d),
 and \SI{4000}{\metre} for \SI{60}{\second} (e,f). Crosses mark deletions, dotted
-lines boundaries, and shading the block cap $w$. Lower panels show chord speed
+lines boundaries, and shading the block cap $w=\SI{\PreprocHampelWindowS}{\second}$. Lower panels show chord speed
 from the current anchor and the bound $v_{xy}^{\max}$. The moderate offset removes
 nine fixes at each end, including genuine ones; the large offset is kept as a
 separate segment.}
@@ -2527,7 +2527,7 @@ The map itself shows the full retained ensemble, before this additional selectio
   }
   \caption{Take-off sites of the retained ensemble, on three frames, pooling both
   disciplines throughout.
-  (a)~Metropolitan France, density on a \SI{0.15}{\degree} cell; the dashed boxes mark the geographic windows in Table~\ref{tab:regional-boxes},
+  (a)~Metropolitan France, density on a \SI{0.15}{\degree} cell; the coloured boxes mark the geographic windows in Table~\ref{tab:regional-boxes},
   including Champagne-Lorraine; no altitude preselection is applied to this map. (b)~La~R\'eunion, on a \SI{0.01}{\degree} cell, the one
   overseas department with a substantial share. (c)~Everything else, one marker per
   \SI{0.5}{\degree} cell with the area set by its count.}
