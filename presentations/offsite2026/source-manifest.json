@@ -84,7 +84,7 @@
     },
     {
       "path": "presentations/offsite2026/offsite-2026.tex",
-      "sha256": "0b205eb37df34dd69409402ab5f43f584f7a68529b35ab6eb7e26f2d7bdd65ab"
+      "sha256": "b02ab0ef106035c69929328a2601b80846f941cd2f89a3671001bb27757c0e0c"
     },
     {
       "path": "presentations/offsite2026/render_figures.py",
@@ -161,6 +161,73 @@
     {
       "path": "presentations/offsite2026/assets/screenshots/thermal-flight-counts.tex",
       "sha256": "6e7349fd7e5a1bc603bb366d12770c47cdfe3eac9e2a00216b68719ad569db62"
+    },
+    {
+      "path": "presentations/offsite2026/render_regional_climb_density.py",
+      "sha256": "2b4018cca7c4e1da2a5eab1af231298abb75b6ee878632d7aaf3d0df1c889ad4"
+    },
+    {
+      "path": "presentations/offsite2026/render_regional_climb_maps.py",
+      "sha256": "30b355c50914720ac13499cbadc0ed97b696996b8742f405121a62995d7c378f"
+    },
+    {
+      "path": "src/soaring/viewer/thermal_daily.py",
+      "sha256": "ad7ac1fb54b716b8b3e0989f64621a368b02559dd9a40c895764f4ab10c7f99a"
+    },
+    {
+      "path": "src/soaring/viewer/thermal_geometry.py",
+      "sha256": "036a4d1448794f22cb382f8244b34481a7612ca315d0647155719e31883b1400"
+    },
+    {
+      "path": "presentations/offsite2026/assets/regional-climb/counts-report.json",
+      "sha256": "3f4b2118770f8cb31f61413cb03b73c40793e2938209e4f9174a406953d2e7fc"
+    },
+    {
+      "path": "presentations/offsite2026/assets/regional-climb/pyrenees-cells.csv",
+      "sha256": "37e70cd105f6f5db4312d379a994a0185ac01870e9fe3893cf5a40ebcbd350b7"
+    },
+    {
+      "path": "presentations/offsite2026/assets/regional-climb/champagne-cells.csv",
+      "sha256": "98c5468f61cd81e1c20ed6bdb845c48e285a31d9fe2ab5f1db48f0c58042414f"
+    },
+    {
+      "path": "presentations/offsite2026/assets/regional-climb/alps-cells.csv",
+      "sha256": "0c408be04cc63d7e8d83d71adf142634d499770b7638940ca1967783903d077d"
+    },
+    {
+      "path": "presentations/offsite2026/assets/regional-climb/channel-coast-cells.csv",
+      "sha256": "0be1adab8e4c4e672067032c757977c3f6942f5eb4978ed2861eb883e29f5e84"
+    },
+    {
+      "path": "presentations/offsite2026/assets/regional-climb/channel-coast-map.pdf",
+      "sha256": "27a80fbb56bdf69cd636da652da9a33b0756c6af77911a050fc87702628edba2"
+    },
+    {
+      "path": "presentations/offsite2026/assets/regional-climb/pyrenees-map.pdf",
+      "sha256": "46547b6ec261a3590e9c2b9335f3d5dc3fa275f3e95665f59f3a015928f18201"
+    },
+    {
+      "path": "presentations/offsite2026/assets/regional-climb/alps-map.pdf",
+      "sha256": "2e093f3b1ffd0008db061b9dfc7afd0eef3399d9abefb3d52eb3a7254a8ed201"
+    },
+    {
+      "path": "presentations/offsite2026/assets/regional-climb/champagne-map.pdf",
+      "sha256": "eedf4e63ba562ec1bf567df26ba8d43535698b1a80df22f886d4ba6496ca4dff"
+    },
+    {
+      "path": "presentations/offsite2026/assets/regional-climb/legend.pdf",
+      "sha256": "3b06578c521cb4b8876ad2cda7f83f08b3c7bfe52a9f02b9edc507f3a1cbdd5a"
     }
-  ]
+  ],
+  "regional_climb_maps": {
+    "slides": [
+      23,
+      24,
+      25
+    ],
+    "method": "Continuous native own-HMM climb edges intersected with 10 m ASL planes using viewer lattice_points; all crossings retained, pooled into 1 km bins, displayed as absolute crossings per km\u00b2 with 2 km Gaussian smoothing.",
+    "cohort_flights": 36913,
+    "crossings": 33810541,
+    "report": "presentations/offsite2026/assets/regional-climb/counts-report.json"
+  }
 }
