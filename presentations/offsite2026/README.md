@@ -2,7 +2,7 @@
 
 **The statistics of soaring flight** — Matteo Di Sante.
 
-30 slides total, including the cover, closing research agenda, sources, bibliography, thanks and three appendices, entirely in English. Scope: the current
+32 slides total, including the cover, closing research agenda, sources, bibliography, thanks and appendices, entirely in English. Scope: the current
 thesis introduction and dataset chapter, then Sections 3.1 and 3.2 of
 `thesis/tesi/04-fixed-transport.tex`, plus the requested qualitative comparison
 in the thermal-plane viewer. Only slides 4–7 cover preprocessing.
@@ -22,9 +22,8 @@ give the fixed counts from 10 s onward and the caption gives the smaller 1 s
 counts. `render_figures.py` reads these numbers from the existing reports and
 verified crossing CSVs, without remeasuring trajectories or changing fits.
 
-The cover carries the supplied white Econophysics Lab mark with terminal squares
-directly on blue at lower left. The white lower band is limited to CFM and ILB.
-CFM appears without its tagline and ILB uses its wide vector mark. The offsite
+The cover's white lower band spans the full width and carries the Econophysics
+Lab wordmark, CFM and ILB. CFM appears without its tagline and ILB uses its wide vector mark. The offsite
 title is separately typeset in condensed, light lettering directly on blue below
 the cover illustration and beneath the Lab mark on the closing slide. Content
 and appendix slides carry the Lab wordmark at the lower right, with a separate
@@ -33,11 +32,16 @@ Lab mark. All four originals are stored unchanged in `assets/logos/`; see its
 README for the source filenames.
 
 - `offsite-2026.pdf`: projection deck, 16:9.
-- `offsite-2026-notes.pdf`: the same 30 slides, with English speaker notes alongside.
+- `offsite-2026-notes.pdf`: the same 32 slides, with English speaker notes alongside.
 - `offsite-2026.tex`: editable Beamer source.
 - `render_figures.py`: redraws saved numerical arrays and confidence intervals.
 - `preprocessing-global-frame.tex`: editable ellipsoid/ENU schematic adapted from
   the thesis coordinate figure; the tangent-plane close-up is inline in the deck.
+- `render_regional_climb_density.py`: counts distinct C10000 paraglider flights with
+  own-HMM climb fixes in 1 km regional cells, over all available dates and heights.
+- `render_regional_climb_maps.py`: draws appendix slides 23–24 over OpenTopoMap terrain;
+  full Pyrenees and western Alps use matched 450 × 220 km views, while the two
+  lowland examples use matched 100 × 65 km views.
 - `render_thermal_panels.py`: exports slide 18 maps directly from the viewer's
   read-only prepared intersections and saved IGN colour maps, without screenshots.
 - `measure_cadence_support.py`: measures the cadence-limited extension of C10000
@@ -61,24 +65,25 @@ README for the source filenames.
 11. C10000 from 1 s, with growing cadence support below 10 s and fixed support above; fitted growth over 10–10,000 s is superdiffusive.
 12. Terrain (launch-altitude proxy), experience (Beginners = EN A/B/C, Experts = EN D/CCC) and circuit type; pooled circuit comparisons versus comparisons within altitude classes, with remaining weather and equipment differences explicit. OFAT is introduced in the factorial appendix.
 13. Open versus closed circuits: slower growth for return routes, linked to the displacement reduction caused by turns and returns.
-14. Plains > Hills > Mountains in pooled H; circuit composition motivates the within-altitude comparison.
-15. Circuit contributions depend on both flight fractions and MSD; changing shares affect amplitude and fitted H.
-16. The altitude ordering reverses by circuit: a quantified interaction.
+14. Pooled H ranks Plains > Hills > Mountains, but an altitude-only comparison mixes terrain with composition: each class holds different shares of open circuits and Experts, and a group enters the class MSD as flight share times MSD, so open flights outweigh their number (Low mountains: 34% of flights, 61% of the MSD at 10^4 s). Circuit type shifts the weight more than wing class.
+15. The altitude ordering reverses by circuit: a quantified interaction.
+16. Experts-versus-Beginners contrasts persist within altitude classes and vary across them.
 17. Regional comparisons show similar H in the two lowlands and a lower H in the Pyrenees than in the Alps. The interpretation proposes broadly distributed lowland thermal triggers and stronger Pyrenean route constraints from terrain-linked lift; neither trigger uniformity nor route accessibility is measured here.
-18. Thermal-plane maps: requested viewer cells High mountains #2 (H2, Chartreuse, Alps) and Plains #1 (P1, Suisse Normande, Channel Coast), at 100 and 600 m above each cell reference. All dates and years are pooled. Coloured IGN maps, crossing/flight counts, approximate red crests derived from IGN RGE ALTI and a France locator also appear in the thesis.
-19. Scientific 3D perspective schematic: heated mountain slopes versus separated lowland heat sources, with possible wind profiles and advection. Source distribution plus variable wind may broaden pooled climb locations aloft; terrain guidance is a proposed explanation for the narrower circuit gap.
-20. Experts-versus-Beginners contrasts persist within altitude classes and vary across them; a constant speed multiplier cannot explain a difference in H.
-21. Work in progress: continuous-observation HMM across cadences, anisotropy and distribution scaling.
-22. Proposed two-phase transport model: gliding generates displacement; contiguous search and thermalling episodes merge into one waiting phase. Estimate total waiting times, glide lengths/durations and directional memory, then test the 2D-plus-time model with Monte Carlo simulations. Vilpellet's phase-resolved observations motivate the reduction; neglecting motion during waiting remains an approximation to test.
-23. Exposure-aware lift maps and routing under an explicit objective (solo/grouped flight moved to the appendix).
-24. Flight, terrain, map and analysis sources with clickable links.
-25. Selected bibliography.
-26. Take-home messages and open questions.
-27. Thanks and discussion.
-28. Appendix: quantitative factorial model, six additive and ten interaction coefficients, and editable OFAT/full-factorial grids.
-29. Appendix: solo versus group feasibility; group means co-present flights in one cell within about 15 minutes, and the most populated 5 x 5 km cell (Low mountains) holds at most 63 flights in its peak quarter hour (22 July 2023, 13:15--13:30), an upper bound before any split over 32 cells.
-30. Appendix: vector velocity autocorrelation as speed-weighted directional agreement; unit-vector correlation and the distinction from mean drift.
-31. Appendix: cluster bootstrap with replacement and limitations of current bands.
+18. Thermal-plane maps: viewer cells H2 (Chartreuse, Alps) and P1 (Suisse Normande, Channel Coast), at 100 and 600 m above each cell reference. All dates and years are pooled. Coloured IGN maps, crossing and flight counts, approximate red crests and a France locator also appear in the thesis.
+19. Scientific 3D perspective schematic: heated mountain slopes versus separated lowland heat sources, with possible wind profiles and advection.
+20. Take-home messages, before the work in progress: a 2x2 grid in the style of slide 21, each finding beside a pictogram of its evidence. Scaling: fitted H between the diffusive and ballistic references, same flights at every lag. Route and wing: open 0.91 versus closed 0.86, experts above beginners. Terrain: open and closed H across altitude classes, with the circuit gap narrowing from 0.13 to 0.02. Lift geography: schematic H2 and P1 crossings at 600 m. The band states that every group is strongly superdiffusive, that route, terrain and wing shape H jointly, and the working hypothesis that terrain acts through where lift is found.
+21. Work in progress: phase segmentation, directional memory and distribution scaling.
+22. Thanks and discussion.
+23. Appendix: full Pyrenees and a same-area western Alpine view on one slide, with comparable regional open shares of 30.9% and 32.1%.
+24. Appendix: matched Channel Coast and Champagne-Lorraine windows; broader, uneven climb-use patches.
+25. Appendix: four-step schematic for the regional climb-use maps. Technical parameters remain in speaker notes and the renderer.
+26. Appendix: factorial model and interactions.
+27. Appendix: solo versus group feasibility.
+28. Appendix: gliding and waiting model.
+29. Appendix: velocity and directional memory.
+30. Appendix: bootstrap confidence intervals and limitations.
+31. Flight, terrain, map and analysis sources with clickable links.
+32. Selected bibliography.
 
 Numerical estimates retain their archived confidence intervals. A marginal comparison pools
 other characteristics; a stratified comparison fixes a selected category.
@@ -86,14 +91,14 @@ Neither is a controlled OFAT experiment. Unequal factor frequencies and
 interactions in H are distinguished. The factorial implementation remains under
 review in Experimentals; this deck motivates it without presenting its results.
 
-Questions guide slides 9, 10, 12, 13, 14, 16, 17, 18 and 19, where the audience needs
+Questions guide slides 9, 10, 12–21, where the audience needs
 an explicit comparison to interpret the evidence. Their titles state the question,
 while plots and conclusions supply the answer. Definitions and the factorial model retain topic titles.
 
 The conditional sequence follows observations → composition → stratification →
 spatial evidence → physical interpretation → joint analysis. Visible conclusions
 explain what each result implies; notes retain the statistical qualifications and
-presentation transitions. Slide 16 emphasises the observed increase in spatial
+presentation transitions. Slide 18 emphasises the observed increase in spatial
 spread with height in P1 relative to the persistent slope-and-ridge concentration in H2.
 
 ## Rebuild
@@ -128,7 +133,7 @@ VECLIB_MAXIMUM_THREADS=2 .venv/bin/python presentations/offsite2026/measure_cade
 ```
 
 The deck reads the current source counters and two existing vector figures from
-`thesis/generated`; the report-based figures are local to `assets/`. The within-altitude weight plot uses the shared `circuit_msd_weights.py` renderer
+`thesis/generated`; the report-based figures are local to `assets/`. The altitude-composition plot compares flight shares with shares of the class MSD at 10^4 s
 and retains unclassified flights in the class denominator. The notes
 identify the populations, estimators, fit ranges, uncertainty conventions and
 interpretive limits. The title path, flight-behaviour sketch, preprocessing,
@@ -141,6 +146,31 @@ The results slides flag that the current clusters remain too fine and probably
 understate uncertainty. The appendix explains sampling with replacement and the
 unresolved dependence across groups; it remains the final appendix after the expanded conditional-analysis sequence. The grid-bootstrap check is discussed as an unfinished
 diagnostic, not as a validated replacement for the intervals plotted here.
+
+## Regional climb-use maps (appendix slides 23–24)
+
+The Pyrenees map shows the full Atlantic-to-Mediterranean chain in a 450 × 220 km
+view; the western Alpine view covers the same physical area. The two lowland
+examples each cover 100 × 65 km. They use the exact
+paraglider C10000 regional populations behind slide 17, including all available
+dates and heights. One flight contributes once per 1 km cell containing at least
+one own-HMM climb fix; maps show that count as a share of regional flights. A
+Gaussian display smooth with 2 km standard deviation and one logarithmic colour
+scale aid display. Transparent
+density sits over OpenTopoMap relief and contours, whose topography derives from
+OpenStreetMap and SRTM independently of the flight tracks. These are maps of
+observed climb use, not direct maps of all thermals or a causal explanation of
+regional H. Source counts, map extents, tile provenance and hashes are in
+`assets/regional-climb/counts-report.json`.
+
+With the SSD connected, rebuild them before compiling:
+
+```bash
+.venv/bin/python presentations/offsite2026/render_regional_climb_density.py
+MPLCONFIGDIR=/tmp/soaring-offsite-mpl .venv/bin/python presentations/offsite2026/render_regional_climb_maps.py
+```
+
+The saved PDF maps allow deck compilation without the SSD.
 
 ## Viewer maps (slide 18)
 

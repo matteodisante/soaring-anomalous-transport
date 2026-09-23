@@ -1,0 +1,319 @@
+{
+  "method": "Unique C10000 paraglider flight with at least one own-HMM climb fix in a 1 km Lambert-93 cell; all dates and altitudes pooled; no calendar filter.",
+  "interpretation": "Observed climb use, not direct thermal-source density; sampling, route choice and launch distribution remain confounders.",
+  "cell_m": 1000,
+  "source_flights": "/Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917/para/flights.parquet",
+  "source_phase_points": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/segmentation/phase_points.parquet",
+  "regions": {
+    "Alps": {
+      "cohort_flights": 32790,
+      "task_counts": {
+        "closed": 22212,
+        "open": 10533,
+        "unknown": 45
+      },
+      "open_fraction": 0.3212259835315645,
+      "climb_fixes": 19263218,
+      "occupied_cells": 27682,
+      "flight_cell_visits": 1329791,
+      "max_cell_flights": 6177,
+      "csv": "alps-cells.csv",
+      "csv_sha256": "d206761b75d7048a7745a546e42dbb6ef4ee841656f888b0ace04f8de0127c31",
+      "map": {
+        "extent_epsg2154": [
+          800000,
+          6335000,
+          1250000,
+          6555000
+        ],
+        "map_occupied_cells": 20633,
+        "map_flight_cell_visits": 1196838,
+        "basemap": {
+          "bounds_epsg2154": [
+            800000,
+            6335000,
+            1250000,
+            6555000
+          ],
+          "size": [
+            2250,
+            1100
+          ],
+          "zoom": 9,
+          "tile_url_template": "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+          "tile_hashes": {
+            "262/181": "b7dfdfee773cb57eb85e128c749a4ab61efb4193279a96562d9bae1f4e00c02d",
+            "262/182": "a31db24817f89c84d343c25469148033ff656a2e9882a356ba1145a6cf03417d",
+            "262/183": "48250743903c0414e56863455e57ad6a50c8f370442b0e48d103ab9d8b313154",
+            "262/184": "a91663f22deaf0c8959a1bdaa9bad744c1370c1bd6205d44ff3e760fe79c90ef",
+            "262/185": "171b3a04b3eab181d57bd7f8fa33ac19c3a7e2b2b887a4b4eee2b469b10d61c8",
+            "262/186": "e7cf62b35d208c81894dd4afdf2a2f0b0118312cc2f729b51a933f7976f13516",
+            "263/181": "9fb45a3ee2936ac9914c1148751bc41ab7b87e43a6d5277f739cdc5b6e184dab",
+            "263/182": "2714e8ed02472302dbdbd0017986e3f8d0645a9b07701f4ea27b6e4d2c6880e1",
+            "263/183": "f1674fbb7ee0d5fa9cc29e77f65894b14db9ac4079bb5a01ef0a8ff1af27e800",
+            "263/184": "8356dd0dee4ea09feead3ac5de65093ea8af3cc127aa052ab24bc9aa065636b3",
+            "263/185": "bf5f2e06c5d00c546e879949868a9434cabc801360051ff654605e54fabafd1e",
+            "263/186": "3f85f398999e2e15ddd340c694ec0d7cd7af46ec94feb3b77db63bb153fd0946",
+            "264/181": "f4aee43f77e4adf934fc40e810ee9d7213bc1b396f05dd1ecf0f2ce71b3cd70a",
+            "264/182": "7585491875e70777515f6dbc6cb23727a2d69e94c336719a1d75b50fa09d1f8d",
+            "264/183": "c7917d0b8b4603dd6dae54163193c0299a1224f00ece0e8ac0d819950caa3e9a",
+            "264/184": "e2ee1c66c57b64f1a279e7c42606a10babe76b4f72538f78abbc54cc0d3327b9",
+            "264/185": "1fcca51190e41d237b2b18e7d3b4aa4fa4563b516f3c55cafd24841dd139eb21",
+            "264/186": "288f6771b468341972d489fc67a1bf8baa878e76da80aab2857709ca8fd9b149",
+            "265/181": "a12314ca03cb3ddb0f3ad2b2ee19592ce95ba2e2598bce34128579de83b8b1b3",
+            "265/182": "fb9dd4dabcc41c637b61bcdb60b4b7d115b845a5c3d62812f928b5451797ee5d",
+            "265/183": "a49ad00a1d6e23a248c0d7175c5f6c69949a8897ec3eb0ecd030094bd99bd52d",
+            "265/184": "688c28bde57be3d3b9d65cf7fcb0e169a89f0052fd481c54ddd8fd2d0f8528ce",
+            "265/185": "798d13e08dc534b6407d4232b3debdcbfc4c6771ac34946db1c77a38c2dd0b83",
+            "265/186": "4f7db7101ff5376887b2f4fcc08e45413bff992e7a0f295c46fb8847f19f9090",
+            "266/181": "0a3dc67e8bee675feee5c9211d6c76d2c7010de7f4e586a909bbd84d24487c9d",
+            "266/182": "1227d235573aa706a5831a5089d395e475d20075b008895febfd163f7ae86917",
+            "266/183": "ed51977e559c8a7452d714e4c157dabf9eeb892f8b6f3f39b7045d72368ef512",
+            "266/184": "02806fb560577fdae7ef1cf65aad466cddc969d29aa3ec1ee866860996df9e1f",
+            "266/185": "4920b2499a351eb90cb82cade1fb7340e7a5d99b0fff6df138d290e59d7eb6eb",
+            "266/186": "c25cd9a26d530ae2712f7e3b5c4334cd3211afc3a20525d925518d4e7e096145",
+            "267/181": "32781bf76b647631f9e8254a429642038593080bba3da1513edfffc48bea92fa",
+            "267/182": "92e138df7205d7fbe6ec691d93e7e9394599c7b8ae4b3ff4824816dfa7f2fef2",
+            "267/183": "627dd7766dce08c343ab8ae79b674e9eeac2ece8cfcb0848244c2e996badc776",
+            "267/184": "853b726fc3d5a73f8978b0c16babcee46de09000fb9aa371523b4a035d0e74ed",
+            "267/185": "8d77b78eec892369e5b72899141f889f8ebcd922f40fca557c21ffc29fe2ec7d",
+            "267/186": "da50823fcdb15edc196dac69de87266bc86af88de0723e8a938818c30f14ab1e",
+            "268/181": "6cd7e9e723e94920ad37bacfcd9e8326a8fb84d0779aa3c2c7585d8ce2dafef1",
+            "268/182": "0fd6c0907b9c8ca00f173b46e80ec6f49addcd3c99c6c0ed37aa97a6e293fb2b",
+            "268/183": "53b8899d8920023159c4a56361e3c60fa2cbea6ee825e59f57483d56cb2e40e7",
+            "268/184": "caabf11232d10506530734dc4015d79201a90945272bcaac90a7a8a02da3dff4",
+            "268/185": "44a3642f3c5b3c7efa997d73cbfca8e8ae5748719fbd9dba6de4a2102a6d3a9d",
+            "268/186": "e87539da350c269c49823726a9bd44d98cdcc1ef2286d73a73b44b5c4615b640",
+            "269/181": "30c90ab32afcb26085aee8c9f6099132c9433b197a99d4564b30836aed3bd441",
+            "269/182": "3c080e12ad62adf87f4c2fb85391ea334d5fbf1bcbcb8b3a424cf12dc7f9a6f3",
+            "269/183": "f6b215414ab94265a27a360c62c78462de93b33d2a844c8a0d384f20445b0fa8",
+            "269/184": "1f52befdf21d0727fc2673329d79b906e8d901fec8da5869cce2b2930f0fe428",
+            "269/185": "568953e2013b31ccc3d1eb1bafb9a2c8beaf1dc6bef3af8c1f4154bedb8798a2",
+            "269/186": "484e0e45f4b2a44e7e3cf84c796f6f27fad75ef23f7ee0b9d9ebf4e4868db5f8",
+            "270/181": "97d1793cfef9afc902eb4f327922e58bb86507378a1a6782bfaf2ecd7c378830",
+            "270/182": "d854220027d7bf629b5f7aa60c64dc822520485fe62182946f22749b3444b5ae",
+            "270/183": "95c496d02f492cbbca832b5b6915ccb6e0b5c5c178afa1a1b187d87c81df3811",
+            "270/184": "a274909b92aca60c16ce6a2a0d1ad90ef13b23e8d3ac4fec17de32dd7a9f778e",
+            "270/185": "16a08c1ed05ee51cca0ee095cd050f7efa708c96d7e1a9a24be581477530e736",
+            "270/186": "17262a4bcab5c4672dd405035c145deb84787918bbf101ab326fe499c028c08a"
+          },
+          "attribution": "Map data: \u00a9 OpenStreetMap contributors; elevation: SRTM; map style: \u00a9 OpenTopoMap (CC-BY-SA)",
+          "retrieved_utc": "2026-09-23T18:02:02.983252+00:00",
+          "sha256": "51b552cc35789d4717bba0ec6ded4a4f0e30f03dc1035eb716cdfcc63141f8a1"
+        },
+        "png_sha256": "c54ff57d8a7d7548f30c608aadd679bd25baaff35a3c946fa7ceec5f561e0a60"
+      }
+    },
+    "Pyrenees": {
+      "cohort_flights": 2257,
+      "task_counts": {
+        "closed": 1556,
+        "open": 698,
+        "unknown": 3
+      },
+      "open_fraction": 0.309260079751883,
+      "climb_fixes": 1422973,
+      "occupied_cells": 9585,
+      "flight_cell_visits": 79122,
+      "max_cell_flights": 717,
+      "csv": "pyrenees-cells.csv",
+      "csv_sha256": "779bcfb0f99869f44c4d01c5c841d4e9f02affcd1e9402974b427adc075bfae4",
+      "map": {
+        "extent_epsg2154": [
+          300000,
+          6070000,
+          750000,
+          6290000
+        ],
+        "map_occupied_cells": 9585,
+        "map_flight_cell_visits": 79122,
+        "basemap": {
+          "bounds_epsg2154": [
+            300000,
+            6070000,
+            750000,
+            6290000
+          ],
+          "size": [
+            2250,
+            1100
+          ],
+          "zoom": 9,
+          "tile_url_template": "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+          "tile_hashes": {
+            "253/186": "3b1ea0ae9c04e3c31ce0904bd06ff3456d516d5c0a64ba53067c58e008e276f7",
+            "253/187": "295634a0ff200217f1da8ffdd8deb1b6d974432fb635043f428ea5f9be932d7c",
+            "253/188": "ac26b7a0d763856359385c25300f6b76e4922e183dab9040e81124d74b9b1913",
+            "253/189": "8ce0c5f1da98f96890311acbf4df6258e520f74665dc5c1034517632f7bfd6b4",
+            "253/190": "63742c290bfd77c83a9f03619f248dad5c8e1d87160dcd6341ab4bdf40ed6cf8",
+            "254/186": "151d422f300abf8b81f2d483eae998a2246b94d17d529a93fc427d527f8f61b6",
+            "254/187": "879c914ade97b8805b894f491829ba060b464d17b12ac793da384d5e26030cbd",
+            "254/188": "8fe0a799c99c5afb56948680db22e49b287a59cff7bf8894555c390466781274",
+            "254/189": "d5d303a41404fb72d3fb9eecbffbf48b704208e13c6e54f72bbdc3074a878e69",
+            "254/190": "1d21cd3de556ff5a589c8cc9842aaf87af2f658d8fbe77c31c9322aba3f1f40e",
+            "255/186": "140c90486b64fb5c5b57cd6cf0ad958a07b1b1ac5d8f8ef368909714dd5439bc",
+            "255/187": "80497fd43716c9daefde03e98fcc0e01f6a315bc4ac3ccc595eaacfafb840b07",
+            "255/188": "82d47777712c16a23abd985f81d73d4c0410c3f20baf8d77286907b6d7a95bfb",
+            "255/189": "bfec987303fe8035cb66af80843f535778077735462866c57e6303efb1522ec0",
+            "255/190": "e8b4699e3a5b39b00fed47b96c40c769d69056d11df61ae9b32e8ed6539ecf5d",
+            "256/186": "c24b6f459c9fd6d1dcbc76b0834a2de8dc3bbcc3b63184f1a7677de553bdba0a",
+            "256/187": "8b31a214df8a3c980b0a3166d1634c29fd454c6a26964acfaba5461fb8aace10",
+            "256/188": "1d4aa8d605cc4ff72a9f089bba18bb318deed029175c9a4dc0375b4e20538b9c",
+            "256/189": "c754a18543c620467ae261cb219b62ee8df8a5c9d79c987547e0e4f6221babc9",
+            "256/190": "1ae4b906cd396e3d6688e152a029432a6bb3a70e2de69a97f8d1e259baa4d319",
+            "257/186": "5822a792cc9ea12b86b4a1459c809bc4d51d399c448f050fc1c0a8c34c206fdc",
+            "257/187": "0cf49502d226a306e2712d7a641b3d6372ade1f55d48f082d2b7e89395189a71",
+            "257/188": "3c3833bf70bc7b5ef5ce62b15f89a5f0a3cf0469a3514d562eb35f91b2c73eed",
+            "257/189": "fb803cc1a0a77d3368e0c48bb6d6fe1e3baffe14b1364d56d7c0eb2e7c7b4f23",
+            "257/190": "d08c442fb05a08eb4580a734f1e0f100f5036507212b53453ed4002e1a2f9719",
+            "258/186": "06b1d4b0cb793eb9ec6cf8860709e000fc1c3279d69ec685e6df56a38ebc59b4",
+            "258/187": "ca3a975c8fc5d63fa999d612fe4c7a3db2a66c69cac83a7787cd23ad7494e13a",
+            "258/188": "a2c90e7d6668a9ad9dfd3266d08bc13de25f60d44baf71c0456b397c1548ec0d",
+            "258/189": "babbc1c8115b18b6febefc3450608989c9cb9af2579126c8719a377bb5cdda60",
+            "258/190": "1e75a2c7525624437c814b68f6b483f36dd6c3d937364999da7daf2cdff8eb7c",
+            "259/186": "ea777f59f7047af1e79eb243bd14874bb2762505f4f2fc1d83503ad4b5c0e0df",
+            "259/187": "cc85745343ff20dd3c816a73145fed2e660b5d80255a1a842814004427ea52eb",
+            "259/188": "32f6080723141eb39430103f007907ff50a90b68281ac905e65917706e4fbc6f",
+            "259/189": "c2744ebaab206c0a7b80946f87d8e031661f1f8519170b76add2e5998a19755e",
+            "259/190": "17f19f044c1500e0f23751c8ada6384c5c6aa0abb2c6a1f69951d4b8eb747d62",
+            "260/186": "34c4df07730148ea7dd28d4aa9e70287a7adbdee02cf734e9fc5a00eb2850e45",
+            "260/187": "65457fdea8bc4a43cd161bb1888af3883294a1954ad3dcd9bde163ec454b2482",
+            "260/188": "627e90daa8fa3ae0d02dae6ab0df1341d81bec3b32e0475e0db47abca151c2b8",
+            "260/189": "a4110565067f16879549f19c6a6deb88b6f18c5281f03d7e0505a70df531cdcd",
+            "260/190": "c7216dc3f1393bf17108d44cbb973597652c286b67495f34c9a229d0a1eb16cd",
+            "261/186": "4f91e9f634a0c0f824e89dbb3e1d0fe2582e49fcda3299194639dd9c67f72bdd",
+            "261/187": "bd4b7747a5aca91d81a2c7784c549198278c323abba3ecd8dbc35f76e6c05629",
+            "261/188": "a38c04d290e933bab447cb040d4639887696d326cdc95b65c1be2b960b8055fd",
+            "261/189": "f792d4adb21c94b6f49e871e881eb6f9f5f153809e17033993cda9614d7587f2",
+            "261/190": "0ebfc6de850a12fa13715d6488a7e36d34b8991b8c212bb221d3642dc31c4c01"
+          },
+          "attribution": "Map data: \u00a9 OpenStreetMap contributors; elevation: SRTM; map style: \u00a9 OpenTopoMap (CC-BY-SA)",
+          "retrieved_utc": "2026-09-23T18:00:52.782473+00:00",
+          "sha256": "2fcd315e00286c9f8e92d6c23dc03f5a6fac0888d89acd096718f31dad1d5b0d"
+        },
+        "png_sha256": "a3f3757952914cc66375ba50b961bde048c6d706979d364fa20860bee38bb37a"
+      }
+    },
+    "Channel Coast": {
+      "cohort_flights": 1068,
+      "task_counts": {
+        "open": 1020,
+        "closed": 48
+      },
+      "open_fraction": 0.9550561797752809,
+      "climb_fixes": 624626,
+      "occupied_cells": 25138,
+      "flight_cell_visits": 58726,
+      "max_cell_flights": 240,
+      "csv": "channel-coast-cells.csv",
+      "csv_sha256": "867a09269d1a6a8caca617042c08a10a5c35da3b349acaa3ed631ddc148e13ad",
+      "map": {
+        "extent_epsg2154": [
+          405000,
+          6845000,
+          505000,
+          6910000
+        ],
+        "map_occupied_cells": 3470,
+        "map_flight_cell_visits": 15868,
+        "basemap": {
+          "bounds_epsg2154": [
+            405000,
+            6845000,
+            505000,
+            6910000
+          ],
+          "size": [
+            1320,
+            858
+          ],
+          "zoom": 9,
+          "tile_url_template": "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+          "tile_hashes": {
+            "254/175": "ea25e0348299ba755fb6a4d373a175df856825677c82bb051c10c51fdfbd5832",
+            "254/176": "6e586d8a6fd7926d19a38bd83ab5e15319c690f3d1fea7bbdc60290ecdfa39d2",
+            "255/175": "9049d30389a6667ec4b667415b5f50f17ae4261939d5067e2d74b26616f2235b",
+            "255/176": "8a0fefd786e0c831a805e2919b5699afbab796dee5e670ca2b13938bc373b72e",
+            "256/175": "1bb0b4e314cf2891363766ce52efb51cb553839314896572083b6043e4c1a82f",
+            "256/176": "f629cfde638cd097016c792843c4a97a438566a310381bcdf17f57328176f411"
+          },
+          "attribution": "Map data: \u00a9 OpenStreetMap contributors; elevation: SRTM; map style: \u00a9 OpenTopoMap (CC-BY-SA)",
+          "retrieved_utc": "2026-09-23T18:00:54.212199+00:00",
+          "sha256": "3f9264d6fa652fbedb302740f883aff5d5ddf72cb42bed0a6982301e9bcb0602"
+        },
+        "png_sha256": "1ce4c1e71625a9008aaa0250a761576ba84aba68fde968541c2b96211b853f11"
+      }
+    },
+    "Champagne-Lorraine": {
+      "cohort_flights": 798,
+      "task_counts": {
+        "open": 741,
+        "closed": 57
+      },
+      "open_fraction": 0.9285714285714286,
+      "climb_fixes": 472353,
+      "occupied_cells": 24215,
+      "flight_cell_visits": 45257,
+      "max_cell_flights": 116,
+      "csv": "champagne-cells.csv",
+      "csv_sha256": "32d9e1582baeb21c36a1e7e9cdacd7cf3bedc5c7fbeab92d5bcfa5b257ab61de",
+      "map": {
+        "extent_epsg2154": [
+          790000,
+          6907500,
+          890000,
+          6972500
+        ],
+        "map_occupied_cells": 3426,
+        "map_flight_cell_visits": 9906,
+        "basemap": {
+          "bounds_epsg2154": [
+            790000,
+            6907500,
+            890000,
+            6972500
+          ],
+          "size": [
+            1320,
+            858
+          ],
+          "zoom": 9,
+          "tile_url_template": "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+          "tile_hashes": {
+            "262/173": "73329ab06426ef497b338ecc8d0831fb7cb3d426dd1d90457afb8df47b06c740",
+            "262/174": "dd333a9c5c22f86b65ff4cc586f71a7d3ba17ab5f940cc6d46f62bfbc09943ef",
+            "262/175": "8c4b301087cd95d9ed1eac379a5cbe2d0e4c4a7fb649273bfeefbf17c3c624af",
+            "263/173": "47f34ea684ad469ebf7dac6a2bad12b89aa15080e8f082029fddc7b670318fba",
+            "263/174": "eb76260ff36a47c34f8c663add1d17ec2b5788e11a8fd979d84e177780852fc7",
+            "263/175": "d40a57283d464884935502f31adb8658f29b8344271e44bc53d6e4376e139c1e",
+            "264/173": "a248bec04e25b913f4137a4b4647f06612be59a53f875af56f267847df0e7cc6",
+            "264/174": "775ee88f6560426ca9dfa1a2d19525ab2b2ee74db5b377c04db1f34497322542",
+            "264/175": "f5b511de5a2ac9cf2ba0ac8acf6894ebb20de205b3088d92e9776ec420cfd65e"
+          },
+          "attribution": "Map data: \u00a9 OpenStreetMap contributors; elevation: SRTM; map style: \u00a9 OpenTopoMap (CC-BY-SA)",
+          "retrieved_utc": "2026-09-23T18:00:55.910224+00:00",
+          "sha256": "ee533350822267bb54198761de9b5ff8ccbf930c9a2c82f792fc18b75a2fff5f"
+        },
+        "png_sha256": "0f0b1b0035ba6d8c2fd2e26ccedae8fb2f10862db24f6e0f123abc6a07f7eac4"
+      }
+    }
+  },
+  "display": {
+    "mountain_extent_m": [
+      450000,
+      220000
+    ],
+    "lowland_extent_m": [
+      100000,
+      65000
+    ],
+    "shared_colormap": "navy-blue-cyan-lime-yellow",
+    "density_unit": "percent of regional C10000 flights with a climb fix in a 1 km cell",
+    "smoothing_sigma_m": 2000,
+    "display_min_percent": 0.03,
+    "display_max_percent": 5.0,
+    "terrain": "OpenTopoMap topographic tiles (OSM + SRTM relief and contours)",
+    "basemap_style": "85% desaturated, 28% white blend for legible heat overlay",
+    "basemap_attribution": "Map data: \u00a9 OpenStreetMap contributors; elevation: SRTM; map style: \u00a9 OpenTopoMap (CC-BY-SA)"
+  }
+}

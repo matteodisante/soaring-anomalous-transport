@@ -2,7 +2,6 @@
 from pathlib import Path
 import hashlib
 import json
-import sys
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.patches
@@ -19,15 +18,11 @@ CADENCE = json.loads((OUT.parent / "cadence-support-report.json").read_text())
 BLUE, RUST, STEEL, TEAL, GOLD, WINE = "#3477A8", "#B5482A", "#4A6079", "#2E7D8A", "#C98A1E", "#8E3B5C"
 ALT = [BLUE, TEAL, GOLD, WINE]
 NAMES = ["Plains", "Hills", "Low mountains", "High mountains"]
-sys.path.insert(0, str(ROOT / "scripts/tesi/ch03_fixed_transport"))
-from circuit_msd_weights import compute_weights, plot_weights
 
 plt.rcParams.update({"font.family":"serif", "font.serif":["Palatino","DejaVu Serif"], "font.size":13,
  "axes.labelsize":13, "axes.titlesize":14, "legend.fontsize":11, "xtick.labelsize":11,
  "ytick.labelsize":11, "axes.spines.top":False,"axes.spines.right":False,
  "pdf.fonttype":42,"axes.edgecolor":"#666666", "text.color":"#202A35"})
-plot_weights(compute_weights(C), OUT / "circuit-weights.pdf", colors=ALT,
-             figsize=(11.8, 3.5), fontsize=13, show_counts=True)
 
 def a(x): return np.asarray(x, dtype=float)
 def hci(h):
@@ -183,6 +178,38 @@ for i,(name,color) in enumerate(zip(NAMES,ALT)):
 ax.legend(frameon=False,loc="upper left")
 save(fig,"altitude")
 
+# Composition of each altitude class: a group enters the class MSD as p*M_g, so its share
+# w_g=p*M_g/M_a of the class MSD can exceed its share of flights p. Along the lag,
+# d ln w_g/d ln tau = 2(h_g-h_a) for local exponents h, so the gap between the two dots
+# grows only when the groups grow at different rates. Full class denominators.
+fig,axs=plt.subplots(1,2,figsize=(5.6,4.35),layout="constrained",sharey=True)
+for k,(ax,key,color,title) in enumerate(zip(axs,["open_{}","experts_alt{}"],[BLUE,GOLD],["Open circuits","Experts"])):
+    for i in range(4):
+        a_=C["groups"][f"alt{i}"];g=C["groups"][key.format(i)];y=3-i
+        p=100*g["flights"]/a_["flights"];w=p*g["msd"]["point"][-1]/a_["msd"]["point"][-1]
+        ax.plot([p,w],[y,y],color=color,lw=1.4,zorder=3)
+        ax.plot(p,y,"o",ms=8,mfc="white",mec=color,mew=1.6,zorder=4);ax.plot(w,y,"o",ms=8,color=color,zorder=5)
+        ax.text(p-5,y,f"{p:.0f}%",ha="right",va="center",fontsize=13,color="#666666",bbox=dict(fc="white",ec="none",pad=.5),zorder=2)
+        ax.text(w+5,y,f"{w:.0f}%",ha="left",va="center",fontsize=13,color=color,weight="bold")
+    ax.axvline(50,color="#888888",ls="--",lw=1,zorder=1)
+    ax.set_xlim(4,113);ax.set_xticks([25,50,75,100],["25%","50%","75%","100%"])
+    ax.set_title(title,color=color,weight="bold",fontsize=15)
+for ax in axs:
+    ax.set_ylim(-.6,3.6);ax.grid(axis="x",color="#E2E7EC",lw=.6);ax.set_axisbelow(True)
+    ax.spines["left"].set_visible(False);ax.tick_params(axis="y",length=0,labelsize=13.5);ax.tick_params(axis="x",labelsize=11.5)
+axs[0].set_yticks(range(4),[f"{n}\nH = {C['groups'][f'alt{i}']['fit']['hurst']['point']:.3f}" for i,n in reversed(list(enumerate(NAMES)))])
+# Pooled H falls from Plains to the mountains; Low and High mountains are bracketed together
+# because their own order (0.866 < 0.875) runs the other way.
+T,x0,grey=axs[0].get_yaxis_transform(),-.9,"#666666"
+axs[0].annotate("",(x0,1.3),(x0,3.35),xycoords=T,arrowprops=dict(arrowstyle="-|>",color=grey,lw=1.5,mutation_scale=13),annotation_clip=False)
+axs[0].text(x0-.04,2.3,"H decreases",transform=T,rotation=90,ha="right",va="center",fontsize=12.5,color=grey)
+axs[0].plot([x0+.04,x0,x0,x0+.04],[1.2,1.2,-.2,-.2],transform=T,clip_on=False,color=grey,lw=1.3)
+axs[0].text(x0-.04,.5,f"pooled H = {C['groups']['mountains']['fit']['hurst']['point']:.3f}",transform=T,rotation=90,ha="right",va="center",fontsize=12,color=grey)
+marker=dict(marker="o",ms=8,ls="none",mec=grey,mew=1.6)
+fig.legend([plt.Line2D([],[],mfc="white",**marker),plt.Line2D([],[],color=grey,**marker)],
+           ["share of flights",r"share of the class MSD at τ = 10⁴ s"],loc="outside upper center",ncol=2,frameon=False,fontsize=13,handletextpad=.3,columnspacing=1.2)
+save(fig,"altitude-mix")
+
 fig,axs=plt.subplots(1,2,figsize=(11.8,3.65),layout="constrained",sharey=True)
 for ax,title,keys in zip(axs,[r"Mountain launches: $z_0\geq800$ m",r"Lowland launches: $z_0<800$ m"],
  [[("alps","Alps",WINE),("pyrenees","Pyrenees",GOLD)],[("channel_coast","Channel Coast",TEAL),("champagne_lorraine","Champagne-Lorraine",STEEL)]]):
@@ -262,7 +289,7 @@ if previous_manifest.exists():
     for item in json.loads(previous_manifest.read_text())["inputs"]:
         if item["path"] not in inputs:
             inputs.append(item["path"])
-manifest={"scope":"Thesis Chapters 1–2 and Sections 3.1–3.2; thermal-plane topography; research agenda with a stochastic-flight schematic, sources and conclusions; factorial, directional-memory and bootstrap appendices (30 slides).", "operation":"Redraw saved estimates and intervals. Slide 9 shows the available-population TA-MSD and its shrinking flight support. Slide 11 extends C_10000 below 10 s with cadence-limited support, and densely evaluates the original estimator above 10 s. Original bootstrap draws and 10–10000 s fits are preserved; see cadence-support-report.json. Circuit weights use the full altitude-class MSD denominator and observed curves only. Every plotted category reports its flight count; thermal-map counts use distinct flights from verified crossing CSVs.", "inputs":[]}
+manifest={"scope":"Thesis Chapters 1–2 and Sections 3.1–3.2; thermal-plane topography; research agenda with a stochastic-flight schematic, sources and conclusions; factorial, directional-memory and bootstrap appendices (29 slides).", "operation":"Redraw saved estimates and intervals. Slide 9 shows the available-population TA-MSD and its shrinking flight support. Slide 11 extends C_10000 below 10 s with cadence-limited support, and densely evaluates the original estimator above 10 s. Original bootstrap draws and 10–10000 s fits are preserved; see cadence-support-report.json. Altitude-class composition compares flight shares with shares of the class MSD at 10^4 s, with full altitude-class denominators and observed curves only. Every plotted category reports its flight count; thermal-map counts use distinct flights from verified crossing CSVs.", "inputs":[]}
 for rel in inputs:
     p=ROOT/rel;manifest["inputs"].append({"path":rel,"sha256":hashlib.sha256(p.read_bytes()).hexdigest()})
 (OUT.parent/"source-manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")

@@ -6,10 +6,10 @@ preserves the original aspect ratios.
 
 | Original filename | Use |
 | --- | --- |
-| `EconophysicsLab_logo.png` | Content and appendix footers, 23 mm wide. |
+| `EconophysicsLab_logo.png` | Cover white band, 40 mm wide; content and appendix footers, 23 mm wide. |
 | `Capital_Fund_Management_Logo.svg.png` | Cover, 25 mm wide. The version without a tagline remains clear at this size. |
 | `logo-ILB-wide-BLK.pdf` | Cover, 37 mm wide. Vector artwork with a larger institute name than the compact variant. |
-| `econophisics_squares.png` | Cover directly on blue, 48 mm wide; dark closing slide, 62 mm wide. |
+| `econophisics_squares.png` | Dark closing slide, 62 mm wide. |
 
 The other supplied variants (`CFM_CoRGB_300dpi_Tight_box.png`,
 `logo-ILB-BLK.pdf`, `logo_square.png`) are not used. The first has a tagline,

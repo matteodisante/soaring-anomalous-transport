@@ -39,7 +39,16 @@
 \newcommand{\credit}[1]{%
  \node[anchor=west,inner sep=0pt,text width=120mm,align=left,text=muted,font=\fontsize{6}{7}\selectfont]at(7,86.5){#1};}
 \newcommand{\bootstrapcredit}{\credit{Nominal 90\% bootstrap CIs; clusters sampled with replacement. Clustering remains too fine; bands likely too narrow.}}
+% Split an exported "value [lo, hi]" macro so the estimate reads first.
+\def\splitgap#1 [#2]{\textbf{#1}\ {\fontsize{7.5}{9}\selectfont[#2]}}
+\newcommand{\gapcell}[1]{\expandafter\splitgap#1}
+\newcommand{\gaphead}[1]{{\leavevmode\color{muted}\fontsize{7.5}{9}\selectfont #1}}
+% Framed interpretation under one figure panel (72 mm wide, between figure and bottom line).
+\newcommand{\hypbox}[3]{\node[anchor=north west,draw=pisablue,line width=.6pt,rounded corners=1.2mm,fill=white,inner xsep=2mm,inner ysep=1.2mm,text width=68mm,minimum height=13.6mm,align=left,text=pisablue,font=\fontsize{9}{11}\selectfont]at(#1,59.6){{\bfseries\fontsize{9.5}{11}\selectfont #2}\\#3};}
 \newsavebox{\slidetitlebox}
+% Figure markers for the altitude-mix slide, boxed outside any overlay picture.
+\newsavebox{\hollowmark}\newsavebox{\filledmark}
+\AtBeginDocument{\sbox{\hollowmark}{\tikz[baseline=-.6ex]\draw[muted,line width=.8pt](0,0)circle[radius=.55ex];}\sbox{\filledmark}{\tikz[baseline=-.6ex]\fill[muted](0,0)circle[radius=.62ex];}}
 \newcommand{\startslide}[1]{%
  \sbox{\slidetitlebox}{\fontsize{15}{17}\selectfont\bfseries #1}%
  \ifdim\wd\slidetitlebox>140mm
@@ -71,14 +80,14 @@
 \begin{frame}[plain]\frametitle{The statistics of soaring flight}
 \begin{tikzpicture}[remember picture,overlay,shift={(current page.north west)},x=1mm,y=-1mm]
  \fill[pisablue](0,0)rectangle(160,90);
- \fill[white](61,73)rectangle(160,90);
+ \fill[white](0,73)rectangle(160,90);
  \txt[text=white,font=\fontsize{26}{30}\selectfont\bfseries]{11}{11}{140}{The statistics of\\soaring flight}
  \txt[text=white,font=\fontsize{14}{18}\selectfont]{11}{37}{75}{Displacement scaling across\\terrain, circuit types\\and wing classes}
  % Lake Maggiore and Isola dei Pescatori; the thermal remains on a mainland slope.
  \node[anchor=north west,inner sep=0pt]at(77,3){\includegraphics[width=82mm]{assets/cover-lago-maggiore-contrast.png}};
  \txt[text=white,font=\fontsize{11}{13}\selectfont]{11}{65}{92}{Matteo Di Sante {\fontsize{8.5}{10}\selectfont(intern, September 2026 -- February 2027)}}
  \node[inner sep=0pt]at(130,65.5){\scalebox{.65}{\offsitetitle{offsitelight}{white}}};
- \node[anchor=west,inner sep=0pt]at(11,81.5){\includegraphics[width=48mm]{assets/logos/econophisics_squares.png}};
+ \node[anchor=west,inner sep=0pt]at(11,81.5){\includegraphics[width=40mm]{assets/logos/EconophysicsLab_logo.png}};
  \node[inner sep=0pt]at(82,81.5){\includegraphics[width=25mm]{assets/logos/Capital_Fund_Management_Logo.svg.png}};
  \node[anchor=east,inner sep=0pt]at(149,81.5){\includegraphics[width=37mm]{assets/logos/logo-ILB-wide-BLK.pdf}};
 \end{tikzpicture}
@@ -408,10 +417,13 @@
 \begin{frame}[plain]\frametitle{Can we afford a fixed population?}\startslide{Can we afford a fixed population?}
  \txt[font=\fontsize{9}{11}\selectfont]{8}{18}{68}{%
   {\color{pisablue}\bfseries\boldmath\fontsize{10}{12}\selectfont $C_{10000}$: select once for the largest lag}\par\vspace{3mm}
-  $\tau_{\max}=10{,}000\,\mathrm{s}\leq0.8\,T_s$:\quad $T_s\geq12{,}500$ s\\Only these segments enter, at every lag.\par\vspace{4.5mm}
-  \stepitem{1}{Same flights and segments, 10 to 10,000~s,\\with no loss of flights beyond $6\times10^3$~s}\vspace{3mm}
-  \stepitem{2}{Three decades of lag; at $\tau_{\max}$ each segment\\still offers at least 251 origins for $m_f$}\vspace{3mm}
-  \stepitem{3}{\textcolor{para}{\textbf{46,273 paragliders}}, 30\% of those at 10 s\\\textcolor{hang}{\textbf{2,326 hang gliders}}, 38\% of those at 10 s}}
+  $\tau_{\max}=10{,}000\,\mathrm{s}\leq0.8\,T_s$:\quad $T_s\geq12{,}500$ s\\Only these segments enter, at every lag.}
+ % Advantages answer the three desiderata of the previous slide, in the same order.
+ \node[name=adv,anchor=north west,draw=pisablue,line width=.6pt,rounded corners=1.5mm,inner xsep=2mm,inner ysep=1.8mm,text width=64mm,align=left,font=\fontsize{8.5}{10}\selectfont]at(8,39.5){%
+  \stepitem{1}{Same flights and segments, 10 to 10,000~s,\\with no loss of flights beyond $6\times10^3$~s}\vspace{1.8mm}
+  \stepitem{2}{Three decades of lag; at $\tau_{\max}$ each segment\\still offers at least 251 origins for $m_f$}\vspace{1.8mm}
+  \stepitem{3}{Sample still large, same order as at 10 s:\\\textcolor{para}{\textbf{46,273 paragliders}} (30\%)\\\textcolor{hang}{\textbf{2,326 hang gliders}} (38\%)}};
+ \node[anchor=south,inner sep=0pt,text=pisablue,font=\bfseries\boldmath\fontsize{10}{12}\selectfont]at([yshift=1.2mm]adv.north){Advantages of $C_{10000}$};
  \smalltxt[text=pisablue,font=\fontsize{8.5}{10}\selectfont\bfseries]{80}{18}{73}{Cost of selecting longer flights}
  \figureat{77}{24}{78}{selection}
  \smalltxt[text=muted,font=\fontsize{7.5}{9}\selectfont]{80}{66}{73}{Nested cohorts, identical fit ranges, paired bootstrap draws.}
@@ -460,63 +472,59 @@
  \draw[wine,line width=1.2pt,-{Latex}](117,66)--(132,57)--(149,67)--(117,66);
  \smalltxt[]{116}{69}{36}{28,234 flights}
  \fill[pisablight!33](7,74.7)rectangle(153,83);
- \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont]{10}{75.5}{140}{$H_{\rm open}-H_{\rm closed}=0.054\;[0.053,\,0.056]$\quad (90\% paired interval)}
+ \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont]{10}{75.5}{140}{$H_{\rm open}-H_{\rm closed}=0.054\;[0.053,\,0.056]>0$\quad (90\% paired interval)}
  \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{79.2}{140}{Slower closed-route MSD growth is consistent with turns and returns.}
  \credit{78 unclassified flights excluded. Nominal 90\% cluster-bootstrap CIs; bands likely too narrow (Appendix).}
 \notetext{The catalogue describes the intended circuit, not a guarantee that the trimmed trajectory returns to its starting point. Closed routes include triangles and out-and-return flights. Pooling launch altitudes gives \CondOpenH{} for open routes and \CondClosedH{} for closed routes. Their paired difference is positive under the adopted bootstrap.\par\medskip We fix the lag and average squared displacements over starting times along each segment. Suppose an ideal pilot reverses direction at minute 60, with the same speed on both legs. A two-minute interval from minute 59 to 61 spans the reversal and ends at its starting position; minute 20 to 22 covers straight flight. Thus even a short lag can capture a turn late in the flight. With equal leg times, T/2 and T/3 locate the first major turn along out-and-return and triangular routes. They do not define a minimum affected lag. Ten thousand seconds is the analysis limit; flight and leg durations vary. Testing the triangle hypothesis requires separating route types and examining actual leg durations.\par\medskip The schematics illustrate geometry only. This marginal comparison pools launch environments and equipment, so its magnitude cannot rank the causal importance of route choice against terrain. Sources: thesis Section 3.2.1, ch3\_conditional.json.}
 \finishslide\end{frame}
 
-\begin{frame}[plain]\frametitle{How does H differ across altitude classes?}\startslide{How does $H$ differ across altitude classes?}
- \figureat{6}{17}{104}{altitude}
- \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont\bfseries]{113}{18}{41}{Circuit composition}
- \smalltxt[font=\fontsize{7.5}{10}\selectfont]{113}{29}{41}{%
-  \setlength{\tabcolsep}{2pt}\renewcommand{\arraystretch}{1.25}%
-  \begin{tabular}{@{}lrr@{}}
-   & Open & Closed\\\midrule
-   Plains & 91.1\% & 8.9\%\\
-   Hills & 71.1\% & 28.9\%\\
-   Low mtn. & 33.5\% & 66.3\%\\
-   High mtn. & 35.0\% & 64.8\%
-  \end{tabular}}
- \smalltxt[text=muted,font=\fontsize{6.5}{8}\selectfont]{113}{57}{41}{Shares within each altitude group.\\Unclassified: less than 0.3\%.}
+\begin{frame}[plain]\frametitle{Does the altitude ranking of H measure terrain alone?}\startslide{Does the altitude ranking of $H$ measure terrain alone?}
+ \node[anchor=north west,inner sep=0pt]at(6,15){\includegraphics[width=92mm,height=59mm,keepaspectratio]{assets/altitude-mix.pdf}};
+ \node[anchor=north west,inner sep=0pt,text width=64mm,align=left,font=\fontsize{8.5}{10.5}\selectfont]at(89,20){%
+  \stepitem{1}{\textbf{Different mix} \usebox{\hollowmark}\\Lowlands: more open circuits and more Experts, both with higher $H$.}\par\medskip
+  \stepitem{2}{\textbf{Different weight} \usebox{\filledmark}\\Group $g$, a circuit type or wing class, enters as flight share $\times$ MSD:\par\vspace{.8mm}
+   \makebox[\linewidth]{$M_{2,a}(\tau)=\sum_g p_{g\mid a}\,M_{2,g,a}(\tau)$}\par\vspace{.8mm}
+   Low mountains: open flights are 34\% of flights, 61\% of the MSD at $10^4$\,s. Circuit type shifts the weights more than wing class.}};
  \fill[pisablight!33](7,74.7)rectangle(153,83);
- \smalltxt[text=pisablue,font=\fontsize{8.5}{10}\selectfont]{10}{75.5}{140}{Plains $>$ Hills $>$ Mountains in pooled $H$; lowlands have larger open fractions.}
- \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{79.2}{140}{The pooled altitude contrast also reflects circuit mix.}
- \credit{Initial GNSS altitude above sea level. Nominal 90\% cluster-bootstrap CIs; bands likely too narrow (Appendix).}
-\notetext{The pooled hierarchy is Plains \CondAltZeroH{}, Hills \CondAltOneH{}, Low mountains \CondAltTwoH{} and High mountains \CondAltThreeH{}. Brackets give nominal 90 percent intervals. Both mountain classes lie below the lowland classes. Initial GNSS altitude is a broad launch-environment proxy.\par\medskip Read the composition table alongside the curves. Plains and Hills contain 91.1 and 71.1 percent open flights, compared with about one third in mountains. The preceding slide showed faster pooled growth for open routes. Thus this apparent altitude contrast also changes circuit composition; it cannot isolate terrain.\par\medskip The next step is to show how flight fractions and circuit MSDs combine, then compare circuits within altitude classes. Do not infer which factor dominates from this marginal plot alone. The table includes 0, 1, 36 and 41 unclassified flights in its denominators. Source: thesis Section 3.2.2; ch3\_conditional.json.}
-\finishslide\end{frame}
-
-\begin{frame}[plain]\frametitle{How much MSD comes from each circuit type?}\startslide{How much MSD comes from each circuit type?}
- \txt[font=\fontsize{11}{13}\selectfont]{9}{17}{97}{$w_{c\mid a}(\tau)=\dfrac{p_{c\mid a}M_{2,c,a}(\tau)}{M_{2,a}(\tau)}$\qquad $p_{c\mid a}=\dfrac{N_{c,a}}{N_a}$}
- \smalltxt[font=\fontsize{8.5}{10}\selectfont]{111}{19}{42}{Within altitude class $a$;\\circuit $c$, flight fraction $p$.}
- \node[anchor=north west,inner sep=0pt]at(7,29){\includegraphics[width=146mm,height=42mm,keepaspectratio]{assets/circuit-weights.pdf}};
- \fill[pisablight!33](7,74.7)rectangle(153,83);
- \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont]{10}{75.5}{140}{Low mountains: 33.5\% open flights supply 60.6\% of the MSD at 10,000 s.}
- \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{79.2}{140}{Changing MSD shares shape both the amplitude and fitted $H$ of the pooled curve.}
- \credit{$N$: circuit flights within each altitude class; denominator includes unclassified flights. Observed shares, no confidence bands.}
-\notetext{For a fixed altitude class a, multiply each circuit's mean-square displacement by its flight fraction and divide by the full class MSD. This is the within-class contribution, not the contribution of altitude classes to all open flights. Open, closed and unclassified shares sum to one within each class and lag; the four coloured curves within one panel do not sum to one.\par\medskip Open flights are numerous in Plains and Hills and have larger MSDs, producing 99.4 and 97.6 percent of their class MSD at 10000 s. In Low mountains, open flights are only 33.5 percent of flights but contribute 60.6 percent of the MSD at that lag. In High mountains, closed routes still supply about 51.9 percent. The unclassified contribution remains small and is explicitly retained.\par\medskip Flight fractions stay fixed, whereas MSD shares change with lag as circuit curves grow differently. These contributions shape the mixed MSD and its fitted H. A share is not an exact averaging weight for the H fitted over the whole interval. We retain no new local-exponent derivation. Source: thesis Section 3.2.2; circuit\_msd\_weights.py and ch3\_conditional.json.}
+ \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont]{10}{75.5}{140}{Pooled $H$: Plains $>$ Hills $>$ mountains; the circuit and wing mix changes with altitude too.}
+ \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{79.2}{140}{An altitude-only comparison mixes terrain with circuit and wing composition.}
+ \credit{Shares of all flights in each class; unclassified: circuit $<0.3\%$, wing up to 10\%. Observed shares, no confidence bands.}
+\notetext{Pooled over circuits and wings, H orders Plains \CondAltZeroH{}, Hills \CondAltOneH{}, Low mountains \CondAltTwoH{} and High mountains \CondAltThreeH{}. The arrow on the left of the figure marks the fall from Plains to Hills to the two mountain classes pooled, \CondMountainsH{}. The decrease is monotone only after pooling: High mountains sit slightly above Low mountains, and their nominal intervals do not overlap. Before reading this ranking as terrain, look at what each class contains.\par\medskip Point 1, hollow dots: Plains and Hills are 91 and 71 percent open circuits and 52 percent Experts; both mountain classes are about one third of each. Pooled, open circuits grow faster than closed ones, \CondOpenH{} against \CondClosedH{}, and Experts faster than Beginners, \CondExpertsH{} against \CondBeginnersH{} (slides 13 and 16).\par\medskip Point 2, filled dots: in the left panel a group is a circuit type, open or closed; in the right panel it is a wing class, Expert or Beginner. Group g supplies $p_{g\mid a}M_{2,g,a}/M_{2,a}$ of the class MSD. At 10,000 seconds in Low mountains, open flights reach 1,814 km$^2$ against 596 km$^2$ for closed ones: 33.5 percent of the flights supply 60.6 percent of the MSD. For Experts the shift is smaller, 33.4 to 45.2 percent.\par\medskip The MSD share $w_g$ is not fixed along the lag. At 10 seconds it is close to the flight share; in Low mountains the open share of the MSD rises from 34.6 percent at 10 seconds to 60.6 percent at 10,000 seconds, a gain of 26 points. With local exponents $h$ defined by $M_2\propto\tau^{2h}$, $\mathrm{d}\ln w_g/\mathrm{d}\ln\tau=2(h_g-h_a)$, so a share that grows with lag belongs to the faster-growing group, and the class exponent is the share-weighted mean $h_a=\sum_g w_g h_g$. From Plains to High mountains the open share gains 5, 20, 26 and 14 points between 10 and 10,000 seconds, the Expert share 3, 4, 8 and 6. In every altitude class the circuit split moves the weights more than the wing split: circuit type pulls harder. The fitted H is a slope over the whole interval, so the shares are not its exact averaging weights.\par\medskip An altitude-only comparison therefore cannot say how much of the ranking is terrain; the next slide holds the circuit fixed. Denominators include unclassified flights: at most 0.3 percent for circuits, up to 10 percent for wings. Sources: thesis Section 3.2.2; ch3\_conditional.json.}
 \finishslide\end{frame}
 
 \begin{frame}[plain]\frametitle{Does the open--closed H gap change with altitude?}\startslide{Does the open--closed $H$ gap change with altitude?}
- \figureat{7}{16}{146}{interaction}
- \smalltxt[text=pisablue,font=\fontsize{7.5}{9}\selectfont]{9}{65.5}{144}{\textbf{Open minus closed ($\Delta H$, 90\% CIs):} Plains \ChThreeTaskGapPlains; Hills \ChThreeTaskGapHills.\\Low mountains \ChThreeTaskGapLow; High mountains \ChThreeTaskGapHigh.}
+ \figureat{13}{16}{134}{interaction}
+ % Interpretation under each panel: orography channels the route for both circuits.
+ \smalltxt{12}{62.3}{66}{{\color{pisablue}\textbf{Open:} lowland $H$ is higher.} In mountains, each transition must head for known lift, so the flight moves out less directly.}
+ \smalltxt{83}{62.3}{66}{{\color{pisablue}\textbf{Closed:} mountain $H$ is higher.} In plains, pilots can turn back sooner and more often; in mountains, even the way home must follow the lift.}
  \fill[pisablight!33](7,74.7)rectangle(153,83);
- \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont]{10}{75.4}{140}{\textbf{Open:} lowland $H$ is higher.\qquad \textbf{Closed:} mountain $H$ is higher.}
- \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{79.2}{140}{Open $>$ closed within every altitude class; the gap narrows in mountains.}
+ \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont]{10}{75.4}{140}{Plains: thermals turn up here and there. Mountains: routes must follow ridges and slopes.}
+ \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{79.2}{142}{Open $>$ closed in every class; mountain orography constrains both, and the gap narrows.}
  \bootstrapcredit
-\notetext{Read this figure in two directions. Comparing circuits within each altitude class gives open H greater than closed H in all four classes. The paired differences are \ChThreeTaskGapPlains{} in Plains, \ChThreeTaskGapHills{} in Hills, \ChThreeTaskGapLow{} in Low mountains and \ChThreeTaskGapHigh{} in High mountains. All four nominal 90 percent intervals are above zero. The circuit ordering survives altitude stratification, so different altitude composition alone cannot explain it. This is a consistent conditional association; its size still depends on altitude.\par\medskip Comparing altitudes within each circuit reveals the reversal. Lowland-minus-mountain H contrasts are positive for open routes (0.051--0.064) and negative for closed routes (magnitudes 0.021--0.051). All eight paired intervals exclude zero. There is no general mountain penalty in H.\par\medskip The two findings combine into a narrower circuit gap in mountains, as quantified by the four paired estimates and intervals on the slide. A physical interpretation is that terrain constrains how pilots realise either objective. Open routes may lose outward persistence; longer legs or later returns could make mountain closed routes less affected by closure within the fitted interval. These mechanisms need route and weather measurements. The conditional orderings and their interaction are already measured; future factorial analysis adds equipment and further interactions. Sources: thesis Figure 3.9 and ch3\_transport\_task\_table.tex.}
+\notetext{Read this figure in two directions. Comparing circuits within each altitude class gives open H greater than closed H in all four classes. The paired differences are \ChThreeTaskGapPlains{} in Plains, \ChThreeTaskGapHills{} in Hills, \ChThreeTaskGapLow{} in Low mountains and \ChThreeTaskGapHigh{} in High mountains. All four nominal 90 percent intervals are above zero. The circuit ordering survives altitude stratification, so different altitude composition alone cannot explain it. This is a consistent conditional association; its size still depends on altitude.\par\medskip Comparing altitudes within each circuit reveals the reversal. Lowland-minus-mountain H contrasts are positive for open routes (0.051--0.064) and negative for closed routes (magnitudes 0.021--0.051). All eight paired intervals exclude zero. There is no general mountain penalty in H.\par\medskip The two findings combine into a narrower circuit gap in mountains, as quantified by the four paired estimates above. Our interpretation is that orography constrains how pilots carry out either task. In mountains, usable thermals are localised on sun-facing slopes and along ridges, so each transition must be planned towards places where lift is known to form. In plains, lift use is spread more evenly in space and in height, with fewer clusters: a pilot meets thermals here and there along the way. Open circuits are therefore somewhat less open in mountains. Glides bend towards the known lift zones, so outward displacement, and with it the MSD, grows more slowly than in plains. Closed circuits show the opposite effect. In plains and hills the pilot is freer to turn back, sooner and more often, so over the same time the flight accumulates less MSD. In mountains, staying airborne on the way home still means following the lift along the ridges, which carries closed routes further out. Terrain pulls both circuits towards the same routes, so the task matters less and the gap narrows. The next slide asks the same question for wing class; the regional slides after it map where climbs occur. Testing the mechanism still needs route and weather measurements. The conditional orderings and their interaction are already measured; future factorial analysis adds equipment and further interactions. Sources: thesis Figure 3.9 and ch3\_transport\_task\_table.tex.}
+\finishslide\end{frame}
+
+\begin{frame}[plain]\frametitle{Does the expert--beginner H gap change with altitude?}\startslide{Does the expert--beginner $H$ gap change with altitude?}
+ \figureat{7}{16}{146}{equipment}
+ \fill[pisablight!33](7,74.7)rectangle(153,83);
+ \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{75.5}{140}{Higher $H$ for experts in every class; the gap depends on altitude.}
+ \smalltxt[text=pisablue,font=\fontsize{8.5}{10}\selectfont]{10}{79.6}{140}{A constant speed advantage changes MSD amplitude, not $H$.}
+ \credit{Wing class is a proxy. Nominal 90\% cluster-bootstrap CIs; bands likely too narrow (Appendix).}
+\notetext{The Beginners group contains 27,609 flights and the Experts group 16,497; 2,167 flights are excluded from this comparison. These are the operational groups defined on slide 12. Individual experience is not observed: an experienced pilot can fly a lower-class wing, and the same pilot can contribute to different groups on different flights. The pooled exponent difference is 0.025 [0.024,0.026]. Within altitude classes the differences are \CondEquipmentAltZeroDelta{}, \CondEquipmentAltOneDelta{}, \CondEquipmentAltTwoDelta{} and \CondEquipmentAltThreeDelta{}, all with paired intervals excluding zero. The Low mountains contrast exceeds the others in the paired interaction tests. A constant speed multiplier alone changes MSD amplitude, not its log--log slope, so the difference concerns the lag dependence too. The altitude-dependent gap is an equipment-by-altitude interaction already tested with paired contrasts. Each cell still pools circuits and weather. Circuit and equipment contrasts both depend on altitude, motivating the joint model with interaction terms discussed in the future-work section and the appendix. Source: thesis Section 3.2.4, ch3\_conditional.json and ch3\_conditional\_equipment\_table.tex.}
 \finishslide\end{frame}
 
 \begin{frame}[plain]\frametitle{Within altitude groups, how does H differ by region?}\startslide{Within altitude groups, how does $H$ differ by region?}
- \figureat{7}{16}{146}{regions}
- \smalltxt[text=pisablue,font=\fontsize{7.5}{9}\selectfont]{9}{63}{69}{\textbf{Mountain hypothesis:} slope-linked lift\\ties routes to ridge and valley geometry.}
- \smalltxt[text=pisablue,font=\fontsize{7.5}{9}\selectfont]{86}{63}{68}{\textbf{Lowland hypothesis:} roads and dark fields\\may supply broadly distributed thermal triggers.}
+ \figureat{8}{14.5}{142}{regions}
+ \hypbox{7}{Mountain hypothesis}{Slope-linked lift ties routes to ridge and valley geometry.}
+ \hypbox{81}{Lowland hypothesis}{Roads and dark fields may supply broadly distributed thermal triggers.}
  \fill[pisablight!33](7,74.7)rectangle(153,83);
  \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont]{10}{75.5}{140}{$\Delta H$: Alps--Pyrenees \CondMountainRegionsDelta{}; lowlands \CondLowlandRegionsDelta{}.}
  \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{79.2}{140}{Similar lowland $H$; Pyrenees may constrain routes more than the Alps.}
  \bootstrapcredit
-\notetext{The regional selections hold broad launch altitude fixed: at least 800 m in the Alps and Pyrenees, below 800 m in Channel Coast and Champagne-Lorraine. Legends give the selected flight counts. Alps H is \CondAlpsH{} against \CondPyreneesH{} in the Pyrenees, with paired difference 0.037 [0.033,0.041]. The lowland difference is -0.002 [-0.005,0.001]: their growth exponents are similar, although MSD amplitudes differ.\par\medskip The identity of the plain may matter less for H when thermal triggers have comparable spatial statistics. Roads, asphalt and dark ploughed fields provide candidate heated patches distributed across lowland landscapes. Comparable spacing and availability are hypotheses; trigger locations are not mapped here.\par\medskip In mountains, thermally heated slopes and wind-driven slope lift link usable lift to ridge and valley geometry. We interpret lower H and smaller long-lag MSD in the Pyrenees as consistent with stronger constraints on net progress than in the Alps. Alpine terrain may offer more connected route choices. H alone does not count accessible directions. Circuit mix, equipment, weather and detailed launch altitude remain unmatched.\par\medskip Sources: thesis Section 3.2.3; ch3\_conditional.json; SSA, \href{https://www.ssa.org/lift-sources/}{Lift Sources}; FAA Glider Flying Handbook, Chapter 9.}
+\notetext{The regional selections hold broad launch altitude fixed: at least 800 m in the Alps and Pyrenees, below 800 m in Channel Coast and Champagne-Lorraine. Legends give the selected flight counts. Alps H is \CondAlpsH{} against \CondPyreneesH{} in the Pyrenees, with paired difference 0.037 [0.033,0.041]. The lowland difference is -0.002 [-0.005,0.001]: their growth exponents are similar, although MSD amplitudes differ.\par\medskip The identity of the plain may matter less for H when lift-use locations have comparable spatial structure. Two appendix slides map where classified climbs occurred. Those maps show observed use, not the atmospheric distribution of thermal sources. Roads, asphalt and dark ploughed fields are candidate lowland triggers; comparable spacing and availability remain hypotheses.\par\medskip In mountains, thermally heated slopes and wind-driven slope lift link usable lift to ridge and valley geometry. We interpret lower H and smaller long-lag MSD in the Pyrenees as consistent with stronger constraints on net progress than in the Alps. Alpine terrain may offer more connected route choices. H alone does not count accessible directions. The open shares in the two mountain regional cohorts are 32.1 and 30.9 percent, reducing the concern that a large circuit-mix difference alone explains the contrast. Equipment, weather and detailed launch altitude remain unmatched.\par\medskip Sources: thesis Section 3.2.3; ch3\_conditional.json; SSA, \href{https://www.ssa.org/lift-sources/}{Lift Sources}; FAA Glider Flying Handbook, Chapter 9.}
 \finishslide\end{frame}
+
+
 
 \begin{frame}[plain]\frametitle{How do climb locations change with height?}\startslide{How do climb locations change with height?}
  \node[anchor=north west,inner sep=0pt]at(7,14.5){\includegraphics[width=18mm]{assets/screenshots/cell-locator.pdf}};
@@ -540,10 +548,11 @@
  \smalltxt[align=center,font=\fontsize{6.5}{8}\selectfont]{44.5}{71.5}{33.5}{PG: \ThermalMountainHighParaN\quad HG: \ThermalMountainHighHangN}
  \smalltxt[align=center,font=\fontsize{6.5}{8}\selectfont]{82}{71.5}{33.5}{PG: \ThermalPlainsLowParaN\quad HG: \ThermalPlainsLowHangN}
  \smalltxt[align=center,font=\fontsize{6.5}{8}\selectfont]{119.5}{71.5}{33.5}{PG: \ThermalPlainsHighParaN\quad HG: \ThermalPlainsHighHangN}
- \fill[pisablight!33](7,74.7)rectangle(153,83);
+ \fill[pisablight!33](7,74.7)rectangle(153,79.7);
  \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{75.5}{140}{100 to 600 m: P1 climbs spread out; H2 climbs stay near slopes and ridges.}
- \smalltxt[text=pisablue,font=\fontsize{8}{10}\selectfont]{10}{79.6}{140}{Observed lift use is less confined aloft in P1, supporting more spatial freedom for route choices.}
- \credit{PG/HG: distinct paraglider/hang-glider flights, blue/orange. Red: approximate crests. AGL: fixed cell reference. \copyright\ IGN Plan IGN / RGE ALTI.}
+ % Key message in the freed credit row, bottom-aligned with the Lab mark.
+ \fill[pisablue](7,80.3)rectangle(133.5,89.1);
+ \smalltxt[text=white,font=\bfseries\fontsize{9.5}{11}\selectfont]{10}{81.2}{120}{Observed lift use is less confined aloft in P1,\\ supporting more spatial freedom for route choices.}
 \notetext{The two five-kilometre viewer cells are H2, High mountains number 2 near Aulp du Seuil in the Chartreuse, Alps; and P1, Plains number 1 in inland Suisse Normande within the Channel Coast box. P1 contains local slopes despite its low starting-altitude class. Both disciplines and all available dates through June 2026 contribute, without seasonal or MSD-duration cuts.\par\medskip Heights are offsets from fixed references: 1756 m ASL in H2, based on five screened starts, and 185 m in P1, based on 1165. They are not local terrain clearance. Red crests are independently derived from IGN RGE ALTI at 25 m sampling with 50 m smoothing. These scale-dependent traces include secondary ridges and retain gaps at weak or ambiguous junctions. They do not move with the flight plane.\par\medskip H2's two main bands at 100 m chiefly follow outer slopes of separate ridges: Lances de Malissard and Aulp du Seuil--Bellefont, enclosing the Vallon de Marcieu. They do not simply flank one central crest. In P1, crossings cluster near local slopes at 100 m and occupy a broader area at 600 m; H2 retains narrower terrain-associated corridors.\par\medskip This is observed lift use, not tracked thermal centres. Possible slope lift and different flights and weather contribute at each height. Source distribution and wind advection are proposed explanations on the next slide; neither wind profiles nor their contribution to H are measured here. Sources: prepared viewer intersections; IGN Plan IGN and RGE ALTI, Licence Ouverte 2.0.}
 \finishslide\end{frame}
 
@@ -560,13 +569,70 @@
 \notetext{Distributed heat sources and wind advection could explain the stronger broadening between 100 and 600 m in P1. Slope-associated sources and possible shelter could preserve a narrower mountain footprint. Mountain sources can form on heated slopes and move upslope before detaching; they need not originate on crests. Dry fields, asphalt and roofs illustrate separate potential lowland sources, not guaranteed thermals. Orange is buoyant rising air, blue is horizontal wind. Helices indicate ascent, not measured rotation; fragments illustrate possible shear disruption.\par\medskip Sheltered slopes with stronger flow above the crest are one possible mountain profile. Exposed lowland sources may drift from lower heights. Neither profile is measured or universal: valleys can channel strong wind, and inland P1 is not necessarily coastal.\par\medskip For a steady idealised plume, $\Delta\boldsymbol r_h\simeq(\boldsymbol u_h/w)\Delta z$, where $w$ is upward air speed, not glider climb rate. Shared wind and rise speed translate a source pattern; variability across dates can broaden pooled crossings. Matched climbs and wind profiles are needed to test this.\par\medskip Terrain guidance and clearance could interrupt open routes' outward progress. Longer legs or later returns could weaken closure's signature in closed routes. Both may narrow the circuit gap; route timing remains untested. Sources: FAA Glider Flying Handbook, Chapters 9--10; SSA, \href{https://www.ssa.org/lift-sources/}{Lift Sources}; Schroeder and Buck, Fire Weather, Chapter 6; thesis Section 3.2.2.}
 \finishslide\end{frame}
 
-\begin{frame}[plain]\frametitle{Does the expert--beginner H gap change with altitude?}\startslide{Does the expert--beginner $H$ gap change with altitude?}
- \figureat{7}{16}{146}{equipment}
+\begin{frame}[plain]\frametitle{Take-home messages}\startslide{Take-home messages}
+ % 2x2 grid in the style of the work-in-progress slide: evidence in miniature
+ % on the left of each cell, the finding on the right.
+ \draw[pisablight,line width=.6pt](8,44.5)--(152,44.5)(81,16)--(81,72);
+ \txt[text=pisablue,font=\bfseries\fontsize{10.5}{12.5}\selectfont]{8}{15.5}{70}{Scaling}
+ \txt[text=pisablue,font=\bfseries\fontsize{10.5}{12.5}\selectfont]{85}{15.5}{68}{Route and wing}
+ \txt[text=pisablue,font=\bfseries\fontsize{10.5}{12.5}\selectfont]{8}{46.5}{70}{Terrain}
+ \txt[text=pisablue,font=\bfseries\fontsize{10.5}{12.5}\selectfont]{85}{46.5}{68}{Lift geography}
+ % Scaling (slide 11): fitted log-log slope between the diffusive and ballistic references.
+ \draw[muted,-{Latex},line width=.6pt](10,41)--(29.5,41);
+ \draw[muted,-{Latex},line width=.6pt](10,41)--(10,22);
+ \smalltxt[text=muted,font=\fontsize{6}{7}\selectfont]{24}{41.6}{8}{$\log\tau$}
+ \smalltxt[text=muted,font=\fontsize{6}{7}\selectfont]{11}{21.6}{10}{$\log M_2$}
+ \draw[muted,dashed,line width=.7pt](11,40)--(29,23.5);
+ \draw[muted,dashed,line width=.7pt](11,40)--(29,31.75);
+ \draw[para,line width=1.5pt](11,40)--(29,{40-.458*18*2*\CadenceParaH});
+ \node[anchor=west,inner sep=0pt,text=muted,font=\fontsize{6.5}{7.5}\selectfont]at(29.6,23){$H{=}1$};
+ \node[anchor=west,inner sep=0pt,text=para,font=\bfseries\fontsize{8.5}{9.5}\selectfont]at(29.6,26.2){\fpeval{round(\CadenceParaH,2)}};
+ \node[anchor=west,inner sep=0pt,text=muted,font=\fontsize{6.5}{7.5}\selectfont]at(29.6,31.75){$H{=}\tfrac12$};
+ \smalltxt[font=\bfseries\fontsize{9}{11}\selectfont]{39}{21.5}{41}{Strongly superdiffusive}
+ \smalltxt[font=\fontsize{8}{9.8}\selectfont]{39}{26.5}{41}{$H={}$\fpeval{round(\CadenceParaH,2)} for paragliders, \fpeval{round(\CadenceHangH,2)} for hang gliders, fitted over 10\,s--$10^4$\,s on the same flights at every lag.}
+ % Route and wing (slides 13, 16): pooled H of open and closed circuits.
+ \draw[para,-{Latex},line width=1.2pt](86,29)--(91,25.8)--(95,27.8)--(103,23.8);
+ \node[anchor=west,inner sep=0pt,text=para,font=\bfseries\fontsize{8.5}{9.5}\selectfont]at(105,26.2){0.91};
+ \smalltxt[text=para,font=\bfseries\fontsize{6.5}{7.5}\selectfont]{86}{30.4}{12}{open}
+ \draw[wine,line width=1.2pt,line join=round](86,40)--(93.5,34)--(103,39.6)--cycle;
+ \node[anchor=west,inner sep=0pt,text=wine,font=\bfseries\fontsize{8.5}{9.5}\selectfont]at(105,37.4){0.86};
+ \smalltxt[text=wine,font=\bfseries\fontsize{6.5}{7.5}\selectfont]{86}{40.8}{12}{closed}
+ \smalltxt[font=\bfseries\fontsize{9}{11}\selectfont]{115}{21.5}{39}{Open routes spread faster}
+ \smalltxt[font=\fontsize{8}{9.8}\selectfont]{115}{26.5}{39}{Open exceeds closed in every altitude class ($+0.054$ pooled). Experts exceed beginners, by less ($+0.025$).}
+ % Terrain (slides 14--15): paraglider H by altitude class, Plains to High mountains.
+ \begin{scope}[shift={(1.5,0)}]
+ \foreach \c/\a/\b/\d/\e in {para/.953/.944/.893/.889,wine/.825/.816/.846/.866}{
+  \draw[\c,line width=1.1pt](15,{67.5-110*(\a-.81)})--(20.33,{67.5-110*(\b-.81)})--(25.67,{67.5-110*(\d-.81)})--(31,{67.5-110*(\e-.81)});
+  \foreach \x/\h in {15/\a,20.33/\b,25.67/\d,31/\e}{\fill[\c](\x,{67.5-110*(\h-.81)})circle(.6);}
+ }
+ \draw[muted,{Latex[length=1.2mm]}-{Latex[length=1.2mm]},line width=.5pt](15,53)--(15,64.6);
+ \node[anchor=west,inner sep=0pt,text=muted,font=\fontsize{6.5}{7.5}\selectfont]at(15.8,58.6){0.13};
+ \node[anchor=west,inner sep=0pt,text=muted,font=\fontsize{6.5}{7.5}\selectfont]at(31.9,60.1){0.02};
+ \node[anchor=east,inner sep=0pt,text=para,font=\bfseries\fontsize{6.5}{7.5}\selectfont]at(13.8,51.8){open};
+ \node[anchor=east,inner sep=0pt,text=wine,font=\bfseries\fontsize{6.5}{7.5}\selectfont]at(13.8,65.9){closed};
+ \node[anchor=north,inner sep=0pt,text=muted,font=\fontsize{6}{7}\selectfont]at(15,68.9){Plains};
+ \node[anchor=north east,inner sep=0pt,text=muted,font=\fontsize{6}{7}\selectfont]at(33.5,68.9){Mountains};
+ \end{scope}
+ \smalltxt[font=\bfseries\fontsize{9}{11}\selectfont]{39}{52.5}{41}{Mountains narrow the gap}
+ \smalltxt[font=\fontsize{8}{9.8}\selectfont]{39}{57.5}{41}{In mountains, open-route $H$ falls and closed-route $H$ rises. Altitude alone mixes terrain with route and wing mix.}
+ % Lift geography (slide 18): schematic climb crossings at 600 m, crests in the slide-18 colour.
+ \pgfmathsetseed{26}
+ \foreach \x in {86,100.5}{\filldraw[fill=pisablight!18,draw=muted!40,line width=.4pt](\x,51.5)rectangle(\x+12,63.5);}
+ \draw[hang,line width=.8pt](86.6,60.5)--(94.5,52.1)(89.3,63)--(97.4,54.6);
+ % Dots jitter about each crest: one shared position u along the crest, small offsets across it.
+ \foreach \xa/\ya in {86.9/60.2,89.8/62.6}{\foreach \i in {1,...,18}{\pgfmathsetmacro\u{rnd}\fill[para,opacity=.75]({\xa+7.4*\u+.4*rand},{\ya-7.8*\u+.4*rand})circle(.3);}}
+ \draw[hang,line width=.8pt](101,62.6)--(104.5,60);
+ \foreach \i in {1,...,36}{\fill[para,opacity=.75]({101.2+10.6*rnd},{52.2+10.6*rnd})circle(.3);}
+ \node[anchor=north,inner sep=0pt,text=muted,font=\fontsize{6}{7}\selectfont]at(92,64.3){H2, Alps};
+ \node[anchor=north,inner sep=0pt,text=muted,font=\fontsize{6}{7}\selectfont]at(106.5,64.3){P1, plains};
+ \node[anchor=north,inner sep=0pt,text=muted,font=\fontsize{6}{7}\selectfont]at(99.25,67.6){climbs at 600 m};
+ \smalltxt[font=\bfseries\fontsize{9}{11}\selectfont]{115}{52.5}{39}{Mountain lift hugs ridges}
+ \smalltxt[font=\fontsize{8}{9.8}\selectfont]{115}{57.5}{39}{From 100 to 600 m, H2 climbs keep to slopes and ridges; P1 climbs spread out. Observed lift use; causes untested.}
  \fill[pisablight!33](7,74.7)rectangle(153,83);
- \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{75.5}{140}{Higher $H$ for experts in every class; the gap depends on altitude.}
- \smalltxt[text=pisablue,font=\fontsize{8.5}{10}\selectfont]{10}{79.6}{140}{A constant speed advantage changes MSD amplitude, not $H$.}
- \credit{Wing class is a proxy. Nominal 90\% cluster-bootstrap CIs; bands likely too narrow (Appendix).}
-\notetext{The Beginners group contains 27,609 flights and the Experts group 16,497; 2,167 flights are excluded from this comparison. These are the operational groups defined on slide 12. Individual experience is not observed: an experienced pilot can fly a lower-class wing, and the same pilot can contribute to different groups on different flights. The pooled exponent difference is 0.025 [0.024,0.026]. Within altitude classes the differences are \CondEquipmentAltZeroDelta{}, \CondEquipmentAltOneDelta{}, \CondEquipmentAltTwoDelta{} and \CondEquipmentAltThreeDelta{}, all with paired intervals excluding zero. The Low mountains contrast exceeds the others in the paired interaction tests. A constant speed multiplier alone changes MSD amplitude, not its log--log slope, so the difference concerns the lag dependence too. The altitude-dependent gap is an equipment-by-altitude interaction already tested with paired contrasts. Each cell still pools circuits and weather. Circuit and equipment contrasts both depend on altitude, motivating the joint model with interaction terms discussed in the future-work section and the appendix. Source: thesis Section 3.2.4, ch3\_conditional.json and ch3\_conditional\_equipment\_table.tex.}
+ \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{75.5}{140}{Strongly superdiffusive in every group; route and terrain interact, wing adds a small shift.}
+ \smalltxt[text=pisablue,font=\fontsize{8.5}{10}\selectfont]{10}{79.6}{140}{Working hypothesis: terrain constrains routes through where pilots can find lift.}
+ \credit{$C_{10000}$ fits over 10--10,000 s; route and terrain: paragliders; maps: slide 18. Nominal 90\% CIs, likely too narrow (Appendix).}
+\notetext{Four findings, one per cell; the band gives the synthesis. What we are still working on follows on the next slide.\par\medskip Scaling. Over 10 to 10,000 s the fixed C10000 cohort gives $H=\CadenceParaH$ for paragliders and \CadenceHangH{} for hang gliders, between diffusion at one half and ballistic motion at one. The same flights enter at every lag, so the exponent is not produced by long lags keeping only long flights. The pictogram is schematic: the reference lines are the diffusive and ballistic slopes, the blue line has the fitted paraglider slope. $H$ summarises the fit range: the local slope stays near 0.85--0.94 up to about 2,000 s and then declines, to about 0.64 for paragliders and 0.41 for hang gliders at 10,000 s (slide 11, right panel).\par\medskip Route and wing. Pooled over altitude classes, open circuits reach \CondOpenH{} and closed circuits \CondClosedH{}, a paired difference of 0.054; open exceeds closed within every altitude class. Experts exceed Beginners in every class too, by 0.025 pooled and 0.013--0.021 within classes.\par\medskip Terrain. The miniature plots the eight circuit-by-altitude exponents of slide 15. Open routes have higher $H$ in the lowlands, closed routes in the mountains, so there is no general mountain penalty. The open--closed gap is \ChThreeTaskGapPlains{} in Plains and \ChThreeTaskGapHigh{} in High mountains. Because Plains are 91 percent open circuits and the mountain classes about one third, a ranking by altitude alone mixes terrain with route and wing composition (slide 14). Regionally, the two lowlands have similar $H$ and the Pyrenees sit below the Alps by 0.037.\par\medskip Lift geography. The squares are schematic versions of the slide 18 maps, not the data. In H2, climb crossings stay close to slopes and ridges at both 100 and 600 m; in P1 they cluster near local slopes at 100 m and spread at 600 m. The appendix maps show the same contrast at regional scale. This is where pilots climbed, not where thermals form; wind is not measured.\par\medskip Synthesis. All 37 paraglider groups examined lie between 0.816 and 0.955, and hang gliders at \CadenceHangH{}: every group is strongly superdiffusive, and the contrasts are differences of a few hundredths to about 0.13. Route and terrain interact: the open--closed gap falls from \ChThreeTaskGapPlains{} in Plains to \ChThreeTaskGapHigh{} in High mountains, so the circuit effect depends on the altitude class. The wing shift is smaller and steadier: Experts exceed Beginners by 0.013--0.021 within every class. The factorial analysis in the appendix is the tool to quantify these interactions jointly; its implementation is still under review. All these contrasts are conditional associations with nominal intervals that are likely too narrow. Our working hypothesis links them: terrain decides where lift can be found, and so how freely routes can extend. Testing it needs phase segmentation, directions and wind, which is the work in progress on the next slide.}
 \finishslide\end{frame}
 
 \begin{frame}[plain]\frametitle{Work in progress: resolving phases and directions}\startslide{Work in progress: phases and directions}
@@ -638,20 +704,6 @@
 \notetext{The current Vilpellet segmentation is useful and already supplies the thermal-plane examples. The source study retained trajectories at a minimum frequency of one hertz; its appendix uses binary trajectory features. That domain does not validate transfer to our slower loggers. Visual inspection also suggests some climbing or lifting stretches are missed. These are diagnostics, not a completed accuracy benchmark. The proposed replacement remains an HMM with discrete glide, search and climb states, but continuous-valued observations such as vertical speed and turning measures. Features must be defined in physical time and state persistence must account for sampling interval. Merely replacing binary emissions with Gaussians does not solve cadence dependence. Validate on reviewed trajectories and deliberately downsampled high-frequency tracks.\par\medskip The top-right cell states the goal: a stochastic model able to describe the empirical observations. The candidate has two phases: glides generate displacement, and each contiguous search and thermalling block becomes one waiting episode. Estimate glide lengths, durations, directions and turning-angle memory, and total waiting times without assuming independent search and climb durations. Position is held fixed during waiting, which neglects local search motion and thermal drift. Monte Carlo simulations with the observed sampling then test MSD, displacement distributions, anisotropy and temporal correlations. Details are in the appendix.\par\medskip For anisotropy, estimate the displacement tensor at each lag and compare its main axis with local ridge orientation or measured wind. Mountain alignment and weaker lowland wind alignment remain preliminary. Terrain and wind directions must be measured independently of the trajectories.\par\medskip Distribution-collapse and moment-scaling diagnostics are not yet consistent enough to claim or reject a common self-similar law. Repeat them on matched populations, lag ranges and directions with uncertainty. The fitted MSD exponent is only a second-moment summary.}
 \finishslide\end{frame}
 
-
-
-
-
-\begin{frame}[plain]\frametitle{Take-home messages and open questions}\startslide{Take-home messages and open questions}
- \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{8}{18}{70}{What the data show}
- \smalltxt[font=\fontsize{9.5}{12}\selectfont]{8}{28}{69}{\textbf{Persistent displacement growth.}\\A fixed population makes lag comparisons\\interpretable; $H$ summarises one fit range.\\[3mm]\textbf{Circuit and terrain interact.}\\Open $>$ closed within every altitude class.\\The altitude ordering reverses by circuit.\\[3mm]\textbf{Composition matters.}\\Group MSD shares change with lag;\\flight counts alone cannot explain pooled $H$.}
- \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{86}{18}{67}{What remains open}
- \smalltxt[font=\fontsize{9.5}{12}\selectfont]{86}{28}{67}{\textbf{Mechanisms and uncertainty.}\\Terrain-linked lift is observed; wind and\\route mechanisms need matched tests.\\[3mm]\textbf{Cadence and scaling.}\\Validate segmentation, anisotropy,\\distribution scaling and bootstrap coverage.\\[3mm]\textbf{Joint models and social flight.}\\Quantify conditional group / solo contrasts;\\test a phase-based stochastic model.}
- \bottomline{Next: test the mechanisms with joint models and validated flight phases}
- \credit{Measured contrasts. Nominal 90\% bootstrap intervals are shown with estimates; coverage remains under review.}
-\notetext{The main contribution is a reproducible statistical description, followed by marginal and stratified comparisons that reveal which contrasts survive changes of setting. The fixed cohort removes lag-dependent entry and exit of flights over the principal fit range, while preserving the need to discuss duration selection and statistical uncertainty.\par\medskip Open trajectories have larger effective exponents than closed trajectories within every launch-altitude class. The altitude ranking reverses between open and closed circuits: mountain flights do not have a universally smaller H. Unequal circuit composition and lag-dependent MSD contributions explain why a pooled terrain plot alone is insufficient. Wing-class contrasts also depend on altitude, although wing class mixes equipment and an experience proxy.\par\medskip Thermal-plane maps show terrain-associated climb corridors in H2 and stronger broadening with height in P1. They support a physical interpretation but do not isolate wind or explain the circuit interaction by themselves. Next steps validate segmentation and uncertainty, resolve anisotropy and distribution scaling, and combine drivers in joint factorial models, especially for solo versus grouped flight. Phase durations and dependence will then constrain and test a stochastic model. These are open tasks, not further established results.}
-\finishslide\end{frame}
-
 \begin{frame}[plain]\frametitle{Thank you}
  \begin{tikzpicture}[remember picture,overlay,shift={(current page.north west)},x=1mm,y=-1mm]
   \fill[pisablue](0,0)rectangle(160,90);
@@ -659,13 +711,76 @@
   \node[anchor=north east,inner sep=0pt]at(145,27){\scalebox{.95}{\offsitetitle{offsitelight}{white}}};
   \txt[text=white,font=\bfseries\fontsize{30}{36}\selectfont]{12}{38}{136}{Thank you\\for your attention}
  \end{tikzpicture}
-\notetext{Thank the audience and open the discussion. The quantitative factorial example, the solo-versus-group feasibility check, the gliding-and-waiting model, the velocity-memory definitions and the bootstrap-method slide follow as backup material.}
+\notetext{Thank the audience and open the discussion. The regional climb-map construction, quantitative factorial example, solo-versus-group feasibility check, gliding-and-waiting model, velocity-memory definitions and bootstrap method follow as backup material.}
 \end{frame}
 
 
 
 
 \appendix
+
+\begin{frame}[plain]\frametitle{Where do mountain climbs concentrate?}\startslide{Where do mountain climbs concentrate?}
+ \txt[text=pisablue,font=\bfseries\fontsize{10}{12}\selectfont]{8}{15.5}{68}{Pyrenees: full chain}
+ \txt[text=pisablue,font=\bfseries\fontsize{10}{12}\selectfont]{83}{15.5}{68}{Western Alps}
+ \smalltxt[text=muted,font=\fontsize{7.5}{9}\selectfont]{8}{20}{69}{Atlantic to Mediterranean}
+ \smalltxt[text=muted,font=\fontsize{7.5}{9}\selectfont]{83}{20}{69}{Matched 450 $\times$ 220 km area}
+ \node[anchor=north west,inner sep=0pt]at(8,24){\includegraphics[width=69mm]{assets/regional-climb/pyrenees-map.pdf}};
+ \node[anchor=north west,inner sep=0pt]at(83,24){\includegraphics[width=69mm]{assets/regional-climb/alps-map.pdf}};
+ \smalltxt[font=\fontsize{7.3}{9}\selectfont]{8}{59}{69}{2,257 flights: open 698 (30.9\%), closed 1,556 (68.9\%)}
+ \smalltxt[font=\fontsize{7.3}{9}\selectfont]{83}{59}{69}{32,790 flights: open 10,533 (32.1\%), closed 22,212 (67.7\%)}
+ \smalltxt[text=pisablue,font=\bfseries\fontsize{8.5}{10}\selectfont]{8}{64}{69}{$H=0.833$}
+ \smalltxt[text=pisablue,font=\bfseries\fontsize{8.5}{10}\selectfont]{83}{64}{69}{$H=0.870$}
+ \smalltxt[text=muted,font=\fontsize{7.5}{9}\selectfont]{9}{69}{53}{Share of flights with a climb}
+ \node[anchor=north west,inner sep=0pt]at(67,67.7){\includegraphics[width=82mm]{assets/regional-climb/legend.pdf}};
+ \fill[pisablight!33](7,74.7)rectangle(153,83);
+ \smalltxt[text=pisablue,font=\fontsize{8.5}{10.5}\selectfont]{10}{75.5}{140}{Pyrenees: a narrow northern band. Alps: more branching climb areas.}
+ \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9}{11}\selectfont]{10}{79.4}{140}{Similar open shares make terrain guidance plausible, but the maps do not establish causation.}
+ \credit{C10000 paragliders; all dates and heights pooled. Equal 450 $\times$ 220 km views and colour range. Map: \copyright\ OSM contributors, SRTM, OpenTopoMap (CC-BY-SA).}
+\notetext{The Pyrenean map spans the chain from its Atlantic to Mediterranean ends, 450 by 220 km in Lambert-93. The western Alpine map covers the same physical area, but not the entire Alpine chain. The topographic base is lightly desaturated to keep its relief and ridge lines visible under the colour layer. The coloured field is observed climb use, not a census of all atmospheric thermal sources. In this archive, the Pyrenees have a strong elongated high-use band along the northern slopes, while the Alps show a main band with more branches through other valleys and ridge systems.\par\medskip Both maps use the same C10000 paraglider cohorts as the regional H comparison: 2,257 Pyrenean flights (698 open, 1,556 closed, 3 unclassified) and 32,790 Alpine flights (10,533 open, 22,212 closed, 45 unclassified). The open shares are 30.9 and 32.1 percent, so the circuit mix is broadly comparable. H is 0.833 versus 0.870; the paired difference is 0.037 [0.033,0.041]. Similar circuit proportions do not remove weather, equipment, launch-location or route-selection differences.\par\medskip No date, season or climb height is excluded. A flight counts once per 1 km cell with at least one own-HMM climb fix. Counts are divided by the regional flight number and smoothed by a 2 km Gaussian for display. Both panels use the same 0.03 to 5 percent logarithmic colour scale; low values fade to transparent. The OpenTopoMap background derives from OpenStreetMap and SRTM independently of flight coordinates. A more branched Alpine pattern is compatible with greater route freedom, but the map does not directly measure available lift or accessible directions and cannot explain H causally. See the appendix construction diagram. Sources: ch3\_conditional.json; render\_regional\_climb\_density.py; OpenTopoMap (CC-BY-SA).}
+ \finishslide\end{frame}
+
+\begin{frame}[plain]\frametitle{How broadly are lowland climbs distributed?}\startslide{How broadly are lowland climbs distributed?}
+ \txt[text=pisablue,font=\bfseries\fontsize{10}{12}\selectfont]{8}{15.5}{68}{Channel Coast}
+ \txt[text=pisablue,font=\bfseries\fontsize{10}{12}\selectfont]{84}{15.5}{68}{Champagne-Lorraine}
+ \smalltxt[font=\fontsize{7.5}{9}\selectfont]{8}{20}{69}{1,068 flights, $H=0.953$, 95.5\% open}
+ \smalltxt[font=\fontsize{7.5}{9}\selectfont]{84}{20}{69}{798 flights, $H=0.955$, 92.9\% open}
+ \node[anchor=north west,inner sep=0pt]at(8,24){\includegraphics[width=66mm,height=42.9mm]{assets/regional-climb/channel-coast-map.pdf}};
+ \node[anchor=north west,inner sep=0pt]at(84,24){\includegraphics[width=66mm,height=42.9mm]{assets/regional-climb/champagne-map.pdf}};
+ \smalltxt[text=muted,font=\fontsize{7.5}{9}\selectfont]{9}{69}{53}{Share of flights with a climb}
+ \node[anchor=north west,inner sep=0pt]at(67,67.7){\includegraphics[width=82mm]{assets/regional-climb/legend.pdf}};
+ \fill[pisablight!33](7,74.7)rectangle(153,83);
+ \smalltxt[text=pisablue,font=\fontsize{8.5}{10.5}\selectfont]{10}{75.5}{140}{Both windows contain broad patches of climb use, with no single mountain-like crest corridor.}
+ \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9}{11}\selectfont]{10}{79.4}{140}{Their similar $H$ values are compatible with weaker spatial constraints in lowlands.}
+ \credit{C10000 paragliders; all dates and heights pooled. Matched 100 $\times$ 65 km lowland views; shared colour range. Map: \copyright\ OSM contributors, SRTM, OpenTopoMap (CC-BY-SA).}
+\notetext{These matched 100 by 65 km views sample active portions of the Channel Coast and Champagne-Lorraine regional boxes. The first is inland Suisse Normande, not the immediate shoreline. The maps use the same C10000 paraglider population, own-HMM climb label, 1 km unique-flight grid, 2 km display smoothing and colour range as the mountain maps. There is no seasonal or height-plane restriction. Channel Coast has 1,068 flights, 1,020 open and 48 closed; Champagne-Lorraine has 798 flights, 741 open and 57 closed. Their open shares are 95.5 and 92.9 percent. Their fitted H values are 0.953 and 0.955, with a paired Channel-minus-Champagne difference of -0.002 [-0.005,0.001].\par\medskip Both lowland examples occupy broad areas. They are not spatially uniform: visible hotspots remain, especially near active flight corridors. The maps support the weaker statement that climb use is less confined to a narrow mountain-crest network in these examples. More spatial freedom is a possible link to the larger open-minus-closed H gap in Plains and Hills shown earlier, but these plots do not measure available lift or prove that mechanism. Similarly, two matching lowland H values do not establish the same result for every plain or hill region. Unequal launch-site exposure, weather, wind and route choices remain alternatives.\par\medskip The OpenTopoMap relief and contours are independent of flight coordinates. The method and limitations are listed in the appendix. Sources: ch3\_conditional.json; render\_regional\_climb\_density.py; OpenTopoMap (CC-BY-SA).}
+ \finishslide\end{frame}
+
+\begin{frame}[plain]\frametitle{Appendix: construction of the 2D climb maps}\startslide{Appendix: construction of the 2D climb maps}
+ \smalltxt[text=muted,font=\fontsize{8.5}{10}\selectfont]{8}{16}{145}{One chain for every map: the regional $H$ cohort, with all dates and climb heights pooled.}
+ \foreach \xx in {8,45,82,119}{\filldraw[fill=pisablight!14,draw=pisablight,line width=.7pt,rounded corners=1.5mm](\xx,23)rectangle(\xx+33,69);}
+ \foreach \xx in {42,79,116}{\draw[-{Latex[length=2mm]},pisablue,line width=1.1pt](\xx,46)--(\xx+2,46);}
+ \smalltxt[text=pisablue,font=\bfseries\fontsize{9}{11}\selectfont]{11}{26}{27}{1\quad Select flights}
+ \smalltxt[text=pisablue,font=\bfseries\fontsize{13}{15}\selectfont]{11}{35}{27}{C10000}
+ \smalltxt[font=\fontsize{7.5}{9}\selectfont]{11}{53}{27}{Regional launch +\\altitude selection}
+ \smalltxt[text=pisablue,font=\bfseries\fontsize{9}{11}\selectfont]{48}{26}{27}{2\quad Keep climbs}
+ \draw[muted,line width=1.1pt](49,48)--(53,44)--(58,46)--(62,40)--(68,42)--(73,37);
+ \foreach \xx/\yy in {53/44,62/40,68/42}{\fill[hang](\xx,\yy)circle(1.3);}
+ \smalltxt[font=\fontsize{7.5}{9}\selectfont]{48}{53}{27}{HMM-labelled\\climb fixes}
+ \smalltxt[text=pisablue,font=\bfseries\fontsize{9}{11}\selectfont]{85}{26}{27}{3\quad Count cells}
+ \foreach \xx in {88,93,98,103,108}{\draw[muted!65,line width=.4pt](\xx,38)--(\xx,58);}
+ \foreach \yy in {38,43,48,53,58}{\draw[muted!65,line width=.4pt](88,\yy)--(108,\yy);}
+ \fill[para!55](93.2,43.2)rectangle(97.8,47.8);
+ \fill[para!75](98.2,48.2)rectangle(102.8,52.8);
+ \fill[para!35](103.2,48.2)rectangle(107.8,52.8);
+ \smalltxt[font=\fontsize{7.5}{9}\selectfont]{85}{61}{27}{1 flight per 1 km cell}
+ \smalltxt[text=pisablue,font=\bfseries\fontsize{9}{11}\selectfont]{122}{26}{27}{4\quad Map share}
+ \txt[text=pisablue,font=\bfseries\fontsize{13}{15}\selectfont]{122}{38}{27}{$100\,n_r(c)/N_r$}
+ \smalltxt[font=\fontsize{7.5}{9}\selectfont]{122}{53}{27}{2 km display blur\\on terrain relief}
+ \fill[pisablight!33](7,74.7)rectangle(153,83);
+ \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9}{11}\selectfont]{10}{77.5}{140}{Colour shows observed climb use, not every available thermal or a causal effect on $H$.}
+ \credit{Source: FFVL C10000 tracks, own-HMM phase labels; OpenTopoMap relief (OSM contributors / SRTM, CC-BY-SA). Code and provenance: render\_regional\_climb\_maps.py.}
+\notetext{The map population is the fixed 10--10,000 s C10000 paraglider cohort from chapter 3. A flight enters the Alps or Pyrenees sample if its cleaned launch lies in that geographic box and its initial altitude is at least 800 m. For Channel Coast or Champagne-Lorraine, the launch altitude is below 800 m. This reproduces the region memberships of the H comparison. No year, month, season or height plane is selected: all available dated fixes of those flights contribute.\par\medskip The own-HMM phase\_points.parquet supplies the climb label and each cleaned fix's fixed-frame E, N and GNSS altitude. The exact inverse WGS84 transform reconstructs longitude and latitude; Lambert-93 gives metric eastings and northings. A flight contributes one count to a one-kilometre square if it has at least one classified climb fix there, even if it circles for a long time or records many fixes. Divide by the total number of C10000 flights in that region. Display smoothing uses a Gaussian with 2 km standard deviation. Values below 0.03 percent are transparent and values at or above 5 percent saturate on the shared logarithmic colour scale. The Pyrenees map spans the whole chain in a 450 by 220 km view. The Alps uses the same physical extent and shows a selected western portion of that much larger chain. Lowland windows are each 100 by 65 km. The latter are illustrative subregions, not maps of the entire lowland regional boxes.\par\medskip OpenTopoMap supplies the independent topographic background: OpenStreetMap map data, SRTM relief and a CC-BY-SA cartographic style. The map tiles are warped to Lambert-93 before the flight-density field is overlaid. Topographic ridges and contours therefore do not depend on flight coordinates. The basemap is a contemporary, multi-source geographic reference rather than a record of conditions at each flight time.\par\medskip Observed climb-use density depends on launch sites, routes, flight exposure, weather, wind, phase-classification errors and the pilot's choice of where to climb. It cannot estimate all available thermal sources or identify the causal contribution of terrain to H. PNG/PDF maps, cell-count CSVs, cached basemaps and JSON provenance are in assets/regional-climb.}
+ \finishslide\end{frame}
 
 \begin{frame}[plain]\frametitle{Appendix: factorial models and interactions}\startslide{Appendix: factorial models and interactions}
  \smalltxt[font=\fontsize{8.5}{10.5}\selectfont]{8}{16}{146}{$A$: 4 altitudes \qquad $C$: 2 circuits \qquad $E$: beginners / experts \qquad $4\times2\times2=16$ cells}
@@ -793,12 +908,12 @@
  \smalltxt[font=\fontsize{9}{12}\selectfont]{59}{18}{94}{FFVL Coupe F\'ed\'erale de Distance: IGC tracks, dates,\\declared sites, circuits and wing classes.\\\href{https://parapente.ffvl.fr/cfd/liste}{parapente.ffvl.fr/cfd/liste}\quad \href{https://delta.ffvl.fr/cfd/liste}{delta.ffvl.fr/cfd/liste}}
  \draw[pisablight,line width=.6pt](8,36)--(152,36);
  \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{8}{40}{45}{Maps and terrain}
- \smalltxt[font=\fontsize{9}{12}\selectfont]{59}{39}{94}{\href{https://cartes.gouv.fr}{IGN / G\'eoplateforme}: Plan IGN map backgrounds.\\\href{https://www.data.gouv.fr/datasets/rge-alti-r}{IGN RGE ALTI}: local terrain windows and derived crests.\\Licence Ouverte 2.0; only the selected cells downloaded.}
+ \smalltxt[font=\fontsize{8.5}{11}\selectfont]{59}{39}{94}{\href{https://opentopomap.org}{OpenTopoMap}: regional relief and contours (OSM / SRTM, CC-BY-SA).\\\href{https://cartes.gouv.fr}{IGN / G\'eoplateforme}: local Plan IGN backgrounds.\\\href{https://www.data.gouv.fr/datasets/rge-alti-r}{IGN RGE ALTI}: local terrain and derived crests.}
  \draw[pisablight,line width=.6pt](8,57)--(152,57);
  \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{8}{61}{45}{Locator and analysis}
  \smalltxt[font=\fontsize{9}{12}\selectfont]{59}{60}{94}{\href{https://www.naturalearthdata.com/about/terms-of-use/}{Natural Earth}: France outline, public domain.\\MSD, intervals and crossings: this thesis's prepared pipeline.\\\href{https://github.com/matteodisante/soaring-anomalous-transport}{Code, figure scripts and recorded source provenance}}
  \credit{Flight archive through June 2026. Geographic extracts retrieved 22 September 2026. Website links are clickable.}
-\notetext{The FFVL archive supplies the observed trajectories and catalogue metadata. Paraglider and hang-glider collections have separate portals and season ranges, shown earlier. The pipeline applies the documented cleaning, selection and equal-flight estimators; generated figures are outputs of this thesis rather than independent external datasets. Thermal crossings come from the prepared viewer store.\par\medskip IGN Plan IGN is the coloured map background. Approximate crest lines are computed independently of flight positions from RGE ALTI terrain, requested at 25 m sampling for twelve selected five-kilometre cells with a 500 m processing buffer. The total terrain download is about 2.64 MiB. The source licence and precise queries are retained with the extracts. The France locator uses Natural Earth country boundaries in the public domain.\par\medskip Named summit points from IGN BD TOPO were tested earlier but are not the crest overlay currently displayed. The thermal-mechanism image is a schematic, not an atmospheric measurement. Source hashes, extraction parameters and figure scripts are recorded with the presentation and thesis.}
+\notetext{The FFVL archive supplies the observed trajectories and catalogue metadata. Paraglider and hang-glider collections have separate portals and season ranges, shown earlier. The pipeline applies the documented cleaning, selection and equal-flight estimators; generated figures are outputs of this thesis rather than independent external datasets. Thermal crossings in the five-kilometre cells come from the prepared viewer store. Regional climb-use maps come from the C10000 paraglider cohort and archived HMM phase fixes.\par\medskip Regional maps use OpenTopoMap tiles, including OpenStreetMap map data and SRTM relief, warped to Lambert-93; the tiles and style are credited under CC-BY-SA. The background is desaturated and lightened for display. IGN Plan IGN is the coloured background of the separate small-cell maps. Approximate local crest lines are computed independently of flight positions from RGE ALTI terrain, requested at 25 m sampling for twelve selected five-kilometre cells with a 500 m processing buffer. The France locator uses Natural Earth country boundaries in the public domain.\par\medskip Named summit points from IGN BD TOPO were tested earlier but are not the crest overlay currently displayed. The thermal-mechanism image is a schematic, not an atmospheric measurement. Source hashes, extraction parameters and figure scripts are recorded with the presentation and thesis.}
 \finishslide\end{frame}
 
 
