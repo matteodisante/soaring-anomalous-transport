@@ -1,4 +1,4 @@
-"""Render matched-scale regional climb-use maps over independent IGN terrain."""
+"""Render regional 10 m plane-crossing densities over OpenTopoMap terrain."""
 
 from __future__ import annotations
 
@@ -8,22 +8,16 @@ import json
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
-from urllib.parse import urlencode
-from urllib.request import urlopen
 
 import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as effects
-import mercantile
 import numpy as np
 import pandas as pd
-import rasterio
 from matplotlib.colors import LinearSegmentedColormap, LogNorm
 from PIL import Image
-from rasterio.enums import Resampling
-from rasterio.warp import reproject, transform_bounds
 from scipy.ndimage import gaussian_filter
 
 HERE = Path(__file__).resolve().parent
@@ -41,8 +35,8 @@ STEMS = {
 PIXELS = {"Alps": (2250, 1100), "Pyrenees": (2250, 1100),
           "Channel Coast": (1320, 858), "Champagne-Lorraine": (1320, 858)}
 ZOOM = 9
-DISPLAY_MIN = .03
-DISPLAY_MAX = 5.0
+DISPLAY_MIN = 1.0
+DISPLAY_MAX = 10_000.0
 SMOOTHING_KM = 2.0
 TILE_TEMPLATE = "https://a.tile.opentopomap.org/{z}/{x}/{y}.png"
 TILE_ATTRIBUTION = "Map data: © OpenStreetMap contributors; elevation: SRTM; map style: © OpenTopoMap (CC-BY-SA)"
@@ -61,6 +55,13 @@ def basemap(name: str, bounds: tuple[int, int, int, int]):
         if (meta.get("bounds_epsg2154") == list(bounds)
                 and meta.get("size") == list(size) and meta.get("zoom") == ZOOM):
             return np.asarray(Image.open(dest).convert("RGB")), meta
+    # The published cache makes normal figure rebuilds offline and avoids loading
+    # the tile-download/warping dependencies unless a basemap needs rebuilding.
+    import mercantile
+    import rasterio
+    from rasterio.enums import Resampling
+    from rasterio.warp import reproject, transform_bounds
+
     lonlat = transform_bounds("EPSG:2154", "EPSG:4326", *bounds, densify_pts=21)
     tiles = list(mercantile.tiles(*lonlat, ZOOM))
     xs, ys = [t.x for t in tiles], [t.y for t in tiles]
@@ -103,18 +104,24 @@ def basemap(name: str, bounds: tuple[int, int, int, int]):
     return dst, meta
 
 
-def map_array(name: str, bounds: tuple[int, int, int, int], n: int):
+def map_array(name: str, bounds: tuple[int, int, int, int]):
     frame = pd.read_csv(OUT / f"{STEMS[name]}-cells.csv")
     west, south, east, north = bounds
     if any(v % 1000 for v in bounds):
         raise ValueError(f"1 km density grid requires aligned map bounds: {name}")
     nx, ny = (east - west) // 1000, (north - south) // 1000
-    value = np.zeros((ny, nx), dtype=float)
+    # Include surrounding bins before smoothing; cropping must not reflect the
+    # crossing field at an arbitrary map-window boundary.
+    pad = int(np.ceil(4 * SMOOTHING_KM))
+    value = np.zeros((ny + 2 * pad, nx + 2 * pad), dtype=float)
     x = frame.ix.to_numpy(dtype=int) - west // 1000
     y = frame.iy.to_numpy(dtype=int) - south // 1000
     good = (x >= 0) & (x < nx) & (y >= 0) & (y < ny)
-    value[y[good], x[good]] = frame.flights.to_numpy()[good] / n * 100
-    return gaussian_filter(value, sigma=SMOOTHING_KM), int(good.sum()), int(frame.flights.to_numpy()[good].sum())
+    padded = (x >= -pad) & (x < nx + pad) & (y >= -pad) & (y < ny + pad)
+    value[y[padded] + pad, x[padded] + pad] = frame.crossings.to_numpy()[padded]
+    smooth = gaussian_filter(value, sigma=SMOOTHING_KM, mode="constant")
+    return (smooth[pad:pad + ny, pad:pad + nx], int(good.sum()),
+            int(frame.crossings.to_numpy()[good].sum()))
 
 
 def heat_rgba(density: np.ndarray) -> np.ndarray:
@@ -129,7 +136,7 @@ def heat_rgba(density: np.ndarray) -> np.ndarray:
 def render(name: str, info: dict):
     bounds = EXTENT[name]
     bg, provenance = basemap(name, bounds)
-    climb, occupied, visits = map_array(name, bounds, info["cohort_flights"])
+    climb, occupied, crossings = map_array(name, bounds)
     mountain = name in ("Alps", "Pyrenees")
     # Keep relief and labels while making the thermal layer the visual focus.
     grey = np.dot(bg[..., :3], [0.299, 0.587, 0.114])[..., None]
@@ -157,7 +164,9 @@ def render(name: str, info: dict):
     fig.savefig(OUT / f"{STEMS[name]}-map.pdf", metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
     return {"extent_epsg2154": bounds, "map_occupied_cells": occupied,
-            "map_flight_cell_visits": visits, "basemap": provenance,
+            "map_crossings": crossings,
+            "max_smoothed_crossings_per_km2": float(climb.max()),
+            "basemap": provenance,
             "png_sha256": hashlib.sha256((OUT / f"{STEMS[name]}-map.png").read_bytes()).hexdigest()}
 
 
@@ -169,7 +178,7 @@ def legend():
               extent=(0, 100, 0, 1))
     ax.set_xlim(-4, 104)
     ax.set_yticks([])
-    ax.set_xticks([0, 24, 45, 69, 100], ["0.03%", "0.1%", "0.3%", "1%", "5%"], fontsize=9)
+    ax.set_xticks([0, 25, 50, 75, 100], ["1", "10", "100", "1,000", "10,000+"], fontsize=9)
     for spine in ax.spines.values(): spine.set_visible(False)
     fig.savefig(OUT / "legend.pdf", metadata={"CreationDate": None, "ModDate": None})
     plt.close(fig)
@@ -182,9 +191,9 @@ def main():
     report["display"] = {
         "mountain_extent_m": [450_000, 220_000], "lowland_extent_m": [100_000, 65_000],
         "shared_colormap": "navy-blue-cyan-lime-yellow",
-        "density_unit": "percent of regional C10000 flights with a climb fix in a 1 km cell",
-        "smoothing_sigma_m": 2000, "display_min_percent": DISPLAY_MIN,
-        "display_max_percent": DISPLAY_MAX,
+        "density_unit": "10 m plane crossings per square kilometre (absolute count, no per-flight deduplication or normalisation)",
+        "smoothing_sigma_m": 2000, "display_min_crossings_per_km2": DISPLAY_MIN,
+        "display_max_crossings_per_km2": DISPLAY_MAX,
         "terrain": "OpenTopoMap topographic tiles (OSM + SRTM relief and contours)",
         "basemap_style": "85% desaturated, 28% white blend for legible heat overlay",
         "basemap_attribution": TILE_ATTRIBUTION,

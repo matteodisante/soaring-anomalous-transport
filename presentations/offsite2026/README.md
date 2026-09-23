@@ -37,8 +37,9 @@ README for the source filenames.
 - `render_figures.py`: redraws saved numerical arrays and confidence intervals.
 - `preprocessing-global-frame.tex`: editable ellipsoid/ENU schematic adapted from
   the thesis coordinate figure; the tangent-plane close-up is inline in the deck.
-- `render_regional_climb_density.py`: counts distinct C10000 paraglider flights with
-  own-HMM climb fixes in 1 km regional cells, over all available dates and heights.
+- `render_regional_climb_density.py`: intersects continuous native own-HMM
+  climb edges with horizontal planes every 10 m ASL, using the viewer routine,
+  and pools every crossing into 1 km regional bins over all dates and heights.
 - `render_regional_climb_maps.py`: draws appendix slides 23–24 over OpenTopoMap terrain;
   full Pyrenees and western Alps use matched 450 × 220 km views, while the two
   lowland examples use matched 100 × 65 km views.
@@ -153,10 +154,23 @@ The Pyrenees map shows the full Atlantic-to-Mediterranean chain in a 450 × 220 
 view; the western Alpine view covers the same physical area. The two lowland
 examples each cover 100 × 65 km. They use the exact
 paraglider C10000 regional populations behind slide 17, including all available
-dates and heights. One flight contributes once per 1 km cell containing at least
-one own-HMM climb fix; maps show that count as a share of regional flights. A
-Gaussian display smooth with 2 km standard deviation and one logarithmic colour
-scale aid display. Transparent
+dates and heights. Archived own-HMM climb intervals label the native cleaned
+trajectory; edges cannot cross phase changes, preprocessing boundaries or gaps.
+The viewer's `thermal_daily.lattice_points` routine intersects those edges with
+horizontal planes at every 10 m of absolute GNSS altitude. Regional maps use this
+common ASL lattice because an entire region has no single ground reference; the
+viewer's small cells instead use their fixed local ground reference.
+
+Every crossing contributes to its 1 km horizontal bin, including repeated
+crossings by one flight. Both upward and downward crossings inside climb phases
+are retained; shared vertices count once, terminal vertices are retained, and
+horizontal coplanar edges are omitted. The map shows absolute crossings per km²,
+with a 2 km Gaussian display smooth, an 8 km margin before cropping, and a common
+logarithmic colour scale from 1 to 10,000 (higher counts saturate). A 500 m
+monotonic ascent contributes approximately 50 points. Counts also reflect flight
+exposure and vertical climb extent; those points are not independent thermals.
+Slide 25 explains the four steps and the distinction between flights and crossings.
+Transparent
 density sits over OpenTopoMap relief and contours, whose topography derives from
 OpenStreetMap and SRTM independently of the flight tracks. These are maps of
 observed climb use, not direct maps of all thermals or a causal explanation of

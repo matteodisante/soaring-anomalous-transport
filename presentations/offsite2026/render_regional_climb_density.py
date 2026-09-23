@@ -1,16 +1,16 @@
-"""Regional climb-use maps for the offsite deck.
+"""Regional densities of climb crossings through horizontal planes every 10 m.
 
-One paraglider contributes at most once to each 1 km cell.  The flight population is
-exactly the fixed C10000 regional population used for the H comparison, with no date
-filter.  A coloured cell records observed climb use, not a thermal source or an
-independent sample of the atmosphere.
+Use the viewer's native-edge continuity and intersection routines. Every crossing
+counts, including several crossings from one flight in one horizontal bin. The
+regional C10000 cohorts and archived own-HMM labels match the regional H comparison.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
-from collections import defaultdict
+from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -21,16 +21,19 @@ import pyarrow.parquet as pq
 from pyproj import Transformer
 
 from soaring.analysis.preproc.enu import WGS84_A_M, WGS84_E2, geodetic_to_ecef
+from soaring.analysis.derived import stream_flights
 from soaring.analysis.regions import REGIONAL_BOXES
 from soaring.viewer.geodesy import _ecef_to_geodetic
+from soaring.viewer.thermal_geometry import continuous_edges
+from soaring.viewer.thermal_daily import lattice_points
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 OUT = HERE / "assets/regional-climb"
 SOURCE = Path("/Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917/para")
-PHASE_POINTS = Path(
-    "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/segmentation/phase_points.parquet"
-)
+DERIVED = Path("/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived")
+PHASE_SEGMENTS = DERIVED / "segmentation/phase_segments.parquet"
+FIXES = DERIVED / "fixes.parquet"
 REGIONS = ("Alps", "Pyrenees", "Channel Coast", "Champagne-Lorraine")
 CELL_M = 1000
 TO_LAMBERT = Transformer.from_crs(4326, 2154, always_xy=True)
@@ -73,42 +76,116 @@ def to_lambert(points: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
     return TO_LAMBERT.transform(lon, lat)
 
 
+@dataclass(frozen=True)
+class RegionalPlanes:
+    """An uncropped regional plane stack with an absolute 10 m altitude lattice.
+
+    The viewer's cell-local AGL zero is replaced with a multiple of 10 m ASL.
+    Rounded bounds keep its extra terminal plane on that same regular lattice.
+    """
+
+    ground_m: float
+    max_agl_m: float
+    bounds: tuple[float, float, float, float] = (-np.inf, -np.inf, np.inf, np.inf)
+
+
+def climb_runs(selected: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    """Read the archived half-open decision intervals used to label native fixes."""
+    ids = pc.SetLookupOptions(value_set=pa.array(selected.index.to_numpy(dtype=str)))
+    frames = []
+    columns = ["flight_id", "segment_id", "phase", "t_start", "t_end", "n_points"]
+    for batch in pq.ParquetFile(PHASE_SEGMENTS).iter_batches(columns=columns):
+        keep = pc.and_(pc.equal(batch.column("phase"), "climb"),
+                       pc.is_in(batch.column("flight_id"), options=ids))
+        if pc.any(keep).as_py():
+            frames.append(batch.filter(keep).to_pandas())
+    runs = pd.concat(frames, ignore_index=True)
+    # A run must cover consecutive 10 s HMM decision cells; never bridge a gap.
+    assert np.allclose(runs.t_end - runs.t_start, runs.n_points * 10)
+    return {str(fid): frame for fid, frame in runs.groupby("flight_id", sort=False)}
+
+
+def native_climb_edges(flight: pd.DataFrame, runs: pd.DataFrame, origin) -> np.ndarray:
+    """Join only adjacent native fixes inside the same continuous climb interval."""
+    flight = flight.sort_values(["segment_id", "t"], kind="stable").reset_index(drop=True)
+    run_id = np.full(len(flight), -1, dtype=int)
+    for segment_id, group in flight.groupby("segment_id", sort=False):
+        intervals = runs.loc[runs.segment_id.eq(segment_id)].sort_values("t_start")
+        if intervals.empty:
+            continue
+        times = group.t.to_numpy(dtype=float)
+        positions = np.searchsorted(intervals.t_start.to_numpy(), times, side="right") - 1
+        safe = np.clip(positions, 0, len(intervals) - 1)
+        inside = (positions >= 0) & (times < intervals.t_end.to_numpy()[safe])
+        run_id[group.index[inside]] = intervals.index.to_numpy()[safe[inside]]
+    use = continuous_edges(flight) & (run_id[:-1] >= 0) & (run_id[:-1] == run_id[1:])
+    finite = np.isfinite(flight[["E", "N", "z", "t"]].to_numpy()).all(axis=1)
+    use &= finite[:-1] & finite[1:]
+    starts = np.flatnonzero(use)
+    if not len(starts):
+        return np.empty((0, 8))
+    vertices = np.unique(np.r_[starts, starts + 1])
+    tab = flight.iloc[vertices].copy()
+    for name in ("lat0", "lon0", "alt0"):
+        tab[name] = origin[name]
+    x, y = to_lambert(tab)
+    values = np.column_stack((x, y, tab.z, tab.t))
+    return np.column_stack((values[np.searchsorted(vertices, starts)],
+                            values[np.searchsorted(vertices, starts + 1)]))
+
+
+def crossing_points(edges: np.ndarray) -> np.ndarray:
+    """Pool all 10 m planes using the viewer's exact crossing implementation."""
+    if not len(edges):
+        return np.empty((0, 4))
+    z = edges[:, [2, 6]]
+    bottom = float(np.floor(z.min() / 10) * 10)
+    top = float(np.ceil(z.max() / 10) * 10)
+    return lattice_points(edges, RegionalPlanes(bottom, top - bottom))
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     selected = cohort()
-    ids = pc.SetLookupOptions(value_set=pa.array(selected.index.to_numpy(dtype=str)))
-    seen: set[tuple[int, str, int, int]] = set()
-    points_by_region = np.zeros(len(REGIONS), dtype=np.int64)
-    pf = pq.ParquetFile(PHASE_POINTS)
-    for number, batch in enumerate(
-        pf.iter_batches(batch_size=250_000, columns=["flight_id", "E", "N", "z", "phase"]), 1
-    ):
-        keep = pc.and_(pc.equal(batch.column("phase"), "climb"),
-                       pc.is_in(batch.column("flight_id"), options=ids))
-        if not pc.any(keep).as_py():
-            continue
-        tab = batch.filter(keep).to_pandas()
-        tab = tab.join(selected[["lat0", "lon0", "alt0", "region_index"]], on="flight_id")
-        tab = tab.loc[np.isfinite(tab[["E", "N", "z", "lat0", "lon0", "alt0"]]).all(axis=1)]
-        if tab.empty:
-            continue
-        x, y = to_lambert(tab)
-        ix = np.floor(np.asarray(x) / CELL_M).astype(np.int32)
-        iy = np.floor(np.asarray(y) / CELL_M).astype(np.int32)
-        points_by_region += np.bincount(tab.region_index.to_numpy(dtype=int), minlength=len(REGIONS))
-        tuples = zip(tab.region_index.to_numpy(dtype=int), tab.flight_id.to_numpy(), ix, iy)
-        seen.update(tuples)
-        if number % 100 == 0:
-            print(f"{number} batches, {len(seen):,} unique flight-cells", flush=True)
-    cells: dict[int, dict[tuple[int, int], int]] = defaultdict(lambda: defaultdict(int))
-    for region, _flight, ix, iy in seen:
-        cells[int(region)][(int(ix), int(iy))] += 1
+    runs = climb_runs(selected)
+    print(f"Loaded climb intervals for {len(runs):,} selected flights", flush=True)
+    cells = [Counter() for _ in REGIONS]
+    totals = np.zeros(len(REGIONS), dtype=np.int64)
+    contributors = np.zeros(len(REGIONS), dtype=np.int64)
+    native_edges = np.zeros(len(REGIONS), dtype=np.int64)
+    found = set()
+    columns = ["flight_id", "segment_id", "t", "E", "N", "z"]
+    for number, flight in enumerate(stream_flights(FIXES, columns=columns), 1):
+        fid = str(flight.flight_id.iloc[0])
+        if fid in selected.index:
+            found.add(fid)
+        if fid in runs:
+            origin = selected.loc[fid]
+            region = int(origin.region_index)
+            edges = native_climb_edges(flight, runs[fid], origin)
+            points = crossing_points(edges)
+            native_edges[region] += len(edges)
+            totals[region] += len(points)
+            contributors[region] += bool(len(points))
+            if len(points):
+                bins = np.floor(points[:, 1:3] / CELL_M).astype(np.int64)
+                keys, counts = np.unique(bins, axis=0, return_counts=True)
+                cells[region].update({tuple(key): int(n) for key, n in zip(keys, counts)})
+        if number % 2000 == 0:
+            print(f"Read {number:,} flights; {len(found):,}/{len(selected):,} cohort flights; "
+                  f"{totals.sum():,} crossings", flush=True)
+    assert found == set(selected.index), f"Missing {len(set(selected.index) - found)} cohort flights"
     report = {
-        "method": "Unique C10000 paraglider flight with at least one own-HMM climb fix in a 1 km Lambert-93 cell; all dates and altitudes pooled; no calendar filter.",
-        "interpretation": "Observed climb use, not direct thermal-source density; sampling, route choice and launch distribution remain confounders.",
+        "method": "Viewer lattice_points on continuous native own-HMM climb edges; horizontal planes at every 10 m ASL; pool all crossings into 1 km Lambert-93 bins, retaining repeated contributions from each flight; all dates and heights pooled.",
+        "interpretation": "Observed climb-crossing density. Repeated crossings are correlated and do not count independent atmospheric thermals. Vertical extent, launch exposure, routes and weather affect the density.",
         "cell_m": CELL_M,
+        "plane_step_m": 10,
+        "plane_reference": "Absolute adopted GNSS altitude (ASL), with planes at integer multiples of 10 m; regional analogue of the viewer cell-local AGL lattice.",
+        "crossing_convention": "Upward and downward crossings within climb runs; half-open edges and terminal vertices, as in the viewer; horizontal coplanar edges omitted.",
         "source_flights": str(SOURCE / "flights.parquet"),
-        "source_phase_points": str(PHASE_POINTS),
+        "source_phase_segments": str(PHASE_SEGMENTS),
+        "source_native_fixes": str(FIXES),
+        "geometry_code": "src/soaring/viewer/thermal_daily.py:lattice_points; src/soaring/viewer/thermal_geometry.py:continuous_edges",
         "regions": {},
     }
     for i, name in enumerate(REGIONS):
@@ -116,7 +193,7 @@ def main() -> None:
         keys = list(cells[i])
         table = pd.DataFrame({
             "ix": [key[0] for key in keys], "iy": [key[1] for key in keys],
-            "flights": [cells[i][key] for key in keys],
+            "crossings": [cells[i][key] for key in keys],
         }).sort_values(["iy", "ix"], kind="stable").reset_index(drop=True)
         stem = name.lower().replace(" ", "-").replace("-lorraine", "")
         table.to_csv(OUT / f"{stem}-cells.csv", index=False)
@@ -124,13 +201,15 @@ def main() -> None:
         report["regions"][name] = {
             "cohort_flights": len(frame), "task_counts": count,
             "open_fraction": count.get("open", 0) / len(frame),
-            "climb_fixes": int(points_by_region[i]),
+            "crossing_flights": int(contributors[i]),
+            "native_climb_edges": int(native_edges[i]),
+            "crossings": int(totals[i]),
             "occupied_cells": len(table),
-            "flight_cell_visits": int(table.flights.sum()),
-            "max_cell_flights": int(table.flights.max()),
+            "max_cell_crossings": int(table.crossings.max()),
             "csv": f"{stem}-cells.csv",
             "csv_sha256": hashlib.sha256((OUT / f"{stem}-cells.csv").read_bytes()).hexdigest(),
         }
+        assert int(table.crossings.sum()) == int(totals[i])
     conditional = json.loads((ROOT / "thesis/generated/ch3_conditional.json").read_text())
     for name in REGIONS:
         key = name.lower().replace(" ", "_").replace("-", "_")

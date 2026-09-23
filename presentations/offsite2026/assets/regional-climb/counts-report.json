@@ -1,9 +1,14 @@
 {
-  "method": "Unique C10000 paraglider flight with at least one own-HMM climb fix in a 1 km Lambert-93 cell; all dates and altitudes pooled; no calendar filter.",
-  "interpretation": "Observed climb use, not direct thermal-source density; sampling, route choice and launch distribution remain confounders.",
+  "method": "Viewer lattice_points on continuous native own-HMM climb edges; horizontal planes at every 10 m ASL; pool all crossings into 1 km Lambert-93 bins, retaining repeated contributions from each flight; all dates and heights pooled.",
+  "interpretation": "Observed climb-crossing density. Repeated crossings are correlated and do not count independent atmospheric thermals. Vertical extent, launch exposure, routes and weather affect the density.",
   "cell_m": 1000,
+  "plane_step_m": 10,
+  "plane_reference": "Absolute adopted GNSS altitude (ASL), with planes at integer multiples of 10 m; regional analogue of the viewer cell-local AGL lattice.",
+  "crossing_convention": "Upward and downward crossings within climb runs; half-open edges and terminal vertices, as in the viewer; horizontal coplanar edges omitted.",
   "source_flights": "/Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917/para/flights.parquet",
-  "source_phase_points": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/segmentation/phase_points.parquet",
+  "source_phase_segments": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/segmentation/phase_segments.parquet",
+  "source_native_fixes": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/fixes.parquet",
+  "geometry_code": "src/soaring/viewer/thermal_daily.py:lattice_points; src/soaring/viewer/thermal_geometry.py:continuous_edges",
   "regions": {
     "Alps": {
       "cohort_flights": 32790,
@@ -13,12 +18,13 @@
         "unknown": 45
       },
       "open_fraction": 0.3212259835315645,
-      "climb_fixes": 19263218,
-      "occupied_cells": 27682,
-      "flight_cell_visits": 1329791,
-      "max_cell_flights": 6177,
+      "crossing_flights": 31611,
+      "native_climb_edges": 168584502,
+      "crossings": 30344128,
+      "occupied_cells": 27557,
+      "max_cell_crossings": 339184,
       "csv": "alps-cells.csv",
-      "csv_sha256": "d206761b75d7048a7745a546e42dbb6ef4ee841656f888b0ace04f8de0127c31",
+      "csv_sha256": "0c408be04cc63d7e8d83d71adf142634d499770b7638940ca1967783903d077d",
       "map": {
         "extent_epsg2154": [
           800000,
@@ -26,8 +32,9 @@
           1250000,
           6555000
         ],
-        "map_occupied_cells": 20633,
-        "map_flight_cell_visits": 1196838,
+        "map_occupied_cells": 20545,
+        "map_crossings": 27410848,
+        "max_smoothed_crossings_per_km2": 35435.26233018218,
         "basemap": {
           "bounds_epsg2154": [
             800000,
@@ -101,7 +108,7 @@
           "retrieved_utc": "2026-09-23T18:02:02.983252+00:00",
           "sha256": "51b552cc35789d4717bba0ec6ded4a4f0e30f03dc1035eb716cdfcc63141f8a1"
         },
-        "png_sha256": "c54ff57d8a7d7548f30c608aadd679bd25baaff35a3c946fa7ceec5f561e0a60"
+        "png_sha256": "751a8e0b806465c7438c5aefae2c2cd16cb69d3cdff0aa0ad1a4558ccc321785"
       }
     },
     "Pyrenees": {
@@ -112,12 +119,13 @@
         "unknown": 3
       },
       "open_fraction": 0.309260079751883,
-      "climb_fixes": 1422973,
-      "occupied_cells": 9585,
-      "flight_cell_visits": 79122,
-      "max_cell_flights": 717,
+      "crossing_flights": 2199,
+      "native_climb_edges": 12963364,
+      "crossings": 2042097,
+      "occupied_cells": 9548,
+      "max_cell_crossings": 70532,
       "csv": "pyrenees-cells.csv",
-      "csv_sha256": "779bcfb0f99869f44c4d01c5c841d4e9f02affcd1e9402974b427adc075bfae4",
+      "csv_sha256": "37e70cd105f6f5db4312d379a994a0185ac01870e9fe3893cf5a40ebcbd350b7",
       "map": {
         "extent_epsg2154": [
           300000,
@@ -125,8 +133,9 @@
           750000,
           6290000
         ],
-        "map_occupied_cells": 9585,
-        "map_flight_cell_visits": 79122,
+        "map_occupied_cells": 9548,
+        "map_crossings": 2042097,
+        "max_smoothed_crossings_per_km2": 6133.1227358533815,
         "basemap": {
           "bounds_epsg2154": [
             300000,
@@ -191,7 +200,7 @@
           "retrieved_utc": "2026-09-23T18:00:52.782473+00:00",
           "sha256": "2fcd315e00286c9f8e92d6c23dc03f5a6fac0888d89acd096718f31dad1d5b0d"
         },
-        "png_sha256": "a3f3757952914cc66375ba50b961bde048c6d706979d364fa20860bee38bb37a"
+        "png_sha256": "73baba9edac1796fd796fc63780e0a7126c8b3bbfcf7e4c63fe3f08c9edc9775"
       }
     },
     "Channel Coast": {
@@ -201,12 +210,13 @@
         "closed": 48
       },
       "open_fraction": 0.9550561797752809,
-      "climb_fixes": 624626,
-      "occupied_cells": 25138,
-      "flight_cell_visits": 58726,
-      "max_cell_flights": 240,
+      "crossing_flights": 1024,
+      "native_climb_edges": 5566578,
+      "crossings": 790441,
+      "occupied_cells": 24783,
+      "max_cell_crossings": 10965,
       "csv": "channel-coast-cells.csv",
-      "csv_sha256": "867a09269d1a6a8caca617042c08a10a5c35da3b349acaa3ed631ddc148e13ad",
+      "csv_sha256": "0be1adab8e4c4e672067032c757977c3f6942f5eb4978ed2861eb883e29f5e84",
       "map": {
         "extent_epsg2154": [
           405000,
@@ -214,8 +224,9 @@
           505000,
           6910000
         ],
-        "map_occupied_cells": 3470,
-        "map_flight_cell_visits": 15868,
+        "map_occupied_cells": 3449,
+        "map_crossings": 254982,
+        "max_smoothed_crossings_per_km2": 1394.8098276900166,
         "basemap": {
           "bounds_epsg2154": [
             405000,
@@ -241,7 +252,7 @@
           "retrieved_utc": "2026-09-23T18:00:54.212199+00:00",
           "sha256": "3f9264d6fa652fbedb302740f883aff5d5ddf72cb42bed0a6982301e9bcb0602"
         },
-        "png_sha256": "1ce4c1e71625a9008aaa0250a761576ba84aba68fde968541c2b96211b853f11"
+        "png_sha256": "5f51a04740f23b9d8adb17ecad9dc2db792c60f78fc4c547f1fdabb74fd54a40"
       }
     },
     "Champagne-Lorraine": {
@@ -251,27 +262,29 @@
         "closed": 57
       },
       "open_fraction": 0.9285714285714286,
-      "climb_fixes": 472353,
-      "occupied_cells": 24215,
-      "flight_cell_visits": 45257,
-      "max_cell_flights": 116,
+      "crossing_flights": 771,
+      "native_climb_edges": 4144628,
+      "crossings": 633875,
+      "occupied_cells": 23880,
+      "max_cell_crossings": 4354,
       "csv": "champagne-cells.csv",
-      "csv_sha256": "32d9e1582baeb21c36a1e7e9cdacd7cf3bedc5c7fbeab92d5bcfa5b257ab61de",
+      "csv_sha256": "98c5468f61cd81e1c20ed6bdb845c48e285a31d9fe2ab5f1db48f0c58042414f",
       "map": {
         "extent_epsg2154": [
           790000,
-          6907500,
+          6907000,
           890000,
-          6972500
+          6972000
         ],
-        "map_occupied_cells": 3426,
-        "map_flight_cell_visits": 9906,
+        "map_occupied_cells": 3397,
+        "map_crossings": 154656,
+        "max_smoothed_crossings_per_km2": 692.6065527864264,
         "basemap": {
           "bounds_epsg2154": [
             790000,
-            6907500,
+            6907000,
             890000,
-            6972500
+            6972000
           ],
           "size": [
             1320,
@@ -291,10 +304,10 @@
             "264/175": "f5b511de5a2ac9cf2ba0ac8acf6894ebb20de205b3088d92e9776ec420cfd65e"
           },
           "attribution": "Map data: \u00a9 OpenStreetMap contributors; elevation: SRTM; map style: \u00a9 OpenTopoMap (CC-BY-SA)",
-          "retrieved_utc": "2026-09-23T18:00:55.910224+00:00",
-          "sha256": "ee533350822267bb54198761de9b5ff8ccbf930c9a2c82f792fc18b75a2fff5f"
+          "retrieved_utc": "2026-09-23T20:20:59.481115+00:00",
+          "sha256": "3b9766824b8504df0cf7d279fcc1bdad20faf3e8317be52a280f22fb5dc4c8ed"
         },
-        "png_sha256": "0f0b1b0035ba6d8c2fd2e26ccedae8fb2f10862db24f6e0f123abc6a07f7eac4"
+        "png_sha256": "5e769ae441764f86b3613617cfcc13dbabfa23b5030e702c8b36597a48a0c04e"
       }
     }
   },
@@ -308,10 +321,10 @@
       65000
     ],
     "shared_colormap": "navy-blue-cyan-lime-yellow",
-    "density_unit": "percent of regional C10000 flights with a climb fix in a 1 km cell",
+    "density_unit": "10 m plane crossings per square kilometre (absolute count, no per-flight deduplication or normalisation)",
     "smoothing_sigma_m": 2000,
-    "display_min_percent": 0.03,
-    "display_max_percent": 5.0,
+    "display_min_crossings_per_km2": 1.0,
+    "display_max_crossings_per_km2": 10000.0,
     "terrain": "OpenTopoMap topographic tiles (OSM + SRTM relief and contours)",
     "basemap_style": "85% desaturated, 28% white blend for legible heat overlay",
     "basemap_attribution": "Map data: \u00a9 OpenStreetMap contributors; elevation: SRTM; map style: \u00a9 OpenTopoMap (CC-BY-SA)"
