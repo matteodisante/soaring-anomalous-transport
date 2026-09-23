@@ -1,10 +1,11 @@
-"""Projection-sized figures from thesis reports and the slide-9 cadence extension."""
+"""Projection-sized figures from thesis reports and the slide-11 cadence extension."""
 from pathlib import Path
 import hashlib
 import json
 import sys
 import matplotlib
 matplotlib.use("Agg")
+import matplotlib.patches
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -72,6 +73,51 @@ for ax,slug,title in zip(axs,["para","hang"],["Paragliders","Hang gliders"]):
 axs[0].set_ylabel("Effective exponent H")
 save(fig,"selection")
 
+# Available population: the flights averaged at each lag change with the lag.
+fig,axs=plt.subplots(1,2,figsize=(9.0,4.2),layout="constrained",gridspec_kw={"width_ratios":[1.2,1]})
+tail=[]
+for slug,color,label in [("para",BLUE,"Paragliders"),("hang",RUST,"Hang gliders")]:
+    g=R["results"][slug]["general"]
+    x,n=a(g["lags"]),a(g["tamsd_support"])
+    # Common 10 s grid only; the descriptive band needs enough site-day groups.
+    keep=(x>=10)&(a(g["tamsd_group_support"])>=g["minimum_groups_for_descriptive_band"])
+    n10=n[x==10][0]
+    band(axs[0],x[keep],g["tamsd"],color,f"{label} (N={n10:,.0f} at 10 s)",idx=keep)
+    axs[1].plot(x[keep],n[keep]/n10,"o-",color=color,lw=1.7,ms=3,mfc="white")
+    last=np.flatnonzero(keep)[-1]
+    axs[1].annotate(f"{n[last]:,.0f} flights",(x[last],n[last]/n10),xytext=(-6,0),
+                    textcoords="offset points",ha="right",va="center",fontsize=10,color=color)
+    late=keep&(x>=1e4)
+    tail+=list(zip(x[late],a(g["tamsd"]["point"])[late]/1e6))
+for ax in axs: style(ax,logy=True);ax.set_xlim(10,4e4)
+ax=axs[0];ax.set_ylim(1e-3,2e5)
+ax.set_ylabel(r"MSD (km$^2$)");ax.legend(frameon=False,loc="upper left")
+ax.set_title("MSD over all available flights")
+# Outline the MSD points from 10^4 s onward, never covering them: build the ellipse in a
+# frame where one unit is the same length on both axes, then map it back to axes units.
+fig.canvas.draw()
+bbox=ax.get_window_extent();aspect=np.array([bbox.width,bbox.height])/bbox.width
+pts=(ax.transScale+ax.transLimits).transform(np.array(tail))*aspect
+centre=(pts.min(0)+pts.max(0))/2
+d=pts[np.argmax(pts[:,0])]-pts[np.argmin(pts[:,0])];d/=np.hypot(*d)
+u,v=(pts-centre)@d,(pts-centre)@np.array([-d[1],d[0]])
+b=np.abs(v).max()+.05;semi_a=1.05*np.max(np.abs(u)/np.sqrt(1-(v/b)**2))+.03
+theta=np.linspace(0,2*np.pi,200)
+ring=centre+np.outer(semi_a*np.cos(theta),d)+np.outer(b*np.sin(theta),[-d[1],d[0]])
+ax.add_patch(matplotlib.patches.Polygon(ring/aspect,closed=True,fill=False,ec="#4A6079",lw=1.3,
+             transform=ax.transAxes,clip_on=False,zorder=5))
+lowest=ring[np.argmin(ring[:,1])]/aspect
+ax.annotate("From ~6×10³ s the flight\nset shrinks: the MSD mixes\ndynamics and selection",
+            xy=lowest,xycoords="axes fraction",xytext=(.97,.04),textcoords="axes fraction",
+            ha="right",va="bottom",fontsize=12.5,color="#4A6079",linespacing=1.25,
+            arrowprops=dict(arrowstyle="-|>",color="#4A6079",lw=1.1,shrinkA=3,shrinkB=1))
+axs[1].axhline(.1,color="#999999",ls=":",lw=1)
+axs[1].text(12,.075,"10× fewer flights than at 10 s",fontsize=10,color="#666666",va="top")
+axs[1].yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v,_:f"{100*v:g}%"))
+axs[1].set_ylim(8e-5,1.8);axs[1].set_ylabel("Share of the flights at 10 s")
+axs[1].set_title("Contributing flights")
+save(fig,"available")
+
 # Full C_10000 from 10 s onward; increasing cadence-limited support below 10 s.
 fig,axs=plt.subplots(1,2,figsize=(11.8,4.1),layout="constrained")
 for ax in axs:
@@ -88,6 +134,11 @@ for slug,color,label in [("para",BLUE,"Paragliders"),("hang",RUST,"Hang gliders"
         # Explicit integer-second evaluations in the cadence-limited range.
         short=x<=10
         ax.plot(x[short],p[short],"o",color=color,ms=2.8,mfc="white")
+    # Horizontal band from the local minimum near 10 s to the local maximum near 40-50 s.
+    h_loc=a(d["local_h"]["point"])
+    h_min=h_loc[(x>=8)&(x<=15)].min();h_max=h_loc[(x>=30)&(x<=60)].max()
+    axs[1].axhspan(h_min,h_max,color=color,alpha=.2,lw=0,zorder=-2)
+    for h_edge in (h_min,h_max): axs[1].axhline(h_edge,color=color,lw=.8,ls="--",zorder=-1)
 axs[0].set_ylabel(r"MSD (km$^2$)");style(axs[0]);axs[0].set_xlim(1,10000);axs[0].legend(frameon=False)
 axs[0].set_title("MSD; H fitted over 10–10,000 s")
 style(axs[1],logy=False);axs[1].set_ylabel(r"Local growth exponent $H_{\rm loc}$")
@@ -144,7 +195,7 @@ save(fig,"regions")
 fig,ax=plt.subplots(figsize=(7.4,4.2),layout="constrained")
 for key,color in [("open",BLUE),("closed",WINE)]:
     curve(ax,key,color,group_label(key,key.capitalize()))
-ax.legend(frameon=False,loc="upper left");save(fig,"circuit")
+ax.legend(frameon=False,loc="upper left",fontsize=16,handlelength=1.6,labelspacing=.7);save(fig,"circuit")
 
 # Interaction: display the fitted exponents with their archived intervals.
 fig,axs=plt.subplots(1,2,figsize=(11.8,3.95),layout="constrained",sharey=True)
@@ -211,7 +262,7 @@ if previous_manifest.exists():
     for item in json.loads(previous_manifest.read_text())["inputs"]:
         if item["path"] not in inputs:
             inputs.append(item["path"])
-manifest={"scope":"Thesis Chapters 1–2 and Sections 3.1–3.2; thermal-plane topography; research agenda with a stochastic-flight schematic, sources and conclusions; factorial, directional-memory and bootstrap appendices (28 slides).", "operation":"Redraw saved estimates and intervals. Slide 9 extends C_10000 below 10 s with cadence-limited support, and densely evaluates the original estimator above 10 s. Original bootstrap draws and 10–10000 s fits are preserved; see cadence-support-report.json. Circuit weights use the full altitude-class MSD denominator and observed curves only. Every plotted category reports its flight count; thermal-map counts use distinct flights from verified crossing CSVs.", "inputs":[]}
+manifest={"scope":"Thesis Chapters 1–2 and Sections 3.1–3.2; thermal-plane topography; research agenda with a stochastic-flight schematic, sources and conclusions; factorial, directional-memory and bootstrap appendices (30 slides).", "operation":"Redraw saved estimates and intervals. Slide 9 shows the available-population TA-MSD and its shrinking flight support. Slide 11 extends C_10000 below 10 s with cadence-limited support, and densely evaluates the original estimator above 10 s. Original bootstrap draws and 10–10000 s fits are preserved; see cadence-support-report.json. Circuit weights use the full altitude-class MSD denominator and observed curves only. Every plotted category reports its flight count; thermal-map counts use distinct flights from verified crossing CSVs.", "inputs":[]}
 for rel in inputs:
     p=ROOT/rel;manifest["inputs"].append({"path":rel,"sha256":hashlib.sha256(p.read_bytes()).hexdigest()})
 (OUT.parent/"source-manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")

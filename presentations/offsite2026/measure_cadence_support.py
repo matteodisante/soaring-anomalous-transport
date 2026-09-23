@@ -1,4 +1,4 @@
-"""Slide 9: C_10000, cadence-limited support below 10 s and fixed support above.
+"""Slide 11: C_10000, cadence-limited support below 10 s and fixed support above.
 
 All SSD inputs are read-only. Short lags admit segments when native dt <= tau;
 endpoints between native fixes are linearly interpolated within the selected span.

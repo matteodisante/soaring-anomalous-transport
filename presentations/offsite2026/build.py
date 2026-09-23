@@ -1,9 +1,14 @@
-"""Compile the twenty-eight-slide offsite deck and the companion speaker-notes PDF."""
+"""Compile the offsite deck and the companion speaker-notes PDF."""
 from pathlib import Path
 import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parent
+# This deck has one PDF page per explicit frame, including in the notes version.
+expected_pages = sum(
+    line.lstrip().startswith(r"\begin{frame}")
+    for line in (ROOT / "offsite-2026.tex").read_text().splitlines()
+)
 for notes in (False, True):
     stem = "offsite-2026" + ("-notes" if notes else "")
     build = ROOT / "build" / stem
@@ -21,5 +26,5 @@ for notes in (False, True):
     shutil.copy2(build / (stem + ".pdf"), ROOT / (stem + ".pdf"))
     info = subprocess.check_output(["pdfinfo", str(ROOT / (stem + ".pdf"))], text=True)
     pages = int(next(line.split(":")[1] for line in info.splitlines() if line.startswith("Pages:")))
-    assert pages == 28, (stem, pages)
+    assert pages == expected_pages, (stem, pages, expected_pages)
     print(f"Built {stem}.pdf ({pages} pages)")

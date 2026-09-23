@@ -3,6 +3,21 @@
 \input{../theme.tex}
 \usepackage{xfp}
 \definecolor{climbgreen}{HTML}{00843D}
+\definecolor{curveblue}{HTML}{3477A8}
+\definecolor{curverust}{HTML}{B5482A}
+% Okabe--Ito hues: the three bootstrap groups must stay distinct at a glance.
+\definecolor{bootA}{HTML}{0072B2}
+\definecolor{bootB}{HTML}{009E73}
+\definecolor{bootC}{HTML}{E69F00}
+\definecolor{offsiteblue}{HTML}{226BA5}
+\definecolor{offsiteink}{HTML}{123B63}
+\definecolor{offsitelight}{HTML}{B8DEFA}
+% Region-box outlines of prelim_map.pdf (BOX_COLORS in generate_prelim_figure.py).
+\definecolor{boxAlps}{HTML}{8E3B5C}
+\definecolor{boxPyrenees}{HTML}{8A6240}
+\definecolor{boxMassif}{HTML}{6FA58C}
+\definecolor{boxChannel}{HTML}{2E7D8A}
+\definecolor{boxChampagne}{HTML}{817268}
 \input{../../thesis/generated/stats.tex}
 \input{../../thesis/generated/pipeline_census.tex}
 \input{../../thesis/generated/prelim.tex}
@@ -17,6 +32,7 @@
 \setbeamerfont{note page}{size=\small}
 \newcommand{\txt}[5][]{\node[anchor=north west,inner sep=0pt,text width=#4mm,align=left,font=\fontsize{10}{12}\selectfont,#1] at (#2,#3) {#5};}
 \newcommand{\smalltxt}[5][]{\txt[font=\fontsize{8}{10}\selectfont,#1]{#2}{#3}{#4}{#5}}
+\newcommand{\stepitem}[2]{\noindent\makebox[4mm][l]{\textcolor{pisablue}{\bfseries #1}}\parbox[t]{\dimexpr\linewidth-4mm}{\raggedright #2}\par}
 \newcommand{\figureat}[4]{\node[anchor=north west,inner sep=0pt]at(#1,#2){\includegraphics[width=#3mm,height=55mm,keepaspectratio]{assets/#4.pdf}};}
 \newcommand{\bottomline}[1]{\fill[pisablight!33](7,74.7)rectangle(153,83);\txt[text=pisablue,font=\bfseries\boldmath\fontsize{10}{12}\selectfont]{10}{76.5}{140}{#1}}
 % Reserve the right-hand footer for the Lab mark, including on appendix slides.
@@ -36,8 +52,13 @@
  \node[anchor=east,inner sep=0pt,text=white,font=\fontsize{8}{9}\selectfont]at(155,6.6){\insertframenumber};
 }
 \newcommand{\notetext}[1]{\note{#1}}
+% Typeset the offsite title in tall, condensed blue lettering inspired by the
+% supplied visual reference. The words remain text rather than a pasted image.
+\newcommand{\offsitetitle}[2]{\shortstack[c]{%
+ {\fontfamily{phv}\fontseries{bc}\fontsize{27}{27}\selectfont\color{#1}\textls[100]{OFFSITE}}\\[-1mm]
+ {\fontfamily{phv}\fontseries{bc}\fontsize{32}{32}\selectfont\color{#2}\textls[100]{2026}}}}
 \newcommand{\finishslide}{%
- \node[anchor=east,inner sep=0pt]at(153,86.5){\includegraphics[width=23mm]{assets/logos/EconophysicsLab_logo.png}};
+ \node[anchor=east,inner sep=0pt]at(159,86.5){\includegraphics[width=23mm]{assets/logos/EconophysicsLab_logo.png}};
  \end{tikzpicture}}
 % Heights and counts are exported together by render_thermal_panels.py.
 \newcommand{\thermalpanel}[4]{%
@@ -50,15 +71,14 @@
 \begin{frame}[plain]\frametitle{The statistics of soaring flight}
 \begin{tikzpicture}[remember picture,overlay,shift={(current page.north west)},x=1mm,y=-1mm]
  \fill[pisablue](0,0)rectangle(160,90);
- \fill[white](0,73)rectangle(160,90);
- \txt[text=white,font=\fontsize{26}{30}\selectfont\bfseries]{11}{17}{140}{The statistics of\\soaring flight}
- \txt[text=white,font=\fontsize{14}{18}\selectfont]{11}{43}{75}{Displacement scaling across\\terrain, circuit types\\and wing classes}
+ \fill[white](61,73)rectangle(160,90);
+ \txt[text=white,font=\fontsize{26}{30}\selectfont\bfseries]{11}{11}{140}{The statistics of\\soaring flight}
+ \txt[text=white,font=\fontsize{14}{18}\selectfont]{11}{37}{75}{Displacement scaling across\\terrain, circuit types\\and wing classes}
  % Lake Maggiore and Isola dei Pescatori; the thermal remains on a mainland slope.
- \node[anchor=north west,inner sep=0pt]at(83,11){\includegraphics[width=75mm]{assets/cover-lago-maggiore-contrast.png}};
- \txt[text=white,font=\fontsize{11}{13}\selectfont]{11}{67}{70}{Matteo Di Sante}
- \txt[text=white,font=\fontsize{10.5}{13}\selectfont,align=right]{81}{67}{68}{EconophysicsLab offsite 2026}
- % Original partner marks on white, sized for comparable visual weight.
- \node[anchor=west,inner sep=0pt]at(11,81.5){\includegraphics[width=48mm]{assets/logos/EconophysicsLab_logo.png}};
+ \node[anchor=north west,inner sep=0pt]at(77,3){\includegraphics[width=82mm]{assets/cover-lago-maggiore-contrast.png}};
+ \txt[text=white,font=\fontsize{11}{13}\selectfont]{11}{65}{92}{Matteo Di Sante {\fontsize{8.5}{10}\selectfont(intern, September 2026 -- February 2027)}}
+ \node[inner sep=0pt]at(130,65.5){\scalebox{.65}{\offsitetitle{offsitelight}{white}}};
+ \node[anchor=west,inner sep=0pt]at(11,81.5){\includegraphics[width=48mm]{assets/logos/econophisics_squares.png}};
  \node[inner sep=0pt]at(82,81.5){\includegraphics[width=25mm]{assets/logos/Capital_Fund_Management_Logo.svg.png}};
  \node[anchor=east,inner sep=0pt]at(149,81.5){\includegraphics[width=37mm]{assets/logos/logo-ILB-wide-BLK.pdf}};
 \end{tikzpicture}
@@ -73,74 +93,98 @@
  \smalltxt[text=muted]{7}{27}{23}{Height}
  \draw[para,line width=1.8pt] (18,40)--(49,54);
  \draw[wine,line width=1.8pt] (49,54) .. controls(52,48)and(62,48)..(65,51) .. controls(69,56)and(60,59)..(57,55) .. controls(54,52)and(69,51)..(81,51);
- \draw[climbgreen,line width=1.8pt,domain=0:1080,samples=150]plot({77+4*cos(\x)},{51-\x/58+1.3*sin(\x)});
- \draw[para,line width=1.8pt] (81,32.4)--(143,51);
- \txt[text=para,font=\bfseries\fontsize{10}{12}\selectfont]{21}{32}{31}{Glide}
- \txt[text=wine,font=\bfseries\fontsize{10}{12}\selectfont]{49}{41}{24}{Search}
- \txt[text=climbgreen,font=\bfseries\fontsize{10}{12}\selectfont]{84}{31}{31}{Climb in lift}
- \smalltxt[text=muted]{8}{66}{140}{Wind, terrain and route choice act throughout the flight. \hfill Schematic}
+ \draw[climbgreen,line width=1.8pt,domain=0:1080,samples=150]plot({77+5*\x/1080+4*cos(\x)},{51-\x/58+1.3*sin(\x)});
+ \draw[para,line width=1.8pt] (86,32.4)--(143,51);
+ % Stylised paraglider on the first transition leg; the pilot sits on the path.
+ \begin{scope}[shift={(31,45.9)}]
+  \fill[para,draw=white,line width=.4pt](-6.2,-6.4)..controls(-4,-9.6)and(4,-9.6)..(6.2,-6.4)..controls(4,-8.2)and(-4,-8.2)..cycle;
+  \draw[para,line width=.3pt](-5.8,-6.6)--(0,-1.3)--(5.8,-6.6)(-3.2,-7.8)--(0,-1.3)--(3.2,-7.8)(0,-8.1)--(0,-1.3);
+  \fill[para,draw=white,line width=.4pt](0,-.4)ellipse(.75 and .95);
+  \fill[para,draw=white,line width=.4pt](0,-1.75)circle(.5);
+ \end{scope}
+ \txt[text=para,font=\bfseries\fontsize{10}{12}\selectfont]{21}{32}{31}{Transition}
+ \txt[text=wine,font=\bfseries\fontsize{10}{12}\selectfont]{49}{41}{27}{Glide search}
+ \txt[text=climbgreen,font=\bfseries\fontsize{10}{12}\selectfont]{84}{26}{31}{Climb}
+ \smalltxt[text=muted]{8}{66}{140}{Wind, terrain and route choice act throughout the flight.}
  \bottomline{Which statistical laws emerge from this sequence of behaviours?}
- \credit{Thesis \S1.1--1.3}
 \notetext{A flight is sustained by an energy budget: the pilot trades altitude for horizontal distance, searches for rising air, and recovers altitude in lift. These are useful behavioural descriptions, not phase labels supplied by the recorder or results of a segmentation shown here. Ground motion includes both air-relative motion and wind. The challenge is to explain whole-flight transport while respecting these physical constraints. The present measurements are the first layer of that programme. An MSD exponent alone cannot distinguish all the candidate mechanisms: persistent motion, changes of behaviour and heterogeneous conditions can produce similar second moments. The schematic is illustrative and its horizontal axis has no numerical scale. Source: thesis introduction, Sections 1.1--1.3.}
 \finishslide\end{frame}
 
 \begin{frame}[plain]\frametitle{A large archive of free flight}\startslide{A large archive of free flight}
- \node[anchor=north west,inner sep=0pt]at(6,15){\includegraphics[width=72mm,trim=35bp 176bp 4bp 0bp,clip]{../../thesis/generated/prelim_map.pdf}};
- \txt[text=pisablue,font=\fontsize{12}{14}\selectfont\bfseries]{90}{17}{63}{FFVL distance competition}
- \txt[text=para,font=\fontsize{20}{23}\selectfont\bfseries]{90}{29}{63}{\num{\StatParaDownloaded}}
- \smalltxt[]{90}{38}{63}{Paraglider tracklogs\\1999--2000 to 2025--2026}
- \txt[text=hang,font=\fontsize{20}{23}\selectfont\bfseries]{90}{51}{63}{\num{\StatHangDownloaded}}
- \smalltxt[]{90}{60}{63}{Hang-glider tracklogs\\2001--2002 to 2025--2026}
+ \node[anchor=north west,inner sep=0pt]at(1,15){\includegraphics[width=72mm,trim=35bp 176bp 4bp 0bp,clip]{../../thesis/generated/prelim_map.pdf}};
+ \txt[text=pisablue,font=\fontsize{12}{14}\selectfont\bfseries]{84}{17}{69}{FFVL distance competition}
+ \txt[text=para,font=\fontsize{20}{23}\selectfont\bfseries]{84}{29}{36}{\num{\StatParaDownloaded}}
+ \smalltxt[]{84}{38}{36}{Paraglider tracklogs\\1999--2000 to 2025--2026}
+ \txt[text=hang,font=\fontsize{20}{23}\selectfont\bfseries]{84}{51}{36}{\num{\StatHangDownloaded}}
+ \smalltxt[]{84}{60}{36}{Hang-glider tracklogs\\2001--2002 to 2025--2026}
+ % Legend for the map's region boxes, north to south, in the outline colours.
+ \smalltxt[text=pisablue,font=\bfseries\fontsize{8.5}{10}\selectfont]{120}{30}{33}{Regional boxes}
+ \foreach \y/\c/\name in {35.5/boxChannel/Channel Coast,40/boxChampagne/Champagne-Lorraine,44.5/boxMassif/Massif Central,49/boxAlps/Alps,53.5/boxPyrenees/Pyrenees}{
+  \draw[\c,line width=1pt,dash pattern=on 1.2pt off .8pt](120,\y+.5)rectangle(123,\y+2.7);
+  \smalltxt[text=\c,font=\bfseries\fontsize{8}{10}\selectfont]{124.5}{\y}{30}{\name}
+ }
  \bottomline{IGC trajectories + metadata: time, position, altitude, site, circuit and wing class}
- \credit{France map: \num{\StatPrelimParaMetroFlights} paraglider and \num{\StatPrelimHangMetroFlights} hang-glider flights. Colour: flights per 0.15$^\circ$ cell (log scale). Thesis Ch. 2.}
-\notetext{The source is the FFVL Coupe F\'ed\'erale de Distance, with separate archives for paragliders and hang gliders. The verified downloads contain 186,052 and 6,716 tracklogs. Season names refer to their starting year. The IGC files supply time-stamped coordinates and altitude channels, while the catalogue supplies flight date, declared take-off site, route class and wing class. The map shows the retained population, not the raw downloads; both disciplines are pooled. About 94.8 percent of retained flights are in metropolitan France, with a strong Alpine concentration. Additional flights occur in La R\'eunion and elsewhere. This is a submitted cross-country archive with uneven geographic coverage, not a random sample of all free flight. Sources: thesis Chapter 2; generated/stats.tex, pipeline\_census.tex and prelim\_map.pdf.}
+ \credit{France map: \num{\StatPrelimParaMetroFlights} paraglider and \num{\StatPrelimHangMetroFlights} hang-glider flights. Colour: flights per 0.15$^\circ$ cell.}
+\notetext{The source is the FFVL Coupe F\'ed\'erale de Distance, with separate archives for paragliders and hang gliders. The verified downloads contain 186,052 and 6,716 tracklogs. Season names refer to their starting year. The IGC files supply time-stamped coordinates and altitude channels, while the catalogue supplies flight date, declared take-off site, route class and wing class. The map shows the retained population, not the raw downloads; both disciplines are pooled. About 94.8 percent of retained flights are in metropolitan France, with a strong Alpine concentration. The coloured boxes are the longitude--latitude windows used for regional comparisons, listed on the right in the same colours: Channel Coast, Champagne-Lorraine, Massif Central, Alps and Pyrenees. Additional flights occur in La R\'eunion and elsewhere. This is a submitted cross-country archive with uneven geographic coverage, not a random sample of all free flight. Sources: thesis Chapter 2; generated/stats.tex, pipeline\_census.tex and prelim\_map.pdf.}
 \finishslide\end{frame}
 
 \begin{frame}[plain]\frametitle{Preprocessing: clean the recorded flight}\startslide{Preprocessing: clean the recorded flight}
  \foreach \x/\n/\head in {8/1/GNSS altitude,85/2/Fix-level cleaning}{
-  \fill[pisablight!38](\x,20)circle(2.8);
-  \node[text=pisablue,font=\bfseries\small]at(\x,20){\n};
-  \txt[text=pisablue,font=\bfseries\fontsize{9.5}{11.5}\selectfont]{\x+5}{17.5}{65}{\head}
+  \fill[pisablight!38](\x,18)circle(2.8);
+  \node[text=pisablue,font=\bfseries\small]at(\x,18){\n};
+  \txt[text=pisablue,font=\bfseries\fontsize{9.5}{11.5}\selectfont]{\x+5}{15.5}{65}{\head}
  }
- % The two recorded altitude channels have separate roles.
- \smalltxt[text=para,font=\fontsize{9}{11}\selectfont]{8}{27}{25}{GNSS height}
- \draw[->,para,line width=1pt](34,29)--(44,29);
- \smalltxt[text=para,font=\fontsize{9}{11}\selectfont]{47}{27}{31}{Trajectory $z(t)$}
- \smalltxt[text=teal,font=\fontsize{9}{11}\selectfont]{8}{35}{25}{Barometer}
- \draw[->,teal,line width=1pt](34,37)--(44,37);
- \smalltxt[text=teal,font=\fontsize{9}{11}\selectfont]{47}{35}{31}{Cleaning checks}
- \smalltxt[text=pisablue,font=\fontsize{7.5}{9}\selectfont]{8}{43}{69}{GNSS needs no pressure or temperature calibration.}
- \smalltxt[font=\fontsize{8}{10}\selectfont]{85}{25.5}{69}{One fix: time, position and altitude.\\Remove a faulty fix only when the\\remaining fixes can be physically rejoined.}
- % A numerical example makes the physical gate and rejoin explicit.
- \draw[hang!60,line width=.8pt](88,46)--(106,38)--(125,46);
- \draw[para,dashed,line width=1pt](88,46)--(125,46);
- \fill[para](88,46)circle(.8);\fill[para](125,46)circle(.8);
- \draw[hang,line width=1.1pt](105,37)--(107,39) (105,39)--(107,37);
- \smalltxt[text=hang,font=\fontsize{6.5}{8}\selectfont]{109}{36.5}{40}{B: 800 m at 1 s}
- \smalltxt[text=para,font=\fontsize{6.5}{8}\selectfont]{85}{47.2}{37}{A: 0 m at 0 s}
- \smalltxt[text=para,font=\fontsize{6.5}{8}\selectfont]{124}{47.2}{30}{C: 10 m at 2 s}
- \smalltxt[text=hang,font=\fontsize{7}{8.5}\selectfont]{129}{40}{26}{A$\to$B: 800 m/s}
- \smalltxt[text=para,fill=white,font=\fontsize{7}{8.5}\selectfont]{96}{42.5}{30}{A$\to$C: 5 m/s}
+ % The two recorded altitude channels have separate roles; the boxed one is the output.
+ \draw[para,line width=.8pt,fill=pisablight!25,rounded corners=1.5mm](6,23)rectangle(80,30.2);
+ \smalltxt[text=para,font=\bfseries\fontsize{9}{11}\selectfont]{8}{24.8}{25}{GNSS height}
+ \draw[->,para,line width=1pt](34,26.8)--(44,26.8);
+ \smalltxt[text=para,font=\bfseries\fontsize{9}{11}\selectfont]{47}{24.8}{31}{Trajectory $z(t)$}
+ \smalltxt[text=teal,font=\fontsize{9}{11}\selectfont]{8}{33}{25}{Barometer}
+ \draw[->,teal,line width=1pt](34,35)--(44,35);
+ \smalltxt[text=teal,font=\fontsize{9}{11}\selectfont]{47}{33}{31}{Cleaning checks}
+ \smalltxt[text=pisablue,font=\fontsize{7.5}{9}\selectfont]{8}{40.5}{70}{GNSS: absolute height without weather drift.\\Same high-frequency noise as the barometer.}
+ \smalltxt[font=\fontsize{8}{10}\selectfont]{85}{23.5}{69}{One fix $=(t,\varphi,\lambda,z)$: time, latitude, longitude, height\\Delete an unreachable fix only if the track\\rejoins without it; otherwise split the flight.}
+ % Two schematics: an isolated jump is deleted, a lasting one is cut.
+ \draw[hang!60,line width=1pt](88,44.5)--(101,37)--(114,44.5);
+ \draw[para,dashed,line width=1.2pt](88,44.5)--(114,44.5);
+ \fill[para](88,44.5)circle(1);\fill[para](114,44.5)circle(1);
+ \draw[hang,line width=1.3pt](99.8,35.8)--(102.2,38.2) (99.8,38.2)--(102.2,35.8);
+ \smalltxt[text=para,font=\fontsize{7.5}{9}\selectfont]{85}{45.2}{5}{A}
+ \smalltxt[text=hang,font=\fontsize{7.5}{9}\selectfont]{103.2}{34.8}{5}{B}
+ \smalltxt[text=para,font=\fontsize{7.5}{9}\selectfont]{115.3}{45.2}{5}{C}
+ \smalltxt[text=hang,font=\fontsize{7.5}{9}\selectfont]{108.5}{36.2}{14}{800 m/s}
+ \smalltxt[text=para,fill=white,font=\fontsize{7.5}{9}\selectfont]{96.8}{42.7}{9}{5 m/s}
+ \draw[para,line width=.8pt](123,44.5)--(134,44.5) (139,37.5)--(153,37.5);
+ \foreach \x in {123,125.2,...,134}{\fill[para](\x,44.5)circle(.7);}
+ \foreach \x in {139,141.33,...,153}{\fill[para](\x,37.5)circle(.7);}
+ \draw[pisablue,dashed,line width=.8pt](136.5,35)--(136.5,46);
+ \node[text=pisablue,font=\bfseries\fontsize{7.5}{9}\selectfont]at(128.5,41.8){1};
+ \node[text=pisablue,font=\bfseries\fontsize{7.5}{9}\selectfont]at(146,35){2};
+ \smalltxt[align=center,text=pisablue,font=\fontsize{7.5}{9}\selectfont]{85}{47.3}{33}{Rejoins: delete B}
+ \smalltxt[align=center,text=pisablue,font=\fontsize{7.5}{9}\selectfont]{119}{47.3}{37}{No rejoin within 20 s: split}
  % A full-width timeline separates the four events and the three ground phases.
- \fill[pisablight!38](8,53)circle(2.8);
- \node[text=pisablue,font=\bfseries\small]at(8,53){3};
- \txt[text=pisablue,font=\bfseries\fontsize{9.5}{11.5}\selectfont]{13}{50.5}{65}{Airborne interval}
- \fill[para](93,53)circle(.65);
- \smalltxt[text=para,font=\fontsize{7}{9}\selectfont]{95}{51.5}{26}{Retained flight}
- \fill[muted!20](123,52)rectangle(125,54);
- \smalltxt[text=muted,font=\fontsize{7}{9}\selectfont]{127}{51.5}{26}{Ground removed}
- \foreach \a/\b in {10/27,70/94,137/151}{\fill[muted!12](\a,62)rectangle(\b,72.5);}
- \draw[muted!45,line width=1pt](10,71)--(27,71) (70,71)--(94,71) (137,71)--(151,71);
- \draw[para,line width=1.4pt](27,71)--(38,64)--(48,63)--(59,65)--(70,71);
- \draw[para,line width=1.4pt](94,71)--(105,64)--(116,63.5)--(125,66)--(137,71);
- \foreach \x in {27,70,94,137}{\draw[pisablue!65,dashed,line width=.5pt](\x,61.5)--(\x,72.5);\fill[para](\x,71)circle(.6);}
- \smalltxt[align=center,font=\fontsize{7.5}{9}\selectfont]{16}{57}{22}{Take-off}
- \smalltxt[align=center,font=\fontsize{7.5}{9}\selectfont]{57}{55.8}{26}{Intermediate\\landing}
- \smalltxt[align=center,font=\fontsize{7.5}{9}\selectfont]{84}{57}{22}{Relaunch}
- \smalltxt[align=center,font=\fontsize{7.5}{9}\selectfont]{125}{55.8}{25}{Final\\landing}
- \bottomline{Trim before take-off and after landing; excise witnessed stops and split the flight}
- \credit{Thesis \S2.7--2.8. Schematics. Fix positions: horizontal metres. Stops require low speed and supporting barometry.}
-\notetext{GNSS supplies one altitude channel throughout, with an absolute-height reference that needs no pressure or temperature calibration. In supported paired records, high-frequency median spectra are comparable to barometry. This does not establish uniformly better absolute accuracy; logged vertical datums remain unaudited. Barometry corroborates cleaning decisions without replacing the output altitude.\par\medskip A fix records time, position and altitude at one instant. In the example, A is at 0 m at 0 s, B at 800 m at 1 s, and C at 10 m at 2 s. Reaching B from A requires an impossible 800 m/s. Removing B leaves 10 m in 2 s: 5 m/s. Deletion therefore passes both the impossibility and rejoin tests. The dashed chord tests reachability; it is not interpolation. The pipeline handles contiguous blocks similarly. Without a timely reachable rejoin, it splits instead of deleting. A Hampel flag alone never deletes a fix; timestamp, frozen-lock and altitude defects have separate rules.\par\medskip The timeline distinguishes take-off, intermediate landing, relaunch and final landing. Grey ground phases are removed; blue pieces remain segments of one parent flight. Outer boundaries use sustained speed. Interior stops also require eligible barometry supporting stable altitude: slow motion alone is insufficient. An excised stop becomes a boundary that later processing never bridges. Sources: thesis Sections 2.7--2.8 and cleaning ADRs.}
+ \begin{scope}[yshift=-3mm]
+ \fill[pisablight!38](8,54)circle(2.8);
+ \node[text=pisablue,font=\bfseries\small]at(8,54){3};
+ \txt[text=pisablue,font=\bfseries\fontsize{9.5}{11.5}\selectfont]{13}{51.5}{65}{Airborne interval}
+ \fill[para](93,54)circle(.65);
+ \smalltxt[text=para,font=\fontsize{7}{9}\selectfont]{95}{52.5}{26}{Retained flight}
+ \fill[muted!20](123,53)rectangle(125,55);
+ \smalltxt[text=muted,font=\fontsize{7}{9}\selectfont]{127}{52.5}{26}{Ground removed}
+ \foreach \a/\b in {10/27,70/94,137/151}{\fill[muted!12](\a,64)rectangle(\b,74.5);}
+ \draw[muted!45,line width=1pt](10,73)--(27,73) (70,73)--(94,73) (137,73)--(151,73);
+ \draw[para,line width=1.4pt](27,73)--(38,66)--(48,65)--(59,67)--(70,73);
+ \draw[para,line width=1.4pt](94,73)--(105,66)--(116,65.5)--(125,68)--(137,73);
+ \foreach \x in {27,70,94,137}{\draw[pisablue!65,dashed,line width=.5pt](\x,63.5)--(\x,74.5);\fill[para](\x,73)circle(.6);}
+ \smalltxt[align=center,font=\fontsize{7.5}{9}\selectfont]{16}{59}{22}{Take-off}
+ \smalltxt[align=center,font=\fontsize{7.5}{9}\selectfont]{57}{57.8}{26}{Intermediate\\landing}
+ \smalltxt[align=center,font=\fontsize{7.5}{9}\selectfont]{84}{59}{22}{Relaunch}
+ \smalltxt[align=center,font=\fontsize{7.5}{9}\selectfont]{125}{57.8}{25}{Final\\landing}
+ \smalltxt[align=center,text=para,font=\bfseries\fontsize{7}{9}\selectfont]{38}{61.3}{21}{Segment 1}
+ \smalltxt[align=center,text=para,font=\bfseries\fontsize{7}{9}\selectfont]{105}{61.3}{21}{Segment 2}
+ \smalltxt[font=\fontsize{8}{10}\selectfont]{10}{77}{140}{Trim before take-off and after landing.\\ Stops are not recorded: we infer them from position and altitude.}
+ \end{scope}
+\notetext{GNSS height is the chosen output channel, used throughout. Its absolute reference needs no pressure or temperature calibration, whereas pressure altitude shifts with the weather. In supported paired records, high-frequency median spectra are comparable to barometry. This does not make GNSS uniformly more accurate: logged vertical datums (ellipsoid or geoid) remain unaudited. Barometry corroborates cleaning decisions without replacing the output altitude.\par\medskip A fix records time, position and altitude at one instant. The rule is conservative: a fix is deleted only when the flight without it is physically consistent. In the left example, A is at 0 m at 0 s, B at 800 m at 1 s, and C at 10 m at 2 s. Reaching B from A requires an impossible 800 m/s. Removing B leaves 10 m in 2 s: 5 m/s. Deletion therefore passes both the impossibility and rejoin tests. The dashed chord tests reachability; it is not interpolation. Contiguous blocks are handled the same way. In the right example the track jumps and stays displaced: no later fix is reachable from the last accepted one within 20 seconds, the Hampel half-window. Unlike the single spike on the left, the displacement persists past the window, so it cannot be an isolated error. The pipeline then keeps both branches, segments 1 and 2, and splits the flight at the jump without deleting any fix, because it cannot tell which branch holds the true positions. A Hampel flag alone never deletes a fix; timestamp, frozen-lock and altitude defects have separate rules.\par\medskip The timeline distinguishes take-off, intermediate landing, relaunch and final landing. Grey ground phases are removed; the blue pieces, segments 1 and 2, remain segments of one parent flight. Outer boundaries use sustained speed. No log marks a landing: stops are inferred from the time series of position and altitude. Interior stops also require eligible barometry supporting stable altitude: slow motion alone is insufficient. An excised stop becomes a boundary that later processing never bridges. Sources: thesis Sections 2.7--2.8 and cleaning ADRs.}
 \finishslide\end{frame}
 
 \begin{frame}[plain]\frametitle{Preprocessing: selection and local coordinates}\startslide{Preprocessing: selection and local coordinates}
@@ -150,8 +194,7 @@
   \txt[text=pisablue,font=\bfseries\fontsize{9.5}{11.5}\selectfont]{\x+5}{17.5}{60}{\head}
  }
  \smalltxt[]{8}{27}{43}{Minimum flight thresholds}
- \smalltxt[text=para,font=\fontsize{6.5}{8}\selectfont]{8}{31.5}{44}{Blue: passes this check}
- \smalltxt[]{58}{26}{95}{Latitude, longitude, height $\longrightarrow$ Earth-centred position\\$\longrightarrow$ local east--north distances in metres}
+ \txt[]{58}{25.5}{95}{Latitude, longitude, height $\longrightarrow$ Earth-centred position\\$\longrightarrow$ local east--north distances in metres}
  % Each full bar is the population reaching that sequential check, pooled
  % across disciplines. The cutoff separates observed failures from passes.
  % Derive the fractions directly from the same census as the retention counts.
@@ -175,14 +218,13 @@
   \draw[pisablight,line width=2pt](8,\y)--(48,\y);
   \draw[para,line width=2pt](\cutx,\y)--(48,\y);
   \draw[hang,line width=.9pt](\cutx,\y-1.7)--(\cutx,\y+1.7);
-  \smalltxt[text=muted,font=\fontsize{6.5}{8}\selectfont]{8}{\y+2}{44}{\fpeval{round(100*\drop/\entry,2)}\% excluded ($N=\num{\entry}$)}
+  \smalltxt[text=muted,font=\fontsize{7.5}{9}\selectfont]{8}{\y+2}{44}{\fpeval{round(100*\drop/\entry,2)}\% excluded ($N=\num{\entry}$)}
  }
- \smalltxt[text=muted,font=\fontsize{7}{8.5}\selectfont]{8}{70}{44}{Plus integrity and reach checks}
  % Global ellipsoid geometry is adapted directly from the thesis figure.
- \node[anchor=north west,inner sep=0pt]at(56,34){\resizebox{38mm}{!}{\input{preprocessing-global-frame.tex}}};
- \draw[->,pisablue,line width=.9pt](102,50)--(109,50);
+ \node[anchor=north west,inner sep=0pt]at(55,33){\resizebox{48mm}{!}{\input{preprocessing-global-frame.tex}}};
+ \draw[->,pisablue,line width=.9pt](105,53)--(111,53);
  % Close-up: the space diagonal projects onto the fixed tangent plane.
- \begin{scope}[shift={(113,61)},x=9mm,y=9mm,font=\fontsize{7.5}{9}\selectfont]
+ \begin{scope}[shift={(116,64)},x=9mm,y=9mm,font=\fontsize{7.5}{9}\selectfont]
   \foreach \n in {-.35,0,.45,.9,1.2}{
    \draw[muted!30,line width=.4pt]plot[domain=-.35:3.25,samples=25,variable=\e]
     ({\e+.6*\n},{.65*\n-.07*(\e*\e+\n*\n)});
@@ -204,149 +246,212 @@
   \fill[teal](C)circle(.07);
   \node[text=teal,anchor=south,fill=white,inner sep=1pt]at(1.3,.2){Tangent plane};
  \end{scope}
- \smalltxt[text=pisablue,font=\fontsize{7.5}{9}\selectfont]{58}{68}{95}{$P_0$: first trimmed fix; fixed for the flight.\quad $z=h_{\rm GNSS}$, not $U$.}
- \fill[pisablight!33](7,73.5)rectangle(153,83.5);
- \smalltxt[text=pisablue,font=\fontsize{6.5}{8}\selectfont]{10}{74.2}{140}{Retained after the full pipeline}
- \smalltxt[text=para,font=\fontsize{9.5}{12}\selectfont\bfseries]{10}{78}{70}{\num{\StatPipeParaKept}\ paragliders\quad\StatPipeParaKeptPct\%}
- \smalltxt[text=hang,font=\fontsize{9.5}{12}\selectfont\bfseries]{86}{78}{66}{\num{\StatPipeHangKept}\ hang gliders\quad\StatPipeHangKeptPct\%}
- \credit{Bars: pipeline census, pooled sequential checks. Coordinates: thesis \S2.7, curvature exaggerated. Bottom: retained / downloaded, full pipeline.}
-\notetext{The minima are 40 minutes, 20 kilometres and 600 metres of altitude range. Elapsed span is capped at 16 hours, with additional integrity and reach checks. Each bar pools both disciplines and represents the logs reaching that sequential check. Duration rejects 2,163 of 191,108 (1.13 percent), path rejects 174 of 188,942 (0.09 percent), and altitude range rejects 5,054 of 188,768 (2.68 percent). Three overlong logs leave before the path check. Blue marks the share passing that check. These are cascade rates, rather than independent tests on the raw archive.\par\medskip Latitude, longitude and logged GNSS height give an Earth-centred Earth-fixed position. Subtract the first trimmed fix, P0, then rotate into local east, north and up. The global schematic preserves the ellipsoid normal with exaggerated flattening. The close-up projects a later fix onto the fixed tangent plane. Keep the same origin and orientation for every segment of that flight. P0 is near, but need not coincide with, true take-off.\par\medskip The output vertical coordinate remains logged GNSS height, without subtracting origin height. Rotated Up contains curvature and is not used for vertical dynamics. Bottom counts cover the full pipeline, including resampling and smoothing: 156,406 of 186,052 paraglider logs and 6,094 of 6,716 hang-glider logs. Sources: thesis Sections 2.7--2.8, local ENU figure and pipeline\_census.tex.}
+ \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont]{58}{76.5}{95}{\textbf{Earth model: WGS84 ellipsoid, not a sphere} (GPS reference)\\$P_0$: first trimmed fix; fixed for the flight.\quad $z=h_{\rm GNSS}$, not $U$.}
+\notetext{The minima are 40 minutes, 20 kilometres and 600 metres of altitude range. Elapsed span is capped at 16 hours, with additional integrity and reach checks. Each bar pools both disciplines and represents the logs reaching that sequential check. Duration rejects 2,163 of 191,108 (1.13 percent), path rejects 174 of 188,942 (0.09 percent), and altitude range rejects 5,054 of 188,768 (2.68 percent). Three overlong logs leave before the path check. Blue marks the share passing that check. These are cascade rates, rather than independent tests on the raw archive.\par\medskip Latitude, longitude and logged GNSS height give an Earth-centred Earth-fixed position. The conversion uses the WGS84 ellipsoid rather than a spherical Earth, because GPS positions are expressed in that reference: semi-major axis 6,378,137 m, flattening 1/298.257223563. Subtract the first trimmed fix, P0, then rotate into local east, north and up. The global schematic preserves the ellipsoid normal with exaggerated flattening. The close-up projects a later fix onto the fixed tangent plane. Keep the same origin and orientation for every segment of that flight. P0 is near, but need not coincide with, true take-off.\par\medskip The output vertical coordinate remains logged GNSS height, without subtracting origin height. Rotated Up contains curvature and is not used for vertical dynamics. Final retained counts come after stage 7, on the next slide. Sources: thesis Sections 2.7--2.8, local ENU figure and pipeline\_census.tex.}
 \finishslide\end{frame}
 
-\begin{frame}[plain]\frametitle{Preprocessing: time grid and smoothing}\startslide{Preprocessing: time grid and smoothing}
- \foreach \x/\n/\head in {8/6/Time grid,86/7/Savitzky--Golay fit}{
-  \fill[pisablight!38](\x,20)circle(2.8);
-  \node[text=pisablue,font=\bfseries\small]at(\x,20){\n};
-  \txt[text=pisablue,font=\bfseries\fontsize{9.5}{11.5}\selectfont]{\x+5}{17.5}{66}{\head}
- }
- \smalltxt[]{8}{26}{72}{Keep the flight's native cadence $\Delta t$.\\Bridge only when $g\leq g_{\max}=\min(10\Delta t,20\,\mathrm{s})$.}
- \smalltxt[]{86}{26}{68}{Fit a cubic locally to $E$, $N$, $z$.\\Differentiate the polynomial analytically.}
+\begin{frame}[plain]\frametitle{Preprocessing: uniform time grid}\startslide{Preprocessing: uniform time grid}
+ \fill[pisablight!38](8,18)circle(2.8);
+ \node[text=pisablue,font=\bfseries\small]at(8,18){6};
+ \txt[text=pisablue,font=\bfseries\fontsize{9.5}{11.5}\selectfont]{13}{15.5}{66}{Time grid}
+ \txt[]{8}{23.5}{72}{Put each flight on an exact grid $t_k=t_0+k\Delta t$ at its own native interval $\Delta t$.\\\textbullet\ A fix within $\Delta t/2$ of $t_k$: use it.\\\textbullet\ None that close: reconstruct $t_k$.}
+ \txt[]{84}{23.5}{70}{Reconstruct only a gap $g\leq g_{\max} = \min(10\Delta t,20\,\mathrm{s})$.\\A longer gap splits the flight into segments.}
  % Two separate examples, both with native cadence 5 s and cap 20 s.
- \smalltxt[text=pisablue,font=\fontsize{7.5}{9}\selectfont]{8}{36}{71}{Example: $\Delta t=5$ s, $g_{\max}=20$ s}
- \smalltxt[font=\fontsize{7.5}{9}\selectfont]{8}{43}{17}{Short gap\\15 s: fill}
- \draw[para,line width=1pt](30,47)--(35,47) (50,47)--(60,47);
- \draw[expert,dashed,line width=1.2pt](35,47)--(50,47);
- \foreach \x in {30,35,50,55,60}{\fill[para](\x,47)circle(.8);}
- \foreach \x in {40,45}{\draw[expert,fill=white,line width=1pt](\x,47)circle(1);}
- \draw[<->,expert,line width=.6pt](35,43)--(50,43);
- \smalltxt[text=expert,font=\fontsize{7}{8.5}\selectfont]{63}{44}{16}{Filled +\\flagged}
- \smalltxt[font=\fontsize{7.5}{9}\selectfont]{8}{54}{17}{Long gap\\30 s: split}
+ \begin{scope}[yshift=-2mm]
+ \smalltxt[text=pisablue,font=\bfseries\fontsize{8.5}{10}\selectfont]{34}{40.5}{80}{Example: $\Delta t=5$ s, $g_{\max}=20$ s}
+ \smalltxt[font=\fontsize{8.5}{10}\selectfont]{8}{45.8}{24}{Short gap\\15 s: reconstruct}
+ % Raw fixes carry jitter and never land exactly on t_k; dotted lines show
+ % which grid point each one is snapped to (within Delta t/2).
+ \foreach \x/\o in {34/1.4,43/-1.6,70/1.1,79/-1.4,88/1.5}{
+  \draw[pisablue,line width=.8pt,dash pattern=on 1.4pt off 1.1pt]({\x+\o},46.6)--(\x,48.2);
+  \fill[pisablue]({\x+\o},46)circle(1);
+ }
+ \smalltxt[text=pisablue,font=\fontsize{7}{8.5}\selectfont]{91}{45}{18}{raw fix}
+ \draw[para,line width=1.2pt](34,49)--(43,49) (70,49)--(88,49);
+ \draw[expert,dashed,line width=1.4pt](43,49)--(70,49);
+ \foreach \x in {34,43,70,79,88}{\fill[para](\x,49)circle(1);}
+ \foreach \x in {52,61}{\draw[expert,fill=white,line width=1.1pt](\x,49)circle(1.2);}
+ \foreach \x in {34,43,...,88}{\draw[muted!70,line width=.5pt](\x,51.2)--(\x,52.8);}
+ \smalltxt[text=muted,font=\fontsize{7.5}{9}\selectfont]{91}{50.8}{14}{grid $t_k$}
+ \smalltxt[font=\fontsize{8.5}{10}\selectfont]{8}{57.3}{24}{Long gap\\30 s: split}
  % The empty interval is real: no line, markers or fit joins its two ends.
- \draw[para,line width=1pt](30,58)--(35,58) (65,58)--(75,58);
- \foreach \x in {30,35,65,70,75}{\fill[para](\x,58)circle(.8);}
- \draw[<->,hang,line width=.6pt](35,54)--(65,54);
- \smalltxt[text=hang,align=center,font=\fontsize{7}{8.5}\selectfont]{39}{56.5}{22}{No estimates}
- \smalltxt[text=para,align=center,font=\fontsize{7}{8.5}\selectfont]{25}{61}{16}{Segment A}
- \smalltxt[text=para,align=center,font=\fontsize{7}{8.5}\selectfont]{62}{61}{16}{Segment B}
- \fill[para](9,70)circle(.75);
- \smalltxt[font=\fontsize{7}{8.5}\selectfont]{12}{68.6}{25}{Retained fix}
- \draw[expert,fill=white,line width=1pt](41,70)circle(.95);
- \smalltxt[font=\fontsize{7}{8.5}\selectfont]{44}{68.6}{35}{Reconstructed fix}
+ \draw[para,line width=1.2pt](34,61)--(43,61) (97,61)--(115,61);
+ \foreach \x in {34,43,97,106,115}{\fill[para](\x,61)circle(1);}
+ \draw[<->,hang,line width=.7pt](43,57)--(97,57);
+ \smalltxt[text=hang,align=center,font=\fontsize{8}{9.5}\selectfont]{55}{58.2}{30}{No estimates}
+ \smalltxt[text=para,align=center,font=\fontsize{8}{9.5}\selectfont]{28.5}{63}{20}{Segment A}
+ \smalltxt[text=para,align=center,font=\fontsize{8}{9.5}\selectfont]{96}{63}{20}{Segment B}
+ \fill[pisablue](124,42.6)circle(1);
+ \smalltxt[text=pisablue,font=\fontsize{8}{9.5}\selectfont]{127}{41.2}{29}{Raw fix\\(jittered)}
+ \fill[para](124,49.5)circle(1);
+ \smalltxt[font=\fontsize{8}{9.5}\selectfont]{127}{48.1}{27}{Measured fix}
+ \draw[expert,fill=white,line width=1.1pt](124,56)circle(1.2);
+ \smalltxt[text=expert,font=\fontsize{8}{9.5}\selectfont]{127}{54.6}{27}{Reconstructed,\\flagged}
+ \end{scope}
+ % The segment gate is where most flights are lost.
+ \begin{scope}[yshift=-1.5mm]
+ \draw[hang,line width=.8pt,rounded corners=1.2mm](7,71.5)rectangle(153,82);
+ \smalltxt[font=\fontsize{9.5}{11.5}\selectfont]{10}{72.8}{140}{Keep a segment only if it lasts $\geq90$ s and $\leq10\%$ of its grid is reconstructed.\\\textbf{No segment kept: flight dropped.} \num{\StatPipeParaDropNoSegmentSurvived} paragliders, \num{\StatPipeHangDropNoSegmentSurvived} hang gliders: the largest loss.}
+ \end{scope}
+\notetext{Stage 6 puts each flight on an exact uniform grid, t0 plus k times its native interval (the median recording interval). A grid time with a fix within half a step counts as measured; one without is reconstructed (PCHIP horizontally, linear in altitude) and flagged. Jitter is thus removed while the flight keeps its own cadence. At a 5-second cadence the gap cap is 20 seconds. A 15-second gap has two internal grid fixes, linearly reconstructed and flagged: orange dashes and hollow markers. Blue markers are retained fixes in this aligned example. A 30-second gap leaves separate segments with no estimates between them. Mandatory cleaning boundaries always split. The same cap applies between finite altitudes: long altitude holes split the full trajectory. Reconstructed grid fixes are 0.58 percent for paragliders and 0.30 percent for hang gliders. Each resulting segment must last at least 90 seconds and have at most 10 percent reconstructed grid times; a failing segment is dropped alone. A flight with no surviving segment is dropped: 20,798 paraglider and 193 hang-glider flights, the largest single loss in the pipeline. Retained counts follow on the next slide, after stage 7. Sources: thesis uniform-sampling section; resample.py.}
+\finishslide\end{frame}
+
+\begin{frame}[plain]\frametitle{Preprocessing: smoothing and derivatives}\startslide{Preprocessing: smoothing and derivatives}
+ \fill[pisablight!38](8,20)circle(2.8);
+ \node[text=pisablue,font=\bfseries\small]at(8,20){7};
+ \txt[text=pisablue,font=\bfseries\fontsize{9.5}{11.5}\selectfont]{13}{17.5}{66}{Savitzky--Golay fit}
+ \txt[]{8}{26}{70}{Fit a cubic to $E$, $N$, $z$ in a moving window,\\within each segment.\\[1.5mm]Window: odd, $\geq5$ fixes.\\[1.5mm]Differentiate the polynomial analytically:\\no finite differences.}
+ \smalltxt[text=pisablue,font=\fontsize{11}{13}\selectfont]{8}{56.5}{72}{$\dfrac{\mathrm{d}^n\hat x}{\mathrm{d}t^n}(t_i)=\left.\dfrac{\mathrm{d}^n P_i}{\mathrm{d}u^n}\right|_{u=0},\quad u=t-t_i$}
  % Synthetic least-squares example. Residuals .035*(1,-4,6,-4,1)
  % are orthogonal to every cubic on u=-2,-1,0,1,2, so this is the exact fit.
+ \begin{scope}[shift={(-28.8,-16)},scale=1.2]
  \fill[pisablight!25](99,38)rectangle(141,60);
- \smalltxt[text=pisablue,font=\fontsize{7.5}{9}\selectfont,align=center]{98}{35}{46}{One 5-fix window; then slide it}
+ \smalltxt[text=pisablue,font=\fontsize{8.5}{10}\selectfont,align=center]{98}{35}{46}{One 5-fix window; then slide it}
  \draw[->,muted,line width=.5pt](94,60)--(151,60);
  \draw[->,muted,line width=.5pt](94,60)--(94,40);
- \smalltxt[text=muted,font=\fontsize{7}{8.5}\selectfont]{86}{37}{10}{$E$}
- \smalltxt[text=muted,font=\fontsize{7}{8.5}\selectfont]{149}{60.5}{5}{$t$}
- \draw[expert,line width=1.2pt,domain=-2:2,samples=60,variable=\u]
+ \smalltxt[text=muted,font=\fontsize{8}{9.5}\selectfont]{90.5}{37.5}{5}{$E$}
+ \smalltxt[text=muted,font=\fontsize{8}{9.5}\selectfont]{149}{60.5}{5}{$t$}
+ \draw[expert,line width=1.4pt,domain=-2:2,samples=60,variable=\u]
   plot({120+10*\u},{58-14*(.7+.35*\u-.025*\u*\u-.03*\u*\u*\u)});
  \foreach \u/\v in {-2/.175,-1/.215,0/.91,1/.855,2/1.095}{\fill[muted](120+10*\u,58-14*\v)circle(.8);}
- \draw[pisablue,dashed,line width=.85pt](113,51.63)--(127,44.77);
  \draw[pisablue!55,dotted](120,48.2)--(120,60);
  \fill[para](120,48.2)circle(1);
- \smalltxt[text=para,font=\fontsize{7}{8.5}\selectfont]{99}{62}{28}{Fitted centre value}
- \smalltxt[text=expert,font=\fontsize{7}{8.5}\selectfont]{131}{40}{19}{Cubic fit}
- \smalltxt[text=pisablue,font=\fontsize{10}{12}\selectfont]{86}{66}{70}{$\widehat{x^{(n)}}(t_i)=P_i^{(n)}(0),\quad u=t-t_i$}
- \smalltxt[text=muted,font=\fontsize{7}{8.5}\selectfont]{86}{71}{70}{$n=0$: position; $n=1$: velocity; $n=2$: acceleration}
- \bottomline{Analytic derivatives, without finite differences; fit each segment separately}
- \credit{Thesis \S2.7. Schematics; cubic fit is exact for the synthetic fixes shown. Gap rule also applies to missing altitude.}
-\notetext{Stage 6 uses each flight's median recording interval. At a 5-second cadence the gap cap is 20 seconds. A 15-second gap has two internal grid fixes, linearly reconstructed and flagged: orange dashes and hollow markers. Blue markers are retained fixes in this aligned example. A 30-second gap leaves separate segments with no estimates between them. Mandatory cleaning boundaries always split. The same cap applies between finite altitudes: long altitude holes split the full trajectory. Reconstructed grid fixes are 0.58 percent for paragliders and 0.30 percent for hang gliders.\par\medskip Stage 7 fits a cubic independently to E, N and z in a moving window. With physical time offset $u=t-t_i$, the fitted value and successive polynomial derivatives at zero give position, velocity and acceleration. Derivatives through order three are available from a cubic; the pipeline exports the first two. No subsequent finite differences are taken: those would amplify high-frequency position noise. The grey synthetic fixes and orange curve show an exact least-squares fit; the blue dot and dashed tangent mark its centre value and slope.\par\medskip The 5-second configured timescale is converted to an odd window with at least five fixes. Five fixes span 4 seconds at 1-second cadence but 20 seconds at 5-second cadence. Smoothing can therefore affect short-lag statistics differently across cadences. Windows never cross a split; one-sided edge estimates and reconstructed support remain flagged. Sources: thesis uniform-sampling and smoothing sections; resample.py and smoothing.py.}
+ \smalltxt[text=para,font=\fontsize{8}{9.5}\selectfont]{99}{61.5}{28}{Fitted centre value}
+ \smalltxt[text=expert,font=\fontsize{8}{9.5}\selectfont]{131}{40}{19}{Cubic fit}
+ \end{scope}
+ % Final census: every stage, including the segment gate of stage 6, has acted.
+ \fill[pisablight!33](7,73.5)rectangle(153,83.5);
+ \smalltxt[text=pisablue,font=\bfseries\fontsize{8.5}{10}\selectfont]{10}{74.3}{140}{Retained flights after all seven stages \textmd{(share of downloaded logs)}}
+ \smalltxt[text=para,font=\fontsize{9.5}{12}\selectfont\bfseries]{10}{78.6}{70}{\num{\StatPipeParaKept}\ paragliders\quad\StatPipeParaKeptPct\%}
+ \smalltxt[text=hang,font=\fontsize{9.5}{12}\selectfont\bfseries]{86}{78.6}{66}{\num{\StatPipeHangKept}\ hang gliders\quad\StatPipeHangKeptPct\%}
+ \credit{Schematic; the cubic fit is exact for the synthetic fixes shown.}
+\notetext{Stage 7 fits a cubic independently to E, N and z in a moving window. With physical time offset $u=t-t_i$, the fitted value and successive polynomial derivatives at zero give position, velocity and acceleration. Derivatives through order three are available from a cubic; the pipeline exports the first two. No subsequent finite differences are taken: those would amplify high-frequency position noise. The grey synthetic fixes and orange curve show an exact least-squares fit; the blue dot marks its centre value; the derivatives are those of the orange cubic at that time.\par\medskip The 5-second configured timescale is converted to an odd window with at least five fixes. Five fixes span 4 seconds at 1-second cadence but 20 seconds at 5-second cadence. Smoothing can therefore affect short-lag statistics differently across cadences. Windows never cross a split; one-sided edge estimates and reconstructed support remain flagged. Retained counts cover the full pipeline: 156,406 of 186,052 paraglider logs and 6,094 of 6,716 hang-glider logs. Stage 6 causes most of the loss. Sources: thesis smoothing section; smoothing.py.}
 \finishslide\end{frame}
 
 \begin{frame}[plain]\frametitle{Measuring horizontal transport}\startslide{Measuring horizontal transport}
- \smalltxt[text=pisablue,font=\fontsize{8.5}{10.5}\selectfont]{8}{16}{74}{One flight $f$, two retained segments}
- % Horizontal geometry of two disconnected pieces of the same flight.
+ \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont]{8}{16}{74}{One flight $f$, two retained segments}
+ % Horizontal geometry of two disconnected pieces of the same flight; one displacement of lag tau in each.
+ \begin{scope}[shift={(0,2.5)}]
  \draw[para,line width=1.5pt](12,40)..controls(13,33)and(17,31)..(20,32)
   ..controls(25,30)and(30,38)..(36,30)..controls(38,28)and(40,25)..(43,27);
- \draw[para,line width=1.5pt](56,31)..controls(61,37)and(68,32)..(76,25);
+ \draw[para,line width=1.5pt](56,31)..controls(61,37)and(68,32)..(72,29)..controls(74,27.5)and(76,26.5)..(79,26);
  \fill[pisablue](20,32)circle(.85);\fill[pisablue](36,30)circle(.85);
  \draw[-{Latex},pisablue,line width=.9pt](20,32)--(36,30);
- \smalltxt[text=pisablue,font=\fontsize{8}{10}\selectfont]{21}{23}{43}{$\Delta\boldsymbol{x}_f(t_i,\tau)$}
+ \smalltxt[text=pisablue,font=\fontsize{8}{10}\selectfont]{15}{23}{30}{$\Delta\boldsymbol{x}_f(t_i,\tau)$}
  \smalltxt[font=\fontsize{8}{10}\selectfont]{8}{42}{26}{$\boldsymbol{x}_f(t_i)$}
- \smalltxt[font=\fontsize{8}{10}\selectfont]{36}{39}{42}{$\boldsymbol{x}_f(t_i+\tau)$}
+ \smalltxt[font=\fontsize{8}{10}\selectfont]{30}{39}{42}{$\boldsymbol{x}_f(t_i+\tau)$}
  \draw[muted!65,line width=.4pt](20,33)--(17,40);
  \draw[muted!65,line width=.4pt](36,31)--(40,37);
  \smalltxt[text=muted,font=\fontsize{7}{9}\selectfont]{44}{31}{12}{gap}
+ % Second displacement: same lag, different origin index j, inside the second segment.
+ \fill[pisablue](62,34.2)circle(.85);\fill[pisablue](77,26.1)circle(.85);
+ \draw[-{Latex},pisablue,line width=.9pt](62,34.2)--(77,26.1);
+ \smalltxt[text=pisablue,font=\fontsize{8}{10}\selectfont]{57}{21.5}{30}{$\Delta\boldsymbol{x}_f(t_j,\tau)$}
+ \smalltxt[font=\fontsize{8}{10}\selectfont]{52}{38.5}{26}{$\boldsymbol{x}_f(t_j)$}
+ \smalltxt[font=\fontsize{8}{10}\selectfont]{66}{35}{30}{$\boldsymbol{x}_f(t_j+\tau)$}
+ \draw[muted!65,line width=.4pt](77,27)--(77,35);
+ \draw[muted!65,line width=.4pt](62,35)--(60,38.5);
+ \end{scope}
  % Same lag on the retained clock: valid within one segment, invalid across gap.
- \fill[pisablight!30](40,50)rectangle(53,63);
+ \begin{scope}[shift={(0,5)}]
+ \fill[pisablight!30](40,50)rectangle(51,63);
  \draw[para,line width=1.2pt](11,58)--(40,58);
- \draw[para,line width=1.2pt](53,58)--(78,58);
- \foreach \x in {14,20,26,32,38,56,62,68,74}{\fill[para](\x,58)circle(.6);}
- \draw[-{Latex},pisablue,line width=.8pt](14,53)--(32,53);
- \draw[pisablue,line width=.55pt](14,53)--(14,58);\draw[pisablue,line width=.55pt](32,53)--(32,58);
- \smalltxt[text=pisablue,font=\fontsize{7.5}{9}\selectfont]{21}{48}{9}{$\tau$}
- \draw[-{Latex},hang,dashed,line width=.8pt](38,53)--(56,53);
- \draw[hang,dashed,line width=.55pt](38,53)--(38,58);\draw[hang,dashed,line width=.55pt](56,53)--(56,58);
- \smalltxt[text=hang,font=\fontsize{7.5}{9}\selectfont]{45}{48}{9}{$\tau$}
- \smalltxt[font=\fontsize{7}{9}\selectfont]{11}{60}{12}{$t_i$}
- \smalltxt[font=\fontsize{7}{9}\selectfont]{27}{60}{19}{$t_i+\tau$}
- \smalltxt[text=hang,font=\fontsize{7}{9}\selectfont]{43}{60}{30}{excluded}
- \smalltxt[font=\fontsize{7.5}{9.5}\selectfont]{8}{67}{73}{$\mathcal I_f(\tau)$: origin indices with both endpoints\\inside the same retained segment.}
- % Notation is identical to the geometry and the admissible-origin diagram.
- \smalltxt[]{86}{16}{68}{Pool origins within each flight;\\then give each flight equal weight.}
- \txt[font=\fontsize{10}{13}\selectfont]{86}{28}{69}{$\Delta\boldsymbol{x}_f(t_i,\tau)=\boldsymbol{x}_f(t_i+\tau)-\boldsymbol{x}_f(t_i)$}
- \txt[font=\fontsize{11}{15}\selectfont]{86}{41}{69}{$\displaystyle m_f(\tau)=\frac{1}{|\mathcal I_f(\tau)|}\sum_{i\in\mathcal I_f(\tau)}\!|\Delta\boldsymbol{x}_f(t_i,\tau)|^2$}
- \txt[font=\fontsize{11}{15}\selectfont]{86}{56}{69}{$\displaystyle M_2(\tau)=\frac{1}{|\mathcal C(\tau)|}\sum_{f\in\mathcal C(\tau)}m_f(\tau)$}
- \smalltxt[font=\fontsize{8}{10}\selectfont]{86}{68}{69}{$\mathcal C(\tau)=\{f:|\mathcal I_f(\tau)|>0\}$: contributing flights.}
- \bottomline{$M_2(\tau)\propto\tau^{2H}$:\quad $H=\tfrac12$ diffusion\quad $H=1$ ballistic motion}
- \credit{Thesis \S3.1.1. Schematics. No displacement crosses a segment boundary; each eligible flight has equal weight.}
-\notetext{The index $f$ labels a flight; $i$ labels a candidate origin time $t_i$ within it. The set $\mathcal I_f(\tau)$ contains only origins for which both endpoints lie in the same retained segment and the temporal-resolution rule supports the lag. We pool all such origins across the flight's selected segments. No displacement crosses a gap.\par\medskip The upper drawing shows two pieces of one horizontal trajectory and a displacement within the first. The lower drawing shows their retained time intervals. Both arrows have the same lag, but only the arrow inside one segment contributes. The arrow crossing the grey gap is excluded even though its endpoints belong to retained segments.\par\medskip The set $\mathcal C(\tau)$ contains flights with admissible origins. Its size gives the outer denominator; $|\mathcal I_f(\tau)|$ gives the inner denominator. Thus $n_f(\tau)=|\mathcal I_f(\tau)|$ and $N(\tau)=|\mathcal C(\tau)|$ if those symbols are used elsewhere. Every contributing flight has equal weight, regardless of its number of origins or segments. Displacement is a chord, not distance travelled.\par\medskip The main analysis uses a common ten-second grid and fixed C10000 membership over 10--10,000 seconds. Slide 9 extends the short-lag view with cadence-limited admission. H is half the log--log slope: an effective growth exponent, not an identified self-similarity exponent. Source: thesis Section 3.1.1.}
+ \draw[para,line width=1.2pt](51,58)--(80,58);
+ \foreach \x in {12,18,24,30,36,54,60,66,72,78}{\fill[para](\x,58)circle(.6);}
+ \draw[-{Latex},pisablue,line width=.8pt](12,53)--(30,53);
+ \draw[pisablue,line width=.55pt](12,53)--(12,58);\draw[pisablue,line width=.55pt](30,53)--(30,58);
+ \smalltxt[text=pisablue,font=\fontsize{7.5}{9}\selectfont,align=center]{16}{48.3}{9}{$\tau$}
+ \draw[-{Latex},pisablue,line width=.8pt](60,53)--(78,53);
+ \draw[pisablue,line width=.55pt](60,53)--(60,58);\draw[pisablue,line width=.55pt](78,53)--(78,58);
+ \smalltxt[text=pisablue,font=\fontsize{7.5}{9}\selectfont,align=center]{64.5}{48.3}{9}{$\tau$}
+ \draw[-{Latex},hang,dashed,line width=.8pt](36,53)--(54,53);
+ \draw[hang,dashed,line width=.55pt](36,53)--(36,58);\draw[hang,dashed,line width=.55pt](54,53)--(54,58);
+ \smalltxt[text=hang,font=\fontsize{7.5}{9}\selectfont,align=center]{40.5}{48.3}{9}{$\tau$}
+ \smalltxt[font=\fontsize{7}{9}\selectfont,align=center]{7}{60}{10}{$t_i$}
+ \smalltxt[font=\fontsize{7}{9}\selectfont,align=center]{22}{60}{16}{$t_i+\tau$}
+ \smalltxt[font=\fontsize{7}{9}\selectfont,align=center]{55}{60}{10}{$t_j$}
+ \smalltxt[font=\fontsize{7}{9}\selectfont,align=center]{70}{60}{16}{$t_j+\tau$}
+ \smalltxt[text=hang,font=\fontsize{7}{9}\selectfont,align=center]{39}{60}{14}{excluded}
+ \end{scope}
+ \smalltxt[font=\fontsize{8}{10}\selectfont]{5}{72.5}{78}{%
+  \noindent\makebox[3.5mm][l]{\textcolor{pisablue}{$\bullet$}}\parbox[t]{\dimexpr\linewidth-3.5mm}{\raggedright The solid arrows ($\Delta\boldsymbol{x}_f$) lie in different segments, but each lies entirely within one: $i,j\in\mathcal I_f(\tau)$.}\par\vspace{2pt}
+  \noindent\makebox[3.5mm][l]{\textcolor{pisablue}{$\bullet$}}\parbox[t]{\dimexpr\linewidth-3.5mm}{\raggedright The dashed arrow crosses the gap and is excluded.}} % Right column: the estimator in the order it is computed, at one lag.
+ \txt[font=\fontsize{8}{10}\selectfont]{85}{16}{68}{%
+  {\color{pisablue}\fontsize{9}{11}\selectfont For each lag $\tau$:}\par\vspace{3mm}
+  \stepitem{1}{Slide the origin $t_i$ through each segment of $f$, one grid step at a time, while $t_i+\tau$ stays inside\par\vspace{1.2mm}
+   {\fontsize{9.5}{11}\selectfont$\Delta\boldsymbol{x}_f(t_i,\tau)=\boldsymbol{x}_f(t_i+\tau)-\boldsymbol{x}_f(t_i)$}}\vspace{3mm}
+  \stepitem{2}{Pool these origins over all segments of $f$\par\vspace{1.2mm}
+   {\fontsize{9.5}{11}\selectfont\mbox{$\mathcal I_f(\tau)=\{\,i:\ t_i,\ t_i+\tau\ \text{in the same segment}\,\}$}}}\vspace{3mm}
+  \stepitem{3}{Average the $n_f(\tau)=|\mathcal I_f(\tau)|$ squared displacements\par\vspace{.5mm}
+   {\fontsize{9.5}{11}\selectfont$\displaystyle m_f(\tau)=\frac{1}{|\mathcal I_f(\tau)|}\sum_{i\in\mathcal I_f(\tau)}|\Delta\boldsymbol{x}_f(t_i,\tau)|^2$}}\vspace{3mm}
+  \stepitem{4}{Average over the $N(\tau)$ flights with at least one origin, each with weight $1/N(\tau)$\par\vspace{.5mm}
+   {\fontsize{9.5}{11}\selectfont$\displaystyle M_2(\tau)=\frac{1}{N(\tau)}\sum_{f:\,|\mathcal I_f(\tau)|>0}m_f(\tau)$}}}
+\notetext{The right column is the computation at one fixed lag $\tau$; we repeat it for every lag. Step 1: in each segment of flight $f$, the first origin is the segment start; we move the origin one grid step at a time up to the last point for which $t_i+\tau$ is still in the same segment, so displacements overlap. In the drawing, $i$ and $j$ are two origins of the same flight with the same lag, in different segments. Step 2: pooling over all segments gives $\mathcal I_f(\tau)$. No displacement crosses a gap: the dashed arrow has both endpoints in retained segments but is excluded.\par\medskip Step 3: the flight has $n_f(\tau)=|\mathcal I_f(\tau)|$ displacements, the number of its origins that admit lag $\tau$. Their plain mean square is the time-averaged MSD $m_f(\tau)$. Step 4: the plain mean of $m_f(\tau)$ over the $N(\tau)$ flights with at least one admissible origin; the thesis calls this set $\mathcal C(\tau)$. A flight with many origins or segments weighs the same as a flight with few: this is the equal-flight average. Displacement is a chord, not distance travelled.\par\medskip In the main analysis the grid step is ten seconds, and the flights and segments are the fixed C10000 cohort introduced two slides ahead: only segments of at least 12,500 seconds enter, at every lag. Slide 11 extends the short-lag view with cadence-limited admission. H is half the log--log slope: an effective growth exponent, not an identified self-similarity exponent. Source: thesis Section 3.1, Eqs.\ 3.1 and 3.6.}
 \finishslide\end{frame}
 
-\begin{frame}[plain]\frametitle{Why use a fixed population?}\startslide{Why use a fixed population?}
- \txt[text=pisablue,font=\bfseries\fontsize{10}{12}\selectfont]{8}{18}{68}{All available flights}
- \smalltxt[font=\fontsize{9}{11}\selectfont]{8}{26}{66}{As lag grows, short flights drop out.\\MSD then mixes motion with a change\\in which flights are averaged.}
- \txt[text=pisablue,font=\bfseries\fontsize{10}{12}\selectfont]{8}{42}{69}{$C_{10000}$: select once for the largest lag}
- \smalltxt[font=\fontsize{9}{11}\selectfont]{8}{51}{68}{$10{,}000\,\mathrm{s}\leq0.8T_s$:\quad $T_s\geq12{,}500$ s\\Only these segments enter at every lag.}
- \smalltxt[text=para,font=\fontsize{9}{11}\selectfont\bfseries]{8}{62}{68}{46,273 paragliders}
- \smalltxt[text=hang,font=\fontsize{9}{11}\selectfont\bfseries]{8}{67}{68}{2,326 hang gliders}
+\begin{frame}[plain]\frametitle{Which flights contribute at each lag?}\startslide{Which flights contribute at each lag?}
+ \smalltxt[text=pisablue]{7}{15}{146}{All available flights: a flight enters at lag $\tau$ if one of its segments has $\tau\leq0.8\,T_s$ ($\geq1/5$ of it left as origins for $m_f$).}
+ \node[anchor=north west,inner sep=0pt]at(7,19.5){\includegraphics[width=110mm,height=53mm,keepaspectratio]{assets/available.pdf}};
+ % Desiderata: framed list, heading centred just above the top edge.
+ \draw[pisablue,line width=.6pt,rounded corners=1.5mm](123,29)rectangle(156,64);
+ \node[anchor=south,inner sep=0pt,text=pisablue,font=\bfseries\fontsize{10}{12}\selectfont]at(139.5,27.8){Desiderata};
+ \txt[font=\fontsize{8.5}{10.5}\selectfont]{125.5}{34}{29}{%
+  \stepitem{1}{The same flights\\at every lag}\vspace{4mm}
+  \stepitem{2}{The longest\\possible lag range}\vspace{4mm}
+  \stepitem{3}{$N \approx$ of the same\\order as at 10 s}}
+ \fill[pisablight!33](7,74.7)rectangle(153,83);
+ \smalltxt[text=pisablue,font=\fontsize{8.5}{10}\selectfont]{10}{75.5}{140}{At long lags only long flights remain, and their number falls steeply.}
+ \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{79.2}{140}{Any lag-dependent statistic then mixes dynamics with a changing set of flights.}
+\notetext{Before fixing a population, look at what happens without one. At each lag we average over every flight that can contribute: a flight enters at lag $\tau$ if at least one of its retained segments satisfies $\tau\leq0.8\,T_s$. At least a fifth of that segment then remains available for origins, so $m_f$ still averages over a sizeable stretch of the flight rather than a handful of displacements. Left: the equal-flight TA-MSD of all available flights. Trajectories sit on the common 10-second grid, so origins shift in 10-second steps; the plotted lags are a log-spaced subset. Shading shows pointwise 90 percent bootstrap intervals. Right: the number of contributing flights relative to the count at ten seconds.\par\medskip Up to a few thousand seconds almost every flight contributes; from about 6,000 seconds the count falls steeply. Paragliders go from 155,085 flights at ten seconds to 46,273 at 10,000 seconds and 27 at 32,690 seconds; hang gliders from 6,060 to 2,326 and then 20 at 24,740 seconds. The dotted line marks a tenfold loss. The curves end where fewer than 20 site--day groups still contribute. A group is the set of flights from one take-off site on one calendar day; the bootstrap resamples whole groups, so with fewer than 20 the confidence bands would not be meaningful.\par\medskip The circled end of the MSD is where this loss acts. There the curve steepens: around 6,600 seconds the local slope of the all-flight curve gives H near 0.90 for paragliders, whereas the fixed cohort of the next slide gives about 0.70 at the same lag. Same estimator, different flights: the steepening comes from which flights are averaged, not only from how they move. An H fitted to the all-flight curve therefore mixes two effects, and we cannot say which one drives which feature. The same ambiguity affects any lag-dependent statistic, that is, any statistic computed as a function of $\tau$: local slopes, displacement quantiles and kurtosis, velocity autocorrelation.\par\medskip We therefore want one population with three properties: the same flights at every lag, the longest possible lag range, and a number of flights of the same order as at ten seconds, so that the statistics still rest on a large sample. The next slide gives our choice and what it costs. Below ten seconds, support depends on each logger's native cadence; slide 11 treats that range. Source: thesis Section 3.1.2, Figure 3.1 and Table 3.2; ch3\_transport\_report.json and cadence-support-report.json.}
+\finishslide\end{frame}
+
+\begin{frame}[plain]\frametitle{Can we afford a fixed population?}\startslide{Can we afford a fixed population?}
+ \txt[font=\fontsize{9}{11}\selectfont]{8}{18}{68}{%
+  {\color{pisablue}\bfseries\boldmath\fontsize{10}{12}\selectfont $C_{10000}$: select once for the largest lag}\par\vspace{3mm}
+  $\tau_{\max}=10{,}000\,\mathrm{s}\leq0.8\,T_s$:\quad $T_s\geq12{,}500$ s\\Only these segments enter, at every lag.\par\vspace{4.5mm}
+  \stepitem{1}{Same flights and segments, 10 to 10,000~s,\\with no loss of flights beyond $6\times10^3$~s}\vspace{3mm}
+  \stepitem{2}{Three decades of lag; at $\tau_{\max}$ each segment\\still offers at least 251 origins for $m_f$}\vspace{3mm}
+  \stepitem{3}{\textcolor{para}{\textbf{46,273 paragliders}}, 30\% of those at 10 s\\\textcolor{hang}{\textbf{2,326 hang gliders}}, 38\% of those at 10 s}}
  \smalltxt[text=pisablue,font=\fontsize{8.5}{10}\selectfont\bfseries]{80}{18}{73}{Cost of selecting longer flights}
  \figureat{77}{24}{78}{selection}
- \smalltxt[text=muted,font=\fontsize{7.5}{9}\selectfont]{80}{66}{73}{$H$ rises by about 2\% on matched lag ranges.}
- \bottomline{Fixed flights and segments over 10--10,000 s; fewer origins at longer lags}
+ \smalltxt[text=muted,font=\fontsize{7.5}{9}\selectfont]{80}{66}{73}{Nested cohorts, identical fit ranges, paired bootstrap draws.}
+ \fill[pisablight!33](7,74.7)rectangle(153,83);
+ \smalltxt[text=pisablue,font=\fontsize{8.5}{10}\selectfont]{10}{75.5}{140}{Long flights raise $H$ by 0.016--0.018 on matched lag ranges; origins still decrease with lag.}
+ \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{79.2}{140}{About 2\% in $H$ buys the same flights at every lag over three decades.}
  \bootstrapcredit
-\notetext{The available population loses short flights as lag increases. We therefore select a fixed set of flights and segments once, before computing the main curves. Requiring the maximum lag to be at most 80 percent of segment duration leaves at least one fifth of each selected segment available for origins at the longest lag. For ten thousand seconds, that means at least 12,500 seconds on the common grid and at least 251 origins at the maximum lag. Shorter segments of an otherwise eligible flight are excluded at every lag. The main cohort contains 46,273 paragliders and 2,326 hang gliders. The figure compares nested cohorts over identical fit intervals, using paired bootstrap draws. The main cohort increases H by 0.0164--0.0177, about 1.8--2.0 percent. We accept this small, measured duration-selection shift to keep the population constant across three decades of lag. Origins still vary with lag. Source: thesis Section 3.1.3 and ch3\_transport\_report.json.}
+\notetext{$C_{10000}$ answers the three desiderata of the previous slide. We apply the admission rule once, at the largest lag: $10{,}000\,\mathrm{s}\leq0.8\,T_s$ means segments of at least 12,500 seconds on the common grid. Even at the maximum lag, each segment keeps 2,500 seconds of origins, at least 251 on the 10-second grid. Only these segments enter, at every lag; shorter segments of an otherwise eligible flight are excluded throughout. Between 6,000 and 10,000 seconds, where the all-flight curve loses most of its flights, this cohort loses none. The cohort is exactly the set of flights still present at 10,000 seconds on the previous slide: 46,273 paragliders and 2,326 hang gliders, 30 and 38 percent of the flights available at ten seconds. So the sample stays of the same order as the full population, while covering three decades of lag. Pushing the maximum lag further would cost flights quickly: beyond about 16,000 seconds fewer than a tenth remain.\par\medskip The price is a duration selection: long flights are not a random subset. The figure measures it by comparing nested cohorts over identical fit intervals, using paired bootstrap draws. The main cohort increases H by 0.0164--0.0177, about 1.8--2.0 percent. We accept this small, measured shift to keep the population constant across three decades of lag. Origins per flight still vary with lag. Source: thesis Section 3.1.3 and ch3\_transport\_report.json.}
 \finishslide\end{frame}
 
 \begin{frame}[plain]\frametitle{Displacement growth from 1 s to 10,000 s}\startslide{Displacement growth from 1 s to 10,000 s}
  \smalltxt[text=pisablue]{7}{15}{146}{$C_{10000}$: changing support below 10 s; the same flights at every lag from 10 to 10,000 s.}
- \figureat{7}{19.5}{146}{fixed}
- \smalltxt[text=muted,font=\fontsize{6.5}{8}\selectfont]{7}{71.5}{146}{At 1 s: \CadenceParaStartCount\ paragliders, \CadenceHangStartCount\ hang gliders. Support grows to the legend counts at 10 s.}
- \bottomline{$H_{\rm PG}=\CadenceParaH\,[\CadenceParaLow,\CadenceParaHigh]$; $H_{\rm HG}=\CadenceHangH\,[\CadenceHangLow,\CadenceHangHigh]$ over 10--10,000 s}
+ \smalltxt[text=pisablue]{7}{19.5}{146}{$M_2(\tau)\propto\tau^{2H}$:\quad $H=\tfrac12$ diffusion\quad $H=1$ ballistic motion}
+ \figureat{12}{24}{137}{fixed}
+ \bottomline{{\color{curveblue}$H_{\rm PG}=\CadenceParaH\,[\CadenceParaLow,\CadenceParaHigh]$}\;$>$\;{\color{curverust}$H_{\rm HG}=\CadenceHangH\,[\CadenceHangLow,\CadenceHangHigh]$} over 10--10,000 s}
  \bootstrapcredit
-\notetext{The parent population is the original C10000 cohort, with the same selected long segments. Below ten seconds, a segment contributes when its native logging interval is no larger than the lag. Thus the contributing population grows from \CadenceParaStartCount\ paragliders and \CadenceHangStartCount\ hang gliders at one second to the full \CadenceParaCount\ and \CadenceHangCount\ at ten seconds. It stays fixed thereafter, through 10,000 seconds.\par\medskip At short lags we use native origins and linearly interpolate endpoints when the lag is not a multiple of the logging interval, always within the selected segment span. This monotone admission rule differs from Figure 3.1: that figure uses the general population and requires exact native short-lag resolution, so its short-lag counts need not grow monotonically. From ten seconds, this slide uses the thesis's common ten-second grid and reproduces every original MSD point.\par\medskip There are \CadenceLagCount\ evaluated lags, including every second from one to ten. Local H is half the log--log slope in a plus/minus 0.25-decade window, expanded to the nearest three lags when sparse. The one-second estimate uses one to three seconds. Slopes below ten seconds, and windows crossing that boundary, combine dynamics with changing sample composition. Lines connect computed estimates.\par\medskip The original 10--10,000 second fits and 1,000 paired site--day bootstrap draws are preserved: H=\CadenceParaH\ [\CadenceParaLow,\CadenceParaHigh] and \CadenceHangH\ [\CadenceHangLow,\CadenceHangHigh]. Bands are pointwise 90 percent intervals. Sources: thesis Section 3.1; cadence-support-report.json and measure\_cadence\_support.py.}
+\notetext{The parent population is the original C10000 cohort, with the same selected long segments. Below ten seconds, a segment contributes when its native logging interval is no larger than the lag. Thus the contributing population grows from \CadenceParaStartCount\ paragliders and \CadenceHangStartCount\ hang gliders at one second to the full \CadenceParaCount\ and \CadenceHangCount\ at ten seconds. It stays fixed thereafter, through 10,000 seconds.\par\medskip At short lags we use native origins and linearly interpolate endpoints when the lag is not a multiple of the logging interval, always within the selected segment span. This monotone admission rule differs from Figure 3.1: that figure uses the general population and requires exact native short-lag resolution, so its short-lag counts need not grow monotonically. From ten seconds, this slide uses the thesis's common ten-second grid and reproduces every original MSD point.\par\medskip There are \CadenceLagCount\ evaluated lags, including every second from one to ten. Local H is half the log--log slope in a plus/minus 0.25-decade window, expanded to the nearest three lags when sparse. The one-second estimate uses one to three seconds. Slopes below ten seconds, and windows crossing that boundary, combine dynamics with changing sample composition. Lines connect computed estimates. In the right panel, each shaded horizontal band spans that discipline's local-slope range from its local minimum near ten seconds to its local maximum near 40--50 seconds.\par\medskip The original 10--10,000 second fits and 1,000 paired site--day bootstrap draws are preserved: H=\CadenceParaH\ [\CadenceParaLow,\CadenceParaHigh] and \CadenceHangH\ [\CadenceHangLow,\CadenceHangHigh]. Bands are pointwise 90 percent intervals. Sources: thesis Section 3.1; cadence-support-report.json and measure\_cadence\_support.py.}
 \finishslide\end{frame}
 
 \begin{frame}[plain]\frametitle{Which flight characteristics shape MSD and H?}\startslide{Which flight characteristics shape MSD and $H$?}
+ \draw[pisablue,line width=.8pt,rounded corners=1.2mm](5,14)rectangle(155,37);
  \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{8}{17}{46}{Circuit type}
- \smalltxt[font=\fontsize{9}{11}\selectfont]{8}{24}{46}{Declared route\\Open versus closed}
+ \smalltxt[font=\fontsize{9}{11}\selectfont]{8}{24}{46}{Declared route\\{\bfseries\color{para}Open} versus {\bfseries\color{wine}closed}}
  \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{59}{17}{46}{Terrain / altitude}
- \smalltxt[font=\fontsize{9}{11}\selectfont]{59}{24}{46}{Proxy: launch altitude\\Plains, hills, low and\\high mountains}
+ \smalltxt[font=\fontsize{9}{11}\selectfont]{59}{24}{46}{Proxy: launch altitude\\{\bfseries\color{para}Plains}, {\bfseries\color{teal}hills}, {\bfseries\color{expert}low} and\\{\bfseries\color{wine}high} mountains}
  \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{110}{17}{43}{Experience}
- \smalltxt[font=\fontsize{8.5}{10.5}\selectfont]{110}{24}{45}{Proxy: wing class\\\textbf{Beginners}: EN A/B/C\\\textbf{Experts}: EN D/CCC}
- \txt[text=pisablue,font=\bfseries\fontsize{12}{14}\selectfont]{8}{40}{68}{Marginal comparison}
- \txt[font=\fontsize{9.5}{11.5}\selectfont]{8}{47}{67}{Pool the other characteristics.\\[1.5mm]Open vs closed, all altitudes together.}
- \txt[text=pisablue,font=\bfseries\fontsize{12}{14}\selectfont]{85}{40}{68}{Stratified comparison}
- \txt[font=\fontsize{9.5}{11.5}\selectfont]{85}{47}{67}{Keep a selected category fixed.\\[1.5mm]Open vs closed, one altitude class at a time.}
- \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont]{8}{65}{145}{\textbf{One factor at a time (OFAT):} vary one input while holding the others fixed.\\The archive comparisons leave other flight conditions free to differ.}
- \bottomline{First compare groups; then test which contrasts persist across shared settings}
- \credit{NIST/SEMATECH e-Handbook, \href{https://www.itl.nist.gov/div898/handbook/pri/section2/pri212.htm}{\S5.2.1.2}. Observational archive, without random assignment.}
-\notetext{We examine three characteristics: terrain or launch environment, represented by the launch-altitude classes Plains, Hills, Low mountains and High mountains; pilot experience, with Beginners defined as EN A/B/C and Experts as EN D/CCC; and the declared circuit type, open versus closed. Launch altitude describes the starting environment rather than the terrain traversed throughout the flight. Wing class is an indirect indicator of experience and also reflects equipment performance.\par\medskip OFAT has a precise experimental meaning: vary one factor while holding all other settings fixed. Presenting one recorded characteristic at a time is only informally similar. Our marginal comparisons pool the others, and our stratified comparisons hold a selected category fixed while remaining conditions can differ. They are useful for locating contrasts, checking whether they persist within settings, and detecting interactions. They do not isolate causal effects. The circuit-by-altitude and equipment-by-altitude comparisons include paired numerical contrasts, so their evidence goes beyond a visual reading. Source: NIST/SEMATECH e-Handbook of Statistical Methods, Section 5.2.1.2, https://www.itl.nist.gov/div898/handbook/pri/section2/pri212.htm, accessed 22 September 2026; thesis Section 3.2.}
+ \smalltxt[font=\fontsize{8.5}{10.5}\selectfont]{110}{24}{45}{Proxy: wing class\\{\bfseries\color{pisablue}Beginners}: EN A/B/C\\{\bfseries\color{expert}Experts}: EN D/CCC}
+ \smalltxt[font=\fontsize{8.5}{10.5}\selectfont]{8}{38.5}{145}{Weather also matters, but we have no data with sufficient spatial and temporal resolution.}
+ \filldraw[draw=pisablue,fill=pisablight!28,line width=.9pt,rounded corners=1.2mm](5,43)rectangle(78,61.5);
+ \filldraw[draw=pisablue,fill=pisablight!28,line width=.9pt,rounded corners=1.2mm](82,43)rectangle(155,61.5);
+ \txt[text=pisablue,font=\bfseries\fontsize{12}{14}\selectfont]{9}{45}{65}{Marginal comparison}
+ \txt[font=\fontsize{9.5}{11.5}\selectfont]{9}{52}{65}{\textit{Example:} open vs closed flights\\{\bfseries\color{pisablue}across all} altitude classes.}
+ \txt[text=pisablue,font=\bfseries\fontsize{12}{14}\selectfont]{86}{45}{65}{Stratified comparison}
+ \txt[font=\fontsize{9.5}{11.5}\selectfont]{86}{52}{65}{\textit{Example:} open vs closed flights\\{\bfseries\color{pisablue}within each} altitude class.}
+ \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont]{8}{64}{145}{\textbf{What stratification controls}\\The altitude class is shared; weather and equipment can still differ between groups.}
+ \bottomline{First compare groups overall, then within the same altitude class.}
+\notetext{We examine circuit type, launch-altitude class and wing class. Launch altitude describes the starting environment, rather than the full terrain traversed. Wing class reflects equipment performance as well as a proxy for pilot experience.\par\medskip A marginal circuit comparison pools altitude classes: open and closed flights can have different altitude compositions. Stratification compares open and closed flights within Plains, then within Hills, Low mountains and High mountains. The altitude class is fixed, while equipment, weather and the precise altitude within that class can still differ. The comparison is conditional on altitude class and still marginal over the remaining characteristics. Stratification does not require all flight conditions to be identical.\par\medskip The next figures show pooled circuit and altitude contrasts, then examine circuit composition and its contribution to the pooled MSD. We then compare circuits within altitude classes: does the open--closed contrast persist, and does its size change? It persists but narrows in mountains, and the altitude ordering differs between open and closed circuits. Later comparisons examine regions and wing classes within selected altitude categories.\par\medskip These are observational associations. Stratification accounts for the selected category, but alone does not isolate causal effects of circuit choice, terrain or equipment. Source: thesis Section 3.2.}
 \finishslide\end{frame}
 
-\begin{frame}[plain]\frametitle{How do MSD and H differ by circuit type?}\startslide{How do MSD and $H$ differ by circuit type?}
+\begin{frame}[plain]\frametitle{Open vs closed: how do MSD and H differ?}\startslide{Open vs closed: how do MSD and $H$ differ?}
  \figureat{6}{17}{104}{circuit}
  \smalltxt[text=para,font=\bfseries\fontsize{10}{12}\selectfont]{116}{19}{36}{Open circuits}
  \draw[para,line width=1.2pt,-{Latex}](117,36)--(127,31)--(133,34)--(149,27);
@@ -361,7 +466,7 @@
 \notetext{The catalogue describes the intended circuit, not a guarantee that the trimmed trajectory returns to its starting point. Closed routes include triangles and out-and-return flights. Pooling launch altitudes gives \CondOpenH{} for open routes and \CondClosedH{} for closed routes. Their paired difference is positive under the adopted bootstrap.\par\medskip We fix the lag and average squared displacements over starting times along each segment. Suppose an ideal pilot reverses direction at minute 60, with the same speed on both legs. A two-minute interval from minute 59 to 61 spans the reversal and ends at its starting position; minute 20 to 22 covers straight flight. Thus even a short lag can capture a turn late in the flight. With equal leg times, T/2 and T/3 locate the first major turn along out-and-return and triangular routes. They do not define a minimum affected lag. Ten thousand seconds is the analysis limit; flight and leg durations vary. Testing the triangle hypothesis requires separating route types and examining actual leg durations.\par\medskip The schematics illustrate geometry only. This marginal comparison pools launch environments and equipment, so its magnitude cannot rank the causal importance of route choice against terrain. Sources: thesis Section 3.2.1, ch3\_conditional.json.}
 \finishslide\end{frame}
 
-\begin{frame}[plain]\frametitle{Why is pooled H higher in lowlands?}\startslide{Why is pooled $H$ higher in lowlands?}
+\begin{frame}[plain]\frametitle{How does H differ across altitude classes?}\startslide{How does $H$ differ across altitude classes?}
  \figureat{6}{17}{104}{altitude}
  \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont\bfseries]{113}{18}{41}{Circuit composition}
  \smalltxt[font=\fontsize{7.5}{10}\selectfont]{113}{29}{41}{%
@@ -381,7 +486,7 @@
 \notetext{The pooled hierarchy is Plains \CondAltZeroH{}, Hills \CondAltOneH{}, Low mountains \CondAltTwoH{} and High mountains \CondAltThreeH{}. Brackets give nominal 90 percent intervals. Both mountain classes lie below the lowland classes. Initial GNSS altitude is a broad launch-environment proxy.\par\medskip Read the composition table alongside the curves. Plains and Hills contain 91.1 and 71.1 percent open flights, compared with about one third in mountains. The preceding slide showed faster pooled growth for open routes. Thus this apparent altitude contrast also changes circuit composition; it cannot isolate terrain.\par\medskip The next step is to show how flight fractions and circuit MSDs combine, then compare circuits within altitude classes. Do not infer which factor dominates from this marginal plot alone. The table includes 0, 1, 36 and 41 unclassified flights in its denominators. Source: thesis Section 3.2.2; ch3\_conditional.json.}
 \finishslide\end{frame}
 
-\begin{frame}[plain]\frametitle{Circuit contributions change with lag}\startslide{Circuit contributions change with lag}
+\begin{frame}[plain]\frametitle{How much MSD comes from each circuit type?}\startslide{How much MSD comes from each circuit type?}
  \txt[font=\fontsize{11}{13}\selectfont]{9}{17}{97}{$w_{c\mid a}(\tau)=\dfrac{p_{c\mid a}M_{2,c,a}(\tau)}{M_{2,a}(\tau)}$\qquad $p_{c\mid a}=\dfrac{N_{c,a}}{N_a}$}
  \smalltxt[font=\fontsize{8.5}{10}\selectfont]{111}{19}{42}{Within altitude class $a$;\\circuit $c$, flight fraction $p$.}
  \node[anchor=north west,inner sep=0pt]at(7,29){\includegraphics[width=146mm,height=42mm,keepaspectratio]{assets/circuit-weights.pdf}};
@@ -392,7 +497,7 @@
 \notetext{For a fixed altitude class a, multiply each circuit's mean-square displacement by its flight fraction and divide by the full class MSD. This is the within-class contribution, not the contribution of altitude classes to all open flights. Open, closed and unclassified shares sum to one within each class and lag; the four coloured curves within one panel do not sum to one.\par\medskip Open flights are numerous in Plains and Hills and have larger MSDs, producing 99.4 and 97.6 percent of their class MSD at 10000 s. In Low mountains, open flights are only 33.5 percent of flights but contribute 60.6 percent of the MSD at that lag. In High mountains, closed routes still supply about 51.9 percent. The unclassified contribution remains small and is explicitly retained.\par\medskip Flight fractions stay fixed, whereas MSD shares change with lag as circuit curves grow differently. These contributions shape the mixed MSD and its fitted H. A share is not an exact averaging weight for the H fitted over the whole interval. We retain no new local-exponent derivation. Source: thesis Section 3.2.2; circuit\_msd\_weights.py and ch3\_conditional.json.}
 \finishslide\end{frame}
 
-\begin{frame}[plain]\frametitle{Does the circuit contrast persist across terrain?}\startslide{Does the circuit contrast persist across terrain?}
+\begin{frame}[plain]\frametitle{Does the open--closed H gap change with altitude?}\startslide{Does the open--closed $H$ gap change with altitude?}
  \figureat{7}{16}{146}{interaction}
  \smalltxt[text=pisablue,font=\fontsize{7.5}{9}\selectfont]{9}{65.5}{144}{\textbf{Open minus closed ($\Delta H$, 90\% CIs):} Plains \ChThreeTaskGapPlains; Hills \ChThreeTaskGapHills.\\Low mountains \ChThreeTaskGapLow; High mountains \ChThreeTaskGapHigh.}
  \fill[pisablight!33](7,74.7)rectangle(153,83);
@@ -402,7 +507,7 @@
 \notetext{Read this figure in two directions. Comparing circuits within each altitude class gives open H greater than closed H in all four classes. The paired differences are \ChThreeTaskGapPlains{} in Plains, \ChThreeTaskGapHills{} in Hills, \ChThreeTaskGapLow{} in Low mountains and \ChThreeTaskGapHigh{} in High mountains. All four nominal 90 percent intervals are above zero. The circuit ordering survives altitude stratification, so different altitude composition alone cannot explain it. This is a consistent conditional association; its size still depends on altitude.\par\medskip Comparing altitudes within each circuit reveals the reversal. Lowland-minus-mountain H contrasts are positive for open routes (0.051--0.064) and negative for closed routes (magnitudes 0.021--0.051). All eight paired intervals exclude zero. There is no general mountain penalty in H.\par\medskip The two findings combine into a narrower circuit gap in mountains, as quantified by the four paired estimates and intervals on the slide. A physical interpretation is that terrain constrains how pilots realise either objective. Open routes may lose outward persistence; longer legs or later returns could make mountain closed routes less affected by closure within the fitted interval. These mechanisms need route and weather measurements. The conditional orderings and their interaction are already measured; future factorial analysis adds equipment and further interactions. Sources: thesis Figure 3.9 and ch3\_transport\_task\_table.tex.}
 \finishslide\end{frame}
 
-\begin{frame}[plain]\frametitle{Is launch altitude enough to describe transport?}\startslide{Is launch altitude enough to describe transport?}
+\begin{frame}[plain]\frametitle{Within altitude groups, how does H differ by region?}\startslide{Within altitude groups, how does $H$ differ by region?}
  \figureat{7}{16}{146}{regions}
  \smalltxt[text=pisablue,font=\fontsize{7.5}{9}\selectfont]{9}{63}{69}{\textbf{Mountain hypothesis:} slope-linked lift\\ties routes to ridge and valley geometry.}
  \smalltxt[text=pisablue,font=\fontsize{7.5}{9}\selectfont]{86}{63}{68}{\textbf{Lowland hypothesis:} roads and dark fields\\may supply broadly distributed thermal triggers.}
@@ -455,89 +560,87 @@
 \notetext{Distributed heat sources and wind advection could explain the stronger broadening between 100 and 600 m in P1. Slope-associated sources and possible shelter could preserve a narrower mountain footprint. Mountain sources can form on heated slopes and move upslope before detaching; they need not originate on crests. Dry fields, asphalt and roofs illustrate separate potential lowland sources, not guaranteed thermals. Orange is buoyant rising air, blue is horizontal wind. Helices indicate ascent, not measured rotation; fragments illustrate possible shear disruption.\par\medskip Sheltered slopes with stronger flow above the crest are one possible mountain profile. Exposed lowland sources may drift from lower heights. Neither profile is measured or universal: valleys can channel strong wind, and inland P1 is not necessarily coastal.\par\medskip For a steady idealised plume, $\Delta\boldsymbol r_h\simeq(\boldsymbol u_h/w)\Delta z$, where $w$ is upward air speed, not glider climb rate. Shared wind and rise speed translate a source pattern; variability across dates can broaden pooled crossings. Matched climbs and wind profiles are needed to test this.\par\medskip Terrain guidance and clearance could interrupt open routes' outward progress. Longer legs or later returns could weaken closure's signature in closed routes. Both may narrow the circuit gap; route timing remains untested. Sources: FAA Glider Flying Handbook, Chapters 9--10; SSA, \href{https://www.ssa.org/lift-sources/}{Lift Sources}; Schroeder and Buck, Fire Weather, Chapter 6; thesis Section 3.2.2.}
 \finishslide\end{frame}
 
-\begin{frame}[plain]\frametitle{Experts and beginners across altitudes}\startslide{Experts and beginners across altitudes}
+\begin{frame}[plain]\frametitle{Does the expert--beginner H gap change with altitude?}\startslide{Does the expert--beginner $H$ gap change with altitude?}
  \figureat{7}{16}{146}{equipment}
  \fill[pisablight!33](7,74.7)rectangle(153,83);
  \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{75.5}{140}{Higher $H$ for experts in every class; the gap depends on altitude.}
  \smalltxt[text=pisablue,font=\fontsize{8.5}{10}\selectfont]{10}{79.6}{140}{A constant speed advantage changes MSD amplitude, not $H$.}
  \credit{Wing class is a proxy. Nominal 90\% cluster-bootstrap CIs; bands likely too narrow (Appendix).}
-\notetext{The Beginners group contains 27,609 flights and the Experts group 16,497; 2,167 flights are excluded from this comparison. These are the operational groups defined on slide 10. Individual experience is not observed: an experienced pilot can fly a lower-class wing, and the same pilot can contribute to different groups on different flights. The pooled exponent difference is 0.025 [0.024,0.026]. Within altitude classes the differences are \CondEquipmentAltZeroDelta{}, \CondEquipmentAltOneDelta{}, \CondEquipmentAltTwoDelta{} and \CondEquipmentAltThreeDelta{}, all with paired intervals excluding zero. The Low mountains contrast exceeds the others in the paired interaction tests. A constant speed multiplier alone changes MSD amplitude, not its log--log slope, so the difference concerns the lag dependence too. The altitude-dependent gap is an equipment-by-altitude interaction already tested with paired contrasts. Each cell still pools circuits and weather. Circuit and equipment contrasts both depend on altitude, motivating the joint model with interaction terms discussed in the future-work section and the appendix. Source: thesis Section 3.2.4, ch3\_conditional.json and ch3\_conditional\_equipment\_table.tex.}
+\notetext{The Beginners group contains 27,609 flights and the Experts group 16,497; 2,167 flights are excluded from this comparison. These are the operational groups defined on slide 12. Individual experience is not observed: an experienced pilot can fly a lower-class wing, and the same pilot can contribute to different groups on different flights. The pooled exponent difference is 0.025 [0.024,0.026]. Within altitude classes the differences are \CondEquipmentAltZeroDelta{}, \CondEquipmentAltOneDelta{}, \CondEquipmentAltTwoDelta{} and \CondEquipmentAltThreeDelta{}, all with paired intervals excluding zero. The Low mountains contrast exceeds the others in the paired interaction tests. A constant speed multiplier alone changes MSD amplitude, not its log--log slope, so the difference concerns the lag dependence too. The altitude-dependent gap is an equipment-by-altitude interaction already tested with paired contrasts. Each cell still pools circuits and weather. Circuit and equipment contrasts both depend on altitude, motivating the joint model with interaction terms discussed in the future-work section and the appendix. Source: thesis Section 3.2.4, ch3\_conditional.json and ch3\_conditional\_equipment\_table.tex.}
 \finishslide\end{frame}
 
 \begin{frame}[plain]\frametitle{Work in progress: resolving phases and directions}\startslide{Work in progress: phases and directions}
- \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{8}{18}{43}{Segmentation}
- \smalltxt[font=\fontsize{9}{11}\selectfont]{55}{17}{98}{Vilpellet's HMM: developed on tracks at $\geq1$ Hz.\\Slower logs and some missed climbs motivate a revision.\\Next: continuous observations and timing in physical seconds.}
- \draw[pisablight,line width=.6pt](8,36)--(152,36);
- \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{8}{40}{43}{Anisotropy}
- \smalltxt[font=\fontsize{9}{11}\selectfont]{55}{39}{98}{Mountains: test alignment with the mountain-chain axis.\\Plains: test weaker alignment with mean wind.\\Preliminary observations; quantify under matched conditions.}
- \draw[pisablight,line width=.6pt](8,57)--(152,57);
- \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{8}{61}{43}{Distribution scaling}
- \smalltxt[font=\fontsize{9}{11}\selectfont]{55}{60}{98}{Collapse tests and moment scaling currently give mixed indications.\\A power-law MSD alone does not establish self-similarity.}
- \bottomline{Validate across logger cadences before interpreting phase statistics and scaling}
- \credit{Segmentation baseline: Vilpellet, Darmon \& Benzaquen (2026), \href{https://arxiv.org/abs/2601.01293}{arXiv:2601.01293}, \S~II and Appendix. Other observations: work in progress.}
-\notetext{The current Vilpellet segmentation is useful and already supplies the thermal-plane examples. The source study retained trajectories at a minimum frequency of one hertz; its appendix uses binary trajectory features. That domain does not validate transfer to our slower loggers. Visual inspection also suggests some climbing or lifting stretches are missed. These are diagnostics, not a completed accuracy benchmark. The proposed replacement remains an HMM with discrete glide, search and climb states, but continuous-valued observations such as vertical speed and turning measures. Features must be defined in physical time and state persistence must account for sampling interval. Merely replacing binary emissions with Gaussians does not solve cadence dependence. Validate on reviewed trajectories and deliberately downsampled high-frequency tracks.\par\medskip For anisotropy, estimate the displacement tensor at each lag and compare its main axis with local ridge orientation or measured wind. Mountain alignment and weaker lowland wind alignment remain preliminary. Terrain and wind directions must be measured independently of the trajectories.\par\medskip Distribution-collapse and moment-scaling diagnostics are not yet consistent enough to claim or reject a common self-similar law. Repeat them on matched populations, lag ranges and directions with uncertainty. The fitted MSD exponent is only a second-moment summary.}
+ % 2x2 grid: phases on top (segmentation feeds the glide/wait model),
+ % directions and distributions below. Pictogram left, question and status right.
+ \draw[pisablight,line width=.6pt](8,49.5)--(152,49.5)(81,55)--(81,80);
+ \begin{scope}[shift={(0,2)}]
+ \draw[pisablue,-{Latex},line width=1pt](78.5,30)--(83,30);
+ \txt[text=pisablue,font=\bfseries\fontsize{10.5}{12.5}\selectfont]{8}{16}{70}{Segmentation}
+ \txt[text=pisablue,font=\bfseries\fontsize{10.5}{12.5}\selectfont]{85}{16}{68}{Stochastic model}
+ % Segmentation: slide-2 phase colours on a side-view track.
+ \begin{scope}[shift={(1.2,7.9)},scale=.68]
+  \draw[para,line width=1.2pt](10,31)--(21,38);
+  \draw[wine,line width=1.2pt](21,38)..controls(23,34)and(27,34)..(28,36.5)..controls(29.5,39.5)and(25.5,40.5)..(25,38)..controls(24.5,35.5)and(30,36)..(33,36);
+  \draw[climbgreen,line width=1.2pt,domain=0:1080,samples=120]plot({31+3*\x/1080+2*cos(\x)},{36-\x/100+.6*sin(\x)});
+  \draw[para,line width=1.2pt](36,25.2)--(51,34);
+ \end{scope}
+ \smalltxt[text=para,font=\bfseries\fontsize{7}{8}\selectfont]{8}{37.5}{10}{glide}
+ \smalltxt[text=wine,font=\bfseries\fontsize{7}{8}\selectfont]{15.5}{37.5}{10}{search}
+ \smalltxt[text=climbgreen,font=\bfseries\fontsize{7}{8}\selectfont]{24.3}{37.5}{10}{climb}
+ % Stochastic model: candidate glide/wait structure; full model in the appendix.
+ \fill[pisablue](86,36)circle(.6);
+ \draw[para,-{Latex},line width=1.2pt](86,36)--(94.6,28.4);
+ \draw[para,-{Latex},line width=1.2pt](97.4,28.6)--(102.6,36.2);
+ \draw[para,-{Latex},line width=1.2pt](105.4,36.6)--(112,30);
+ \filldraw[fill=wine!12,draw=wine,line width=1pt](96,27)circle(1.6);
+ \filldraw[fill=wine!12,draw=wine,line width=1pt](104,38)circle(1.6);
+ \smalltxt[text=para,font=\bfseries\fontsize{7}{8}\selectfont]{86}{37.5}{10}{glide}
+ \smalltxt[text=wine,font=\bfseries\fontsize{7}{8}\selectfont]{93}{37.5}{10}{wait}
+ \smalltxt[font=\bfseries\fontsize{9}{11}\selectfont]{39}{22.5}{40}{Revise Vilpellet's HMM}
+ \smalltxt[font=\fontsize{8}{9.8}\selectfont]{39}{27.5}{40}{Built on $\geq1$\,Hz tracks;\\misses some of our climbs.\\Next: continuous features\\in physical time.}
+ \smalltxt[font=\bfseries\fontsize{9}{11}\selectfont]{115}{22.5}{39}{Describe the observations}
+ \smalltxt[font=\fontsize{8}{9.8}\selectfont]{115}{27.5}{39}{Candidate: glides alternate\\with waits (search + climb),\\built from measured glides,\\turns and waiting times.}
+ \end{scope}
+ \begin{scope}[shift={(0,8)}]
+ \txt[text=pisablue,font=\bfseries\fontsize{10.5}{12.5}\selectfont]{8}{47}{70}{Anisotropy}
+ \txt[text=pisablue,font=\bfseries\fontsize{10.5}{12.5}\selectfont]{85}{47}{68}{Distribution scaling}
+ % Anisotropy: displacement ellipses; ridge in the slide-18 crest colour.
+ \begin{scope}[shift={(-34,35.8)},scale=.7]
+  % TikZ rotates on the page (counterclockwise), so +22.9 matches the ridge drawn with y downward.
+  \filldraw[fill=para!15,draw=para,line width=.8pt,rotate around={22.9:(69,36.2)}](69,36.2)ellipse(9 and 2.6);
+  \draw[hang,line width=1.1pt](58,40.87)--(80,31.53);
+  \fill[pisablue](69,36.2)circle(.8);
+  \draw[muted,-{Latex},line width=.9pt](86,29)--(100,29);
+  \filldraw[fill=para!15,draw=para,line width=.8pt](93,36.5)ellipse(6.5 and 4);
+  \fill[pisablue](93,36.5)circle(.8);
+ \end{scope}
+ \smalltxt[text=hang,font=\fontsize{6.5}{8}\selectfont]{18.2}{54.6}{10}{ridge}
+ \smalltxt[text=muted,font=\fontsize{6.5}{8}\selectfont]{28.2}{52.5}{10}{wind}
+ \smalltxt[text=muted,font=\fontsize{6.5}{8}\selectfont]{8.5}{66}{16}{Mountains}
+ \smalltxt[text=muted,font=\fontsize{6.5}{8}\selectfont]{27.5}{66}{12}{Plains}
+ % Distribution scaling: rescaled densities at three lags, almost collapsed.
+ \begin{scope}[shift={(12.4,36.8)},scale=.66]
+  \draw[muted,-{Latex},line width=.6pt](110,42)--(152,42);
+  \draw[muted,-{Latex},line width=.6pt](110,42)--(110,25);
+  \draw[para!40,line width=1pt,domain=-20:20,samples=81]plot({131+\x},{42-14*exp(-(\x*\x)/35.3)});
+  \draw[para!70,line width=1pt,domain=-20:20,samples=81]plot({131+\x},{42-13*exp(-(\x*\x)/48)});
+  \draw[para,line width=1pt,domain=-20:20,samples=81]plot({131+\x},{42-12/(1+(\x/4.5)^2)});
+ \end{scope}
+ \smalltxt[text=muted,font=\fontsize{6.5}{8}\selectfont]{105}{65.3}{10}{$x/t^{H}$}
+ \smalltxt[text=muted,font=\fontsize{6.5}{8}\selectfont]{87}{52.5}{10}{$t^{H}P$}
+ \smalltxt[text=muted,font=\fontsize{6}{7}\selectfont]{104}{54.5}{10}{3 lags}
+ \smalltxt[font=\bfseries\fontsize{9}{11}\selectfont]{39}{53.5}{40}{Ridge axis or wind?}
+ \smalltxt[font=\fontsize{8}{9.8}\selectfont]{39}{58.5}{40}{Mountains: chain axis.\\Plains: weaker, mean wind.\\Preliminary observations.}
+ \smalltxt[font=\bfseries\fontsize{9}{11}\selectfont]{115}{53.5}{39}{Do distributions collapse?}
+ \smalltxt[font=\fontsize{8}{9.8}\selectfont]{115}{58.5}{39}{Collapse and moment tests:\\mixed so far. Power-law\\MSD alone does not\\establish self-similarity.}
+ \end{scope}
+ \credit{Segmentation baseline: Vilpellet, Darmon \& Benzaquen (2026), \href{https://arxiv.org/abs/2601.01293}{arXiv:2601.01293}, \S~II and Appendix.}
+\notetext{The current Vilpellet segmentation is useful and already supplies the thermal-plane examples. The source study retained trajectories at a minimum frequency of one hertz; its appendix uses binary trajectory features. That domain does not validate transfer to our slower loggers. Visual inspection also suggests some climbing or lifting stretches are missed. These are diagnostics, not a completed accuracy benchmark. The proposed replacement remains an HMM with discrete glide, search and climb states, but continuous-valued observations such as vertical speed and turning measures. Features must be defined in physical time and state persistence must account for sampling interval. Merely replacing binary emissions with Gaussians does not solve cadence dependence. Validate on reviewed trajectories and deliberately downsampled high-frequency tracks.\par\medskip The top-right cell states the goal: a stochastic model able to describe the empirical observations. The candidate has two phases: glides generate displacement, and each contiguous search and thermalling block becomes one waiting episode. Estimate glide lengths, durations, directions and turning-angle memory, and total waiting times without assuming independent search and climb durations. Position is held fixed during waiting, which neglects local search motion and thermal drift. Monte Carlo simulations with the observed sampling then test MSD, displacement distributions, anisotropy and temporal correlations. Details are in the appendix.\par\medskip For anisotropy, estimate the displacement tensor at each lag and compare its main axis with local ridge orientation or measured wind. Mountain alignment and weaker lowland wind alignment remain preliminary. Terrain and wind directions must be measured independently of the trajectories.\par\medskip Distribution-collapse and moment-scaling diagnostics are not yet consistent enough to claim or reject a common self-similar law. Repeat them on matched populations, lag ranges and directions with uncertainty. The fitted MSD exponent is only a second-moment summary.}
 \finishslide\end{frame}
 
-\begin{frame}[plain]\frametitle{Next: gliding and waiting}\startslide{Next: gliding and waiting}
- \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{8}{17}{145}{A two-phase model, motivated by Vilpellet et al.}
- \txt[text=para,font=\bfseries\fontsize{10}{12}\selectfont]{8}{26}{70}{Displacement: gliding}
- \smalltxt[font=\fontsize{8.5}{10.5}\selectfont]{8}{32}{70}{Duration $T_{\rm g}$, length $\ell$ and direction $\theta$.\\Retain turning-angle memory between glides.}
- \txt[text=wine,font=\bfseries\fontsize{10}{12}\selectfont]{84}{26}{70}{Waiting: search + thermalling}
- \smalltxt[font=\fontsize{8.5}{10.5}\selectfont]{84}{32}{70}{$T_{\rm w}$: total time between successive glides.\\Estimate one pooled waiting-time distribution.}
- % Coarse-grained 2D path: finite-duration glide vectors separated by one
- % waiting state. Each circle aggregates a contiguous search/thermalling block.
- \fill[pisablue](13,60)circle(.75);
- \draw[para,-{Latex},line width=1.7pt](13,60)--(43,49.7);
- \draw[para,-{Latex},line width=1.7pt](47,49.5)--(86,59.5);
- \draw[para,-{Latex},line width=1.7pt](90,59.5)--(140,46);
- \filldraw[fill=wine!12,draw=wine,line width=1.2pt](45,49)circle(2.2);
- \filldraw[fill=wine!12,draw=wine,line width=1.2pt](88,60)circle(2.2);
- \smalltxt[text=para,font=\fontsize{10}{12}\selectfont]{23}{51}{15}{$\ell_1$}
- \smalltxt[text=wine,font=\fontsize{9}{11}\selectfont]{35}{42}{36}{Wait: $T_{{\rm w},1}$}
- \smalltxt[text=para,font=\fontsize{10}{12}\selectfont]{63}{59}{15}{$\ell_2$}
- \smalltxt[text=wine,font=\fontsize{9}{11}\selectfont]{80}{63.5}{36}{Wait: $T_{{\rm w},2}$}
- \smalltxt[text=para,font=\fontsize{10}{12}\selectfont]{116}{46}{18}{$\ell_3$}
- \smalltxt[text=muted,font=\fontsize{7.5}{9}\selectfont]{8}{69}{146}{Waiting neglects local search motion and thermal drift: a modelling approximation to test.}
- \bottomline{Monte Carlo: test MSD, displacement distributions, anisotropy and memory}
- \credit{Proposed model; schematic path. Motivation: Vilpellet et al. (2026), \S IV, VI and Figs. 3--4, \href{https://arxiv.org/abs/2601.01293}{arXiv:2601.01293}.}
-\notetext{The proposed transport model has two phases: displacement during gliding, and waiting that combines search and thermalling. Vilpellet et al. report ballistic glides, subdiffusive search and slow horizontal drift during climbs. These observations motivate our reduction; they do not establish a fitted two-state model.\par\medskip Retain three behavioural labels for segmentation, then merge each contiguous search/thermalling block into one waiting episode. Its duration includes all such intervals until the next glide, allowing repeated alternations or an absent search phase. Estimate total waiting times directly, without assuming independent search and climb durations.\par\medskip Glides generate displacement over finite durations. Estimate their lengths, durations, directions and successive dependence, including turning-angle memory. In the simplest model, position stays fixed during waiting while time advances. This neglects local search motion and thermal advection: quantify the displacement error over the target scales. Reorientation between glides remains part of the model.\par\medskip Simulate in two dimensions plus time, using the observed sampling and estimators. Test MSD, displacement distributions, anisotropy and temporal correlations on held-out flights. Matching one H is insufficient. Source: Vilpellet et al. (2026), Sections IV and VI, Figures 3--4.}
-\finishslide\end{frame}
 
-\begin{frame}[plain]\frametitle{Next: social flight and the spatial supply of lift}\startslide{Next: social flight and the supply of lift}
- \txt[text=pisablue,font=\bfseries\fontsize{12}{14}\selectfont]{8}{18}{69}{Solo versus grouped flights}
- \smalltxt[font=\fontsize{9.5}{12}\selectfont]{8}{29}{69}{Build reliable group / solo labels.\\Compare transport within shared terrain,\\circuit and wing-class settings.}
- \txt[font=\fontsize{11}{14}\selectfont]{8}{48}{69}{$\Delta H^{\rm social}_{a,c,e}=H_{a,c,e,\rm group}-H_{a,c,e,\rm solo}$}
- \smalltxt[font=\fontsize{9}{11}\selectfont]{8}{60}{69}{\textbf{Factorial models}: estimate this contrast\\and how it changes across the other factors.}
- \txt[text=pisablue,font=\bfseries\fontsize{12}{14}\selectfont]{85}{18}{69}{Where is usable lift?}
- \smalltxt[font=\fontsize{9.5}{12}\selectfont]{85}{29}{69}{Estimate the horizontal distribution of thermals\\conditional on height and weather.\\Account for where gliders actually sampled.}
- \draw[->,pisablue,line width=1pt](119,46)--(119,51);
- \smalltxt[font=\fontsize{9}{11}\selectfont]{85}{55}{69}{Test routes against an explicit objective:\\for example, maximise expected progress\\subject to altitude and safety constraints.}
- \bottomline{Separate social contrasts from composition; link route choices to the available lift}
- \credit{Joint factorial models: NIST/SEMATECH, \href{https://www.itl.nist.gov/div898/handbook/pri/section3/pri333.htm}{Full Factorial Designs}. Quantitative example in the appendix. All analyses here are planned.}
-\notetext{Reliable detection of simultaneous group flight is a prerequisite. For each altitude, circuit and equipment setting, compare grouped with solo flights, then model how that contrast varies between settings. Adding a binary social factor doubles the four-by-two-by-two table to 32 cells. Factorial models include both conditional contrasts and interactions with terrain, circuit or equipment; adequate cell support and dependence-aware resampling remain essential. The current conditional comparisons already demonstrate circuit-by-altitude and equipment-by-altitude associations. The proposed joint model brings these factors together; it does not turn an observational archive into a randomised experiment or guarantee causal identification. The symbolic model is retained in the appendix.\par\medskip The second direction estimates the spatial availability of usable lift from climb data, conditional on altitude and weather. Crossing density is biased by routes, exposure and pilot choices, so it is not directly thermal density. Correcting for flight sampling and, where possible, using atmospheric information is necessary. Use the resulting field in a routing model only after stating what optimal means: expected progress, travel time or another criterion, subject to altitude, reachability and safety constraints. This is a future scientific model, not flight-navigation advice or a validated operational route planner.}
-\finishslide\end{frame}
 
-\begin{frame}[plain]\frametitle{Data and geographic sources}\startslide{Data and geographic sources}
- \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{8}{18}{45}{Flight archive}
- \smalltxt[font=\fontsize{9}{12}\selectfont]{59}{18}{94}{FFVL Coupe F\'ed\'erale de Distance: IGC tracks, dates,\\declared sites, circuits and wing classes.\\\href{https://parapente.ffvl.fr/cfd/liste}{parapente.ffvl.fr/cfd/liste}\quad \href{https://delta.ffvl.fr/cfd/liste}{delta.ffvl.fr/cfd/liste}}
- \draw[pisablight,line width=.6pt](8,36)--(152,36);
- \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{8}{40}{45}{Maps and terrain}
- \smalltxt[font=\fontsize{9}{12}\selectfont]{59}{39}{94}{\href{https://cartes.gouv.fr}{IGN / G\'eoplateforme}: Plan IGN map backgrounds.\\\href{https://www.data.gouv.fr/datasets/rge-alti-r}{IGN RGE ALTI}: local terrain windows and derived crests.\\Licence Ouverte 2.0; only the selected cells downloaded.}
- \draw[pisablight,line width=.6pt](8,57)--(152,57);
- \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{8}{61}{45}{Locator and analysis}
- \smalltxt[font=\fontsize{9}{12}\selectfont]{59}{60}{94}{\href{https://www.naturalearthdata.com/about/terms-of-use/}{Natural Earth}: France outline, public domain.\\MSD, intervals and crossings: this thesis's prepared pipeline.\\\href{https://github.com/matteodisante/soaring-anomalous-transport}{Code, figure scripts and recorded source provenance}}
- \credit{Flight archive through June 2026. Geographic extracts retrieved 22 September 2026. Website links are clickable.}
-\notetext{The FFVL archive supplies the observed trajectories and catalogue metadata. Paraglider and hang-glider collections have separate portals and season ranges, shown earlier. The pipeline applies the documented cleaning, selection and equal-flight estimators; generated figures are outputs of this thesis rather than independent external datasets. Thermal crossings come from the prepared viewer store.\par\medskip IGN Plan IGN is the coloured map background. Approximate crest lines are computed independently of flight positions from RGE ALTI terrain, requested at 25 m sampling for twelve selected five-kilometre cells with a 500 m processing buffer. The total terrain download is about 2.64 MiB. The source licence and precise queries are retained with the extracts. The France locator uses Natural Earth country boundaries in the public domain.\par\medskip Named summit points from IGN BD TOPO were tested earlier but are not the crest overlay currently displayed. The thermal-mechanism image is a schematic, not an atmospheric measurement. Source hashes, extraction parameters and figure scripts are recorded with the presentation and thesis.}
-\finishslide\end{frame}
 
-\begin{frame}[plain]\frametitle{Selected bibliography}\startslide{Selected bibliography}
- \smalltxt[font=\fontsize{9}{12}\selectfont]{8}{18}{146}{\textbf{Vilpellet, Darmon \& Benzaquen (2026).} \emph{From Random Walks to Thermal Rides:\\Universal Anomalous Transport in Soaring Flights.} \href{https://arxiv.org/abs/2601.01293}{arXiv:2601.01293}.\\Transport, HMM phase segmentation and phase-duration benchmarks.}
- \smalltxt[font=\fontsize{9}{12}\selectfont]{8}{37}{146}{\textbf{NIST/SEMATECH.} \emph{e-Handbook of Statistical Methods},\\\href{https://www.itl.nist.gov/div898/handbook/pri/section2/pri212.htm}{\S5.2.1.2: One Variable at a Time}; \href{https://www.itl.nist.gov/div898/handbook/pri/section3/pri333.htm}{\S5.3.3.3: Full Factorial Designs}.\\\textbf{Mohr, Wilson \& Freund (2022).} \emph{Statistical Methods}, 4th ed., \S9.3, \S9.7.}
- \smalltxt[font=\fontsize{9}{12}\selectfont]{8}{56}{146}{\textbf{FAA (2024).} \href{https://www.faa.gov/sites/faa.gov/files/Glider-Flying-Handbook.pdf}{\emph{Glider Flying Handbook}}, Ch. 9--10.\\\textbf{Soaring Society of America.} \href{https://www.ssa.org/lift-sources/}{\emph{Lift Sources}}.\\\textbf{Schroeder \& Buck (1970).} \href{https://www.weather.gov/media/zhu/ZHU_Training_Page/winds/FireWx_General_Winds/FireWx_General_Winds.pdf}{\emph{Fire Weather}}, Ch. 6: General Winds.}
- \smalltxt[font=\fontsize{8.5}{11}\selectfont]{8}{75}{146}{\textbf{Savitzky \& Golay (1964).} Smoothing and Differentiation of Data by Simplified Least\\Squares Procedures. \emph{Analytical Chemistry} 36, 1627--1639. \href{https://doi.org/10.1021/ac60214a047}{doi:10.1021/ac60214a047}.}
- \credit{Selection of references used in the talk; full bibliography in the thesis. Geographic and flight sources on the preceding slide.}
-\notetext{Vilpellet, Darmon and Benzaquen provide the central transport and segmentation comparison. Their reported phase durations are a benchmark to test after our own segmentation is validated. NIST and the statistical-methods textbook support the distinction between controlled one-factor-at-a-time experiments and factorial models with interactions. The FAA, SSA and general-wind sources support possible lift and wind mechanisms, not a measured wind profile for either selected cell. Savitzky and Golay give the local-polynomial basis of the smoothing and derivative estimates. The main talk keeps the statistical results, physical interpretations and proposed mechanisms distinct. The full references, publication details and links are maintained in thesis/references.bib.}
-\finishslide\end{frame}
 
 \begin{frame}[plain]\frametitle{Take-home messages and open questions}\startslide{Take-home messages and open questions}
  \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{8}{18}{70}{What the data show}
@@ -545,21 +648,22 @@
  \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{86}{18}{67}{What remains open}
  \smalltxt[font=\fontsize{9.5}{12}\selectfont]{86}{28}{67}{\textbf{Mechanisms and uncertainty.}\\Terrain-linked lift is observed; wind and\\route mechanisms need matched tests.\\[3mm]\textbf{Cadence and scaling.}\\Validate segmentation, anisotropy,\\distribution scaling and bootstrap coverage.\\[3mm]\textbf{Joint models and social flight.}\\Quantify conditional group / solo contrasts;\\test a phase-based stochastic model.}
  \bottomline{Next: test the mechanisms with joint models and validated flight phases}
- \credit{Measured contrasts: thesis \S3.1--3.2. Nominal 90\% bootstrap intervals are shown with estimates; coverage remains under review.}
+ \credit{Measured contrasts. Nominal 90\% bootstrap intervals are shown with estimates; coverage remains under review.}
 \notetext{The main contribution is a reproducible statistical description, followed by marginal and stratified comparisons that reveal which contrasts survive changes of setting. The fixed cohort removes lag-dependent entry and exit of flights over the principal fit range, while preserving the need to discuss duration selection and statistical uncertainty.\par\medskip Open trajectories have larger effective exponents than closed trajectories within every launch-altitude class. The altitude ranking reverses between open and closed circuits: mountain flights do not have a universally smaller H. Unequal circuit composition and lag-dependent MSD contributions explain why a pooled terrain plot alone is insufficient. Wing-class contrasts also depend on altitude, although wing class mixes equipment and an experience proxy.\par\medskip Thermal-plane maps show terrain-associated climb corridors in H2 and stronger broadening with height in P1. They support a physical interpretation but do not isolate wind or explain the circuit interaction by themselves. Next steps validate segmentation and uncertainty, resolve anisotropy and distribution scaling, and combine drivers in joint factorial models, especially for solo versus grouped flight. Phase durations and dependence will then constrain and test a stochastic model. These are open tasks, not further established results.}
 \finishslide\end{frame}
 
 \begin{frame}[plain]\frametitle{Thank you}
  \begin{tikzpicture}[remember picture,overlay,shift={(current page.north west)},x=1mm,y=-1mm]
   \fill[pisablue](0,0)rectangle(160,90);
-  \node[anchor=north east,inner sep=0pt]at(148,10){\includegraphics[width=34mm]{assets/logos/econophisics_squares.png}};
-  \txt[text=white,font=\bfseries\fontsize{30}{34}\selectfont]{12}{22}{136}{Thank you}
-  \txt[text=white,font=\fontsize{17}{21}\selectfont]{12}{40}{136}{Questions and discussion}
-  \txt[text=pisablight,font=\fontsize{11}{14}\selectfont]{12}{62}{136}{Thanks to the pilots sharing their flights,\\the FFVL archive and the research community.}
-  \txt[text=white,font=\fontsize{10}{12}\selectfont]{12}{79}{136}{Matteo Di Sante\hfill EconophysicsLab offsite 2026}
+  \node[anchor=north east,inner sep=0pt]at(148,10){\includegraphics[width=62mm]{assets/logos/econophisics_squares.png}};
+  \node[anchor=north east,inner sep=0pt]at(145,27){\scalebox{.95}{\offsitetitle{offsitelight}{white}}};
+  \txt[text=white,font=\bfseries\fontsize{30}{36}\selectfont]{12}{38}{136}{Thank you\\for your attention}
  \end{tikzpicture}
-\notetext{Thank the audience and open the discussion. Acknowledge the pilots who contributed their flight logs, the FFVL archive making those records available, and the research community whose methods and results support the analysis. The quantitative factorial example and the bootstrap-method slide follow as backup material.}
+\notetext{Thank the audience and open the discussion. The quantitative factorial example, the solo-versus-group feasibility check, the gliding-and-waiting model, the velocity-memory definitions and the bootstrap-method slide follow as backup material.}
 \end{frame}
+
+
+
 
 \appendix
 
@@ -595,6 +699,43 @@
 \finishslide\end{frame}
 
 \appendix
+\begin{frame}[plain]\frametitle{Appendix: is a solo versus group study feasible?}\startslide{Appendix: is a solo versus group study feasible?}
+ \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{8}{18}{69}{What a group label requires}
+ \smalltxt[font=\fontsize{9.5}{12}\selectfont]{8}{28}{69}{Flights in the same small cell, close enough\\in time to see each other: visual contact,\\about 15 minutes apart at most.\\[2mm]Then compare transport within shared\\altitude, circuit and wing-class settings.}
+ \txt[font=\fontsize{11}{14}\selectfont]{8}{55}{69}{$\Delta H^{\rm social}_{a,c,e}=H_{a,c,e,\rm group}-H_{a,c,e,\rm solo}$}
+ \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{85}{18}{69}{What the archive gives}
+ \smalltxt[font=\fontsize{9.5}{12}\selectfont]{85}{28}{69}{Best case: the most populated 5\,km cell\\(Low mountains), busiest day, peak 15 min.}
+ \txt[text=wine,font=\bfseries\fontsize{22}{26}\selectfont]{85}{43}{69}{$\le$\,63 flights}
+ \smalltxt[font=\fontsize{9.5}{12}\selectfont]{85}{55}{69}{22 July 2023, 13:15--13:30 Paris time.\\An upper bound, before any split\\over 32 cells. Other cells are sparser.}
+ \bottomline{With the current archive, a solo versus group comparison is most likely out of reach}
+ \credit{Group definition is operational and not yet implemented. Counts: 5\,$\times$\,5 km Lambert-93 cells, span from first to last time in the cell.}
+\notetext{Solo versus grouped flight was proposed as a factor in the joint factorial model. It requires reliable labels for simultaneous flight. A group here means flights that share a small spatial cell and are close enough in time for pilots to see each other, of the order of fifteen minutes. That rules out flights in the same cell on the same day but hours apart.\par\medskip Even in the most favourable case the counts are far too small. Take the most populated 5 by 5 km cell, a Low-mountains cell, on its busiest summer day, 22 July 2023. In the peak quarter hour, 13:15 to 13:30 Paris time, at most 63 flights cross the cell, whether or not they climb there. This is an upper bound: a flight counts as present from its first to its last time in the cell, even if it leaves in between. Less populated cells hold fewer flights. Splitting by altitude class, circuit type and wing class, and then by group versus solo, divides such counts over 32 cells. The archive is therefore probably too sparse for this contrast, and the number is not a marginal shortfall.\par\medskip Possible ways forward are a looser definition of co-presence, a coarser cell or a different data source with denser coverage, each at the cost of a weaker notion of visual contact. No group labels or social contrasts are reported.}
+\finishslide\end{frame}
+
+\begin{frame}[plain]\frametitle{Appendix: gliding and waiting}\startslide{Appendix: gliding and waiting}
+ \txt[text=para,font=\bfseries\fontsize{10}{12}\selectfont]{8}{26}{70}{Displacement: gliding}
+ \smalltxt[font=\fontsize{8.5}{10.5}\selectfont]{8}{32}{70}{Duration $T_{\rm g}$, length $\ell$ and direction $\theta$.\\Retain turning-angle memory between glides.}
+ \txt[text=wine,font=\bfseries\fontsize{10}{12}\selectfont]{84}{26}{70}{Waiting: search + thermalling}
+ \smalltxt[font=\fontsize{8.5}{10.5}\selectfont]{84}{32}{70}{$T_{\rm w}$: total time between successive glides.\\Estimate one pooled waiting-time distribution.}
+ % Coarse-grained 2D path: finite-duration glide vectors separated by one
+ % waiting state. Each circle aggregates a contiguous search/thermalling block.
+ \fill[pisablue](13,60)circle(.75);
+ \draw[para,-{Latex},line width=1.7pt](13,60)--(43,49.7);
+ \draw[para,-{Latex},line width=1.7pt](47,49.5)--(86,59.5);
+ \draw[para,-{Latex},line width=1.7pt](90,59.5)--(140,46);
+ \filldraw[fill=wine!12,draw=wine,line width=1.2pt](45,49)circle(2.2);
+ \filldraw[fill=wine!12,draw=wine,line width=1.2pt](88,60)circle(2.2);
+ \smalltxt[text=para,font=\fontsize{10}{12}\selectfont]{23}{51}{15}{$\ell_1$}
+ \smalltxt[text=wine,font=\fontsize{9}{11}\selectfont]{35}{42}{36}{Wait: $T_{{\rm w},1}$}
+ \smalltxt[text=para,font=\fontsize{10}{12}\selectfont]{63}{59}{15}{$\ell_2$}
+ \smalltxt[text=wine,font=\fontsize{9}{11}\selectfont]{80}{63.5}{36}{Wait: $T_{{\rm w},2}$}
+ \smalltxt[text=para,font=\fontsize{10}{12}\selectfont]{116}{46}{18}{$\ell_3$}
+ \smalltxt[text=muted,font=\fontsize{7.5}{9}\selectfont]{8}{69}{146}{Waiting neglects local search motion and thermal drift.}
+ \bottomline{Monte Carlo: test MSD, displacement distributions, anisotropy and memory}
+ \credit{Proposed model; schematic path.}
+\notetext{The proposed transport model has two phases: displacement during gliding, and waiting that combines search and thermalling. Vilpellet et al. report ballistic glides, subdiffusive search and slow horizontal drift during climbs. These observations motivate our reduction; they do not establish a fitted two-state model.\par\medskip Retain three behavioural labels for segmentation, then merge each contiguous search/thermalling block into one waiting episode. Its duration includes all such intervals until the next glide, allowing repeated alternations or an absent search phase. Estimate total waiting times directly, without assuming independent search and climb durations.\par\medskip Glides generate displacement over finite durations. Estimate their lengths, durations, directions and successive dependence, including turning-angle memory. In the simplest model, position stays fixed during waiting while time advances. This neglects local search motion and thermal advection: quantify the displacement error over the target scales. Reorientation between glides remains part of the model.\par\medskip Simulate in two dimensions plus time, using the observed sampling and estimators. Test MSD, displacement distributions, anisotropy and temporal correlations on held-out flights. Matching one H is insufficient. Source: Vilpellet et al. (2026), Sections IV and VI, Figures 3--4.}
+\finishslide\end{frame}
+
 \begin{frame}[plain]\frametitle{Appendix: velocity and directional memory}\startslide{Appendix: velocity and directional memory}
  \smalltxt[text=pisablue,font=\fontsize{9.5}{12}\selectfont]{8}{17}{144}{$\boldsymbol v(t)=s(t)\,\boldsymbol e(t)$,\quad $\boldsymbol e=(\cos\theta,\sin\theta)$\qquad $\Delta\theta=\theta(t+\tau)-\theta(t)$}
  % Direction comparisons; translated arrows retain the same vector directions.
@@ -624,12 +765,12 @@
  \smalltxt[]{58}{27}{43}{Sample with replacement.\\Keep each group together.}
  \smalltxt[]{108}{27}{44}{1,000 replicates.\\Take the 5th--95th percentiles.}
  % Sampling units and their repeated appearance in one schematic replicate.
- \foreach \x/\col/\lab in {16/para/A,30/teal/B,44/hang/C,66/teal/B,80/teal/B,94/para/A}{
-  \draw[\col,line width=.7pt](\x,48)circle(5.1);
+ \foreach \x/\col/\lab in {16/bootA/A,30/bootB/B,44/bootC/C,66/bootB/B,80/bootB/B,94/bootA/A}{
+  \draw[\col,fill=\col!15,line width=1pt](\x,48)circle(5.1);
   \fill[\col](\x-1.7,46.5)circle(.65);
   \fill[\col](\x+1.7,46.5)circle(.65);
   \fill[\col](\x,49.3)circle(.65);
-  \node[text=\col,font=\fontsize{8}{10}\selectfont]at(\x,57){\lab};
+  \node[text=\col,font=\bfseries\fontsize{8}{10}\selectfont]at(\x,57){\lab};
  }
  \draw[-{Latex},pisablue,line width=.8pt](50,48)--(58,48);
  \draw[-{Latex},pisablue,line width=.8pt](100,48)--(107,48);
@@ -641,8 +782,34 @@
  \smalltxt[font=\fontsize{8}{10}\selectfont]{143}{55}{14}{$q_{0.95}$}
  \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont]{9}{66}{142}{Current clusters are too small to absorb all shared flight conditions.}
  \bottomline{Intervals likely underestimate uncertainty; clustering is still being refined}
- \credit{Thesis \S3.1.2. Schematic resample. Intervals are pointwise; they do not guarantee simultaneous curve coverage.}
+ \credit{Schematic resample. Intervals are pointwise; they do not guarantee simultaneous curve coverage.}
 \notetext{The reported confidence intervals use the current site--day cluster bootstrap. Each group combines flights from the same declared take-off site and calendar day. We sample groups with replacement, preserve all flights belonging to a sampled group, recompute the equal-flight estimator, and repeat this one thousand times. The same multiplicities are paired across lags and conditional comparisons. The 5th and 95th percentiles form nominal 90 percent intervals; for a curve they are pointwise, not a simultaneous confidence band.\par\medskip Clustering aims to keep dependent flights together and make different groups approximately independent. The current partition is too fine: nearby sites and neighbouring days can share weather and other conditions, so flights in different groups can still be dependent. In the current cohort, 71.1 percent of paraglider groups and 81.3 percent of hang-glider groups are singletons. The bands are consequently likely to understate uncertainty; their nominal level should not be read as demonstrated coverage.\par\medskip Validation with 50-km cells crossed with initial-altitude class and month of year gives standard errors for fitted H roughly four times the site--day value for paragliders and twice for hang gliders. Further aggregation changes the errors again; independence and uncertainty have not stabilised. These are diagnostic comparisons, not a validated replacement partition, and other chapter bands have not been recomputed with that scheme. All intervals in this presentation retain the original bootstrap convention. Sources: thesis Section 3.1.2; ch3\_transport\_grid\_bootstrap.json and its generated values.}
 \finishslide\end{frame}
+
+
+
+\begin{frame}[plain]\frametitle{Data and geographic sources}\startslide{Data and geographic sources}
+ \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{8}{18}{45}{Flight archive}
+ \smalltxt[font=\fontsize{9}{12}\selectfont]{59}{18}{94}{FFVL Coupe F\'ed\'erale de Distance: IGC tracks, dates,\\declared sites, circuits and wing classes.\\\href{https://parapente.ffvl.fr/cfd/liste}{parapente.ffvl.fr/cfd/liste}\quad \href{https://delta.ffvl.fr/cfd/liste}{delta.ffvl.fr/cfd/liste}}
+ \draw[pisablight,line width=.6pt](8,36)--(152,36);
+ \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{8}{40}{45}{Maps and terrain}
+ \smalltxt[font=\fontsize{9}{12}\selectfont]{59}{39}{94}{\href{https://cartes.gouv.fr}{IGN / G\'eoplateforme}: Plan IGN map backgrounds.\\\href{https://www.data.gouv.fr/datasets/rge-alti-r}{IGN RGE ALTI}: local terrain windows and derived crests.\\Licence Ouverte 2.0; only the selected cells downloaded.}
+ \draw[pisablight,line width=.6pt](8,57)--(152,57);
+ \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{8}{61}{45}{Locator and analysis}
+ \smalltxt[font=\fontsize{9}{12}\selectfont]{59}{60}{94}{\href{https://www.naturalearthdata.com/about/terms-of-use/}{Natural Earth}: France outline, public domain.\\MSD, intervals and crossings: this thesis's prepared pipeline.\\\href{https://github.com/matteodisante/soaring-anomalous-transport}{Code, figure scripts and recorded source provenance}}
+ \credit{Flight archive through June 2026. Geographic extracts retrieved 22 September 2026. Website links are clickable.}
+\notetext{The FFVL archive supplies the observed trajectories and catalogue metadata. Paraglider and hang-glider collections have separate portals and season ranges, shown earlier. The pipeline applies the documented cleaning, selection and equal-flight estimators; generated figures are outputs of this thesis rather than independent external datasets. Thermal crossings come from the prepared viewer store.\par\medskip IGN Plan IGN is the coloured map background. Approximate crest lines are computed independently of flight positions from RGE ALTI terrain, requested at 25 m sampling for twelve selected five-kilometre cells with a 500 m processing buffer. The total terrain download is about 2.64 MiB. The source licence and precise queries are retained with the extracts. The France locator uses Natural Earth country boundaries in the public domain.\par\medskip Named summit points from IGN BD TOPO were tested earlier but are not the crest overlay currently displayed. The thermal-mechanism image is a schematic, not an atmospheric measurement. Source hashes, extraction parameters and figure scripts are recorded with the presentation and thesis.}
+\finishslide\end{frame}
+
+
+\begin{frame}[plain]\frametitle{Selected bibliography}\startslide{Selected bibliography}
+ \smalltxt[font=\fontsize{9}{12}\selectfont]{8}{18}{146}{\textbf{Vilpellet, Darmon \& Benzaquen (2026).} \emph{From Random Walks to Thermal Rides:\\Universal Anomalous Transport in Soaring Flights.} \href{https://arxiv.org/abs/2601.01293}{arXiv:2601.01293}.\\Transport, HMM phase segmentation and phase-duration benchmarks.}
+ \smalltxt[font=\fontsize{9}{12}\selectfont]{8}{37}{146}{\textbf{NIST/SEMATECH.} \emph{e-Handbook of Statistical Methods},\\\href{https://www.itl.nist.gov/div898/handbook/pri/section2/pri212.htm}{\S5.2.1.2: One Variable at a Time}; \href{https://www.itl.nist.gov/div898/handbook/pri/section3/pri333.htm}{\S5.3.3.3: Full Factorial Designs}.\\\textbf{Mohr, Wilson \& Freund (2022).} \emph{Statistical Methods}, 4th ed., \S9.3, \S9.7.}
+ \smalltxt[font=\fontsize{9}{12}\selectfont]{8}{56}{146}{\textbf{FAA (2024).} \href{https://www.faa.gov/sites/faa.gov/files/Glider-Flying-Handbook.pdf}{\emph{Glider Flying Handbook}}, Ch. 9--10.\\\textbf{Soaring Society of America.} \href{https://www.ssa.org/lift-sources/}{\emph{Lift Sources}}.\\\textbf{Schroeder \& Buck (1970).} \href{https://www.weather.gov/media/zhu/ZHU_Training_Page/winds/FireWx_General_Winds/FireWx_General_Winds.pdf}{\emph{Fire Weather}}, Ch. 6: General Winds.}
+ \smalltxt[font=\fontsize{8.5}{11}\selectfont]{8}{75}{146}{\textbf{Savitzky \& Golay (1964).} Smoothing and Differentiation of Data by Simplified Least\\Squares Procedures. \emph{Analytical Chemistry} 36, 1627--1639. \href{https://doi.org/10.1021/ac60214a047}{doi:10.1021/ac60214a047}.}
+ \credit{Selection of references used in the talk; full bibliography in the thesis. Geographic and flight sources on the preceding slide.}
+\notetext{Vilpellet, Darmon and Benzaquen provide the central transport and segmentation comparison. Their reported phase durations are a benchmark to test after our own segmentation is validated. NIST and the statistical-methods textbook support the distinction between controlled one-factor-at-a-time experiments and factorial models with interactions. The FAA, SSA and general-wind sources support possible lift and wind mechanisms, not a measured wind profile for either selected cell. Savitzky and Golay give the local-polynomial basis of the smoothing and derivative estimates. The main talk keeps the statistical results, physical interpretations and proposed mechanisms distinct. The full references, publication details and links are maintained in thesis/references.bib.}
+\finishslide\end{frame}
+
 
 \end{document}

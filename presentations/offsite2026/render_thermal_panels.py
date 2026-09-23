@@ -1,4 +1,4 @@
-"""Export thesis and slide 16 maps from the viewer's prepared intersections.
+"""Export thesis and slide 18 maps from the viewer's prepared intersections.
 
 No screen capture, raw-flight decoding, segmentation or network requests.
 Pool all available dates, with no seasonal restriction.

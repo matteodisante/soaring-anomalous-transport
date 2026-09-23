@@ -1,6 +1,6 @@
 {
-  "scope": "Thesis Chapters 1\u20132 and Sections 3.1\u20133.2; thermal-plane topography; research agenda with a stochastic-flight schematic, sources and conclusions; factorial, directional-memory and bootstrap appendices (28 slides).",
-  "operation": "Redraw saved estimates and intervals. Slide 9 extends C_10000 below 10 s with cadence-limited support, and densely evaluates the original estimator above 10 s. Original bootstrap draws and 10\u201310000 s fits are preserved; see cadence-support-report.json. Circuit weights use the full altitude-class MSD denominator and observed curves only. Every plotted category reports its flight count; thermal-map counts use distinct flights from verified crossing CSVs.",
+  "scope": "Thesis Chapters 1\u20132 and Sections 3.1\u20133.2; thermal-plane topography; research agenda with a stochastic-flight schematic, sources and conclusions; factorial, directional-memory and bootstrap appendices (30 slides).",
+  "operation": "Redraw saved estimates and intervals. Slide 9 shows the available-population TA-MSD and its shrinking flight support. Slide 11 extends C_10000 below 10 s with cadence-limited support, and densely evaluates the original estimator above 10 s. Original bootstrap draws and 10\u201310000 s fits are preserved; see cadence-support-report.json. Circuit weights use the full altitude-class MSD denominator and observed curves only. Every plotted category reports its flight count; thermal-map counts use distinct flights from verified crossing CSVs.",
   "inputs": [
     {
       "path": "thesis/tesi/01-introduction.tex",
@@ -8,7 +8,7 @@
     },
     {
       "path": "thesis/tesi/03-dataset.tex",
-      "sha256": "b3a17d07f1a9efe502d017c4e6c1351bf01f1a2048a0dd59576e7b361a935e09"
+      "sha256": "1560303f6d2f88932d503caeb782cda21362353c619a7cdd56f7011879adaec2"
     },
     {
       "path": "thesis/tesi/04-fixed-transport.tex",
@@ -64,7 +64,7 @@
     },
     {
       "path": "src/soaring/viewer/widgets/thermal_plane.py",
-      "sha256": "2fe9f27ca49e89e04b8b5baed57ec988ac2d627253603b5aab314ac1b0350119"
+      "sha256": "495131a3e37511352bd4ff0b2e848d795a8f598b170ae3c6f7928b0ceb956385"
     },
     {
       "path": "presentations/offsite2026/cadence-support-report.json",
@@ -72,7 +72,7 @@
     },
     {
       "path": "presentations/offsite2026/measure_cadence_support.py",
-      "sha256": "34beb005d96b253079bcccd75ae229cb1da50d0686339ced186a826d821202b9"
+      "sha256": "e443af7789c3a3a5236fbbeb205fcc6c5fb7f89240814271a84bd97de5d52fcc"
     },
     {
       "path": "scripts/tesi/ch03_fixed_transport/circuit_msd_weights.py",
@@ -84,11 +84,11 @@
     },
     {
       "path": "presentations/offsite2026/offsite-2026.tex",
-      "sha256": "3efb13d41f5770fc4a2f198264bdc1414f5208453aef44afb8d093877cf18543"
+      "sha256": "5c6ce37881e08cca30aefd61a1cc8e015cd1536d5c81a7c02b1dfdd69b47aab1"
     },
     {
       "path": "presentations/offsite2026/render_figures.py",
-      "sha256": "321592c3e171956e5a4d87c71dd45311f0c6569b9a25d79cecc62a4d8dc401ac"
+      "sha256": "be9f0dacfd88884560554a26d07cd5ad8b400e89768d8f09fb0ae23faf773b7a"
     },
     {
       "path": "presentations/offsite2026/preprocessing-global-frame.tex",
@@ -96,7 +96,7 @@
     },
     {
       "path": "presentations/offsite2026/render_thermal_panels.py",
-      "sha256": "7f43877ba2e0eca872e3012fb7e84323a0a259176c7e0e0acfe80611fe9dd370"
+      "sha256": "b2fcdfb616af83bdbbda3715ea8e6442c130c65168cd4a59feae8e2e7c8b0d59"
     },
     {
       "path": "presentations/offsite2026/assets/screenshots/thermal-panels-report.json",

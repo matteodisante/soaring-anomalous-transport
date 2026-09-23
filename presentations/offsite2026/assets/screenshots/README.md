@@ -1,4 +1,4 @@
-# Direct viewer-data maps for the thesis and slide 16
+# Direct viewer-data maps for the thesis and slide 18
 
 These are scientific exports from the viewer code, not screenshots.
 `render_thermal_panels.py` uses `ThermalStore.read_plane`, `height_levels` and
