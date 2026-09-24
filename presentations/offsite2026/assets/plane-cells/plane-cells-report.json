@@ -1,8 +1,9 @@
 {
   "method": "Viewer thermal-plane explorer: census visitors of each 5 km cell, whole-flight own-HMM climb edges (saved or decoded into the viewer climb cache), and plane_intersections at one absolute altitude, as in the expanded neighbourhood view. All dates, both disciplines.",
-  "selection": "Per regional box, the 10 km Lambert-93 cell (edges at multiples of 10 km, 2 x 2 viewer cells) wholly inside the box with the most distinct crossing flights in the viewer census; ties by grid coordinates.",
-  "plane": "H = mean IGN RGE ALTI terrain of the 10 km cell + 600 m, the average of its four 5 km viewer DEM means (equal areas). One horizontal plane.",
-  "height_m": 600,
+  "selection": "Per regional box, the 20 km Lambert-93 cell (edges at multiples of 20 km, 4 x 4 viewer cells) wholly inside the box with the most distinct crossing flights in the viewer census; ties by grid coordinates.",
+  "plane": "At height H = 800 m above the mean IGN RGE ALTI terrain of the cell, the average of its 16 5 km viewer DEM means (equal areas). One horizontal plane.",
+  "size_km": 20,
+  "height_m": 800,
   "segmentation": "own",
   "time_extent_utc_s": [
     946736956.4331654,
@@ -14,151 +15,431 @@
     "alps": {
       "region": "Alps",
       "block": [
-        92,
-        647
+        47,
+        326
       ],
       "bounds_epsg2154": [
-        920000,
-        6470000,
-        930000,
-        6480000
+        940000,
+        6520000,
+        960000,
+        6540000
       ],
       "centre_lon_lat": [
-        5.873293584854371,
-        45.33753655756321
+        6.220848363486821,
+        45.823744258096276
       ],
-      "census_flights": 19935,
+      "census_flights": 25063,
       "runner_up_flights": [
-        19931,
-        19793
+        22799,
+        22578
       ],
-      "mean_terrain_m": 1141.1206698997498,
-      "plane_altitude_m": 1741.1206698997498,
+      "mean_terrain_m": 878.5768463719368,
+      "plane_altitude_m": 1678.5768463719369,
       "dem": {
         "file": "alps-dem.tif",
-        "source_url": "https://data.geopf.fr/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES&STYLES=normal&CRS=EPSG%3A2154&BBOX=920000%2C6470000%2C930000%2C6480000&WIDTH=400&HEIGHT=400&FORMAT=image%2Ftiff",
-        "response_sha256": "bc02bbd144b9d0e4eb4190b53505d90b1a7100bbf94e7938603cf27bb0882ed4",
-        "mean_m": 1141.1206288085937,
-        "mean_minus_cell_average_m": -4.109115616302006e-05,
-        "min_m": 227.46112060546875,
-        "max_m": 2054.321533203125,
-        "area_above_plane": 0.067375
+        "source_url": "https://data.geopf.fr/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES&STYLES=normal&CRS=EPSG%3A2154&BBOX=940000%2C6520000%2C960000%2C6540000&WIDTH=800&HEIGHT=800&FORMAT=image%2Ftiff",
+        "response_sha256": "3f45ee6ac7d32a150c1b322bd767da17af348fd1ff4d2267f68452ba76a08f0c",
+        "mean_m": 878.5769487232209,
+        "mean_minus_cell_average_m": 0.00010235128411295591,
+        "min_m": 415.63067626953125,
+        "max_m": 2343.16259765625,
+        "area_above_plane": 0.0251703125
       },
       "cells": [
         {
-          "ix": 184,
-          "iy": 1294,
-          "terrain_label": "High mountains",
-          "visitors": 15213,
-          "mean_terrain_m": 1343.0278955291749,
-          "selected": 15213,
-          "decoded": 15213,
-          "unclassified": 297,
-          "unavailable": 0,
-          "unknown_clock": 0,
-          "cached": 15213,
-          "crossings": 10835
-        },
-        {
-          "ix": 185,
-          "iy": 1294,
-          "terrain_label": "Low mountains",
-          "visitors": 19192,
-          "mean_terrain_m": 651.8968226539612,
-          "selected": 19192,
-          "decoded": 19192,
-          "unclassified": 378,
-          "unavailable": 0,
-          "unknown_clock": 0,
-          "cached": 19192,
-          "crossings": 1501
-        },
-        {
-          "ix": 184,
-          "iy": 1295,
+          "ix": 188,
+          "iy": 1304,
           "terrain_label": "Neighbour",
-          "visitors": 3079,
-          "mean_terrain_m": 1324.682682496643,
-          "selected": 3079,
-          "decoded": 3079,
-          "unclassified": 50,
+          "visitors": 5278,
+          "mean_terrain_m": 1010.8841063842773,
+          "selected": 5277,
+          "decoded": 5277,
+          "unclassified": 119,
           "unavailable": 0,
-          "unknown_clock": 0,
-          "cached": 3079,
-          "crossings": 877
+          "unknown_clock": 1,
+          "cached": 5277,
+          "crossings": 333
         },
         {
-          "ix": 185,
-          "iy": 1295,
-          "terrain_label": "High mountains",
-          "visitors": 15840,
-          "mean_terrain_m": 1244.87527891922,
-          "selected": 15840,
-          "decoded": 15840,
-          "unclassified": 328,
+          "ix": 189,
+          "iy": 1304,
+          "terrain_label": "Neighbour",
+          "visitors": 15199,
+          "mean_terrain_m": 1128.7345110473632,
+          "selected": 15199,
+          "decoded": 15199,
+          "unclassified": 344,
           "unavailable": 0,
           "unknown_clock": 0,
-          "cached": 15840,
-          "crossings": 2340
+          "cached": 15199,
+          "crossings": 4556
+        },
+        {
+          "ix": 190,
+          "iy": 1304,
+          "terrain_label": "Neighbour",
+          "visitors": 4085,
+          "mean_terrain_m": 682.7865293006897,
+          "selected": 4085,
+          "decoded": 4085,
+          "unclassified": 84,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 4085,
+          "crossings": 52
+        },
+        {
+          "ix": 191,
+          "iy": 1304,
+          "terrain_label": "Neighbour",
+          "visitors": 3844,
+          "mean_terrain_m": 683.4373892799377,
+          "selected": 3844,
+          "decoded": 3844,
+          "unclassified": 94,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 3844,
+          "crossings": 319
+        },
+        {
+          "ix": 188,
+          "iy": 1305,
+          "terrain_label": "Neighbour",
+          "visitors": 4754,
+          "mean_terrain_m": 1110.388936126709,
+          "selected": 4753,
+          "decoded": 4753,
+          "unclassified": 95,
+          "unavailable": 0,
+          "unknown_clock": 1,
+          "cached": 4753,
+          "crossings": 4610
+        },
+        {
+          "ix": 189,
+          "iy": 1305,
+          "terrain_label": "Neighbour",
+          "visitors": 16312,
+          "mean_terrain_m": 724.8164550704956,
+          "selected": 16312,
+          "decoded": 16312,
+          "unclassified": 409,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 16312,
+          "crossings": 6661
+        },
+        {
+          "ix": 190,
+          "iy": 1305,
+          "terrain_label": "Neighbour",
+          "visitors": 14618,
+          "mean_terrain_m": 958.7576450920105,
+          "selected": 14618,
+          "decoded": 14618,
+          "unclassified": 403,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 14618,
+          "crossings": 3702
+        },
+        {
+          "ix": 191,
+          "iy": 1305,
+          "terrain_label": "Neighbour",
+          "visitors": 5457,
+          "mean_terrain_m": 1118.898932546997,
+          "selected": 5457,
+          "decoded": 5457,
+          "unclassified": 139,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 5457,
+          "crossings": 610
+        },
+        {
+          "ix": 188,
+          "iy": 1306,
+          "terrain_label": "Neighbour",
+          "visitors": 1416,
+          "mean_terrain_m": 747.2800563896179,
+          "selected": 1416,
+          "decoded": 1416,
+          "unclassified": 25,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 1416,
+          "crossings": 441
+        },
+        {
+          "ix": 189,
+          "iy": 1306,
+          "terrain_label": "Neighbour",
+          "visitors": 15124,
+          "mean_terrain_m": 498.0643308959961,
+          "selected": 15124,
+          "decoded": 15124,
+          "unclassified": 404,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 15124,
+          "crossings": 359
+        },
+        {
+          "ix": 190,
+          "iy": 1306,
+          "terrain_label": "Low mountains",
+          "visitors": 19011,
+          "mean_terrain_m": 1222.0108039039612,
+          "selected": 19011,
+          "decoded": 19011,
+          "unclassified": 508,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 19011,
+          "crossings": 22563
+        },
+        {
+          "ix": 191,
+          "iy": 1306,
+          "terrain_label": "Neighbour",
+          "visitors": 4140,
+          "mean_terrain_m": 1175.2904629104614,
+          "selected": 4140,
+          "decoded": 4140,
+          "unclassified": 99,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 4140,
+          "crossings": 509
+        },
+        {
+          "ix": 188,
+          "iy": 1307,
+          "terrain_label": "Neighbour",
+          "visitors": 1208,
+          "mean_terrain_m": 488.6716752838135,
+          "selected": 1208,
+          "decoded": 1208,
+          "unclassified": 24,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 1208,
+          "crossings": 108
+        },
+        {
+          "ix": 189,
+          "iy": 1307,
+          "terrain_label": "Neighbour",
+          "visitors": 5222,
+          "mean_terrain_m": 712.7889229789733,
+          "selected": 5222,
+          "decoded": 5222,
+          "unclassified": 142,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 5222,
+          "crossings": 2068
+        },
+        {
+          "ix": 190,
+          "iy": 1307,
+          "terrain_label": "Neighbour",
+          "visitors": 12148,
+          "mean_terrain_m": 919.0098003845214,
+          "selected": 12148,
+          "decoded": 12148,
+          "unclassified": 274,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 12148,
+          "crossings": 1733
+        },
+        {
+          "ix": 191,
+          "iy": 1307,
+          "terrain_label": "Hills",
+          "visitors": 3154,
+          "mean_terrain_m": 875.4089843551636,
+          "selected": 3154,
+          "decoded": 3154,
+          "unclassified": 64,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 3154,
+          "crossings": 481
         }
       ],
-      "crossings": 15553,
-      "flights": 7890,
+      "crossings": 49105,
+      "flights": 17603,
       "discipline_crossings": {
-        "paragliders": 15232,
-        "hang gliders": 321
+        "paragliders": 47656,
+        "hang gliders": 1449
       },
-      "points_sha256": "3a67cffaa76a993480f3883fa97f16d7d465cb199e2331a295421f0f700ef1a7",
+      "points_sha256": "9cdef6e89a3ec5f1ad45c8b5bba81c577abb323063455a8bf1155b502bb56258",
       "hotspot": {
         "centre_epsg2154": [
-          922125.0,
-          6470375.0
+          951125.0,
+          6534625.0
         ],
         "centre_lon_lat": [
-          5.8344918118560924,
-          45.29685379956724
+          6.237767866264838,
+          45.86494297977081
         ],
-        "crossings_in_bin": 1248,
+        "crossings_in_bin": 2523,
         "flights_without_origin": 0,
-        "flights_started_within_1km": 0.00038022813688212925,
-        "flights_started_within_3km": 0.022179974651457542,
-        "flights_started_inside_cell": 0.8105196451204055
+        "flights_started_within_1km": 0.0017042549565414987,
+        "flights_started_within_3km": 0.27830483440322673,
+        "flights_started_inside_cell": 0.5688234959950008
       }
     },
     "pyrenees": {
       "region": "Pyrenees",
       "block": [
-        48,
-        619
+        24,
+        309
       ],
       "bounds_epsg2154": [
         480000,
-        6190000,
-        490000,
+        6180000,
+        500000,
         6200000
       ],
       "centre_lon_lat": [
-        0.37321055432940015,
-        42.82230174811641
+        0.43623793281312856,
+        42.778844160328724
       ],
-      "census_flights": 3089,
+      "census_flights": 3452,
       "runner_up_flights": [
-        2942,
-        2722
+        3119,
+        1269
       ],
-      "mean_terrain_m": 1268.2465821704864,
-      "plane_altitude_m": 1868.2465821704864,
+      "mean_terrain_m": 1795.6170371488572,
+      "plane_altitude_m": 2595.617037148857,
       "dem": {
         "file": "pyrenees-dem.tif",
-        "source_url": "https://data.geopf.fr/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES&STYLES=normal&CRS=EPSG%3A2154&BBOX=480000%2C6190000%2C490000%2C6200000&WIDTH=400&HEIGHT=400&FORMAT=image%2Ftiff",
-        "response_sha256": "5db7fb7a6b5189d99ba4df9f10c1cd61adddb2ac756e23b2096076ac6f9e64f4",
-        "mean_m": 1268.2466454917908,
-        "mean_minus_cell_average_m": 6.332130442388006e-05,
+        "source_url": "https://data.geopf.fr/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES&STYLES=normal&CRS=EPSG%3A2154&BBOX=480000%2C6180000%2C500000%2C6200000&WIDTH=800&HEIGHT=800&FORMAT=image%2Ftiff",
+        "response_sha256": "5aa2e2c21f237ae7638725e1d566433b9cf0446103c6b04ea511b1e9a33f4f4f",
+        "mean_m": 1795.61709538393,
+        "mean_minus_cell_average_m": 5.823507285640517e-05,
         "min_m": 741.9522705078125,
-        "max_m": 2245.785400390625,
-        "area_above_plane": 0.0257875
+        "max_m": 3218.008056640625,
+        "area_above_plane": 0.0968796875
       },
       "cells": [
+        {
+          "ix": 96,
+          "iy": 1236,
+          "terrain_label": "Neighbour",
+          "visitors": 187,
+          "mean_terrain_m": 2356.049174597168,
+          "selected": 187,
+          "decoded": 187,
+          "unclassified": 0,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 187,
+          "crossings": 3
+        },
+        {
+          "ix": 97,
+          "iy": 1236,
+          "terrain_label": "Neighbour",
+          "visitors": 187,
+          "mean_terrain_m": 2369.1534100341796,
+          "selected": 187,
+          "decoded": 187,
+          "unclassified": 1,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 187,
+          "crossings": 14
+        },
+        {
+          "ix": 98,
+          "iy": 1236,
+          "terrain_label": "Neighbour",
+          "visitors": 754,
+          "mean_terrain_m": 2528.922822344971,
+          "selected": 754,
+          "decoded": 754,
+          "unclassified": 8,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 754,
+          "crossings": 3
+        },
+        {
+          "ix": 99,
+          "iy": 1236,
+          "terrain_label": "Neighbour",
+          "visitors": 953,
+          "mean_terrain_m": 2420.0324103363037,
+          "selected": 953,
+          "decoded": 953,
+          "unclassified": 9,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 953,
+          "crossings": 94
+        },
+        {
+          "ix": 96,
+          "iy": 1237,
+          "terrain_label": "Neighbour",
+          "visitors": 717,
+          "mean_terrain_m": 2230.242594229126,
+          "selected": 717,
+          "decoded": 717,
+          "unclassified": 9,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 717,
+          "crossings": 73
+        },
+        {
+          "ix": 97,
+          "iy": 1237,
+          "terrain_label": "Neighbour",
+          "visitors": 2486,
+          "mean_terrain_m": 1780.2631223876954,
+          "selected": 2486,
+          "decoded": 2486,
+          "unclassified": 40,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 2486,
+          "crossings": 2136
+        },
+        {
+          "ix": 98,
+          "iy": 1237,
+          "terrain_label": "Neighbour",
+          "visitors": 2641,
+          "mean_terrain_m": 2010.941138986206,
+          "selected": 2641,
+          "decoded": 2641,
+          "unclassified": 39,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 2641,
+          "crossings": 2275
+        },
+        {
+          "ix": 99,
+          "iy": 1237,
+          "terrain_label": "Neighbour",
+          "visitors": 1446,
+          "mean_terrain_m": 1790.8780462463378,
+          "selected": 1446,
+          "decoded": 1446,
+          "unclassified": 16,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 1446,
+          "crossings": 1083
+        },
         {
           "ix": 96,
           "iy": 1238,
@@ -171,7 +452,7 @@
           "unavailable": 0,
           "unknown_clock": 0,
           "cached": 1801,
-          "crossings": 290
+          "crossings": 394
         },
         {
           "ix": 97,
@@ -185,7 +466,35 @@
           "unavailable": 0,
           "unknown_clock": 0,
           "cached": 2983,
-          "crossings": 3877
+          "crossings": 2245
+        },
+        {
+          "ix": 98,
+          "iy": 1238,
+          "terrain_label": "Neighbour",
+          "visitors": 2471,
+          "mean_terrain_m": 1579.1028482299805,
+          "selected": 2471,
+          "decoded": 2471,
+          "unclassified": 40,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 2471,
+          "crossings": 726
+        },
+        {
+          "ix": 99,
+          "iy": 1238,
+          "terrain_label": "Neighbour",
+          "visitors": 458,
+          "mean_terrain_m": 1240.5026321548462,
+          "selected": 458,
+          "decoded": 458,
+          "unclassified": 5,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 458,
+          "crossings": 43
         },
         {
           "ix": 96,
@@ -199,7 +508,7 @@
           "unavailable": 0,
           "unknown_clock": 0,
           "cached": 1159,
-          "crossings": 271
+          "crossings": 83
         },
         {
           "ix": 97,
@@ -213,66 +522,206 @@
           "unavailable": 0,
           "unknown_clock": 0,
           "cached": 2206,
-          "crossings": 406
+          "crossings": 558
+        },
+        {
+          "ix": 98,
+          "iy": 1239,
+          "terrain_label": "Neighbour",
+          "visitors": 1729,
+          "mean_terrain_m": 1787.8221626098632,
+          "selected": 1729,
+          "decoded": 1729,
+          "unclassified": 30,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 1729,
+          "crossings": 791
+        },
+        {
+          "ix": 99,
+          "iy": 1239,
+          "terrain_label": "Neighbour",
+          "visitors": 277,
+          "mean_terrain_m": 1562.975903543091,
+          "selected": 277,
+          "decoded": 277,
+          "unclassified": 3,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 277,
+          "crossings": 36
         }
       ],
-      "crossings": 4844,
-      "flights": 2352,
+      "crossings": 10557,
+      "flights": 2634,
       "discipline_crossings": {
-        "paragliders": 4800,
-        "hang gliders": 44
+        "paragliders": 10381,
+        "hang gliders": 176
       },
-      "points_sha256": "83a2f108cff845918262a91f4d093a7893f74ac287b9c065526faaa847862115",
+      "points_sha256": "5520e32f21860e9ea306795b876d094e1df45bf89479ae29018d6622639ee281",
       "hotspot": {
         "centre_epsg2154": [
-          486125.0,
-          6193875.0
+          485375.0,
+          6193625.0
         ],
         "centre_lon_lat": [
-          0.38739992950938323,
-          42.81252687042881
+          0.3783463448305601,
+          42.81005663816446
         ],
-        "crossings_in_bin": 676,
+        "crossings_in_bin": 177,
         "flights_without_origin": 0,
-        "flights_started_within_1km": 0.7453231292517006,
-        "flights_started_within_3km": 0.8979591836734694,
-        "flights_started_inside_cell": 0.905187074829932
+        "flights_started_within_1km": 0.6678056188306758,
+        "flights_started_within_3km": 0.7004555808656037,
+        "flights_started_inside_cell": 0.8823082763857252
       }
     },
     "channel-coast": {
       "region": "Channel Coast",
       "block": [
-        44,
-        687
+        22,
+        343
       ],
       "bounds_epsg2154": [
         440000,
-        6870000,
-        450000,
+        6860000,
+        460000,
         6880000
       ],
       "centre_lon_lat": [
-        -0.48101262832090774,
-        48.92438908749731
+        -0.4098975423581472,
+        48.88142907449169
       ],
-      "census_flights": 2586,
+      "census_flights": 2673,
       "runner_up_flights": [
-        1303,
-        989
+        969,
+        867
       ],
-      "mean_terrain_m": 146.76210281310082,
-      "plane_altitude_m": 746.7621028131008,
+      "mean_terrain_m": 171.62469854572413,
+      "plane_altitude_m": 971.6246985457242,
       "dem": {
         "file": "channel-coast-dem.tif",
-        "source_url": "https://data.geopf.fr/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES&STYLES=normal&CRS=EPSG%3A2154&BBOX=440000%2C6870000%2C450000%2C6880000&WIDTH=400&HEIGHT=400&FORMAT=image%2Ftiff",
-        "response_sha256": "21ac757a17839a7ecaacb03001dc9371257e85c42dc8b1fbabb472f5b26bfd2f",
-        "mean_m": 146.76211849589347,
-        "mean_minus_cell_average_m": 1.5682792650295596e-05,
+        "source_url": "https://data.geopf.fr/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES&STYLES=normal&CRS=EPSG%3A2154&BBOX=440000%2C6860000%2C460000%2C6880000&WIDTH=800&HEIGHT=800&FORMAT=image%2Ftiff",
+        "response_sha256": "f12eebda99ff8364494b33a70e386ad682992b255b1eba1866c4442605e79591",
+        "mean_m": 171.62468957816958,
+        "mean_minus_cell_average_m": -8.9675545495993e-06,
         "min_m": 24.402490615844727,
-        "max_m": 302.18560791015625,
+        "max_m": 305.5207824707031,
         "area_above_plane": 0.0
       },
       "cells": [
+        {
+          "ix": 88,
+          "iy": 1372,
+          "terrain_label": "Neighbour",
+          "visitors": 566,
+          "mean_terrain_m": 219.28357472782136,
+          "selected": 566,
+          "decoded": 566,
+          "unclassified": 9,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 566,
+          "crossings": 206
+        },
+        {
+          "ix": 89,
+          "iy": 1372,
+          "terrain_label": "Neighbour",
+          "visitors": 304,
+          "mean_terrain_m": 180.7263586997986,
+          "selected": 304,
+          "decoded": 304,
+          "unclassified": 3,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 304,
+          "crossings": 76
+        },
+        {
+          "ix": 90,
+          "iy": 1372,
+          "terrain_label": "Neighbour",
+          "visitors": 62,
+          "mean_terrain_m": 162.4876156135559,
+          "selected": 62,
+          "decoded": 62,
+          "unclassified": 1,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 62,
+          "crossings": 13
+        },
+        {
+          "ix": 91,
+          "iy": 1372,
+          "terrain_label": "Neighbour",
+          "visitors": 68,
+          "mean_terrain_m": 176.0759414598465,
+          "selected": 68,
+          "decoded": 68,
+          "unclassified": 3,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 68,
+          "crossings": 21
+        },
+        {
+          "ix": 88,
+          "iy": 1373,
+          "terrain_label": "Neighbour",
+          "visitors": 961,
+          "mean_terrain_m": 154.18133643465043,
+          "selected": 961,
+          "decoded": 961,
+          "unclassified": 17,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 961,
+          "crossings": 297
+        },
+        {
+          "ix": 89,
+          "iy": 1373,
+          "terrain_label": "Neighbour",
+          "visitors": 1177,
+          "mean_terrain_m": 150.1496125386238,
+          "selected": 1177,
+          "decoded": 1177,
+          "unclassified": 19,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 1177,
+          "crossings": 600
+        },
+        {
+          "ix": 90,
+          "iy": 1373,
+          "terrain_label": "Neighbour",
+          "visitors": 183,
+          "mean_terrain_m": 138.76721163139342,
+          "selected": 183,
+          "decoded": 183,
+          "unclassified": 3,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 183,
+          "crossings": 31
+        },
+        {
+          "ix": 91,
+          "iy": 1373,
+          "terrain_label": "Neighbour",
+          "visitors": 307,
+          "mean_terrain_m": 177.91764591865538,
+          "selected": 307,
+          "decoded": 307,
+          "unclassified": 3,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 307,
+          "crossings": 80
+        },
         {
           "ix": 88,
           "iy": 1374,
@@ -285,7 +734,7 @@
           "unavailable": 0,
           "unknown_clock": 0,
           "cached": 450,
-          "crossings": 109
+          "crossings": 145
         },
         {
           "ix": 89,
@@ -299,7 +748,35 @@
           "unavailable": 0,
           "unknown_clock": 0,
           "cached": 2246,
-          "crossings": 1014
+          "crossings": 702
+        },
+        {
+          "ix": 90,
+          "iy": 1374,
+          "terrain_label": "Neighbour",
+          "visitors": 815,
+          "mean_terrain_m": 216.48050372247695,
+          "selected": 815,
+          "decoded": 815,
+          "unclassified": 17,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 815,
+          "crossings": 277
+        },
+        {
+          "ix": 91,
+          "iy": 1374,
+          "terrain_label": "Neighbour",
+          "visitors": 693,
+          "mean_terrain_m": 212.56173696861268,
+          "selected": 693,
+          "decoded": 693,
+          "unclassified": 15,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 693,
+          "crossings": 203
         },
         {
           "ix": 88,
@@ -313,7 +790,7 @@
           "unavailable": 0,
           "unknown_clock": 0,
           "cached": 546,
-          "crossings": 224
+          "crossings": 287
         },
         {
           "ix": 89,
@@ -327,63 +804,91 @@
           "unavailable": 0,
           "unknown_clock": 0,
           "cached": 1463,
-          "crossings": 1134
+          "crossings": 1031
+        },
+        {
+          "ix": 90,
+          "iy": 1375,
+          "terrain_label": "Neighbour",
+          "visitors": 403,
+          "mean_terrain_m": 203.39907816467286,
+          "selected": 403,
+          "decoded": 403,
+          "unclassified": 6,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 403,
+          "crossings": 96
+        },
+        {
+          "ix": 91,
+          "iy": 1375,
+          "terrain_label": "Neighbour",
+          "visitors": 225,
+          "mean_terrain_m": 166.9161495990753,
+          "selected": 225,
+          "decoded": 225,
+          "unclassified": 4,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 225,
+          "crossings": 75
         }
       ],
-      "crossings": 2481,
-      "flights": 1454,
+      "crossings": 4140,
+      "flights": 1939,
       "discipline_crossings": {
-        "paragliders": 2477,
-        "hang gliders": 4
+        "paragliders": 4133,
+        "hang gliders": 7
       },
-      "points_sha256": "6593c17b0b319d3d4f4f971efb093a577a9f5883b0220676e30483d45df9b1a1",
+      "points_sha256": "41208330e824685e1b1c52efeaae9299542687e16f9f2af5a2f52217d50d23e3",
       "hotspot": {
         "centre_epsg2154": [
-          446375.0,
-          6875375.0
+          446125.0,
+          6876125.0
         ],
         "centre_lon_lat": [
-          -0.46249090681971416,
-          48.92830154033418
+          -0.4663487191772816,
+          48.93494089086201
         ],
-        "crossings_in_bin": 48,
+        "crossings_in_bin": 33,
         "flights_without_origin": 0,
-        "flights_started_within_1km": 0.7840440165061898,
-        "flights_started_within_3km": 0.7984869325997249,
-        "flights_started_inside_cell": 0.9965612104539202
+        "flights_started_within_1km": 0.4930376482723053,
+        "flights_started_within_3km": 0.5997937080969572,
+        "flights_started_inside_cell": 0.9953584321815369
       }
     },
     "champagne": {
       "region": "Champagne-Lorraine",
       "block": [
-        84,
-        694
+        42,
+        347
       ],
       "bounds_epsg2154": [
         840000,
         6940000,
-        850000,
-        6950000
+        860000,
+        6960000
       ],
       "centre_lon_lat": [
-        5.004530870711905,
-        49.58765851973151
+        5.075437719948151,
+        49.63141435837447
       ],
-      "census_flights": 666,
+      "census_flights": 701,
       "runner_up_flights": [
-        505,
-        442
+        588,
+        578
       ],
-      "mean_terrain_m": 230.4841497396469,
-      "plane_altitude_m": 830.4841497396469,
+      "mean_terrain_m": 218.10344256026747,
+      "plane_altitude_m": 1018.1034425602675,
       "dem": {
         "file": "champagne-dem.tif",
-        "source_url": "https://data.geopf.fr/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES&STYLES=normal&CRS=EPSG%3A2154&BBOX=840000%2C6940000%2C850000%2C6950000&WIDTH=400&HEIGHT=400&FORMAT=image%2Ftiff",
-        "response_sha256": "5b63e89d76cffd846e3193105d1c2c89ef7c297e48d5fd97a620f3e4f855f61f",
-        "mean_m": 230.48426540193557,
-        "mean_minus_cell_average_m": 0.00011566228866399797,
-        "min_m": 151.54998779296875,
-        "max_m": 319.91143798828125,
+        "source_url": "https://data.geopf.fr/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES&STYLES=normal&CRS=EPSG%3A2154&BBOX=840000%2C6940000%2C860000%2C6960000&WIDTH=800&HEIGHT=800&FORMAT=image%2Ftiff",
+        "response_sha256": "6cd35249225e42c25cff348ae48ecda043c5522a7749268ab29d4b00f9ab1088",
+        "mean_m": 218.10347211313248,
+        "mean_minus_cell_average_m": 2.9552865015602947e-05,
+        "min_m": 149.4952392578125,
+        "max_m": 349.01385498046875,
         "area_above_plane": 0.0
       },
       "cells": [
@@ -399,7 +904,7 @@
           "unavailable": 0,
           "unknown_clock": 0,
           "cached": 456,
-          "crossings": 68
+          "crossings": 75
         },
         {
           "ix": 169,
@@ -413,7 +918,35 @@
           "unavailable": 0,
           "unknown_clock": 0,
           "cached": 643,
-          "crossings": 591
+          "crossings": 517
+        },
+        {
+          "ix": 170,
+          "iy": 1388,
+          "terrain_label": "Neighbour",
+          "visitors": 43,
+          "mean_terrain_m": 197.59795457763673,
+          "selected": 43,
+          "decoded": 43,
+          "unclassified": 0,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 43,
+          "crossings": 11
+        },
+        {
+          "ix": 171,
+          "iy": 1388,
+          "terrain_label": "Neighbour",
+          "visitors": 13,
+          "mean_terrain_m": 267.6890387702942,
+          "selected": 13,
+          "decoded": 13,
+          "unclassified": 0,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 13,
+          "crossings": 0
         },
         {
           "ix": 168,
@@ -427,7 +960,7 @@
           "unavailable": 0,
           "unknown_clock": 0,
           "cached": 59,
-          "crossings": 28
+          "crossings": 12
         },
         {
           "ix": 169,
@@ -441,39 +974,179 @@
           "unavailable": 0,
           "unknown_clock": 0,
           "cached": 36,
-          "crossings": 14
+          "crossings": 8
+        },
+        {
+          "ix": 170,
+          "iy": 1389,
+          "terrain_label": "Neighbour",
+          "visitors": 17,
+          "mean_terrain_m": 236.65893094673157,
+          "selected": 17,
+          "decoded": 17,
+          "unclassified": 0,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 17,
+          "crossings": 4
+        },
+        {
+          "ix": 171,
+          "iy": 1389,
+          "terrain_label": "Neighbour",
+          "visitors": 15,
+          "mean_terrain_m": 200.61876184997558,
+          "selected": 15,
+          "decoded": 15,
+          "unclassified": 0,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 15,
+          "crossings": 1
+        },
+        {
+          "ix": 168,
+          "iy": 1390,
+          "terrain_label": "Neighbour",
+          "visitors": 32,
+          "mean_terrain_m": 192.33798760757446,
+          "selected": 32,
+          "decoded": 32,
+          "unclassified": 1,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 32,
+          "crossings": 5
+        },
+        {
+          "ix": 169,
+          "iy": 1390,
+          "terrain_label": "Neighbour",
+          "visitors": 24,
+          "mean_terrain_m": 172.0316604221344,
+          "selected": 24,
+          "decoded": 24,
+          "unclassified": 0,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 24,
+          "crossings": 3
+        },
+        {
+          "ix": 170,
+          "iy": 1390,
+          "terrain_label": "Neighbour",
+          "visitors": 15,
+          "mean_terrain_m": 179.01634183807374,
+          "selected": 15,
+          "decoded": 15,
+          "unclassified": 0,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 15,
+          "crossings": 2
+        },
+        {
+          "ix": 171,
+          "iy": 1390,
+          "terrain_label": "Neighbour",
+          "visitors": 15,
+          "mean_terrain_m": 198.50787877197266,
+          "selected": 15,
+          "decoded": 15,
+          "unclassified": 0,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 15,
+          "crossings": 2
+        },
+        {
+          "ix": 168,
+          "iy": 1391,
+          "terrain_label": "Neighbour",
+          "visitors": 34,
+          "mean_terrain_m": 202.4486768547058,
+          "selected": 34,
+          "decoded": 34,
+          "unclassified": 0,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 34,
+          "crossings": 11
+        },
+        {
+          "ix": 169,
+          "iy": 1391,
+          "terrain_label": "Neighbour",
+          "visitors": 20,
+          "mean_terrain_m": 224.1627790473938,
+          "selected": 20,
+          "decoded": 20,
+          "unclassified": 0,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 20,
+          "crossings": 8
+        },
+        {
+          "ix": 170,
+          "iy": 1391,
+          "terrain_label": "Neighbour",
+          "visitors": 11,
+          "mean_terrain_m": 239.4748155090332,
+          "selected": 11,
+          "decoded": 11,
+          "unclassified": 0,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 11,
+          "crossings": 1
+        },
+        {
+          "ix": 171,
+          "iy": 1391,
+          "terrain_label": "Neighbour",
+          "visitors": 8,
+          "mean_terrain_m": 257.1736558101654,
+          "selected": 8,
+          "decoded": 8,
+          "unclassified": 0,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 8,
+          "crossings": 0
         }
       ],
-      "crossings": 701,
-      "flights": 500,
+      "crossings": 660,
+      "flights": 474,
       "discipline_crossings": {
-        "paragliders": 700,
-        "hang gliders": 1
+        "paragliders": 655,
+        "hang gliders": 5
       },
-      "points_sha256": "de89f1be6fe13a5c3b76e1724b99c01ba34609c458424e97e0f85d0d5fe92e02",
+      "points_sha256": "a59868cf645ed089e16d6e261305dd1bde00b089fdb76e2ed51293d29a159ea9",
       "hotspot": {
         "centre_epsg2154": [
-          848375.0,
-          6942125.0
+          848125.0,
+          6941625.0
         ],
         "centre_lon_lat": [
-          5.0501356333812355,
-          49.56105176388285
+          5.046503853239147,
+          49.5566181414282
         ],
-        "crossings_in_bin": 26,
+        "crossings_in_bin": 15,
         "flights_without_origin": 0,
-        "flights_started_within_1km": 0.912,
-        "flights_started_within_3km": 0.98,
-        "flights_started_inside_cell": 0.982
+        "flights_started_within_1km": 0.07805907172995781,
+        "flights_started_within_3km": 0.9324894514767933,
+        "flights_started_inside_cell": 0.9324894514767933
       }
     }
   },
   "code_sha256": {
-    "presentations/offsite2026/measure_plane_cells.py": "ca265eb712d7c601c8c76a71aa3d9116ce47ae971cb3262c7185754c69d888f4",
+    "presentations/offsite2026/measure_plane_cells.py": "68b64a14790afbc2e243a6aa28ea09dfd5c18e2e49390c1561a4972fa319abca",
     "src/soaring/viewer/thermal_explorer.py": "0e5c3124c0939a0fcf98bdc36089e2d5d8a421d1f696f8783660553e86286b2e",
     "src/soaring/viewer/thermal_geometry.py": "007aa20d4280eaf39f8dee7dbc037fca7a34f3f6c30c0ba8afe738b2a2c0b714",
     "src/soaring/viewer/thermal_ground.py": "7db1c147a4950aa193ec6bd4eb88f44f3afb42713a003fae7e0603ef2676eac3",
-    "src/soaring/viewer/thermal_prepare.py": "0b67a0e3b8bcfc0bfbb1ee39f862fbc2b9aed889027df0e5b793c0d1646037de",
+    "src/soaring/viewer/thermal_prepare.py": "ec74f872bf1ca47e79593c79f7a76acdecd6b5dcf7076ea8b964ea4ac28989d5",
     "src/soaring/viewer/thermal_store.py": "9b360971aa3e0c88016890dd577103153bca26083f1267dbfb00f25658eb514c",
     "src/soaring/viewer/thermal_cache.py": "37d4af6d97863bc7f12aef3638df50958d9d80eb122b9417890aec1028924612"
   }

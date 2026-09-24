@@ -1,95 +1,95 @@
 {
-  "definition": "Median over 1000 draws of 500 flights (all flights if fewer) of the smallest share of 250 m bins holding half of their first crossings. share_for_half_by_bin_m gives [observed, uniform] for other bin sizes.",
+  "definition": "Median over 1000 draws of 474 flights per cell (the smallest cell's count, capped at 500; a cell with exactly that many uses all of them once) of the smallest share of 250 m bins holding half of their first crossings. share_for_half_by_bin_m gives [observed, uniform] for other bin sizes.",
   "regions": {
     "alps": {
-      "share_for_half": 0.006875,
-      "uniform_share_for_half": 0.1125,
-      "flights_drawn": 500,
+      "share_for_half": 0.0034375,
+      "uniform_share_for_half": 0.034375,
+      "flights_drawn": 474,
       "share_for_half_by_bin_m": {
         "100": [
-          0.0044,
-          0.0238
+          0.0019,
+          0.00585
         ],
         "250": [
-          0.006875,
-          0.111875
+          0.00359375,
+          0.034375
         ],
         "500": [
-          0.0125,
-          0.22375
+          0.005625,
+          0.10875
         ],
         "1000": [
-          0.02,
-          0.34
+          0.0125,
+          0.2175
         ]
       }
     },
     "pyrenees": {
-      "share_for_half": 0.001875,
-      "uniform_share_for_half": 0.1125,
-      "flights_drawn": 500,
+      "share_for_half": 0.00453125,
+      "uniform_share_for_half": 0.034375,
+      "flights_drawn": 474,
       "share_for_half_by_bin_m": {
         "100": [
-          0.0015,
-          0.0238
+          0.0025,
+          0.00585
         ],
         "250": [
-          0.001875,
-          0.111875
+          0.0044531250000000005,
+          0.034375
         ],
         "500": [
-          0.005,
-          0.2225
+          0.005625,
+          0.108125
         ],
         "1000": [
-          0.02,
-          0.34
+          0.01,
+          0.2175
         ]
       }
     },
     "channel-coast": {
-      "share_for_half": 0.016875,
-      "uniform_share_for_half": 0.1125,
-      "flights_drawn": 500,
+      "share_for_half": 0.01203125,
+      "uniform_share_for_half": 0.034375,
+      "flights_drawn": 474,
       "share_for_half_by_bin_m": {
         "100": [
-          0.0099,
-          0.0238
+          0.0047,
+          0.00585
         ],
         "250": [
-          0.016875,
-          0.1125
+          0.0121875,
+          0.034375
         ],
         "500": [
-          0.02,
-          0.2225
+          0.0175,
+          0.108125
         ],
         "1000": [
-          0.03,
-          0.34
+          0.0225,
+          0.2175
         ]
       }
     },
     "champagne": {
-      "share_for_half": 0.01125,
-      "uniform_share_for_half": 0.1125,
-      "flights_drawn": 500,
+      "share_for_half": 0.005,
+      "uniform_share_for_half": 0.034375,
+      "flights_drawn": 474,
       "share_for_half_by_bin_m": {
         "100": [
-          0.008,
-          0.0238
+          0.002975,
+          0.00585
         ],
         "250": [
-          0.01125,
-          0.1125
+          0.005,
+          0.034375
         ],
         "500": [
-          0.0125,
-          0.2225
+          0.00625,
+          0.108125
         ],
         "1000": [
-          0.02,
-          0.34
+          0.01,
+          0.2175
         ]
       }
     }

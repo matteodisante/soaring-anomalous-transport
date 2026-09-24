@@ -4,7 +4,8 @@ Each panel: shaded IGN relief, the terrain standing above the plane, and every c
 crossing of the plane. No SSD or network access; reads assets/plane-cells only.
 
 Concentration: the share of the cell's 250 m bins that holds half of the crossings,
-with one crossing per flight (its first in time) and 500 flights drawn per region,
+with one crossing per flight (its first in time) and an equal sample per region,
+capped at 500 and at the number of flights in the smallest cell,
 so that unequal traffic does not decide the comparison. The same statistic for as
 many uniform random points is saved as the reference.
 """
@@ -34,7 +35,7 @@ POINT_SIZE = 1.7
 POINT_ALPHA = .35
 BIN_M = 250
 CHECK_BINS_M = (100, 250, 500, 1000)  # robustness of the ranking, report only
-SAMPLE_FLIGHTS = 500
+SAMPLE_FLIGHTS = 500  # at most; every cell draws as many as the smallest cell holds
 DRAWS = 1000
 DEM_STEP_M = 25
 
@@ -53,15 +54,15 @@ def hillshade(z, azimuth=315, altitude=45):
     return np.clip((nx * light[0] + ny * light[1] + light[2]) / norm, 0, 1)
 
 
-def half_share(points, bounds, rng, bin_m=BIN_M):
-    """Median share of bins holding half of 500 flights' first crossings."""
+def half_share(points, bounds, rng, sample, bin_m=BIN_M):
+    """Median share of bins holding half of ``sample`` flights' first crossings."""
     west, south, east, north = bounds
     first = points.sort_values("utc", kind="stable").drop_duplicates(["discipline", "flight_id"])
     bins = int((east - west) // bin_m)
     ix = ((first.x - west) // bin_m).astype(int).to_numpy()
     iy = ((first.y - south) // bin_m).astype(int).to_numpy()
     flat = ix * bins + iy
-    n = min(SAMPLE_FLIGHTS, len(flat))
+    n = min(sample, len(flat))
 
     def share(cells):
         counts = np.sort(np.bincount(cells, minlength=bins**2))[::-1]
@@ -110,13 +111,17 @@ def main():
     report = json.loads((OUT / "plane-cells-report.json").read_text())
     rng = np.random.default_rng(2026)
     concentration, macros = {}, []
+    points = {slug: panel(slug, region) for slug, region in report["regions"].items()}
+    sample = min(SAMPLE_FLIGHTS, *(len(p[["discipline", "flight_id"]].drop_duplicates())
+                                   for p in points.values()))
+    macros.append(f"\\newcommand{{\\PlaneCellSampleFlights}}{{{sample}}}")
     for slug, region in report["regions"].items():
-        points = panel(slug, region)
-        share, uniform, n = half_share(points, region["bounds_epsg2154"], rng)
+        share, uniform, n = half_share(points[slug], region["bounds_epsg2154"], rng, sample)
         concentration[slug] = {
             "share_for_half": share, "uniform_share_for_half": uniform, "flights_drawn": n,
             "share_for_half_by_bin_m": {
-                str(b): half_share(points, region["bounds_epsg2154"], rng, b)[:2] for b in CHECK_BINS_M
+                str(b): half_share(points[slug], region["bounds_epsg2154"], rng, sample, b)[:2]
+                for b in CHECK_BINS_M
             },
         }
         tag = "".join(part.capitalize() for part in slug.split("-"))
@@ -127,7 +132,8 @@ def main():
     macros.append(f"\\newcommand{{\\PlaneCellUniformHalfShare}}{{{100 * uniform:.0f}}}")
     (OUT / "plane-cells-concentration.json").write_text(json.dumps({
         "definition": (
-            f"Median over {DRAWS} draws of {SAMPLE_FLIGHTS} flights (all flights if fewer) "
+            f"Median over {DRAWS} draws of {sample} flights per cell (the smallest cell's "
+            "count, capped at 500; a cell with exactly that many uses all of them once) "
             f"of the smallest share of {BIN_M} m bins holding half of their first crossings. "
             "share_for_half_by_bin_m gives [observed, uniform] for other bin sizes."
         ),
