@@ -215,29 +215,6 @@ def parking(ax, x0, y0, w, d, shift):
             ax.plot(u, v, color="#E8E8E8", lw=0.3, zorder=3.1)
 
 
-QUARRY_STEP = 1.0  # depth of each quarry bench
-
-
-def quarry(ax, cx, cy, shift):
-    """Open pit cut in benches: each level shows its lit back wall above a paler bench floor."""
-    t = np.linspace(0, 2 * np.pi, 80, endpoint=False)
-    r = 3.8 + 0.25 * np.sin(3 * t) + 0.15 * np.cos(5 * t)
-
-    def outline(scale, z):
-        u, v, _ = project(cx + 1.25 * scale * r * np.cos(t), cy + scale * r * np.sin(t), np.full(len(t), z), shift)
-        return np.column_stack([u, v])
-
-    opening = None
-    for k, (scale, wall, floor) in enumerate(((1.0, "#8E806A", "#DDD5C4"), (0.55, "#7E715D", "#CFC5B1"))):
-        top, bottom = outline(scale, GROUND - k * QUARRY_STEP), outline(scale, GROUND - (k + 1) * QUARRY_STEP)
-        rim = ax.fill(*top.T, color=wall, ec="#6E6352", lw=0.35, zorder=3 + 0.1 * k)[0]
-        base = ax.fill(*bottom.T, color=floor, lw=0, zorder=3.05 + 0.1 * k)[0]
-        if opening is not None:
-            rim.set_clip_path(opening)
-        base.set_clip_path(rim)
-        opening = rim
-
-
 def box(x0, y0, w, d, h, roof, walls, ridge=0.0, shift=0.0):
     """Polygons of a building seen from the front right; ridge > 0 adds a pitched roof along x."""
     def P(x, y, z):
@@ -268,7 +245,6 @@ def lowland_panel(ax, shift):
     ploughed(ax, 50.0, 14.5, 5.0, 4.0, shift)
     ploughed(ax, 44.0, 2.5, 8.8, 7.3, shift)
     parking(ax, 26.8, 10.8, 6.5, 4.5, shift)
-    quarry(ax, 22.0, 5.0, shift)
     objects = []
     for hx, hy, hw in ((53.5, 25.0, 1.9), (56.2, 25.9, 1.7), (54.4, 28.1, 1.8), (57.8, 28.6, 1.6),
                        (52.0, 27.6, 1.5), (59.5, 25.8, 1.7)):
@@ -280,7 +256,6 @@ def lowland_panel(ax, shift):
         ((52.5, 16.5), 9.0, 0.70, 2.5, 0.0),  # small ploughed field, right
         ((48.5, 6.0), 10.5, 0.80, 2.5, 0.0),  # ploughed field, front right
         ((30.0, 13.0), 12.0, 0.85, 3.0, 0.0),  # parking lot
-        ((22.0, 5.0), 11.0, 0.85, 2.5, -2 * QUARRY_STEP),  # quarry floor
         ((56.5, 27.3), 14.0, 0.95, 3.0, 0.0),  # village roofs
         ((37.0, 29.0), 12.5, 0.90, 3.0, 2.4),  # warehouse roof
     ]
