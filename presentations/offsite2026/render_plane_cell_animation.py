@@ -2,6 +2,7 @@
 
 No SSD or network is needed after measure_plane_cell_animation.py has saved the
 crossing arrays. Terrain, bounds and colours match render_plane_cells.py.
+Playback starts at 800 m, so the GIF and PDF posters show the reference plane.
 """
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ OUT = HERE / "assets/plane-cells"
 FRAMES = OUT / "animation-frames"
 WIDTH_IN = 34 / 25.4
 HEIGHT_IN = 41 / 25.4
+POSTER_HEIGHT_M = 800
 
 
 def render_frame(slug, region, xy, height, dem, index):
@@ -68,7 +70,9 @@ def main():
     animation = json.loads((OUT / "plane-cell-animation-report.json").read_text())
     if hashlib.sha256(report_path.read_bytes()).hexdigest() != animation["source_report_sha256"]:
         raise ValueError("The plane-cell report changed; remeasure the altitude sweep.")
-    heights = animation["height_above_mean_terrain_m"]
+    measured_heights = animation["height_above_mean_terrain_m"]
+    start = measured_heights.index(POSTER_HEIGHT_M)
+    heights = measured_heights[start:] + measured_heights[:start]
     FRAMES.mkdir(exist_ok=True)
     for slug, region in report["regions"].items():
         with Image.open(io.BytesIO((OUT / region["dem"]["file"]).read_bytes())) as im:
@@ -81,9 +85,10 @@ def main():
                 with Image.open(path) as im:
                     sequence.append(im.convert("RGB"))
         sequence[0].save(OUT / f"{slug}-height.gif", save_all=True,
-                         append_images=sequence[1:], duration=[500] * (len(sequence) - 1) + [1000],
+                         append_images=sequence[1:],
+                         duration=[1000 if h == max(heights) else 500 for h in heights],
                          loop=0, optimize=True, disposal=2)
-        print(f"{slug}: {len(sequence)} frames, {OUT / f'{slug}-height.gif'}", flush=True)
+        print(f"{slug}: heights {heights}, {OUT / f'{slug}-height.gif'}", flush=True)
 
 
 if __name__ == "__main__":

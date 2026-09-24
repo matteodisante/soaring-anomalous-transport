@@ -1,0 +1,91 @@
+{
+  "source_report_sha256": "b3958647a3afc9faf308a2b6a0c3d6fcc06603189e75638ace4b49c4a061fd00",
+  "method": "Viewer own-HMM continuous climb edges and the viewer's half-open plane-intersection rule at each absolute height; all dates and both disciplines.",
+  "height_above_mean_terrain_m": [
+    200,
+    400,
+    600,
+    800,
+    1000,
+    1200,
+    1400
+  ],
+  "regions": {
+    "alps": {
+      "bounds_epsg2154": [
+        940000,
+        6520000,
+        960000,
+        6540000
+      ],
+      "mean_terrain_m": 878.5768463719369,
+      "counts": {
+        "200": 14822,
+        "400": 24075,
+        "600": 39001,
+        "800": 49105,
+        "1000": 46847,
+        "1200": 37334,
+        "1400": 22896
+      },
+      "array_file": "alps-height-series.npz"
+    },
+    "pyrenees": {
+      "bounds_epsg2154": [
+        480000,
+        6180000,
+        500000,
+        6200000
+      ],
+      "mean_terrain_m": 1795.617037148857,
+      "counts": {
+        "200": 7710,
+        "400": 10095,
+        "600": 10910,
+        "800": 10557,
+        "1000": 9068,
+        "1200": 6673,
+        "1400": 4450
+      },
+      "array_file": "pyrenees-height-series.npz"
+    },
+    "channel-coast": {
+      "bounds_epsg2154": [
+        440000,
+        6860000,
+        460000,
+        6880000
+      ],
+      "mean_terrain_m": 171.6246985457242,
+      "counts": {
+        "200": 3043,
+        "400": 3602,
+        "600": 4147,
+        "800": 4140,
+        "1000": 2975,
+        "1200": 1342,
+        "1400": 501
+      },
+      "array_file": "channel-coast-height-series.npz"
+    },
+    "champagne": {
+      "bounds_epsg2154": [
+        840000,
+        6940000,
+        860000,
+        6960000
+      ],
+      "mean_terrain_m": 218.10344256026747,
+      "counts": {
+        "200": 649,
+        "400": 659,
+        "600": 760,
+        "800": 660,
+        "1000": 551,
+        "1200": 376,
+        "1400": 219
+      },
+      "array_file": "champagne-height-series.npz"
+    }
+  }
+}

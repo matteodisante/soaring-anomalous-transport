@@ -1,9 +1,10 @@
 """Export crossings at successive heights for the four cells on the plane slide.
 
 The saved plane-cells report fixes the cell bounds, terrain reference, time span,
-and own-HMM segmentation. This script reads the same viewer climb edges and calls
-its plane_intersections routine at each absolute plane altitude. It requires the
-connected SSD; render_plane_cell_animation.py needs only these exported arrays.
+and own-HMM segmentation. This script reads the same viewer climb edges and
+applies the same half-open plane-intersection rule at each absolute altitude.
+It requires the connected SSD; render_plane_cell_animation.py needs only these
+exported arrays.
 """
 
 from __future__ import annotations
@@ -75,7 +76,7 @@ def main() -> None:
     cache = sqlite3.connect(f"file:{cache_path}?mode=ro", uri=True)
     manifest = {
         "source_report_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
-        "method": "Viewer own-HMM continuous climb edges and plane_intersections at each absolute height; all dates and both disciplines.",
+        "method": "Viewer own-HMM continuous climb edges and the viewer's half-open plane-intersection rule at each absolute height; all dates and both disciplines.",
         "height_above_mean_terrain_m": list(HEIGHTS_M),
         "regions": {},
     }
