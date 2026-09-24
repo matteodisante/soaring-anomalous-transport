@@ -97,8 +97,7 @@ def prepare_climbs(
                     entry[1].setdefault(source, []).append((cache.key, cell))
     total = len(todo)
     progress(
-        f"{total:,} distinct flights still need products "
-        "(requested methods and cells)"
+        f"{total:,} distinct flights still need products (requested methods and cells)"
     )
     if not total:
         return
