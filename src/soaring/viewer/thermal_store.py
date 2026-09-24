@@ -15,6 +15,7 @@ import pandas as pd
 
 from ..reporting.disciplines import DISCIPLINES
 from .thermal_geometry import ThermalCell
+from .thermal_ground import GROUND_REFERENCE, terrain_cell, terrain_reference
 
 EDGE_COLUMNS = [f"{axis}{end}" for end in (0, 1) for axis in ("x", "y", "z", "utc")]
 STORE_NAME = "thermal-planes.sqlite3"
@@ -60,11 +61,20 @@ class ThermalStore:
             if metadata.get("ready") != "1" or metadata.get("version") not in (
                 "1",
                 "2",
+                "3",
             ):
                 raise ValueError(
                     "The prepared thermal-plane file is incomplete or incompatible"
                 )
-            self.has_points = metadata.get("point_lattice") == "10m-v1"
+            if metadata.get("ground_reference") != GROUND_REFERENCE:
+                raise ValueError(
+                    "This snapshot uses launch altitudes. Run "
+                    "scripts/pipeline/prepare_thermal_ground.py to prepare "
+                    "mean terrain references and interpolated intersections."
+                )
+            from .thermal_daily import POINT_LATTICE_VERSION
+
+            self.has_points = metadata.get("point_lattice") == POINT_LATTICE_VERSION
             self.disciplines = tuple(json.loads(metadata["disciplines"]))
             self.quality_summary = json.loads(metadata.get("launch_quality", "null"))
 
@@ -129,6 +139,17 @@ class ThermalStore:
                 (cell.ix, cell.iy),
             ).fetchone()
 
+    def terrain_reference(self, cell):
+        """Read the DEM mean, sampling, coverage and attribution saved offline."""
+        with _connect(self.path) as db:
+            row = db.execute(
+                "SELECT metadata FROM terrain WHERE ix=? AND iy=?",
+                (cell.ix, cell.iy),
+            ).fetchone()
+        if row is None:
+            raise ValueError("Missing saved terrain reference")
+        return json.loads(row[0])
+
     def time_extent(self):
         """Saved global coverage; no per-cell selection can narrow the user's dates."""
         with _connect(self.path) as db:
@@ -153,7 +174,15 @@ class ThermalStore:
             ).fetchone()
 
     def read_plane(
-        self, cell, start, end, source, *, progress=lambda _: None, cancel=None
+        self,
+        cell,
+        start,
+        end,
+        source,
+        *,
+        progress=lambda _: None,
+        cancel=None,
+        use_edges=False,
     ):
         """Read saved products only: no raw files, parquet, models or write handles."""
         if source not in ("own", "vilpellet"):
@@ -164,19 +193,20 @@ class ThermalStore:
         point_frames = []
         visit_spans = []
         selected = decoded = unclassified = unavailable = 0
+        use_points = self.has_points and not use_edges
         with _connect(self.path) as db:
             unknown = db.execute(
                 "SELECT COUNT(*) FROM visitors WHERE ix=? AND iy=? AND start IS NULL",
                 (cell.ix, cell.iy),
             ).fetchone()[0]
-            product = "p.points" if self.has_points else "c.edges"
+            product = "p.points" if use_points else "c.edges"
             join = (
                 (
                     " LEFT JOIN plane_points p ON p.source=c.source "
                     "AND p.ix=c.ix AND p.iy=c.iy "
                     "AND p.discipline=c.discipline AND p.flight_id=c.flight_id "
                 )
-                if self.has_points
+                if use_points
                 else ""
             )
             rows = db.execute(
@@ -203,7 +233,7 @@ class ThermalStore:
                     raise ValueError(
                         "Missing prepared intersections; finish offline preparation"
                     )
-                if self.has_points:
+                if use_points:
                     with np.load(io.BytesIO(blob), allow_pickle=False) as saved:
                         values = saved["points"]
                     values = values[(values[:, 3] >= start) & (values[:, 3] <= end)]
@@ -235,14 +265,14 @@ class ThermalStore:
                     columns=["level", "x", "y", "utc", "discipline", "flight_id"]
                 )
             )
-            if self.has_points
+            if use_points
             else None,
             pd.DataFrame(visit_spans, columns=["start", "end"], dtype=float),
         )
 
 
-def load_store():
-    """Find the ready file, without checking or opening its original archives."""
+def find_store_path():
+    """Locate a snapshot, including legacy files awaiting an offline upgrade."""
     override = os.environ.get("SOARING_VIEWER_CACHE_DIR")
     paths = (
         [Path(override).expanduser() / STORE_NAME]
@@ -254,14 +284,21 @@ def load_store():
     )
     for path in paths:
         if path.is_file():
-            return ThermalStore(path)
+            return path
     return None
+
+
+def load_store():
+    """Find the ready file, without checking or opening its original archives."""
+    path = find_store_path()
+    return ThermalStore(path) if path is not None else None
 
 
 def export_store(index, *, relief=None):
     """Atomically publish a complete, standalone snapshot after offline preparation."""
     from .thermal_cache import segmentation_signature
 
+    references = {(cell.ix, cell.iy): terrain_reference(cell) for cell in index.cells()}
     if relief is None and hasattr(index, "quality_summary"):
         from .thermal_relief import prepare_relief
 
@@ -276,6 +313,8 @@ def export_store(index, *, relief=None):
         out.executescript("""
             CREATE TABLE metadata(key TEXT PRIMARY KEY,value TEXT);
             CREATE TABLE relief(key TEXT PRIMARY KEY,metadata TEXT,png BLOB);
+            CREATE TABLE terrain(ix INTEGER,iy INTEGER,metadata TEXT,
+                PRIMARY KEY(ix,iy));
             CREATE TABLE cells(position INTEGER PRIMARY KEY,ix INTEGER,iy INTEGER,
                 payload TEXT,day REAL,height REAL);
             CREATE TABLE visitors(ix INTEGER,iy INTEGER,discipline TEXT,flight_id TEXT,
@@ -290,7 +329,8 @@ def export_store(index, *, relief=None):
         out.executemany(
             "INSERT INTO metadata VALUES (?,?)",
             [
-                ("version", "2"),
+                ("version", "3"),
+                ("ground_reference", GROUND_REFERENCE),
                 ("disciplines", json.dumps(index.disciplines)),
                 ("archive_signature", index.signature),
                 ("segmentation_signatures", json.dumps(keys)),
@@ -304,6 +344,12 @@ def export_store(index, *, relief=None):
                 ("launch_quality", json.dumps(index.quality_summary)),
             )
         for position, cell in enumerate(index.cells()):
+            reference = references[(cell.ix, cell.iy)]
+            cell = terrain_cell(cell, reference)
+            out.execute(
+                "INSERT INTO terrain VALUES (?,?,?)",
+                (cell.ix, cell.iy, json.dumps(reference)),
+            )
             visitors = index.flights(cell)
             utc = visitors.start_utc + visitors.trim_start
             out.executemany(

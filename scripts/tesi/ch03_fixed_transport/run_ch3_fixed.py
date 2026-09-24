@@ -37,6 +37,11 @@ def main():
         type=Path,
         help="Also measure/redraw Section 3.2 in this separate output directory",
     )
+    parser.add_argument(
+        "--route-out",
+        type=Path,
+        help="Also measure/redraw the closed-route types in this output directory",
+    )
     parser.add_argument("--publish", type=Path, default=ROOT / "thesis/generated")
     args = parser.parse_args()
     if not args.redraw:
@@ -94,6 +99,14 @@ def main():
         else:
             conditional_args.extend(["--data", args.data])
         run("conditional_ch3_transport.py", *conditional_args)
+    if args.route_out:
+        # Validates against the published ch3_conditional.json, so it runs after it.
+        route_args = ["--out", args.route_out, "--publish", args.publish]
+        if args.redraw or (args.route_out / "report.json").exists():
+            route_args.append("--redraw")
+        else:
+            route_args.extend(["--data", args.data])
+        run("route_ch3_transport.py", *route_args)
 
 
 if __name__ == "__main__":

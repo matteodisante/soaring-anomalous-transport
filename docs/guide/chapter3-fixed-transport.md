@@ -489,6 +489,25 @@ The separate composition-standardization diagnostic under
 `revisions/circuit-composition-2026-09-22/` remains a review artifact; its
 reference-dependent percentage reductions are not promoted to the main text.
 
+`route_ch3_transport.py` splits the closed flights into the four catalogue
+route types (flat triangle, FAI triangle, quadrilateral, out-and-return) and
+crosses them with the altitude classes, with the same cohort, fit window and
+archived draws. It first reproduces the published closed groups from
+`thesis/generated/ch3_conditional.json`, so run it after the conditional script:
+
+```bash
+MPLCONFIGDIR=/private/tmp/soaring-mpl-cache .venv/bin/python \
+  scripts/tesi/ch03_fixed_transport/route_ch3_transport.py \
+  --data /Volumes/SSD_DISANTE/derived-audit/chapter3-fixed-20260917 \
+  --out /Volumes/SSD_DISANTE/derived-audit/chapter3-route-20260924 \
+  --publish thesis/generated
+```
+
+Cells with fewer than 20 site--day groups get counts but no interval. The
+quadrilateral and out-and-return labels occur almost only up to 2011, so the
+script also measures every route restricted to those seasons (`early_` keys).
+`--route-out OUT` on `run_ch3_fixed.py` includes it in the main workflow.
+
 Section 3.2 palettes live in `conditional_plot_style.py`. Circuit, altitude,
 region and equipment categories have semantic colours distinct from the
 paraglider/hang-glider pair; the existing circuit-by-altitude renderer imports

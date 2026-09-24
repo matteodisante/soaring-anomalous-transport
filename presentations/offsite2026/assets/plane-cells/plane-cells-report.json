@@ -1,0 +1,480 @@
+{
+  "method": "Viewer thermal-plane explorer: census visitors of each 5 km cell, whole-flight own-HMM climb edges (saved or decoded into the viewer climb cache), and plane_intersections at one absolute altitude, as in the expanded neighbourhood view. All dates, both disciplines.",
+  "selection": "Per regional box, the 10 km Lambert-93 cell (edges at multiples of 10 km, 2 x 2 viewer cells) wholly inside the box with the most distinct crossing flights in the viewer census; ties by grid coordinates.",
+  "plane": "H = mean IGN RGE ALTI terrain of the 10 km cell + 600 m, the average of its four 5 km viewer DEM means (equal areas). One horizontal plane.",
+  "height_m": 600,
+  "segmentation": "own",
+  "time_extent_utc_s": [
+    946736956.4331654,
+    1782565038.8808224
+  ],
+  "census": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/viewer/thermal-planes/thermal-cells.sqlite3",
+  "dem_dataset": "https://www.data.gouv.fr/datasets/rge-alti-r",
+  "regions": {
+    "alps": {
+      "region": "Alps",
+      "block": [
+        92,
+        647
+      ],
+      "bounds_epsg2154": [
+        920000,
+        6470000,
+        930000,
+        6480000
+      ],
+      "centre_lon_lat": [
+        5.873293584854371,
+        45.33753655756321
+      ],
+      "census_flights": 19935,
+      "runner_up_flights": [
+        19931,
+        19793
+      ],
+      "mean_terrain_m": 1141.1206698997498,
+      "plane_altitude_m": 1741.1206698997498,
+      "dem": {
+        "file": "alps-dem.tif",
+        "source_url": "https://data.geopf.fr/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES&STYLES=normal&CRS=EPSG%3A2154&BBOX=920000%2C6470000%2C930000%2C6480000&WIDTH=400&HEIGHT=400&FORMAT=image%2Ftiff",
+        "response_sha256": "bc02bbd144b9d0e4eb4190b53505d90b1a7100bbf94e7938603cf27bb0882ed4",
+        "mean_m": 1141.1206288085937,
+        "mean_minus_cell_average_m": -4.109115616302006e-05,
+        "min_m": 227.46112060546875,
+        "max_m": 2054.321533203125,
+        "area_above_plane": 0.067375
+      },
+      "cells": [
+        {
+          "ix": 184,
+          "iy": 1294,
+          "terrain_label": "High mountains",
+          "visitors": 15213,
+          "mean_terrain_m": 1343.0278955291749,
+          "selected": 15213,
+          "decoded": 15213,
+          "unclassified": 297,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 15213,
+          "crossings": 10835
+        },
+        {
+          "ix": 185,
+          "iy": 1294,
+          "terrain_label": "Low mountains",
+          "visitors": 19192,
+          "mean_terrain_m": 651.8968226539612,
+          "selected": 19192,
+          "decoded": 19192,
+          "unclassified": 378,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 19192,
+          "crossings": 1501
+        },
+        {
+          "ix": 184,
+          "iy": 1295,
+          "terrain_label": "Neighbour",
+          "visitors": 3079,
+          "mean_terrain_m": 1324.682682496643,
+          "selected": 3079,
+          "decoded": 3079,
+          "unclassified": 50,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 3079,
+          "crossings": 877
+        },
+        {
+          "ix": 185,
+          "iy": 1295,
+          "terrain_label": "High mountains",
+          "visitors": 15840,
+          "mean_terrain_m": 1244.87527891922,
+          "selected": 15840,
+          "decoded": 15840,
+          "unclassified": 328,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 15840,
+          "crossings": 2340
+        }
+      ],
+      "crossings": 15553,
+      "flights": 7890,
+      "discipline_crossings": {
+        "paragliders": 15232,
+        "hang gliders": 321
+      },
+      "points_sha256": "3a67cffaa76a993480f3883fa97f16d7d465cb199e2331a295421f0f700ef1a7",
+      "hotspot": {
+        "centre_epsg2154": [
+          922125.0,
+          6470375.0
+        ],
+        "centre_lon_lat": [
+          5.8344918118560924,
+          45.29685379956724
+        ],
+        "crossings_in_bin": 1248,
+        "flights_without_origin": 0,
+        "flights_started_within_1km": 0.00038022813688212925,
+        "flights_started_within_3km": 0.022179974651457542,
+        "flights_started_inside_cell": 0.8105196451204055
+      }
+    },
+    "pyrenees": {
+      "region": "Pyrenees",
+      "block": [
+        48,
+        619
+      ],
+      "bounds_epsg2154": [
+        480000,
+        6190000,
+        490000,
+        6200000
+      ],
+      "centre_lon_lat": [
+        0.37321055432940015,
+        42.82230174811641
+      ],
+      "census_flights": 3089,
+      "runner_up_flights": [
+        2942,
+        2722
+      ],
+      "mean_terrain_m": 1268.2465821704864,
+      "plane_altitude_m": 1868.2465821704864,
+      "dem": {
+        "file": "pyrenees-dem.tif",
+        "source_url": "https://data.geopf.fr/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES&STYLES=normal&CRS=EPSG%3A2154&BBOX=480000%2C6190000%2C490000%2C6200000&WIDTH=400&HEIGHT=400&FORMAT=image%2Ftiff",
+        "response_sha256": "5db7fb7a6b5189d99ba4df9f10c1cd61adddb2ac756e23b2096076ac6f9e64f4",
+        "mean_m": 1268.2466454917908,
+        "mean_minus_cell_average_m": 6.332130442388006e-05,
+        "min_m": 741.9522705078125,
+        "max_m": 2245.785400390625,
+        "area_above_plane": 0.0257875
+      },
+      "cells": [
+        {
+          "ix": 96,
+          "iy": 1238,
+          "terrain_label": "Neighbour",
+          "visitors": 1801,
+          "mean_terrain_m": 1398.404381352234,
+          "selected": 1801,
+          "decoded": 1801,
+          "unclassified": 28,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 1801,
+          "crossings": 290
+        },
+        {
+          "ix": 97,
+          "iy": 1238,
+          "terrain_label": "Neighbour",
+          "visitors": 2983,
+          "mean_terrain_m": 1317.882114526367,
+          "selected": 2983,
+          "decoded": 2983,
+          "unclassified": 53,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 2983,
+          "crossings": 3877
+        },
+        {
+          "ix": 96,
+          "iy": 1239,
+          "terrain_label": "Neighbour",
+          "visitors": 1159,
+          "mean_terrain_m": 1054.8039048400879,
+          "selected": 1159,
+          "decoded": 1159,
+          "unclassified": 17,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 1159,
+          "crossings": 271
+        },
+        {
+          "ix": 97,
+          "iy": 1239,
+          "terrain_label": "Neighbour",
+          "visitors": 2206,
+          "mean_terrain_m": 1301.8959279632568,
+          "selected": 2206,
+          "decoded": 2206,
+          "unclassified": 38,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 2206,
+          "crossings": 406
+        }
+      ],
+      "crossings": 4844,
+      "flights": 2352,
+      "discipline_crossings": {
+        "paragliders": 4800,
+        "hang gliders": 44
+      },
+      "points_sha256": "83a2f108cff845918262a91f4d093a7893f74ac287b9c065526faaa847862115",
+      "hotspot": {
+        "centre_epsg2154": [
+          486125.0,
+          6193875.0
+        ],
+        "centre_lon_lat": [
+          0.38739992950938323,
+          42.81252687042881
+        ],
+        "crossings_in_bin": 676,
+        "flights_without_origin": 0,
+        "flights_started_within_1km": 0.7453231292517006,
+        "flights_started_within_3km": 0.8979591836734694,
+        "flights_started_inside_cell": 0.905187074829932
+      }
+    },
+    "channel-coast": {
+      "region": "Channel Coast",
+      "block": [
+        44,
+        687
+      ],
+      "bounds_epsg2154": [
+        440000,
+        6870000,
+        450000,
+        6880000
+      ],
+      "centre_lon_lat": [
+        -0.48101262832090774,
+        48.92438908749731
+      ],
+      "census_flights": 2586,
+      "runner_up_flights": [
+        1303,
+        989
+      ],
+      "mean_terrain_m": 146.76210281310082,
+      "plane_altitude_m": 746.7621028131008,
+      "dem": {
+        "file": "channel-coast-dem.tif",
+        "source_url": "https://data.geopf.fr/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES&STYLES=normal&CRS=EPSG%3A2154&BBOX=440000%2C6870000%2C450000%2C6880000&WIDTH=400&HEIGHT=400&FORMAT=image%2Ftiff",
+        "response_sha256": "21ac757a17839a7ecaacb03001dc9371257e85c42dc8b1fbabb472f5b26bfd2f",
+        "mean_m": 146.76211849589347,
+        "mean_minus_cell_average_m": 1.5682792650295596e-05,
+        "min_m": 24.402490615844727,
+        "max_m": 302.18560791015625,
+        "area_above_plane": 0.0
+      },
+      "cells": [
+        {
+          "ix": 88,
+          "iy": 1374,
+          "terrain_label": "Neighbour",
+          "visitors": 450,
+          "mean_terrain_m": 167.9465743242264,
+          "selected": 450,
+          "decoded": 450,
+          "unclassified": 10,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 450,
+          "crossings": 109
+        },
+        {
+          "ix": 89,
+          "iy": 1374,
+          "terrain_label": "Plains",
+          "visitors": 2246,
+          "mean_terrain_m": 140.7625675743103,
+          "selected": 2246,
+          "decoded": 2246,
+          "unclassified": 35,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 2246,
+          "crossings": 1014
+        },
+        {
+          "ix": 88,
+          "iy": 1375,
+          "terrain_label": "Neighbour",
+          "visitors": 546,
+          "mean_terrain_m": 115.78781858491898,
+          "selected": 546,
+          "decoded": 546,
+          "unclassified": 9,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 546,
+          "crossings": 224
+        },
+        {
+          "ix": 89,
+          "iy": 1375,
+          "terrain_label": "Plains",
+          "visitors": 1463,
+          "mean_terrain_m": 162.5514507689476,
+          "selected": 1463,
+          "decoded": 1463,
+          "unclassified": 27,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 1463,
+          "crossings": 1134
+        }
+      ],
+      "crossings": 2481,
+      "flights": 1454,
+      "discipline_crossings": {
+        "paragliders": 2477,
+        "hang gliders": 4
+      },
+      "points_sha256": "6593c17b0b319d3d4f4f971efb093a577a9f5883b0220676e30483d45df9b1a1",
+      "hotspot": {
+        "centre_epsg2154": [
+          446375.0,
+          6875375.0
+        ],
+        "centre_lon_lat": [
+          -0.46249090681971416,
+          48.92830154033418
+        ],
+        "crossings_in_bin": 48,
+        "flights_without_origin": 0,
+        "flights_started_within_1km": 0.7840440165061898,
+        "flights_started_within_3km": 0.7984869325997249,
+        "flights_started_inside_cell": 0.9965612104539202
+      }
+    },
+    "champagne": {
+      "region": "Champagne-Lorraine",
+      "block": [
+        84,
+        694
+      ],
+      "bounds_epsg2154": [
+        840000,
+        6940000,
+        850000,
+        6950000
+      ],
+      "centre_lon_lat": [
+        5.004530870711905,
+        49.58765851973151
+      ],
+      "census_flights": 666,
+      "runner_up_flights": [
+        505,
+        442
+      ],
+      "mean_terrain_m": 230.4841497396469,
+      "plane_altitude_m": 830.4841497396469,
+      "dem": {
+        "file": "champagne-dem.tif",
+        "source_url": "https://data.geopf.fr/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES&STYLES=normal&CRS=EPSG%3A2154&BBOX=840000%2C6940000%2C850000%2C6950000&WIDTH=400&HEIGHT=400&FORMAT=image%2Ftiff",
+        "response_sha256": "5b63e89d76cffd846e3193105d1c2c89ef7c297e48d5fd97a620f3e4f855f61f",
+        "mean_m": 230.48426540193557,
+        "mean_minus_cell_average_m": 0.00011566228866399797,
+        "min_m": 151.54998779296875,
+        "max_m": 319.91143798828125,
+        "area_above_plane": 0.0
+      },
+      "cells": [
+        {
+          "ix": 168,
+          "iy": 1388,
+          "terrain_label": "Neighbour",
+          "visitors": 456,
+          "mean_terrain_m": 237.3287579017639,
+          "selected": 456,
+          "decoded": 456,
+          "unclassified": 9,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 456,
+          "crossings": 68
+        },
+        {
+          "ix": 169,
+          "iy": 1388,
+          "terrain_label": "Neighbour",
+          "visitors": 643,
+          "mean_terrain_m": 227.30921472053527,
+          "selected": 643,
+          "decoded": 643,
+          "unclassified": 14,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 643,
+          "crossings": 591
+        },
+        {
+          "ix": 168,
+          "iy": 1389,
+          "terrain_label": "Neighbour",
+          "visitors": 59,
+          "mean_terrain_m": 262.6452235080719,
+          "selected": 59,
+          "decoded": 59,
+          "unclassified": 2,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 59,
+          "crossings": 28
+        },
+        {
+          "ix": 169,
+          "iy": 1389,
+          "terrain_label": "Neighbour",
+          "visitors": 36,
+          "mean_terrain_m": 194.65340282821654,
+          "selected": 36,
+          "decoded": 36,
+          "unclassified": 2,
+          "unavailable": 0,
+          "unknown_clock": 0,
+          "cached": 36,
+          "crossings": 14
+        }
+      ],
+      "crossings": 701,
+      "flights": 500,
+      "discipline_crossings": {
+        "paragliders": 700,
+        "hang gliders": 1
+      },
+      "points_sha256": "de89f1be6fe13a5c3b76e1724b99c01ba34609c458424e97e0f85d0d5fe92e02",
+      "hotspot": {
+        "centre_epsg2154": [
+          848375.0,
+          6942125.0
+        ],
+        "centre_lon_lat": [
+          5.0501356333812355,
+          49.56105176388285
+        ],
+        "crossings_in_bin": 26,
+        "flights_without_origin": 0,
+        "flights_started_within_1km": 0.912,
+        "flights_started_within_3km": 0.98,
+        "flights_started_inside_cell": 0.982
+      }
+    }
+  },
+  "code_sha256": {
+    "presentations/offsite2026/measure_plane_cells.py": "ca265eb712d7c601c8c76a71aa3d9116ce47ae971cb3262c7185754c69d888f4",
+    "src/soaring/viewer/thermal_explorer.py": "0e5c3124c0939a0fcf98bdc36089e2d5d8a421d1f696f8783660553e86286b2e",
+    "src/soaring/viewer/thermal_geometry.py": "007aa20d4280eaf39f8dee7dbc037fca7a34f3f6c30c0ba8afe738b2a2c0b714",
+    "src/soaring/viewer/thermal_ground.py": "7db1c147a4950aa193ec6bd4eb88f44f3afb42713a003fae7e0603ef2676eac3",
+    "src/soaring/viewer/thermal_prepare.py": "0b67a0e3b8bcfc0bfbb1ee39f862fbc2b9aed889027df0e5b793c0d1646037de",
+    "src/soaring/viewer/thermal_store.py": "9b360971aa3e0c88016890dd577103153bca26083f1267dbfb00f25658eb514c",
+    "src/soaring/viewer/thermal_cache.py": "37d4af6d97863bc7f12aef3638df50958d9d80eb122b9417890aec1028924612"
+  }
+}

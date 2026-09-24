@@ -111,7 +111,7 @@ class ThermalDensity(QWidget):
         self._terrain.setRange(0, 100)
         self._terrain.setDecimals(0)
         self._terrain.setSingleStep(5)
-        self._terrain.setValue(35)
+        self._terrain.setValue(85)
         self._terrain.setSuffix("% terrain")
         self._strength = QDoubleSpinBox()
         self._strength.setRange(0, 100)
@@ -119,8 +119,12 @@ class ThermalDensity(QWidget):
         self._strength.setSingleStep(5)
         self._strength.setValue(100)
         self._strength.setSuffix("% density")
-        self._ridges = QCheckBox("Crests · IGN DEM")
-        self._ridges.setChecked(True)
+        self._ridges = QCheckBox("Estimated crests · IGN DEM")
+        self._ridges.setChecked(False)
+        self._ridges.setToolTip(
+            "Our estimates from official IGN RGE ALTI elevations; "
+            "not official IGN crest vectors."
+        )
         self._info = QPushButton("i")
         self._info.setFixedWidth(28)
         self._info.setToolTip("How the density maps are computed")

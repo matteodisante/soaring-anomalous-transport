@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from soaring.analysis.observables.global_diagnostics import (
+    closed_route_type,
     covariance_geometry,
     declared_task_class,
     levy_walk_spectrum,
@@ -26,6 +27,21 @@ def test_declared_open_tasks(name):
 @pytest.mark.parametrize("name", ["Marche et Vol", "unknown", "nan", ""])
 def test_unidentified_geometry_is_not_assigned_open(name):
     assert declared_task_class(name) == "unknown"
+
+
+@pytest.mark.parametrize(
+    ("name", "route"),
+    [
+        ("triangle", "flat_triangle"),
+        ("triangle FAI", "fai_triangle"),
+        ("Quadrilatère", "quadrilateral"),
+        ("Aller-Retour", "out_and_return"),
+        ("Dist 3 pts", "other"),
+        ("Marche et Vol bouclé", "other"),
+    ],
+)
+def test_closed_route_type_separates_triangles(name, route):
+    assert closed_route_type(name) == route
 
 
 def test_centering_and_rotation_invariance():

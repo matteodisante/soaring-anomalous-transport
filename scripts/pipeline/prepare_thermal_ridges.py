@@ -12,6 +12,7 @@ from urllib.parse import urlencode
 import numpy as np
 from PIL import Image
 
+from soaring.viewer.thermal_geometry import ThermalCell
 from soaring.viewer.thermal_ridges import (
     ATTRIBUTION,
     DATA_DIRECTORY,
@@ -22,13 +23,14 @@ from soaring.viewer.thermal_ridges import (
     derive_ridges,
     load_ridges,
 )
-from soaring.viewer.thermal_store import load_store
+from soaring.viewer.thermal_store import _connect, find_store_path
 
 
 def main():
     """Fetch small terrain windows or rederive their lines entirely offline."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=DATA_DIRECTORY)
+    parser.add_argument("--store", type=Path)
     parser.add_argument("--refresh", action="store_true")
     parser.add_argument(
         "--rederive",
@@ -36,11 +38,18 @@ def main():
         help="Recompute lines from saved terrain, without downloads",
     )
     args = parser.parse_args()
-    store = load_store()
-    if store is None or len(store.cells()) > 12:
+    path = args.store or find_store_path()
+    if path is None:
         raise SystemExit("Connect the prepared store with at most twelve saved cells.")
+    with _connect(path) as db:
+        cells = [
+            ThermalCell(**json.loads(r[0]))
+            for r in db.execute("SELECT payload FROM cells ORDER BY position")
+        ]
+    if len(cells) > 12:
+        raise SystemExit("Expected at most twelve saved cells.")
     args.output.mkdir(parents=True, exist_ok=True)
-    for cell in store.cells():
+    for cell in cells:
         existing = load_ridges(cell, args.output)
         if not args.refresh and not args.rederive and existing is not None:
             continue

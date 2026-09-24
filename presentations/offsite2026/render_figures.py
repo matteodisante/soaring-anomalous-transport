@@ -15,6 +15,7 @@ OUT.mkdir(parents=True, exist_ok=True)
 R = json.loads((ROOT / "thesis/generated/ch3_transport_report.json").read_text())
 C = json.loads((ROOT / "thesis/generated/ch3_conditional.json").read_text())
 CADENCE = json.loads((OUT.parent / "cadence-support-report.json").read_text())
+OPEN = json.loads((OUT.parent / "open-circuits-report.json").read_text())
 BLUE, RUST, STEEL, TEAL, GOLD, WINE = "#3477A8", "#B5482A", "#4A6079", "#2E7D8A", "#C98A1E", "#8E3B5C"
 ALT = [BLUE, TEAL, GOLD, WINE]
 NAMES = ["Plains", "Hills", "Low mountains", "High mountains"]
@@ -27,8 +28,8 @@ plt.rcParams.update({"font.family":"serif", "font.serif":["Palatino","DejaVu Ser
 def a(x): return np.asarray(x, dtype=float)
 def hci(h):
     return f"{h['point']:.3f} [{h['low']:.3f}, {h['high']:.3f}]"
-def group_label(key, name):
-    g = C["groups"][key]
+def group_label(key, name, source=C):
+    g = source["groups"][key]
     return f"{name} (N={g['flights']:,})\nH={hci(g['fit']['hurst'])}"
 def save(fig, name):
     fig.savefig(OUT / f"{name}.pdf", bbox_inches="tight", pad_inches=.05, metadata={"CreationDate":None,"ModDate":None})
@@ -45,9 +46,9 @@ def band(ax, x, stats, color, label=None, idx=None, scale=1e6):
     if idx is not None: p,l,h=p[idx],l[idx],h[idx]
     ax.fill_between(x,l/scale,h/scale,color=color,alpha=.17,lw=0)
     ax.plot(x,p/scale,"o-",color=color,lw=1.7,ms=3,mfc="white",label=label)
-def curve(ax, key, color, label=None):
-    g=C["groups"][key]
-    band(ax,a(C["lags_s"]),g["msd"],color,label)
+def curve(ax, key, color, label=None, source=C):
+    g=source["groups"][key]
+    band(ax,a(source["lags_s"]),g["msd"],color,label)
     ax.set_xlim(10,10000); ax.set_ylim(.006,14000)
     ax.set_ylabel(r"MSD (km$^2$)");style(ax)
 def herror(ax,x,h,color,**kw):
@@ -144,6 +145,29 @@ axs[1].set_xlim(1,10000);axs[1].set_ylim(min(.26,lower-.025),max(1.07,upper+.035
 axs[1].set_title("Local slope on a dense lag grid")
 save(fig,"fixed")
 
+# Slide 5: the MSD over its local slope, sharing the lag axis, sized for the left half of the slide.
+fig,(ax,axh)=plt.subplots(2,1,figsize=(5.6,5.3),sharex=True,layout="constrained",gridspec_kw={"height_ratios":[1.3,1]})
+for panel in (ax,axh): panel.axvline(10,color="#A0ACBA",lw=.8,ls="--",zorder=-1)
+for slug,color,label in [("para",BLUE,"Paragliders"),("hang",RUST,"Hang gliders")]:
+    d=CADENCE["results"][slug];x=a(CADENCE["lags_s"])
+    p,l,u=[a(d["msd"][k])/1e6 for k in ["point","low","high"]]
+    ax.fill_between(x,l,u,color=color,alpha=.17,lw=0)
+    ax.plot(x,p,color=color,lw=1.7,label=f"{label} (N={d['flights']:,} from 10 s)\nH = {hci(d['fit_10_10000'])}")
+    ax.plot(x[x<=10],p[x<=10],"o",color=color,ms=2.8,mfc="white")
+    p,l,u=[a(d["local_h"][k]) for k in ["point","low","high"]]
+    axh.fill_between(x,l,u,color=color,alpha=.17,lw=0)
+    axh.plot(x,p,color=color,lw=1.5)
+ax.set_ylabel(r"MSD (km$^2$)");style(ax,xlabel="");ax.set_xlim(1,10000);ax.legend(frameon=False,loc="upper left")
+ax.set_title("MSD; H fitted over 10–10,000 s")
+# Lower panel: the local slope of the same curves (the right panel of the full figure).
+style(axh,logy=False);axh.set_ylabel(r"Local slope $H_{\rm loc}$")
+axh.axhline(.5,color="#999999",ls=":",lw=1);axh.text(1.25,.52,"Diffusive",fontsize=11,color="#666666")
+axh.set_ylim(.35,1.05);axh.set_yticks([.5,.75,1])
+# The long-lag fall comes from closed circuits (open/closed split, slide 8); ellipse in axes units, as x is log.
+axh.add_patch(matplotlib.patches.Ellipse((.935,.43),.17,.86,transform=axh.transAxes,fill=False,ec=STEEL,lw=1.2,ls="--",clip_on=False))
+axh.text(.84,.47,"Closed-circuit effect,\nanalysed later",transform=axh.transAxes,ha="right",va="center",fontsize=11,color=STEEL)
+save(fig,"fixed-msd")
+
 cadence_tex=[]
 for slug,prefix in [("para","CadencePara"),("hang","CadenceHang")]:
     d=CADENCE["results"][slug]
@@ -210,51 +234,73 @@ fig.legend([plt.Line2D([],[],mfc="white",**marker),plt.Line2D([],[],color=grey,*
            ["share of flights",r"share of the class MSD at τ = 10⁴ s"],loc="outside upper center",ncol=2,frameon=False,fontsize=13,handletextpad=.3,columnspacing=1.2)
 save(fig,"altitude-mix")
 
+# Regions, open and closed circuits pooled (thesis Section 3.2.3); lowlands left, mountains right.
 fig,axs=plt.subplots(1,2,figsize=(11.8,3.65),layout="constrained",sharey=True)
-for ax,title,keys in zip(axs,[r"Mountain launches: $z_0\geq800$ m",r"Lowland launches: $z_0<800$ m"],
- [[("alps","Alps",WINE),("pyrenees","Pyrenees",GOLD)],[("channel_coast","Channel Coast",TEAL),("champagne_lorraine","Champagne-Lorraine",STEEL)]]):
+for ax,title,keys in zip(axs,[r"Lowland launches: $z_0<800$ m, all circuits",r"Mountain launches: $z_0\geq800$ m, all circuits"],
+ [[("channel_coast","Channel Coast",TEAL),("champagne_lorraine","Champagne-Lorraine",STEEL)],[("alps","Alps",WINE),("pyrenees","Pyrenees",GOLD)]]):
     for key,label,color in keys:
-        h=C["groups"][key]["fit"]["hurst"]
         curve(ax,key,color,group_label(key,label))
     ax.set_title(title);ax.legend(frameon=False,loc="upper left")
 save(fig,"regions")
 
-fig,ax=plt.subplots(figsize=(7.4,4.2),layout="constrained")
-for key,color in [("open",BLUE),("closed",WINE)]:
-    curve(ax,key,color,group_label(key,key.capitalize()))
-ax.legend(frameon=False,loc="upper left",fontsize=16,handlelength=1.6,labelspacing=.7);save(fig,"circuit")
+def local_slope(lags, msd):
+    """Half log-log OLS slope, +/-0.25 dex; nearest three at sparse edges (as measure_cadence_support.py)."""
+    x,y=np.log10(lags),np.log10(msd);out=[]
+    for centre in x:
+        distance=np.abs(x-centre);take=np.flatnonzero(distance<=.25+1e-12)
+        if len(take)<3: take=np.sort(np.argsort(distance,kind="stable")[:3])
+        centred=x[take]-x[take].mean();out.append(.5*centred@y[take]/(centred@centred))
+    return a(out)
 
-# Interaction: display the fitted exponents with their archived intervals.
-fig,axs=plt.subplots(1,2,figsize=(11.8,3.95),layout="constrained",sharey=True)
-for ax,task,title in zip(axs,["open","closed"],["Open circuits","Closed circuits"]):
+# Open vs closed: MSD, then its local slope against the fitted H, so the H gap reads by eye.
+fig,(ax,axh)=plt.subplots(1,2,figsize=(7.6,3.9),layout="constrained")
+for key,color in [("open",BLUE),("closed",WINE)]:
+    curve(ax,key,color,key.capitalize())
+    g=C["groups"][key];h=g["fit"]["hurst"]["point"]
+    axh.plot(C["lags_s"],local_slope(a(C["lags_s"]),a(g["msd"]["point"])),"o-",color=color,lw=1.7,ms=3,mfc="white")
+    axh.axhline(h,color=color,lw=1.5,ls="--",label=f"{key.capitalize()}: H = {h:.3f}")
+ax.legend(frameon=False,loc="upper left",fontsize=14,handlelength=1.4);ax.set_title("MSD")
+style(axh,logy=False);axh.set_xlim(10,10000);axh.set_ylim(.2,1.02);axh.set_ylabel(r"Local slope $H_{\rm loc}$")
+axh.axhline(.5,color="#999999",ls=":",lw=1);axh.text(13,.515,"Diffusive",fontsize=11,color="#666666")
+axh.legend(frameon=False,loc="lower left",fontsize=13,handlelength=1.6)
+axh.set_title("Local slope; dashed: H fitted over 10–10,000 s",fontsize=12);save(fig,"circuit")
+
+# Interaction: open and closed exponents on one axis, with their archived intervals.
+# Values sit above the open intervals and below the closed ones; flight counts along the bottom.
+fig,ax=plt.subplots(figsize=(7.4,4.5),layout="constrained")
+for task,color,end,dy,va in [("open",BLUE,"high",.006,"bottom"),("closed",WINE,"low",-.006,"top")]:
     hs=[]
-    for i,color in enumerate(ALT):
+    for i in range(4):
         g=C["groups"][f"{task}_{i}"];h=g["fit"]["hurst"];hs.append(h["point"])
         herror(ax,i,h,color)
-        ax.text(i,h["point"]+.013,f"{h['point']:.3f}",ha="center",fontsize=12,color=color)
-        ax.text(i,.784,f"n={g['flights']:,}",ha="center",fontsize=10,color="#666666")
-    ax.plot(range(4),hs,color="#ABB6C2",lw=1.1,zorder=0)
-    ax.set_xticks(range(4),["Plains","Hills","Low\nmountains","High\nmountains"])
-    ax.set_title(title);ax.grid(axis="y",color="#E2E7EC");ax.set_ylim(.775,.985);ax.set_xlim(-.45,3.45)
-axs[0].set_ylabel("Effective exponent H")
+        ax.text(i,h[end]+dy,f"{h['point']:.3f}",ha="center",va=va,fontsize=12,color=color)
+    ax.plot(range(4),hs,color=color,lw=1.6,zorder=0,label=f"{task.capitalize()} circuits")
+for i in range(4):
+    ax.text(i-.04,.784,f"{C['groups'][f'open_{i}']['flights']:,}",ha="right",fontsize=10,color=BLUE)
+    ax.text(i+.04,.784,f"{C['groups'][f'closed_{i}']['flights']:,}",ha="left",fontsize=10,color=WINE)
+ax.text(-.42,.784,"n:",fontsize=10,color="#666666")
+ax.set_xticks(range(4),["Plains","Hills","Low\nmountains","High\nmountains"])
+ax.grid(axis="y",color="#E2E7EC");ax.set_ylim(.775,.985);ax.set_xlim(-.45,3.45)
+ax.set_ylabel("Effective exponent H");ax.legend(frameon=False,loc="upper right",fontsize=13)
 save(fig,"interaction")
 
-fig,axs=plt.subplots(1,2,figsize=(11.8,4.05),layout="constrained",gridspec_kw={"width_ratios":[1.1,1]})
+# Experts versus Beginners, open circuits only (measure_open_circuits.py).
+fig,axs=plt.subplots(1,2,figsize=(11.8,4.7),layout="constrained",gridspec_kw={"width_ratios":[1.1,1]})
 for key,label,color in [("beginners","Beginners",STEEL),("experts","Experts",GOLD)]:
-    curve(axs[0],key,color,group_label(key,label))
-axs[0].legend(frameon=False,loc="upper left");axs[0].set_title("All initial altitudes pooled")
+    curve(axs[0],key,color,group_label(key,label,OPEN),OPEN)
+axs[0].legend(frameon=False,loc="upper left");axs[0].set_title("Open circuits, all initial altitudes pooled")
 ax=axs[1];keys=["experts_beginners"]+[f"equipment_alt{i}" for i in range(4)]
 for i,(key,color) in enumerate(zip(keys,[STEEL]+ALT)):
-    h=C["contrasts"][key]["hurst"]
+    h=OPEN["contrasts"][key]["hurst"]
     ax.errorbar(h["point"],4-i,xerr=[[h["point"]-h["low"]],[h["high"]-h["point"]]],fmt="o",color=color,ms=7,capsize=4)
 count_labels = []
 for label, suffix in zip(["All altitudes"]+NAMES, [""]+[f"_alt{i}" for i in range(4)]):
-    beginners = C["groups"]["beginners"+suffix]["flights"]
-    experts = C["groups"]["experts"+suffix]["flights"]
+    beginners = OPEN["groups"]["beginners"+suffix]["flights"]
+    experts = OPEN["groups"]["experts"+suffix]["flights"]
     count_labels.append(f"{label}\nN: {beginners:,} B / {experts:,} E")
 ax.axvline(0,ls=":",color="#888888");ax.set_yticks(range(5),list(reversed(count_labels)),fontsize=10)
 ax.set_xlim(-.002,.031);ax.grid(axis="x",color="#E2E7EC");ax.set_xlabel(r"$\Delta H$: Experts minus Beginners")
-ax.set_title("B: Beginners; E: Experts")
+ax.set_title("Open circuits. B: Beginners; E: Experts")
 save(fig,"equipment")
 
 inputs=["thesis/tesi/01-introduction.tex","thesis/tesi/03-dataset.tex","thesis/tesi/04-fixed-transport.tex",
@@ -266,6 +312,7 @@ inputs=["thesis/tesi/01-introduction.tex","thesis/tesi/03-dataset.tex","thesis/t
  "thesis/generated/ch3_transport_grid_bootstrap.json","thesis/generated/ch3_transport_grid_bootstrap_values.tex",
  "docs/guide/thermal-planes.md","src/soaring/viewer/widgets/thermal_plane.py",
  "presentations/offsite2026/cadence-support-report.json","presentations/offsite2026/measure_cadence_support.py",
+ "presentations/offsite2026/open-circuits-report.json","presentations/offsite2026/measure_open_circuits.py",
  "scripts/tesi/ch03_fixed_transport/circuit_msd_weights.py", "thesis/references.bib",
  "presentations/offsite2026/offsite-2026.tex",
  "presentations/offsite2026/render_figures.py",
@@ -274,8 +321,8 @@ inputs=["thesis/tesi/01-introduction.tex","thesis/tesi/03-dataset.tex","thesis/t
  "presentations/offsite2026/assets/screenshots/thermal-panels-report.json",
  "presentations/offsite2026/assets/screenshots/thermal-panel-values.tex",
  "data/basemap.json", "presentations/offsite2026/assets/screenshots/cell-locator.pdf",
- "presentations/offsite2026/assets/thermal-mechanism-3d.png",
- "presentations/offsite2026/assets/thermal-mechanism-3d-prompt.txt",
+ "presentations/offsite2026/render_thermal_mechanism.py",
+ "presentations/offsite2026/assets/thermal-mechanism.pdf",
  "src/soaring/viewer/thermal_orography.py",
  "src/soaring/viewer/thermal_ridges.py",
  "scripts/pipeline/prepare_thermal_ridges.py",

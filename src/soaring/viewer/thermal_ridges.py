@@ -149,6 +149,13 @@ def load_ridges(cell, folder=None):
     path = folder / f"ign-ridges-{cell.ix}-{cell.iy}.geojson"
     if not path.exists():
         return None
+    from .thermal_ground import terrain_reference
+
+    # These are our estimates from official elevations. Verify the exact saved
+    # source raster before displaying a line, including after a local file edit.
+    reference = terrain_reference(cell, folder)
+    if not reference["source_url"].startswith(SERVICE + "?"):
+        raise ValueError("Crest elevation source is not the official IGN WMS")
     payload = _read_ridges(path, path.stat().st_mtime_ns)
     if tuple(payload["provenance"]["bounds_epsg2154"]) != tuple(cell.bounds):
         raise ValueError("Saved crest extent does not match this cell")
@@ -190,7 +197,7 @@ def draw_ridges(ax, cell, payload, *, linewidth=1.15):
             color=SUMMIT_COLOR,
             linewidth=linewidth,
             zorder=5,
-            label="IGN DEM-derived crests" if i == 0 else None,
+            label="Estimated crests from IGN DEM" if i == 0 else None,
             path_effects=[
                 effects.Stroke(linewidth=linewidth + 0.8, foreground="white"),
                 effects.Normal(),

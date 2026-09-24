@@ -6,6 +6,7 @@
 \input{generated/ch3_transport_origin_dependence_values}
 \input{generated/ch3_conditional_values}
 \input{generated/ch3_conditional_circuit_weights_values}
+\input{generated/ch3_route_values}
 
 
 We measure the mean-square displacement (MSD) and its dependence on circuit type,
@@ -599,7 +600,8 @@ against two for $\mathcal C_{1000}$ and one for $\mathcal C_{100}$.
 We examine how MSD amplitude and its effective growth exponent $H$ vary with
 three recorded characteristics:
 \begin{itemize}
- \item \emph{Circuit type}: open distance flights versus closed routes.
+ \item \emph{Circuit type}: open distance flights versus closed routes, then
+ the four declared types of closed route.
  \item \emph{Launch environment}: initial altitude as a proxy for plains,
  hills and mountains, followed by regional comparisons within these settings.
  \item \emph{Equipment}: wing class as a proxy for pilot experience.
@@ -661,8 +663,8 @@ route geometry and leg durations. For a flight of duration $T$ with equal
 leg times, the first major turn occurs at $T/2$ for an out-and-return flight
 and $T/3$ for a triangle. These are times along the route: even a short lag can straddle
 a turn, because the MSD averages over starting points along each segment.
-Testing the role of triangular geometry requires separating the two closed
-route types and comparing their actual leg durations.
+Section~\ref{sec:conditional-route} separates the declared closed route
+types; their actual leg durations remain unmeasured.
 
 \FloatBarrier
 \subsection{Initial altitude, circuit composition and interaction}
@@ -941,6 +943,137 @@ and low horizontal planes can intersect terrain. Their spatial contrast is
 observed; attributing it to wind requires following the same climbs across
 heights and matching wind profiles. Its contribution to $H$ and generality
 across sites remain to be quantified.
+\FloatBarrier
+\subsection{Closed-route type and initial altitude}
+\label{sec:conditional-route}
+
+The closed class of Section~\ref{sec:conditional-circuit} pools four catalogue
+labels: flat triangles, FAI triangles, quadrilaterals and out-and-return flights.
+Together they make up the \ChThreeMainClosed{} closed flights of the fixed
+cohort. The shortest side of an FAI triangle is at least 28\% of its
+perimeter~\cite{ffvl_cfd_rules}. The flat-triangle label covers triangles scored
+without this constraint, which can therefore be more elongated. An
+out-and-return flight has a single turnpoint, and a quadrilateral has four legs.
+
+The timescale argument of Section~\ref{sec:conditional-circuit} gives an
+expectation. A route that reverses its outward progress later, or less often,
+should suppress the long-lag MSD growth less. If route geometry controls $H$,
+out-and-return flights should have the largest exponent and FAI triangles,
+whose legs are the most balanced, the smallest, with flat triangles between
+them.
+
+Figure~\ref{fig:route-altitude} and Table~\ref{tab:route-altitude} cross the four
+route types with the four initial-altitude classes of
+Section~\ref{sec:conditional-orography}. The estimator, fit range and paired
+bootstrap draws are those of Eq.~\eqref{eq:conditional-msd}. A cell receives an
+interval only if it contains at least \RouteMinGroups{} site--day groups. The
+quadrilateral and out-and-return cells of Plains and Hills hold between
+\RouteOutAndReturnAltZeroN{} and \RouteQuadrilateralAltOneN{} flights each, so
+they are reported by their counts only.
+
+\begin{figure}[htbp]
+ \centering
+ \includegraphics[width=\textwidth]{generated/ch3_route_altitude.pdf}
+ \caption{Paraglider MSD $M_{2,g}(\tau)$ of Eq.~\eqref{eq:conditional-msd} by
+ declared closed-route type, one panel per initial-altitude class. Solid curves
+ join the equal-flight estimates, shaded bands give pointwise 90\% intervals, and
+ dashed lines are fits $M_{2,g}\propto\tau^{2H_g}$ over 10--10000 s. Cells with
+ fewer than \RouteMinGroups{} site--day groups are listed in their panel and not
+ drawn.}
+ \label{fig:route-altitude}
+\end{figure}
+\begin{table}[htbp]
+ \centering\footnotesize\setlength{\tabcolsep}{3.5pt}
+ \input{generated/ch3_route_table}
+ \caption{Closed-route transport by initial altitude: flights $N$, site--day
+ groups $G$, effective exponent $H$ with its 90\% interval, MSD at $10^4$ s and
+ median launch year. The first block pools the altitude classes. Dashes mark
+ cells with fewer than \RouteMinGroups{} groups.}
+ \label{tab:route-altitude}
+\end{table}
+
+\paragraph{Two labels confined to the early seasons.}
+In the catalogue, the quadrilateral and out-and-return labels almost vanish after
+\RouteLastFourLabelYear: \RouteQuadrilateralEarlyPct\% and
+\RouteOutAndReturnEarlyPct\% of these flights date from \RouteLastFourLabelYear{}
+or earlier, against \RouteFlatTriangleEarlyPct\% and \RouteFaiTriangleEarlyPct\%
+of the flat and FAI triangles. Comparing them with the triangles therefore also
+compares older flights with recent ones, which can differ in equipment,
+recorders and pilots. Table~\ref{tab:route-early} repeats the comparison with all
+four routes restricted to flights up to \RouteLastFourLabelYear. Enough support
+remains for the pooled altitudes and for the two mountain classes.
+
+\begin{table}[htbp]
+ \centering\footnotesize\setlength{\tabcolsep}{3.5pt}
+ \input{generated/ch3_route_early_table}
+ \caption{As Table~\ref{tab:route-altitude}, restricted to flights up to
+ \RouteLastFourLabelYear, the seasons in which all four route labels occur.
+ Only altitude classes with at least two supported routes are shown.}
+ \label{tab:route-early}
+\end{table}
+
+\begin{itemize}
+ \item \textbf{FAI triangles have smaller $H$ than flat triangles in every
+ altitude class.} The paired differences $H_{\rm FAI}-H_{\rm flat}$ are
+ \RouteFaiTriangleFlatTriangleAltZeroDelta{} in Plains,
+ \RouteFaiTriangleFlatTriangleAltOneDelta{} in Hills,
+ \RouteFaiTriangleFlatTriangleAltTwoDelta{} in Low mountains and
+ \RouteFaiTriangleFlatTriangleAltThreeDelta{} in High mountains. All four exclude
+ zero, and the difference persists in the early seasons,
+ \RouteFaiTriangleFlatTriangleEarlyAllDelta{} with altitudes pooled. The gap
+ narrows in High mountains: the Low mountains gap minus the High mountains gap
+ is \RouteFaiTriangleFlatTriangleAltTwoAltThreeDelta{}. The Plains, Hills and
+ Low mountains gaps are not resolved from one another.
+
+ \item \textbf{Within the same seasons, out-and-return flights have the largest
+ $H$ and FAI triangles the smallest.} Up to \RouteLastFourLabelYear{} and with
+ altitudes pooled, the order is out-and-return, flat triangle, quadrilateral,
+ FAI triangle, and all six paired differences exclude zero. For example,
+ out-and-return minus flat triangle is
+ \RouteOutAndReturnFlatTriangleEarlyAllDelta{}, quadrilateral minus flat
+ triangle \RouteQuadrilateralFlatTriangleEarlyAllDelta{} and quadrilateral
+ minus FAI triangle \RouteQuadrilateralFaiTriangleEarlyAllDelta{}. The same
+ order holds within Low mountains, again with all six intervals excluding zero.
+ In High mountains, with \RouteOutAndReturnEarlyAltThreeN{} out-and-return and
+ \RouteQuadrilateralEarlyAltThreeN{} quadrilateral flights, only three
+ contrasts exclude zero: FAI minus flat triangle, and out-and-return minus
+ either FAI triangle or quadrilateral.
+
+ \item \textbf{Over all seasons, the season mix shifts these contrasts.} With
+ every year included, out-and-return and flat triangles are not resolved,
+ \RouteOutAndReturnFlatTriangleAllDelta{}, and quadrilaterals match FAI
+ triangles, \RouteQuadrilateralFaiTriangleAllDelta{}. Triangles flown up to
+ \RouteLastFourLabelYear{} have smaller exponents than the full triangle
+ populations: \RouteFlatTriangleEarlyAllH{} against \RouteFlatTriangleAllH{}
+ for flat triangles, \RouteFaiTriangleEarlyAllH{} against
+ \RouteFaiTriangleAllH{} for FAI triangles. The all-season contrasts
+ therefore combine the route difference with a change across seasons.
+
+ \item \textbf{Both triangle types keep the closed-route altitude reversal.}
+ For flat and FAI triangles alike, each lowland class has a smaller $H$ than
+ each mountain class. The eight lowland-minus-mountain differences range from
+ \RouteFlatTriangleAltZeroAltTwoDelta{} (flat, Plains minus Low mountains) to
+ \RouteFaiTriangleAltOneAltThreeDelta{} (FAI, Hills minus High mountains), and
+ all exclude zero. High mountains also exceed Low mountains, with
+ Low-minus-High differences of \RouteFlatTriangleAltTwoAltThreeDelta{} for flat
+ triangles, \RouteFaiTriangleAltTwoAltThreeDelta{} for FAI triangles and
+ \RouteQuadrilateralAltTwoAltThreeDelta{} for quadrilaterals. The closed-route reversal of
+ Section~\ref{sec:conditional-orography} therefore persists within each
+ triangle type, and different proportions of flat and FAI triangles across
+ altitude classes cannot explain it.
+\end{itemize}
+
+\paragraph{Interpretation.}
+Within the same seasons, the ordering matches the geometric expectation at its
+two ends: the route with one turnpoint has the largest $H$ and the most compact
+triangle the smallest. The number of legs alone does not set the order, since
+quadrilaterals lie between the two triangle types. The narrower FAI--flat gap in
+High mountains is consistent with the terrain constraints discussed in
+Section~\ref{sec:conditional-orography}: if slopes and ridges channel both
+triangle types along similar corridors, the declared shape matters less. Both
+readings remain hypotheses, because leg lengths and turn times have not been
+measured. The labels are scoring categories, and the intervals retain the
+limitations of Section~\ref{sec:fixed-bootstrap-reliability}.
 \FloatBarrier
 \subsection{Regional differences within a broad launch environment}
 \label{sec:conditional-regions}

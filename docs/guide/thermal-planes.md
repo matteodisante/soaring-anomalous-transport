@@ -6,7 +6,9 @@ mode. It defaults to Vilpellet and the full saved date range. Date controls use
 Europe/Paris local time (CET/CEST) and do not reset on cell, height, background,
 segmentation or reload changes.
 **Reload SSD data** only reopens that file: there is no preparation button and no
-fallback to archive scanning or segmentation inside this view.
+fallback to archive scanning for the twelve published cells. Explicit neighbour
+exploration uses the archive census and prepares missing whole-flight climb
+products in a background worker; see **Pan and bounded zoom** below.
 
 The default destination is `derived/viewer/thermal-planes/` in the first available
 archive on the SSD. With the current configuration this is:
@@ -15,15 +17,27 @@ archive on the SSD. With the current configuration this is:
 /Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/viewer/thermal-planes/
 ```
 
-`thermal-planes.sqlite3` (format 2) contains the twelve selected cells, their ground references
+`thermal-planes.sqlite3` (format 3) contains the twelve selected cells, their mean terrain references
 and maxima, UTC visitor intervals, and compressed climb edges for both methods
 and all dates. It works without opening the original IGC files, parquet tables or
 models. The enriched file also contains **already interpolated intersections**
-at every 10 m AGL and at each cell’s exact maximum. Slider steps of 10, 20, 50,
-100 and 200 m select subsets of this same lattice. The viewer only reads, filters
-and plots these saved points; it neither computes intersections nor segments
-flights. Legacy snapshots without the lattice still support in-memory edge
-interpolation until upgraded offline.
+at every 10 m above mean terrain and at each cell’s exact maximum. The
+**Height increment** options of 10, 20, 50, 100 and 200 m select subsets of this
+same lattice. They are the distance between selectable planes: **each plane has
+zero thickness**, and a fix need not fall exactly on it. The viewer reads, filters
+and plots these saved points. Expanded neighbourhood views interpolate saved
+climb edges at the selected absolute altitude. Terrain-referenced snapshots
+without the lattice also support in-memory edge interpolation. Older launch-referenced snapshots must first be upgraded offline:
+
+```bash
+uv run --group viewer python scripts/pipeline/prepare_thermal_ground.py
+```
+
+This uses the saved climb edges and local IGN elevation rasters, without decoding
+flights again. It rebases the ground reference and rebuilds all point products in
+a separate SQLite copy, then atomically publishes it. Completed batches resume
+after an interruption. A terrain change invalidates the old intersection lattice;
+old launch-relative points are never relabelled as terrain-relative heights.
 
 Preparation is a separate offline command:
 
@@ -64,12 +78,22 @@ at grid boundaries, so an intervening cell is included even when neither recorde
 endpoint lies inside it. No line is drawn across a preprocessing segment boundary
 or a temporal gap.
 
-The **ground reference** is computed independently: the median GNSS altitude of
+The **plane ground reference** is the area-weighted arithmetic mean of unsmoothed
+IGN RGE ALTI elevations over the entire 5 × 5 km square. Each saved window has
+25 m sampling, giving **40,000 elevation values inside the cell**. The 500 m
+buffer used for crest detection is excluded. Full valid coverage is required;
+missing terrain never falls back to launch altitudes. Source query, retrieval
+date, raster hash, extent, sampling, coverage and extrema are embedded in the
+standalone file. The viewer displays attribution, the dataset link and the exact
+WMS download request for the selected cell, independently of the map background.
+
+The existing **cell selection and altitude categories** retain the median GNSS altitude of
 the first raw, parseable fix of retained flights whose first raw position is
 inside that cell, **before trimming**. Zero/missing altitudes and values outside
 the preprocessing plausibility bounds are excluded. No barometric fallback or
 post-trim origin altitude is substituted. The number of usable starts is shown.
-Cells without such a reference cannot be candidates.
+Cells without a launch median cannot be candidates under this existing ranking.
+The launch median is saved separately from the plane's DEM mean.
 
 Before computing that median, a separate offline audit screens the **same first
 raw fix**. An invalid GNSS declaration excludes that origin. The first fix is also
@@ -97,16 +121,20 @@ This uses the median rather than the majority-of-launch-bands rule in the old
 thesis map. The rankings, launch medians and maximum heights use **all dates** and
 do not change with the selected time interval or segmentation.
 
-The AGL slider runs from zero to the highest supported trajectory altitude
+The height slider runs from zero to the highest supported trajectory altitude
 **inside the cell**, minus its ground reference. Boundary intersections contribute
 to this maximum too. It is not the maximum of entire flights outside the square,
-nor the maximum restricted to climb-labelled fixes. AGL here means height above
-one fixed launch median, not height above a terrain model at each horizontal point.
+nor the maximum restricted to climb-labelled fixes. The selected z means height
+above one fixed **mean terrain elevation** per cell. Thus the absolute plane is
+`H = mean_terrain + z`; this is distinct from terrain clearance below each dot.
+The plot displays both z and H. IGN provides normal terrain heights, while the
+geoid/ellipsoid convention of the recorder GNSS altitude is not harmonised across
+IGC files; that datum uncertainty remains in the height difference.
 
 ## Ranked map and shaded terrain
 
 The dropdown and map callouts show category, within-category rank, distinct
-crossing flights, and the median launch altitude in metres ASL. The cell summary
+crossing flights, and the mean terrain elevation in metres ASL. The cell summary
 also reports the raw support and median before the separate origin screen, so
 the effect of that policy is visible.
 Map labels **P1–P3**, **H1–H3**, **L1–L3**, **M1–M3** use category colours and
@@ -115,19 +143,25 @@ separated callouts, which are also clickable. Here M denotes High mountains;
 Neighbouring 5 km cells may be hard to distinguish at France scale; use the map
 zoom controls for their exact footprints.
 
-Both plots show a subdued [Esri World Hillshade](https://services.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer)
-backdrop. The offline command downloads a France overview in EPSG:4326 and a
-600 × 600 image per cell in EPSG:2154, retaining the returned bounds and source
-metadata. The same Lambert-93 bounds locate the cell image and climb points.
-All PNGs are embedded in `thermal-planes.sqlite3`; the viewer never requests tiles
-or contacts the service. The **% background** control adjusts both backgrounds without
-changing the selected data. Points use a contrasting colour and a white edge.
+The default background is **Topography · IGN**: Plan IGN with official IGN
+**elevation contours** (`ELEVATION.CONTOUR.LINE`). These contours show equal
+terrain elevations; they are not crest lines. Topography, colour maps and
+orthophotos are saved at 4000 × 4000 pixels per cell (1.25 m per displayed pixel).
+This is image sampling, not source accuracy. Background opacity defaults to 85%
+and remains adjustable. Alternative Esri shaded relief retains its separate
+attribution and resolution.
+Large contour backgrounds are requested in smaller georeferenced windows and
+joined without resampling to avoid interrupted WMS responses. Metadata retains
+all actual request URLs for reproducing the mosaic.
+If a contour background is unavailable, the viewer uses the saved IGN colour
+map and explicitly labels the missing contours instead of showing a blank map.
 
-The **Crests · IGN DEM** checkbox adds approximate red crest lines, including
-secondary ridges, derived from small IGN RGE ALTI windows in
-`data/thermal_orography/`. Enabled by default, it works with every background
-and in whole-interval or daily views. The viewer makes no network requests.
-Prepare the twelve saved cells with `scripts/pipeline/prepare_thermal_ridges.py`.
+The **Estimated crests · IGN DEM** checkbox adds approximate red crest lines
+computed from official IGN RGE ALTI windows in `data/thermal_orography/`. It is
+**off by default**. These are our estimates, not IGN-certified crest vectors.
+The raster hash is checked against saved provenance before displaying them.
+The overlay covers the selected saved cell; it is not generated for neighbours.
+Prepare saved cells with `scripts/pipeline/prepare_thermal_ridges.py`.
 A missing extract is distinguished from an empty derived trace.
 
 Source: [IGN RGE ALTI](https://www.data.gouv.fr/datasets/rge-alti-r), Licence
@@ -143,7 +177,7 @@ triangles are no longer displayed.
 Source attribution: Esri, Vantor, Airbus DS, USGS, NGA, NASA, CGIAR, N Robinson,
 NCEAS, NLS, OS, NMA, Geodatastyrelsen, Rijkswaterstaat, GSA, Geoland, FEMA, Intermap,
 and the GIS user community. The hillshade is only a visual background: it does not
-replace the GNSS ground reference or change the meaning of the AGL slider.
+change the DEM mean or the meaning of the height slider.
 
 ## Time and segmentation
 
@@ -173,8 +207,9 @@ fix tables or the altitude plausibility bounds. Each method's climb products are
 also keyed by its model, configuration and decoding/geometry code. Changing one
 method does not invalidate the other. A rebuilt census invalidates climb products
 too, including their UTC origins. A new viewer session or a different time interval
-does not invalidate anything. Missing products are prepared only by the offline command;
-the viewer reports how many flights were read from the published file.
+does not invalidate anything. Missing ranked-cell products are prepared offline.
+Explicit neighbour exploration may prepare additional whole-flight products in
+the background; the published snapshot stays read-only.
 
 The complete census is published atomically. Every whole-flight climb product is
 committed independently, so resuming preparation skips finished products. Original
@@ -183,7 +218,7 @@ IGC files, processed tables and segmentation models are never modified.
 
 ## Colour maps, aerial dates and daily comparison
 
-**Colour map · IGN**, **Aerial photo · IGN**, **Shaded relief**, and **None** are
+**Topography · IGN**, **Colour map · IGN**, **Aerial photo · IGN**, **Shaded relief**, and **None** are
 available for both maps. The IGN photographs are aerial orthophotos, not a live
 satellite feed. Each 5 km square is saved at 4000 × 4000 pixels (1.25 m per pixel),
 with its exact EPSG:2154 bounds; the France overview uses CRS:84. Zooming uses the
@@ -233,7 +268,7 @@ Point products resume per flight, commit in batches and advertise the completed
 lattice only after coverage verification; backgrounds resume per image. The
 existing snapshot remains readable if offline enrichment is interrupted. The
 writer uses the same `.prepare.lock` as the original preparation. Read-only
-viewers never repair or rebuild missing products.
+ranked-cell reads never repair or rebuild missing products.
 
 ## Enlarged maps and full screen
 
@@ -253,3 +288,27 @@ Controls are compact: only the active time-selection controls are shown. The
 long ground-reference summary is available through **Cell details**; acquisition
 dates and map credits remain visible. Switching views or entering full screen
 requires no cache preparation and does not recompute scientific results.
+
+## Pan and bounded zoom
+
+Use **Zoom +**, **Zoom −**, and **Reset cell** above the maps. The visible width
+is limited to **0.5–10 km**. Use the toolbar's pan tool to drag the view; panning
+is bounded by the selected square and its eight immediate neighbours, a
+15 × 15 km area. Reset returns to the original 5 × 5 km square. Height,
+background and time-band redraws preserve the viewport; selecting another ranked
+cell resets it. A dashed outline marks the selected square in expanded views.
+
+Leaving the square loads each neighbour's own visitors, including flights that
+never crossed the selected cell. First exploration needs connected processed
+archives and a current `thermal-cells.sqlite3` census. Missing IGN terrain and
+backgrounds require internet. Terrain TIFFs (25 m sampling) are saved in
+`exploration/terrain/`, images in `imagery/`, and decoded edges in the existing
+`thermal-climbs.sqlite3` cache beside the published snapshot. Missing flights are
+decoded whole before spatial or temporal cuts. Partial neighbourhood results are
+never shown as complete; failed expansion restores the previous viewport.
+
+All points use **one horizontal absolute plane**:
+`H = selected_cell_mean_terrain + z`. The reference does not jump at cell boundaries.
+Neighbour means are recorded separately and do not redefine H. Intersection and
+contributing-flight counts refer to the visible viewport; the central-cell
+visitor count remains explicitly labelled as such.

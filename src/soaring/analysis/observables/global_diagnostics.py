@@ -48,6 +48,20 @@ def closed_route_geometry(task: str) -> str:
     return "other"
 
 
+def closed_route_type(task: str) -> str:
+    """Name the declared closed route type, keeping flat and FAI triangles apart.
+
+    Returns ``"flat_triangle"``, ``"fai_triangle"``, ``"quadrilateral"`` or
+    ``"out_and_return"``; every open or unclassified label is ``"other"``.
+    """
+    return {
+        "triangle": "flat_triangle",
+        "triangle fai": "fai_triangle",
+        "quadrilatere": "quadrilateral",
+        "aller-retour": "out_and_return",
+    }.get(_normalized_task(task), "other")
+
+
 def log_slope(lags: np.ndarray, values: np.ndarray) -> tuple[float, float]:
     """Return a descriptive log--log slope and its RMS residual in decades."""
     good = np.isfinite(values) & (values > 0) & (lags > 0)

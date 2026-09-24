@@ -1,0 +1,97 @@
+{
+  "definition": "Median over 1000 draws of 500 flights (all flights if fewer) of the smallest share of 250 m bins holding half of their first crossings. share_for_half_by_bin_m gives [observed, uniform] for other bin sizes.",
+  "regions": {
+    "alps": {
+      "share_for_half": 0.006875,
+      "uniform_share_for_half": 0.1125,
+      "flights_drawn": 500,
+      "share_for_half_by_bin_m": {
+        "100": [
+          0.0044,
+          0.0238
+        ],
+        "250": [
+          0.006875,
+          0.111875
+        ],
+        "500": [
+          0.0125,
+          0.22375
+        ],
+        "1000": [
+          0.02,
+          0.34
+        ]
+      }
+    },
+    "pyrenees": {
+      "share_for_half": 0.001875,
+      "uniform_share_for_half": 0.1125,
+      "flights_drawn": 500,
+      "share_for_half_by_bin_m": {
+        "100": [
+          0.0015,
+          0.0238
+        ],
+        "250": [
+          0.001875,
+          0.111875
+        ],
+        "500": [
+          0.005,
+          0.2225
+        ],
+        "1000": [
+          0.02,
+          0.34
+        ]
+      }
+    },
+    "channel-coast": {
+      "share_for_half": 0.016875,
+      "uniform_share_for_half": 0.1125,
+      "flights_drawn": 500,
+      "share_for_half_by_bin_m": {
+        "100": [
+          0.0099,
+          0.0238
+        ],
+        "250": [
+          0.016875,
+          0.1125
+        ],
+        "500": [
+          0.02,
+          0.2225
+        ],
+        "1000": [
+          0.03,
+          0.34
+        ]
+      }
+    },
+    "champagne": {
+      "share_for_half": 0.01125,
+      "uniform_share_for_half": 0.1125,
+      "flights_drawn": 500,
+      "share_for_half_by_bin_m": {
+        "100": [
+          0.008,
+          0.0238
+        ],
+        "250": [
+          0.01125,
+          0.1125
+        ],
+        "500": [
+          0.0125,
+          0.2225
+        ],
+        "1000": [
+          0.02,
+          0.34
+        ]
+      }
+    }
+  }
+}

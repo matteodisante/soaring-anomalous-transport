@@ -1,7 +1,9 @@
 # Crest references for thermal-plane maps
 
-The viewer, thesis and slides now show **red crest lines**, replacing the named
-summit triangles. The lines are derived from small [IGN RGE ALTI terrain
+The viewer offers **Estimated crests · IGN DEM**, off by default. Thesis and
+slide exporters also use these **red crest lines**, replacing named summit
+triangles. The viewer defaults to Plan IGN with official elevation contours
+(`ELEVATION.CONTOUR.LINE`), distinct from crest estimates. The lines are derived from small [IGN RGE ALTI terrain
 extracts](https://www.data.gouv.fr/datasets/rge-alti-r), under **Licence Ouverte
 2.0**. They are approximate, scale-dependent height ridges, not official mapped
 crest vectors or an exhaustive inventory of every local maximum.
@@ -47,11 +49,32 @@ is reversed when processing: TIFF north-to-south becomes south-to-north.
 .venv/bin/python scripts/pipeline/prepare_thermal_ridges.py --rederive
 ```
 
-The prepared SSD selects the twelve cells and is read only. `--refresh`
+The prepared SSD selects the twelve cells and is read only during crest preparation. `--refresh`
 requests new terrain; default execution reuses existing valid crest extracts.
 The viewer and figure exporter share `thermal_ridges.load_ridges` and
 `thermal_ridges.draw_ridges`; neither downloads data. Terrain lines do not
-change the flight sample, heights, counts or cell reference altitude.
+change the flight sample or counts.
+
+## Mean terrain reference for the viewer
+
+`thermal_ground.terrain_reference` reuses these elevation TIFFs to compute the
+area-weighted mean inside the exact 5 × 5 km cell. It verifies each raster's hash
+against its saved provenance and requires complete finite coverage. The mean
+uses the original elevations, before ridge smoothing, excluding the 500 m buffer:
+200 × 200 = 40,000 values per cell at 25 m sampling. This replaces the launch
+median as the thermal plane's reference elevation. Launch medians remain separate
+metadata for the existing cell ranking.
+
+```bash
+.venv/bin/python scripts/pipeline/prepare_thermal_ground.py
+```
+
+This upgrades the standalone SSD store atomically and regenerates intersections
+from saved climb edges at the new absolute heights. The viewer shows the terrain
+source, sampling, retrieval date, licence, dataset link and exact WMS query.
+The base WMS endpoint alone is not a web page: a GetMap request needs the layer,
+bounding box, projection, raster dimensions and output format. The TIFF download
+contains numerical elevations rather than a browser map.
 
 ## Reading the mountain cell
 
@@ -71,3 +94,12 @@ Licence Ouverte 2.0. These discrete named points were insufficient to trace
 continuous ridges. IGN `ligne_orographique` features marked `Talus` were not
 relabelled as crests. OpenStreetMap ridge/arete geometry was inspected in H2,
 but its coverage was too fragmented; it is not used in the published overlay.
+
+## Neighbour exploration
+
+Additional elevation extracts requested by viewer navigation are stored on the
+SSD in `exploration/terrain/` beside `thermal-planes.sqlite3`, not in this folder.
+They use the same official IGN elevation layer, with a 200 × 200 float TIFF over
+the exact 5 km square. A JSON sidecar retains the query, hash, sampling and
+retrieval date. These extracts supply mean terrain references; no red crest
+geometry is automatically inferred for neighbouring cells.

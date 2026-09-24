@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from datetime import date, datetime, timedelta
+from html import escape
 from itertools import pairwise
 from threading import Event
 
@@ -31,9 +32,10 @@ from PyQt6.QtWidgets import (
 
 from .. import geography
 from ..thermal_daily import PARIS, height_levels, local_bounds
+from ..thermal_explorer import load_explorer as load_store
 from ..thermal_geometry import plane_intersections, unproject
 from ..thermal_ridges import draw_ridges, load_ridges
-from ..thermal_store import CancelledError, PlaneData, ThermalStore, load_store
+from ..thermal_store import CancelledError, PlaneData, ThermalStore
 from .thermal_info import ThermalInfo
 
 
@@ -78,6 +80,10 @@ class ThermalPlane(QWidget):
         self._dates_initialized = False
         self._daily_info = ""
         self._daily_days = {}
+        self._terrain_info = None
+        self._neighborhood = {}
+        self._plane_limits = ((0, 5), (0, 5))
+        self._pending_limits = None
         self._build = QPushButton("Reload SSD data")
         self._build.setToolTip(
             "Read the completed thermal-planes.sqlite3 file from the SSD."
@@ -103,9 +109,16 @@ class ThermalPlane(QWidget):
         self._step = QComboBox()
         for step in (10, 20, 50, 100, 200):
             self._step.addItem(f"{step} m", step)
+        self._step.setToolTip(
+            "Vertical distance between selectable planes. Each plane has zero "
+            "thickness: dots are exact interpolated climb intersections."
+        )
         self._height = QDoubleSpinBox()
         self._height.setDecimals(2)
-        self._height.setSuffix(" m AGL")
+        self._height.setSuffix(" m above mean terrain")
+        self._height.setToolTip(
+            "Plane altitude = mean IGN terrain elevation inside this 5 km cell + z"
+        )
         self._height.setRange(0, 0)
         self._height.setSingleStep(10)
         self._background = QComboBox()
@@ -113,12 +126,13 @@ class ThermalPlane(QWidget):
         self._background.addItem("Aerial photo · IGN", "aerial")
         self._background.addItem("Shaded relief", "relief")
         self._background.addItem("None", "none")
-        self._background.setCurrentIndex(0)
-        self._ridges = QCheckBox("Crests · IGN DEM")
-        self._ridges.setChecked(True)
+        self._background.addItem("Topography + contours · IGN", "topography")
+        self._background.setCurrentIndex(4)
+        self._ridges = QCheckBox("Estimated crests · IGN DEM")
+        self._ridges.setChecked(False)
         self._ridges.setToolTip(
-            "Show approximate crest lines derived from IGN terrain, "
-            "including secondary ridges. "
+            "Our estimated crest lines derived from official IGN RGE ALTI heights; "
+            "these are not official IGN crest vectors. "
             "These ground locations do not change with the plane height."
         )
         self._image_info = QLabel()
@@ -151,7 +165,7 @@ class ThermalPlane(QWidget):
         self._relief_strength.setRange(0, 100)
         self._relief_strength.setDecimals(0)
         self._relief_strength.setSingleStep(5)
-        self._relief_strength.setValue(35)
+        self._relief_strength.setValue(85)
         self._relief_strength.setSuffix("% background")
         self._relief_strength.setToolTip(
             "Strength of the saved terrain backdrop on both maps"
@@ -159,8 +173,8 @@ class ThermalPlane(QWidget):
         self._summary = QLabel(
             "Metropolitan France · both available disciplines · "
             "5 x 5 km Lambert-93 cells.\n"
-            "Ranked by all-time distinct crossing flights. Ground: median raw GNSS "
-            "launch altitude of flights starting inside the cell."
+            "Ranked by all-time distinct crossing flights. Plane reference: "
+            "mean IGN terrain elevation inside the cell."
         )
         self._summary.setWordWrap(True)
         self._status = QLabel(
@@ -178,7 +192,7 @@ class ThermalPlane(QWidget):
         self._details.setCheckable(True)
         self._details.toggled.connect(self._summary.setVisible)
         self._info = QPushButton("Info")
-        self._info.setToolTip("How the cells, ground altitude and AGL are obtained")
+        self._info.setToolTip("Data sources, terrain reference and climb intersections")
         self._info_panel: ThermalInfo | None = None
         self._info.clicked.connect(self._show_info)
         self._summary.hide()
@@ -194,7 +208,7 @@ class ThermalPlane(QWidget):
         heights = QHBoxLayout()
         heights.addWidget(QLabel("Horizontal plane"))
         heights.addWidget(self._slider, 1)
-        heights.addWidget(QLabel("Step"))
+        heights.addWidget(QLabel("Height increment"))
         heights.addWidget(self._step)
         heights.addWidget(self._height)
         heights.addWidget(self._background)
@@ -230,12 +244,27 @@ class ThermalPlane(QWidget):
         layout.addWidget(self._daily_settings)
         self._daily_settings.hide()
         layout.addLayout(heights)
+        self._provenance = QLabel()
+        self._provenance.setWordWrap(True)
+        self._provenance.setOpenExternalLinks(True)
+        layout.addWidget(self._provenance)
         layout.addWidget(self._image_info)
         self._toolbar = NavigationToolbar2QT(self._canvas, self)
         navigation = QHBoxLayout()
         navigation.addWidget(self._toolbar)
         navigation.addWidget(QLabel("View"))
         navigation.addWidget(self._view)
+        self._zoom_in = QPushButton("Zoom +")
+        self._zoom_out = QPushButton("Zoom -")
+        self._reset_view = QPushButton("Reset cell")
+        self._zoom_in.setToolTip("Zoom in, down to a 500 m wide view")
+        self._zoom_out.setToolTip(
+            "Zoom out up to 10 km; load neighbouring cells and their climb points. "
+            "First use needs the source archives and Internet for uncached IGN maps."
+        )
+        self._reset_view.setToolTip("Return to the selected 5 x 5 km cell")
+        for button in (self._zoom_in, self._zoom_out, self._reset_view):
+            navigation.addWidget(button)
         navigation.addStretch(1)
         for button in (
             self._info,
@@ -270,6 +299,10 @@ class ThermalPlane(QWidget):
         self._relief_strength.valueChanged.connect(self._relief_changed)
         self._ridges.toggled.connect(self._draw_plane)
         self._canvas.mpl_connect("button_press_event", self._map_clicked)
+        self._canvas.mpl_connect("button_release_event", self._pan_finished)
+        self._zoom_in.clicked.connect(lambda: self._zoom_plane(0.5))
+        self._zoom_out.clicked.connect(lambda: self._zoom_plane(2))
+        self._reset_view.clicked.connect(self._reset_plane_view)
         self._set_busy(False)
         self._draw_map()
         self._draw_plane()
@@ -303,6 +336,10 @@ class ThermalPlane(QWidget):
         """Drop results after the application's archive folders change."""
         self.shutdown()
         self._index = self._plane = None
+        self._neighborhood = {}
+        self._plane_limits = ((0, 5), (0, 5))
+        self._terrain_info = None
+        self._provenance.clear()
         self._tried_cache = False
         self._cells.clear()
         self._set_busy(False)
@@ -341,12 +378,17 @@ class ThermalPlane(QWidget):
             self._best_day,
             self._before,
             self._after,
+            self._background,
         ):
             widget.setEnabled(
                 not busy and self._index is not None and self._cells.count() > 0
             )
         for widget in (self._slider, self._height, self._step):
             widget.setEnabled(not busy and self._plane is not None)
+        for widget in (self._zoom_in, self._zoom_out, self._reset_view):
+            widget.setEnabled(
+                not busy and self._plane is not None and bool(self._plane_axes)
+            )
 
     def _run(self, operation, on_success):
         """Connect a worker result to this widget's GUI-thread slot."""
@@ -356,7 +398,7 @@ class ThermalPlane(QWidget):
         self._worker = _Worker(operation, self)
         self._on_success = on_success
         self._worker.progress.connect(self._progress)
-        self._worker.failed.connect(self._progress)
+        self._worker.failed.connect(self._operation_failed)
         self._worker.succeeded.connect(self._receive_result)
         self._worker.finished.connect(self._finished)
         self._worker.start()
@@ -364,6 +406,15 @@ class ThermalPlane(QWidget):
     def _progress(self, message):
         """Ignore queued messages from an invalidated archive request."""
         if self.sender() is self._worker:
+            self._status.setText(message)
+
+    def _operation_failed(self, message):
+        """Restore the previous viewport when a neighbour load fails or is cancelled."""
+        if self.sender() is self._worker:
+            if self._pending_limits is not None:
+                self._plane_limits = self._pending_limits
+                self._pending_limits = None
+                self._draw_plane()
             self._status.setText(message)
 
     def _receive_result(self, result):
@@ -400,7 +451,7 @@ class ThermalPlane(QWidget):
             ranks[cell.terrain] = ranks.get(cell.terrain, 0) + 1
             self._cells.addItem(
                 f"{cell.terrain} #{ranks[cell.terrain]} · {cell.flights:,} flights "
-                f"· ground {cell.ground_m:g} m",
+                f"· mean terrain {cell.ground_m:.1f} m",
                 cell,
             )
         if previous is not None:
@@ -443,7 +494,16 @@ class ThermalPlane(QWidget):
         """Set a useful one-day window and the cell's fixed all-time height range."""
         cell = self._cells.currentData()
         self._plane = None
+        self._neighborhood = {}
+        self._plane_limits = ((0, 5), (0, 5))
+        self._pending_limits = None
         if cell is not None and self._index is not None:
+            self._terrain_info = (
+                self._index.terrain_reference(cell)
+                if hasattr(self._index, "terrain_reference")
+                else None
+            )
+            self._update_provenance()
             _, height = self._index.defaults(cell)
             if hasattr(self._index, "summer_days"):
                 days = self._index.summer_days(cell)
@@ -466,19 +526,20 @@ class ThermalPlane(QWidget):
             self._height.setRange(0, cell.max_agl_m)
             self._height.setValue(height)
             self._height.blockSignals(False)
-            origin_kind = (
-                "screened raw"
-                if getattr(self._index, "quality_summary", None)
-                else "raw"
-            )
+            launch = cell.launch_median_m
             self._summary.setText(
                 f"{cell.terrain} #{self._rank(cell)} · 5 x 5 km (Lambert-93) · "
                 f"{cell.flights:,} distinct "
-                f"crossing flights, all dates. Ground: {cell.ground_m:.1f} m "
-                f"(median of {cell.launches:,} {origin_kind} GNSS starts inside). "
-                f"Maximum inside cell: {cell.max_agl_m:.1f} m AGL.\n"
-                "Bands use the ground median: <300 / 300-800 / 800-1500 / ≥1500 m. "
-                "AGL uses this fixed reference; shaded terrain is a separate backdrop."
+                f"crossing flights, all dates. "
+                f"Mean terrain: {cell.ground_m:.2f} m ASL. "
+                f"Maximum height above mean terrain: {cell.max_agl_m:.1f} m.\n"
+                "Category bands use launch medians: <300 / 300-800 / "
+                "800-1500 / ≥1500 m. "
+                + (
+                    f"Launch median: {launch:.1f} m ({cell.launches:,} starts). "
+                    if launch is not None
+                    else ""
+                )
                 + (
                     " Few starts: altitude category has limited support."
                     if cell.launches < 10
@@ -502,9 +563,34 @@ class ThermalPlane(QWidget):
             else:
                 self._auto_load = True
 
+    def _update_provenance(self):
+        """Keep flight and elevation sources visible independently of backgrounds."""
+        terrain = self._terrain_info
+        detail = (
+            f" · {terrain['grid_m'][0]:g} m grid · {terrain['samples']:,} pixels/cell"
+            f" · retrieved {terrain['retrieved_utc'][:10]}"
+            if terrain
+            else ""
+        )
+        api = (
+            f' · <a href="{escape(terrain["source_url"], quote=True)}">'
+            "Download cell elevations (TIFF)</a>"
+            if terrain
+            else ""
+        )
+        self._provenance.setText(
+            'Terrain: <a href="https://www.data.gouv.fr/datasets/rge-alti-r">'
+            "IGN RGE ALTI</a> · Licence Ouverte 2.0"
+            f"{detail}{api}. Flights: FFVL CFD IGC · GNSS altitude · "
+            f"climb labels: {self._source.currentText()}."
+        )
+
     def _invalidate_plane(self, *_):
         """Hide stale results immediately when the UTC interval or decoder changes."""
         self._plane = None
+        self._neighborhood = {}
+        self._pending_limits = None
+        self._update_provenance()
         self._set_busy(self._worker is not None)
         self._status.setText(
             "Selection changed. Load climb intersections for this interval."
@@ -520,6 +606,9 @@ class ThermalPlane(QWidget):
         if end < start:
             self._status.setText("The end time must be at or after the start time.")
             return
+        if self._needs_neighbors():
+            self._start_neighborhood()
+            return
         index, source = self._index, self._source.currentData()
         self._plane = None
         self._draw_plane()
@@ -527,6 +616,77 @@ class ThermalPlane(QWidget):
             lambda **kwargs: index.read_plane(cell, start, end, source, **kwargs),
             self._plane_ready,
         )
+
+    def _needs_neighbors(self):
+        """Check whether the viewport reaches outside the selected square."""
+        return any(lo < 0 or hi > 5 for lo, hi in self._plane_limits)
+
+    def _start_neighborhood(self):
+        """Load complete nearby-cell data before exposing an expanded view."""
+        cell = self._cells.currentData()
+        if self._index is None or not hasattr(self._index, "read_neighborhood"):
+            self._status.setText("Neighbour exploration requires the archive census.")
+            return
+        bounds, source, kind = (
+            self._read_bounds(),
+            self._source.currentData(),
+            self._background.currentData(),
+        )
+        self._run(
+            lambda **kwargs: self._index.read_neighborhood(
+                cell, *bounds, source, kind, **kwargs
+            ),
+            self._neighborhood_ready,
+        )
+
+    def _neighborhood_ready(self, result):
+        """Publish one complete neighbourhood; all tiles use one absolute altitude."""
+        self._neighborhood = result
+        self._pending_limits = None
+        cell = self._cells.currentData()
+        self._reliefs.clear()
+        self._plane_ready(result[cell.ix, cell.iy][1])
+
+    def _zoom_plane(self, factor):
+        """Bound the display width to 0.5-10 km within the available 3 x 3 cells."""
+        if self._worker is not None or self._plane is None:
+            return
+        previous = self._plane_limits
+        limits = []
+        for lo, hi in self._plane_limits:
+            width = float(np.clip((hi - lo) * factor, 0.5, 10))
+            centre = float(np.clip((lo + hi) / 2, -5 + width / 2, 10 - width / 2))
+            limits.append((centre - width / 2, centre + width / 2))
+        self._plane_limits = tuple(limits)
+        if self._needs_neighbors() and not self._neighborhood:
+            self._pending_limits = previous
+            self._start_neighborhood()
+        else:
+            self._draw_plane()
+
+    def _reset_plane_view(self):
+        """Restore the central cell without changing height, dates or segmentation."""
+        self._plane_limits = ((0, 5), (0, 5))
+        self._draw_plane()
+
+    def _pan_finished(self, event):
+        """Keep pan and toolbar zoom within the supported neighbourhood extent."""
+        if event.inaxes not in self._plane_axes or self._worker is not None:
+            return
+        previous = self._plane_limits
+        limits = []
+        for lo, hi in (event.inaxes.get_xlim(), event.inaxes.get_ylim()):
+            width = float(np.clip(hi - lo, 0.5, 10))
+            centre = float(np.clip((lo + hi) / 2, -5 + width / 2, 10 - width / 2))
+            limits.append((centre - width / 2, centre + width / 2))
+        if np.allclose(limits, self._plane_limits):
+            return
+        self._plane_limits = tuple(limits)
+        if self._needs_neighbors() and not self._neighborhood:
+            self._pending_limits = previous
+            self._start_neighborhood()
+        else:
+            self._draw_plane()
 
     def _plane_ready(self, plane):
         """Report absent models/UTC explicitly, including an entirely empty slice."""
@@ -677,7 +837,7 @@ class ThermalPlane(QWidget):
             self._height_changed()
 
     def _slider_changed(self, value):
-        """Choose one saved plane; no interpolation or segmentation at runtime."""
+        """Choose a height without rereading or relabelling flights."""
         self._height.setValue(self._levels[value])
 
     def _height_changed(self, *_):
@@ -721,14 +881,44 @@ class ThermalPlane(QWidget):
                 if hasattr(self._index, "relief")
                 else None
             )
+            if (
+                self._reliefs[key] is None
+                and kind == "topography"
+                and hasattr(self._index, "background")
+            ):
+                colour = self._index.background(cell, "colour")
+                if colour is not None:
+                    pixels, metadata = colour
+                    self._reliefs[key] = pixels, {
+                        **metadata,
+                        "attribution": metadata.get("attribution", "Plan IGN")
+                        + " · Elevation contours unavailable",
+                    }
         if key in self._reliefs:
             self._reliefs.move_to_end(key)
-        while len(self._reliefs) > 4:
+        while len(self._reliefs) > 12:
             self._reliefs.popitem(last=False)
         return self._reliefs.get(key)
 
     def _relief_changed(self, *_):
         """Adjust background strength without changing any scientific result."""
+        if self._neighborhood and self._worker is None:
+            kind = self._background.currentData()
+            targets = [c for c, _ in self._neighborhood.values()]
+            if any(self._index.needs_background(c, kind) for c in targets):
+
+                def prepare(**kwargs):
+                    for c in targets:
+                        self._index.prepare_background(c, kind, **kwargs)
+
+                self._run(prepare, self._backgrounds_ready)
+                return
+        self._draw_map()
+        self._draw_plane()
+
+    def _backgrounds_ready(self, _):
+        """Refresh only imagery after an explicit background change."""
+        self._reliefs.clear()
         self._draw_map()
         self._draw_plane()
 
@@ -800,7 +990,8 @@ class ThermalPlane(QWidget):
             tx = 0.01 if band < 2 else 0.59
             ty = 0.93 - (band % 2) * 0.32 - (rank - 1) * 0.073
             annotation = ax.annotate(
-                f"{codes[cell.terrain]}{rank} · {cell.flights:,} · {cell.ground_m:g} m",
+                f"{codes[cell.terrain]}{rank} · {cell.flights:,} · "
+                f"{cell.ground_m:.0f} m",
                 (cx, cy),
                 xytext=(tx, ty),
                 textcoords="axes fraction",
@@ -826,7 +1017,7 @@ class ThermalPlane(QWidget):
             0.02,
             0.02,
             "P: Plains   H: Hills\nL: Low mountains   M: High mountains\n"
-            "1 / 2 / 3 = rank within category; m = median launch altitude",
+            "1 / 2 / 3 = rank within category; m = mean terrain elevation",
             transform=ax.transAxes,
             fontsize=7,
             va="bottom",
@@ -892,7 +1083,14 @@ class ThermalPlane(QWidget):
                 f"Downloaded: {info.get('retrieved', '')[:10]} · 1.25 m/pixel."
             )
         elif saved:
-            self._image_info.setText(info.get("attribution", "Saved relief"))
+            resolution = ""
+            if cell is not None and self._plane_axes:
+                width = saved[0].shape[1]
+                metres = (info["extent"][2] - info["extent"][0]) / width
+                resolution = f" · {width:,} px · {metres:.2f} m/pixel"
+            self._image_info.setText(
+                info.get("attribution", "Saved relief") + resolution
+            )
         else:
             self._image_info.setText(
                 "Background not prepared"
@@ -904,27 +1102,49 @@ class ThermalPlane(QWidget):
             try:
                 ridges = load_ridges(cell)
                 ridge_info = (
-                    f"Red crest lines: {len(ridges['features'])} pieces "
-                    "derived from terrain · "
+                    f"Estimated crests: {len(ridges['features'])} pieces · "
+                    "our derivation from official terrain, not IGN crest vectors · "
                     "© IGN RGE ALTI · Licence Ouverte 2.0"
                     if ridges is not None
-                    else "IGN crest lines not prepared for this cell"
+                    else "Estimated crests not prepared for this cell"
                 )
             except (OSError, ValueError, KeyError) as exc:
-                ridge_info = f"IGN crest overlay unavailable: {exc}"
+                ridge_info = f"Estimated crest overlay unavailable: {exc}"
             self._image_info.setText(
                 " · ".join(filter(None, (self._image_info.text(), ridge_info)))
             )
         points = None
+        # Preserve the exact terminal level, even when the spin box rounds it.
+        height = self._levels[self._slider.value()]
         if self._plane is not None and cell is not None and self._plane_axes:
-            if self._plane.points is not None:
-                level = int(
-                    np.argmin(abs(height_levels(cell.max_agl_m) - self._height.value()))
-                )
+            if self._neighborhood:
+                frames = [
+                    plane_intersections(
+                        plane.edges,
+                        target,
+                        height,
+                        *self._read_bounds(),
+                        altitude_m=cell.ground_m + height,
+                    )
+                    for target, plane in self._neighborhood.values()
+                ]
+                points = pd.concat(frames, ignore_index=True)
+                if not points.empty:
+                    clock = pd.to_datetime(
+                        points.utc, unit="s", utc=True
+                    ).dt.tz_convert(PARIS)
+                    points["local_hour"] = (
+                        clock.dt.hour
+                        + clock.dt.minute / 60
+                        + clock.dt.second / 3600
+                        + clock.dt.microsecond / 3.6e9
+                    )
+            elif self._plane.points is not None:
+                level = int(np.argmin(abs(height_levels(cell.max_agl_m) - height)))
                 points = self._plane.points.loc[self._plane.points.level == level]
             else:
                 points = plane_intersections(
-                    self._plane.edges, cell, self._height.value(), *self._read_bounds()
+                    self._plane.edges, cell, height, *self._read_bounds()
                 )
                 if not points.empty:
                     clock = pd.to_datetime(
@@ -936,13 +1156,26 @@ class ThermalPlane(QWidget):
         bands = [e.time().hour() + e.time().minute() / 60 for e in self._bands]
         valid_bands = all(a < b for a, b in pairwise(bands))
         labels = ("Morning", "Midday", "Afternoon")
+        image_cells = (
+            [c for c, _ in self._neighborhood.values()]
+            if self._neighborhood
+            else [cell]
+        )
+        images = [self._saved_relief(c) for c in image_cells if c is not None]
         for i, ax in zip(self._panel_indices, self._plane_axes, strict=True):
             ax.clear()
-            ax.set(xlim=(0, 5), ylim=(0, 5), xlabel="East (km)", ylabel="North (km)")
+            ax.set(
+                xlim=self._plane_limits[0],
+                ylim=self._plane_limits[1],
+                xlabel="East from selected cell (km)",
+                ylabel="North from selected cell (km)",
+            )
             ax.set_aspect("equal")
             ax.grid(alpha=0.15)
-            if saved is not None:
-                pixels, info = saved
+            for backdrop in images:
+                if backdrop is None:
+                    continue
+                pixels, info = backdrop
                 w, s, e, n = info["extent"]
                 west, south, _, _ = cell.bounds
                 ax.imshow(
@@ -954,19 +1187,47 @@ class ThermalPlane(QWidget):
                         (n - south) / 1000,
                     ),
                     origin="upper",
+                    interpolation="nearest",
                     alpha=self._relief_strength.value() / 100,
                     zorder=0,
                 )
+            if saved is not None:
                 ax.text(
                     0.01,
                     0.01,
-                    info.get("attribution", "Relief: Esri / contributors"),
+                    saved[1].get("attribution", "Relief: Esri / contributors"),
                     transform=ax.transAxes,
                     fontsize=6,
                     zorder=4,
                     bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.8},
                 )
             selected = points
+            if selected is not None and not selected.empty:
+                west, south, _, _ = cell.bounds
+                (xmin, xmax), (ymin, ymax) = self._plane_limits
+                selected = selected.loc[
+                    selected.x.between(
+                        west + xmin * 1000, west + xmax * 1000, inclusive="left"
+                    )
+                    & selected.y.between(
+                        south + ymin * 1000, south + ymax * 1000, inclusive="left"
+                    )
+                ]
+            if self._neighborhood:
+                from matplotlib.patches import Rectangle
+
+                ax.add_patch(
+                    Rectangle(
+                        (0, 0),
+                        5,
+                        5,
+                        fill=False,
+                        edgecolor="black",
+                        linewidth=1.2,
+                        linestyle="--",
+                        zorder=4,
+                    )
+                )
             if ridges is not None:
                 draw_ridges(ax, cell, ridges)
             if (
@@ -1038,10 +1299,11 @@ class ThermalPlane(QWidget):
                 hours = (bands[i], bands[i + 1]) if valid_bands else (0, 0)
             crossing = self._cell_flights(hours)
             if crossing is not None:
-                prefix += f"{crossing:,} flights cross the cell\n"
+                prefix += f"{crossing:,} flights cross the selected cell\n"
             ax.set_title(
-                f"{prefix}z = {self._height.value():g} m AGL · "
-                f"{count:,} points · {flights:,} flights at this z",
+                f"{prefix}z = {height:.2f} m above mean terrain\n"
+                + (f"Plane: {cell.ground_m + height:.1f} m ASL · " if cell else "")
+                + f"{count:,} visible points · {flights:,} contributing flights",
                 fontsize=10,
             )
         if self._mode.currentIndex():

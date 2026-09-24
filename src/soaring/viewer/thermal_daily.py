@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import sqlite3
@@ -15,6 +16,7 @@ from .thermal_geometry import ThermalCell
 
 PARIS = ZoneInfo("Europe/Paris")
 POINT_COLUMNS = ["level", "x", "y", "utc"]
+POINT_LATTICE_VERSION = "10m-v2"
 
 
 def height_levels(maximum, step=10):
@@ -86,19 +88,38 @@ def prepare_daily(path, progress=print):
                 ix INTEGER,iy INTEGER,day TEXT,flights INTEGER,
                 PRIMARY KEY(ix,iy,day));
         """)
+        cells = [
+            ThermalCell(**json.loads(r[0]))
+            for r in db.execute("SELECT payload FROM cells ORDER BY position")
+        ]
+        signature = hashlib.sha256(
+            json.dumps(
+                [
+                    POINT_LATTICE_VERSION,
+                    [(c.ix, c.iy, c.ground_m, c.max_alt_m) for c in cells],
+                ]
+            ).encode()
+        ).hexdigest()
+        previous = db.execute(
+            "SELECT value FROM metadata WHERE key='point_build_signature'"
+        ).fetchone()
+        if previous != (signature,):
+            db.execute("DELETE FROM plane_points")
+            db.execute("DELETE FROM metadata WHERE key='point_lattice'")
+            db.execute(
+                "INSERT OR REPLACE INTO metadata VALUES ('point_build_signature',?)",
+                (signature,),
+            )
+            db.commit()
         ready = db.execute(
             "SELECT value FROM metadata WHERE key='point_lattice'"
         ).fetchone()
-        if ready and ready[0] == "10m-v1":
+        if ready and ready[0] == POINT_LATTICE_VERSION:
             expected = db.execute("SELECT COUNT(*) FROM climbs").fetchone()[0]
             actual = db.execute("SELECT COUNT(*) FROM plane_points").fetchone()[0]
             if expected == actual:
                 progress(f"All {actual:,} point products already prepared")
                 return
-        cells = [
-            ThermalCell(**json.loads(r[0]))
-            for r in db.execute("SELECT payload FROM cells ORDER BY position")
-        ]
         for cell in cells:
             days = Counter()
             for start, end in db.execute(
@@ -155,7 +176,10 @@ def prepare_daily(path, progress=print):
             WHERE p.source IS NULL""").fetchone()[0]
         if missing:
             raise ValueError(f"Missing {missing} prepared point products")
-        db.execute("INSERT OR REPLACE INTO metadata VALUES ('point_lattice','10m-v1')")
+        db.execute(
+            "INSERT OR REPLACE INTO metadata VALUES ('point_lattice',?)",
+            (POINT_LATTICE_VERSION,),
+        )
         db.commit()
         count = db.execute("SELECT SUM(count) FROM plane_points").fetchone()[0]
         progress(f"Prepared points: {count:,}")

@@ -118,3 +118,12 @@ def test_nan_and_invalid_bounds():
     assert plane_intersections(edges(fixes), CELL, 100, 0, 2000).empty
     with pytest.raises(ValueError):
         plane_intersections(edges(fixes), CELL, CELL.max_agl_m + 1, 0, 2000)
+
+
+def test_exact_plane_between_fixes_has_no_altitude_band():
+    fixes = edges(track([1000, 2000], [197, 203]))
+    point = plane_intersections(fixes, CELL, 100, 0, 2000).iloc[0]
+    assert point.x == 1500
+    assert point.utc == 1000.5
+    # Proximity alone never supplies a crossing outside the supported heights.
+    assert plane_intersections(fixes, CELL, 104, 0, 2000).empty

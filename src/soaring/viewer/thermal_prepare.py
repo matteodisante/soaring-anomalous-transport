@@ -64,10 +64,16 @@ def _decode(task):
     return result
 
 
-def prepare_climbs(index, *, workers=4, progress=print):
-    """Stream needed row groups once; parent alone commits complete products."""
+def prepare_climbs(
+    index, *, workers=4, progress=print, cells=None, sources=("own", "vilpellet")
+):
+    """Stream needed row groups once; parent alone commits complete products.
+
+    ``cells`` and ``sources`` narrow the work, e.g. to explored squares and one
+    segmentation; by default every selected cell gets both methods.
+    """
     todo = {}
-    for source in ("own", "vilpellet"):
+    for source in sources:
         with ClimbCache(index, source) as cache:
             existing = set(
                 cache.db.execute(
@@ -75,7 +81,7 @@ def prepare_climbs(index, *, workers=4, progress=print):
                     (cache.key,),
                 )
             )
-            for cell in index.cells():
+            for cell in index.cells() if cells is None else cells:
                 for row in index.flights(cell).to_dict("records"):
                     if not np.isfinite(row["start_utc"] + row["trim_start"]):
                         continue
@@ -92,7 +98,7 @@ def prepare_climbs(index, *, workers=4, progress=print):
     total = len(todo)
     progress(
         f"{total:,} distinct flights still need products "
-        "(both methods, all selected cells)"
+        "(requested methods and cells)"
     )
     if not total:
         return

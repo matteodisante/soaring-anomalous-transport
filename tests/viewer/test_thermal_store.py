@@ -15,7 +15,7 @@ from soaring.viewer.thermal_store import ThermalStore, load_store
 
 @pytest.fixture
 def store(tmp_path):
-    cell = ThermalCell(193, 1304, "Plains", 2, 1, 260, 2000)
+    cell = ThermalCell(193, 1304, "Plains", 2, 1, 260, 2000, launch_median_m=185)
     west, south, _, _ = cell.bounds
     blob = io.BytesIO()
     np.savez_compressed(
@@ -27,7 +27,8 @@ def store(tmp_path):
     path = tmp_path / "thermal-planes.sqlite3"
     with sqlite3.connect(path) as db:
         db.executescript("""
-        CREATE TABLE metadata(key TEXT,value TEXT);
+        CREATE TABLE metadata(key TEXT PRIMARY KEY,value TEXT);
+        CREATE TABLE terrain(ix INTEGER,iy INTEGER,metadata TEXT,PRIMARY KEY(ix,iy));
         CREATE TABLE cells(position INTEGER,ix INTEGER,iy INTEGER,
                 payload TEXT,day REAL,height REAL);
         CREATE TABLE visitors(ix INTEGER,iy INTEGER,discipline TEXT,flight_id TEXT,
@@ -38,7 +39,28 @@ def store(tmp_path):
         """)
         db.executemany(
             "INSERT INTO metadata VALUES (?,?)",
-            [("ready", "1"), ("version", "1"), ("disciplines", '["paragliders"]')],
+            [
+                ("ready", "1"),
+                ("version", "3"),
+                ("disciplines", '["paragliders"]'),
+                ("ground_reference", "ign-dem-cell-mean-v1"),
+            ],
+        )
+        db.execute(
+            "INSERT INTO terrain VALUES (?,?,?)",
+            (
+                cell.ix,
+                cell.iy,
+                json.dumps(
+                    {
+                        "mean_m": 260,
+                        "grid_m": [25, 25],
+                        "samples": 40000,
+                        "retrieved_utc": "2026-09-22",
+                        "source_url": "https://data.geopf.fr/",
+                    }
+                ),
+            ),
         )
         db.execute(
             "INSERT INTO cells VALUES (0,?,?,?,?,?)",
@@ -100,6 +122,13 @@ def test_real_worker_auto_load_and_reload_button(qapp, store, monkeypatch):
         assert view._plane is not None, view._status.text()
         assert view._load.isEnabled()
         assert len(view._plane_ax.collections) == 1
+        assert "IGN RGE ALTI" in view._provenance.text()
+        assert "40,000" in view._provenance.text()
+        assert (
+            store.terrain_reference(store.cells()[0])["source_url"]
+            in view._provenance.text()
+        )
+        assert view._provenance.openExternalLinks()
 
     try:
         view.ensure_loaded()
@@ -171,6 +200,11 @@ def test_prepared_points_read_without_geometry_and_resume(store, monkeypatch):
         assert point.y == cell.bounds[1] + 150
         assert point.utc == 150
         assert data.selected == 1
+        native = prepared.read_plane(cell, 125, 175, source, use_edges=True)
+        assert native.points is None
+        assert len(native.edges) == 1
+        assert native.edges.z0.iloc[0] == 400
+        assert native.edges.z1.iloc[0] == 800
 
 
 def test_saved_aerial_dates_and_pixels(store, monkeypatch):
@@ -200,3 +234,51 @@ def test_saved_aerial_dates_and_pixels(store, monkeypatch):
     pixels, metadata = store.background(cell, "aerial")
     assert pixels[0, 0].tolist() == [20, 40, 60]
     assert metadata["acquisition_dates"] == dates
+
+
+def test_terrain_upgrade_rebuilds_points_and_resumes_without_changing_source(
+    store, monkeypatch
+):
+    from soaring.viewer import thermal_daily, thermal_ground
+
+    store.path.chmod(0o644)
+    thermal_daily.prepare_daily(store.path, progress=lambda _: None)
+    original = store.path.read_bytes()
+    cell = store.cells()[0]
+    reference = {**store.terrain_reference(cell), "mean_m": 300}
+    monkeypatch.setattr(thermal_ground, "terrain_reference", lambda *a: reference)
+    real_prepare = thermal_daily.prepare_daily
+
+    def interrupted(path, **kwargs):
+        real_prepare(path, **kwargs)
+        raise RuntimeError("interrupted before publication")
+
+    monkeypatch.setattr(thermal_daily, "prepare_daily", interrupted)
+    with pytest.raises(RuntimeError, match="interrupted"):
+        thermal_ground.upgrade_terrain_store(store.path, progress=lambda _: None)
+    assert store.path.read_bytes() == original
+    monkeypatch.setattr(thermal_daily, "prepare_daily", real_prepare)
+    thermal_ground.upgrade_terrain_store(store.path, progress=lambda _: None)
+    upgraded = ThermalStore(store.path)
+    new_cell = upgraded.cells()[0]
+    assert new_cell.ground_m == 300
+    assert new_cell.launch_median_m == 185
+    assert new_cell.terrain == cell.terrain
+    assert upgraded.defaults(new_cell)[1] == 300
+    for source in ("own", "vilpellet"):
+        points = upgraded.read_plane(new_cell, 125, 175, source).points
+        # z=300 above mean terrain is 600 ASL, exactly halfway along this edge.
+        point = points.loc[points.level == 30].iloc[0]
+        assert point.x == cell.bounds[0] + 150
+        assert point.utc == 150
+    modified = store.path.stat().st_mtime_ns
+    thermal_ground.upgrade_terrain_store(store.path, progress=lambda _: None)
+    assert store.path.stat().st_mtime_ns == modified
+
+
+def test_legacy_launch_reference_cannot_be_displayed_as_mean_terrain(store):
+    store.path.chmod(0o644)
+    with sqlite3.connect(store.path) as db:
+        db.execute("DELETE FROM metadata WHERE key='ground_reference'")
+    with pytest.raises(ValueError, match=r"prepare_thermal_ground\.py"):
+        ThermalStore(store.path)

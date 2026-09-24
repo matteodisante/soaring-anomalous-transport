@@ -38,7 +38,11 @@ def unproject(x, y):
 
 @dataclass(frozen=True)
 class ThermalCell:
-    """A square, its all-time crossing population, and independent launch ground."""
+    """A square and its reference elevation; published cells use the DEM mean.
+
+    The census initially uses launch medians for ranking. Publication replaces
+    ground_m with mean terrain and retains the ranking median separately.
+    """
 
     ix: int
     iy: int
@@ -47,6 +51,7 @@ class ThermalCell:
     launches: int
     ground_m: float
     max_alt_m: float
+    launch_median_m: float | None = None
 
     @property
     def bounds(self) -> tuple[float, float, float, float]:
@@ -60,7 +65,7 @@ class ThermalCell:
 
     @property
     def max_agl_m(self) -> float:
-        """Highest supported in-cell altitude relative to the launch median."""
+        """Highest supported in-cell altitude relative to the cell reference."""
         return max(0.0, self.max_alt_m - self.ground_m)
 
 
@@ -171,6 +176,8 @@ def plane_intersections(
     z_agl: float,
     start_utc: float,
     end_utc: float,
+    *,
+    altitude_m: float | None = None,
 ) -> pd.DataFrame:
     """Intersect climb polylines with an AGL plane, then clip position and UTC.
 
@@ -179,12 +186,14 @@ def plane_intersections(
     intersections and are excluded. Both upward and downward crossings within a
     climb-labelled phase are included; no inference of thermal centres is made.
     """
-    if not 0 <= z_agl <= cell.max_agl_m or end_utc < start_utc:
+    if (altitude_m is None and not 0 <= z_agl <= cell.max_agl_m) or end_utc < start_utc:
         raise ValueError("Invalid altitude or UTC interval")
+    if altitude_m is not None and not np.isfinite(altitude_m):
+        raise ValueError("Invalid absolute plane altitude")
     columns = ["x", "y", "utc", "flight_id", "discipline"]
     if edges.empty:
         return pd.DataFrame(columns=columns)
-    z = cell.ground_m + z_agl
+    z = cell.ground_m + z_agl if altitude_m is None else altitude_m
     delta = edges.z1.to_numpy() - edges.z0.to_numpy()
     fraction = np.divide(
         z - edges.z0.to_numpy(),

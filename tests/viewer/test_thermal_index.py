@@ -289,11 +289,19 @@ def test_source_change_invalidates_only_its_own_products(index, monkeypatch, tmp
     assert thermal_cache.segmentation_signature(index, "vilpellet") != jeremie
 
 
-def test_offline_export_requires_both_complete_methods_and_is_standalone(index):
+def test_offline_export_requires_both_complete_methods_and_is_standalone(
+    index, monkeypatch
+):
+    from dataclasses import replace
+
     from soaring.viewer.thermal_cache import ClimbCache
     from soaring.viewer.thermal_store import ThermalStore, export_store
 
     cell = index.cells()[0]
+    monkeypatch.setattr(
+        "soaring.viewer.thermal_store.terrain_reference",
+        lambda c: {"mean_m": c.ground_m},
+    )
     edges = pd.DataFrame(
         {
             "x0": [100.0],
@@ -321,7 +329,7 @@ def test_offline_export_requires_both_complete_methods_and_is_standalone(index):
     index.path.unlink()
     index.path.with_name("thermal-climbs.sqlite3").unlink()
     store = ThermalStore(path)
-    assert store.cells() == [cell]
+    assert store.cells() == [replace(cell, launch_median_m=cell.ground_m)]
     assert store.defaults(cell) == (0, 300)
     for source in ("own", "vilpellet"):
         result = store.read_plane(cell, 1080, 1090, source)

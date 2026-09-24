@@ -66,6 +66,101 @@ def test_height_slider_updates_points_without_reloading(widget):
     assert widget._plane_ax.get_ylim() == (0, 5)
 
 
+def test_exact_terminal_height_survives_spinbox_rounding(widget, monkeypatch):
+    from dataclasses import replace
+
+    cell = replace(widget._cells.currentData(), max_alt_m=1500.006)
+    plane = widget._plane
+    plane.edges["z1"] = cell.max_alt_m
+    index = SimpleNamespace(
+        disciplines=("paragliders",),
+        cells=lambda: [cell],
+        defaults=lambda _: (widget._utc_bounds()[0], 500),
+    )
+    monkeypatch.setattr(widget, "_start_plane", lambda: None)
+    widget._index_ready(index)
+    widget._plane_ready(plane)
+    widget._slider.setValue(widget._slider.maximum())
+    assert widget._height.value() == 1000.01
+    assert widget._plane_ax.collections[0].get_offsets()[0].tolist() == [2, 2]
+
+
+def test_neighbour_zoom_uses_one_absolute_plane_and_limits_counts_to_view(widget):
+    from dataclasses import replace
+
+    cell = widget._cells.currentData()
+    central = widget._plane
+    neighbour = replace(cell, ix=cell.ix + 1, ground_m=1200, max_alt_m=2000)
+    edge = central.edges.copy()
+    edge["x0"] += 5000
+    edge["x1"] += 5000
+    edge["z0"], edge["z1"] = 900, 1100
+    edge["flight_id"] = "neighbour-only"
+    other = PlaneData(edge, 1, 1, 0, 0, 0)
+    widget._plane_limits = ((-2.5, 7.5), (-2.5, 7.5))
+    widget._neighborhood_ready(
+        {
+            (cell.ix, cell.iy): (cell, central),
+            (neighbour.ix, neighbour.iy): (neighbour, other),
+        }
+    )
+    # H=500+500=1000, even though the neighbouring DEM mean is 1200.
+    offsets = widget._plane_ax.collections[0].get_offsets()
+    assert offsets.tolist() == [[1.5, 1.5], [6.5, 1.5]]
+    before = (
+        widget._height.value(),
+        widget._utc_bounds(),
+        widget._source.currentData(),
+    )
+    widget._zoom_plane(2)
+    assert widget._plane_ax.get_xlim() == (-2.5, 7.5)
+    widget._reset_plane_view()
+    assert widget._plane_ax.get_xlim() == (0, 5)
+    assert widget._plane_ax.collections[0].get_offsets().tolist() == [[1.5, 1.5]]
+    assert before == (
+        widget._height.value(),
+        widget._utc_bounds(),
+        widget._source.currentData(),
+    )
+    for _ in range(8):
+        widget._zoom_plane(0.5)
+    assert widget._plane_ax.get_xlim()[1] - widget._plane_ax.get_xlim()[0] == 0.5
+
+
+def test_pan_and_zoom_are_preserved_by_height_and_background_redraw(widget):
+    widget._plane_ax.set_xlim(1, 3)
+    widget._plane_ax.set_ylim(1, 3)
+    widget._pan_finished(SimpleNamespace(inaxes=widget._plane_ax))
+    widget._height.setValue(600)
+    widget._relief_strength.setValue(100)
+    assert widget._plane_ax.get_xlim() == (1, 3)
+    assert widget._plane_ax.get_ylim() == (1, 3)
+
+
+def test_default_topography_and_crest_estimates_are_explicit(widget):
+    assert widget._background.currentData() == "topography"
+    assert widget._relief_strength.value() == 85
+    assert not widget._ridges.isChecked()
+    assert "Estimated" in widget._ridges.text()
+
+
+def test_missing_contours_use_saved_colour_map_with_explicit_attribution(widget):
+    import numpy as np
+
+    cell = widget._cells.currentData()
+    pixels = np.full((4, 4, 3), 180, dtype=np.uint8)
+    metadata = {"extent": cell.bounds, "attribution": "Plan IGN"}
+    widget._index = SimpleNamespace(
+        background=lambda c, kind: (pixels, metadata) if kind == "colour" else None
+    )
+    widget._reliefs.clear()
+    image, info = widget._saved_relief(cell)
+    assert image is pixels
+    assert info["extent"] == cell.bounds
+    assert info["attribution"] == "Plan IGN · Elevation contours unavailable"
+    assert metadata["attribution"] == "Plan IGN"
+
+
 def test_crest_toggle_and_height_do_not_change_the_loaded_climbs(widget, monkeypatch):
     from soaring.viewer.widgets import thermal_plane
 
@@ -85,6 +180,7 @@ def test_crest_toggle_and_height_do_not_change_the_loaded_climbs(widget, monkeyp
         ]
     }
     monkeypatch.setattr(thermal_plane, "load_ridges", lambda _: payload)
+    widget._ridges.setChecked(True)
     widget._height.setValue(500)
     loaded = widget._plane
     edges = loaded.edges.copy()
@@ -97,7 +193,7 @@ def test_crest_toggle_and_height_do_not_change_the_loaded_climbs(widget, monkeyp
     ridge = next(
         line
         for line in widget._plane_ax.lines
-        if line.get_label() == "IGN DEM-derived crests"
+        if line.get_label() == "Estimated crests from IGN DEM"
     )
     assert ridge.get_xydata().tolist() == [[1, 4], [1.5, 4.5]]
     climb_positions = positions("paragliders: 1")
@@ -109,7 +205,7 @@ def test_crest_toggle_and_height_do_not_change_the_loaded_climbs(widget, monkeyp
     ridge = next(
         line
         for line in widget._plane_ax.lines
-        if line.get_label() == "IGN DEM-derived crests"
+        if line.get_label() == "Estimated crests from IGN DEM"
     )
     assert ridge.get_xydata().tolist() == [[1, 4], [1.5, 4.5]]
     assert widget._plane is loaded
