@@ -39,6 +39,7 @@
 \input{assets/screenshots/thermal-flight-counts.tex}
 \input{assets/plane-cells/plane-cells-values.tex}
 \input{assets/plane-cells/plane-cells-concentration.tex}
+\input{assets/plane-cells/cell-locator-values.tex}
 \hypersetup{pdftitle={The statistics of soaring flight},pdfsubject={EconophysicsLab offsite 2026}}
 \setbeamertemplate{frametitle}{}
 \setbeamertemplate{footline}{}
@@ -110,23 +111,18 @@
 \newcommand{\thermalpanel}[4]{%
  \node[inner sep=0pt]at({#1+16.75},{#2+15.25}){\includegraphics[width=30.5mm,height=30.5mm,keepaspectratio]{assets/screenshots/#3.pdf}};
 }
-% One 34 mm plane-crossing cell from render_plane_cells.py: left x, name colour,
-% region, file stem, macro tag of measure_plane_cells.py.
-\newcommand{\planecell}[5]{%
- \smalltxt[text=#2,font=\bfseries\fontsize{8.5}{10}\selectfont]{#1}{20.5}{34}{#3}
- \node[anchor=north west,inner sep=0pt]at(#1,24.5){\includegraphics[width=34mm]{assets/plane-cells/#4.pdf}};
- \smalltxt[font=\fontsize{6.5}{8}\selectfont]{#1}{59.3}{34}{mean terrain \csname PlaneCell#5Ground\endcsname\,m, \csname PlaneCell#5Flights\endcsname{} flights\\half the crossings in \textbf{\csname PlaneCell#5HalfShare\endcsname\%}}}
 % The PDF animation uses PNG frames; the linked GIF remains usable in PDF viewers
-% that do not run animate's JavaScript. Speaker notes show the reference frame.
-\newcommand{\animatedplanecell}[4]{%
- \smalltxt[text=#2,font=\bfseries\fontsize{8.5}{10}\selectfont]{#1}{20.5}{34}{#3}
- \node[anchor=north west,inner sep=0pt]at(#1,24.5){%
+% that do not run animate's JavaScript. Frame 00 and the notes show H = 800 m.
+\newcommand{\animatedplanecell}[5]{%
+ \smalltxt[text=#2,font=\bfseries\fontsize{8.5}{10}\selectfont]{#1}{14.8}{34}{#3}
+ \smalltxt[text=muted,font=\fontsize{7}{8}\selectfont]{#1}{18.6}{34}{\csname PlaneCell#5Flights\endcsname{} flights at \PlaneCellHeight\,m}
+ \node[anchor=north west,inner sep=0pt]at(#1,22.1){%
   \ifdefined\Speakernotes
    \includegraphics[width=34mm]{assets/plane-cells/animation-frames/#4-00.png}%
   \else
    \animategraphics[autoplay,loop,poster=first,width=34mm]{2}{assets/plane-cells/animation-frames/#4-}{00}{06}%
   \fi};
- \smalltxt[text=pisablue,font=\fontsize{7}{8}\selectfont]{#1}{67.2}{34}{\href{run:assets/plane-cells/#4-height.gif}{Open GIF}}}
+ \node[anchor=north east,inner sep=0pt,text=pisablue,font=\fontsize{7}{8}\selectfont]at({#1+34},63.6){\href{run:assets/plane-cells/#4-height.gif}{Open GIF}};}
 
 \begin{document}
 
@@ -148,11 +144,10 @@
 \notetext{The aim is to describe soaring flight as a transport process and to identify empirical constraints for a later stochastic model. Today I cover the archive and its preparation, horizontal mean-square displacement and conditional comparisons through Section 3.2, followed by open questions and next steps.\par\medskip The cover evokes the offsite setting: Lake Maggiore, Isola dei Pescatori and the Alps. A glide leads into local search and a helical climb in a thermal rising from a sun-warmed mainland slope. Upward filaments indicate airflow; the white helix is the aircraft path, with wind drift. The foreground island includes its bell tower and a red waterfront building without signs. This AI-generated illustration is geographically inspired, not a literal topographic map, measured airflow or a recorded flight.\par\medskip Visual references: the user-supplied photograph and \href{https://viviverbania.it/en/places/isola-superiore-or-isola-dei-pescatori-18241}{Comune di Verbania, Isola Superiore or Isola dei Pescatori}, including the aerial photograph credited to Robin Ulrich.}
 \end{frame}
 
-\begin{frame}[plain]\frametitle{Soaring is transport with an energy budget}\startslide{Soaring is transport with an energy budget}
- % Behavioural schematic in the left column; labels are placed in its own units.
- \begin{scope}[shift={(3,9)},scale=.5]
-  \draw[->,muted,line width=.6pt](12,59)--(148,59);
-  \draw[->,muted,line width=.6pt](12,59)--(12,31);
+\begin{frame}[plain]\frametitle{The soaring flight cycle}\startslide{The soaring flight cycle}
+ % Landscape first, then the same cycle reduced to its three behaviours.
+ \node[anchor=north west,inner sep=0pt]at(4,17){\includegraphics[width=78mm]{assets/cover-lago-maggiore-contrast.png}};
+ \begin{scope}[shift={(80,24)},scale=.48]
   \draw[para,line width=1.3pt] (18,40)--(49,54);
   \draw[wine,line width=1.3pt] (49,54) .. controls(52,48)and(62,48)..(65,51) .. controls(69,56)and(60,59)..(57,55) .. controls(54,52)and(69,51)..(81,51);
   \draw[climbgreen,line width=1.3pt,domain=0:1080,samples=150]plot({77+5*\x/1080+4*cos(\x)},{51-\x/58+1.3*sin(\x)});
@@ -164,37 +159,17 @@
    \fill[para,draw=white,line width=.3pt](0,-.4)ellipse(.75 and .95);
    \fill[para,draw=white,line width=.3pt](0,-1.75)circle(.5);
   \end{scope}
-  \smalltxt[text=muted,font=\fontsize{7}{8}\selectfont]{110}{61.2}{19}{\raggedleft Horizontal travel}
-  \smalltxt[text=muted,font=\fontsize{7}{8}\selectfont]{3}{22.6}{15}{Height}
-  \smalltxt[text=para,font=\bfseries\fontsize{8.5}{10}\selectfont]{20}{28.8}{20}{Transition}
-  \smalltxt[text=wine,font=\bfseries\fontsize{8.5}{10}\selectfont]{51}{40}{16}{Search}
-  \smalltxt[text=climbgreen,font=\bfseries\fontsize{8.5}{10}\selectfont]{88}{23.6}{16}{Climb}
  \end{scope}
- % One line per phase: name, then what the pilot does.
- \foreach \y/\c/\name/\what in {46/para/Transition/{glide, trading height for distance},53.5/wine/Search/{look for rising air},61/climbgreen/Climb/{circle in a thermal: air rising where the sun heats the ground}}{
-  \txt[text=\c,font=\bfseries\fontsize{10}{12}\selectfont]{8}{\y}{19}{\name}
-  \txt[font=\fontsize{9}{11}\selectfont]{27}{\y+.5}{50}{\what}}
- % The cover illustration: glide, search and a helical climb over a sun-warmed slope.
- \node[anchor=north west,inner sep=0pt]at(78,15){\includegraphics[width=78mm]{assets/cover-lago-maggiore-contrast.png}};
- \bottomline{Glide, search, climb: thermals let pilots cover long distances without an engine}
- \credit{Phases as labelled by the HMM of Vilpellet et al.\ (\href{https://arxiv.org/abs/2601.01293}{arXiv:2601.01293}). Illustration: AI-generated, as on the cover.}
-\notetext{Paragliders and hang gliders have no engine. A cross-country flight repeats three phases. In transition the pilot glides, trading height for horizontal distance. In search the pilot looks for rising air. In climb the pilot circles inside a thermal, a column of air rising where the sun has heated the ground, and regains the height spent. Repeating the cycle, with thermals as the only source of height, is what lets a pilot cover long distances without an engine.\par\medskip The illustration is the cover image: a glide, a short search and a helical climb in a thermal over a sun-warmed slope. The schematic is illustrative and its horizontal axis has no numerical scale. These are behavioural descriptions, not phase labels supplied by the recorder; Vilpellet et al.\ provide a hidden Markov model that labels each fix as transition, search or climb from binary trajectory features, and slide \slideref{wip} returns to it. Ground motion includes both air-relative motion and wind. Source: thesis introduction, Sections 1.1--1.3.}
-\finishslide\end{frame}
-
-\begin{frame}[plain]\frametitle{How do we study the statistics of this motion?}\startslide{How do we study the statistics of this motion?}
- % The answer to the title question: the time-averaged MSD, along each flight, then over flights.
- \txt[text=pisablue,font=\bfseries\fontsize{12}{14}\selectfont]{8}{17}{72}{Mean-square displacement (MSD)}
- \txt[font=\fontsize{9}{11}\selectfont]{8}{26}{72}{%
-  \stepitem{1}{Along each flight $f$, of duration $T_f$\par\vspace{.6mm}
-   {\fontsize{9.5}{11}\selectfont$\displaystyle m_f(\tau)=\frac{1}{T_f-\tau}\int_0^{T_f-\tau}\bigl|\boldsymbol{x}_f(t+\tau)-\boldsymbol{x}_f(t)\bigr|^2\,dt$}}\vspace{2.5mm}
-  \stepitem{2}{Over the $N$ flights:\quad{\fontsize{9.5}{11}\selectfont$M_2(\tau)=\frac{1}{N}\sum_f m_f(\tau)$}}}
- \txt[text=pisablue,font=\fontsize{9}{11}\selectfont]{8}{54}{72}{$M_2(\tau)\propto\tau^{2H}$:\quad $H=\tfrac12$ diffusive,\quad $H=1$ ballistic}
- % Reproduced figure: short label above it, full reference in the footer.
- \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont]{86}{15.5}{67}{Vilpellet et al.: French flights, 2016--2021}
- \node[anchor=north,inner sep=0pt]at(119.5,21){\includegraphics[height=52mm]{assets/vilpellet2026-fig1-msd.png}};
- \bottomline{$M_2(\tau)\propto\tau^{2H}$ with $H\approx0.88$: superdiffusive over three decades, $10^1$--$10^4$\,s}
- \credit{J.\ Vilpellet, A.\ Darmon and M.\ Benzaquen, \emph{From Random Walks to Thermal Rides: Universal Anomalous Transport in Soaring Flights}, \href{https://arxiv.org/abs/2601.01293}{arXiv:2601.01293} (2026).}
-\notetext{Vilpellet, Darmon and Benzaquen analysed publicly available French tracks from 2016 to 2021: CFD--FFVL for paragliders and hang gliders, NetCoupe for sailplanes. After requiring at least 1 Hz sampling, one hour of flight, no discontinuities and a 15 km horizontal range, 49,939 paraglider, 780 hang-glider and 9,203 sailplane trajectories remain. The paper states no terrain or regional selection. Their Figure 1 shows the horizontal MSD. The paper writes it as an expectation, $\delta^2(\Delta)=\mathbb E[(\boldsymbol x_{t+\Delta}-\boldsymbol x_t)^2]$, under a stationarity assumption; it is estimated as on the left: a time average along each flight, then an average over flights. The slide uses the notation of the rest of the talk: $\tau$ for the lag, $m_f$ per flight and $M_2$ over flights. Slide \slideref{fixed} applies the same estimator within the retained segments of each flight, and the exponent $H$ of the bottom line is the one compared there. Below about 10 s the growth is ballistic, $\delta^2\sim\Delta^2$. At longer lags it is sub-ballistic but faster than diffusion, $\delta^2\sim\Delta^{2H}$ with $\tfrac12<H\approx0.88<1$. The three curves differ mainly by a vertical shift set by their characteristic speeds, and the speed-rescaled curves in the inset nearly collapse. They attribute the exponent to the intermittent, two-dimensional and directionally correlated transition--search--climb cycle. They also provide a hidden Markov model that labels each fix as transition, search or climb from binary trajectory features; slide \slideref{wip} returns to it.\par\medskip The challenge is to explain whole-flight transport while respecting the energy budget of the previous slide. The present measurements are the first layer of that programme. An MSD exponent alone cannot distinguish all the candidate mechanisms: persistent motion, changes of behaviour and heterogeneous conditions can produce similar second moments. Source: thesis introduction, Sections 1.1--1.3.}
+ % Each phase is named and explained once, next to its part of the path.
+ \txt[text=para,font=\bfseries\fontsize{10}{12}\selectfont]{85}{31}{32}{Transition}
+ \smalltxt[font=\fontsize{9}{11}\selectfont]{85}{36}{32}{Glide, lose height}
+ \txt[text=climbgreen,font=\bfseries\fontsize{10}{12}\selectfont]{124}{27}{32}{Climb}
+ \smalltxt[font=\fontsize{9}{11}\selectfont]{124}{32}{32}{Circle, regain height}
+ \txt[text=wine,font=\bfseries\fontsize{10}{12}\selectfont]{103}{56}{36}{Search}
+ \smalltxt[font=\fontsize{9}{11}\selectfont]{103}{61}{36}{Find rising air}
+ \bottomline{Thermals let pilots cover long distances without an engine}
+ \credit{Phase terminology: Vilpellet et al.\ (\href{https://arxiv.org/abs/2601.01293}{2026}). Landscape: AI-generated illustration.}
+\notetext{Paragliders and hang gliders have no engine. A cross-country flight repeats three phases. In transition the pilot glides, trading height for horizontal distance. In search the pilot looks for rising air. In climb the pilot circles inside a thermal, a column of air rising where the sun has heated the ground, and regains the height spent. Repeating the cycle, with thermals as the only source of height, is what lets a pilot cover long distances without an engine.\par\medskip The illustration is the cover image: a glide, a short search and a helical climb in a thermal over a sun-warmed slope. The schematic is illustrative and has no numerical scale. These are behavioural descriptions, not phase labels supplied by the recorder; Vilpellet et al.\ provide a hidden Markov model that labels each fix as transition, search or climb from binary trajectory features, and slide \slideref{wip} returns to it. Ground motion includes both air-relative motion and wind. Source: thesis introduction, Sections 1.1--1.3.}
 \finishslide\end{frame}
 
 \begin{frame}[plain]\frametitle{A large archive of free flight}\startslide{A large archive of free flight}
@@ -214,6 +189,24 @@
  \credit{France map: \num{\StatPrelimParaMetroFlights} paraglider and \num{\StatPrelimHangMetroFlights} hang-glider flights. Colour: flights per 0.15$^\circ$ cell.}
 \notetext{The source is the FFVL Coupe F\'ed\'erale de Distance, with separate archives for paragliders and hang gliders. The verified downloads contain 186,052 and 6,716 tracklogs. Season names refer to their starting year. The IGC files supply time-stamped coordinates and altitude channels, while the catalogue supplies flight date, declared take-off site, route class and wing class. The map shows the retained population, not the raw downloads; both disciplines are pooled. About 94.8 percent of retained flights are in metropolitan France, with a strong Alpine concentration. The coloured boxes are the longitude--latitude windows used for regional comparisons, listed on the right in the same colours: Channel Coast, Champagne-Lorraine, Massif Central, Alps and Pyrenees. Additional flights occur in La R\'eunion and elsewhere. This is a submitted cross-country archive with uneven geographic coverage, not a random sample of all free flight. Sources: thesis Chapter 2; generated/stats.tex, pipeline\_census.tex and prelim\_map.pdf.}
 \finishslide\end{frame}
+
+
+\begin{frame}[plain]\frametitle{How do we study the statistics of this motion?}\startslide{How do we study the statistics of this motion?}
+ % The answer to the title question: the time-averaged MSD, along each flight, then over flights.
+ \txt[text=pisablue,font=\bfseries\fontsize{12}{14}\selectfont]{8}{16}{72}{Mean-square displacement (MSD)}
+ \txt[font=\fontsize{9}{11}\selectfont]{8}{26}{78}{%
+  \stepitem{1}{Along each flight $f$, of duration $T_f$\par\vspace{.6mm}
+   {\fontsize{10.5}{12.5}\selectfont\mbox{$\displaystyle m_f(\tau)=\frac{1}{T_f-\tau}\int_0^{T_f-\tau}\bigl|\boldsymbol{x}_f(t+\tau)-\boldsymbol{x}_f(t)\bigr|^2\,dt$}}}\vspace{7.5mm}
+  \stepitem{2}{Over the $N$ flights:\quad{\fontsize{11}{13}\selectfont$M_2(\tau)=\frac{1}{N}\sum_f m_f(\tau)$}}}
+ \txt[text=pisablue,font=\fontsize{10}{12}\selectfont]{8}{62.5}{78}{$M_2(\tau)\propto\tau^{2H}$:\; $H=\tfrac12$ diffusive,\; $H=1$ ballistic}
+ % Reproduced figure: short label above it, full reference in the footer.
+ \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont]{86}{16}{67}{Vilpellet et al.: French flights, 2016--2021}
+ \node[anchor=north,inner sep=0pt]at(119.5,20){\includegraphics[height=54mm]{assets/vilpellet2026-fig1-msd.png}};
+ \bottomline{$M_2(\tau)\propto\tau^{2H}$ with $H\approx0.88$: superdiffusive over three decades, $10^1$--$10^4$\,s}
+ \credit{J.\ Vilpellet, A.\ Darmon and M.\ Benzaquen, \emph{From Random Walks to Thermal Rides: Universal Anomalous Transport in Soaring Flights}, \href{https://arxiv.org/abs/2601.01293}{arXiv:2601.01293} (2026).}
+\notetext{Vilpellet, Darmon and Benzaquen analysed publicly available French tracks from 2016 to 2021: CFD--FFVL for paragliders and hang gliders, NetCoupe for sailplanes. After requiring at least 1 Hz sampling, one hour of flight, no discontinuities and a 15 km horizontal range, 49,939 paraglider, 780 hang-glider and 9,203 sailplane trajectories remain. The paper states no terrain or regional selection. Their Figure 1 shows the horizontal MSD. The paper writes it as an expectation, $\delta^2(\Delta)=\mathbb E[(\boldsymbol x_{t+\Delta}-\boldsymbol x_t)^2]$, under a stationarity assumption; it is estimated as on the left: a time average along each flight, then an average over flights. The slide uses the notation of the rest of the talk: $\tau$ for the lag, $m_f$ per flight and $M_2$ over flights. Slide \slideref{fixed} applies the same estimator within the retained segments of each flight, and the exponent $H$ of the bottom line is the one compared there. Below about 10 s the growth is ballistic, $\delta^2\sim\Delta^2$. At longer lags it is sub-ballistic but faster than diffusion, $\delta^2\sim\Delta^{2H}$ with $\tfrac12<H\approx0.88<1$. The three curves differ mainly by a vertical shift set by their characteristic speeds, and the speed-rescaled curves in the inset nearly collapse. They attribute the exponent to the intermittent, two-dimensional and directionally correlated transition--search--climb cycle. They also provide a hidden Markov model that labels each fix as transition, search or climb from binary trajectory features; slide \slideref{wip} returns to it.\par\medskip The challenge is to explain whole-flight transport while respecting the energy budget of the previous slide. The present measurements are the first layer of that programme. An MSD exponent alone cannot distinguish all the candidate mechanisms: persistent motion, changes of behaviour and heterogeneous conditions can produce similar second moments. Source: thesis introduction, Sections 1.1--1.3.}
+\finishslide\end{frame}
+
 
 \begin{frame}[plain]\frametitle{From raw tracklogs to the fixed cohort C10000}\slidelabel{cohort}\startslide{From raw tracklogs to the fixed cohort $C_{10000}$}
  % Left: the seven preprocessing stages, grouped as their four appendix slides; each row links there.
@@ -355,69 +348,41 @@
  \txt[text=pisablue,font=\bfseries\fontsize{10}{12}\selectfont]{9}{16}{68}{Mountains: lift follows the slopes}
  \txt[text=pisablue,font=\bfseries\fontsize{10}{12}\selectfont]{84}{16}{68}{Lowlands: scattered triggers}
  \smalltxt[text=muted,font=\fontsize{7.5}{9}\selectfont]{9}{21}{68}{Strong thermals climb sunny spurs to the crest.}
- \smalltxt[text=muted,font=\fontsize{7.5}{9}\selectfont]{84}{21}{68}{Fields, quarry, asphalt, roofs: random spots, weaker lift.}
+ \smalltxt[text=muted,font=\fontsize{7.5}{9}\selectfont]{84}{21}{68}{Fields, asphalt, roofs: random spots, weaker lift.}
  \node[anchor=north,inner sep=0pt]at(80,24.5){\includegraphics[width=146mm,height=48mm,keepaspectratio]{assets/thermal-mechanism.pdf}};
  \fill[pisablight!33](7,74.7)rectangle(153,83);
  \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{75.5}{140}{Mountain lift traces each range's relief; lowland lift is scattered at random.}
  \smalltxt[text=pisablue,font=\fontsize{8}{10}\selectfont]{10}{79.6}{140}{So the Alps and Pyrenees can differ in $H$, while two plains with similar trigger statistics cannot.}
  \credit{Orange: rising air. Illustrative schematic, not measurements. Sources: FAA, Ch.~9; SSA, Lift Sources.}
-\notetext{This schematic illustrates the explanation proposed on the previous slide. In mountains, sun-facing slopes heat first. Warm air flows up the spurs and leaves the terrain along the crest, so thermals are strong and sit where the relief puts them. Their pattern traces the orographic profile of the range: another range, with other ridges and spurs, gives another pattern, and pilots must fly between those fixed places. This is one way the Alps and the Pyrenees can differ in H.\par\medskip In the lowlands, thermals are weaker and start from heated surfaces of many kinds: ploughed fields, a quarry, a car park, a warehouse roof, a village. These triggers are scattered with no geometric pattern, and a heated field need not release a thermal at a given moment. If two plains share the same trigger statistics, pilots meet lift in statistically equivalent places, and H is the same.\par\medskip The drawing carries no wind and no data: it is a conceptual picture. Testing it needs the spatial statistics of climbs in each region, as in the appendix maps, compared across ranges and across plains. Sources: FAA Glider Flying Handbook, Chapter 9; SSA, \href{https://www.ssa.org/lift-sources/}{Lift Sources}; thesis Section 3.2.3.}
+\notetext{This schematic illustrates the explanation proposed on the previous slide. In mountains, sun-facing slopes heat first. Warm air flows up the spurs and leaves the terrain along the crest, so thermals are strong and sit where the relief puts them. Their pattern traces the orographic profile of the range: another range, with other ridges and spurs, gives another pattern, and pilots must fly between those fixed places. This is one way the Alps and the Pyrenees can differ in H.\par\medskip In the lowlands, thermals are weaker and start from heated surfaces of many kinds: ploughed fields, a car park, a warehouse roof, a village. These triggers are scattered with no geometric pattern, and a heated field need not release a thermal at a given moment. If two plains share the same trigger statistics, pilots meet lift in statistically equivalent places, and H is the same.\par\medskip The drawing carries no wind and no data: it is a conceptual picture. Testing it needs the spatial statistics of climbs in each region, as in the appendix maps, compared across ranges and across plains. Sources: FAA Glider Flying Handbook, Chapter 9; SSA, \href{https://www.ssa.org/lift-sources/}{Lift Sources}; thesis Section 3.2.3.}
 \finishslide\end{frame}
 
 
 
 
-\begin{frame}[plain]\frametitle{Where do climbs cross one horizontal plane?}\startslide{Where do climbs cross one horizontal plane?}
- \txt[text=pisablue,font=\bfseries\fontsize{10}{12}\selectfont]{7.5}{14.8}{69}{Mountains: narrow bands on the relief}
- \txt[text=pisablue,font=\bfseries\fontsize{10}{12}\selectfont]{83.5}{14.8}{69}{Lowlands: broad clouds}
- % Busiest 20 km cell of each regional box; one plane H = 800 m above its mean IGN terrain.
- \planecell{7.5}{wine}{Alps}{alps}{Alps}
- \planecell{42.5}{expert}{Pyrenees}{pyrenees}{Pyrenees}
- \planecell{83.5}{teal}{Channel Coast}{channel-coast}{ChannelCoast}
- \planecell{118.5}{pisablue}{Champagne-Lorraine}{champagne}{Champagne}
- \fill[rising!70](9,67.6)circle(.75);
- \smalltxt[font=\fontsize{7}{8.5}\selectfont]{10.8}{66.2}{36}{climb crossing of the plane}
- \fill[abovelegend](46,66.6)rectangle(48.4,68.6);
- \smalltxt[font=\fontsize{7}{8.5}\selectfont]{49.6}{66.2}{32}{terrain above the plane}
- \smalltxt[text=muted,font=\fontsize{7}{8.5}\selectfont]{83.5}{66.2}{69}{Plane at $H=\PlaneCellHeight$\,m above the mean terrain of the $\PlaneCellSize\times\PlaneCellSize$ km cell}
- \smalltxt[text=muted,font=\fontsize{7}{8.5}\selectfont]{8.5}{70}{144}{Bold: share of the cell holding half the crossings; uniform points would need \PlaneCellUniformHalfShare\%.}
- \fill[pisablight!33](7,74.7)rectangle(153,83);
- \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{75.5}{140}{At one height: narrow bands in the mountains, broad clouds in the lowlands.}
- \smalltxt[text=pisablue,font=\fontsize{8}{10}\selectfont]{10}{79.6}{140}{No cell is close to uniform: crossings also mark where pilots launch.}
- \credit{Viewer method: own-HMM climbs, both disciplines, all dates; busiest \PlaneCellSize{} km cell per region. Terrain: \copyright\ IGN RGE ALTI.}
-\notetext{The previous slide was a schematic; this one uses the viewer's thermal-plane data. In each regional box of the $H$ comparison I took the 10 by 10 km cell crossed by the most flights, over all dates and both disciplines. Each cell is two by two squares of the viewer's 5 km grid. The Alpine cell covers the Chartreuse escarpment above the Gr\'esivaudan valley, with Saint-Hilaire-du-Touvet; the Channel Coast cell is Cl\'ecy, in Suisse Normande.\par\medskip Each map is one horizontal plane at $H$ equal to the cell's mean IGN terrain plus \PlaneCellHeight{} m, the viewer's definition: \PlaneCellAlpsAltitude{} m in the Alps, \PlaneCellPyreneesAltitude{} m in the Pyrenees, \PlaneCellChannelCoastAltitude{} m on the Channel Coast and \PlaneCellChampagneAltitude{} m in Champagne-Lorraine. The plane does not follow the ground. In the mountains it cuts through the relief: brown marks terrain above it, \PlaneCellAlpsAboveShare{} percent of the Alpine cell and \PlaneCellPyreneesAboveShare{} percent of the Pyrenean one. Orange dots are the viewer's intersections of own-HMM climb segments with the plane, pooled over all dates: \PlaneCellAlpsCrossings{}, \PlaneCellPyreneesCrossings{}, \PlaneCellChannelCoastCrossings{} and \PlaneCellChampagneCrossings{} crossings from \PlaneCellAlpsFlights{}, \PlaneCellPyreneesFlights{}, \PlaneCellChannelCoastFlights{} and \PlaneCellChampagneFlights{} flights.\par\medskip Under each map is the share of the cell holding half of the crossings. It takes the first crossing of 500 flights drawn at random per cell, all of them in Champagne-Lorraine, counted in 250 m squares, so unequal traffic cannot decide the ranking. The mountains give \PlaneCellAlpsHalfShare{} and \PlaneCellPyreneesHalfShare{} percent, the lowlands \PlaneCellChannelCoastHalfShare{} and \PlaneCellChampagneHalfShare{} percent; uniform points would need \PlaneCellUniformHalfShare{} percent. The ranking holds with 100 m squares. With 500 m squares Champagne-Lorraine ties the Alps, and with 1 km squares only the Channel Coast stays wider. The contrast is therefore below about half a kilometre, and it is one of shape: the Alpine crossings form a long, thin band along the cliff edge, where the plane meets the terrain, while the lowland crossings form round clouds.\par\medskip No cell is close to uniform, and part of that is where pilots are. In the Pyrenees and the two plains, \PlaneCellPyreneesStartOne{}, \PlaneCellChannelCoastStartOne{} and \PlaneCellChampagneStartOne{} percent of the contributing flights started within 1 km of the densest spot: pilots climb out near launch. The Alpine hotspot differs: only \PlaneCellAlpsStartThree{} percent of its flights started within 3 km of it.\par\medskip These are observed climb crossings, pooled over years, seasons and weather, not a map of thermal sources; wind drift and traffic shape them too. $H$ is not estimated on these cells, so the slide illustrates the proposed mechanism without testing its link to $H$. Sources: measure\_plane\_cells.py, render\_plane\_cells.py, plane-cells-report.json.}
-\finishslide\end{frame}
-
-
-
-
-\begin{frame}[plain]\frametitle{How do climb crossings change with height?}\startslide{How do climb crossings change with height?}
- \txt[text=pisablue,font=\bfseries\fontsize{10}{12}\selectfont]{7.5}{14.8}{69}{Mountains}
- \txt[text=pisablue,font=\bfseries\fontsize{10}{12}\selectfont]{83.5}{14.8}{69}{Lowlands}
- \animatedplanecell{7.5}{wine}{Alps}{alps}
- \animatedplanecell{42.5}{expert}{Pyrenees}{pyrenees}
- \animatedplanecell{83.5}{teal}{Channel Coast}{channel-coast}
- \animatedplanecell{118.5}{pisablue}{Champagne-Lorraine}{champagne}
+\begin{frame}[plain]\frametitle{Mountain lift follows ridges, lowland lift spreads aloft}\slidelabel{cellHeight}\startslide{Mountain lift follows ridges, lowland lift spreads aloft}
+ \animatedplanecell{7.5}{wine}{Alps}{alps}{Alps}
+ \animatedplanecell{42.5}{expert}{Pyrenees}{pyrenees}{Pyrenees}
+ \animatedplanecell{83.5}{teal}{Channel Coast}{channel-coast}{ChannelCoast}
+ \animatedplanecell{118.5}{pisablue}{Champagne-Lorraine}{champagne}{Champagne}
  \fill[rising!70](9,71.5)circle(.75);
  \smalltxt[font=\fontsize{7}{8.5}\selectfont]{10.8}{70.5}{33}{climb crossing}
  \fill[abovelegend](47,70.5)rectangle(49.4,72.5);
  \smalltxt[font=\fontsize{7}{8.5}\selectfont]{50.6}{70.5}{52}{terrain above the plane}
+ \smalltxt[text=pisablue,font=\fontsize{7}{8.5}\selectfont]{111}{70.5}{42}{\hyperlink{slide:appCells}{Cell locations (Appendix)}}
  \fill[pisablight!33](7,74.7)rectangle(153,83);
- \smalltxt[text=pisablue,font=\bfseries\fontsize{9}{11}\selectfont]{10}{75.5}{140}{The thermal-plane viewer maps how climb crossings change as the plane rises.}
- \smalltxt[text=pisablue,font=\fontsize{8}{10}\selectfont]{10}{79.4}{140}{It may also support the research of my collaborator, Dr. C\'esar Hern\'andez Aguayo.}
- \credit{Same four cells as the previous slide. $H=200$--$1{,}400$\,m above each cell's mean IGN terrain; own-HMM climbs, all dates.}
-\notetext{The four GIFs show the same cells, terrain rasters and own-HMM climb segments as the previous slide. Each frame intersects those segments with a horizontal plane at the cell's fixed mean terrain altitude plus the labelled H. The sweep runs from 200 to 1,400 m in 200 m steps; the \PlaneCellHeight{} m frame reproduces the counts on the previous slide. Orange points are observed climb crossings; brown is terrain above the moving plane. Counts can change with height because segments begin and end, and the same flight may cross a plane more than once. This viewer can show where the observed use of lift shifts with altitude and could also be useful in research by Dr. C\'esar Hern\'andez Aguayo, with whom I collaborate. The animation plays in PDF viewers that support the animate package; each Open GIF link points to a standalone animation. Sources: measure\_plane\_cell\_animation.py, render\_plane\_cell\_animation.py and plane-cell-animation-report.json.}
+ \smalltxt[text=pisablue,font=\bfseries\fontsize{9}{11}\selectfont]{10}{75.5}{140}{Higher up, a random location may offer easier access to thermals in lowlands.}
+ \smalltxt[text=pisablue,font=\fontsize{8}{10}\selectfont]{10}{79.4}{140}{This may explain similar Hurst exponents across lowlands and differences between mountain ranges.}
+ \credit{Observed climbs, both disciplines, all dates. Plane $H=200$--$1{,}400$\,m above mean terrain. Terrain: \copyright\ IGN.}
+\notetext{Each map shows the busiest 20 by 20 km cell in its region, selected by distinct flights across all dates and both disciplines. Orange dots mark own-HMM climb crossings; brown marks terrain above the horizontal plane. Here H is height above the cell's mean IGN terrain, distinct from the Hurst exponent. Mean terrain: 879, 1,796, 172 and 218 m ASL, respectively. The appendix gives exact locations.\par\medskip At 800 m, the four maps contain 49,105, 10,557, 4,140 and 660 crossings. Contributing flights and crossing counts vary with height. A flight may cross repeatedly. Mountain crossings trace ridges; lowland crossings spread from launch clusters into broader clouds aloft. This suggests easier access to thermals at a random location in lowlands than in mountains. It does not imply increasing crossing counts.\par\medskip Possible link to Hurst: mountain routes follow each range's lift geometry, while similar lowland lift statistics could produce similar exponents. These selected cells illustrate a hypothesis; regional Hurst estimates use larger populations. Traffic and weather affect coverage, so these maps do not measure encounter probabilities. At 800 m, Champagne-Lorraine is as compact as the mountain cells: shape and its height dependence motivate the interpretation.\par\medskip Possible collaboration: Dr. C\'esar Hern\'andez Aguayo. Sources: plane-cell measurement reports and rendering scripts.}
 \finishslide\end{frame}
-
-
 
 
 \begin{frame}[plain]\frametitle{Open circuits: expert--beginner H gap by altitude}\slidelabel{equipment}\startslide{Open circuits: expert--beginner $H$ gap by altitude}
  % Taller than \figureat allows, so the figure fills the space down to the band.
  \node[anchor=north,inner sep=0pt]at(80,15){\includegraphics[width=146mm,height=58mm,keepaspectratio]{assets/equipment.pdf}};
  \fill[pisablight!33](7,74.7)rectangle(153,83);
- \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{75.5}{140}{Higher $H$ for experts in every class; the gap depends on altitude.}
- \smalltxt[text=pisablue,font=\fontsize{8}{10}\selectfont]{10}{79.6}{140}{Vilpellet et al.\ also found $H_\mathrm{expert}>H_\mathrm{beginner}$; experts spend less time searching for thermals.}
+ \node[anchor=center,inner sep=0pt,text width=140mm,align=center,text=pisablue,font=\bfseries\boldmath\fontsize{9}{11}\selectfont]at(80,78.85){Vilpellet et al.\ also found \mbox{$H_\mathrm{expert}>H_\mathrm{beginner}$},\\with experts spending less time searching for thermals.};
  \credit{Wing class is a proxy. Nominal 90\% cluster-bootstrap CIs (Appendix). Vilpellet et al.: \href{https://arxiv.org/abs/2601.01293}{arXiv:2601.01293}, Figs.~5a, 6d.}
 \notetext{Only open circuits enter this slide, so circuit type cannot drive the contrast; the thesis, Section 3.2.4, pools all circuits. Beginners fly \num{\OpenBeginnersN} of their \num{\CondBeginnersN} flights on open circuits and Experts \num{\OpenExpertsN} of \num{\CondExpertsN}. These are the operational groups defined on slide \slideref{characteristics}. Individual experience is not observed: an experienced pilot can fly a lower-class wing, and the same pilot can contribute to different groups on different flights.\par\medskip On open circuits the pooled exponent difference is \OpenExpertsBeginnersDelta{}, against \CondExpertsBeginnersDelta{} with all circuits. Within altitude classes the differences are \OpenEquipmentAltZeroDelta{} in Plains, \OpenEquipmentAltOneDelta{} in Hills, \OpenEquipmentAltTwoDelta{} in Low mountains and \OpenEquipmentAltThreeDelta{} in High mountains, all with paired intervals excluding zero. The Low mountains gap exceeds the other three in the paired interaction tests: \OpenEquipmentInteractionZeroTwoDelta{} against Plains, \OpenEquipmentInteractionOneTwoDelta{} against Hills and \OpenEquipmentInteractionTwoThreeDelta{} against High mountains, each written as the first class's gap minus the second's. Plains and High mountains are indistinguishable, \OpenEquipmentInteractionZeroThreeDelta{}.\par\medskip Vilpellet et al.\ found the same ordering with three EN groups: $H$ rises from about 0.85 for beginner wings (EN A and B) to about 0.92 for competition wings (EN D and CCC), our Experts. The fraction of flight time spent searching decreases systematically with wing class (their Figs.~6d and 7), and the search-phase exponent rises from about 0.26 to 0.35. They conclude that skill acts mainly during search: it raises the thermal detection rate and so shortens the search.\par\medskip A constant speed multiplier alone changes MSD amplitude, not its log--log slope, so the difference concerns the lag dependence too. Each cell still pools weather and the precise launch altitude. Circuit and equipment contrasts both depend on altitude, motivating the joint model with interaction terms discussed in the future-work section and the appendix. Sources: thesis Section 3.2.4 (all circuits); open-circuits-report.json and measure\_open\_circuits.py (open circuits).}
 \finishslide\end{frame}
@@ -470,21 +435,19 @@
  \end{scope}
  \smalltxt[font=\bfseries\fontsize{9}{11}\selectfont]{39}{52.5}{41}{Mountains narrow the gap}
  \smalltxt[font=\fontsize{8}{9.8}\selectfont]{39}{57.5}{41}{\bulitem{Open-route $H$ falls}\bulitem{Closed-route $H$ rises}}
- % Lift geography (slide 18): schematic climb crossings at 600 m, crests in the slide-18 colour.
+ % Lift geography: schematic mountain and plains climb crossings.
  \pgfmathsetseed{26}
  \foreach \x in {86,100.5}{\filldraw[fill=pisablight!18,draw=muted!40,line width=.4pt](\x,51.5)rectangle(\x+12,63.5);}
  \draw[hang,line width=.8pt](86.6,60.5)--(94.5,52.1)(89.3,63)--(97.4,54.6);
  % Dots jitter about each crest: one shared position u along the crest, small offsets across it.
  \foreach \xa/\ya in {86.9/60.2,89.8/62.6}{\foreach \i in {1,...,18}{\pgfmathsetmacro\u{rnd}\fill[para,opacity=.75]({\xa+7.4*\u+.4*rand},{\ya-7.8*\u+.4*rand})circle(.3);}}
  \foreach \i in {1,...,36}{\fill[para,opacity=.75]({101.2+10.6*rnd},{52.2+10.6*rnd})circle(.3);}
- \node[anchor=north,inner sep=0pt,text=muted,font=\fontsize{6}{7}\selectfont]at(92,64.3){H2, Alps};
- \node[anchor=north,inner sep=0pt,text=muted,font=\fontsize{6}{7}\selectfont]at(106.5,64.3){P1, plains};
- \node[anchor=north,inner sep=0pt,text=muted,font=\fontsize{6}{7}\selectfont]at(99.25,67.6){climbs at 600 m};
- \smalltxt[font=\bfseries\fontsize{9}{11}\selectfont]{115}{52.5}{39}{Mountain lift hugs ridges}
- \smalltxt[font=\fontsize{8}{9.8}\selectfont]{115}{57.5}{39}{\bulitem{H2: on ridges at 600 m}\bulitem{P1: spread out at 600 m}}
+ \node[anchor=north,inner sep=0pt,text=muted,font=\fontsize{6}{7}\selectfont]at(92,64.3){Mountains};
+ \node[anchor=north,inner sep=0pt,text=muted,font=\fontsize{6}{7}\selectfont]at(106.5,64.3){Plains};
+ \smalltxt[font=\bfseries\fontsize{9}{11}\selectfont]{115}{52.5}{39}{Mountains: ridge climbs}
+ \smalltxt[font=\fontsize{8}{9.8}\selectfont]{115}{58}{39}{Plains: climbs spread out}
  \bottomline{Strongly superdiffusive everywhere; route and terrain set how strongly.}
- \credit{$C_{10000}$ fits over 10--10,000 s; route and terrain: paragliders; maps: slide 18. Nominal 90\% CIs, likely too narrow (Appendix).}
-\notetext{Four findings, one per cell; the band gives the synthesis. What we are still working on follows on the next slide.\par\medskip Scaling. Over 10 to 10,000 s the fixed C10000 cohort gives $H=\CadenceParaH$ for paragliders and \CadenceHangH{} for hang gliders, between diffusion at one half and ballistic motion at one. The same flights enter at every lag, so the exponent is not produced by long lags keeping only long flights. The pictogram is schematic: the reference lines are the diffusive and ballistic slopes, the blue line has the fitted paraglider slope. $H$ summarises the fit range: the local slope stays near 0.85--0.94 up to about 2,000 s and then declines, to about 0.64 for paragliders and 0.41 for hang gliders at 10,000 s (slide \slideref{fixed}, right panel).\par\medskip Route and wing. Pooled over altitude classes, open circuits reach \CondOpenH{} and closed circuits \CondClosedH{}, a paired difference of 0.054; open exceeds closed within every altitude class. On open circuits, Experts exceed Beginners in every class too, by 0.028 pooled and 0.010--0.023 within classes. The canopies are schematic: the longer, thinner one stands for the higher aspect ratio of EN D and CCC wings.\par\medskip Terrain. The miniature plots the eight circuit-by-altitude exponents of slide \slideref{interaction}. Open routes have higher $H$ in the lowlands, closed routes in the mountains, so there is no general mountain penalty. The open--closed gap is \ChThreeTaskGapPlains{} in Plains and \ChThreeTaskGapHigh{} in High mountains. Because Plains are 91 percent open circuits and the mountain classes about one third, a ranking by altitude alone mixes terrain with route and wing composition (slide \slideref{altitudemix}). Among open routes, the two lowlands have similar $H$ and the Pyrenees sit below the Alps by 0.011.\par\medskip Lift geography. The squares are schematic versions of the slide 18 maps, not the data. In H2, climb crossings stay close to slopes and ridges at both 100 and 600 m; in P1 they cluster near local slopes at 100 m and spread at 600 m. The appendix maps show the same contrast at regional scale. This is where pilots climbed, not where thermals form; wind is not measured.\par\medskip Synthesis. All 51 paraglider groups examined, including the 14 open-circuit regional and wing-class groups, lie between 0.816 and 0.958, and hang gliders at \CadenceHangH{}: every group is strongly superdiffusive, and the contrasts are differences of a few hundredths to about 0.13. Route and terrain interact: the open--closed gap falls from \ChThreeTaskGapPlains{} in Plains to \ChThreeTaskGapHigh{} in High mountains, so the circuit effect depends on the altitude class. The wing shift is smaller: on open circuits Experts exceed Beginners by 0.010--0.023 within every class, most in Low mountains. The factorial analysis in the appendix is the tool to quantify these interactions jointly; its implementation is still under review. All these contrasts are conditional associations with nominal intervals that are likely too narrow. Our working hypothesis links them: terrain decides where lift can be found, and so how freely routes can extend. Testing it needs phase segmentation, directions and wind, which is the work in progress on the next slide.}
+\notetext{Four findings, one per cell; the band gives the synthesis. What we are still working on follows on the next slide.\par\medskip Scaling. Over 10 to 10,000 s the fixed C10000 cohort gives $H=\CadenceParaH$ for paragliders and \CadenceHangH{} for hang gliders, between diffusion at one half and ballistic motion at one. The same flights enter at every lag, so the exponent is not produced by long lags keeping only long flights. The pictogram is schematic: the reference lines are the diffusive and ballistic slopes, the blue line has the fitted paraglider slope. $H$ summarises the fit range: the local slope stays near 0.85--0.94 up to about 2,000 s and then declines, to about 0.64 for paragliders and 0.41 for hang gliders at 10,000 s (slide \slideref{fixed}, right panel).\par\medskip Route and wing. Pooled over altitude classes, open circuits reach \CondOpenH{} and closed circuits \CondClosedH{}, a paired difference of 0.054; open exceeds closed within every altitude class. On open circuits, Experts exceed Beginners in every class too, by 0.028 pooled and 0.010--0.023 within classes. The canopies are schematic: the longer, thinner one stands for the higher aspect ratio of EN D and CCC wings.\par\medskip Terrain. The miniature plots the eight circuit-by-altitude exponents of slide \slideref{interaction}. Open routes have higher $H$ in the lowlands, closed routes in the mountains, so there is no general mountain penalty. The open--closed gap is \ChThreeTaskGapPlains{} in Plains and \ChThreeTaskGapHigh{} in High mountains. Because Plains are 91 percent open circuits and the mountain classes about one third, a ranking by altitude alone mixes terrain with route and wing composition. Among open routes, the two lowlands have similar $H$ and the Pyrenees sit below the Alps by 0.011.\par\medskip Lift geography. The squares schematically summarise the climb maps on slide \slideref{cellHeight}. In mountains, crossings form bands along ridges and slopes as the plane rises; in plains, they spread into broader clouds with height. These are locations where pilots climbed, not a map of where thermals form; wind is not measured.\par\medskip Synthesis. All 51 paraglider groups examined, including the 14 open-circuit regional and wing-class groups, lie between 0.816 and 0.958, and hang gliders at \CadenceHangH{}: every group is strongly superdiffusive, and the contrasts are differences of a few hundredths to about 0.13. Route and terrain interact: the open--closed gap falls from \ChThreeTaskGapPlains{} in Plains to \ChThreeTaskGapHigh{} in High mountains, so the circuit effect depends on the altitude class. The wing shift is smaller: on open circuits Experts exceed Beginners by 0.010--0.023 within every class, most in Low mountains. The factorial analysis in the appendix is the tool to quantify these interactions jointly; its implementation is still under review. All these contrasts are conditional associations with nominal intervals that are likely too narrow. Our working hypothesis links them: terrain decides where lift can be found, and so how freely routes can extend. Testing it needs phase segmentation, directions and wind, which is the work in progress on the next slide.}
 \finishslide\end{frame}
 
 \begin{frame}[plain]\frametitle{Work in progress: resolving phases and directions}\slidelabel{wip}\startslide{Work in progress: phases and directions}
@@ -882,6 +845,24 @@
 \finishslide\end{frame}
 
 
+
+\begin{frame}[plain]\frametitle{Appendix: locations of the 20 km cells}\slidelabel{appCells}\startslide{Appendix: locations of the 20 km cells}\backto{cellHeight}
+ % Exact cell outlines over regional context; coordinates come from the same report.
+ \foreach \x/\y/\colour/\locatortitle/\slug/\locatortag in {
+  8/15.5/wine/{Alps: Lake Annecy}/alps/Alps,
+  84/15.5/expert/{Pyrenees: Louron Valley}/pyrenees/Pyrenees,
+  8/50/teal/{Channel Coast: Suisse Normande}/channel-coast/ChannelCoast,
+  84/50/pisablue/{Champagne-Lorraine: Mouzon}/champagne/Champagne}{
+  \smalltxt[text=\colour,font=\bfseries\fontsize{8.5}{10}\selectfont]{\x}{\y}{69}{\locatortitle}
+  \node[anchor=north west,inner sep=0pt]at(\x,\y+5){\includegraphics[width=39mm]{assets/plane-cells/\slug-locator.pdf}};
+  \smalltxt[text=muted,font=\fontsize{7}{8.5}\selectfont]{\x+42}{\y+5}{29}{Centre (WGS84)}
+  \smalltxt[font=\fontsize{7.5}{9}\selectfont]{\x+42}{\y+9.2}{29}{\csname CellLocator\locatortag Centre\endcsname}
+  \smalltxt[text=muted,font=\fontsize{7}{8.5}\selectfont]{\x+42}{\y+19.2}{29}{Bounds (Lambert-93, m)}
+  \smalltxt[font=\fontsize{7}{8.5}\selectfont]{\x+42}{\y+23.4}{29}{\csname CellLocator\locatortag Bounds\endcsname}
+ }
+ \credit{Outlines: exact 20 $\times$ 20 km cells, EPSG:2154. Maps: \copyright\ OpenStreetMap / SRTM / OpenTopoMap (CC-BY-SA).}
+\notetext{These are the exact four cells shown on slide \slideref{cellHeight}, each selected as the busiest 20 by 20 km block in its regional box. Their coloured outlines show the complete cell, with surrounding terrain and named reference communes for orientation. The Alpine cell covers Lake Annecy in the northern French Alps. The Pyrenean cell covers the Louron Valley around Loudenvielle. The Channel Coast cell lies inland around Cl\'ecy in Suisse Normande. The Champagne-Lorraine cell lies around Mouzon in the Ardennes.\par\medskip The Easting and Northing intervals printed on the slide are the exact rectangle bounds in metres in Lambert-93, EPSG:2154. The geographic coordinates are the transformed cell centres in WGS84, shown to five decimal places. They are not corner coordinates: a Lambert-93 square is not an axis-aligned latitude--longitude box. Full-precision centres and all four transformed corners are saved in cell-locator-report.json. Map up follows Lambert-93 grid north; each map includes a 20 km scale bar. The two mountain views span 120 by 78 km; the two lowland views span 100 by 65 km.\par\medskip Sources: plane-cells-report.json for the cell definitions; archived OpenTopoMap basemaps and their retrieval metadata in assets/regional-climb; \href{https://geo.api.gouv.fr/decoupage-administratif/communes}{French government geographic API} for the labelled municipal centres. Locality context: \href{https://www.saintlary.com/winter/destination/saint-lary-soulan/the-aure-valley/}{Saint-Lary Tourism} and \href{https://www.suisse-normande.com/nos-42-communes/clecy/}{Suisse Normande, Cl\'ecy}. The map crops, outlines and coordinates are reproduced offline by render\_cell\_locators.py.}
+\finishslide\end{frame}
 
 \begin{frame}[plain]\frametitle{Data and geographic sources}\startslide{Data and geographic sources}
  \txt[text=pisablue,font=\bfseries\fontsize{11}{13}\selectfont]{8}{18}{45}{Flight archive}

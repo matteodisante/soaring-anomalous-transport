@@ -5,8 +5,8 @@
 25 slides total, including the cover, closing research agenda, thanks, appendices and sources, entirely in English. Scope: the current
 thesis introduction and dataset chapter, then Sections 3.1 and 3.2 of
 `thesis/tesi/04-fixed-transport.tex`, plus the requested qualitative comparison
-in the thermal-plane viewer. Slide 4 alone covers preprocessing and the choice of C10000;
-appendix slides 17–22 give the detail.
+in the thermal-plane viewer. Slide 5 alone covers preprocessing and the choice of C10000;
+appendix slides 16–21 give the detail.
 The palette and Palatino typography follow `presentations/theme.tex`. Header titles
 are kept on one line; compilation rejects titles wider than 140 mm so the slide
 number stays clear.
@@ -18,7 +18,7 @@ interpretation in regular weight, without introducing new emphasis colours.
 Every empirical plot identifies the number of distinct flights in each plotted
 category. Curve legends include `N`, each equipment contrast gives both group
 sizes, and the thermal maps distinguish paraglider and hang-glider flights from
-crossing counts. Cohort legends are discipline-specific. On slide 6, the legends
+crossing counts. Cohort legends are discipline-specific. On slide 22, the legends
 give the fixed counts from 10 s onward and the caption gives the smaller 1 s
 counts. `render_figures.py` reads these numbers from the existing reports and
 verified crossing CSVs, without remeasuring trajectories or changing fits.
@@ -41,20 +41,28 @@ README for the source filenames.
 - `render_regional_climb_density.py`: intersects continuous native own-HMM
   climb edges with horizontal planes every 10 m ASL, using the viewer routine,
   and pools every crossing into 1 km regional bins over all dates and heights.
-- `render_regional_climb_maps.py`: draws appendix slides 23–24 over OpenTopoMap terrain;
+- `render_regional_climb_maps.py`: draws archived regional maps over OpenTopoMap terrain;
   full Pyrenees and western Alps use matched 450 × 220 km views, while the two
   lowland examples use matched 100 × 65 km views.
 - `render_thermal_mechanism.py`: draws the slide-10 schematic of slope-bound
   mountain thermals against scattered lowland triggers.
-- `render_thermal_panels.py`: exports slide 18 maps directly from the viewer's
+- `render_thermal_panels.py`: exports earlier H2/P1 maps directly from the viewer's
   read-only prepared intersections and saved IGN colour maps, without screenshots.
-- `measure_plane_cells.py`: finds the busiest 10 km cell in each regional box and
-  intersects its own-HMM climbs with one plane 600 m above the cell's mean IGN
+- `render_cell_locators.py`: reproduces the appendix locator maps and exact cell
+  coordinates from `plane-cells-report.json` and the archived regional basemaps.
+  The slide gives WGS84 centres and exact Lambert-93 bounds, and links back to
+  slide 11. Full-precision corner coordinates are in `cell-locator-report.json`.
+- `measure_plane_cells.py`: finds the busiest 20 km cell in each regional box and
+  intersects its own-HMM climbs with one plane 800 m above the cell's mean IGN
   terrain, through the viewer's explorer; writes `assets/plane-cells/`.
 - `render_plane_cells.py`: draws the slide-11 maps and their equal-sample
   concentration from those saved files.
+- `measure_plane_cell_animation.py`: intersects the same climb segments with
+  seven planes from 200 to 1,400 m above each cell's mean terrain.
+- `render_plane_cell_animation.py`: exports four GIFs and the PNG frames for
+  slide 11's PDF animation.
 - `measure_cadence_support.py`: measures the cadence-limited extension of C10000
-  for slide 6; writes the portable `cadence-support-report.json`.
+  for slide 22; writes the portable `cadence-support-report.json`.
   It reads the SSD without changing
   the published thesis analysis. Large intermediate arrays stay in `build/`.
 - `measure_open_circuits.py`: repeats the thesis regional and Experts-versus-Beginners
@@ -65,30 +73,30 @@ README for the source filenames.
 
 ## Narrative
 
-1. Title and seminar occasion, with Lake Maggiore, Isola dei Pescatori and the Alps in a perspective illustration. Gliding and search lead into a helical climb inside a thermal rising from a sun-warmed mainland slope; the foreground island includes its bell tower and red waterfront building without signage.
-2. Soaring as transport with an energy budget: phase schematic with a pointer to the Vilpellet et al. HMM segmentation, the time-averaged MSD (per flight, then over flights), the definition of H, and Vilpellet et al. Fig. 1 (French flights, 2016–2021).
+1. Title and seminar occasion, with Lake Maggiore, Isola dei Pescatori and the Alps.
+2. The soaring flight cycle: landscape and phase schematic. Thermals let pilots cover long distances without an engine.
 3. FFVL archive, coverage and metadata.
-4. From raw tracklogs to the fixed cohort C10000. Left: the seven preprocessing stages, grouped as their four appendix slides, each row linking to its slide, then the retained counts. Right: the rule T_s >= 12,500 s, a paraglider support curve of all available flights against the flat C10000 line (real counts from ch3_transport_report.json), the cohort sizes and the ~2% cost in H. Appendix slides 17–22 hold the detail and link back to slide 4.
-5. Equal-flight MSD estimator within retained segments. Left: the MSD panel of the cadence-support slide (`assets/fixed-msd`, rendered by `render_figures.py`), compared with Vilpellet et al.: H ≈ 0.88 for both disciplines there, 0.88 for paragliders and 0.85 for hang gliders here.
-6. C10000 from 1 s, with growing cadence support below 10 s and fixed support above; fitted growth over 10–10,000 s is superdiffusive.
-7. Terrain (launch-altitude proxy), experience (Beginners = EN A/B/C, Experts = EN D/CCC) and circuit type; pooled circuit comparisons versus comparisons within altitude classes, with remaining weather and equipment differences explicit. OFAT is introduced in the factorial appendix.
-8. Open versus closed circuits: slower growth for return routes, linked to the displacement reduction caused by turns and returns.
-9. Pooled H ranks Plains > Hills > Mountains, but an altitude-only comparison mixes terrain with composition: each class holds different shares of open circuits and Experts, and a group enters the class MSD as flight share times MSD, so open flights outweigh their number (Low mountains: 34% of flights, 61% of the MSD at 10^4 s). Circuit type shifts the weight more than wing class.
-10. The altitude ordering reverses by circuit: a quantified interaction.
-11. Experts-versus-Beginners contrasts, open circuits only (`measure_open_circuits.py`): higher H for Experts in every altitude class (+0.028 pooled, 0.010–0.023 within classes), largest in Low mountains.
-12. Regional comparisons, open and closed circuits pooled (thesis Section 3.2.3), lowlands left and mountains right: the Alps--Pyrenees difference in H is clearly non-zero (0.037), while the lowland one is practically zero (−0.002, nominal interval includes zero). The open-circuit check (`measure_open_circuits.py`) shrinks the mountain difference to 0.011 and keeps the ordering. Possible reason: mountain lift follows each range's slopes, while lowland triggers are scattered alike.
-13. 3D schematic of that explanation (`render_thermal_mechanism.py`): strong mountain thermals fed up the spurs and released along the crest, against weaker lowland thermals over heated surfaces of several kinds scattered at random. No wind.
-14. Take-home messages, before the work in progress: a 2x2 grid in the style of slide 15, each finding beside a pictogram of its evidence. Scaling: fitted H between the diffusive and ballistic references, same flights at every lag. Route and wing: open above closed and, on open routes, experts above beginners, drawn as two glyph pairs without values; the Expert canopy is longer and thinner, in the colours of the equipment figure. Terrain: open and closed H across altitude classes, with the circuit gap narrowing from 0.13 to 0.02. Lift geography: schematic H2 and P1 crossings at 600 m. The band states that every group is strongly superdiffusive, that route, terrain and wing shape H jointly, and the working hypothesis that terrain acts through where lift is found.
-15. Work in progress: phase segmentation, directional memory and distribution scaling.
-16. Thanks and discussion.
-17. Appendix: preprocessing steps 1--3: a channel-role diagram for GNSS altitude and barometry, the physical fix-deletion rule, and a timeline distinguishing take-off, intermediate landing, relaunch and final landing. The altitude spectral comparison remains in the speaker notes.
-18. Appendix: preprocessing steps 4--5: selection bars with cutoffs positioned at the observed rejection fractions (both disciplines, among logs reaching each sequential check), a 3D geographic-to-local coordinate diagram adapted from the thesis, and explicit retention after the full pipeline. The census gives 1.13%, 0.09% and 2.68% rejected by the duration, path and altitude-range minima, respectively.
-19. Appendix: preprocessing step 6: short-gap interpolation versus long-gap splitting.
-20. Appendix: preprocessing step 7: the moving cubic Savitzky--Golay fit, with position and analytic derivatives evaluated at the window centre; no subsequent finite differences.
-21. Appendix: TA-MSD over all available flights beside the share of flights contributing at each lag. The circled end of the MSD (from 10^4 s) is where the steep loss of flights beyond about 6x10^3 s acts, so an all-flight H fit mixes dynamics with a changing flight set, as does any lag-dependent statistic. A framed box lists the desiderata for one population: same flights at every lag, longest lag range, N of the same order as at 10 s.
-22. Appendix: C10000 meets those desiderata: no loss of flights up to 10,000 s, at least 251 origins per segment at the largest lag, 30% of paragliders and 38% of hang gliders available at 10 s. The measured duration-selection shift in H, about 2%, is the cost.
-23. Appendix: velocity and directional memory.
-24. Appendix: bootstrap confidence intervals and limitations.
+4. The MSD estimator: time averaging along each flight, then equal weighting across flights, beside Vilpellet et al. Figure 1. The equations are enlarged slightly, with the per-flight definition kept on one line.
+5. From raw tracklogs to the fixed cohort C10000, with links to the preprocessing and cohort appendices.
+6. Flight characteristics: circuit, launch-altitude class and wing class, and the distinction between marginal and stratified comparisons.
+7. Open versus closed circuits: slower growth for return routes, linked to turns and returns.
+8. The open–closed H gap depends on altitude. Mountain terrain constrains both circuit types and narrows their difference.
+9. Regional comparisons: H separates the Alps and Pyrenees more clearly than Channel Coast and Champagne-Lorraine.
+10. Schematic interpretation: mountain lift follows relief, while lowland triggers are scattered. This is an illustration without measured wind or airflow.
+11. One combined thermal-plane slide: mountain lift follows ridges, lowland lift spreads aloft. Four animations begin at 800 m, reproducing the former static maps. Region names and reference flight counts sit above the maps; the lower band suggests easier thermal access aloft in lowlands and a possible connection to regional Hurst contrasts. There are no extra Mountains/Lowlands headings.
+12. Experts-versus-Beginners contrasts on open circuits: higher H for Experts in every altitude class, related to the shorter search phase reported by Vilpellet et al.
+13. Take-home messages: scaling, route and wing, terrain, and lift geography.
+14. Work in progress: segmentation, stochastic models, anisotropy, distribution scaling, and solo versus group flight.
+15. Thanks and discussion.
+16. Appendix: GNSS and barometric channels, fix-level cleaning, airborne intervals.
+17. Appendix: flight selection and geographic-to-local coordinates.
+18. Appendix: short-gap interpolation and the uniform time grid.
+19. Appendix: Savitzky–Golay smoothing and derivatives.
+20. Appendix: changing flight support at long lags and the requirements for one fixed population.
+21. Appendix: support and selection costs of C10000.
+22. Appendix: displacement growth from 1 s to 10,000 s, with growing cadence support below 10 s and fixed support above it.
+23. Appendix: bootstrap confidence intervals and limitations.
+24. Appendix: exact locations of the four 20 km cells, with regional maps, WGS84 centres and Lambert-93 bounds.
 25. Flight, terrain, map and analysis sources with clickable links.
 
 Numerical estimates retain their archived confidence intervals. A marginal comparison pools
@@ -97,15 +105,9 @@ Neither is a controlled OFAT experiment. Unequal factor frequencies and
 interactions in H are distinguished. The factorial implementation remains under
 review in Experimentals; this deck motivates it without presenting its results.
 
-Questions guide slides 7–13 and appendix slides 21–22, where the audience needs
-an explicit comparison to interpret the evidence. Their titles state the question,
-while plots and conclusions supply the answer. Definitions and the factorial model retain topic titles.
-
-The conditional sequence follows observations → composition → stratification →
-spatial evidence → physical interpretation → joint analysis. Visible conclusions
-explain what each result implies; notes retain the statistical qualifications and
-presentation transitions. Slide 18 emphasises the observed increase in spatial
-spread with height in P1 relative to the persistent slope-and-ridge concentration in H2.
+Questions introduce the statistical comparisons. The thermal-plane title states its
+spatial observations directly. Speaker notes keep the Hurst interpretation distinct
+from a measured causal relationship or a thermal encounter probability.
 
 ## Rebuild
 
@@ -116,7 +118,31 @@ MPLCONFIGDIR=/tmp/soaring-offsite-mpl .venv/bin/python presentations/offsite2026
 python3 presentations/offsite2026/build.py
 ```
 
-Slide 6 keeps C10000 as its parent population and its selected segment identities.
+The build validates each compiled PDF, replaces the delivered file atomically,
+and leaves identical PDFs untouched. Preview and continuous-preview modes are
+explicitly disabled.
+
+### VS Code save dialog during refresh
+
+`mathematic.vscode-pdf` 0.2.5 uses pdf.js, which treats `animate` frame visibility
+changes as modified form annotations. Its automatic file refresh closes the old
+document, and pdf.js tries to download those changes through macOS's Save dialog.
+This is separate from the Python build.
+
+`vscode-pdf-animation-reload.patch` fixes the extension's refresh handler. It
+clears the modified flag only when every change is a visibility change on an
+identified `animate` frame. Text annotations, form values and other edits retain
+the viewer's normal save handling. The patch is installed locally; to reapply it
+to the same extension version after reinstalling:
+
+```bash
+patch -p1 -d "$HOME/.vscode/extensions/mathematic.vscode-pdf-0.2.5" < presentations/offsite2026/vscode-pdf-animation-reload.patch
+```
+
+Close and reopen the PDF tab to load the updated handler. An extension update
+may overwrite this local fix and needs a fresh compatibility check.
+
+Slide 22 keeps C10000 as its parent population and its selected segment identities.
 For 1--9 s, segments enter when their native cadence is no larger than the lag;
 native origins and linearly interpolated endpoints stay within each selected span.
 At 10 s all 46,273 paraglider and 2,326 hang-glider flights contribute, and support
@@ -159,7 +185,7 @@ diagnostic, not as a validated replacement for the intervals plotted here.
 The Pyrenees map shows the full Atlantic-to-Mediterranean chain in a 450 × 220 km
 view; the western Alpine view covers the same physical area. The two lowland
 examples each cover 100 × 65 km. They use the exact
-paraglider C10000 regional populations behind slide 12, including all available
+paraglider C10000 regional populations behind slide 9, including all available
 dates and heights. Archived own-HMM climb intervals label the native cleaned
 trajectory; edges cannot cross phase changes, preprocessing boundaries or gaps.
 The viewer's `thermal_daily.lattice_points` routine intersects those edges with
@@ -192,24 +218,27 @@ MPLCONFIGDIR=/tmp/soaring-offsite-mpl .venv/bin/python presentations/offsite2026
 
 The saved PDF maps allow deck compilation without the SSD.
 
-## One plane in four regional cells (slide 11)
+## The 800 m reference plane (slide 11)
 
-Each regional box of the $H$ comparison contributes the 10 km Lambert-93 cell
-(2 × 2 viewer cells) lying wholly inside it and crossed by the most distinct
-flights in the viewer census, over all dates and both disciplines. One horizontal
-plane per cell sits at the mean IGN RGE ALTI terrain of the cell plus 600 m, the
-average of its four 5 km viewer references; it is not terrain-following.
-Crossings use the viewer's explorer: census visitors of each 5 km cell, own-HMM
-climb edges from the published snapshot or decoded into `thermal-climbs.sqlite3`,
-and `plane_intersections` at that absolute altitude. Relief is shaded with one
+Each regional box of the $H$ comparison contributes the 20 km Lambert-93 cell
+(4 × 4 viewer cells) lying wholly inside it and crossed by the most distinct
+flights in the viewer census, over all dates and both disciplines. On the slide,
+the plane is 800 m above the cell's mean IGN RGE ALTI terrain; the mean terrain
+is the average of its sixteen 5 km viewer references. The mean-terrain values
+are in the speaker notes. The plane is horizontal, not
+terrain-following. Crossings use the viewer's explorer: census visitors of each
+5 km cell, own-HMM climb edges from the published snapshot or decoded (in
+parallel, once per flight) into `thermal-climbs.sqlite3`, and
+`plane_intersections` at that absolute altitude. Relief is shaded with one
 fixed light and no per-panel contrast stretch, so the plains look as flat as they
 are; brown marks terrain above the plane.
 
-The concentration under each map is the share of 250 m squares holding half of
-the first crossings of 500 flights drawn per cell (all 500 in Champagne-Lorraine),
-with uniform points as the reference. The mountain-lowland ranking holds at 100
-and 250 m; at 500 m Champagne-Lorraine ties the Alps and at 1 km only the Channel
-Coast stays wider (`plane-cells-concentration.json`). `plane-cells-report.json`
+The concentration check in the speaker notes is the share of 250 m squares holding
+half of the first crossings of the same number of flights drawn per cell (as many as the
+smallest cell holds: all 474 in Champagne-Lorraine), with uniform points as the
+reference. At every square size from 100 m to 1 km only the Channel Coast is
+wider; Champagne-Lorraine is about as compact as the mountain cells, so the
+contrast the slide states is one of shape (`plane-cells-concentration.json`). `plane-cells-report.json`
 also records how far the contributing flights started from each cell's densest
 spot: the lowland and Pyrenean hotspots are near launch, the Alpine one is not.
 
@@ -220,7 +249,23 @@ With the SSD connected and internet for IGN terrain:
 MPLCONFIGDIR=/tmp/soaring-offsite-mpl .venv/bin/python presentations/offsite2026/render_plane_cells.py
 ```
 
-## Viewer maps (slide 18)
+## Height sweep in the same cells (slide 11)
+
+The four maps cover 200 to 1,400 m above each cell's fixed mean terrain in
+200 m steps. Playback starts at 800 m, continues through 1,000, 1,200 and
+1,400 m, then wraps to 200, 400 and 600 m. Measurement arrays retain their
+ascending height order; the renderer alone rotates the presentation sequence.
+Frame `00` is the 800 m reference in every GIF, in the PDF's `poster=first`
+image and in the speaker notes. Its crossing coordinates match the saved static
+maps. The PDF plays PNG frames in viewers supporting `animate`; standalone GIFs
+in `assets/plane-cells/` remain linked from the slide.
+
+```bash
+PYTHONPATH=src .venv/bin/python presentations/offsite2026/measure_plane_cell_animation.py
+MPLCONFIGDIR=/tmp/soaring-offsite-mpl .venv/bin/python presentations/offsite2026/render_plane_cell_animation.py
+```
+
+## Archived viewer maps (H2 and P1)
 
 The four maps are populated by direct exports from the viewer's prepared data.
 See [selection and provenance](assets/screenshots/README.md). To regenerate with
@@ -235,7 +280,7 @@ the SSD. The two 5 km cells retain the same dates, Vilpellet segmentation and
 bounds within each pair. Every map pools the full prepared archive, across all available dates and years,
 without a seasonal restriction. H2 is near Aulp du Seuil in the
 Chartreuse; P1 is in inland Suisse Normande. The two planes are 100 and 600 m
-above the viewer's fixed cell reference, rather than above local terrain. Contributing flights change with height. The slide highlights the observed widening
+above the viewer's fixed cell reference, rather than above local terrain. Contributing flights change with height. The earlier comparison highlighted the observed widening
 of climb locations from 100 to 600 m in P1, while H2 remains concentrated near slopes and ridges.
 This supports freer use of space aloft in the plains cell; its contribution to H
 and generality across sites are not quantified.
@@ -245,7 +290,7 @@ The schematic on slide 10 is `assets/thermal-mechanism.pdf`, drawn by
 layout; it contains no data. Mountain thermals start from upslope flow that
 follows the terrain gradient along sun-facing spurs and leave from the crest, so
 their pattern traces the relief. Lowland thermals are weaker and vertical, over a
-ploughed fields, a quarry, a car park, a warehouse roof and a village,
+ploughed fields, a car park, a warehouse roof and a village,
 placed irregularly; one heated field releases none. Wavy lines are ascent cues,
 not measured rotation.
 The earlier AI-generated `thermal-mechanism-3d`, `thermal-landscapes` and 2D
