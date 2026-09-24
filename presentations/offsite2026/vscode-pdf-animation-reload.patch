@@ -1,0 +1,32 @@
+--- a/assets/main.mjs
++++ b/assets/main.mjs
+@@ -61,0 +62,27 @@
++// animate changes frame visibility, which pdf.js marks as a form edit.
++// On external reload, clear only those playback changes. Preserve real edits.
++async function clearAnimationPlaybackChanges(pdfDocument) {
++  const storage = pdfDocument?.annotationStorage;
++  if (!storage?.size) return;
++  const fields = (await pdfDocument.getFieldObjects()) ?? {};
++  const frameIds = new Set(
++    Object.entries(fields)
++      .filter(([name]) => {
++        const frame = /^(\d+)\.\d+$/.exec(name);
++        return frame && fields[`anm${frame[1]}`];
++      })
++      .flatMap(([, widgets]) => widgets.map(({ id }) => id)),
++  );
++  const changes = storage.serializable.map;
++  if (
++    changes?.size &&
++    [...changes].every(
++      ([id, state]) =>
++        frameIds.has(id) &&
++        Object.keys(state).every((key) => ["noView", "noPrint", "display"].includes(key)),
++    )
++  ) {
++    storage.resetModified();
++  }
++}
++
+@@ -70,0 +98 @@
++      await clearAnimationPlaybackChanges(window.PDFViewerApplication.pdfDocument);
