@@ -44,8 +44,12 @@ README for the source filenames.
 - `render_regional_climb_maps.py`: draws archived regional maps over OpenTopoMap terrain;
   full Pyrenees and western Alps use matched 450 × 220 km views, while the two
   lowland examples use matched 100 × 65 km views.
-- `render_thermal_mechanism.py`: draws the slide-10 schematic of slope-bound
-  mountain thermals against scattered lowland triggers.
+- `assets/thermal-blocks.png`: slide-10 block diagrams, from `render_thermal_blocks.py`.
+- `assets/thermal-mechanism-sunlit.png` (unused): earlier slide-10 illustration of solar heating,
+  rocky slope sources, scattered lowland triggers and circling flight paths.
+  Its ImageGen prompts are archived alongside it.
+- `render_thermal_mechanism.py`: reproduces the earlier analytic schematic,
+  retained as an unused reference for the current slide-10 artwork.
 - `render_thermal_panels.py`: exports earlier H2/P1 maps directly from the viewer's
   read-only prepared intersections and saved IGN colour maps, without screenshots.
 - `render_cell_locators.py`: reproduces the appendix locator maps and exact cell
@@ -82,7 +86,7 @@ README for the source filenames.
 7. Open versus closed circuits: slower growth for return routes, linked to turns and returns.
 8. The open–closed H gap depends on altitude. Mountain terrain constrains both circuit types and narrows their difference.
 9. Regional comparisons: H separates the Alps and Pyrenees more clearly than Channel Coast and Champagne-Lorraine.
-10. Schematic interpretation: mountain lift follows relief, while lowland triggers are scattered. This is an illustration without measured wind or airflow.
+10. Schematic interpretation: sunlight reaches both landscapes, while surface properties create local hot spots. Mountain thermals start along exposed rocky ribs below the summits, and lowland thermals rise from scattered dry fields, asphalt and a dark roof. Helices show circling flight paths through rising air. This is an illustration without measured wind or airflow.
 11. One combined thermal-plane slide: mountain lift follows ridges, lowland lift spreads aloft. Four animations begin at 800 m, reproducing the former static maps. Region names and reference flight counts sit above the maps; the lower band suggests easier thermal access aloft in lowlands and a possible connection to regional Hurst contrasts. There are no extra Mountains/Lowlands headings.
 12. Experts-versus-Beginners contrasts on open circuits: higher H for Experts in every altitude class, related to the shorter search phase reported by Vilpellet et al.
 13. Take-home messages: scaling, route and wing, terrain, and lift geography.
@@ -285,16 +289,30 @@ of climb locations from 100 to 600 m in P1, while H2 remains concentrated near s
 This supports freer use of space aloft in the plains cell; its contribution to H
 and generality across sites are not quantified.
 
-The schematic on slide 10 is `assets/thermal-mechanism.pdf`, drawn by
-`render_thermal_mechanism.py` from an analytic ridge and a hand-placed lowland
-layout; it contains no data. Mountain thermals start from upslope flow that
-follows the terrain gradient along sun-facing spurs and leave from the crest, so
-their pattern traces the relief. Lowland thermals are weaker and vertical, over a
-ploughed fields, a car park, a warehouse roof and a village,
-placed irregularly; one heated field releases none. Wavy lines are ascent cues,
-not measured rotation.
-The earlier AI-generated `thermal-mechanism-3d`, `thermal-landscapes` and 2D
-`thermal-mechanism-schematic` drafts are unused.
+The schematic on slide 10 is `assets/thermal-blocks.png`, rendered by
+`render_thermal_blocks.py` from the saved IGN RGE ALTI tiles: the Tournette massif
+(Alps cell, seen from the west, 1.7x vertical exaggeration) and a flat stretch of the
+Champagne cell floor. Land cover, buildings, thermals and paths are drawn, and one sun
+direction sets the shading, cast shadows and rays. It replaces the ImageGen
+illustration `assets/thermal-mechanism-sunlit.png`, now unused; its prompts remain in
+`assets/thermal-mechanism-sunlit-prompt.txt`. The paragraph below describes that
+earlier illustration.
+Parallel yellow rays enter from the upper left and illuminate both landscapes,
+including the surrounding vegetation. Each paraglider has an inflated canopy,
+suspension lines and a seated pilot; the two sun symbols indicate the common
+distant-light direction.
+Exposed dark rock, dry fields, asphalt and a dark roof have local warm highlights
+to show differential surface heating. Three mountain thermals leave rocky
+shoulders along the descending ribs, visibly below the main summit skyline.
+Seven lowland examples rise from three brown fields, the asphalt car park,
+the warehouse roof and two village house roofs. Orange columns and
+upward arrows denote rising air; the helices and paragliders denote circling
+flight paths, not a claim that thermal air must rotate. The artwork contains no
+data, omits wind and drift, and makes no universal claim that lowland thermals
+are weaker. The regional H explanation remains a hypothesis in the notes.
+The earlier analytic `thermal-mechanism.pdf`, its renderer
+`render_thermal_mechanism.py`, and the AI-generated `thermal-mechanism-3d`,
+`thermal-landscapes` and 2D `thermal-mechanism-schematic` drafts are unused.
 
 The cover uses `assets/cover-lago-maggiore-contrast.png`, a transparent illustration
 edited with the built-in image_gen tool from the previous mountain scene.
