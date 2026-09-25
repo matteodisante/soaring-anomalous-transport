@@ -317,10 +317,10 @@
 
 
 \begin{frame}[plain]\frametitle{Does the open--closed H gap change with altitude?}\slidelabel{interaction}\startslide{Does the open--closed $H$ gap change with altitude?}
- % Open and closed on one axis; interpretation on the right, in the colours of the two curves.
+ % Circuit headings follow the curves; only the bullets colour the terrain names.
  \figureat{8}{16}{92}{interaction}
- \smalltxt{102}{29}{51}{{\color{para}\textbf{Open:} higher $H$ in lowlands}\par\smallskip\bulitem{Lowlands: no deviations for lift}\bulitem{Mountains: deviations to known lift}}
- \smalltxt{102}{46}{51}{{\color{wine}\textbf{Closed:} higher $H$ in mountains}\par\smallskip\bulitem{Lowlands: turn back any time}\bulitem{Mountains: way home follows ridges}}
+ \smalltxt{102}{29}{51}{{\color{para}\textbf{Open:}} higher $H$ in lowlands\par\smallskip\bulitem{\textcolor{climbgreen}{Lowlands}: no deviations for lift}\bulitem{\textcolor{boxPyrenees}{Mountains}: deviations to known lift}}
+ \smalltxt{102}{46}{51}{{\color{wine}\textbf{Closed:}} higher $H$ in mountains\par\smallskip\bulitem{\textcolor{climbgreen}{Lowlands}: turn back any time}\bulitem{\textcolor{boxPyrenees}{Mountains}: way home follows ridges}}
  \fill[pisablight!33](7,74.7)rectangle(153,83);
  \smalltxt[text=pisablue,font=\fontsize{9}{11}\selectfont]{10}{75.4}{142}{Open $>$ closed everywhere: gap $0.13$ in lowlands, $0.02$--$0.05$ in mountains.}
  \smalltxt[text=pisablue,font=\bfseries\boldmath\fontsize{9.5}{11}\selectfont]{10}{79.2}{142}{Mountain terrain constrains both circuits, so the gap narrows.}
@@ -379,6 +379,15 @@
 \begin{frame}[plain]\frametitle{Open circuits: expert--beginner H gap by altitude}\slidelabel{equipment}\startslide{Open circuits: expert--beginner $H$ gap by altitude}
  % Taller than \figureat allows, so the figure fills the space down to the band.
  \node[anchor=north,inner sep=0pt]at(80,15){\includegraphics[width=146mm,height=58mm,keepaspectratio]{assets/equipment.pdf}};
+ % The pooled contrast has different altitude weights in the two wing groups.
+ % Keep the callout inside unused plot space; click it for the numerical example.
+ \draw[pisablue,line width=.9pt](146.2,23.9)ellipse[x radius=3.6mm,y radius=1.9mm];
+ \node[anchor=north west,inner xsep=1.3mm,inner ysep=.9mm,draw=pisablue,
+  fill=pisablight!20,rounded corners=.8mm,line width=.7pt,text width=32.5mm,
+  align=center,text=pisablue,font=\fontsize{7.5}{9}\selectfont]at(102,19.6){%
+  \hyperlink{slide:appEquipmentMix}{\textcolor{pisablue}{%
+   {\bfseries $\ne$ mean of stratum gaps}\\E/B altitude mixes differ}}};
+ \draw[pisablue,-{Latex[length=1.2mm]},line width=.8pt](137.1,23.8)--(142.3,23.8);
  \fill[pisablight!33](7,74.7)rectangle(153,83);
  \node[anchor=center,inner sep=0pt,text width=140mm,align=center,text=pisablue,font=\bfseries\boldmath\fontsize{9}{11}\selectfont]at(80,78.85){Vilpellet et al.\ also found \mbox{$H_\mathrm{expert}>H_\mathrm{beginner}$},\\with experts spending less time searching for thermals.};
  \credit{Wing class is a proxy. Nominal 90\% cluster-bootstrap CIs (Appendix). Vilpellet et al.: \href{https://arxiv.org/abs/2601.01293}{arXiv:2601.01293}, Figs.~5a, 6d.}
@@ -432,7 +441,7 @@
  \node[anchor=north east,inner sep=0pt,text=muted,font=\fontsize{6}{7}\selectfont]at(33.5,68.9){Mountains};
  \end{scope}
  \smalltxt[font=\bfseries\fontsize{9}{11}\selectfont]{39}{52.5}{41}{Mountains narrow the gap}
- \smalltxt[font=\fontsize{8}{9.8}\selectfont]{39}{57.5}{41}{\bulitem{Open-route $H$ falls}\bulitem{Closed-route $H$ rises}}
+ \smalltxt[font=\fontsize{8}{9.8}\selectfont]{39}{57.5}{41}{\bulitem{\textcolor{para}{Open}-route $H\downarrow$}\bulitem{\textcolor{wine}{Closed}-route $H\uparrow$}}
  % Lift geography: schematic mountain and plains climb crossings.
  \pgfmathsetseed{26}
  \foreach \x in {86,100.5}{\filldraw[fill=pisablight!18,draw=muted!40,line width=.4pt](\x,51.5)rectangle(\x+12,63.5);}
@@ -860,6 +869,52 @@
  }
  \credit{Outlines: exact 20 $\times$ 20 km cells, EPSG:2154. Maps: \copyright\ OpenStreetMap / SRTM / OpenTopoMap (CC-BY-SA).}
 \notetext{These are the exact four cells shown on slide \slideref{cellHeight}, each selected as the busiest 20 by 20 km block in its regional box. Their coloured outlines show the complete cell, with surrounding terrain and named reference communes for orientation. The Alpine cell covers Lake Annecy in the northern French Alps. The Pyrenean cell covers the Louron Valley around Loudenvielle. The Channel Coast cell lies inland around Cl\'ecy in Suisse Normande. The Champagne-Lorraine cell lies around Mouzon in the Ardennes.\par\medskip The Easting and Northing intervals printed on the slide are the exact rectangle bounds in metres in Lambert-93, EPSG:2154. The geographic coordinates are the transformed cell centres in WGS84, shown to five decimal places. They are not corner coordinates: a Lambert-93 square is not an axis-aligned latitude--longitude box. Full-precision centres and all four transformed corners are saved in cell-locator-report.json. Map up follows Lambert-93 grid north; each map includes a 20 km scale bar. The two mountain views span 120 by 78 km; the two lowland views span 100 by 65 km.\par\medskip Sources: plane-cells-report.json for the cell definitions; archived OpenTopoMap basemaps and their retrieval metadata in assets/regional-climb; \href{https://geo.api.gouv.fr/decoupage-administratif/communes}{French government geographic API} for the labelled municipal centres. Locality context: \href{https://www.saintlary.com/winter/destination/saint-lary-soulan/the-aure-valley/}{Saint-Lary Tourism} and \href{https://www.suisse-normande.com/nos-42-communes/clecy/}{Suisse Normande, Cl\'ecy}. The map crops, outlines and coordinates are reproduced offline by render\_cell\_locators.py.}
+\finishslide\end{frame}
+
+\begin{frame}[plain]\frametitle{Appendix: why the pooled gap is larger}\slidelabel{appEquipmentMix}\startslide{Appendix: why the pooled gap is larger}\backto{equipment}
+ \draw[pisablight,line width=.6pt](83,16)--(83,71.5);
+ % Ordinary means make the composition effect visible without a log-log fit.
+ \txt[text=pisablue,font=\bfseries\fontsize{10.5}{12}\selectfont]{8}{16}{72}{Same gap within each class}
+ \smalltxt[text=muted,font=\fontsize{7.5}{9}\selectfont]{8}{21.5}{72}{Toy values; ordinary arithmetic means, not fitted $H$}
+ \foreach \x/\lab/\col in {40/Beginners/pisablue,57/Experts/expert,74/Gap/pisablue}{
+  \node[inner sep=0pt,text=\col,font=\bfseries\fontsize{8}{9.5}\selectfont]at(\x,28){\lab};}
+ \draw[pisablight,line width=.6pt](8,31)--(80,31);
+ \foreach \y/\lab/\col/\b/\e in {35/Lowlands/climbgreen/0.86/0.90,41/Mountains/boxPyrenees/0.76/0.80}{
+  \node[anchor=west,inner sep=0pt,text=\col,font=\fontsize{9}{11}\selectfont]at(8,\y){\lab};
+  \node[inner sep=0pt,text=pisablue,font=\fontsize{10}{12}\selectfont]at(40,\y){\b};
+  \node[inner sep=0pt,text=expert,font=\fontsize{10}{12}\selectfont]at(57,\y){\e};
+  \node[inner sep=0pt,text=pisablue,font=\bfseries\fontsize{10}{12}\selectfont]at(74,\y){0.04};}
+ \smalltxt[text=muted,font=\fontsize{7.5}{9}\selectfont]{8}{45.5}{72}{10 equally weighted flights per group}
+ \node[inner sep=0pt,text=muted,font=\fontsize{7.5}{9}\selectfont]at(74,47.5){Mean};
+ \foreach \y/\lab/\col/\nlow/\mean in {53/Experts/expert/9/0.89,61/Beginners/pisablue/1/0.77}{
+  \node[anchor=west,inner sep=0pt,text=\col,font=\bfseries\fontsize{8.5}{10}\selectfont]at(8,\y){\lab};
+  \foreach \j in {1,...,10}{
+   \ifnum\j>\nlow\relax\def\dotcolour{boxPyrenees}\else\def\dotcolour{climbgreen}\fi
+   \fill[\dotcolour]({27.5+3.5*\j},\y)circle(1.15);}
+  \draw[muted,-{Latex[length=1mm]},line width=.6pt](64.5,\y)--(68,\y);
+  \node[inner sep=0pt,text=\col,font=\bfseries\fontsize{10}{12}\selectfont]at(74,\y){\mean};}
+ \node[anchor=north,inner sep=0pt,text=expert,font=\fontsize{7.5}{9}\selectfont]at(47,55.1){$(9\times0.90+1\times0.80)/10$};
+ \node[anchor=north,inner sep=0pt,text=pisablue,font=\fontsize{7.5}{9}\selectfont]at(47,63.1){$(1\times0.86+9\times0.76)/10$};
+ \node[inner sep=0pt,text=pisablue,font=\bfseries\boldmath\fontsize{12}{14}\selectfont]at(44,69.5){$0.89-0.77=0.12>0.04$};
+ % Actual shares are computed from the same archived open-flight counts as slide 12.
+ \edef\expertlowshare{\fpeval{(\OpenExpertsAltZeroN+\OpenExpertsAltOneN)/\OpenExpertsN}}
+ \edef\beginnerlowshare{\fpeval{(\OpenBeginnersAltZeroN+\OpenBeginnersAltOneN)/\OpenBeginnersN}}
+ \txt[text=pisablue,font=\bfseries\fontsize{10.5}{12}\selectfont]{88}{16}{65}{Slide \slideref{equipment}: the observed mix}
+ \smalltxt[text=muted,font=\fontsize{7.5}{9}\selectfont]{88}{21.5}{65}{Open circuits; lowlands = Plains + Hills}
+ \foreach \y/\lab/\col/\share/\n in {28/Experts/expert/\expertlowshare/\OpenExpertsN,43/Beginners/pisablue/\beginnerlowshare/\OpenBeginnersN}{
+  \smalltxt[font=\fontsize{8.5}{10}\selectfont]{88}{\y}{65}{{\bfseries\color{\col}\lab}\hfill $N=\num{\n}$}
+  \fill[altHigh](88,\y+4.5)rectangle(152,\y+10.5);
+  \fill[altPlains](88,\y+4.5)rectangle({88+64*\share},\y+10.5);
+  \node[inner sep=0pt,text=climbgreen,font=\bfseries\fontsize{8}{9}\selectfont]at({88+32*\share},\y+7.5){\fpeval{round(100*\share,1)}\%};
+  \node[inner sep=0pt,text=boxPyrenees,font=\bfseries\fontsize{8}{9}\selectfont]at({120+32*\share},\y+7.5){\fpeval{round(100*(1-\share),1)}\%};}
+ \fill[climbgreen](90,57)circle(.8);\smalltxt[text=climbgreen,font=\fontsize{8}{9}\selectfont]{92}{55.6}{23}{Lowlands}
+ \fill[boxPyrenees](122,57)circle(.8);\smalltxt[text=boxPyrenees,font=\fontsize{8}{9}\selectfont]{124}{55.6}{29}{Mountains}
+ \smalltxt[font=\fontsize{9}{11}\selectfont]{88}{62}{65}{Experts include more lowland flights,\\where $H$ is higher for both groups.}
+ \fill[pisablight!33](7,74.7)rectangle(153,83);
+ \smalltxt[text=pisablue,font=\bfseries\fontsize{10}{12}\selectfont]{10}{75.5}{140}{Different altitude mixes can enlarge the pooled gap.}
+ \smalltxt[text=pisablue,font=\fontsize{8.5}{10}\selectfont]{10}{79.6}{140}{For $H$: pool MSD curves, then fit. Do not average the four gaps.}
+ \credit{Left: illustrative arithmetic example. Right: archived open-circuit counts used on slide \slideref{equipment}.}
+\notetext{The left panel is an arithmetic illustration, not an estimate or a mixture rule for fitted H. Within each class Experts exceed Beginners by 0.04. Nine of the ten Expert flights are in the higher-value lowland class: their mean is $(9\times0.90+1\times0.80)/10=0.89$. Only one Beginner flight is in that class: their mean is $(1\times0.86+9\times0.76)/10=0.77$. The pooled gap is 0.12, larger than either within-class gap. With the same composition in both groups, the arithmetic gap would instead be 0.04.\par\medskip The observed groups have the same direction of imbalance: 1,905 of 6,256 Expert flights are in Plains or Hills, versus 1,545 of 10,830 Beginner flights. These are 30.5 and 14.3 percent. H is higher in those lowland classes for both groups. For the actual estimator, flight shares weight the class MSD curves, and H is fitted from the logarithm of each pooled curve over 10--10,000 s. Averaging fitted H values or their differences does not reproduce that operation. The pooled contrast therefore includes altitude composition and is not a causal effect of pilot experience. Sources: open-circuits-report.json, measure\_open\_circuits.py and fixed\_transport.log\_fit.}
 \finishslide\end{frame}
 
 \begin{frame}[plain]\frametitle{Data and geographic sources}\startslide{Data and geographic sources}

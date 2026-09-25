@@ -5,6 +5,9 @@ import json
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.patches
+from matplotlib import patheffects
+from matplotlib.path import Path as MplPath
+from matplotlib.transforms import Affine2D, ScaledTranslation, blended_transform_factory
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -18,7 +21,38 @@ CADENCE = json.loads((OUT.parent / "cadence-support-report.json").read_text())
 OPEN = json.loads((OUT.parent / "open-circuits-report.json").read_text())
 BLUE, RUST, STEEL, TEAL, GOLD, WINE = "#3477A8", "#B5482A", "#4A6079", "#2E7D8A", "#C98A1E", "#8E3B5C"
 ALT = [BLUE, TEAL, GOLD, WINE]
+# Match altPlains, altHills, altLow and altHigh on the characteristics slide.
+ALT_TINTS = ["#B5D69A", "#DCE0A0", "#DDBE8E", "#B8A89A"]
 NAMES = ["Plains", "Hills", "Low mountains", "High mountains"]
+# Schematic terrain, with a shared width and baseline: flat, rounded, then
+# progressively higher and sharper peaks. Local x spans [-1, 1]; the baseline is y = 0.
+TERRAIN = [
+    ([(-1,0),(-1,.12),(-.35,.16),(.25,.12),(1,.15),(1,0),(0,0)],
+     [MplPath.MOVETO]+[MplPath.LINETO]*5+[MplPath.CLOSEPOLY]),
+    ([(-1,0),(-1,.1),(-.8,.1),(-.7,.56),(-.35,.56),(-.05,.56),
+      (.06,.16),(.25,.16),(.45,.16),(.55,.42),(.72,.42),(.88,.42),
+      (.94,.1),(1,.1),(1,0),(0,0)],
+     [MplPath.MOVETO,MplPath.LINETO]+[MplPath.CURVE4]*12+
+     [MplPath.LINETO,MplPath.CLOSEPOLY]),
+    ([(-1,0),(-1,.1),(-.56,.65),(-.25,.33),(.15,.87),(.5,.48),
+      (.7,.6),(1,.1),(1,0),(0,0)],
+     [MplPath.MOVETO]+[MplPath.LINETO]*8+[MplPath.CLOSEPOLY]),
+    ([(-1,0),(-1,.1),(-.64,.77),(-.37,.41),(.06,1.3),(.43,.58),
+      (.65,.85),(1,.1),(1,0),(0,0)],
+     [MplPath.MOVETO]+[MplPath.LINETO]*8+[MplPath.CLOSEPOLY]),
+]
+def edge_of(tint): return tuple(.7*c for c in matplotlib.colors.to_rgb(tint))
+def terrain(ax, i, transform):
+    """Draw altitude class i's silhouette; transform maps its local coordinates to display."""
+    tint = ALT_TINTS[i]
+    ax.add_patch(matplotlib.patches.PathPatch(
+        MplPath(*TERRAIN[i]),transform=transform,facecolor=tint,
+        edgecolor=edge_of(tint),lw=.8,joinstyle="round",clip_on=False))
+    # A small snow cap distinguishes the high, alpine silhouette at slide scale.
+    if i == 3:
+        ax.add_patch(matplotlib.patches.Polygon(
+            [(-.09,.99),(.06,1.3),(.22,.99),(.1,1.04),(.02,.97)],
+            transform=transform,facecolor="white",edgecolor="none",clip_on=False))
 
 plt.rcParams.update({"font.family":"serif", "font.serif":["Palatino","DejaVu Serif"], "font.size":13,
  "axes.labelsize":13, "axes.titlesize":14, "legend.fontsize":11, "xtick.labelsize":11,
@@ -267,7 +301,9 @@ axh.set_title("Local slope; dashed: H fitted over 10–10,000 s",fontsize=12);sa
 
 # Interaction: open and closed exponents on one axis, with their archived intervals.
 # Values sit above the open intervals and below the closed ones; flight counts along the bottom.
-fig,ax=plt.subplots(figsize=(7.4,4.5),layout="constrained")
+fig,ax=plt.subplots(figsize=(7.4,4.5))
+# Leave a common band below the class names for the four relief silhouettes.
+fig.subplots_adjust(left=.10,right=.99,top=.98,bottom=.235)
 for task,color,end,dy,va in [("open",BLUE,"high",.006,"bottom"),("closed",WINE,"low",-.006,"top")]:
     hs=[]
     for i in range(4):
@@ -280,6 +316,13 @@ for i in range(4):
     ax.text(i+.04,.784,f"{C['groups'][f'closed_{i}']['flights']:,}",ha="left",fontsize=10,color=WINE)
 ax.text(-.42,.784,"n:",fontsize=10,color="#666666")
 ax.set_xticks(range(4),["Plains","Hills","Low\nmountains","High\nmountains"])
+for label,tint in zip(ax.get_xticklabels(),ALT_TINTS):
+    label.set_color(tint)
+    label.set_fontweight("bold")
+    label.set_fontsize(12)
+terrain_transform = blended_transform_factory(ax.transData,fig.transFigure)
+for i in range(4):
+    terrain(ax,i,Affine2D().scale(.34,.07).translate(i,.025)+terrain_transform)
 ax.grid(axis="y",color="#E2E7EC");ax.set_ylim(.775,.985);ax.set_xlim(-.45,3.45)
 ax.set_ylabel("Effective exponent H");ax.legend(frameon=False,loc="upper right",fontsize=13)
 save(fig,"interaction")
@@ -290,16 +333,28 @@ for key,label,color in [("beginners","Beginners",STEEL),("experts","Experts",GOL
     curve(axs[0],key,color,group_label(key,label,OPEN),OPEN)
 axs[0].legend(frameon=False,loc="upper left");axs[0].set_title("Open circuits, all initial altitudes pooled")
 ax=axs[1];keys=["experts_beginners"]+[f"equipment_alt{i}" for i in range(4)]
-for i,(key,color) in enumerate(zip(keys,[STEEL]+ALT)):
-    h=OPEN["contrasts"][key]["hurst"]
-    ax.errorbar(h["point"],4-i,xerr=[[h["point"]-h["low"]],[h["high"]-h["point"]]],fmt="o",color=color,ms=7,capsize=4)
-count_labels = []
-for label, suffix in zip(["All altitudes"]+NAMES, [""]+[f"_alt{i}" for i in range(4)]):
+# Strata take the altitude tints of the interaction slide, outlined in their silhouettes' edge colour.
+for i,(key,color) in enumerate(zip(keys,[STEEL]+ALT_TINTS)):
+    h=OPEN["contrasts"][key]["hurst"];edge=STEEL if i==0 else edge_of(color)
+    bars=ax.errorbar(h["point"],4-i,xerr=[[h["point"]-h["low"]],[h["high"]-h["point"]]],fmt="o",
+        color=color,ms=8,mec=edge,mew=1,ecolor=edge,elinewidth=1.8,capsize=4,capthick=1.6)
+    for line in bars.lines[2]:
+        line.set_color(color);line.set_path_effects([patheffects.Stroke(linewidth=3,foreground=edge),patheffects.Normal()])
+# Silhouettes stand for the class names; the pooled row keeps its text label.
+# Each row's label is centred left of the axis, with both group sizes below it.
+row_anchor = blended_transform_factory(ax.transAxes,ax.transData)
+for i,suffix in enumerate([""]+[f"_alt{i}" for i in range(4)]):
+    y=4-i
+    if i==0:
+        ax.annotate("All altitudes",(0,y),xycoords=row_anchor,xytext=(-62,-1),textcoords="offset points",ha="center",va="bottom",fontsize=10.5)
+    else:
+        terrain(ax,i-1,Affine2D().scale(32/72,18/72).translate(-62/72,1/72)
+                +fig.dpi_scale_trans+ScaledTranslation(0,y,row_anchor))
     beginners = OPEN["groups"]["beginners"+suffix]["flights"]
     experts = OPEN["groups"]["experts"+suffix]["flights"]
-    count_labels.append(f"{label}\nN: {beginners:,} B / {experts:,} E")
-ax.axvline(0,ls=":",color="#888888");ax.set_yticks(range(5),list(reversed(count_labels)),fontsize=10)
-ax.set_xlim(-.002,.031);ax.grid(axis="x",color="#E2E7EC");ax.set_xlabel(r"$\Delta H$: Experts minus Beginners")
+    ax.annotate(f"N: {beginners:,} B / {experts:,} E",(0,y),xycoords=row_anchor,xytext=(-62,-4),textcoords="offset points",ha="center",va="top",fontsize=10)
+ax.axvline(0,ls=":",color="#888888");ax.set_yticks(range(5),[""]*5);ax.tick_params(axis="y",left=False)
+ax.set_ylim(-.6,4.6);ax.set_xlim(-.002,.031);ax.grid(axis="x",color="#E2E7EC");ax.set_xlabel(r"$\Delta H$: Experts minus Beginners")
 ax.set_title("Open circuits. B: Beginners; E: Experts")
 save(fig,"equipment")
 

@@ -2,7 +2,7 @@
 
 **The statistics of soaring flight** — Matteo Di Sante.
 
-25 slides total, including the cover, closing research agenda, thanks, appendices and sources, entirely in English. Scope: the current
+26 slides total, including the cover, closing research agenda, thanks, appendices and sources, entirely in English. Scope: the current
 thesis introduction and dataset chapter, then Sections 3.1 and 3.2 of
 `thesis/tesi/04-fixed-transport.tex`, plus the requested qualitative comparison
 in the thermal-plane viewer. Slide 5 alone covers preprocessing and the choice of C10000;
@@ -33,7 +33,7 @@ Lab mark. All four originals are stored unchanged in `assets/logos/`; see its
 README for the source filenames.
 
 - `offsite-2026.pdf`: projection deck, 16:9.
-- `offsite-2026-notes.pdf`: the same 25 slides, with English speaker notes alongside.
+- `offsite-2026-notes.pdf`: the same 26 slides, with English speaker notes alongside.
 - `offsite-2026.tex`: editable Beamer source.
 - `render_figures.py`: redraws saved numerical arrays and confidence intervals.
 - `preprocessing-global-frame.tex`: editable ellipsoid/ENU schematic adapted from
@@ -84,11 +84,11 @@ README for the source filenames.
 5. From raw tracklogs to the fixed cohort C10000, with links to the preprocessing and cohort appendices.
 6. Flight characteristics: circuit, launch-altitude class and wing class, and the distinction between marginal and stratified comparisons.
 7. Open versus closed circuits: slower growth for return routes, linked to turns and returns.
-8. The open–closed H gap depends on altitude. Mountain terrain constrains both circuit types and narrows their difference.
+8. The open–closed H gap depends on altitude. Mountain terrain constrains both circuit types and narrows their difference. Class names reuse slide 6's altitude tints, with small terrain silhouettes below them, from flat plains to high alpine peaks.
 9. Regional comparisons: H separates the Alps and Pyrenees more clearly than Channel Coast and Champagne-Lorraine.
 10. Schematic interpretation: sunlight reaches both landscapes, while surface properties create local hot spots. Mountain thermals start along exposed rocky ribs below the summits, and lowland thermals rise from scattered dry fields, asphalt and a dark roof. Helices show circling flight paths through rising air. This is an illustration without measured wind or airflow.
 11. One combined thermal-plane slide: mountain lift follows ridges, lowland lift spreads aloft. Four animations begin at 800 m, reproducing the former static maps. Region names and reference flight counts sit above the maps; the lower band suggests easier thermal access aloft in lowlands and a possible connection to regional Hurst contrasts. There are no extra Mountains/Lowlands headings.
-12. Experts-versus-Beginners contrasts on open circuits: higher H for Experts in every altitude class, related to the shorter search phase reported by Vilpellet et al.
+12. Experts-versus-Beginners contrasts on open circuits: higher H for Experts in every altitude class, related to the shorter search phase reported by Vilpellet et al. Altitude classes appear as slide 8's terrain silhouettes, and each class's point and interval take its tint. A circled pooled estimate and a short arrowed callout flag the unequal altitude mixes; the callout links to appendix slide 25.
 13. Take-home messages: scaling, route and wing, terrain, and lift geography.
 14. Work in progress: segmentation, stochastic models, anisotropy, distribution scaling, and solo versus group flight.
 15. Thanks and discussion.
@@ -101,7 +101,8 @@ README for the source filenames.
 22. Appendix: displacement growth from 1 s to 10,000 s, with growing cadence support below 10 s and fixed support above it.
 23. Appendix: bootstrap confidence intervals and limitations.
 24. Appendix: exact locations of the four 20 km cells, with regional maps, WGS84 centres and Lambert-93 bounds.
-25. Flight, terrain, map and analysis sources with clickable links.
+25. Appendix to slide 12: a two-class arithmetic example shows how different compositions enlarge a pooled gap, alongside the observed 30.5% versus 14.3% lowland shares. The example is explicitly separate from fitting H to the pooled MSD. The header links back to slide 12.
+26. Flight, terrain, map and analysis sources with clickable links.
 
 Numerical estimates retain their archived confidence intervals. A marginal comparison pools
 other characteristics; a stratified comparison fixes a selected category.
