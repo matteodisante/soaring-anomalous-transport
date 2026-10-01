@@ -49,3 +49,22 @@
     {\fontsize{7.3}{8.8}\selectfont\insertnote}
   \end{minipage}
 }
+
+% Diagram of the spatial observables sought in this review. Illustrative only.
+\newcommand{\thermalmap}{%
+ \smalltxt[text=muted]{7}{25}{70}{Spatial quantities (schematic)}
+ \draw[-{Latex},muted,line width=.65pt](12,68)--(77,68);
+ \draw[-{Latex},muted,line width=.65pt](12,68)--(12,34);
+ \node[anchor=west,text=muted,font=\fontsize{10}{12}\selectfont]at(77,68){$x$};
+ \node[anchor=east,text=muted,font=\fontsize{10}{12}\selectfont]at(11,34){$y$};
+ \draw[pisablue,line width=.9pt,fill=pisablight!20](30,46)circle(7);
+ \draw[pisablue,line width=.9pt,fill=pisablight!20](63,46)circle(10);
+ \draw[<->,wine,line width=.8pt](30,46)--(63,46);
+ \node[anchor=south,text=wine,font=\fontsize{11}{13}\selectfont]at(46.5,44){$d_{12}$};
+ \draw[-{Latex},pisablue,line width=.8pt](30,46)--(30,39);
+ \node[anchor=south,text=pisablue,font=\fontsize{10}{12}\selectfont]at(30,38){$R_1$};
+ \fill[pisablue](30,46)circle(.7);
+ \fill[pisablue](63,46)circle(.7);
+ \txt[align=center,text=pisablue]{19}{56}{23}{$(x_1,y_1)$}
+ \txt[align=center,text=pisablue]{52}{59}{24}{$(x_2,y_2)$}
+}
