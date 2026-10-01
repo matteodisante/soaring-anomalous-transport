@@ -4,7 +4,7 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parent
-DECKS = {"neggers2003": 5, "arakawa-schubert1974": 6}
+DECKS = {"neggers2003": 4, "arakawa-schubert1974": 4}
 
 for deck, expected in DECKS.items():
     for notes in (False, True):
