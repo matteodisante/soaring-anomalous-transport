@@ -35,4 +35,4 @@ def test_page_is_built_on_first_display(qapp):
     page = SourcesMethods()
     assert page._browser.toPlainText() == ""
     page.ensure_loaded()
-    assert "How the intersection points are calculated" in page._browser.toPlainText()
+    assert "Intersection points" in page._browser.toPlainText()
