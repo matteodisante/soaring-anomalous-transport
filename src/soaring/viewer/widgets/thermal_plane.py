@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta
 from html import escape
 from itertools import pairwise
@@ -31,10 +32,107 @@ from PyQt6.QtWidgets import (
 
 from .. import geography
 from ..thermal_daily import PARIS, height_levels, local_bounds
-from ..thermal_explorer import load_explorer as load_store
 from ..thermal_geometry import plane_intersections, unproject
-from ..thermal_store import CancelledError, PlaneData, ThermalStore
+from ..thermal_store import (
+    CancelledError,
+    PlaneData,
+    ThermalStore,
+    load_store,
+    neighbour_frames,
+)
 from .thermal_info import ThermalInfo
+
+NEIGHBOURS_MISSING = (
+    "Neighbouring cells are not prepared on the SSD. Run "
+    "scripts/pipeline/prepare_thermal_neighbours.py."
+)
+
+
+def _paris_hours(utc):
+    """Fractional Paris wall-clock hour of each UTC epoch second."""
+    clock = pd.to_datetime(utc, unit="s", utc=True).dt.tz_convert(PARIS)
+    return (
+        clock.dt.hour
+        + clock.dt.minute / 60
+        + clock.dt.second / 3600
+        + clock.dt.microsecond / 3.6e9
+    )
+
+
+def _read_backdrop(index, cell, kind):
+    """Saved background of one square, or of France for ``cell=None``.
+
+    Missing contours fall back to the saved colour map, and say so.
+    """
+    if kind == "none" or index is None:
+        return None
+    saved = (
+        index.background(cell, kind)
+        if hasattr(index, "background")
+        else index.relief(cell)
+        if hasattr(index, "relief")
+        else None
+    )
+    if saved is None and kind == "topography" and hasattr(index, "background"):
+        colour = index.background(cell, "colour")
+        if colour is not None:
+            pixels, metadata = colour
+            saved = (
+                pixels,
+                {
+                    **metadata,
+                    "attribution": metadata.get("attribution", "Plan IGN")
+                    + " · Elevation contours unavailable",
+                },
+            )
+    return saved
+
+
+def _neighbour_backdrops(index, cell, kind, cancel):
+    """Decode the eight neighbours' saved backgrounds off the GUI thread.
+
+    Image decoding releases the GIL, so a few threads divide the wait.
+    """
+    if cancel.is_set():
+        raise CancelledError("Cancelled")
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        pending = {
+            (kind, (f.ix, f.iy)): pool.submit(_read_backdrop, index, f, kind)
+            for f in neighbour_frames(cell)
+        }
+        images = {key: future.result() for key, future in pending.items()}
+    if cancel.is_set():
+        raise CancelledError("Cancelled")
+    return images
+
+
+def _visible_part(pixels, extent, limits, columns):
+    """Crop a backdrop to the view, plus half a view each side, at screen resolution.
+
+    Matplotlib resamples every input pixel on each draw: nine full 4000 px squares
+    took about 8 s per redraw after Zoom -. Returns the pixels and their extent
+    (left, right, bottom, top), or None when the image lies outside the view.
+    """
+    left, right, bottom, top = extent
+    (x0, x1), (y0, y1) = limits
+    rows, cols = pixels.shape[:2]
+    dx, dy = (right - left) / cols, (top - bottom) / rows
+    mx, my = (x1 - x0) / 2, (y1 - y0) / 2
+    c0 = max(0, int(np.floor((x0 - mx - left) / dx)))
+    c1 = min(cols, int(np.ceil((x1 + mx - left) / dx)))
+    r0 = max(0, int(np.floor((top - y1 - my) / dy)))
+    r1 = min(rows, int(np.ceil((top - y0 + my) / dy)))
+    if c0 >= c1 or r0 >= r1:
+        return None
+    step = max(1, int((x1 - x0) / dx / max(columns, 1)))
+    # The last kept pixel stands for up to ``step`` source pixels (< 1 on screen).
+    n, m = -(-(c1 - c0) // step), -(-(r1 - r0) // step)
+    return pixels[r0:r1:step, c0:c1:step], (
+        left + c0 * dx,
+        left + (c0 + n * step) * dx,
+        top - (r0 + m * step) * dy,
+        top - r0 * dy,
+    )
 
 
 class _Worker(QThread):
@@ -79,7 +177,8 @@ class ThermalPlane(QWidget):
         self._daily_info = ""
         self._daily_days = {}
         self._terrain_info = None
-        self._neighborhood = {}
+        self._neighbours = None
+        self._neighbour_levels = OrderedDict()
         self._plane_limits = ((0, 5), (0, 5))
         self._pending_limits = None
         self._build = QPushButton("Reload SSD data")
@@ -249,8 +348,8 @@ class ThermalPlane(QWidget):
         self._reset_view = QPushButton("Reset cell")
         self._zoom_in.setToolTip("Zoom in, down to a 500 m wide view")
         self._zoom_out.setToolTip(
-            "Zoom out up to 10 km; load neighbouring cells and their climb points. "
-            "First use needs the source archives and Internet for uncached IGN maps."
+            "Zoom out up to 10 km, showing the eight neighbouring cells "
+            "prepared on the SSD"
         )
         self._reset_view.setToolTip("Return to the selected 5 x 5 km cell")
         for button in (self._zoom_in, self._zoom_out, self._reset_view):
@@ -325,7 +424,7 @@ class ThermalPlane(QWidget):
         """Drop results after the application's archive folders change."""
         self.shutdown()
         self._index = self._plane = None
-        self._neighborhood = {}
+        self._drop_neighbours()
         self._plane_limits = ((0, 5), (0, 5))
         self._terrain_info = None
         self._provenance.clear()
@@ -483,7 +582,7 @@ class ThermalPlane(QWidget):
         """Set a useful one-day window and the cell's fixed all-time height range."""
         cell = self._cells.currentData()
         self._plane = None
-        self._neighborhood = {}
+        self._drop_neighbours()
         self._plane_limits = ((0, 5), (0, 5))
         self._pending_limits = None
         if cell is not None and self._index is not None:
@@ -577,7 +676,7 @@ class ThermalPlane(QWidget):
     def _invalidate_plane(self, *_):
         """Hide stale results immediately when the UTC interval or decoder changes."""
         self._plane = None
-        self._neighborhood = {}
+        self._drop_neighbours()
         self._pending_limits = None
         self._update_provenance()
         self._set_busy(self._worker is not None)
@@ -610,31 +709,77 @@ class ThermalPlane(QWidget):
         """Check whether the viewport reaches outside the selected square."""
         return any(lo < 0 or hi > 5 for lo, hi in self._plane_limits)
 
+    def _drop_neighbours(self):
+        """Forget the neighbourhood of a previous cell, source or interval."""
+        self._neighbours = None
+        self._neighbour_levels.clear()
+
     def _start_neighborhood(self):
-        """Load complete nearby-cell data before exposing an expanded view."""
-        cell = self._cells.currentData()
-        if self._index is None or not hasattr(self._index, "read_neighborhood"):
-            self._status.setText("Neighbour exploration requires the archive census.")
+        """Read the saved neighbourhood, and the cell's plane when not yet loaded."""
+        cell, index = self._cells.currentData(), self._index
+        if index is None or not hasattr(index, "neighbour_flights"):
+            self._status.setText(NEIGHBOURS_MISSING)
             return
         bounds, source, kind = (
             self._read_bounds(),
             self._source.currentData(),
             self._background.currentData(),
         )
-        self._run(
-            lambda **kwargs: self._index.read_neighborhood(
-                cell, *bounds, source, kind, **kwargs
-            ),
-            self._neighborhood_ready,
-        )
+        reload = self._plane is None
+
+        def load(progress, cancel):
+            flights = index.neighbour_flights(cell, source)
+            if flights is None:
+                raise ValueError(NEIGHBOURS_MISSING)
+            plane = (
+                index.read_plane(
+                    cell, *bounds, source, progress=progress, cancel=cancel
+                )
+                if reload
+                else None
+            )
+            progress("Reading neighbouring backgrounds from SSD")
+            return plane, flights, _neighbour_backdrops(index, cell, kind, cancel)
+
+        self._run(load, self._neighborhood_ready)
 
     def _neighborhood_ready(self, result):
         """Publish one complete neighbourhood; all tiles use one absolute altitude."""
-        self._neighborhood = result
+        plane, flights, images = result
+        self._drop_neighbours()
+        self._neighbours = (
+            np.array([f[0] for f in flights], dtype=object),
+            np.array([f[1] for f in flights], dtype=object),
+        )
         self._pending_limits = None
-        cell = self._cells.currentData()
-        self._reliefs.clear()
-        self._plane_ready(result[cell.ix, cell.iy][1])
+        self._backgrounds_ready(images, draw=plane is None)
+        if plane is not None:
+            self._plane_ready(plane)
+        else:
+            self._status.setText(
+                f"Neighbouring cells read from the SSD: {len(flights):,} flights "
+                "with climb crossings there, all dates."
+            )
+
+    def _neighbour_level(self, cell, level):
+        """Saved neighbour crossings on one plane, clipped to the selected interval."""
+        if level not in self._neighbour_levels:
+            start, end = self._read_bounds()
+            frame = self._index.neighbour_points(
+                cell, self._source.currentData(), level
+            )
+            frame = frame.loc[frame.utc.between(start, end)].reset_index(drop=True)
+            disciplines, flight_ids = self._neighbours
+            number = frame.pop("flight").to_numpy(dtype=np.int64)
+            frame["discipline"] = disciplines[number]
+            frame["flight_id"] = flight_ids[number]
+            frame["level"] = level
+            frame["local_hour"] = _paris_hours(frame.utc)
+            self._neighbour_levels[level] = frame
+        self._neighbour_levels.move_to_end(level)
+        while len(self._neighbour_levels) > 64:
+            self._neighbour_levels.popitem(last=False)
+        return self._neighbour_levels[level]
 
     def _zoom_plane(self, factor):
         """Bound the display width to 0.5-10 km within the available 3 x 3 cells."""
@@ -647,7 +792,7 @@ class ThermalPlane(QWidget):
             centre = float(np.clip((lo + hi) / 2, -5 + width / 2, 10 - width / 2))
             limits.append((centre - width / 2, centre + width / 2))
         self._plane_limits = tuple(limits)
-        if self._needs_neighbors() and not self._neighborhood:
+        if self._needs_neighbors() and self._neighbours is None:
             self._pending_limits = previous
             self._start_neighborhood()
         else:
@@ -671,7 +816,7 @@ class ThermalPlane(QWidget):
         if np.allclose(limits, self._plane_limits):
             return
         self._plane_limits = tuple(limits)
-        if self._needs_neighbors() and not self._neighborhood:
+        if self._needs_neighbors() and self._neighbours is None:
             self._pending_limits = previous
             self._start_neighborhood()
         else:
@@ -681,15 +826,7 @@ class ThermalPlane(QWidget):
         """Report absent models/UTC explicitly, including an entirely empty slice."""
         self._plane = plane
         if plane.points is not None and not plane.points.empty:
-            clock = pd.to_datetime(plane.points.utc, unit="s", utc=True).dt.tz_convert(
-                "Europe/Paris"
-            )
-            plane.points["local_hour"] = (
-                clock.dt.hour
-                + clock.dt.minute / 60
-                + clock.dt.second / 3600
-                + clock.dt.microsecond / 3.6e9
-            )
+            plane.points["local_hour"] = _paris_hours(plane.points.utc)
         self._status.setText(
             f"{plane.selected} flights cross the cell in the interval, thermal or not; "
             f"{plane.cached} read from the prepared SSD file; "
@@ -863,26 +1000,7 @@ class ThermalPlane(QWidget):
             return None
         key = (kind, "france" if cell is None else (cell.ix, cell.iy))
         if key not in self._reliefs and self._index is not None:
-            self._reliefs[key] = (
-                self._index.background(cell, kind)
-                if hasattr(self._index, "background")
-                else self._index.relief(cell)
-                if hasattr(self._index, "relief")
-                else None
-            )
-            if (
-                self._reliefs[key] is None
-                and kind == "topography"
-                and hasattr(self._index, "background")
-            ):
-                colour = self._index.background(cell, "colour")
-                if colour is not None:
-                    pixels, metadata = colour
-                    self._reliefs[key] = pixels, {
-                        **metadata,
-                        "attribution": metadata.get("attribution", "Plan IGN")
-                        + " · Elevation contours unavailable",
-                    }
+            self._reliefs[key] = _read_backdrop(self._index, cell, kind)
         if key in self._reliefs:
             self._reliefs.move_to_end(key)
         while len(self._reliefs) > 12:
@@ -891,25 +1009,33 @@ class ThermalPlane(QWidget):
 
     def _relief_changed(self, *_):
         """Adjust background strength without changing any scientific result."""
-        if self._neighborhood and self._worker is None:
-            kind = self._background.currentData()
-            targets = [c for c, _ in self._neighborhood.values()]
-            if any(self._index.needs_background(c, kind) for c in targets):
-
-                def prepare(**kwargs):
-                    for c in targets:
-                        self._index.prepare_background(c, kind, **kwargs)
-
-                self._run(prepare, self._backgrounds_ready)
-                return
+        cell, kind = self._cells.currentData(), self._background.currentData()
+        if (
+            self._neighbours is not None
+            and self._worker is None
+            and kind != "none"
+            and any(
+                (kind, (f.ix, f.iy)) not in self._reliefs
+                for f in neighbour_frames(cell)
+            )
+        ):
+            index = self._index
+            self._run(
+                lambda cancel, **_: _neighbour_backdrops(index, cell, kind, cancel),
+                self._backgrounds_ready,
+            )
+            return
         self._draw_map()
         self._draw_plane()
 
-    def _backgrounds_ready(self, _):
-        """Refresh only imagery after an explicit background change."""
-        self._reliefs.clear()
-        self._draw_map()
-        self._draw_plane()
+    def _backgrounds_ready(self, images, draw=True):
+        """Keep backgrounds decoded by the worker; the GUI thread only draws."""
+        for key, image in images.items():
+            self._reliefs[key] = image
+            self._reliefs.move_to_end(key)
+        if draw:
+            self._draw_map()
+            self._draw_plane()
 
     def _draw_map(self):
         """Show numbered, category-coloured cells and separated ranking callouts."""
@@ -1090,30 +1216,8 @@ class ThermalPlane(QWidget):
         # Preserve the exact terminal level, even when the spin box rounds it.
         height = self._levels[self._slider.value()]
         if self._plane is not None and cell is not None and self._plane_axes:
-            if self._neighborhood:
-                frames = [
-                    plane_intersections(
-                        plane.edges,
-                        target,
-                        height,
-                        *self._read_bounds(),
-                        altitude_m=cell.ground_m + height,
-                    )
-                    for target, plane in self._neighborhood.values()
-                ]
-                points = pd.concat(frames, ignore_index=True)
-                if not points.empty:
-                    clock = pd.to_datetime(
-                        points.utc, unit="s", utc=True
-                    ).dt.tz_convert(PARIS)
-                    points["local_hour"] = (
-                        clock.dt.hour
-                        + clock.dt.minute / 60
-                        + clock.dt.second / 3600
-                        + clock.dt.microsecond / 3.6e9
-                    )
-            elif self._plane.points is not None:
-                level = int(np.argmin(abs(height_levels(cell.max_agl_m) - height)))
+            level = int(np.argmin(abs(height_levels(cell.max_agl_m) - height)))
+            if self._plane.points is not None:
                 points = self._plane.points.loc[self._plane.points.level == level]
             else:
                 points = plane_intersections(
@@ -1126,12 +1230,17 @@ class ThermalPlane(QWidget):
                     points["local_hour"] = (
                         clock.dt.hour + clock.dt.minute / 60 + clock.dt.second / 3600
                     )
+            if self._neighbours is not None:
+                # Same 10 m lattice index: the neighbours lie on this cell's planes.
+                points = pd.concat(
+                    [points, self._neighbour_level(cell, level)], ignore_index=True
+                )
         bands = [e.time().hour() + e.time().minute() / 60 for e in self._bands]
         valid_bands = all(a < b for a, b in pairwise(bands))
         labels = ("Morning", "Midday", "Afternoon")
         image_cells = (
-            [c for c, _ in self._neighborhood.values()]
-            if self._neighborhood
+            [cell, *neighbour_frames(cell)]
+            if self._neighbours is not None and cell is not None
             else [cell]
         )
         images = [self._saved_relief(c) for c in image_cells if c is not None]
@@ -1151,14 +1260,22 @@ class ThermalPlane(QWidget):
                 pixels, info = backdrop
                 w, s, e, n = info["extent"]
                 west, south, _, _ = cell.bounds
-                ax.imshow(
+                visible = _visible_part(
                     pixels,
-                    extent=(
+                    (
                         (w - west) / 1000,
                         (e - west) / 1000,
                         (s - south) / 1000,
                         (n - south) / 1000,
                     ),
+                    self._plane_limits,
+                    ax.get_window_extent().width,
+                )
+                if visible is None:
+                    continue
+                ax.imshow(
+                    visible[0],
+                    extent=visible[1],
                     origin="upper",
                     interpolation="nearest",
                     alpha=self._relief_strength.value() / 100,
@@ -1186,7 +1303,7 @@ class ThermalPlane(QWidget):
                         south + ymin * 1000, south + ymax * 1000, inclusive="left"
                     )
                 ]
-            if self._neighborhood:
+            if self._neighbours is not None:
                 from matplotlib.patches import Rectangle
 
                 ax.add_patch(

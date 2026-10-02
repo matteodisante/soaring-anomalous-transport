@@ -98,18 +98,17 @@ belong to one thermal. No clustering or estimation of thermal centres is applied
 the selected cell and its eight immediate neighbours. <b>Reset cell</b> restores
 the central 5 x 5 km square. Zoom and pan are retained when changing the height
 or background. The dashed square marks the selected cell.</p>
-<p>When looking outside that square, the viewer loads <b>all flights crossing
+<p>When looking outside that square, the viewer shows <b>all flights crossing
 each neighbouring cell</b> in the chosen time interval, including flights that
-never crossed the central cell. Every visible point is intersected with the
+never crossed the central cell. Every visible point lies on the
 <b>same absolute plane H = selected cell's mean terrain + z</b>. Neighbouring
 terrain means do not tilt or step the plane. Counts of points and contributing
 flights refer to the visible map area; the central cell's visitor count is
 reported separately.</p>
-<p>First exploration needs the processed flight archives and Internet access for
-uncached IGN terrain and maps. Missing whole flights are labelled in the background
-with the selected method, before spatial or temporal cuts. Products are cached on
-the SSD and can be reused. Cancel stops loading without displaying a partial
-neighbourhood. The twelve ranked cells remain available from the standalone file.</p>
+<p>Neighbouring crossings and maps are prepared offline on the SSD by
+scripts/pipeline/prepare_thermal_neighbours.py, with whole flights labelled
+before any spatial or temporal cut. The viewer only reads them: no archive,
+segmentation or Internet access is needed.</p>
 
 <h3>Trajectory source and vertical datum</h3>
 <p>Trajectories are processed <b>FFVL Coupe Fédérale de Distance IGC recordings</b>

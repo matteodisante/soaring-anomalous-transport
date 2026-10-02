@@ -6,9 +6,8 @@ mode. It defaults to Vilpellet and the full saved date range. Date controls use
 Europe/Paris local time (CET/CEST) and do not reset on cell, height, background,
 segmentation or reload changes.
 **Reload SSD data** only reopens that file: there is no preparation button and no
-fallback to archive scanning for the twelve published cells. Explicit neighbour
-exploration uses the archive census and prepares missing whole-flight climb
-products in a background worker; see **Pan and bounded zoom** below.
+fallback to archive scanning. The eight neighbours of each cell, shown by
+**Zoom −**, are prepared offline too; see **Pan and bounded zoom** below.
 
 The default destination is `derived/viewer/thermal-planes/` in the first available
 archive on the SSD. With the current configuration this is:
@@ -25,8 +24,8 @@ at every 10 m above mean terrain and at each cell’s exact maximum. The
 **Height increment** options of 10, 20, 50, 100 and 200 m select subsets of this
 same lattice. They are the distance between selectable planes: **each plane has
 zero thickness**, and a fix need not fall exactly on it. The viewer reads, filters
-and plots these saved points. Expanded neighbourhood views interpolate saved
-climb edges at the selected absolute altitude. Terrain-referenced snapshots
+and plots these saved points. Expanded neighbourhood views read a second saved
+lattice: the neighbours' crossings on the selected cell's planes. Terrain-referenced snapshots
 without the lattice also support in-memory edge interpolation. Older launch-referenced snapshots must first be upgraded offline:
 
 ```bash
@@ -207,9 +206,8 @@ fix tables or the altitude plausibility bounds. Each method's climb products are
 also keyed by its model, configuration and decoding/geometry code. Changing one
 method does not invalidate the other. A rebuilt census invalidates climb products
 too, including their UTC origins. A new viewer session or a different time interval
-does not invalidate anything. Missing ranked-cell products are prepared offline.
-Explicit neighbour exploration may prepare additional whole-flight products in
-the background; the published snapshot stays read-only.
+does not invalidate anything. Missing ranked-cell and neighbourhood products are
+prepared offline; the viewer never writes to the snapshot.
 
 The complete census is published atomically. Every whole-flight climb product is
 committed independently, so resuming preparation skips finished products. Original
@@ -298,14 +296,27 @@ is bounded by the selected square and its eight immediate neighbours, a
 background and time-band redraws preserve the viewport; selecting another ranked
 cell resets it. A dashed outline marks the selected square in expanded views.
 
-Leaving the square loads each neighbour's own visitors, including flights that
-never crossed the selected cell. First exploration needs connected processed
-archives and a current `thermal-cells.sqlite3` census. Missing IGN terrain and
-backgrounds require internet. Terrain TIFFs (25 m sampling) are saved in
-`exploration/terrain/`, images in `imagery/`, and decoded edges in the existing
-`thermal-climbs.sqlite3` cache beside the published snapshot. Missing flights are
-decoded whole before spatial or temporal cuts. Partial neighbourhood results are
-never shown as complete; failed expansion restores the previous viewport.
+Leaving the square shows each neighbour's own visitors, including flights that
+never crossed the selected cell. The viewer only reads them from the snapshot:
+no archive, segmentation or internet access is needed. They are prepared once,
+offline:
+
+```bash
+uv run --group viewer python scripts/pipeline/prepare_thermal_neighbours.py --workers 6
+```
+
+The command labels every flight crossing the neighbouring squares with both
+methods, whole before spatial or temporal cuts, in the shared
+`thermal-climbs.sqlite3` cache. A neighbour that is itself a ranked cell reuses
+the snapshot's own products. For each ranked cell and method it then saves one
+point blob per 10 m level of that cell's lattice, and the IGN topography, colour
+map, orthophoto (4000 × 4000 pixels, `--image-px`) and hillshade of every
+neighbour. It needs the processed archives, a current `thermal-cells.sqlite3`
+census and internet, and resumes after an interruption. Without these products,
+**Zoom −** reports that they are missing and keeps the previous viewport.
+
+Each redraw crops the backgrounds to the view and thins them to about one image
+pixel per screen pixel, so nine 4000-pixel squares stay responsive.
 
 All points use **one horizontal absolute plane**:
 `H = selected_cell_mean_terrain + z`. The reference does not jump at cell boundaries.

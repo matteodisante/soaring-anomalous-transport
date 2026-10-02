@@ -1,5 +1,8 @@
 """On-demand neighbouring cells, with official IGN terrain and persistent climbs.
 
+Used by the offsite measurement scripts. The thermal-plane viewer does not call
+it: Zoom - reads the neighbourhoods saved by thermal_neighbours.py.
+
 The twelve published cells stay read-only. Explicit navigation uses the saved
 archive census and processes missing whole flights in the worker thread. Reuse
 the same decoder and edge cache as offline preparation; never infer neighbours

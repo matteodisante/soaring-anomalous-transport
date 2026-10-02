@@ -5,6 +5,7 @@ import json
 import sqlite3
 import time
 from dataclasses import asdict
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -282,3 +283,146 @@ def test_legacy_launch_reference_cannot_be_displayed_as_mean_terrain(store):
         db.execute("DELETE FROM metadata WHERE key='ground_reference'")
     with pytest.raises(ValueError, match=r"prepare_thermal_ground\.py"):
         ThermalStore(store.path)
+
+
+def _neighbour_census(store, tmp_path, monkeypatch, products):
+    """A census whose only neighbour visitor crosses the square east of the cell."""
+    import pandas as pd
+
+    cell = store.cells()[0]
+    visitors = pd.DataFrame(
+        [
+            {
+                "discipline": "paragliders",
+                "flight_id": "east",
+                "start_utc": 0.0,
+                "trim_start": 0.0,
+            },
+            {
+                "discipline": "paragliders",
+                "flight_id": "no-clock",
+                "start_utc": np.nan,
+                "trim_start": 0.0,
+            },
+        ]
+    )
+    census = SimpleNamespace(
+        path=tmp_path / "thermal-cells.sqlite3",
+        flights=lambda c: (
+            visitors if (c.ix, c.iy) == (cell.ix + 1, cell.iy) else visitors.iloc[:0]
+        ),
+    )
+    with sqlite3.connect(tmp_path / "thermal-climbs.sqlite3") as db:
+        db.execute(
+            "CREATE TABLE IF NOT EXISTS climbs(cache_key TEXT,discipline TEXT,"
+            "flight_id TEXT,ix INTEGER,iy INTEGER,status TEXT,edges BLOB)"
+        )
+        db.executemany("INSERT INTO climbs VALUES (?,?,?,?,?,?,?)", products)
+    monkeypatch.setattr(
+        "soaring.viewer.thermal_index.load_saved_index", lambda **_: census
+    )
+    monkeypatch.setattr(
+        "soaring.viewer.thermal_cache.segmentation_signature",
+        lambda index, source: f"key-{source}",
+    )
+    monkeypatch.setattr(
+        "soaring.viewer.thermal_prepare.prepare_climbs", lambda *a, **k: None
+    )
+    return cell
+
+
+def _edges(*rows):
+    blob = io.BytesIO()
+    np.savez_compressed(blob, edges=np.array(rows, dtype=float).reshape(-1, 8))
+    return blob.getvalue()
+
+
+def test_neighbours_lie_on_the_cell_planes_and_resume(store, tmp_path, monkeypatch):
+    from soaring.viewer.thermal_neighbours import prepare_neighbour_points
+
+    store.path.chmod(0o644)
+    cell = store.cells()[0]
+    west, south, _, _ = cell.bounds
+    east = (cell.ix + 1, cell.iy)
+    crossing = _edges(
+        [west + 5100, south + 100, 400, 100, west + 5200, south + 200, 800, 200]
+    )
+    products = [
+        (f"key-{s}", "paragliders", "east", *east, "decoded", crossing)
+        for s in ("own", "vilpellet")
+    ]
+    # Decoded for another square, this flight never visits the east one.
+    products.append(("key-own", "paragliders", "elsewhere", *east, "decoded", _edges()))
+    _neighbour_census(store, tmp_path, monkeypatch, products[:1])
+    with pytest.raises(RuntimeError, match="1 flights still need climb products"):
+        prepare_neighbour_points(store.path, progress=lambda _: None)
+    _neighbour_census(store, tmp_path, monkeypatch, products[1:])
+    prepare_neighbour_points(store.path, progress=lambda _: None)
+    for source in ("own", "vilpellet"):
+        assert store.neighbour_flights(cell, source) == [("paragliders", "east")]
+        # z=34 * 10 m above the selected cell's 260 m mean terrain: 600 m ASL,
+        # halfway along the edge. The east square's own terrain plays no part.
+        points = store.neighbour_points(cell, source, 34)
+        assert points.to_numpy().tolist() == [[west + 5150, south + 150, 150, 0]]
+        assert store.neighbour_points(cell, source, 60).empty  # 860 m: above the edge
+    before = store.path.stat().st_mtime_ns
+    prepare_neighbour_points(store.path, progress=lambda _: None)
+    assert store.path.stat().st_mtime_ns == before
+
+
+def test_zoom_out_reads_only_the_ssd(qapp, store, tmp_path, monkeypatch):
+    from soaring.viewer.thermal_neighbours import prepare_neighbour_points
+    from soaring.viewer.widgets.thermal_plane import NEIGHBOURS_MISSING, ThermalPlane
+
+    monkeypatch.setenv("SOARING_VIEWER_CACHE_DIR", str(store.path.parent))
+    view = ThermalPlane()
+
+    def drain():
+        deadline = time.monotonic() + 10
+        while view._worker is not None and time.monotonic() < deadline:
+            qapp.processEvents()
+            time.sleep(0.01)
+        qapp.processEvents()
+        assert view._worker is None, view._status.text()
+
+    try:
+        view.ensure_loaded()
+        drain()
+        view._zoom_out.click()
+        drain()
+        assert NEIGHBOURS_MISSING in view._status.text()
+        assert view._plane_limits == ((0, 5), (0, 5))
+
+        store.path.chmod(0o644)
+        cell = store.cells()[0]
+        west, south, _, _ = cell.bounds
+        east = (cell.ix + 1, cell.iy)
+        crossing = _edges(
+            [west + 5100, south + 100, 400, 100, west + 5200, south + 200, 800, 200]
+        )
+        _neighbour_census(
+            store,
+            tmp_path,
+            monkeypatch,
+            [
+                (f"key-{s}", "paragliders", "east", *east, "decoded", crossing)
+                for s in ("own", "vilpellet")
+            ],
+        )
+        prepare_neighbour_points(store.path, progress=lambda _: None)
+        store.path.chmod(0o444)
+        monkeypatch.setattr(
+            "soaring.viewer.thermal_index.load_saved_index",
+            lambda **_: pytest.fail("census"),
+        )
+        monkeypatch.setattr(
+            "urllib.request.urlopen", lambda *a, **k: pytest.fail("network")
+        )
+        view._zoom_out.click()
+        drain()
+        assert view._plane_limits == ((-2.5, 7.5), (-2.5, 7.5))
+        offsets = view._plane_ax.collections[0].get_offsets().tolist()
+        assert offsets == [pytest.approx([0.15, 0.15]), pytest.approx([5.15, 0.15])]
+    finally:
+        view.shutdown()
+        view.close()

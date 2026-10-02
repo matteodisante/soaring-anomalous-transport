@@ -86,27 +86,34 @@ def test_exact_terminal_height_survives_spinbox_rounding(widget, monkeypatch):
 
 
 def test_neighbour_zoom_uses_one_absolute_plane_and_limits_counts_to_view(widget):
-    from dataclasses import replace
-
     cell = widget._cells.currentData()
-    central = widget._plane
-    neighbour = replace(cell, ix=cell.ix + 1, ground_m=1200, max_alt_m=2000)
-    edge = central.edges.copy()
-    edge["x0"] += 5000
-    edge["x1"] += 5000
-    edge["z0"], edge["z1"] = 900, 1100
-    edge["flight_id"] = "neighbour-only"
-    other = PlaneData(edge, 1, 1, 0, 0, 0)
+    west, south, _, _ = cell.bounds
+    day = widget._utc_bounds()[0] + 43200
+    reads = []
+
+    def neighbour_points(c, source, level):
+        reads.append(level)
+        # Saved on the selected cell's lattice: level 50 is H = 500 + 500 m.
+        if level != 50:
+            return pd.DataFrame({"x": [], "y": [], "utc": [], "flight": []})
+        return pd.DataFrame(
+            {
+                "x": [west + 6500, west + 6600],
+                "y": [south + 1500, south + 1600],
+                "utc": [day + 80, day + 10 * 86400],
+                "flight": [0, 0],
+            }
+        )
+
+    widget._index = SimpleNamespace(neighbour_points=neighbour_points)
     widget._plane_limits = ((-2.5, 7.5), (-2.5, 7.5))
-    widget._neighborhood_ready(
-        {
-            (cell.ix, cell.iy): (cell, central),
-            (neighbour.ix, neighbour.iy): (neighbour, other),
-        }
-    )
-    # H=500+500=1000, even though the neighbouring DEM mean is 1200.
+    widget._neighborhood_ready((None, [("paragliders", "neighbour-only")], {}))
+    # The second crossing lies outside the selected interval.
     offsets = widget._plane_ax.collections[0].get_offsets()
     assert offsets.tolist() == [[1.5, 1.5], [6.5, 1.5]]
+    widget._height.setValue(600)
+    widget._height.setValue(500)
+    assert reads == [50, 60]
     before = (
         widget._height.value(),
         widget._utc_bounds(),
@@ -353,3 +360,21 @@ def test_cell_flights_counts_every_visit_overlapping_the_paris_band(
     assert widget._cell_flights((18, 19)) == 0
     widget._plane = PlaneData(pd.DataFrame(), 0, 0, 0, 0, 0)
     assert widget._cell_flights() is None
+
+
+def test_backdrops_are_cropped_to_the_view_at_screen_resolution():
+    import numpy as np
+
+    from soaring.viewer.widgets.thermal_plane import _visible_part
+
+    pixels = np.arange(64 * 64).reshape(64, 64)
+    extent = (0, 8, 0, 8)  # 0.125 km per pixel
+    whole, box = _visible_part(pixels, extent, ((0, 8), (0, 8)), 16)
+    assert whole.shape == (16, 16)
+    assert box == (0, 8, 0, 8)
+    # A 2 km view keeps half a view of margin on each side, at full resolution.
+    part, box = _visible_part(pixels, extent, ((2, 4), (2, 4)), 1000)
+    assert box == (1, 5, 1, 5)
+    assert part.shape == (32, 32)
+    assert part[0, 0] == pixels[24, 8]
+    assert _visible_part(pixels, extent, ((20, 22), (2, 4)), 1000) is None

@@ -7,7 +7,7 @@ import json
 import os
 import sqlite3
 from contextlib import contextmanager
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
 import numpy as np
@@ -19,6 +19,20 @@ from .thermal_ground import GROUND_REFERENCE, terrain_cell, terrain_reference
 
 EDGE_COLUMNS = [f"{axis}{end}" for end in (0, 1) for axis in ("x", "y", "z", "utc")]
 STORE_NAME = "thermal-planes.sqlite3"
+NEIGHBOUR_OFFSETS = tuple(
+    (dx, dy) for dy in (-1, 0, 1) for dx in (-1, 0, 1) if (dx, dy) != (0, 0)
+)
+
+
+def neighbour_frames(cell):
+    """The eight squares around ``cell``, carrying its ground and ceiling.
+
+    Zoom - shows them on the selected cell's planes, so only ix/iy change: their
+    own terrain means never tilt or step the plane.
+    """
+    return [
+        replace(cell, ix=cell.ix + dx, iy=cell.iy + dy) for dx, dy in NEIGHBOUR_OFFSETS
+    ]
 
 
 class CancelledError(Exception):
@@ -126,6 +140,42 @@ class ThermalStore:
         return np.asarray(Image.open(io.BytesIO(row[1])).convert("RGB")), json.loads(
             row[0]
         )
+
+    def neighbour_flights(self, cell, source):
+        """Flights behind the saved neighbourhood of ``cell``; None if unprepared."""
+        with _connect(self.path) as db:
+            if not db.execute(
+                "SELECT 1 FROM sqlite_master WHERE name='neighbour_flights'"
+            ).fetchone():
+                return None
+            row = db.execute(
+                "SELECT flights FROM neighbour_flights "
+                "WHERE source=? AND ix=? AND iy=?",
+                (source, cell.ix, cell.iy),
+            ).fetchone()
+        return None if row is None else [tuple(f) for f in json.loads(row[0])]
+
+    def neighbour_points(self, cell, source, level):
+        """Saved crossings of the eight surrounding squares with one plane of ``cell``.
+
+        Columns x, y (Lambert-93 m), utc, and ``flight``: the position of the
+        flight in neighbour_flights. One indexed row per level, so a height
+        change reads only that plane.
+        """
+        with _connect(self.path) as db:
+            row = db.execute(
+                "SELECT points FROM neighbour_points "
+                "WHERE source=? AND ix=? AND iy=? AND level=?",
+                (source, cell.ix, cell.iy, level),
+            ).fetchone()
+        if row is None:
+            points, flight = np.empty((0, 3)), np.empty(0, dtype=np.int32)
+        else:
+            with np.load(io.BytesIO(row[0]), allow_pickle=False) as saved:
+                points, flight = saved["points"], saved["flight"]
+        frame = pd.DataFrame(points, columns=["x", "y", "utc"])
+        frame["flight"] = flight
+        return frame
 
     def reference_audit(self, cell):
         """Return the saved unfiltered support beside the screened reference."""
