@@ -30,6 +30,7 @@ from . import data, plotting
 from .widgets.flight_picker import FlightPicker
 from .widgets.map_view import MapView
 from .widgets.plot_controls import PlotControls
+from .widgets.sources_methods import SourcesMethods
 from .widgets.thermal_density import ThermalDensity
 from .widgets.thermal_plane import ThermalPlane
 
@@ -128,6 +129,9 @@ class MainWindow(QMainWindow):
         self._tabs.addTab(self._thermal_plane, "Thermal planes")
         self._thermal_density = ThermalDensity()
         self._tabs.addTab(self._thermal_density, "Thermal density")
+        self._sources_methods = SourcesMethods()
+        # "&&": a single "&" would underline the next letter as a shortcut.
+        self._tabs.addTab(self._sources_methods, "Sources && methods")
         # The map's take-off points are only read from disk the first time this tab is
         # actually shown, not at startup: a full catalog + flights_meta read for both
         # disciplines is seconds of work the app should not pay before its window
@@ -225,6 +229,8 @@ class MainWindow(QMainWindow):
             self._thermal_plane.ensure_loaded()
         elif self._tabs.widget(index) is self._thermal_density:
             self._thermal_density.ensure_loaded()
+        elif self._tabs.widget(index) is self._sources_methods:
+            self._sources_methods.ensure_loaded()
 
     def closeEvent(self, event) -> None:  # noqa: N802
         """Cancel archive work before Qt destroys the thermal-plane worker."""
