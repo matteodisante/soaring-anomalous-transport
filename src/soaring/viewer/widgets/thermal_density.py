@@ -7,7 +7,6 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolb
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from PyQt6.QtWidgets import (
-    QCheckBox,
     QComboBox,
     QDialog,
     QDoubleSpinBox,
@@ -21,7 +20,6 @@ from PyQt6.QtWidgets import (
 
 from .. import geography, thermal_regions
 from ..density_view import AdaptiveDensity, histogram_source
-from ..thermal_ridges import draw_ridges, load_ridges
 from ..thermal_store import load_store
 from .thermal_plane import _Worker
 
@@ -119,12 +117,6 @@ class ThermalDensity(QWidget):
         self._strength.setSingleStep(5)
         self._strength.setValue(100)
         self._strength.setSuffix("% density")
-        self._ridges = QCheckBox("Estimated crests · IGN DEM")
-        self._ridges.setChecked(False)
-        self._ridges.setToolTip(
-            "Our estimates from official IGN RGE ALTI elevations; "
-            "not official IGN crest vectors."
-        )
         self._info = QPushButton("i")
         self._info.setFixedWidth(28)
         self._info.setToolTip("How the density maps are computed")
@@ -145,7 +137,7 @@ class ThermalDensity(QWidget):
         top.addWidget(self._info)
         look = QHBoxLayout()
         look.addWidget(QLabel("Background"))
-        for widget in (self._background, self._terrain, self._strength, self._ridges):
+        for widget in (self._background, self._terrain, self._strength):
             look.addWidget(widget)
         look.addWidget(self._toolbar, 1)
         layout = QVBoxLayout(self)
@@ -160,7 +152,6 @@ class ThermalDensity(QWidget):
         self._background.currentIndexChanged.connect(self._draw)
         self._terrain.valueChanged.connect(self._terrain_changed)
         self._strength.valueChanged.connect(self._strength_changed)
-        self._ridges.toggled.connect(self._draw)
         self._reload.clicked.connect(self._load)
         self._info.clicked.connect(self._show_info)
         self._area_changed()
@@ -220,7 +211,6 @@ class ThermalDensity(QWidget):
     def _area_changed(self, *_):
         cells = self._area.currentData() == "cells"
         self._source.setVisible(cells)
-        self._ridges.setVisible(cells)
         self._item.blockSignals(True)
         self._item.clear()
         if cells:
@@ -456,13 +446,6 @@ class ThermalDensity(QWidget):
             ),
         )
         ax.set(xlim=(0, 5), ylim=(0, 5))
-        if self._ridges.isChecked():
-            try:
-                ridges = load_ridges(cell)
-            except (OSError, ValueError, KeyError):
-                ridges = None
-            if ridges is not None:
-                draw_ridges(ax, cell, ridges)
         plane = self._planes.get((cell.ix, cell.iy, self._source.currentData()))
         count = flights = 0
         points = plane.points if plane is not None else None

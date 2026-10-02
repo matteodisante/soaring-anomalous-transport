@@ -137,11 +137,9 @@ def test_pan_and_zoom_are_preserved_by_height_and_background_redraw(widget):
     assert widget._plane_ax.get_ylim() == (1, 3)
 
 
-def test_default_topography_and_crest_estimates_are_explicit(widget):
+def test_default_background_is_topography(widget):
     assert widget._background.currentData() == "topography"
     assert widget._relief_strength.value() == 85
-    assert not widget._ridges.isChecked()
-    assert "Estimated" in widget._ridges.text()
 
 
 def test_missing_contours_use_saved_colour_map_with_explicit_attribution(widget):
@@ -161,53 +159,12 @@ def test_missing_contours_use_saved_colour_map_with_explicit_attribution(widget)
     assert metadata["attribution"] == "Plan IGN"
 
 
-def test_crest_toggle_and_height_do_not_change_the_loaded_climbs(widget, monkeypatch):
-    from soaring.viewer.widgets import thermal_plane
-
-    cell = widget._cells.currentData()
-    west, south, _, _ = cell.bounds
-    payload = {
-        "features": [
-            {
-                "geometry": {
-                    "coordinates": [
-                        [west + 1000, south + 4000],
-                        [west + 1500, south + 4500],
-                    ]
-                },
-                "properties": {"method": "transverse height maximum"},
-            }
-        ]
-    }
-    monkeypatch.setattr(thermal_plane, "load_ridges", lambda _: payload)
-    widget._ridges.setChecked(True)
+def test_height_does_not_change_the_loaded_climbs(widget):
     widget._height.setValue(500)
     loaded = widget._plane
     edges = loaded.edges.copy()
     widget._draw_plane()
-
-    def positions(label):
-        artist = next(c for c in widget._plane_ax.collections if c.get_label() == label)
-        return artist.get_offsets().tolist()
-
-    ridge = next(
-        line
-        for line in widget._plane_ax.lines
-        if line.get_label() == "Estimated crests from IGN DEM"
-    )
-    assert ridge.get_xydata().tolist() == [[1, 4], [1.5, 4.5]]
-    climb_positions = positions("paragliders: 1")
-    widget._ridges.setChecked(False)
-    assert len(widget._plane_ax.collections) == 1
-    assert positions("paragliders: 1") == climb_positions
-    widget._ridges.setChecked(True)
     widget._height.setValue(600)
-    ridge = next(
-        line
-        for line in widget._plane_ax.lines
-        if line.get_label() == "Estimated crests from IGN DEM"
-    )
-    assert ridge.get_xydata().tolist() == [[1, 4], [1.5, 4.5]]
     assert widget._plane is loaded
     pd.testing.assert_frame_equal(widget._plane.edges, edges)
 

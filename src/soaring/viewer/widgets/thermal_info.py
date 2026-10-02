@@ -27,7 +27,7 @@ the entire {cell_km} x {cell_km} km cell</b>. Source:
 <a href="https://www.data.gouv.fr/datasets/rge-alti-r">IGN RGE ALTI</a>,
 Licence Ouverte 2.0. Saved elevation rasters are sampled every <b>25 m</b>:
 200 x 200 = <b>40,000 elevations per cell</b>. The mean uses the unsmoothed
-elevations and excludes the 500 m buffer used to derive crests. Complete valid
+elevations and excludes the 500 m buffer around the saved raster. Complete valid
 terrain coverage is required. The source query, retrieval date, raster hash,
 sampling and coverage are saved with the data. Sampling is distinct from
 vertical accuracy; RGE ALTI's native product is finer than these extracts.</p>
@@ -137,16 +137,6 @@ also available, together with Esri World Hillshade. IGN cell maps are saved at
 4,000 x 4,000 pixels (1.25 m/pixel); sampling does not imply metre-level map
 accuracy. Background opacity starts at 85% and is adjustable. Attribution,
 sampling and aerial acquisition dates appear below the controls.</p>
-<h3>Estimated crests and official IGN data</h3>
-<p><b>The red crest lines are our estimates from official IGN RGE ALTI elevations.</b>
-They are optional and off initially. They use a 25 m DEM, 50 m Gaussian smoothing,
-transverse height maxima, and drop/length thresholds. The raster's saved hash and
-IGN source are checked before drawing. They are scale-dependent, can be fragmented
-or misplaced, and have not been certified by IGN as ridge vectors.</p>
-<p>The BD TOPO features named &ldquo;Crête&rdquo; in the queried IGN service are
-toponymic points; they do not provide a continuous crest trace. Official elevation
-contours describe equal-height lines and are labelled as contours. The terrain
-mean is calculated from numerical elevations independently of these overlays.</p>
 """
 
 

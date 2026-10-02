@@ -15,7 +15,6 @@ from matplotlib.figure import Figure
 from matplotlib.patches import Polygon
 from PyQt6.QtCore import QDate, QDateTime, Qt, QThread, QTime, QTimeZone, pyqtSignal
 from PyQt6.QtWidgets import (
-    QCheckBox,
     QComboBox,
     QDateEdit,
     QDateTimeEdit,
@@ -34,7 +33,6 @@ from .. import geography
 from ..thermal_daily import PARIS, height_levels, local_bounds
 from ..thermal_explorer import load_explorer as load_store
 from ..thermal_geometry import plane_intersections, unproject
-from ..thermal_ridges import draw_ridges, load_ridges
 from ..thermal_store import CancelledError, PlaneData, ThermalStore
 from .thermal_info import ThermalInfo
 
@@ -128,13 +126,6 @@ class ThermalPlane(QWidget):
         self._background.addItem("None", "none")
         self._background.addItem("Topography + contours · IGN", "topography")
         self._background.setCurrentIndex(4)
-        self._ridges = QCheckBox("Estimated crests · IGN DEM")
-        self._ridges.setChecked(False)
-        self._ridges.setToolTip(
-            "Our estimated crest lines derived from official IGN RGE ALTI heights; "
-            "these are not official IGN crest vectors. "
-            "These ground locations do not change with the plane height."
-        )
         self._image_info = QLabel()
         self._image_info.setWordWrap(True)
         self._mode = QComboBox()
@@ -213,7 +204,6 @@ class ThermalPlane(QWidget):
         heights.addWidget(self._height)
         heights.addWidget(self._background)
         heights.addWidget(self._relief_strength)
-        heights.addWidget(self._ridges)
         self._figure = Figure(figsize=(10, 5), layout="constrained")
         self._map_ax, self._plane_ax = self._figure.subplots(
             1, 2, width_ratios=[1, 1.5]
@@ -297,7 +287,6 @@ class ThermalPlane(QWidget):
         self._slider.valueChanged.connect(self._slider_changed)
         self._height.valueChanged.connect(self._height_changed)
         self._relief_strength.valueChanged.connect(self._relief_changed)
-        self._ridges.toggled.connect(self._draw_plane)
         self._canvas.mpl_connect("button_press_event", self._map_clicked)
         self._canvas.mpl_connect("button_release_event", self._pan_finished)
         self._zoom_in.clicked.connect(lambda: self._zoom_plane(0.5))
@@ -1097,22 +1086,6 @@ class ThermalPlane(QWidget):
                 if self._background.currentData() != "none"
                 else ""
             )
-        ridges = None
-        if self._ridges.isChecked() and cell is not None and self._plane_axes:
-            try:
-                ridges = load_ridges(cell)
-                ridge_info = (
-                    f"Estimated crests: {len(ridges['features'])} pieces · "
-                    "our derivation from official terrain, not IGN crest vectors · "
-                    "© IGN RGE ALTI · Licence Ouverte 2.0"
-                    if ridges is not None
-                    else "Estimated crests not prepared for this cell"
-                )
-            except (OSError, ValueError, KeyError) as exc:
-                ridge_info = f"Estimated crest overlay unavailable: {exc}"
-            self._image_info.setText(
-                " · ".join(filter(None, (self._image_info.text(), ridge_info)))
-            )
         points = None
         # Preserve the exact terminal level, even when the spin box rounds it.
         height = self._levels[self._slider.value()]
@@ -1228,8 +1201,6 @@ class ThermalPlane(QWidget):
                         zorder=4,
                     )
                 )
-            if ridges is not None:
-                draw_ridges(ax, cell, ridges)
             if (
                 self._mode.currentIndex()
                 and selected is not None
