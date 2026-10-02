@@ -187,6 +187,11 @@ class ThermalPlane(QWidget):
         )
         self._cells = QComboBox()
         self._cells.setMinimumContentsLength(20)
+        self._cells.setToolTip(
+            "Ranked by distinct cell visitors across all dates, at any altitude "
+            "and in any flight phase. This is not the number of climbing flights "
+            "or intersections at the selected height."
+        )
         self._source = QComboBox()
         self._source.addItem("This work (HMM)", "own")
         self._source.addItem("Jérémie (Vilpellet)", "vilpellet")
@@ -263,7 +268,7 @@ class ThermalPlane(QWidget):
         self._summary = QLabel(
             "Metropolitan France · both available disciplines · "
             "5 x 5 km Lambert-93 cells.\n"
-            "Ranked by all-time distinct crossing flights. Plane reference: "
+            "Ranked by all-time Vilpellet climb runs. Plane reference: "
             "mean IGN terrain elevation inside the cell."
         )
         self._summary.setWordWrap(True)
@@ -528,7 +533,7 @@ class ThermalPlane(QWidget):
         self._run(lambda **_: load_store(), self._saved_index_ready)
 
     def _index_ready(self, index):
-        """Expose the four winning cells with their distinct crossing counts."""
+        """Expose saved cells with their DEM categories and crossing counts."""
         self._index = index
         self._reliefs.clear()
         previous = self._cells.currentData()
@@ -537,10 +542,23 @@ class ThermalPlane(QWidget):
         self._cells.clear()
         for cell in index.cells():
             ranks[cell.terrain] = ranks.get(cell.terrain, 0) + 1
+            activity = getattr(index, "activity_counts", {}).get((cell.ix, cell.iy))
+            population = (
+                f"{activity['climb_runs']:,} Vilpellet climbs"
+                if activity
+                else f"{cell.flights:,} cell visitors"
+            )
             self._cells.addItem(
-                f"{cell.terrain} #{ranks[cell.terrain]} · {cell.flights:,} flights "
-                f"· mean terrain {cell.ground_m:.1f} m",
+                f"{cell.terrain} #{ranks[cell.terrain]} · "
+                f"{population} · mean terrain {cell.ground_m:.1f} m",
                 cell,
+            )
+        if getattr(index, "has_climb_ranking", False):
+            self._cells.setToolTip(
+                "Ranked by continuous Vilpellet climb runs inside each cell, "
+                "using all dates and both disciplines. Each run counts once per "
+                "cell, regardless of duration, repeated entries or sample count. "
+                "Changing the display method does not change this ranking."
             )
         if previous is not None:
             for i in range(self._cells.count()):
@@ -570,12 +588,14 @@ class ThermalPlane(QWidget):
         missing = [name for name in geography.TERRAIN_ORDER if name not in bands]
         self._status.setText(
             f"Indexed archives: {', '.join(index.disciplines)}. "
+            + (f"No prepared cell in: {', '.join(missing)}. " if missing else "")
+            + "Select an interval in Paris local time to read saved intersections."
             + (
-                f"No cell with a ground reference for: {', '.join(missing)}. "
-                if missing
+                " Saved selection predates terrain-based ranking; ranks compare "
+                "the prepared cells only."
+                if not getattr(index, "has_terrain_ranking", True)
                 else ""
             )
-            + "Select an interval in Paris local time to read saved intersections."
         )
 
     def _cell_changed(self, *_):
@@ -615,31 +635,46 @@ class ThermalPlane(QWidget):
             self._height.setValue(height)
             self._height.blockSignals(False)
             launch = cell.launch_median_m
+            activity = getattr(self._index, "activity_counts", {}).get(
+                (cell.ix, cell.iy)
+            )
             self._summary.setText(
                 f"{cell.terrain} #{self._rank(cell)} · 5 x 5 km (Lambert-93) · "
-                f"{cell.flights:,} distinct "
+                + (
+                    f"{activity['climb_runs']:,} Vilpellet climb runs from "
+                    f"{activity['climb_flights']:,} flights (ranking, all dates). "
+                    if activity
+                    else ""
+                )
+                + f"{cell.flights:,} distinct "
                 f"crossing flights, all dates. "
                 f"Mean terrain: {cell.ground_m:.2f} m ASL. "
                 f"Maximum height above mean terrain: {cell.max_agl_m:.1f} m.\n"
-                "Category bands use launch medians: <300 / 300-800 / "
-                "800-1500 / ≥1500 m. "
+                "Category bands use mean terrain: <300 / 300-<800 / "
+                "800-<1500 / ≥1500 m. "
                 + (
-                    f"Launch median: {launch:.1f} m ({cell.launches:,} starts). "
+                    f"Launch median (audit only): {launch:.1f} m "
+                    f"({cell.launches:,} starts). "
                     if launch is not None
                     else ""
                 )
                 + (
-                    " Few starts: altitude category has limited support."
-                    if cell.launches < 10
+                    " Few starts: launch median has limited support."
+                    if launch is not None and cell.launches < 10
                     else ""
                 )
             )
             if hasattr(self._index, "reference_audit"):
                 audit = self._index.reference_audit(cell)
                 if audit is not None:
+                    median = (
+                        f"median {audit[1]:g} m"
+                        if audit[1] is not None
+                        else "no usable launch altitude"
+                    )
                     self._summary.setText(
                         self._summary.text() + f" Raw start audit: {audit[0]} starts, "
-                        f"median {audit[1]:g} m; "
+                        f"{median}; "
                         f"{audit[0] - cell.launches} excluded by origin screen."
                     )
         self._set_busy(self._worker is not None)
@@ -828,12 +863,13 @@ class ThermalPlane(QWidget):
         if plane.points is not None and not plane.points.empty:
             plane.points["local_hour"] = _paris_hours(plane.points.utc)
         self._status.setText(
-            f"{plane.selected} flights cross the cell in the interval, thermal or not; "
-            f"{plane.cached} read from the prepared SSD file; "
-            f"{plane.unclassified} entirely unclassified; "
-            f"{plane.unavailable} unavailable. "
-            f"{plane.unknown_clock} all-time visitors lack a recoverable UTC origin. "
-            "Points are climb crossings; several may belong to the same thermal."
+            f"{plane.selected:,} cell visitors in the interval, at any altitude "
+            f"and in any flight phase; {plane.cached:,} read from SSD; "
+            f"{plane.unclassified:,} entirely unclassified by this method; "
+            f"{plane.unavailable:,} unavailable. "
+            f"{plane.unknown_clock:,} all-time visitors lack a recoverable UTC origin. "
+            "Only climb intersections with the selected plane are drawn; "
+            "a visiting flight can contribute no points."
         )
         self._draw_plane()
 
@@ -1074,6 +1110,10 @@ class ThermalPlane(QWidget):
         for i in range(self._cells.count()):
             cell = self._cells.itemData(i)
             rank = self._rank(cell)
+            activity = getattr(self._index, "activity_counts", {}).get(
+                (cell.ix, cell.iy)
+            )
+            score = activity["climb_runs"] if activity else cell.flights
             west, south, east, north = cell.bounds
             lon, lat = unproject([west, east, east, west], [south, south, north, north])
             color = colors[cell.terrain]
@@ -1105,8 +1145,7 @@ class ThermalPlane(QWidget):
             tx = 0.01 if band < 2 else 0.59
             ty = 0.93 - (band % 2) * 0.32 - (rank - 1) * 0.073
             annotation = ax.annotate(
-                f"{codes[cell.terrain]}{rank} · {cell.flights:,} · "
-                f"{cell.ground_m:.0f} m",
+                f"{codes[cell.terrain]}{rank} · {score:,} · {cell.ground_m:.0f} m",
                 (cx, cy),
                 xytext=(tx, ty),
                 textcoords="axes fraction",
@@ -1132,14 +1171,28 @@ class ThermalPlane(QWidget):
             0.02,
             0.02,
             "P: Plains   H: Hills\nL: Low mountains   M: High mountains\n"
-            "1 / 2 / 3 = rank within category; m = mean terrain elevation",
+            + (
+                "Count = Vilpellet climb runs; m = mean terrain\n"
+                if getattr(self._index, "has_climb_ranking", False)
+                else "Count = cell visitors; m = mean terrain\n"
+            )
+            + "Number after letter = rank within category",
             transform=ax.transAxes,
             fontsize=7,
             va="bottom",
             bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.9},
             zorder=7,
         )
-        ax.set_title("Top 3 cells per altitude category", fontsize=11)
+        ax.set_title(
+            "Top Vilpellet climb cells per terrain category"
+            if getattr(self._index, "has_climb_ranking", False)
+            else (
+                "Top visitor cells per mean terrain altitude category"
+                if getattr(self._index, "has_terrain_ranking", True)
+                else "Prepared cells by mean terrain altitude"
+            ),
+            fontsize=11,
+        )
         ax.set_xlabel("Longitude (°)")
         ax.set_ylabel("Latitude (°)")
         self._canvas.draw_idle()
@@ -1387,11 +1440,11 @@ class ThermalPlane(QWidget):
                 hours = (bands[i], bands[i + 1]) if valid_bands else (0, 0)
             crossing = self._cell_flights(hours)
             if crossing is not None:
-                prefix += f"{crossing:,} flights cross the selected cell\n"
+                prefix += f"{crossing:,} cell visitors · any altitude / flight phase\n"
             ax.set_title(
                 f"{prefix}z = {height:.2f} m above mean terrain\n"
                 + (f"Plane: {cell.ground_m + height:.1f} m ASL · " if cell else "")
-                + f"{count:,} visible points · {flights:,} contributing flights",
+                + f"{count:,} climb intersections · {flights:,} contributing flights",
                 fontsize=10,
             )
         if self._mode.currentIndex():

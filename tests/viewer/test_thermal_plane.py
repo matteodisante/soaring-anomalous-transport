@@ -149,6 +149,46 @@ def test_default_background_is_topography(widget):
     assert widget._relief_strength.value() == 85
 
 
+def test_vilpellet_climb_counts_are_separate_from_visitors(widget, monkeypatch):
+    cell = widget._cells.currentData()
+    index = SimpleNamespace(
+        disciplines=("paragliders",),
+        cells=lambda: [cell],
+        defaults=lambda _: (widget._utc_bounds()[0], 500),
+        has_terrain_ranking=True,
+        has_climb_ranking=True,
+        activity_counts={(cell.ix, cell.iy): {"climb_runs": 40, "climb_flights": 3}},
+    )
+    monkeypatch.setattr(widget, "_start_plane", lambda: None)
+    widget._index_ready(index)
+    assert "40 Vilpellet climbs" in widget._cells.currentText()
+    assert "40 Vilpellet climb runs from 3 flights" in widget._summary.text()
+    assert "5 distinct crossing flights" in widget._summary.text()
+    assert "40" in widget._map_labels[0][0].get_text()
+    assert "Vilpellet climb" in widget._map_ax.get_title()
+    widget._source.setCurrentIndex(0)
+    assert "40 Vilpellet climbs" in widget._cells.currentText()
+
+
+def test_dem_ranked_cell_without_internal_starts_can_be_selected(widget, monkeypatch):
+    from dataclasses import replace
+
+    cell = replace(widget._cells.currentData(), launches=0, launch_median_m=None)
+    index = SimpleNamespace(
+        disciplines=("paragliders",),
+        cells=lambda: [cell],
+        defaults=lambda _: (widget._utc_bounds()[0], 500),
+        reference_audit=lambda _: (0, None),
+        has_terrain_ranking=True,
+    )
+    monkeypatch.setattr(widget, "_start_plane", lambda: None)
+    widget._index_ready(index)
+    assert "Category bands use mean terrain" in widget._summary.text()
+    assert "no usable launch altitude" in widget._summary.text()
+    assert "Launch median" not in widget._summary.text()
+    assert widget._height.maximum() == cell.max_agl_m
+
+
 def test_missing_contours_use_saved_colour_map_with_explicit_attribution(widget):
     import numpy as np
 

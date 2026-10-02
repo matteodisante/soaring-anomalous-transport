@@ -69,7 +69,8 @@ decimated into <i>data/basemap.json</i> by scripts/tools/build_basemap.py</td>
 <td><a href="{RGE_ALTI_URL}">IGN RGE ALTI</a>, WMS layer {DEM_LAYER} of the
 Géoplateforme ({IGN_WMS}), float elevations,
 <a href="{LICENCE_OUVERTE}">Licence Ouverte 2.0</a></td>
-<td>Mean terrain of each {cell_km} x {cell_km} km cell (plane reference)</td></tr>
+<td>Mean terrain of each {cell_km} x {cell_km} km cell
+(category and plane reference)</td></tr>
 <tr><td>Background maps</td><td>IGN Géoplateforme and Esri, listed in
 <a href="#maps">Background maps</a></td><td>Thermal planes and Thermal density</td></tr>
 </table>
@@ -179,12 +180,23 @@ def _planes_tab() -> str:
 <a name="tab-planes"></a><h3>Thermal planes tab</h3>
 <p><b>Cells.</b> Lambert-93 is cut into {cell_km} x {cell_km} km squares. The census
 walks every processed flight in Lambert-93, splitting each step at the grid lines, so a
-square crossed between two fixes also counts. A square's population is the number of
-distinct flights that cross it, each counted once. The three busiest squares of each
-category are offered. The category is the median launch altitude (GNSS altitude of the
-raw first fix, after a quality screen) of the flights starting in the square: Plains
+square crossed between two fixes also counts. Selection uses the number of continuous
+<b>Vilpellet climb runs</b> intersecting each square, over all dates and both
+disciplines.
+One episode counts once per cell, including repeated entries; different episodes from
+one flight count separately. Sample count and duration add no weight. Gaps and phase
+boundaries are never bridged. Whole-flight eligibility guards remain active.
+The three squares with most climbs in each category are selected during preparation.
+This ranking remains Vilpellet-based when displaying HMM intersections. The separate
+visitor count includes every flight phase and altitude. The category uses mean IGN
+terrain
+elevation over the entire square, also used as the plane reference: Plains
 &lt; {lo} m, Hills {lo}&ndash;{mid} m, Low mountains {mid}&ndash;{hi} m, High mountains
-&ge; {hi} m.</p>
+&ge; {hi} m. These bands describe elevation, not slope or relief. Launch medians
+are audit information only; cells without internal starts are eligible. The viewer
+requires mean-terrain categories. Visitor-ranked snapshots identify their count as
+cell visitors; prepare again to use the Vilpellet climb-run ranking. There is no
+regional quota: a low alpine valley can qualify as Plains.</p>
 <p><b>Plane reference.</b> The RGE ALTI elevations of the cell are sampled every
 {grid} m ({samples:,} values per cell). The reference is their area-weighted mean over
 the whole cell, unsmoothed, with complete valid coverage required. The plane altitude is

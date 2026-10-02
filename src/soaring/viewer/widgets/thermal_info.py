@@ -13,13 +13,55 @@ def info_html() -> str:
     lo, mid, hi = (int(b[2]) for b in TERRAIN_BANDS[:3])
     cell_km = int(CELL_M // 1000)
     return f"""
-<h3>Cells</h3>
-<p>Each cell is a {cell_km} x {cell_km} km square of a Lambert-93 grid. Its
-population counts every <b>distinct flight that crosses it</b>, wherever the flight
-started; a flight that returns counts once. Twelve cells are offered: the three
-busiest in each category (P Plains, H Hills, L Low mountains, M High mountains).
-Rank 1 is the busiest <i>within its category</i>. Population and ranking use all
-dates and do not change with the selected interval or segmentation.</p>
+<h3>How the 12 cells are selected</h3>
+<ol>
+<li><b>Partition the metropolitan-France map window.</b> A fixed Lambert-93
+(EPSG:2154) grid divides the area into <b>{cell_km} x {cell_km} km squares</b>.
+The grid is defined before counting climbs; its boundaries do not move with
+flight density.</li>
+<li><b>Count continuous Vilpellet climb runs in each cell.</b> Use all dates in
+the processed archive, pooling paragliders and hang gliders. Vilpellet labels
+the whole flight before any spatial cut, with its normal eligibility guards.
+Each continuous climb episode counts once in every cell it traverses, even if
+it took off elsewhere or leaves and re-enters the cell. Different climbs from
+the same flight count separately. Duration and number of fixes do not add weight.
+Crossings between consecutive fixes count; gaps and phase boundaries are never
+bridged. An isolated climb-labelled fix is not a trajectory segment. Cells
+without internal take-offs are eligible.</li>
+<li><b>Assign a terrain category.</b> Calculate the area-weighted mean IGN terrain
+elevation over the entire square. The category comes from that mean, with the
+thresholds below; it does not come from the launch altitude of visiting flights.</li>
+<li><b>Keep the three cells with most Vilpellet climbs in each category.</b>
+Sort separately within Plains, Hills, Low mountains and High mountains by climb
+run count, highest first. Select the first three in each group: <b>12 cells total</b>.
+Ties are broken by grid coordinates (ix, then iy).</li>
+</ol>
+<p>P, H, L and M identify the four categories; rank 1 has the most Vilpellet climbs
+<i>within its category</i>. This all-date selection stays fixed when changing the
+displayed date interval, horizontal-plane height or segmentation method.
+The cell ranking always uses Vilpellet, even when displaying this work's HMM
+intersections. Total cell visitors and distinct climbing flights are shown
+separately in Cell details.</p>
+
+<h3>Why a busy cell can show few intersections</h3>
+<p><b>Cell visitors count all flight phases and all altitudes.</b> A gliding or
+descending flight counts as a visitor but does not add to the climb-run ranking.
+Even a cell with many climbs can have few at a particular altitude.
+A dot requires a trajectory segment labelled climb by the
+selected method to cross the exact selected horizontal plane inside the cell
+and time interval. Flights wholly above or below that plane contribute no dots;
+entirely unclassified flights cannot contribute climb dots either.</p>
+<p>For example, with a cell mean of 289 m, z = 100 m selects a plane at 389 m
+above sea level. Many flights can cross that cell while very few climb through
+389 m. Changing the plane height can therefore change the point count sharply.</p>
+
+<h3>Why the selected cells can cluster in the Alps</h3>
+<p>The ranking covers the metropolitan-France map window but applies <b>no
+regional quota or minimum spacing</b>. Several winners can belong to the same
+active valley. Plains and Hills name mean-elevation bands: a low alpine valley
+can be Plains even when mountains surround it. The winners represent the most
+active cells by Vilpellet climb-run count in the available archive,
+not a geographically balanced sample of France.</p>
 
 <h3>Mean terrain elevation and its source</h3>
 <p>The plane reference is the <b>area-weighted mean terrain elevation inside
@@ -33,11 +75,12 @@ sampling and coverage are saved with the data. Sampling is distinct from
 vertical accuracy; RGE ALTI's native product is finer than these extracts.</p>
 
 <h3>Categories</h3>
-<p>The existing cell selection uses the median screened GNSS launch altitude:
-Plains &lt; {lo} m, Hills {lo}&ndash;{mid} m,
-Low mountains {mid}&ndash;{hi} m, High mountains &ge; {hi} m. They are altitude
-bands. Launch medians and their supporting counts are retained in cell details
-for the ranking; the plane uses the DEM mean described above.</p>
+<p>Categories use the same <b>mean IGN terrain elevation</b> as the plane reference:
+Plains &lt; {lo} m, Hills {lo}&ndash;&lt;{mid} m,
+Low mountains {mid}&ndash;&lt;{hi} m, High mountains &ge; {hi} m. They are altitude
+bands, not a measure of slope or relief. Launch medians and their supporting
+counts are retained in cell details only as an audit; they do not determine the
+category or eligibility. Cells without internal starts can be selected too.</p>
 
 <h3>The horizontal plane</h3>
 <p><b>Plane altitude = mean terrain elevation + selected z.</b> Each cell has
