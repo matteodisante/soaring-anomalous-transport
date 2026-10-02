@@ -8,7 +8,44 @@ import pytest
 from PIL import Image
 
 from soaring.viewer.thermal_geometry import ThermalCell
-from soaring.viewer.thermal_ground import mean_terrain, terrain_reference
+from soaring.viewer.thermal_ground import (
+    mean_terrain,
+    terrain_category,
+    terrain_cell,
+    terrain_reference,
+)
+
+
+@pytest.mark.parametrize(
+    ("mean", "category"),
+    [
+        (299.999, "Plains"),
+        (300, "Hills"),
+        (799.999, "Hills"),
+        (800, "Low mountains"),
+        (1030.758, "Low mountains"),
+        (1499.999, "Low mountains"),
+        (1500, "High mountains"),
+    ],
+)
+def test_category_follows_dem_mean_at_exact_band_boundaries(mean, category):
+    cell = ThermalCell(196, 1312, "Plains", 1596, 1, 188, 3584)
+    updated = terrain_cell(cell, {"mean_m": mean})
+    assert updated.terrain == category
+    assert updated.ground_m == mean
+    assert updated.launch_median_m == 188
+    assert updated.bounds == cell.bounds
+
+
+@pytest.mark.parametrize("mean", [np.nan, np.inf, -np.inf])
+def test_category_never_falls_back_to_launch_when_mean_is_missing(mean):
+    with pytest.raises(ValueError, match="finite mean terrain"):
+        terrain_category(mean)
+
+
+def test_terrain_publication_does_not_invent_a_launch_median_for_a_visitor_only_cell():
+    cell = ThermalCell(0, 0, "Hills", 10, 0, 500, 1800)
+    assert terrain_cell(cell, {"mean_m": 500}).launch_median_m is None
 
 
 def test_mean_uses_whole_cell_without_the_crest_buffer():

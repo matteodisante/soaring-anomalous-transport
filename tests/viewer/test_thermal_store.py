@@ -45,6 +45,7 @@ def store(tmp_path):
                 ("version", "3"),
                 ("disciplines", '["paragliders"]'),
                 ("ground_reference", "ign-dem-cell-mean-v1"),
+                ("ranking_reference", "ign-dem-cell-mean-top-v1"),
             ],
         )
         db.execute(
@@ -105,6 +106,37 @@ def test_standalone_read_only_file_needs_no_archive_or_model(store, monkeypatch)
         assert loaded.read_plane(cell, 300, 400, source).edges.empty
     assert store.path.stat().st_mtime_ns == before
     assert {p.name for p in store.path.parent.iterdir()} == {"thermal-planes.sqlite3"}
+
+
+def test_climb_ranking_survives_loading_without_visitor_resort(store):
+    from dataclasses import replace
+
+    from soaring.viewer.thermal_ground import CLIMB_RANKING
+
+    first = store.cells()[0]
+    second = replace(first, ix=first.ix + 1, flights=1)
+    store.path.chmod(0o644)
+    with sqlite3.connect(store.path) as db:
+        db.execute(
+            "UPDATE metadata SET value=? WHERE key='ranking_reference'",
+            (CLIMB_RANKING,),
+        )
+        db.execute(
+            "CREATE TABLE cell_activity(ix INTEGER,iy INTEGER,"
+            "climb_runs INTEGER,climb_flights INTEGER)"
+        )
+        db.executemany(
+            "INSERT INTO cell_activity VALUES (?,?,?,?)",
+            [(first.ix, first.iy, 3, 2), (second.ix, second.iy, 10, 1)],
+        )
+        db.execute(
+            "INSERT INTO cells VALUES (1,?,?,?,?,?)",
+            (second.ix, second.iy, json.dumps(asdict(second)), 0, 340),
+        )
+    loaded = ThermalStore(store.path)
+    assert loaded.has_climb_ranking
+    assert loaded.cells() == [second, first]
+    assert loaded.activity_counts[second.ix, second.iy]["climb_runs"] == 10
 
 
 def test_real_worker_auto_load_and_reload_button(qapp, store, monkeypatch):
@@ -264,7 +296,7 @@ def test_terrain_upgrade_rebuilds_points_and_resumes_without_changing_source(
     new_cell = upgraded.cells()[0]
     assert new_cell.ground_m == 300
     assert new_cell.launch_median_m == 185
-    assert new_cell.terrain == cell.terrain
+    assert new_cell.terrain == "Hills"
     assert upgraded.defaults(new_cell)[1] == 300
     for source in ("own", "vilpellet"):
         points = upgraded.read_plane(new_cell, 125, 175, source).points
@@ -426,3 +458,73 @@ def test_zoom_out_reads_only_the_ssd(qapp, store, tmp_path, monkeypatch):
     finally:
         view.shutdown()
         view.close()
+
+
+def test_legacy_launch_categories_are_corrected_without_touching_snapshot(store):
+    from dataclasses import replace
+
+    store.path.chmod(0o644)
+    original_cell = store.cells()[0]
+    cells = [
+        replace(
+            original_cell,
+            ix=196,
+            iy=1312,
+            terrain="Plains",
+            ground_m=1030.758,
+            flights=1596,
+            launch_median_m=188,
+        ),
+        replace(
+            original_cell,
+            ix=191,
+            iy=1307,
+            terrain="Hills",
+            ground_m=875.409,
+            flights=3154,
+            launch_median_m=776,
+        ),
+        replace(
+            original_cell,
+            ix=185,
+            iy=1294,
+            terrain="Low mountains",
+            ground_m=651.897,
+            flights=19192,
+            launch_median_m=959,
+        ),
+    ]
+    with sqlite3.connect(store.path) as db:
+        db.execute("DELETE FROM metadata WHERE key='ranking_reference'")
+        db.execute("DELETE FROM cells")
+        db.executemany(
+            "INSERT INTO cells VALUES (?,?,?,?,?,?)",
+            [
+                (i, c.ix, c.iy, json.dumps(asdict(c)), 0, 340)
+                for i, c in enumerate(cells)
+            ],
+        )
+    original = store.path.read_bytes()
+    saved = ThermalStore(store.path)
+    corrected = saved.cells()
+    assert [(c.ix, c.iy, c.terrain) for c in corrected] == [
+        (185, 1294, "Hills"),
+        (191, 1307, "Low mountains"),
+        (196, 1312, "Low mountains"),
+    ]
+    for before in cells:
+        after = next(c for c in corrected if (c.ix, c.iy) == (before.ix, before.iy))
+        assert replace(after, terrain=before.terrain) == before
+    assert not saved.has_terrain_ranking
+    assert store.path.read_bytes() == original
+
+
+def test_viewer_refuses_legacy_subset_instead_of_calling_it_the_terrain_top_three(
+    store, monkeypatch
+):
+    store.path.chmod(0o644)
+    with sqlite3.connect(store.path) as db:
+        db.execute("DELETE FROM metadata WHERE key='ranking_reference'")
+    monkeypatch.setenv("SOARING_VIEWER_CACHE_DIR", str(store.path.parent))
+    with pytest.raises(ValueError, match="three most populated cells"):
+        load_store()

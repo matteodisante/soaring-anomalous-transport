@@ -15,7 +15,15 @@ import pandas as pd
 
 from ..reporting.disciplines import DISCIPLINES
 from .thermal_geometry import ThermalCell
-from .thermal_ground import GROUND_REFERENCE, terrain_cell, terrain_reference
+from .thermal_ground import (
+    CLIMB_RANKING,
+    GROUND_REFERENCE,
+    TERRAIN_RANKING,
+    order_terrain_cells,
+    terrain_category,
+    terrain_cell,
+    terrain_reference,
+)
 
 EDGE_COLUMNS = [f"{axis}{end}" for end in (0, 1) for axis in ("x", "y", "z", "utc")]
 STORE_NAME = "thermal-planes.sqlite3"
@@ -91,14 +99,48 @@ class ThermalStore:
             self.has_points = metadata.get("point_lattice") == POINT_LATTICE_VERSION
             self.disciplines = tuple(json.loads(metadata["disciplines"]))
             self.quality_summary = json.loads(metadata.get("launch_quality", "null"))
+            self.has_terrain_ranking = metadata.get("ranking_reference") in (
+                TERRAIN_RANKING,
+                CLIMB_RANKING,
+            )
+            self.has_climb_ranking = metadata.get("ranking_reference") == CLIMB_RANKING
+            self.activity_counts = (
+                {
+                    (ix, iy): {"climb_runs": runs, "climb_flights": flights}
+                    for ix, iy, runs, flights in db.execute(
+                        "SELECT * FROM cell_activity"
+                    )
+                }
+                if self.has_climb_ranking
+                else {}
+            )
 
     def cells(self):
-        """Read the already ranked cells without recomputing their ranking."""
+        """Classify the saved subset by DEM mean, including legacy snapshots.
+
+        Reordering saved cells does not claim a new archive-wide top three.
+        Heights, grid IDs and point products remain unchanged.
+        """
         with _connect(self.path) as db:
-            return [
+            cells = [
                 ThermalCell(**json.loads(row[0]))
                 for row in db.execute("SELECT payload FROM cells ORDER BY position")
             ]
+        if self.has_climb_ranking:
+            from .geography import TERRAIN_ORDER
+
+            return sorted(
+                cells,
+                key=lambda c: (
+                    TERRAIN_ORDER.index(terrain_category(c.ground_m)),
+                    -self.activity_counts[c.ix, c.iy]["climb_runs"],
+                    c.ix,
+                    c.iy,
+                ),
+            )
+        return order_terrain_cells(
+            replace(cell, terrain=terrain_category(cell.ground_m)) for cell in cells
+        )
 
     def relief(self, cell=None, key=None):
         """Read prepared relief and its exact coordinates, without networking."""
@@ -341,19 +383,34 @@ def find_store_path():
 def load_store():
     """Find the ready file, without checking or opening its original archives."""
     path = find_store_path()
-    return ThermalStore(path) if path is not None else None
+    if path is None:
+        return None
+    store = ThermalStore(path)
+    if not store.has_terrain_ranking:
+        raise ValueError(
+            "This snapshot still contains the old launch-selected cells. Run "
+            "scripts/pipeline/prepare_thermal_planes.py to prepare the three "
+            "most populated cells per mean terrain category."
+        )
+    return store
 
 
-def export_store(index, *, relief=None):
-    """Atomically publish a complete, standalone snapshot after offline preparation."""
+def export_store(index, *, relief=None, destination=None):
+    """Export checked edges, optionally staging before imagery/point enrichment."""
     from .thermal_cache import segmentation_signature
 
-    references = {(cell.ix, cell.iy): terrain_reference(cell) for cell in index.cells()}
+    references = getattr(index, "terrain_references", None)
+    if references is None:
+        references = {
+            (cell.ix, cell.iy): terrain_reference(cell) for cell in index.cells()
+        }
     if relief is None and hasattr(index, "quality_summary"):
         from .thermal_relief import prepare_relief
 
         relief = prepare_relief(index)
-    target = index.path.with_name(STORE_NAME)
+    target = (
+        index.path.with_name(STORE_NAME) if destination is None else Path(destination)
+    )
     temporary = target.with_suffix(".building.sqlite3")
     temporary.unlink(missing_ok=True)
     with (
@@ -367,6 +424,8 @@ def export_store(index, *, relief=None):
                 PRIMARY KEY(ix,iy));
             CREATE TABLE cells(position INTEGER PRIMARY KEY,ix INTEGER,iy INTEGER,
                 payload TEXT,day REAL,height REAL);
+            CREATE TABLE cell_activity(ix INTEGER,iy INTEGER,climb_runs INTEGER,
+                climb_flights INTEGER,PRIMARY KEY(ix,iy));
             CREATE TABLE visitors(ix INTEGER,iy INTEGER,discipline TEXT,flight_id TEXT,
                 start REAL,end REAL,
                 PRIMARY KEY(ix,iy,discipline,flight_id));
@@ -393,9 +452,28 @@ def export_store(index, *, relief=None):
                 "INSERT INTO metadata VALUES (?,?)",
                 ("launch_quality", json.dumps(index.quality_summary)),
             )
+            if index.quality_summary.get("ranking_reference") in (
+                TERRAIN_RANKING,
+                CLIMB_RANKING,
+            ):
+                out.execute(
+                    "INSERT INTO metadata VALUES ('ranking_reference',?)",
+                    (index.quality_summary["ranking_reference"],),
+                )
         for position, cell in enumerate(index.cells()):
             reference = references[(cell.ix, cell.iy)]
             cell = terrain_cell(cell, reference)
+            activity = getattr(index, "activity_counts", {}).get((cell.ix, cell.iy))
+            if activity is not None:
+                out.execute(
+                    "INSERT INTO cell_activity VALUES (?,?,?,?)",
+                    (
+                        cell.ix,
+                        cell.iy,
+                        activity["climb_runs"],
+                        activity["climb_flights"],
+                    ),
+                )
             out.execute(
                 "INSERT INTO terrain VALUES (?,?,?)",
                 (cell.ix, cell.iy, json.dumps(reference)),

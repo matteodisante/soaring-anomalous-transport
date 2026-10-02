@@ -295,6 +295,7 @@ def test_offline_export_requires_both_complete_methods_and_is_standalone(
     from dataclasses import replace
 
     from soaring.viewer.thermal_cache import ClimbCache
+    from soaring.viewer.thermal_ranking import rank_cells
     from soaring.viewer.thermal_store import ThermalStore, export_store
 
     cell = index.cells()[0]
@@ -326,22 +327,48 @@ def test_offline_export_requires_both_complete_methods_and_is_standalone(
     with ClimbCache(index, "vilpellet") as cache:
         cache.put("paragliders", "c", cell, "decoded", edges)
     path = export_store(index)
+    assert not ThermalStore(path).has_terrain_ranking
+    # Publication must reuse the exact DEM used to rank, even when the
+    # launch category differs and no repository raster exists for the winner.
+    monkeypatch.setattr(
+        "soaring.viewer.thermal_ranking._cell_terrain",
+        lambda *a: {"mean_m": 350},
+    )
+    ranked = rank_cells(index)
+    monkeypatch.setattr(
+        "soaring.viewer.thermal_store.terrain_reference",
+        lambda c: pytest.fail("ranking reference must be reused"),
+    )
+    published = path
+    original = published.read_bytes()
+    path = export_store(
+        ranked, relief=[], destination=published.with_name("staged.sqlite3")
+    )
+    assert published.read_bytes() == original
     index.path.unlink()
     index.path.with_name("thermal-climbs.sqlite3").unlink()
     store = ThermalStore(path)
-    assert store.cells() == [replace(cell, launch_median_m=cell.ground_m)]
-    assert store.defaults(cell) == (0, 300)
+    assert store.has_terrain_ranking
+    assert store.cells() == [
+        replace(cell, terrain="Hills", ground_m=350, launch_median_m=cell.ground_m)
+    ]
+    assert store.terrain_reference(store.cells()[0])["mean_m"] == 350
+    assert store.defaults(cell) == (0, 150)
     for source in ("own", "vilpellet"):
         result = store.read_plane(cell, 1080, 1090, source)
         assert result.cached == result.selected == 3
         assert result.edges.utc0.tolist() == [1060.0] * 3
 
 
-def test_quality_changes_ground_category_without_removing_crossing_flights(
-    index, tmp_path
+def test_quality_changes_launch_audit_without_changing_terrain_or_crossing_flights(
+    index, tmp_path, monkeypatch
 ):
     from soaring.viewer.thermal_ranking import rank_cells
 
+    monkeypatch.setattr(
+        "soaring.viewer.thermal_ranking._cell_terrain",
+        lambda *a: {"mean_m": 200},
+    )
     assert rank_cells(index).cells()[0].terrain == "Plains"
     quality = tmp_path / "quality.sqlite3"
     with sqlite3.connect(quality) as db:
@@ -362,17 +389,22 @@ def test_quality_changes_ground_category_without_removing_crossing_flights(
         )
     ranked = rank_cells(index, quality=(quality, "p"))
     cell = ranked.cells()[0]
-    assert cell.terrain == "Hills"
-    assert cell.ground_m == 300
+    assert cell.terrain == "Plains"
+    assert cell.ground_m == 200
+    assert cell.launch_median_m == 300
     assert cell.launches == 1
     assert cell.flights == len(ranked.flights(cell)) == 3
     assert ranked.path == index.path
     assert ranked.quality_summary["excluded"] == 1
 
 
-def test_top_three_use_all_crossers_and_break_ties_by_grid_position(index):
+def test_top_three_use_all_crossers_and_break_ties_by_grid_position(index, monkeypatch):
     from soaring.viewer.thermal_ranking import rank_cells
 
+    monkeypatch.setattr(
+        "soaring.viewer.thermal_ranking._cell_terrain",
+        lambda *a: {"mean_m": 200},
+    )
     with sqlite3.connect(index.path) as db:
         for ix in range(2, 5):
             db.execute(

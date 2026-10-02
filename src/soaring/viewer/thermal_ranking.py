@@ -1,4 +1,4 @@
-"""Offline ranking and quality audit of raw launch references, independent of climbs."""
+"""Offline DEM-based cell ranking and a separate audit of raw launch references."""
 
 from __future__ import annotations
 
@@ -7,15 +7,23 @@ import json
 import math
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 import pandas as pd
 
 from ..analysis.config import load_preproc_config
 from ..analysis.igc import _altitude, _lat, _lon, _valid_time_of_day
-from .geography import TERRAIN_ORDER, classify_terrain
+from .geography import TERRAIN_ORDER
 from .thermal_geometry import ThermalCell
+from .thermal_ground import (
+    CLIMB_RANKING,
+    TERRAIN_RANKING,
+    fetch_terrain_reference,
+    terrain_category,
+    terrain_reference,
+)
+from .thermal_orography import DATA_DIRECTORY
 
 
 def launch_quality(path, horizontal_limit, vertical_limit):
@@ -144,6 +152,8 @@ class RankedIndex:
     base: object
     selected: tuple[ThermalCell, ...]
     quality_summary: dict
+    terrain_references: dict
+    activity_counts: dict = field(default_factory=dict)
 
     @property
     def path(self):
@@ -169,8 +179,32 @@ class RankedIndex:
         return self.base.flights(cell)
 
 
-def rank_cells(index, *, per_category=3, quality=None):
-    """Rank all France cells with a ground reference; ties use grid coordinates."""
+def _cell_terrain(cell, index):
+    """Reuse attributed local terrain; fetch missing candidates into the SSD cache."""
+    if any(
+        (DATA_DIRECTORY / name).exists()
+        for name in (
+            f"ign-terrain-{cell.ix}-{cell.iy}.json",
+            f"ign-ridges-{cell.ix}-{cell.iy}.geojson",
+        )
+    ):
+        return terrain_reference(cell)
+    return fetch_terrain_reference(cell, index.path.parent / "exploration/terrain")
+
+
+def rank_cells(
+    index, *, per_category=3, quality=None, activity=None, progress=lambda _: None
+):
+    """Select the busiest visited cells in each band of mean IGN terrain elevation.
+
+    With an activity census, rank Vilpellet climb runs instead of visitors.
+    Visit candidates in descending score order and stop when every band is
+    full. No unexamined cell can outrank a winner. Starts are audit data only;
+    a visited cell needs no internal launch to qualify. A missing/invalid DEM
+    aborts preparation instead of silently biasing the ranking.
+    """
+    if per_category < 1:
+        raise ValueError("per_category must be at least 1")
     with sqlite3.connect(index.path) as db:
         starts = pd.read_sql_query(
             "SELECT discipline,flight_id,launch_x ix,launch_y iy,launch_alt "
@@ -203,28 +237,64 @@ def rank_cells(index, *, per_category=3, quality=None):
             "statuses": starts.status.value_counts().to_dict(),
         }
         starts = starts.loc[accepted]
-    ground = starts.groupby(["ix", "iy"], as_index=False).agg(
-        ground=("launch_alt", "median"), launches=("launch_alt", "size")
+    launches = starts.groupby(["ix", "iy"], as_index=False).agg(
+        launch_median=("launch_alt", "median"), launches=("launch_alt", "size")
     )
-    cells = visits.merge(ground, on=["ix", "iy"])
-    cells["terrain"] = classify_terrain(cells.ground.to_numpy())
-    cells = cells.sort_values(["flights", "ix", "iy"], ascending=[False, True, True])
-    result = []
-    for band in TERRAIN_ORDER:
-        for c in (
-            cells.loc[cells.terrain == band].head(per_category).itertuples(index=False)
-        ):
-            result.append(
-                ThermalCell(
-                    int(c.ix),
-                    int(c.iy),
-                    band,
-                    int(c.flights),
-                    int(c.launches),
-                    float(c.ground),
-                    float(c.max_alt),
-                )
+    cells = visits.merge(launches, on=["ix", "iy"], how="left")
+    metric = "flights"
+    if activity is not None:
+        with sqlite3.connect(Path(activity).as_uri() + "?mode=ro", uri=True) as db:
+            metadata = dict(db.execute("SELECT key,value FROM metadata"))
+            if metadata.get("ready") != "1":
+                raise ValueError("National Vilpellet climb census is incomplete")
+            counts = pd.read_sql_query(
+                "SELECT ix,iy,SUM(climb_runs) climb_runs,COUNT(*) climb_flights "
+                "FROM activity GROUP BY ix,iy",
+                db,
             )
-    summary["eligible_cells"] = len(cells)
+        cells = cells.merge(counts, on=["ix", "iy"], validate="one_to_one")
+        metric = "climb_runs"
+        summary["activity_signature"] = metadata["signature"]
+        summary["ranking_method"] = "vilpellet"
+        summary["ranking_unit"] = "continuous_climb_runs"
+    cells = cells.sort_values([metric, "ix", "iy"], ascending=[False, True, True])
+    groups = {band: [] for band in TERRAIN_ORDER}
+    references = {}
+    activity_counts = {}
+    examined = 0
+    for c in cells.itertuples(index=False):
+        cell = ThermalCell(
+            int(c.ix),
+            int(c.iy),
+            "",
+            int(c.flights),
+            int(c.launches) if pd.notna(c.launches) else 0,
+            0.0,
+            float(c.max_alt),
+            float(c.launch_median) if pd.notna(c.launch_median) else None,
+        )
+        reference = _cell_terrain(cell, index)
+        band = terrain_category(reference["mean_m"])
+        examined += 1
+        progress(
+            f"Terrain candidate {examined}: {cell.ix}/{cell.iy}, "
+            + (f"{int(c.climb_runs):,} Vilpellet climbs, " if activity else "")
+            + f"{cell.flights:,} flights, {reference['mean_m']:.1f} m, {band}"
+        )
+        if len(groups[band]) < per_category:
+            groups[band].append(
+                replace(cell, terrain=band, ground_m=reference["mean_m"])
+            )
+            references[cell.ix, cell.iy] = reference
+            if activity is not None:
+                activity_counts[cell.ix, cell.iy] = {
+                    "climb_runs": int(c.climb_runs),
+                    "climb_flights": int(c.climb_flights),
+                }
+        if all(len(group) == per_category for group in groups.values()):
+            break
+    result = [cell for group in groups.values() for cell in group]
+    summary["ranking_reference"] = CLIMB_RANKING if activity else TERRAIN_RANKING
+    summary["terrain_candidates_examined"] = examined
     summary["visited_cells"] = len(visits)
-    return RankedIndex(index, tuple(result), summary)
+    return RankedIndex(index, tuple(result), summary, references, activity_counts)

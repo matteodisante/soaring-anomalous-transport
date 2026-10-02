@@ -13,9 +13,28 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from .geography import TERRAIN_ORDER, classify_terrain
 from .thermal_orography import DATA_DIRECTORY
 
 GROUND_REFERENCE = "ign-dem-cell-mean-v1"
+TERRAIN_RANKING = "ign-dem-cell-mean-top-v1"
+CLIMB_RANKING = "vilpellet-climb-runs-dem-top-v1"
+
+
+def terrain_category(mean_m):
+    """Use the plane's finite DEM mean for the cell's altitude band too."""
+    category = classify_terrain([mean_m])[0]
+    if not category:
+        raise ValueError("Cell classification requires a finite mean terrain elevation")
+    return category
+
+
+def order_terrain_cells(cells):
+    """Order DEM categories and visitor counts, breaking ties by grid coordinates."""
+    return sorted(
+        cells,
+        key=lambda c: (TERRAIN_ORDER.index(c.terrain), -c.flights, c.ix, c.iy),
+    )
 
 
 def mean_terrain(z, raster_bounds, cell_bounds):
@@ -150,12 +169,15 @@ def fetch_terrain_reference(cell, folder):
 
 
 def terrain_cell(cell, reference):
-    """Keep the ranking's launch median distinct from the plane's DEM reference."""
+    """Classify by the DEM mean, retaining the old launch median only as an audit."""
     return replace(
         cell,
+        terrain=terrain_category(reference["mean_m"]),
         ground_m=reference["mean_m"],
         launch_median_m=(
-            cell.ground_m if cell.launch_median_m is None else cell.launch_median_m
+            cell.ground_m
+            if cell.launch_median_m is None and cell.launches
+            else cell.launch_median_m
         ),
     )
 
