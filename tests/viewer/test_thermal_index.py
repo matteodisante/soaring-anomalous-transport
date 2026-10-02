@@ -292,6 +292,7 @@ def test_source_change_invalidates_only_its_own_products(index, monkeypatch, tmp
 def test_offline_export_requires_both_complete_methods_and_is_standalone(
     index, monkeypatch
 ):
+    import runpy
     from dataclasses import replace
 
     from soaring.viewer.thermal_cache import ClimbCache
@@ -345,6 +346,15 @@ def test_offline_export_requires_both_complete_methods_and_is_standalone(
         ranked, relief=[], destination=published.with_name("staged.sqlite3")
     )
     assert published.read_bytes() == original
+    script = (
+        Path(__file__).resolve().parents[2]
+        / "scripts/pipeline/prepare_thermal_planes.py"
+    )
+    matches = runpy.run_path(str(script))["_matches_prepared_selection"]
+    assert matches(path, ranked)
+    changed = replace(ranked, selected=(replace(ranked.cells()[0], ground_m=351),))
+    assert not matches(path, changed)
+    assert not matches(published, ranked)
     index.path.unlink()
     index.path.with_name("thermal-climbs.sqlite3").unlink()
     store = ThermalStore(path)

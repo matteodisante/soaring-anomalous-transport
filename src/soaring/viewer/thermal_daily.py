@@ -19,6 +19,103 @@ POINT_COLUMNS = ["level", "x", "y", "utc"]
 POINT_LATTICE_VERSION = "10m-v2"
 
 
+def _point_signature(cells):
+    return hashlib.sha256(
+        json.dumps(
+            [
+                POINT_LATTICE_VERSION,
+                [(c.ix, c.iy, c.ground_m, c.max_alt_m) for c in cells],
+            ]
+        ).encode()
+    ).hexdigest()
+
+
+def reuse_prepared_points(path, previous):
+    """Retain identical cell lattices when only the selected set/ranking changes."""
+    from pathlib import Path
+
+    from .thermal_neighbours import NEIGHBOUR_LATTICE_VERSION
+    from .thermal_store import ThermalStore
+
+    if not Path(previous).exists() or Path(path).resolve() == Path(previous).resolve():
+        return
+    current, old = ThermalStore(path), ThermalStore(previous)
+    cells = current.cells()
+    old_cells = {(c.ix, c.iy): c for c in old.cells()}
+    shared = [
+        c
+        for c in cells
+        if (c.ix, c.iy) in old_cells
+        and c.ground_m == old_cells[c.ix, c.iy].ground_m
+        and c.max_alt_m == old_cells[c.ix, c.iy].max_alt_m
+    ]
+    if not shared:
+        return
+    with sqlite3.connect(path, uri=True) as db:
+        db.execute(
+            "ATTACH DATABASE ? AS previous",
+            (Path(previous).resolve().as_uri() + "?mode=ro",),
+        )
+        meta = dict(db.execute("SELECT key,value FROM main.metadata"))
+        prior = dict(db.execute("SELECT key,value FROM previous.metadata"))
+        if not all(
+            meta.get(key) is not None and meta[key] == prior.get(key)
+            for key in (
+                "archive_signature",
+                "segmentation_signatures",
+                "ground_reference",
+            )
+        ):
+            return
+        signature = _point_signature(cells)
+        if meta.get("point_build_signature") not in (None, signature):
+            return
+        if prior.get("point_lattice") == POINT_LATTICE_VERSION:
+            db.execute("""CREATE TABLE IF NOT EXISTS plane_points(
+                source TEXT,ix INTEGER,iy INTEGER,discipline TEXT,flight_id TEXT,
+                points BLOB,count INTEGER,
+                PRIMARY KEY(source,ix,iy,discipline,flight_id))""")
+            for cell in shared:
+                db.execute(
+                    "INSERT OR IGNORE INTO main.plane_points SELECT * "
+                    "FROM previous.plane_points WHERE ix=? AND iy=?",
+                    (cell.ix, cell.iy),
+                )
+            db.execute(
+                "INSERT OR REPLACE INTO metadata VALUES ('point_build_signature',?)",
+                (signature,),
+            )
+        if prior.get("neighbour_segmentations") == meta["segmentation_signatures"]:
+            db.executescript("""
+                CREATE TABLE IF NOT EXISTS neighbour_points(
+                    source TEXT,ix INTEGER,iy INTEGER,level INTEGER,points BLOB,
+                    PRIMARY KEY(source,ix,iy,level));
+                CREATE TABLE IF NOT EXISTS neighbour_flights(
+                    source TEXT,ix INTEGER,iy INTEGER,flights TEXT,signature TEXT,
+                    PRIMARY KEY(source,ix,iy));
+            """)
+            for cell in shared:
+                for source, key in json.loads(meta["segmentation_signatures"]).items():
+                    expected = json.dumps(
+                        [NEIGHBOUR_LATTICE_VERSION, key, cell.ground_m, cell.max_alt_m]
+                    )
+                    identity = source, cell.ix, cell.iy
+                    row = db.execute(
+                        "SELECT signature FROM previous.neighbour_flights "
+                        "WHERE source=? AND ix=? AND iy=?",
+                        identity,
+                    ).fetchone()
+                    if row != (expected,):
+                        continue
+                    for table in ("neighbour_points", "neighbour_flights"):
+                        db.execute(
+                            f"INSERT OR IGNORE INTO main.{table} SELECT * "
+                            f"FROM previous.{table} WHERE source=? AND ix=? AND iy=?",
+                            identity,
+                        )
+        db.commit()
+
+
 def height_levels(maximum, step=10):
     """Regular AGL levels plus the exact supported ceiling, even off the grid."""
     values = np.arange(0, maximum, step, dtype=float)
@@ -92,14 +189,7 @@ def prepare_daily(path, progress=print):
             ThermalCell(**json.loads(r[0]))
             for r in db.execute("SELECT payload FROM cells ORDER BY position")
         ]
-        signature = hashlib.sha256(
-            json.dumps(
-                [
-                    POINT_LATTICE_VERSION,
-                    [(c.ix, c.iy, c.ground_m, c.max_alt_m) for c in cells],
-                ]
-            ).encode()
-        ).hexdigest()
+        signature = _point_signature(cells)
         previous = db.execute(
             "SELECT value FROM metadata WHERE key='point_build_signature'"
         ).fetchone()

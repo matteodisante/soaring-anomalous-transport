@@ -139,6 +139,59 @@ def test_climb_ranking_survives_loading_without_visitor_resort(store):
     assert loaded.activity_counts[second.ix, second.iy]["climb_runs"] == 10
 
 
+@pytest.mark.parametrize("change", [None, "ground", "archive", "method"])
+def test_reuse_points_requires_unchanged_geometry_and_method(store, change):
+    import shutil
+
+    from soaring.viewer.thermal_daily import prepare_daily, reuse_prepared_points
+
+    store.path.chmod(0o644)
+    with sqlite3.connect(store.path) as db:
+        db.executemany(
+            "INSERT INTO metadata VALUES (?,?)",
+            [
+                ("archive_signature", "archive"),
+                ("segmentation_signatures", '{"own":"hmm","vilpellet":"vil"}'),
+            ],
+        )
+    prepare_daily(store.path, progress=lambda _: None)
+    target = store.path.with_name("changed-selection.sqlite3")
+    shutil.copyfile(store.path, target)
+    with sqlite3.connect(target) as db:
+        db.execute("DELETE FROM plane_points")
+        db.execute(
+            "DELETE FROM metadata WHERE key IN "
+            "('point_lattice','point_build_signature')"
+        )
+        if change == "ground":
+            row = json.loads(db.execute("SELECT payload FROM cells").fetchone()[0])
+            row["ground_m"] += 10
+            db.execute("UPDATE cells SET payload=?", (json.dumps(row),))
+        elif change in ("archive", "method"):
+            key = (
+                "archive_signature"
+                if change == "archive"
+                else "segmentation_signatures"
+            )
+            db.execute("UPDATE metadata SET value='different' WHERE key=?", (key,))
+    reuse_prepared_points(target, store.path)
+    with sqlite3.connect(target) as db:
+        assert db.execute("SELECT count(*) FROM plane_points").fetchone()[0] == (
+            2 if change is None else 0
+        )
+        assert (
+            db.execute(
+                "SELECT value FROM metadata WHERE key='point_lattice'"
+            ).fetchone()
+            is None
+        )
+    if change is None:
+        messages = []
+        prepare_daily(target, progress=messages.append)
+        assert ThermalStore(target).has_points
+        assert any("0 products to prepare" in m for m in messages)
+
+
 def test_real_worker_auto_load_and_reload_button(qapp, store, monkeypatch):
     from soaring.viewer.widgets.thermal_plane import ThermalPlane
 

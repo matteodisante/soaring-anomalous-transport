@@ -16,7 +16,7 @@ from urllib.request import urlopen
 from PIL import Image
 
 from .geography import FRANCE_EXTENT
-from .thermal_store import ThermalStore
+from .thermal_store import ThermalStore, neighbour_frames
 
 SERVICE = "https://data.geopf.fr/wms-r/wms"
 LAYERS = {
@@ -24,6 +24,40 @@ LAYERS = {
     "colour": "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2",
     "topography": "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2,ELEVATION.CONTOUR.LINE",
 }
+
+
+def reuse_backgrounds(path, previous, *, with_neighbours=False):
+    """Copy unchanged grid backgrounds from an earlier selection, with provenance."""
+    previous = Path(previous)
+    if not previous.exists() or Path(path).resolve() == previous.resolve():
+        return
+    cells = ThermalStore(path).cells()
+    keys = {"france", *(f"{c.ix}/{c.iy}" for c in cells)}
+    if with_neighbours:
+        keys.update(f"{f.ix}/{f.iy}" for c in cells for f in neighbour_frames(c))
+    with sqlite3.connect(path, uri=True) as db:
+        db.execute(
+            "CREATE TABLE IF NOT EXISTS backgrounds(kind TEXT,key TEXT,"
+            "metadata TEXT,image BLOB,PRIMARY KEY(kind,key))"
+        )
+        db.execute(
+            "ATTACH DATABASE ? AS previous", (previous.resolve().as_uri() + "?mode=ro",)
+        )
+        tables = {
+            r[0]
+            for r in db.execute(
+                "SELECT name FROM previous.sqlite_master WHERE type='table'"
+            )
+        }
+        placeholders = ",".join("?" for _ in keys)
+        for table in ("backgrounds", "relief"):
+            if table in tables:
+                db.execute(
+                    f"INSERT OR IGNORE INTO main.{table} SELECT * "
+                    f"FROM previous.{table} WHERE key IN ({placeholders})",
+                    tuple(keys),
+                )
+        db.commit()
 
 
 def _download(url):
