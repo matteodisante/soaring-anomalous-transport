@@ -15,7 +15,6 @@ from PyQt6.QtWidgets import (
     QDoubleSpinBox,
     QLabel,
     QPushButton,
-    QTextBrowser,
     QVBoxLayout,
     QWidget,
 )
@@ -29,61 +28,70 @@ from ..thermal_store import load_store
 from ..thermal_time import cache_path, load_grids
 from .density_background import DensityBackgrounds
 from .flow_layout import FlowLayout
+from .info_browser import info_browser
+from .source_notes import FLIGHT_SOURCE_HTML, background_sources_html
 from .thermal_plane import _Worker
 
 INFO_HTML = f"""
-<h3>Thermal density · hours/km²</h3>
-<p>This map measures <b>cumulative time spent in the climb phase per unit ground
-area</b>, across the full available archive and all heights. It is not an encounter
-probability, a count of distinct atmospheric thermals, or a rate per year.</p>
+<h2>Thermal density</h2>
+<p><b>Cumulative climb time per ground area, in hours/km².</b>
+All archived dates and heights; paragliders and hang gliders pooled.</p>
+
+<h3>Calculation</h3>
 <ol>
-<li><b>Select thermal segments.</b> Keep continuous edges whose two endpoints belong
-to the same climb run. Never connect separate flights, phases or data gaps.
-Regions use this work's HMM decisions; cells use the selected HMM or Vilpellet
-segmentation, exactly as in Thermal planes.</li>
-<li><b>Project horizontally.</b> Convert positions to Lambert-93 (metres). Keep
-elapsed time and pool every altitude. There are no horizontal planes and no 10 m
-vertical grouping. Even a horizontally stationary edge contributes its duration.</li>
-<li><b>Distribute time.</b> Divide the map into 50 &times; 50 m pixels. Approximate each
-edge by linear motion between its endpoints. Split at every pixel boundary and
-assign each pixel exactly the elapsed time spent inside it. An edge already in a
-thermal when it enters a pixel contributes only its time inside.</li>
-<li><b>Sum and normalise.</b> Add these seconds across all trajectories and dates,
-divide by 3600, then by the pixel's area in km²:
-<b>D(B) = Σ time inside B / (3600 &times; area(B))</b>.<br>
-For example, 36 seconds in a 50 &times; 50 m pixel give
-0.01 hours / 0.0025 km² = <b>4 hours/km²</b>.</li>
+<li><b>Select:</b> consecutive fixes in the same climb run. Keep gaps,
+phase boundaries and separate flights apart.</li>
+<li><b>Project:</b> positions to Lambert-93. Pool every altitude.</li>
+<li><b>Split time:</b> assume linear motion along each edge and assign its time
+to the 50 &times; 50 m pixels it crosses. A stationary edge adds its full duration
+to its pixel.</li>
+<li><b>Sum:</b> D(B) = seconds inside pixel B / (3600 &times; area(B) in km²).</li>
 </ol>
+<p><b>Example:</b> 36 seconds in one pixel give
+0.01 hours / 0.0025 km² = <b>4 hours/km²</b>.</p>
+
 <h3>Regions and cells</h3>
-<p>Regions show the five thesis areas with a surrounding margin. All trajectories
-crossing the displayed frame contribute, even if take-off was elsewhere. Their HMM
-geometry uses consecutive decisions (one every
-{load_segmentation_config().decision_step_s:g} s); gaps longer than 1.5
-nominal decision steps are excluded. Cells are the same twelve 5 &times; 5 km squares as
-Thermal planes and reuse its saved continuous climb edges. There is no date filter
-in this tab. Paragliders and hang gliders are pooled.</p>
-<p>Separate pilots flying simultaneously each add their own time. Frequently flown
-locations and long climbs therefore accumulate more hours. Unvisited places and
-observed places without climb time both remain transparent: absence of colour does
-not establish absence of thermals. Overlapping regional frames must not be summed.</p>
-<h3>Zoom, colours and backgrounds</h3>
-<p>Zoom with the toolbar or mouse wheel; pan with the toolbar. When zoomed out,
-neighbouring pixels are combined by summing their time and dividing by their total
-area. Zoom reveals the original 50 m grid, never invented finer thermal detail.
-Axes use Lambert-93 kilometres. Each title reports total thermal hours in its
-whole frame, not just the zoomed view.</p>
-<p>Colours share a fixed logarithmic scale from 0.01 hours/km² to the largest
-50 m value in the prepared product, for all panels, segmentations and zoom levels.
-Positive values below 0.01 use the lightest colour; zero is transparent. Terrain
-and Density control the two opacities independently.</p>
-<p>The backgrounds are the same IGN Plan, aerial, Plan + contours, and Esri hillshade
-layers used in Thermal planes. Saved cell backgrounds are reused when sufficiently
-detailed. Other views request a newly georeferenced image at screen
-resolution (up to 2048 pixels per side, down to 1.25 m/pixel). New uncached views
-need an internet connection; cached views work offline while retained in the
-512 MiB cache.
-On a failed request an existing background may remain at its previous resolution;
-the status line reports this. Aerial acquisition dates differ from flight dates.</p>
+<ul>
+<li><b>Regions:</b> five thesis areas plus a margin. HMM decisions,
+one every {load_segmentation_config().decision_step_s:g} s;
+gaps longer than 1.5 decision steps are excluded.</li>
+<li><b>Cells:</b> the twelve Thermal planes squares; saved climb edges
+from the selected HMM or Vilpellet method.</li>
+<li><b>Coverage:</b> all trajectories crossing the frame, including take-offs
+elsewhere. This tab has no date or height filter.</li>
+</ul>
+
+<h3>Reading the map</h3>
+<ul>
+<li><b>Interpretation:</b> recorded climb time. Frequently flown sites, long
+climbs and simultaneous pilots each add time. Values are neither encounter
+probabilities, thermal counts nor yearly rates.</li>
+<li><b>Transparent:</b> zero recorded climb time, including unvisited areas.
+This does not establish absence of thermals. Regional frames can overlap;
+do not add their totals.</li>
+<li><b>Colour:</b> one logarithmic scale for all panels, methods and zooms.
+Lower limit 0.01 hours/km²; upper limit the larger of 1 and the product's largest
+50 m value. Smaller positive values use the lightest colour.</li>
+<li><b>Zoom:</b> mouse wheel or toolbar; drag with the hand tool.
+Coarser pixels sum time and area. Maximum thermal detail is 50 m;
+axes show Lambert-93 kilometres.</li>
+<li><b>Titles:</b> climb hours over the whole frame.
+Terrain and Density adjust background and density opacity separately.</li>
+</ul>
+
+<h3>Sources and backgrounds</h3>
+<p>{FLIGHT_SOURCE_HTML}: processed IGC positions and times supply the paths
+and durations. HMM / Vilpellet climb labels select which intervals contribute.</p>
+{background_sources_html()}
+<ul>
+<li><b>Access:</b> time grids are saved on the SSD. Detailed saved cell maps are
+reused; other views load online and remain available offline while cached
+(512 MiB).</li>
+<li><b>Map detail:</b> up to 2048 pixels per side, down to 1.25 m/pixel.
+Photo dates differ from flight dates.</li>
+<li><b>Failed request:</b> the previous background may remain at its old
+resolution; the status line reports it.</li>
+</ul>
 """
 
 
@@ -93,9 +101,9 @@ class DensityInfo(QDialog):
     def __init__(self, parent=None):
         """Show the complete definition alongside the plots."""
         super().__init__(parent)
-        self.setWindowTitle("Thermal density: how the maps are computed")
-        self.resize(660, 720)
-        text = QTextBrowser()
+        self.setWindowTitle("Thermal density: methods and sources")
+        self.resize(780, 780)
+        text = info_browser(self)
         text.setHtml(INFO_HTML)
         layout = QVBoxLayout(self)
         layout.addWidget(text)

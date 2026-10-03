@@ -1,39 +1,37 @@
-"""Quick reference for viewer counts, methods and sources.
-
-Configuration values come from the modules that use them. The per-tab Info panels
-hold the longer explanations.
-"""
+"""Quick reference for viewer data sources, counts and methods."""
 
 from __future__ import annotations
 
-from PyQt6.QtWidgets import QTextBrowser, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
+from ...analysis.segmentation.config import load_segmentation_config
 from ..geography import TERRAIN_BANDS
 from ..thermal_geometry import CELL_M
-from ..thermal_imagery import LAYERS
 from ..thermal_imagery import SERVICE as IGN_WMS
-from ..thermal_relief import SOURCE_URL as HILLSHADE_URL
 from ..thermal_ridges import DATASET_URL as RGE_ALTI_URL
 from ..thermal_ridges import LAYER as DEM_LAYER
 from ..thermal_ridges import PARAMETERS as DEM_WINDOW
+from .info_browser import info_browser
 from .map_view import _MIN_CELL_DEG, _SCATTER_MAX_POINTS, _TARGET_CELLS_ACROSS
-from .thermal_density import INFO_HTML as DENSITY_INFO
-
-FFVL_PARAGLIDING = "https://parapente.ffvl.fr"
-FFVL_HANG_GLIDING = "https://delta.ffvl.fr"
-NATURAL_EARTH = "https://www.naturalearthdata.com/"
-LICENCE_OUVERTE = "https://www.etalab.gouv.fr/licence-ouverte-open-licence/"
+from .source_notes import (
+    FLIGHT_SOURCE_HTML,
+    LICENCE_OUVERTE,
+    NATURAL_EARTH,
+    NATURAL_EARTH_WORLD,
+    aerial_dates_html,
+    background_sources_html,
+)
 
 
 def _contents() -> str:
     entries = [
+        ("sources", "Data sources"),
+        ("maps", "Background maps"),
         ("tab-planes", "Thermal planes"),
         ("thermal-points", "Intersections"),
         ("tab-density", "Thermal density"),
         ("tab-trajectory", "Trajectory"),
         ("tab-map", "Map"),
-        ("sources", "Data sources"),
-        ("maps", "Background maps"),
         ("caveats", "Limitations"),
     ]
     links = " &nbsp;·&nbsp; ".join(
@@ -43,55 +41,59 @@ def _contents() -> str:
 
 
 def _sources() -> str:
+    grid = int(DEM_WINDOW["grid_m"])
+    samples = int(CELL_M // grid) ** 2
     return f"""
 <a name="sources"></a><h3>Data sources</h3>
-<table border="1" cellspacing="0" cellpadding="6" width="100%">
-<tr><th>Source</th><th>Used for</th></tr>
-<tr><td>FFVL CFD:
-<a href="{FFVL_PARAGLIDING}">paragliders</a> /
-<a href="{FFVL_HANG_GLIDING}">hang gliders</a></td>
-<td>IGC positions, GNSS altitudes and times. The catalogue helps find flights.</td></tr>
+<table border="1" cellspacing="0" cellpadding="8" width="100%">
+<tr><th width="28%">Source / data</th><th>Where and why</th></tr>
+<tr><td>{FLIGHT_SOURCE_HTML}<br>IGC recordings</td><td>
+<b>Trajectory:</b> recorded positions, GNSS altitudes and times for raw / cleaned
+comparison.<br>
+<b>Map:</b> first retained free-flight fix for each launch location.<br>
+<b>Thermal planes:</b> climb paths and plane crossings.<br>
+<b>Thermal density:</b> paths and elapsed time for climb hours/km².
+</td></tr>
+<tr><td>FFVL CFD<br>XML catalogue</td><td>
+<b>Flight picker:</b> IDs, pilot names and catalogue metadata to find recordings.
+IGC links associate each entry with its flight file; calendar timing comes
+from the IGC recording.</td></tr>
 <tr><td><a href="{RGE_ALTI_URL}" title="{DEM_LAYER}">IGN RGE ALTI</a><br>
-<a href="{LICENCE_OUVERTE}">Licence Ouverte 2.0</a></td>
-<td>Mean terrain elevation for cell categories and plane heights.</td></tr>
-<tr><td><a href="{NATURAL_EARTH}">Natural Earth</a> (public domain)</td>
-<td>Coastlines and borders in the Map tab.</td></tr>
+Ground elevations</td><td><b>Thermal planes:</b> mean ground elevation sets
+the terrain category and reference for H = mean terrain + z.
+Each cell uses {samples:,} samples at {grid} m spacing.<br>
+<b>Thermal density → Cells:</b> reuses this terrain-based cell selection.</td></tr>
+<tr><td>Natural Earth<br>
+<a href="{NATURAL_EARTH_WORLD}">1:50 million</a> /
+<a href="{NATURAL_EARTH}">1:10 million</a><br>
+Admin-0 country polygons</td><td><b>Map</b> and <b>Thermal planes overview:</b>
+coastlines and borders at 1:50 million and 1:10 million respectively,
+to locate launches and selected cells.
+They provide geographic context; region filters use rectangular bounds.</td></tr>
 </table>
-<p>Prepared thermal products are read offline from the SSD. Thermal density fetches
-new background viewports online, with a bounded local cache. Saved map and
-elevation metadata record the source request and retrieval date; elevation rasters
-also carry a SHA-256 hash.</p>
+<p><b>Derived here:</b> cleaned trajectories, HMM / Vilpellet phase labels,
+cell rankings, crossings and time grids. These are computed from the archive.</p>
 """
 
 
 def _maps() -> str:
-    products = {
-        "colour": ("Colour map", "Plan IGN v2"),
-        "aerial": ("Aerial photo", "BD ORTHO"),
-        "topography": ("Topography + contours", "Plan IGN v2 + elevation contours"),
-    }
-    rows = "".join(
-        f'<tr><td>{name}</td><td><a href="{IGN_WMS}" '
-        f'title="{LAYERS[kind]}">{product}</a></td></tr>'
-        for kind, (name, product) in products.items()
-    )
-    pixel = CELL_M / 4000
     return f"""
 <a name="maps"></a><h3>Background maps</h3>
-<table border="1" cellspacing="0" cellpadding="6" width="100%">
-<tr><th>Viewer layer</th><th>Source</th></tr>
-{rows}
-<tr><td>Shaded relief</td>
-<td><a href="{HILLSHADE_URL}">Esri World Hillshade</a> and data contributors</td></tr>
-</table>
-<p>IGN maps: © IGN / Géoplateforme,
-<a href="{LICENCE_OUVERTE}">Licence Ouverte 2.0</a>.
-Thermal planes cell images: 4000 &times; 4000 pixels ({pixel:g} m/pixel);
-hillshade: 600 &times; 600.
-Thermal density requests the current viewport at screen resolution, up to 2048 pixels
-per side and down to 1.25 m/pixel, using a 512 MiB cache. Pixel size describes sampling,
-not accuracy. Aerial acquisition dates differ from flight dates; Thermal planes
-shows them below its controls.</p>
+{background_sources_html()}
+{aerial_dates_html()}
+<ul>
+<li><b>Thermal planes:</b> saved IGN cell images, 4000 &times; 4000 pixels
+({CELL_M / 4000:g} m/pixel); hillshade 600 &times; 600. Prepared maps and
+crossings are read offline from the SSD.</li>
+<li><b>Thermal density:</b> reuses suitable cell images or requests the current
+view online, up to 2048 pixels per side and down to 1.25 m/pixel.
+Cached views work offline while retained in the 512 MiB cache.</li>
+<li><b>Traceability:</b> IGN image and elevation metadata retain source requests
+and retrieval dates; elevation rasters also have SHA-256 hashes.</li>
+</ul>
+<p>IGN images are served by <a href="{IGN_WMS}">Géoplateforme WMS</a>.
+© IGN, <a href="{LICENCE_OUVERTE}">Licence Ouverte 2.0</a>.
+Natural Earth: public domain. Hillshade: Esri and data contributors.</p>
 """
 
 
@@ -99,14 +101,12 @@ def _trajectory_tab() -> str:
     return """
 <a name="tab-trajectory"></a><h3>Trajectory</h3>
 <ul>
-<li><b>Raw:</b> IGC fixes and GNSS altitude, dashed grey. Triangle = first fix;
-square = last fix. Recording gaps stay empty.</li>
-<li><b>Cleaned:</b> the selected IGC is processed again with the current
-configuration.</li>
-<li><b>Colours:</b> flight phase, preprocessing segment or discipline. Lines stop at
-segment boundaries, phase changes and gaps longer than 1.5 times the segment's
-median interval.</li>
-<li><b>Thermals only:</b> climb fixes. The title counts separate climb runs and sums
+<li><b>Raw:</b> IGC fixes and GNSS altitude, dashed grey.
+Triangle = first fix; square = last. Recording gaps stay empty.</li>
+<li><b>Cleaned:</b> selected IGC reprocessed with the current configuration.</li>
+<li><b>Colours:</b> phase, preprocessing segment or discipline. Lines stop at
+segment / phase boundaries and gaps &gt; 1.5 times the segment's median interval.</li>
+<li><b>Thermals only:</b> climb fixes. The title counts climb runs and sums
 their durations (last minus first fix).</li>
 </ul>
 """
@@ -117,106 +117,96 @@ def _map_tab() -> str:
 <a name="tab-map"></a><h3>Map</h3>
 <p>One launch per retained flight: its first free-flight fix after ground trimming.</p>
 <ul>
-<li><b>Density:</b> launches per degree-grid cell, logarithmic colour scale.
+<li><b>Density:</b> launches per degree-grid cell, logarithmic colours.
 Cell width = max({_MIN_CELL_DEG:g}&deg;, visible longitude span /
-{_TARGET_CELLS_ACROSS}); recalculated on zoom or pan.</li>
-<li><b>Points:</b> hover or click individual flights when at most
+{_TARGET_CELLS_ACROSS}); updates on zoom and pan.</li>
+<li><b>Points:</b> hover or click flights when at most
 {_SCATTER_MAX_POINTS:,} launches are visible.</li>
-<li><b>Filters:</b> Region requires a launch inside its box;
-Terrain uses launch altitude.
-The altitude bands are the same as <a href="#tab-planes">Thermal planes</a>,
-where categories use mean ground elevation instead.</li>
+<li><b>Region:</b> launch inside the selected box. <b>Terrain:</b> launch altitude,
+using the Thermal planes elevation bands. Thermal planes applies them to mean ground
+elevation instead.</li>
 </ul>
 """
 
 
 def _planes_tab() -> str:
     cell_km = int(CELL_M // 1000)
-    grid = int(DEM_WINDOW["grid_m"])
-    samples = int(CELL_M // grid) ** 2
     lo, mid, hi = (int(b[2]) for b in TERRAIN_BANDS[:3])
     return f"""
 <a name="tab-planes"></a><h3>Thermal planes</h3>
-<ol>
-<li><b>Grid:</b> divide the metropolitan-France map window into fixed
-{cell_km} &times; {cell_km} km squares in Lambert-93 (EPSG:2154).</li>
-<li><b>Count climbs:</b> continuous <b>Vilpellet climb runs</b> from eligible processed
-flights, over all dates and both disciplines. Each run counts once per cell,
-including re-entry; separate runs from one flight count separately.
-Take-off can be elsewhere.</li>
-<li><b>Select:</b> the <b>three cells with most climbs in each terrain category</b>
-(12 total). Categories use mean IGN ground elevation over the whole cell.</li>
-</ol>
-<p><b>Mean terrain bands:</b> Plains &lt; {lo} m · Hills {lo}&ndash;&lt;{mid} m ·
-Low mountains {mid}&ndash;&lt;{hi} m · High mountains &ge; {hi} m.<br>
-These describe elevation, not slope. There is no regional quota: a low alpine valley
-can qualify as Plains.</p>
-<p>Selection stays fixed when changing dates, height or segmentation method;
-the ranking always uses Vilpellet. Gaps and phase boundaries are never bridged.
-Duration and number of fixes add no weight.</p>
-<table border="1" cellspacing="0" cellpadding="6" width="100%">
-<tr><th>Count</th><th>Meaning</th></tr>
-<tr><td>Vilpellet climbs</td><td>Continuous climb runs used to rank the cell.</td></tr>
-<tr><td>Cell visitors</td><td>Distinct flights crossing the cell, any phase or
-altitude.</td></tr>
-<tr><td>Visible points</td><td>Climb crossings of the selected plane in the visible
-area and time interval. One flight can contribute several.</td></tr>
-<tr><td>Contributing flights</td><td>Distinct flights behind those visible
-points.</td></tr>
-</table>
-
-<a name="thermal-points"></a><h3>Intersection points</h3>
-<p><b>Plane altitude H = mean terrain + selected z.</b> The terrain mean uses
-{samples:,} IGN samples per cell, spaced {grid} m apart, with complete valid coverage.
-Height is relative to this cell mean, not the ground beneath each dot.</p>
 <ul>
-<li><b>A dot</b> is where the segment between consecutive climb-labelled fixes crosses
-H, interpolating position and time linearly. Labels come from the selected method
-applied to the whole processed flight; gaps and phase boundaries stay separate.</li>
-<li><b>Crossings:</b> both upward and downward within a climb run. Shared vertices
-count once; horizontal edges are skipped. Dots are coloured by discipline.</li>
-<li><b>Height increment:</b> spacing between selectable planes. Intersections are
-prepared every 10 m plus the highest level; each plane has zero thickness.</li>
-<li><b>Neighbours:</b> their flights use the selected cell's same absolute plane H.</li>
-<li><b>Daily panels:</b> Paris time, by default 08&ndash;11, 11&ndash;15 and
-15&ndash;18 (end excluded). The default day is the busiest June&ndash;August day.</li>
+<li><b>Selection:</b> fixed {cell_km} &times; {cell_km} km Lambert-93 squares;
+three per terrain category with the most continuous Vilpellet climb runs.
+All archived dates and both disciplines contribute.</li>
+<li><b>Counting:</b> each run counts once per visited cell, including re-entry.
+Separate runs from one flight count separately. Gaps and phase boundaries stay
+separate; duration adds no weight.</li>
+<li><b>Categories:</b> Plains &lt; {lo} m; Hills {lo}&ndash;&lt;{mid} m;
+Low mountains {mid}&ndash;&lt;{hi} m; High mountains &ge; {hi} m.
+These are mean-elevation bands. No regional quota.</li>
+<li><b>Fixed ranking:</b> dates, height and displayed segmentation do not change
+the selected cells. Cell visitors counts distinct flights, any phase or altitude.</li>
 </ul>
-<p><b>Many climbs can yield few dots:</b> only climbs crossing this exact height,
-inside the displayed area and time interval, contribute. Open <b>Thermal planes →
-Info</b> for the interpolation formula and worked example.</p>
+<a name="thermal-points"></a><h3>Intersection points</h3>
+<ul>
+<li><b>Plane:</b> H = cell mean terrain + selected z; zero thickness.
+Height increment sets the spacing between selectable planes.</li>
+<li><b>Dot:</b> a linearly interpolated crossing between consecutive climb fixes,
+at H and within the visible area and time interval. Upward and downward crossings
+count; shared vertices count once; horizontal edges are skipped.</li>
+<li><b>Counts:</b> one flight can add several dots; contributing flights counts
+unique flights. Neighbours use the central cell's same absolute H.</li>
+<li><b>Time:</b> Europe/Paris. Daily panels default to 08&ndash;11, 11&ndash;15,
+15&ndash;18, end excluded. Default day: busiest June&ndash;August day.</li>
+</ul>
+<p>Formulas and examples: <b>Thermal planes → Info</b>.</p>
 """
 
 
 def _density_tab() -> str:
-    return '<a name="tab-density"></a>' + DENSITY_INFO
+    return f"""
+<a name="tab-density"></a><h3>Thermal density</h3>
+<ul>
+<li><b>Measure:</b> cumulative climb hours / ground area in km².
+Linear climb edges split their elapsed time across 50 &times; 50 m pixels.</li>
+<li><b>Coverage:</b> all dates, heights and both disciplines; take-off can be
+elsewhere. Regions use HMM decisions (one every
+{load_segmentation_config().decision_step_s:g} s); cells use HMM or Vilpellet.</li>
+<li><b>Reading:</b> logarithmic colours. Zero is transparent; unvisited places
+and observed places with no climb time look the same. Values depend on flight
+coverage and are neither probabilities nor annual rates.</li>
+</ul>
+<p>Calculation and example: <b>Thermal density → Info</b>.</p>
+"""
 
 
 def _caveats() -> str:
     return """
 <a name="caveats"></a><h3>Limitations</h3>
 <ul>
-<li><b>Altitude:</b> recorder GNSS datums are not harmonised with IGN normal heights;
-height above the terrain mean retains this uncertainty.</li>
+<li><b>Altitude:</b> recorder GNSS datums are not harmonised with IGN normal heights.
+z measures height above the cell mean; local terrain clearance varies.</li>
 <li><b>Interpolation:</b> straight segments approximate curved flight paths;
-error increases with fix spacing and curvature.</li>
-<li><b>Thermals:</b> climb labels and intersection dots do not identify thermal
-centres.</li>
+error grows with fix spacing and curvature.</li>
+<li><b>Thermals:</b> climb labels and crossings do not identify thermal centres.</li>
+<li><b>Backgrounds:</b> pixel spacing is sampling, not positional accuracy.
+Photo acquisition dates differ from flight dates.</li>
 </ul>
 <p><a href="#contents">Back to contents</a></p>
 """
 
 
 def sources_html() -> str:
-    """The full page; thresholds come from the configuration and the code."""
+    """Build the reference page, with data sources before tab summaries."""
     return "".join(
         (
             _contents(),
+            _sources(),
+            _maps(),
             _planes_tab(),
             _density_tab(),
             _trajectory_tab(),
             _map_tab(),
-            _sources(),
-            _maps(),
             _caveats(),
         )
     )
@@ -228,8 +218,7 @@ class SourcesMethods(QWidget):
     def __init__(self, parent: QWidget | None = None):
         """Create an empty browser; reading configs waits for the tab to open."""
         super().__init__(parent)
-        self._browser = QTextBrowser()
-        self._browser.setOpenExternalLinks(True)
+        self._browser = info_browser(self)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._browser)

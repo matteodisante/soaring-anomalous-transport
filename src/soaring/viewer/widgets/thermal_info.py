@@ -1,184 +1,143 @@
-"""The Info panel of the Thermal planes tab: how its non-obvious numbers arise."""
+"""Definitions and sources for the Thermal planes Info panel."""
 
 from __future__ import annotations
 
-from PyQt6.QtWidgets import QDialog, QTextBrowser, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QWidget
 
 from ..geography import TERRAIN_BANDS
 from ..thermal_geometry import CELL_M
+from ..thermal_ridges import DATASET_URL as RGE_ALTI_URL
+from ..thermal_ridges import PARAMETERS as DEM_WINDOW
+from .info_browser import info_browser
+from .source_notes import (
+    FLIGHT_SOURCE_HTML,
+    LICENCE_OUVERTE,
+    aerial_dates_html,
+    background_sources_html,
+)
 
 
 def info_html() -> str:
-    """The panel text; thresholds are read from the code that applies them."""
+    """Explain selection, intersections and sources using the active thresholds."""
     lo, mid, hi = (int(b[2]) for b in TERRAIN_BANDS[:3])
     cell_km = int(CELL_M // 1000)
+    grid = int(DEM_WINDOW["grid_m"])
+    samples = int(CELL_M // grid) ** 2
     return f"""
-<h3>How the 12 cells are selected</h3>
+<h2>Thermal planes</h2>
+<p>Each dot is a climb trajectory crossing one horizontal plane.
+Colour identifies the discipline.</p>
+
+<h3>Cell selection</h3>
 <ol>
-<li><b>Partition the metropolitan-France map window.</b> A fixed Lambert-93
-(EPSG:2154) grid divides the area into <b>{cell_km} x {cell_km} km squares</b>.
-The grid is defined before counting climbs; its boundaries do not move with
-flight density.</li>
-<li><b>Count continuous Vilpellet climb runs in each cell.</b> Use all dates in
-the processed archive, pooling paragliders and hang gliders. Vilpellet labels
-the whole flight before any spatial cut, with its normal eligibility guards.
-Each continuous climb episode counts once in every cell it traverses, even if
-it took off elsewhere or leaves and re-enters the cell. Different climbs from
-the same flight count separately. Duration and number of fixes do not add weight.
-Crossings between consecutive fixes count; gaps and phase boundaries are never
-bridged. An isolated climb-labelled fix is not a trajectory segment. Cells
-without internal take-offs are eligible.</li>
-<li><b>Assign a terrain category.</b> Calculate the area-weighted mean IGN terrain
-elevation over the entire square. The category comes from that mean, with the
-thresholds below; it does not come from the launch altitude of visiting flights.</li>
-<li><b>Keep the three cells with most Vilpellet climbs in each category.</b>
-Sort separately within Plains, Hills, Low mountains and High mountains by climb
-run count, highest first. Select the first three in each group: <b>12 cells total</b>.
-Ties are broken by grid coordinates (ix, then iy).</li>
+<li><b>Grid:</b> fixed {cell_km} &times; {cell_km} km squares over the
+metropolitan-France map window, in Lambert-93 (EPSG:2154).</li>
+<li><b>Count:</b> continuous Vilpellet climb runs, all archived dates and both
+disciplines. Each run counts once per cell, including re-entry. Separate runs
+from one flight count separately; duration and number of fixes add no weight.</li>
+<li><b>Group:</b> by mean IGN terrain elevation over the entire cell.</li>
+<li><b>Keep:</b> the three cells with most climbs in each group: 12 total.
+Ties use grid coordinates (ix, then iy).</li>
 </ol>
-<p>P, H, L and M identify the four categories; rank 1 has the most Vilpellet climbs
-<i>within its category</i>. This all-date selection stays fixed when changing the
-displayed date interval, horizontal-plane height or segmentation method.
-The cell ranking always uses Vilpellet, even when displaying this work's HMM
-intersections. Total cell visitors and distinct climbing flights are shown
-separately in Cell details.</p>
+<p><b>Mean elevation bands:</b> Plains &lt; {lo} m; Hills {lo}&ndash;&lt;{mid} m;
+Low mountains {mid}&ndash;&lt;{hi} m; High mountains &ge; {hi} m.</p>
+<ul>
+<li><b>Ranking stays fixed</b> when dates, height or segmentation change.
+P, H, L and M identify the groups; rank 1 leads its group.</li>
+<li><b>No regional quota or minimum spacing.</b> Nearby alpine cells can win
+several places. A low valley can qualify as Plains; categories describe elevation.</li>
+<li><b>Whole flights are labelled before clipping.</b> Take-off may be elsewhere.
+Only continuous climb segments count; gaps, phase boundaries and isolated fixes
+add no crossings.</li>
+</ul>
 
-<h3>Why a busy cell can show few intersections</h3>
-<p><b>Cell visitors count all flight phases and all altitudes.</b> A gliding or
-descending flight counts as a visitor but does not add to the climb-run ranking.
-Even a cell with many climbs can have few at a particular altitude.
-A dot requires a trajectory segment labelled climb by the
-selected method to cross the exact selected horizontal plane inside the cell
-and time interval. Flights wholly above or below that plane contribute no dots;
-entirely unclassified flights cannot contribute climb dots either.</p>
-<p>For example, with a cell mean of 289 m, z = 100 m selects a plane at 389 m
-above sea level. Many flights can cross that cell while very few climb through
-389 m. Changing the plane height can therefore change the point count sharply.</p>
+<h3>Plane height and terrain source</h3>
+<p><b>H = mean terrain elevation + selected z.</b></p>
+<ul>
+<li><a href="{RGE_ALTI_URL}">IGN RGE ALTI</a> supplies ground elevations:
+{samples:,} samples per cell, {grid} m apart. The area-weighted mean uses unsmoothed
+values inside the square, excludes any outer buffer and requires complete coverage.</li>
+<li>This mean sets both the <b>terrain category</b> and the <b>plane reference</b>.
+Launch-altitude statistics in Cell details are retained for comparison only.</li>
+<li><b>z</b> is height above the cell mean. Local clearance varies with the ground
+under each dot. The upper limit is the highest supported trajectory altitude
+inside the cell minus its terrain mean.</li>
+<li><b>Height increment:</b> spacing between selectable planes (10, 20, 50, 100
+or 200 m). Each plane has zero thickness. Intersections are saved every 10 m,
+plus the exact highest level; the same z always gives the same dots.</li>
+</ul>
 
-<h3>Why the selected cells can cluster in the Alps</h3>
-<p>The ranking covers the metropolitan-France map window but applies <b>no
-regional quota or minimum spacing</b>. Several winners can belong to the same
-active valley. Plains and Hills name mean-elevation bands: a low alpine valley
-can be Plains even when mountains surround it. The winners represent the most
-active cells by Vilpellet climb-run count in the available archive,
-not a geographically balanced sample of France.</p>
-
-<h3>Mean terrain elevation and its source</h3>
-<p>The plane reference is the <b>area-weighted mean terrain elevation inside
-the entire {cell_km} x {cell_km} km cell</b>. Source:
-<a href="https://www.data.gouv.fr/datasets/rge-alti-r">IGN RGE ALTI</a>,
-Licence Ouverte 2.0. Saved elevation rasters are sampled every <b>25 m</b>:
-200 x 200 = <b>40,000 elevations per cell</b>. The mean uses the unsmoothed
-elevations and excludes the 500 m buffer around the saved raster. Complete valid
-terrain coverage is required. The source query, retrieval date, raster hash,
-sampling and coverage are saved with the data. Sampling is distinct from
-vertical accuracy; RGE ALTI's native product is finer than these extracts.</p>
-
-<h3>Categories</h3>
-<p>Categories use the same <b>mean IGN terrain elevation</b> as the plane reference:
-Plains &lt; {lo} m, Hills {lo}&ndash;&lt;{mid} m,
-Low mountains {mid}&ndash;&lt;{hi} m, High mountains &ge; {hi} m. They are altitude
-bands, not a measure of slope or relief. Launch medians and their supporting
-counts are retained in cell details only as an audit; they do not determine the
-category or eligibility. Cells without internal starts can be selected too.</p>
-
-<h3>The horizontal plane</h3>
-<p><b>Plane altitude = mean terrain elevation + selected z.</b> Each cell has
-one fixed reference; this is height above the cell mean, rather than clearance
-above the terrain directly under a dot. The slider goes from 0 to the highest
-supported trajectory altitude inside the cell minus the terrain mean.</p>
-<p><b>Height increment</b> is the spacing between selectable planes (10, 20,
-50, 100 or 200 m). Every plane has <b>zero thickness</b>. The viewer selects
-precomputed exact intersections on a 10 m lattice, plus the exact highest level.
-No altitude tolerance band or slab is used.</p>
-
-<a name="thermal-points"></a>
-<h3>How thermal points are calculated</h3>
-<p><b>Each dot represents one intersection of a climb trajectory with the
-selected horizontal plane.</b> The calculation follows these steps:</p>
+<a name="thermal-points"></a><h3>Intersection points</h3>
 <ol>
-<li><b>Select continuous climb edges.</b> Take pairs of consecutive fixes in
-the processed trajectory. Both fixes must be labelled <b>climb</b> by the selected
-method (this work / HMM or Vilpellet), within the same continuous climb run.
-Trajectory gaps and segment or phase boundaries are never bridged.</li>
-<li><b>Set the absolute plane altitude.</b> Let H = mean terrain elevation of
-the cell + selected z. For an edge with endpoint altitudes z<sub>0</sub> and
-z<sub>1</sub>, compute the intersection fraction:<br>
-<b>f = (H &minus; z<sub>0</sub>) / (z<sub>1</sub> &minus; z<sub>0</sub>).</b><br>
-An intersection must lie between the endpoints (0 &le; f &le; 1).
-There is no extrapolation. Horizontal edges, including those lying in the plane,
-are omitted because they have no isolated intersection.</li>
-<li><b>Interpolate position and time.</b> Join the two fixes with a straight
-segment and calculate:<br>
-x = x<sub>0</sub> + f (x<sub>1</sub> &minus; x<sub>0</sub>)<br>
-y = y<sub>0</sub> + f (y<sub>1</sub> &minus; y<sub>0</sub>)<br>
-t = t<sub>0</sub> + f (t<sub>1</sub> &minus; t<sub>0</sub>).<br>
-Here x and y are Lambert-93 coordinates and t is UTC time. Shared vertices of
-adjacent nonhorizontal edges are counted once; terminal intersections are kept.
-Both upward and downward intersections within a climb-labelled run are included.</li>
-<li><b>Filter and display.</b> Keep intersections inside the selected
-{cell_km} x {cell_km} km cell and the requested date/time interval. The daily
-comparison additionally filters by the Paris hour band. Plot the horizontal
-positions of intersections at <b>the selected plane only</b>, pooling all
-selected flights and dates. Point colour identifies the flight discipline.</li>
+<li>Take consecutive processed fixes labelled <b>climb</b> by the selected
+HMM or Vilpellet method, within one continuous climb run.</li>
+<li>For endpoint altitudes z<sub>0</sub>, z<sub>1</sub>, calculate
+<b>f = (H &minus; z<sub>0</sub>) / (z<sub>1</sub> &minus; z<sub>0</sub>)</b>.
+Keep 0 &le; f &le; 1; skip horizontal edges.</li>
+<li>Interpolate position and time:
+<b>(x, y, t) = (x<sub>0</sub>, y<sub>0</sub>, t<sub>0</sub>) +
+f &times; (&Delta;x, &Delta;y, &Delta;t)</b>.
+Coordinates are Lambert-93; time is UTC.</li>
+<li>Keep crossings in the visible area and selected time interval.
+Both upward and downward crossings count. Shared vertices count once;
+terminal crossings are kept.</li>
 </ol>
-<p><b>Example:</b> for H = 1,000 m, consecutive climb fixes at 997 m and
-1,003 m give f = 0.5: the dot is halfway between their positions and times.
-Neither fix needs to be at 1,000 m. An edge entirely below or above H gives no dot,
-even if it is close to the plane.</p>
-<p>The intersections are prepared at 10 m height intervals and at the cell's exact
-highest level. <b>Height increment changes the spacing of selectable planes,
-not their thickness.</b> At a given z, the same intersections are shown regardless
-of the increment used to reach it.</p>
-<p><b>Reading the counts:</b> one flight can intersect the same plane several
-times and contribute several dots. The number of points counts intersections;
-the number of flights counts distinct contributing flights. Several dots can
-belong to one thermal. No clustering or estimation of thermal centres is applied.</p>
+<p><b>Example:</b> H = 1,000 m; fixes at 997 and 1,003 m give f = 0.5.
+The crossing lies halfway between their positions and times.</p>
 
-<h3>Zoom and neighbouring cells</h3>
-<p><b>Zoom +</b> and <b>Zoom -</b> change the visible width between 0.5 and
-10 km. Use the toolbar's hand tool to drag the map; navigation is bounded to
-the selected cell and its eight immediate neighbours. <b>Reset cell</b> restores
-the central 5 x 5 km square. Zoom and pan are retained when changing the height
-or background. The dashed square marks the selected cell.</p>
-<p>When looking outside that square, the viewer shows <b>all flights crossing
-each neighbouring cell</b> in the chosen time interval, including flights that
-never crossed the central cell. Every visible point lies on the
-<b>same absolute plane H = selected cell's mean terrain + z</b>. Neighbouring
-terrain means do not tilt or step the plane. Counts of points and contributing
-flights refer to the visible map area; the central cell's visitor count is
-reported separately.</p>
-<p>Neighbouring crossings and maps are prepared offline on the SSD by
-scripts/pipeline/prepare_thermal_neighbours.py, with whole flights labelled
-before any spatial or temporal cut. The viewer only reads them: no archive,
-segmentation or Internet access is needed.</p>
+<h3>Counts</h3>
+<table border="1" cellspacing="0" cellpadding="8" width="100%">
+<tr><th>Label</th><th>What it counts</th></tr>
+<tr><td>Vilpellet climbs</td><td>Continuous climb runs used for ranking.</td></tr>
+<tr><td>Cell visitors</td><td>Distinct flights crossing the central cell,
+any phase or altitude, all dates.</td></tr>
+<tr><td>Visible points</td><td>Crossings of this exact plane in the visible area
+and selected interval. One flight can add several.</td></tr>
+<tr><td>Contributing flights</td><td>Distinct flights behind the visible
+points.</td></tr>
+</table>
+<p>A busy cell can show few dots: flights wholly above or below H contribute none.
+For a terrain mean of 289 m and z = 100 m, only crossings at H = 389 m count.</p>
 
-<h3>Trajectory source and vertical datum</h3>
-<p>Trajectories are processed <b>FFVL Coupe Fédérale de Distance IGC recordings</b>
-for paragliders and hang gliders. Flight heights use the recorder's GNSS altitude
-field. The selected method supplies climb labels, and positions and times of
-crossings are interpolated from consecutive climb fixes. IGN supplies normal
-terrain heights; the geoid/ellipsoid convention in the IGC files is not harmonised
-across recorders. The displayed height difference retains that vertical datum
-uncertainty.</p>
+<h3>Navigation and time</h3>
+<ul>
+<li><b>Zoom + / &minus;:</b> visible width 0.5&ndash;10 km. Drag with the toolbar's
+hand tool. Navigation covers the selected cell and its eight neighbours.
+<b>Reset cell</b> returns to the central {cell_km} &times; {cell_km} km square.</li>
+<li><b>Neighbours:</b> include their own visiting flights at the same absolute H.
+The dashed square marks the central cell. Zoom and pan persist across height
+and background changes.</li>
+<li><b>Calendar:</b> Europe/Paris time. UTC comes from the IGC header, first fix
+and trimming offset. Flights without recoverable UTC remain in the cell population
+but cannot enter a calendar interval.</li>
+<li><b>Daily panels:</b> default bands 08&ndash;11, 11&ndash;15, 15&ndash;18,
+end excluded, at the same z. The default day is the busiest June&ndash;August day.</li>
+</ul>
 
-<h3>Time</h3>
-<p>Dates and hours are Europe/Paris local time. The UTC time of a flight is
-recovered from the raw IGC header date and first fix, plus the offset removed by
-trimming. Flights without a recoverable UTC stay in the cell population but cannot
-enter a calendar interval. Morning / midday / afternoon panels use half-open hour
-bands at the same z. The default reference day is the busiest June&ndash;August
-day of the cell.</p>
+<h3>Flight data and limits</h3>
+<ul>
+<li><b>Source:</b> {FLIGHT_SOURCE_HTML}. IGC positions, GNSS altitudes and times
+supply the trajectories. This work's HMM or Vilpellet supplies the climb labels.</li>
+<li><b>Altitude:</b> recorder GNSS datums are not harmonised with IGN normal
+heights. The height difference retains this uncertainty.</li>
+<li><b>Interpolation:</b> straight segments approximate curved paths;
+error grows with fix spacing and curvature.</li>
+<li><b>Dots:</b> trajectory crossings. Several can belong to one thermal;
+thermal centres are not estimated.</li>
+</ul>
 
-<h3>Backgrounds</h3>
-<p><b>Topography + contours &middot; IGN</b> combines Plan IGN with the official
-<a href="https://www.data.gouv.fr/datasets/courbes-de-niveau-4">IGN elevation
-contours</a>, via the WMS layers GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2 and
-ELEVATION.CONTOUR.LINE. The IGN colour map and BD ORTHO aerial photographs are
-also available, together with Esri World Hillshade. IGN cell maps are saved at
-4,000 x 4,000 pixels (1.25 m/pixel); sampling does not imply metre-level map
-accuracy. Background opacity starts at 85% and is adjustable. Attribution,
-sampling and aerial acquisition dates appear below the controls.</p>
+<h3>Backgrounds and access</h3>
+{background_sources_html()}
+{aerial_dates_html()}
+<ul>
+<li><b>Saved images:</b> IGN cell maps 4,000 &times; 4,000 pixels
+({CELL_M / 4000:g} m/pixel); hillshade 600 &times; 600. Pixel size is sampling,
+not positional accuracy. Background opacity starts at 85%.</li>
+<li><b>Offline:</b> prepared crossings, neighbours and maps are read from the SSD.</li>
+<li><b>Provenance:</b> saved elevation queries, retrieval dates, raster hashes
+and coverage make the terrain mean traceable.
+IGN data: <a href="{LICENCE_OUVERTE}">Licence Ouverte 2.0</a>.</li>
+</ul>
 """
 
 
@@ -186,12 +145,11 @@ class ThermalInfo(QDialog):
     """A non-modal, resizable reading panel."""
 
     def __init__(self, parent: QWidget | None = None):
-        """Show the static text in a rich-text browser."""
+        """Show the definitions in a readable rich-text browser."""
         super().__init__(parent)
-        self.setWindowTitle("Thermal planes: how things are computed")
-        self.resize(560, 640)
-        browser = QTextBrowser()
-        browser.setOpenExternalLinks(True)
+        self.setWindowTitle("Thermal planes: methods and sources")
+        self.resize(780, 780)
+        browser = info_browser(self)
         browser.setHtml(info_html())
         layout = QVBoxLayout(self)
         layout.addWidget(browser)
