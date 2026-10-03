@@ -10,7 +10,6 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
     QDoubleSpinBox,
-    QHBoxLayout,
     QLabel,
     QPushButton,
     QTextBrowser,
@@ -21,6 +20,7 @@ from PyQt6.QtWidgets import (
 from .. import geography, thermal_regions
 from ..density_view import AdaptiveDensity, histogram_source
 from ..thermal_store import load_store
+from .flow_layout import FlowLayout
 from .thermal_plane import _Worker
 
 INFO_HTML = """
@@ -96,6 +96,9 @@ class ThermalDensity(QWidget):
         self._area.addItem("Cells", "cells")
         self._item = QComboBox()
         self._item.setMinimumContentsLength(24)
+        self._item.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        )
         self._source = QComboBox()
         self._source.addItem("This work (HMM)", "own")
         self._source.addItem("Jérémie (Vilpellet)", "vilpellet")
@@ -129,17 +132,16 @@ class ThermalDensity(QWidget):
         self._canvas = FigureCanvasQTAgg(self._figure)
         self._toolbar = NavigationToolbar2QT(self._canvas, self)
 
-        top = QHBoxLayout()
+        top = FlowLayout()
         for widget in (self._area, self._item, self._source):
             top.addWidget(widget)
-        top.addStretch(1)
         top.addWidget(self._reload)
         top.addWidget(self._info)
-        look = QHBoxLayout()
+        look = FlowLayout()
         look.addWidget(QLabel("Background"))
         for widget in (self._background, self._terrain, self._strength):
             look.addWidget(widget)
-        look.addWidget(self._toolbar, 1)
+        look.addWidget(self._toolbar)
         layout = QVBoxLayout(self)
         layout.addLayout(top)
         layout.addLayout(look)

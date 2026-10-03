@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, cast
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
-from PyQt6.QtCore import QEvent, Qt
+from PyQt6.QtCore import QEvent, QSize, Qt
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QFileDialog,
@@ -76,7 +76,13 @@ class MainWindow(QMainWindow):
         """Build the picker/controls/canvas layout and show an empty plot."""
         super().__init__()
         self.setWindowTitle("Soaring trajectory viewer")
-        self.resize(1300, 820)
+        # Leave space for the native title bar and window frame on small screens.
+        initial_size = QSize(1300, 820)
+        screen = self.screen()
+        if screen is not None:
+            available = screen.availableGeometry().size() - QSize(40, 60)
+            initial_size = initial_size.boundedTo(available)
+        self.resize(initial_size)
 
         from ..analysis.config import load_preproc_config
 
@@ -97,7 +103,7 @@ class MainWindow(QMainWindow):
         self._picker = FlightPicker()
         self._picker.flight_chosen.connect(self._on_flight_chosen)
         self._picker.folders_changed.connect(self._on_folders_changed)
-        self._picker.setMinimumWidth(320)
+        self._picker.setMinimumWidth(260)
         self._picker.setMaximumWidth(420)
 
         self._controls = PlotControls()
@@ -152,9 +158,9 @@ class MainWindow(QMainWindow):
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(self._picker)
         splitter.addWidget(self._tabs)
-        splitter.setStretchFactor(0, 0)
-        splitter.setStretchFactor(1, 1)
-        splitter.setSizes([340, 960])
+        splitter.setStretchFactor(0, 1)
+        splitter.setStretchFactor(1, 3)
+        splitter.setSizes([320, 980])
         self._splitter = splitter
         self.setCentralWidget(splitter)
 

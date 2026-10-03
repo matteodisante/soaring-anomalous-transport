@@ -1,4 +1,4 @@
-"""Camera regressions: display changes must preserve interactive navigation."""
+"""Window resizing and camera changes must preserve interactive navigation."""
 
 from pathlib import Path
 from types import SimpleNamespace
@@ -127,3 +127,46 @@ def test_fullscreen_exit_after_resize_and_single_map_focus(window, qapp, monkeyp
     assert window._fullscreen_state is None
     assert view._view.currentData() == "midday"
     assert view._panel_indices == [1]
+
+
+@pytest.mark.parametrize("width,height", [(1000, 700), (800, 600)])
+def test_all_tabs_resize_and_keep_controls_inside_window(
+    window, qapp, monkeypatch, width, height
+):
+    from PyQt6.QtCore import QPoint, QRect, QSize
+    from PyQt6.QtWidgets import QLayout
+
+    from soaring.viewer.widgets.flow_layout import FlowLayout
+
+    for view in (window._map_view, window._thermal_plane, window._thermal_density):
+        monkeypatch.setattr(view, "ensure_loaded", lambda: None)
+    # Prepared cell descriptions must not grow the minimum window width either.
+    window._thermal_plane._cells.blockSignals(True)
+    window._thermal_plane._cells.addItem("High mountains · many flights · " * 6)
+    window._controls._chk_3d.setChecked(True)
+    window.show()
+    window.resize(width, height)
+    for index in range(window._tabs.count()):
+        window._tabs.setCurrentIndex(index)
+        qapp.processEvents()
+        assert window.size() == QSize(width, height)
+        tab = window._tabs.currentWidget()
+        canvas = window._canvas if index == 0 else getattr(tab, "_canvas", None)
+        if canvas is not None:
+            assert canvas.width() > 200 and canvas.height() > 100
+        for layout in tab.findChildren(QLayout):
+            if not isinstance(layout, FlowLayout):
+                continue
+            for item_index in range(layout.count()):
+                widget = layout.itemAt(item_index).widget()
+                if widget is not None and widget.isVisible():
+                    bounds = QRect(widget.mapTo(window, QPoint()), widget.size())
+                    assert window.rect().contains(bounds), (index, bounds)
+
+
+def test_initial_window_fits_available_screen(window, qapp):
+    window.show()
+    qapp.processEvents()
+    available = window.screen().availableGeometry()
+    assert window.width() <= available.width()
+    assert window.height() <= available.height()

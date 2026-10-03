@@ -5,9 +5,8 @@ selected frame actually has (:mod:`soaring.viewer.data`'s contract -- ``lon``/``
 ``alt`` for the geographic frame, ``E``/``N``/``z`` for the local ENU one), so the user
 picks any two (2D) or three (3D) of them freely, in either order.
 
-Laid out as compact horizontal strips (one per concern: axes, 3D view, visibility/
-export), not the vertical stack of form rows this widget started as -- that stack ate
-most of the window's height before the plot canvas ever got any of it.
+Controls wrap within each group as the window narrows, keeping the plot resizable
+without hiding the axes, 3D view or visibility/export settings.
 """
 
 from __future__ import annotations
@@ -25,6 +24,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from .flow_layout import FlowLayout, labeled_control
+
 _GEOGRAPHIC_AXES = [("lon", "Longitude"), ("lat", "Latitude"), ("alt", "Altitude")]
 _ENU_AXES = [("E", "East"), ("N", "North"), ("z", "Altitude (z)")]
 
@@ -33,16 +34,6 @@ _ENU_AXES = [("E", "East"), ("N", "North"), ("z", "Altitude (z)")]
 _DEFAULT_AZIM_DEG = -60
 _DEFAULT_ELEV_DEG = 30
 _DEFAULT_ZOOM_PERCENT = 100
-
-
-def _labeled(text: str, widget: QWidget) -> QWidget:
-    """``text`` and ``widget`` side by side, as one compact unit for an QHBoxLayout."""
-    row = QWidget()
-    layout = QHBoxLayout(row)
-    layout.setContentsMargins(0, 0, 0, 0)
-    layout.addWidget(QLabel(text))
-    layout.addWidget(widget)
-    return row
 
 
 class PlotControls(QWidget):
@@ -75,13 +66,12 @@ class PlotControls(QWidget):
         self._z_combo = QComboBox()
         self._chk_3d = QCheckBox("3D")
 
-        axes_row = QHBoxLayout()
-        axes_row.addWidget(_labeled("Frame", self._frame_combo))
-        axes_row.addWidget(_labeled("X", self._x_combo))
-        axes_row.addWidget(_labeled("Y", self._y_combo))
+        axes_row = FlowLayout()
+        axes_row.addWidget(labeled_control("Frame", self._frame_combo))
+        axes_row.addWidget(labeled_control("X", self._x_combo))
+        axes_row.addWidget(labeled_control("Y", self._y_combo))
         axes_row.addWidget(self._chk_3d)
-        axes_row.addWidget(_labeled("Z", self._z_combo))
-        axes_row.addStretch(1)
+        axes_row.addWidget(labeled_control("Z", self._z_combo))
         axes_box = QGroupBox("Axes")
         axes_box.setLayout(axes_row)
 
@@ -96,12 +86,11 @@ class PlotControls(QWidget):
         )
         self._btn_reset_view = QPushButton("Reset view")
 
-        view3d_row = QHBoxLayout()
-        view3d_row.addWidget(_labeled("Azimuth", azim_unit))
-        view3d_row.addWidget(_labeled("Elevation", elev_unit))
-        view3d_row.addWidget(_labeled("Zoom", zoom_unit))
+        view3d_row = FlowLayout()
+        view3d_row.addWidget(labeled_control("Azimuth", azim_unit))
+        view3d_row.addWidget(labeled_control("Elevation", elev_unit))
+        view3d_row.addWidget(labeled_control("Zoom", zoom_unit))
         view3d_row.addWidget(self._btn_reset_view)
-        view3d_row.addStretch(1)
         self._box_3d_view = QGroupBox("3D view (drag the plot, or use the sliders)")
         self._box_3d_view.setLayout(view3d_row)
 
@@ -122,14 +111,13 @@ class PlotControls(QWidget):
         self._btn_fullscreen = QPushButton("Full screen")
         self._btn_save_pdf = QPushButton("Save PDF…")
 
-        display_row = QHBoxLayout()
+        display_row = FlowLayout()
         display_row.addWidget(self._chk_dms)
         display_row.addWidget(self._chk_raw)
         display_row.addWidget(self._chk_cleaned)
-        display_row.addWidget(_labeled("Cleaned colour", self._color_combo))
-        display_row.addWidget(_labeled("Segmentation", self._segmentation_combo))
+        display_row.addWidget(labeled_control("Cleaned colour", self._color_combo))
+        display_row.addWidget(labeled_control("Segmentation", self._segmentation_combo))
         display_row.addWidget(self._chk_climb_only)
-        display_row.addStretch(1)
         display_row.addWidget(self._btn_fullscreen)
         display_row.addWidget(self._btn_save_pdf)
 

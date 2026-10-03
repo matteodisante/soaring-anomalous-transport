@@ -24,7 +24,6 @@ from PyQt6.QtCore import QPoint, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
-    QHBoxLayout,
     QLabel,
     QPushButton,
     QToolTip,
@@ -36,6 +35,7 @@ from soaring.reporting.style import ILLUSTRATION_COLORS
 
 from ...reporting.disciplines import DISCIPLINES
 from .. import catalog_index, geography
+from .flow_layout import FlowLayout, labeled_control
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -158,19 +158,14 @@ class MapView(QWidget):
             self._terrain_combo.addItem(name, name)
         self._btn_reload = QPushButton("Reload")
         self._status = QLabel("Not loaded yet -- switch to this tab, or press Reload.")
+        self._status.setWordWrap(True)
 
-        top = QHBoxLayout()
-        top.addWidget(QLabel("Show"))
-        top.addWidget(self._discipline_combo)
-        top.addWidget(QLabel("Zone"))
-        top.addWidget(self._zone_combo)
-        top.addWidget(QLabel("Region"))
-        top.addWidget(self._region_combo)
-        top.addWidget(QLabel("Terrain"))
-        top.addWidget(self._terrain_combo)
+        top = FlowLayout()
+        top.addWidget(labeled_control("Show", self._discipline_combo))
+        top.addWidget(labeled_control("Zone", self._zone_combo))
+        top.addWidget(labeled_control("Region", self._region_combo))
+        top.addWidget(labeled_control("Terrain", self._terrain_combo))
         top.addWidget(self._btn_reload)
-        top.addStretch(1)
-        top.addWidget(self._status)
 
         self._figure = Figure(figsize=(8.0, 6.0))
         self._canvas = FigureCanvasQTAgg(self._figure)
@@ -179,6 +174,7 @@ class MapView(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
         layout.addLayout(top)
+        layout.addWidget(self._status)
         layout.addWidget(self._toolbar)
         layout.addWidget(self._canvas, 1)
 

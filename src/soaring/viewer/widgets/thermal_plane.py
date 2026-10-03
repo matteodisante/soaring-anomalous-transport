@@ -20,7 +20,6 @@ from PyQt6.QtWidgets import (
     QDateEdit,
     QDateTimeEdit,
     QDoubleSpinBox,
-    QHBoxLayout,
     QLabel,
     QPushButton,
     QSlider,
@@ -40,6 +39,7 @@ from ..thermal_store import (
     load_store,
     neighbour_frames,
 )
+from .flow_layout import FlowLayout, labeled_control
 from .thermal_info import ThermalInfo
 
 NEIGHBOURS_MISSING = (
@@ -187,6 +187,9 @@ class ThermalPlane(QWidget):
         )
         self._cells = QComboBox()
         self._cells.setMinimumContentsLength(20)
+        self._cells.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        )
         self._cells.setToolTip(
             "Ranked by distinct cell visitors across all dates, at any altitude "
             "and in any flight phase. This is not the number of climbing flights "
@@ -291,20 +294,18 @@ class ThermalPlane(QWidget):
         self._info_panel: ThermalInfo | None = None
         self._info.clicked.connect(self._show_info)
         self._summary.hide()
-        top = QHBoxLayout()
+        top = FlowLayout()
         for widget in (self._mode, self._cells, self._source):
             top.addWidget(widget)
         self._time_settings = QWidget()
-        times = QHBoxLayout(self._time_settings)
+        times = FlowLayout(self._time_settings)
         times.setContentsMargins(0, 0, 0, 0)
         for label, widget in (("From", self._start), ("To", self._end)):
-            times.addWidget(QLabel(label))
-            times.addWidget(widget)
-        heights = QHBoxLayout()
+            times.addWidget(labeled_control(label, widget))
+        heights = FlowLayout()
         heights.addWidget(QLabel("Horizontal plane"))
-        heights.addWidget(self._slider, 1)
-        heights.addWidget(QLabel("Height increment"))
-        heights.addWidget(self._step)
+        heights.addWidget(self._slider)
+        heights.addWidget(labeled_control("Height increment", self._step))
         heights.addWidget(self._height)
         heights.addWidget(self._background)
         heights.addWidget(self._relief_strength)
@@ -321,7 +322,7 @@ class ThermalPlane(QWidget):
         layout.setSpacing(4)
         layout.addWidget(self._time_settings)
         self._daily_settings = QWidget()
-        daily = QHBoxLayout(self._daily_settings)
+        daily = FlowLayout(self._daily_settings)
         daily.setContentsMargins(0, 0, 0, 0)
         for item in (
             self._day,
@@ -344,10 +345,9 @@ class ThermalPlane(QWidget):
         layout.addWidget(self._provenance)
         layout.addWidget(self._image_info)
         self._toolbar = NavigationToolbar2QT(self._canvas, self)
-        navigation = QHBoxLayout()
+        navigation = FlowLayout()
         navigation.addWidget(self._toolbar)
-        navigation.addWidget(QLabel("View"))
-        navigation.addWidget(self._view)
+        navigation.addWidget(labeled_control("View", self._view))
         self._zoom_in = QPushButton("Zoom +")
         self._zoom_out = QPushButton("Zoom -")
         self._reset_view = QPushButton("Reset cell")
@@ -359,7 +359,6 @@ class ThermalPlane(QWidget):
         self._reset_view.setToolTip("Return to the selected 5 x 5 km cell")
         for button in (self._zoom_in, self._zoom_out, self._reset_view):
             navigation.addWidget(button)
-        navigation.addStretch(1)
         for button in (
             self._info,
             self._details,
