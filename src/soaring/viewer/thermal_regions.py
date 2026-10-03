@@ -1,12 +1,12 @@
-"""Climb-point density inside the five named regional boxes, prepared once offline.
+"""Legacy climb-point counts and the shared definitions of the five regional boxes.
 
 A region spans hundreds of kilometres, so this reads each discipline's already-decoded
 ``segmentation/phase_points.parquet`` (HMM output) for the flights launching inside the
 box (the population :func:`soaring.analysis.regions.region_box_masks` selects), bins
 the lon/lat of their climb-phase fixes with every height pooled at 0.001 degrees
-(about 100 m), and saves only the non-empty bins. The viewer opens that small file and
-derives coarser levels (0.003, 0.01, 0.03 degrees) so a zoomed-out view stays light and
-a zoomed-in one shows the fine grid; it never touches the archive.
+(about 100 m), and saves only the non-empty bins. These legacy counts remain readable
+for historical analyses. The viewer now uses :mod:`soaring.viewer.thermal_time`
+and ``thermal-duration.npz`` for cumulative hours/km² instead.
 
 No Qt import (see the package docstring).
 """

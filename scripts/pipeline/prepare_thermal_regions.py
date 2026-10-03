@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Bin climb points of the five regional boxes into the viewer's SSD file."""
+"""Prepare legacy regional point counts and static regional backgrounds.
+
+For the current viewer's hours/km² maps, use prepare_thermal_density.py instead.
+"""
 
 from __future__ import annotations
 

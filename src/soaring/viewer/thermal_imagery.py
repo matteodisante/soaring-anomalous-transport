@@ -72,7 +72,7 @@ def _download(url):
             time.sleep(2**attempt)
 
 
-def fetch_image(folder, bounds, crs, size, kind):
+def fetch_image(folder, bounds, crs, size, kind, *, downloader=None):
     """Request exactly one georeferenced image; retain attribution and provenance."""
     params = {
         "SERVICE": "WMS",
@@ -94,6 +94,7 @@ def fetch_image(folder, bounds, crs, size, kind):
     if target.exists() and meta.exists():
         info = json.loads(meta.read_text())
         info.setdefault("request_url", SERVICE + "?" + query)
+        info.setdefault("cache_key", digest)
         return info, target.read_bytes()
     requests = []
     if kind == "topography" and max(size) > 1024:
@@ -114,7 +115,12 @@ def fetch_image(folder, bounds, crs, size, kind):
                     n - (n - s) * y0 / height,
                 )
                 tile_info, tile = fetch_image(
-                    folder, tile_bounds, crs, (x1 - x0, y1 - y0), kind
+                    folder,
+                    tile_bounds,
+                    crs,
+                    (x1 - x0, y1 - y0),
+                    kind,
+                    downloader=downloader,
                 )
                 requests.extend(
                     tile_info.get("request_urls", [tile_info["request_url"]])
@@ -125,7 +131,7 @@ def fetch_image(folder, bounds, crs, size, kind):
         mosaic.save(output, format="PNG")
         payload = output.getvalue()
     else:
-        payload = _download(SERVICE + "?" + query)
+        payload = (downloader or _download)(SERVICE + "?" + query)
     with Image.open(io.BytesIO(payload)) as img:
         img.verify()
         if img.size != tuple(size):
@@ -133,6 +139,7 @@ def fetch_image(folder, bounds, crs, size, kind):
                 "IGN image dimensions differ from the requested resolution"
             )
     info = {
+        "cache_key": digest,
         "extent": bounds,
         "crs": crs,
         "size": size,

@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from PyQt6.QtWidgets import QTextBrowser, QVBoxLayout, QWidget
 
-from ...analysis.segmentation.config import load_segmentation_config
-from .. import thermal_regions
 from ..geography import TERRAIN_BANDS
 from ..thermal_geometry import CELL_M
 from ..thermal_imagery import LAYERS
@@ -19,6 +17,7 @@ from ..thermal_ridges import DATASET_URL as RGE_ALTI_URL
 from ..thermal_ridges import LAYER as DEM_LAYER
 from ..thermal_ridges import PARAMETERS as DEM_WINDOW
 from .map_view import _MIN_CELL_DEG, _SCATTER_MAX_POINTS, _TARGET_CELLS_ACROSS
+from .thermal_density import INFO_HTML as DENSITY_INFO
 
 FFVL_PARAGLIDING = "https://parapente.ffvl.fr"
 FFVL_HANG_GLIDING = "https://delta.ffvl.fr"
@@ -56,9 +55,10 @@ def _sources() -> str:
 <a href="{LICENCE_OUVERTE}">Licence Ouverte 2.0</a></td>
 <td>Mean terrain elevation for cell categories and plane heights.</td></tr>
 <tr><td><a href="{NATURAL_EARTH}">Natural Earth</a> (public domain)</td>
-<td>Coastlines and borders in Map and regional density views.</td></tr>
+<td>Coastlines and borders in the Map tab.</td></tr>
 </table>
-<p>Prepared maps and thermal products are read offline from the SSD. Saved map and
+<p>Prepared thermal products are read offline from the SSD. Thermal density fetches
+new background viewports online, with a bounded local cache. Saved map and
 elevation metadata record the source request and retrieval date; elevation rasters
 also carry a SHA-256 hash.</p>
 """
@@ -86,9 +86,12 @@ def _maps() -> str:
 </table>
 <p>IGN maps: © IGN / Géoplateforme,
 <a href="{LICENCE_OUVERTE}">Licence Ouverte 2.0</a>.
-Cell images: 4000 &times; 4000 pixels ({pixel:g} m/pixel); hillshade: 600 &times; 600.
-Regional images: 4000 pixels wide. Pixel size describes sampling, not accuracy.
-Aerial acquisition dates appear below the controls and differ from flight dates.</p>
+Thermal planes cell images: 4000 &times; 4000 pixels ({pixel:g} m/pixel);
+hillshade: 600 &times; 600.
+Thermal density requests the current viewport at screen resolution, up to 2048 pixels
+per side and down to 1.25 m/pixel, using a 512 MiB cache. Pixel size describes sampling,
+not accuracy. Aerial acquisition dates differ from flight dates; Thermal planes
+shows them below its controls.</p>
 """
 
 
@@ -185,25 +188,7 @@ Info</b> for the interpolation formula and worked example.</p>
 
 
 def _density_tab() -> str:
-    fine = thermal_regions.FINE_DEG
-    seg = load_segmentation_config()
-    return f"""
-<a name="tab-density"></a><h3>Thermal density</h3>
-<table border="1" cellspacing="0" cellpadding="6" width="100%">
-<tr><th>View</th><th>Points counted</th><th>Interpretation</th></tr>
-<tr><td>Regions</td><td>HMM climb decisions, one every {seg.decision_step_s:g} s;
-all heights. Flights must launch inside the region's box.</td>
-<td>Time spent climbing. Finest bins: {fine:g}&deg;; coarser when zoomed out.</td></tr>
-<tr><td>Cells</td><td>Plane intersections pooled across 10 m height levels,
-using the selected segmentation and all dates.</td>
-<td>More height levels crossed = more points. Bins: multiples of 10 m,
-about 150 across the view.</td></tr>
-</table>
-<p>Counts are points, not distinct thermals or flights. Colours use a logarithmic scale
-from 1 to the visible maximum; empty bins are transparent. Each panel rescales on zoom,
-so compare counts rather than colours across panels. Open <b>Thermal density → Info</b>
-for binning details.</p>
-"""
+    return '<a name="tab-density"></a>' + DENSITY_INFO
 
 
 def _caveats() -> str:

@@ -1,0 +1,413 @@
+{
+  "created": "2026-10-03T16:03:35.672726+00:00",
+  "base_m": 50.0,
+  "complete": true,
+  "inputs": [
+    {
+      "path": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/segmentation/phase_points.parquet",
+      "bytes": 13147688560,
+      "mtime_ns": 1789224805920000000
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/flights_meta.parquet",
+      "bytes": 13474270,
+      "mtime_ns": 1789159117260000000
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc/derived/segmentation/phase_points.parquet",
+      "bytes": 570033964,
+      "mtime_ns": 1789225163260000000
+    },
+    {
+      "path": "/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc/derived/flights_meta.parquet",
+      "bytes": 592328,
+      "mtime_ns": 1789159394710000000
+    }
+  ],
+  "stages": {
+    "paragliders": {
+      "seconds": 359.13110912499906,
+      "rows": 171663465,
+      "edges": 49209655,
+      "total_rows": 171663465
+    },
+    "hang gliders": {
+      "seconds": 6.510257542002364,
+      "rows": 7301634,
+      "edges": 2453400,
+      "total_rows": 7301634
+    },
+    "cells": {
+      "seconds": 48.01531249999971,
+      "products": 240726
+    }
+  },
+  "snapshot": {
+    "archive_signature": "214e518be91ed49e826f554cabdf969f7d68f237baf91e070506b33595e01028",
+    "segmentation_signatures": "{\"own\": \"2ca7387b777c86656ee9592793e4cef41e0be550d092df6937b854d852141422\", \"vilpellet\": \"c0d567438c6e402422301f0c7b4b10c14371ad31f7afa93b397097a1042344d3\"}"
+  },
+  "elapsed_s": 428.8880422080001,
+  "output_bytes": 113559386,
+  "grids": {
+    "region/Alps/own": {
+      "hours": 94350.1976002657,
+      "occupied_pixels": 5017647,
+      "bounds": [
+        859800.0,
+        6269000.0,
+        1289850.0,
+        6670100.0
+      ]
+    },
+    "region/Pyrenees/own": {
+      "hours": 11802.198000184551,
+      "occupied_pixels": 1329226,
+      "bounds": [
+        266350.0,
+        6066500.0,
+        750100.0,
+        6313900.0
+      ]
+    },
+    "region/Channel Coast/own": {
+      "hours": 3812.9435135331078,
+      "occupied_pixels": 1383875,
+      "bounds": [
+        319900.0,
+        6766850.0,
+        651250.0,
+        7167750.0
+      ]
+    },
+    "region/Champagne-Lorraine/own": {
+      "hours": 3319.334187736403,
+      "occupied_pixels": 1503479,
+      "bounds": [
+        610000.0,
+        6733250.0,
+        962450.0,
+        7094800.0
+      ]
+    },
+    "region/Massif Central/own": {
+      "hours": 12982.349828617342,
+      "occupied_pixels": 3263501,
+      "bounds": [
+        578200.0,
+        6244500.0,
+        854250.0,
+        6601800.0
+      ]
+    },
+    "cell/89/1375/own": {
+      "hours": 259.8328538449746,
+      "occupied_pixels": 2722,
+      "bounds": [
+        445000.0,
+        6875000.0,
+        450000.0,
+        6880000.0
+      ]
+    },
+    "cell/89/1375/vilpellet": {
+      "hours": 257.37620496095315,
+      "occupied_pixels": 2514,
+      "bounds": [
+        445000.0,
+        6875000.0,
+        450000.0,
+        6880000.0
+      ]
+    },
+    "cell/89/1374/own": {
+      "hours": 225.72350347584734,
+      "occupied_pixels": 3319,
+      "bounds": [
+        445000.0,
+        6870000.0,
+        450000.0,
+        6875000.0
+      ]
+    },
+    "cell/89/1374/vilpellet": {
+      "hours": 221.42909162472617,
+      "occupied_pixels": 3073,
+      "bounds": [
+        445000.0,
+        6870000.0,
+        450000.0,
+        6875000.0
+      ]
+    },
+    "cell/114/1275/own": {
+      "hours": 124.6990154698678,
+      "occupied_pixels": 1218,
+      "bounds": [
+        570000.0,
+        6375000.0,
+        575000.0,
+        6380000.0
+      ]
+    },
+    "cell/114/1275/vilpellet": {
+      "hours": 115.52909073801918,
+      "occupied_pixels": 1101,
+      "bounds": [
+        570000.0,
+        6375000.0,
+        575000.0,
+        6380000.0
+      ]
+    },
+    "cell/184/1293/own": {
+      "hours": 3701.0237675040444,
+      "occupied_pixels": 4275,
+      "bounds": [
+        920000.0,
+        6465000.0,
+        925000.0,
+        6470000.0
+      ]
+    },
+    "cell/184/1293/vilpellet": {
+      "hours": 2258.9814780781016,
+      "occupied_pixels": 3710,
+      "bounds": [
+        920000.0,
+        6465000.0,
+        925000.0,
+        6470000.0
+      ]
+    },
+    "cell/185/1294/own": {
+      "hours": 1615.2901334311746,
+      "occupied_pixels": 5109,
+      "bounds": [
+        925000.0,
+        6470000.0,
+        930000.0,
+        6475000.0
+      ]
+    },
+    "cell/185/1294/vilpellet": {
+      "hours": 1016.8116370788222,
+      "occupied_pixels": 4314,
+      "bounds": [
+        925000.0,
+        6470000.0,
+        930000.0,
+        6475000.0
+      ]
+    },
+    "cell/189/1305/own": {
+      "hours": 1111.679694842606,
+      "occupied_pixels": 2952,
+      "bounds": [
+        945000.0,
+        6525000.0,
+        950000.0,
+        6530000.0
+      ]
+    },
+    "cell/189/1305/vilpellet": {
+      "hours": 714.2363516180003,
+      "occupied_pixels": 2496,
+      "bounds": [
+        945000.0,
+        6525000.0,
+        950000.0,
+        6530000.0
+      ]
+    },
+    "cell/190/1306/own": {
+      "hours": 3912.8451022815925,
+      "occupied_pixels": 5861,
+      "bounds": [
+        950000.0,
+        6530000.0,
+        955000.0,
+        6535000.0
+      ]
+    },
+    "cell/190/1306/vilpellet": {
+      "hours": 2667.4768831572264,
+      "occupied_pixels": 5290,
+      "bounds": [
+        950000.0,
+        6530000.0,
+        955000.0,
+        6535000.0
+      ]
+    },
+    "cell/195/1265/own": {
+      "hours": 1679.101566497135,
+      "occupied_pixels": 6223,
+      "bounds": [
+        975000.0,
+        6325000.0,
+        980000.0,
+        6330000.0
+      ]
+    },
+    "cell/195/1265/vilpellet": {
+      "hours": 1128.3658403310694,
+      "occupied_pixels": 5096,
+      "bounds": [
+        975000.0,
+        6325000.0,
+        980000.0,
+        6330000.0
+      ]
+    },
+    "cell/184/1294/own": {
+      "hours": 1533.8235170150158,
+      "occupied_pixels": 4442,
+      "bounds": [
+        920000.0,
+        6470000.0,
+        925000.0,
+        6475000.0
+      ]
+    },
+    "cell/184/1294/vilpellet": {
+      "hours": 962.8536330399907,
+      "occupied_pixels": 3840,
+      "bounds": [
+        920000.0,
+        6470000.0,
+        925000.0,
+        6475000.0
+      ]
+    },
+    "cell/197/1309/own": {
+      "hours": 1073.033233282752,
+      "occupied_pixels": 4836,
+      "bounds": [
+        985000.0,
+        6545000.0,
+        990000.0,
+        6550000.0
+      ]
+    },
+    "cell/197/1309/vilpellet": {
+      "hours": 785.7351957125835,
+      "occupied_pixels": 4473,
+      "bounds": [
+        985000.0,
+        6545000.0,
+        990000.0,
+        6550000.0
+      ]
+    },
+    "cell/193/1309/own": {
+      "hours": 892.6691937737542,
+      "occupied_pixels": 4429,
+      "bounds": [
+        965000.0,
+        6545000.0,
+        970000.0,
+        6550000.0
+      ]
+    },
+    "cell/193/1309/vilpellet": {
+      "hours": 665.7826767492247,
+      "occupied_pixels": 3870,
+      "bounds": [
+        965000.0,
+        6545000.0,
+        970000.0,
+        6550000.0
+      ]
+    },
+    "cell/194/1308/own": {
+      "hours": 617.8536586497916,
+      "occupied_pixels": 5779,
+      "bounds": [
+        970000.0,
+        6540000.0,
+        975000.0,
+        6545000.0
+      ]
+    },
+    "cell/194/1308/vilpellet": {
+      "hours": 422.7078385572452,
+      "occupied_pixels": 5001,
+      "bounds": [
+        970000.0,
+        6540000.0,
+        975000.0,
+        6545000.0
+      ]
+    }
+  },
+  "runtime_check": {
+    "load_seconds": 0.4389494589995593,
+    "maps": 29,
+    "sparse_pixels": 12593671,
+    "in_memory_grid_bytes": 201498736,
+    "windows": {
+      "region/Alps/own/overview": {
+        "first_ms": 291.7948750000505,
+        "warm_median_ms": 0.9368544997414574,
+        "shape": [
+          502,
+          538
+        ],
+        "pixel": "800 m"
+      },
+      "region/Alps/own/zoom": {
+        "first_ms": 0.29433300005621277,
+        "warm_median_ms": 0.18679149980016518,
+        "shape": [
+          101,
+          101
+        ],
+        "pixel": "50 m"
+      },
+      "cell/197/1309/vilpellet/overview": {
+        "first_ms": 0.10149999798159115,
+        "warm_median_ms": 0.09152100028586574,
+        "shape": [
+          100,
+          100
+        ],
+        "pixel": "50 m"
+      },
+      "cell/197/1309/vilpellet/zoom": {
+        "first_ms": 0.07525000182795338,
+        "warm_median_ms": 0.046749501052545384,
+        "shape": [
+          50,
+          50
+        ],
+        "pixel": "50 m"
+      }
+    },
+    "total_regional_frame_km2": 651071.9825,
+    "regional_rgb_bytes_at_1_25m": 1250058206400.0,
+    "max_resident_bytes": 554565632,
+    "ssd_free_bytes": 30362697728
+  },
+  "machine": {
+    "ram_bytes": 8589934592,
+    "os": "macOS",
+    "date": "2026-10-03"
+  },
+  "preparation_process": {
+    "wall_seconds": 430.84,
+    "maximum_resident_bytes": 1571340288,
+    "peak_memory_footprint_bytes": 2630360512
+  },
+  "native_viewer_check": {
+    "initial_display_seconds": 2.0298823329976585,
+    "maximum_resident_bytes": 1083162624,
+    "peak_memory_footprint_bytes": 1360352512,
+    "views_checked": [
+      "five regional densities",
+      "Alps with IGN topography",
+      "Alps 20 km zoom, new background detail",
+      "three high-mountain cells, saved backgrounds"
+    ],
+    "density_map_cache_limit_bytes": 536870912
+  }
+}

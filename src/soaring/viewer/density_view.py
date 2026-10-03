@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 import numpy as np
+from matplotlib.cm import ScalarMappable
 from matplotlib.colors import LogNorm
 
 #: ``source(x0, x1, y0, y1) -> (counts[y, x], x_edges, y_edges, bin_label)``.
@@ -50,6 +51,7 @@ class AdaptiveDensity:
         unit="",
         cmap="magma_r",
         alpha=1.0,
+        norm=None,
     ):
         """Draw for the current limits and follow later zoom/pan on ``ax``."""
         self.ax, self.source, self.label, self.unit = ax, source, label, unit
@@ -63,12 +65,16 @@ class AdaptiveDensity:
             for name in ("xlim_changed", "ylim_changed")
         ]
         self._cmap = cmap
+        self._norm = norm
 
     def add_colorbar(self, figure):
         """Attach a colorbar once an image exists."""
         if self.image is not None and self.colorbar is None:
             self.colorbar = figure.colorbar(
-                self.image, ax=self.ax, shrink=0.85, label=self._caption()
+                ScalarMappable(norm=self.image.norm, cmap=self._cmap),
+                ax=self.ax,
+                shrink=0.85,
+                label=self._caption(),
             )
 
     def set_alpha(self, alpha):
@@ -79,7 +85,7 @@ class AdaptiveDensity:
 
     def _caption(self):
         return (
-            f"{self.label} ({self._size} {self.unit} bins)"
+            f"{self.label} · {self._size} {self.unit}".strip()
             if self._size
             else self.label
         )
@@ -104,25 +110,23 @@ class AdaptiveDensity:
             return
         self._last = (x0, x1, y0, y1)
         counts, xe, ye, self._size = self.source(x0, x1, y0, y1)
-        shown = np.ma.masked_less(counts, 1)
-        extent = (xe[0], xe[-1], ye[0], ye[-1])
+        shown = np.ma.masked_less_equal(counts, 0)
         top = max(float(counts.max()) if counts.size else 1.0, 2.0)
-        if self.image is None:
-            self.image = self.ax.imshow(
-                shown,
-                extent=extent,
-                origin="lower",
-                cmap=self._cmap,
-                norm=LogNorm(vmin=1, vmax=top),
-                interpolation="nearest",
-                alpha=self._alpha,
-                aspect=self.ax.get_aspect(),
-                zorder=3,
-            )
-        else:
-            self.image.set_data(shown)
-            self.image.set_extent(extent)
-            self.image.norm.vmax = top
+        # Exact pixel edges also handle partial coarse pixels at the map boundary.
+        # Replacing the mesh keeps zoomed arrays bounded without resampling values.
+        if self.image is not None:
+            self.image.remove()
+        self.image = self.ax.pcolormesh(
+            xe,
+            ye,
+            shown,
+            shading="flat",
+            cmap=self._cmap,
+            norm=self._norm or LogNorm(vmin=1, vmax=top),
+            alpha=self._alpha,
+            zorder=3,
+            rasterized=True,
+        )
         if self.colorbar is not None:
             self.colorbar.set_label(self._caption())
-            self.colorbar.update_normal(self.image)
+            self.colorbar.mappable.set_norm(self.image.norm)

@@ -18,7 +18,7 @@ ATTRIBUTION = "Relief: Esri World Hillshade and data contributors"
 SOURCE_URL = "https://services.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer"
 
 
-def fetch_relief(cache_dir, bounds, epsg, size):
+def fetch_relief(cache_dir, bounds, epsg, size, *, timeout=90):
     """Keep the service's exact returned extent alongside each cached PNG."""
     params = {
         "bbox": ",".join(map(str, bounds)),
@@ -35,18 +35,21 @@ def fetch_relief(cache_dir, bounds, epsg, size):
     folder.mkdir(exist_ok=True)
     png, metadata = folder / f"{digest}.png", folder / f"{digest}.json"
     if png.is_file() and metadata.is_file():
-        return png.read_bytes(), json.loads(metadata.read_text())
-    with urlopen(SERVICE + "/export?" + urlencode(params), timeout=90) as response:
+        info = json.loads(metadata.read_text())
+        info.setdefault("cache_key", digest)
+        return png.read_bytes(), info
+    with urlopen(SERVICE + "/export?" + urlencode(params), timeout=timeout) as response:
         exported = json.load(response)
     if "error" in exported or "href" not in exported:
         raise RuntimeError(f"Hillshade service: {exported}")
     extent = exported["extent"]
     actual = [extent[k] for k in ("xmin", "ymin", "xmax", "ymax")]
-    with urlopen(exported["href"], timeout=90) as response:
+    with urlopen(exported["href"], timeout=timeout) as response:
         payload = response.read()
     with Image.open(io.BytesIO(payload)) as image:
         image.verify()
     info = {
+        "cache_key": digest,
         "extent": actual,
         "epsg": epsg,
         "attribution": ATTRIBUTION,

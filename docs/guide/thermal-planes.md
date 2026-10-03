@@ -1,5 +1,7 @@
 # Thermal planes in the viewer
 
+For the cumulative 2D map in hours/km², see [Thermal density](thermal-density.md).
+
 Launch `uv run --group viewer soaring-viewer` and open **Thermal planes**.
 The tab reads **one standalone file**, `thermal-planes.sqlite3`, in read-only
 mode. It defaults to Vilpellet and the full saved date range. Date controls use
