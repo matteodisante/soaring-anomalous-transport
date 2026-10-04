@@ -8,70 +8,85 @@
 
 % 1: measured objects and definitions ---------------------------------
 \begin{frame}[plain]\frametitle{Neggers et al. (2003): cloud-size statistics}\startslide{Neggers et al.\ (2003): cloud-size statistics}
- \figat{8}{20}{62}{47}{\figdir/fig3.png}
- \txt{78}{18}{75}{\textbf{Three LES cases}\\BOMEX (ocean), SCMS and ARM (land).}
- \smalltxt{78}{29}{75}{Cloud: connected saturated cells.}
- \txt[font=\fontsize{15}{18}\selectfont]{78}{36}{75}{$l=\sqrt{A^p}$}
- \txt[font=\fontsize{13}{16}\selectfont]{78}{49}{75}{$N=\displaystyle\int_0^\infty\mathcal N(l)\,dl$}
- \smalltxt{78}{64}{75}{$\mathcal N(l)$: cloud count per unit size.\\$A^p$: vertically projected cloud area.}
- % Measurement sequence, matching the definitions in Section 3.
- \fill[pisablight!33](7,74.7)rectangle(153,83);
- \txt[text=pisablue]{10}{77}{37}{Cloud object}
- \draw[-{Latex},pisablue,line width=.8pt](40,79)--(57,79);
- \txt[text=pisablue]{60}{77}{40}{Projection $A^p$}
- \draw[-{Latex},pisablue,line width=.8pt](94,79)--(109,79);
- \txt[text=pisablue]{112}{77}{39}{Size histogram}
- \credit{Neggers, Jonker \& Siebesma, J. Atmos. Sci. 60, 1060--1074 (2003). \S2--3, Fig. 3, Eqs. (1)--(2).}
-\notetext{Size Statistics of Cumulus Cloud Populations in Large-Eddy Simulations, Neggers, Jonker and Siebesma (2003). The study measures the sizes of shallow cumulus clouds in LES and their contributions to cloud cover and vertical transport. BOMEX represents steady trade-wind cumulus over the ocean. SCMS and ARM represent continental shallow cumulus, with a diurnal cycle in ARM. The reference horizontal grid spacing is 50 m, in a 6.4 km domain. Repeated snapshots sample tens of thousands of clouds per case.\par\smallskip A cloud is a connected set of saturated grid cells. Figure 3 shows the distinction between a cross-section at one height and the vertical projection of the whole cloud. The chosen size is $l=\sqrt{A^p}$, not a radius or a diameter. The size density $\mathcal N(l)$ gives counts per unit size, and its integral is the total count. The scheme summarizes the actual measurement procedure. Source: Sections 2--3 and Appendix, Figure 3, Equations (1)--(2).}
+ \lead{Large-eddy simulations (LES) of shallow cumulus. Each cloud gets one size; the size histogram shows which clouds dominate cloud cover and vertical transport.}
+ \figat{8}{26}{50}{40}{\figdir/fig3.png}
+ \txt[font=\fontsize{15}{18}\selectfont]{64}{26}{44}{$l=\sqrt{A^p}$}
+ \txt[font=\fontsize{13}{16}\selectfont]{64}{37}{44}{$N=\displaystyle\int_0^\infty\mathcal N(l)\,dl$}
+ \smalltxt{64}{53}{44}{\textbf{Three LES cases}\\BOMEX: ocean, trade winds.\\SCMS: land, Florida.\\ARM: land, diurnal cycle.}
+ \symbox{110}{25}{40}{%
+  \sym{cloud}{connected set of saturated grid cells}
+  \sym{$A^p$}{vertically projected area of one cloud: its footprint seen from above}
+  \sym{$l$}{cloud size, m}
+  \sym{$\mathcal N(l)$}{number of clouds per unit size, m$^{-1}$}
+  \sym{$N$}{total number of clouds in the domain}}
+ \bottomline{Find each cloud in 3D $\;\to\;$ project it vertically $\;\to\;$ histogram of the sizes $l$}
+ \credit{Neggers, Jonker \& Siebesma, J. Atmos. Sci. 60, 1060--1074 (2003). \S2--3, Fig. 3, Eqs. (1)--(2). Grid 50 m, domain 6.4 km.}
+\notetext{Size Statistics of Cumulus Cloud Populations in Large-Eddy Simulations, Neggers, Jonker and Siebesma (2003). The study measures the sizes of shallow cumulus clouds in LES and their contributions to cloud cover and vertical transport. BOMEX represents steady trade-wind cumulus over the ocean. SCMS and ARM represent continental shallow cumulus, with a diurnal cycle in ARM. The reference horizontal grid spacing is 50 m, in a 6.4 km domain. Repeated snapshots sample tens of thousands of clouds per case.\par\smallskip A cloud is a connected set of saturated grid cells. Figure 3 shows the distinction between a cross-section at one height and the vertical projection of the whole cloud. The chosen size is $l=\sqrt{A^p}$, the side of a square with the cloud's projected area, not a radius or a diameter. It is chosen so that LES can be compared with satellite images, which see only projections. The size density $\mathcal N(l)$ gives counts per unit size, and its integral is the total count. The bottom line summarizes the actual measurement procedure. Source: Sections 2--3 and Appendix, Figure 3, Equations (1)--(2).}
 \finishslide\end{frame}
 
 % 2: fitted size density -----------------------------------------------
 \begin{frame}[plain]\frametitle{A power law below a variable size break}\startslide{A power law below a variable size break}
- \figat{8}{18}{65}{47}{\figdir/fig4a.png}
- \txt[font=\fontsize{10}{12}\selectfont]{8}{67}{67}{$\mathcal N^*=l\ln(10)\,\mathcal N\quad\text{(log bins)}$}
- \head{82}{18}{71}{Size density below $\ell_d$}
- \txt[font=\fontsize{15}{18}\selectfont]{82}{27}{71}{$\mathcal N(l)\propto l^{-1.70}$}
- \txt{82}{39}{71}{About one decade.\\A steeper fall above $\ell_d$.}
- \txt{82}{54}{71}{\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{1.05}%
- \begin{tabular}{@{}lr@{}}\textbf{Break $\ell_d$} & \\
- BOMEX & 700 m\\SCMS & 1050 m\\ARM & 400--1250 m\end{tabular}}
- \bottomline{The break varies with case and time of day}
- \credit{\S4a, Fig. 4a, Table 2, Eqs. (8)--(9). The log-bin slope is $-0.70$. The linear-size density exponent is $-1.70$.}
-\notetext{Figure 4a shows the normalized size density in logarithmic bins. Below the scale break, the three cases have approximately the same slope. The fitted log-bin slope is $-0.70$, corresponding to the exponent $b=-1.70$ of $\mathcal N(l)\propto l^b$ because $\mathcal N^*=l\ln(10)\mathcal N$. The supported range spans roughly one decade between the grid scale and the break.\par\smallskip Above $\ell_d$, the density decreases faster. Table 2 gives 700 m for BOMEX and 1050 m for SCMS. During the ARM afternoon, the break increases from 400 to 1250 m. Increasing the number of sampled clouds does not remove the break. Its physical origin remains unresolved. It is a cloud-size scale, not an inter-cloud distance. Source: Section 4a, Figure 4a, Table 2, Equations (8)--(9).}
+ \lead{Small clouds are by far the most numerous. Below a size $\ell_d$ their number falls as a power law of size; above $\ell_d$ it falls faster.}
+ \figat{8}{26}{42}{37}{\figdir/fig4a.png}
+ \figat{54}{26}{42}{37}{\figdir/fig6.png}
+ \figcap{8}{64}{42}{Fig. 4a: size density against $l$.}
+ \figcap{54}{64}{42}{Fig. 6: against $l/\ell_d$, the cases collapse.}
+ \txt[font=\fontsize{15}{18}\selectfont]{101}{25}{52}{$\mathcal N(l)=a\,l^{\,b}$}
+ \txt{101}{34}{52}{$b=-1.70$\ \ for\ \ $l<\ell_d$}
+ \symbox{101}{42}{49}{%
+  \sym{$\ell_d$}{scale break: size where the exponent changes. BOMEX 700 m, SCMS 1050 m, ARM 400 $\to$ 1250 m in the afternoon}
+  \sym{$a,\,b$}{fit constants; $b$ is the exponent}
+  \sym{$\mathcal N^*$}{$=l\ln(10)\,\mathcal N$, clouds per decade of size (plotted), slope $b+1=-0.70$}}
+ \bottomline{Same exponent in all cases: only the break $\ell_d$ changes}
+ \credit{\S4a, Figs. 4a and 6, Table 2, Eqs. (8)--(9). Plotted: $\mathcal N^*/N$ in log bins.}
+\notetext{Figure 4a shows the normalized size density in logarithmic bins. Below the scale break, the three cases have approximately the same slope. The fitted log-bin slope is $-0.70$, corresponding to the exponent $b=-1.70$ of $\mathcal N(l)=a\,l^b$ because $\mathcal N^*=l\ln(10)\mathcal N$: a power law per decade has its exponent raised by one. The supported range spans roughly one decade between the grid scale and the break.\par\smallskip Above $\ell_d$, the density decreases faster. Table 2 gives 700 m for BOMEX and 1050 m for SCMS. During the ARM afternoon, the break increases from 400 to 1250 m. Increasing the number of sampled clouds does not remove the break.\par\smallskip Figure 6 plots the three size densities against $l/\ell_d$. Their approximate collapse supports a common functional form for these simulated cumulus populations, with a case-dependent break: the break is the only variable. Its physical origin remains unresolved; the paper mentions subcloud-layer depth and humidity fluctuations as candidates. It is a cloud-size scale, not an inter-cloud distance. Source: Section 4a, Figures 4a and 6, Table 2, Equations (8)--(9).}
 \finishslide\end{frame}
 
-% 3: collapse and area weighting --------------------------------------
+% 3: area weighting ----------------------------------------------------
 \begin{frame}[plain]\frametitle{The size break sets the dominant cloud cover}\startslide{The size break sets the dominant cloud cover}
- \txt[text=pisablue]{7}{18}{73}{Rescaling by $\ell_d$: collapse}
- \txt[font=\fontsize{12.5}{15}\selectfont]{87}{17}{68}{$\alpha^p(l)=\dfrac{l^2\mathcal N(l)}{S}$}
- \figat{13}{28}{63}{45}{\figdir/fig6.png}
- \figat{93}{28}{61}{45}{\figdir/fig7a.png}
- \bottomline{Area weighting gives $\alpha^p\propto l^{\,b+2}$: the cover peaks near $\ell_d$}
- \credit{\S3--4b, Figs. 6 and 7a, Eqs. (4), (10). $S=L_xL_y$: domain area. $\alpha^p(l)$: projected-cover contribution per unit size.}
-\notetext{Left: Figure 6 plots the three size densities against $l/\ell_d$. Their approximate collapse supports a common functional form for these simulated cumulus populations, with a case-dependent break. The scaling range and three tested cases limit this claim.\par\smallskip Right: Figure 7a gives the contribution to projected cloud cover per unit size. Each cloud contributes its projected area $l^2$, so $\alpha^p(l)=l^2\mathcal N(l)/S$, where $S$ is the horizontal domain area. For a power law with exponent $b$, the cover decomposition scales as $l^{b+2}$. Below the break, $b=-1.70$ gives a positive exponent, $0.30$. Above the break the density declines sufficiently rapidly that the cover decomposition decreases. The peak therefore lies at an intermediate size near the break.\par\smallskip This is a decomposition per unit linear size, not per logarithmic bin. The total projected cover is $a^p=\int_0^\infty\alpha^p(l)\,dl$. Source: Section 3, Section 4a--b, Figures 6 and 7a, Equations (3)--(4) and (10).}
+ \lead{Weighting every cloud by its area gives the cloud cover contributed by each size. It grows up to $\ell_d$ and drops beyond, so mid-size clouds cover most of the sky.}
+ \txt[font=\fontsize{13}{16}\selectfont]{8}{26}{85}{$\alpha^p(l)=\dfrac{l^2\,\mathcal N(l)}{L_xL_y}\ \propto\ l^{\,b+2}=l^{\,0.30}\quad(l<\ell_d)$}
+ \txt[font=\fontsize{13}{16}\selectfont]{8}{39}{85}{$a^p=\displaystyle\int_0^\infty\alpha^p(l)\,dl$}
+ \symbox{8}{51}{86}{%
+  \sym{$\alpha^p(l)$}{cloud cover from clouds of size $l$, per unit size, m$^{-1}$}
+  \sym{$a^p$}{projected cloud cover: fraction of the domain covered, seen from above}
+  \sym{$L_xL_y$}{horizontal area of the domain}}
+ \figat{102}{24}{50}{44}{\figdir/fig7a.png}
+ \figcap{102}{69}{50}{Fig. 7a: $\alpha^p(l)$, three cases.}
+ \bottomline{Cloud cover peaks near the break $\ell_d$}
+ \credit{\S3--4b, Fig. 7a, Eqs. (3)--(4), (10).}
+\notetext{Figure 7a gives the contribution to projected cloud cover per unit size. Each cloud contributes its projected area $l^2$, so $\alpha^p(l)=l^2\mathcal N(l)/(L_xL_y)$, where $L_xL_y$ is the horizontal domain area. For a power law with exponent $b$, the cover decomposition scales as $l^{b+2}$. Below the break, $b=-1.70$ gives a positive exponent, $0.30$: the many small clouds are too small to dominate. Above the break the density declines faster than $l^{-2}$, so the cover decomposition decreases. The peak therefore lies at an intermediate size near the break. Without a break, an exponent above $-2$ would let the largest clouds dominate.\par\smallskip This is a decomposition per unit linear size, not per logarithmic bin. The total projected cover is $a^p=\int_0^\infty\alpha^p(l)\,dl$. The paper notes that real shallow cumulus fields also show this intermediate dominant size. Source: Section 3, Section 4b, Figure 7a, Equations (3)--(4) and (10).}
 \finishslide\end{frame}
 
 % 4: vertical transport ------------------------------------------------
-\begin{frame}[plain]\frametitle{Larger cloud velocities shift the transport peak}\startslide{Larger cloud velocities shift the transport peak}
- \head{7}{17}{67}{Mean vertical velocity}
- \head{86}{17}{67}{Mass-flux contribution}
- \figat{10}{25}{64}{38}{\figdir/fig7b.png}
- \figat{91}{25}{63}{38}{\figdir/fig7c.png}
- \txt{7}{65}{60}{Small clouds carry little flux.}
- \txt[font=\fontsize{12.5}{15}\selectfont]{79}{65}{75}{$\mu(l)=\overline{\alpha(l,z)\,w(l,z)}$}
+\begin{frame}[plain]\frametitle{Mass flux peaks at larger sizes than cover}\startslide{Mass flux peaks at larger sizes than cover}
+ \lead{Mass flux is cloud cover times vertical velocity. Larger clouds rise faster, so transport is dominated by somewhat larger clouds; the smallest carry almost nothing.}
+ \figat{8}{26}{42}{36}{\figdir/fig7b.png}
+ \figat{54}{26}{42}{36}{\figdir/fig7c.png}
+ \figcap{8}{63}{42}{Fig. 7b: mean vertical velocity $w$.}
+ \figcap{54}{63}{42}{Fig. 7c: mass flux $\mu(l)$.}
+ \txt[font=\fontsize{12.5}{15}\selectfont]{100}{24}{53}{$\mu(l,z)=\alpha(l,z)\,w(l,z)$}
+ \txt[font=\fontsize{12.5}{15}\selectfont]{100}{31.5}{53}{$\mu(l)=\dfrac1{h_c}\displaystyle\int_{h_c}\mu(l,z)\,dz$}
+ \symbox{99}{43.5}{51}{%
+  \sym{$w(l,z)$}{mean vertical velocity of clouds of size $l$ at height $z$, m\,s$^{-1}$}
+  \sym{$\alpha(l,z)$}{their cloud cover at height $z$, per unit size}
+  \sym{$h_c$}{depth of the cloud layer}
+  \sym{$\mu$}{mass flux divided by air density, per unit size, s$^{-1}$}}
  \bottomline{Mass flux peaks at larger cloud sizes than projected cover}
- \credit{\S3--4b, Fig. 7b--c, Eqs. (5)--(7). $\alpha(l,z)$: cloud-fraction contribution. The bar averages over the cloud layer.}
-\notetext{Figure 7b shows that cloud-mean vertical velocity generally increases with cloud size. Figure 7c shows the resulting mass-flux decomposition. At height $z$, $\mu(l,z)=\alpha(l,z)w(l,z)$, where $\alpha(l,z)$ is the cloud-fraction contribution per unit size. Averaging over the cloud-layer depth $h_c$ gives $\mu(l)=h_c^{-1}\int\alpha(l,z)w(l,z)\,dz$. Its integral over size is the total kinematic mass flux, in m/s under this paper's convention.\par\smallskip Cloud size is always the projected size, even when evaluating the flux at a specific height. Since $w$ increases with size, the mass-flux maximum occurs at somewhat larger cloud sizes than the projected-cover maximum. The smallest clouds contribute very little to total vertical transport.\par\smallskip The intermediate dominant size persists for tested grid spacings of 25--100 m. A 3.2 km domain truncates the largest clouds. Increased shear broadens projected sizes while leaving total mass flux almost unchanged. These sensitivity tests support the main transport result but do not identify the mechanism of the size break. Source: Section 3, Section 4b--e, Figure 7b--c and Figures 9--11.}
+ \credit{\S3--4b, Fig. 7b--c, Eqs. (5)--(7). $l$ is always the projected size, also at a single height $z$.}
+\notetext{Figure 7b shows that cloud-mean vertical velocity generally increases with cloud size. Figure 7c shows the resulting mass-flux decomposition. At height $z$, $\mu(l,z)=\alpha(l,z)w(l,z)$, where $\alpha(l,z)$ is the cloud-fraction contribution per unit size at that height. Averaging over the cloud-layer depth $h_c$ gives $\mu(l)$. Its integral over size is the total kinematic mass flux, in m/s under this paper's convention: mass flux divided by air density.\par\smallskip Cloud size is always the projected size, even when evaluating the flux at a specific height, so each cloud stays in one size bin at all heights. Since $w$ increases with size, the mass-flux maximum occurs at somewhat larger cloud sizes than the projected-cover maximum. The smallest clouds contribute very little to total vertical transport, mainly because of their very low vertical velocities.\par\smallskip The intermediate dominant size persists for tested grid spacings of 25--100 m. A 3.2 km domain truncates the largest clouds. Increased shear broadens projected sizes while leaving total mass flux almost unchanged. These sensitivity tests support the main transport result but do not identify the mechanism of the size break. Source: Section 3, Section 4b--e, Figure 7b--c and Figures 9--11.}
 \finishslide\end{frame}
 
 % 5: scope relative to thermals ----------------------------------------
 \begin{frame}[plain]\frametitle{No 2D distribution of thermals}\startslide{No 2D distribution of thermals}
- \txt{7}{17}{146}{\textbf{Reported:} projected cloud sizes, $\mathcal N(l)$.}
+ \lead{Our question: how are thermals arranged in a horizontal plane? The paper measures clouds seen from above, a different object.}
  \thermalmap
- \head{87}{27}{66}{Not reported for thermals}
- \txt[font=\fontsize{11}{14}\selectfont]{87}{38}{66}{Size distribution $R_i$}
- \txt[font=\fontsize{11}{14}\selectfont]{87}{50}{66}{Positions $(x_i,y_i)$}
- \txt[font=\fontsize{11}{14}\selectfont]{87}{62}{66}{Distances $d_{ij}$}
+ \symbox[Sought, not in the paper]{87}{25}{63}{%
+  \sym{$R_i$}{radius of thermal $i$ at a fixed height}
+  \sym{$(x_i,y_i)$}{position of its centre}
+  \sym{$d_{ij}$}{distance between thermals $i$ and $j$}}
+ \head{87}{46}{66}{Why cloud sizes do not answer it}
+ \smalltxt{87}{53}{66}{A cloud is saturated air; a thermal can stay dry and never form a cloud.\\[1mm]Projection merges all heights and widens with tilt and shear.}
  \bottomline{Projected cumulus size does not determine thermal size or spacing}
  \credit{Scope: \S3--5 and Appendix. The sketch defines the quantities sought. It represents no observed or simulated thermal field.}
 \notetext{Our reading sought distributions of thermals in a horizontal plane: their size at a fixed height, their positions and their separations. The diagram only defines these three quantities. Its circles, radii and separation are schematic, not data or a spatial model.\par\smallskip Neggers et al. report projected cloud sizes and cloud transport statistics. A cloud is a saturated object, whereas a thermal can be unsaturated and can feed a cloud without sharing its projected footprint. Projection also combines geometry over height and responds to tilt and shear. The paper does not establish a cloud-to-thermal size mapping and does not report thermal centres or inter-thermal distances. The exponent $-1.70$ and the break $\ell_d$ therefore remain results about the measured cumulus population. Source: Sections 3--5 and Appendix.}

@@ -9,7 +9,7 @@
 \newcommand{\head}[4]{\txt[text=pisablue,font=\bfseries\fontsize{10}{12}\selectfont]{#1}{#2}{#3}{#4}}
 % \figat{x}{y}{max width}{max height}{file}: top-left anchored, aspect kept.
 \newcommand{\figat}[5]{\node[anchor=north west,inner sep=0pt]at(#1,#2){\includegraphics[width=#3mm,height=#4mm,keepaspectratio]{#5}};}
-\newcommand{\bottomline}[1]{\fill[pisablight!33](7,74.7)rectangle(153,83);\txt[text=pisablue,font=\fontsize{10}{12}\selectfont]{10}{76.5}{140}{#1}}
+\newcommand{\bottomline}[1]{\fill[pisablight!33](7,75.5)rectangle(153,83);\txt[text=pisablue,font=\fontsize{10}{12}\selectfont]{10}{77}{140}{#1}}
 \newcommand{\credit}[1]{\txt[text=muted,font=\fontsize{6}{7}\selectfont]{7}{86}{146}{#1}}
 \newcommand{\startslide}[1]{\begin{tikzpicture}[remember picture,overlay,shift={(current page.north west)},x=1mm,y=-1mm]
  \fill[white](0,0)rectangle(160,90);
@@ -18,6 +18,15 @@
  \node[anchor=east,inner sep=0pt,text=white,font=\fontsize{8}{9}\selectfont]at(155,6.6){\insertframenumber};
 }
 \newcommand{\finishslide}{\end{tikzpicture}}
+% \lead{text}: one or two plain sentences under the title, saying what the slide shows.
+\newcommand{\lead}[1]{\txt[font=\fontsize{9.5}{11.6}\selectfont]{7}{15}{146}{#1}}
+% \symbox[title]{x}{y}{width}{\sym{..}{..}...}: legend of every symbol used on the slide.
+\newcommand{\symbox}[5][Symbols]{\node[anchor=north west,inner sep=1.6mm,fill=pisablight!18,draw=pisablue!45,line width=.3pt,text width=#4mm,align=left,font=\fontsize{7.8}{9.2}\selectfont]at(#2,#3){{\color{pisablue}\bfseries #1}\par\vspace{.2mm}#5};}
+% \symboxtwo{x}{y}{left width}{right width}{left \sym list}{right \sym list}: two-column legend.
+\newcommand{\symboxtwo}[6]{\node[anchor=north west,inner sep=1.6mm,fill=pisablight!18,draw=pisablue!45,line width=.3pt,align=left,font=\fontsize{7.8}{9.2}\selectfont]at(#1,#2){{\color{pisablue}\bfseries Symbols}\\[-2.6mm]\begin{tabular}{@{}p{#3mm}@{\hspace{4mm}}p{#4mm}@{}}#5&#6\end{tabular}};}
+\newcommand{\sym}[2]{\par\vspace{.5mm}\hangindent=3mm\hangafter=1\noindent#1\enspace{\color{black!75}#2}}
+% \figcap{x}{y}{width}{text}: muted caption under a figure.
+\newcommand{\figcap}[4]{\txt[text=muted,font=\fontsize{7.2}{8.6}\selectfont]{#1}{#2}{#3}{#4}}
 % Two kinds of boxed statement: what the paper says, and what we propose.
 % The node width is #3 mm plus 3 mm of padding.
 \newcommand{\paperbox}[4]{\node[anchor=north west,inner sep=1.5mm,fill=pisablight!22,draw=pisablue!55,line width=.4pt,text width=#3mm,align=left,font=\fontsize{7.5}{9.3}\selectfont]at(#1,#2){{\color{pisablue}\bfseries In the paper}\\[.8mm]#4};}
