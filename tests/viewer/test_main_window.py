@@ -30,6 +30,23 @@ def window(qapp, monkeypatch):
     win.close()
 
 
+def _click_map_toggle(button, qapp):
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtTest import QTest
+
+    # Test the actual mouse target, not just the signal of a hidden button.
+    assert button.isVisible()
+    center = button.rect().center()
+    assert button.window().childAt(button.mapTo(button.window(), center)) is button
+    QTest.mouseClick(button, Qt.MouseButton.LeftButton)
+    qapp.processEvents()
+
+
+def _focused_map_height(window):
+    # The tab strip keeps the return toggle and map navigation accessible.
+    return window.height() - window._tabs.tabBar().height() - 8
+
+
 def test_colour_and_visibility_preserve_2d_zoom_and_toolbar_history(window):
     ax = window._figure.axes[0]
     window._toolbar.push_current()
@@ -82,29 +99,31 @@ def test_3d_zoom_preserves_mouse_rotation_and_orientation_preserves_pan(window):
 def test_fullscreen_hides_picker_and_restores_layout_without_redraw(
     window, qapp, monkeypatch
 ):
-    from PyQt6.QtCore import Qt
-    from PyQt6.QtTest import QTest
-
     window.show()
     qapp.processEvents()
     geometry = window.geometry()
     sizes = window._splitter.sizes()
     axes = window._figure.axes[0]
     monkeypatch.setattr(window, "_redraw", lambda: pytest.fail("fullscreen redraw"))
-    window._fullscreen_button.click()
-    qapp.processEvents()
+    _click_map_toggle(window._fullscreen_button, qapp)
     assert window.isFullScreen()
     assert window._picker.isHidden()
-    assert not window._controls.isHidden()
+    assert window._controls.isHidden()
+    assert window._toolbar.isHidden()
+    assert window._tabs.tabBar().isVisible()
+    assert window._canvas.width() >= window.width() - 8
+    assert window._canvas.height() >= _focused_map_height(window)
     assert "Exit" in window._fullscreen_button.text()
-    QTest.keyClick(window, Qt.Key.Key_Escape)
-    qapp.processEvents()
+    _click_map_toggle(window._fullscreen_button, qapp)
     assert not window.isFullScreen()
     assert not window._picker.isHidden()
     assert window.geometry() == geometry
     assert window._splitter.sizes() == sizes
     assert window._figure.axes[0] is axes
-    assert window._fullscreen_button.text() == "Full screen"
+    assert window._fullscreen_button.text() == "Map full screen"
+    assert not window._controls.isHidden()
+    assert not window._toolbar.isHidden()
+    assert not window._tabs.tabBar().isHidden()
 
 
 def test_fullscreen_exit_after_resize_and_single_map_focus(window, qapp, monkeypatch):
@@ -114,14 +133,12 @@ def test_fullscreen_exit_after_resize_and_single_map_focus(window, qapp, monkeyp
     view._mode.setCurrentIndex(1)
     window.show()
     qapp.processEvents()
-    window._fullscreen_button.click()
-    qapp.processEvents()
+    _click_map_toggle(window._fullscreen_button, qapp)
     view._view.setCurrentIndex(view._view.findData("midday"))
     window.resize(1920, 1080)
     qapp.processEvents()
     # Qt can clear its fullscreen flag on resize without a WindowStateChange event.
-    window._fullscreen_button.click()
-    qapp.processEvents()
+    _click_map_toggle(window._fullscreen_button, qapp)
     assert not window.isFullScreen()
     assert not window._picker.isHidden()
     assert window._fullscreen_state is None
@@ -138,7 +155,12 @@ def test_all_tabs_resize_and_keep_controls_inside_window(
 
     from soaring.viewer.widgets.flow_layout import FlowLayout
 
-    for view in (window._map_view, window._thermal_plane, window._thermal_density):
+    for view in (
+        window._map_view,
+        window._thermal_plane,
+        window._thermal_density,
+        window._route_comparison,
+    ):
         monkeypatch.setattr(view, "ensure_loaded", lambda: None)
     # Prepared cell descriptions must not grow the minimum window width either.
     window._thermal_plane._cells.blockSignals(True)
@@ -170,3 +192,194 @@ def test_initial_window_fits_available_screen(window, qapp):
     available = window.screen().availableGeometry()
     assert window.width() <= available.width()
     assert window.height() <= available.height()
+
+
+@pytest.mark.parametrize("index", [1, 2, 3, 4])
+def test_map_only_fullscreen_preserves_canvas_zoom_and_optional_panels(
+    window, qapp, monkeypatch, index
+):
+    tab = window._tabs.widget(index)
+    monkeypatch.setattr(tab, "ensure_loaded", lambda: None)
+    window._tabs.setCurrentIndex(index)
+    window.show()
+    qapp.processEvents()
+    if index == 4:
+        plot = tab._scene_panel
+        hidden = tab._table.isHidden()
+    else:
+        plot = tab._canvas
+        if not tab._figure.axes:
+            tab._figure.add_subplot(111)
+        axes = tuple(tab._figure.axes)
+        axes[-1].set_xlim(1, 3)
+        axes[-1].set_ylim(2, 4)
+    _click_map_toggle(window._fullscreen_button, qapp)
+    assert plot.width() >= window.width() - 8
+    assert plot.height() >= _focused_map_height(window)
+    assert window._tabs.tabBar().isVisible()
+    if index == 4:
+        assert tab._locator.isHidden() and tab._table.isHidden()
+    if index == 2:
+        assert not tab._map_ax.get_visible()
+        assert tab._plane_ax.get_visible()
+    _click_map_toggle(window._fullscreen_button, qapp)
+    if index == 4:
+        assert not tab._locator.isHidden()
+        assert tab._table.isHidden() == hidden
+    else:
+        assert tuple(tab._figure.axes) == axes
+        assert axes[-1].get_xlim() == (1, 3)
+        assert axes[-1].get_ylim() == (2, 4)
+    if index == 2:
+        assert tab._map_ax.get_visible()
+
+
+def test_pending_route_results_stay_hidden_until_fullscreen_exit(
+    window, qapp, monkeypatch
+):
+    tab = window._route_comparison
+    monkeypatch.setattr(tab, "ensure_loaded", lambda: None)
+    window._tabs.setCurrentWidget(tab)
+    window.show()
+    _click_map_toggle(window._fullscreen_button, qapp)
+    tab._table.show()  # A scene finishes loading while only the map is visible.
+    qapp.processEvents()
+    assert tab._table.isHidden()
+    window._exit_full_screen()
+    qapp.processEvents()
+    assert not tab._table.isHidden()
+
+
+def test_3d_dialog_fullscreen_shows_only_terrain_and_restores_controls(qapp):
+    from soaring.viewer.widgets.thermal_3d import Thermal3D
+
+    dialog = Thermal3D()
+    dialog.show()
+    qapp.processEvents()
+    camera = dialog._view.cameraParams()
+    _click_map_toggle(dialog._fullscreen, qapp)
+    assert dialog._heading.isHidden() and dialog._point_size.isHidden()
+    assert dialog._view.height() >= dialog.height() - dialog._fullscreen.height() - 2
+    assert dialog._view.width() >= dialog.width() - 2
+    _click_map_toggle(dialog._fullscreen, qapp)
+    assert not dialog.isFullScreen()
+    assert not dialog._heading.isHidden() and not dialog._point_size.isHidden()
+    assert dialog._view.cameraParams() == camera
+    dialog.close()
+
+
+def test_switching_tabs_while_focused_keeps_the_new_map_visible(
+    window, qapp, monkeypatch
+):
+    window.show()
+    window._fullscreen_button.click()
+    for tab in (window._map_view, window._thermal_plane, window._thermal_density):
+        monkeypatch.setattr(tab, "ensure_loaded", lambda: None)
+        window._tabs.setCurrentWidget(tab)
+        qapp.processEvents()
+        assert tab._canvas.isVisible()
+        assert tab._canvas.width() >= window.width() - 8
+        assert tab._canvas.height() >= _focused_map_height(window)
+        assert tab._toolbar.isHidden()
+    window._exit_full_screen()
+    qapp.processEvents()
+    assert not window._thermal_density._toolbar.isHidden()
+
+
+@pytest.mark.parametrize("index", [0, 1, 2, 3, 4])
+def test_native_fullscreen_preserves_complete_viewer(window, qapp, monkeypatch, index):
+    tab = window._tabs.widget(index)
+    if index:
+        monkeypatch.setattr(tab, "ensure_loaded", lambda: None)
+    window._tabs.setCurrentIndex(index)
+    window.show()
+    qapp.processEvents()
+    toolbar = window._toolbar if index == 0 else getattr(tab, "_toolbar", None)
+    for native_transition in (window.showFullScreen, window.showNormal):
+        native_transition()
+        qapp.processEvents()
+        assert window._map_focus is None
+        assert window._fullscreen_state is None
+        assert window._picker.isVisible()
+        assert window._tabs.tabBar().isVisible()
+        assert window._fullscreen_button.isVisible()
+        assert not window._fullscreen_button.isChecked()
+        if toolbar is not None:
+            assert toolbar.isVisible()
+        if index == 0:
+            assert window._controls.isVisible()
+        elif index == 2:
+            assert tab._map_ax.get_visible()
+        elif index == 4:
+            assert tab._locator.isVisible()
+
+
+def test_map_toggle_restores_an_already_fullscreen_viewer(window, qapp):
+    window.showFullScreen()
+    qapp.processEvents()
+    sizes = window._splitter.sizes()
+    _click_map_toggle(window._fullscreen_button, qapp)
+    assert window._map_focus is not None
+    assert window._fullscreen_button.isChecked()
+    assert window._picker.isHidden()
+    _click_map_toggle(window._fullscreen_button, qapp)
+    assert window.isFullScreen()
+    assert window._map_focus is None
+    assert window._picker.isVisible()
+    assert window._controls.isVisible()
+    assert window._splitter.sizes() == sizes
+    assert not window._fullscreen_button.isChecked()
+
+
+def test_map_focus_changes_only_with_its_toggle(window, qapp):
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtTest import QTest
+
+    window.show()
+    qapp.processEvents()
+    for key in (Qt.Key.Key_F11, Qt.Key.Key_Escape):
+        QTest.keyClick(window, key)
+        qapp.processEvents()
+        assert window._map_focus is None
+    _click_map_toggle(window._fullscreen_button, qapp)
+    focus = window._map_focus
+    for key in (Qt.Key.Key_F11, Qt.Key.Key_Escape):
+        QTest.keyClick(window, key)
+        qapp.processEvents()
+        assert window._map_focus is focus
+    # A native transition must not implicitly toggle the map layout either.
+    window.showNormal()
+    qapp.processEvents()
+    assert window._map_focus is focus
+    assert window._fullscreen_button.isChecked()
+    _click_map_toggle(window._fullscreen_button, qapp)
+    assert window._map_focus is None
+    assert window._controls.isVisible()
+
+
+def test_3d_native_fullscreen_and_map_toggle_are_independent(qapp):
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtTest import QTest
+
+    from soaring.viewer.widgets.thermal_3d import Thermal3D
+
+    dialog = Thermal3D()
+    try:
+        dialog.showFullScreen()
+        qapp.processEvents()
+        assert dialog._map_focus is None
+        assert dialog._heading.isVisible() and dialog._point_size.isVisible()
+        _click_map_toggle(dialog._fullscreen, qapp)
+        assert dialog._map_focus is not None
+        QTest.keyClick(dialog, Qt.Key.Key_Escape)
+        qapp.processEvents()
+        assert dialog.isVisible() and dialog._map_focus is not None
+        _click_map_toggle(dialog._fullscreen, qapp)
+        assert dialog.isFullScreen()
+        assert dialog._map_focus is None
+        assert dialog._heading.isVisible() and dialog._point_size.isVisible()
+        dialog.showNormal()
+        qapp.processEvents()
+        assert dialog._heading.isVisible() and dialog._point_size.isVisible()
+    finally:
+        dialog.close()

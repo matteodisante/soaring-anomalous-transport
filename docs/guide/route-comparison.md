@@ -70,6 +70,18 @@ antialiased widths below one pixel. Geometry and the camera remain unchanged.
 White circles mark the first retained fixes, dark squares with white outlines
 mark the last. **A · DEPARTURE** and **B · ARRIVAL** label the two endpoint cells.
 
+**Map full screen**, at the top right, enlarges the main map, hiding
+controls, the flight table and the France/world locator. The tab strip and the
+same button remain visible: click **Exit map full screen** to restore the prior
+window and panels. Only this button toggles the map layout. The macOS green
+window button puts the complete viewer in native full screen, keeping the sidebar,
+tabs and controls visible. If the viewer is already in native full screen, exiting
+map full screen returns to that complete fullscreen viewer.
+This also works for Trajectory, Map, Thermal planes and Thermal
+density. Thermal planes hides its France overview while enlarging the horizontal
+plane. The separate 3-D terrain window has its own top-right **Map full screen**
+toggle with the same distinction between native fullscreen and map focus.
+
 ## Terrain and resources
 
 One bounded elevation window is fetched from the official [IGN RGE ALTI

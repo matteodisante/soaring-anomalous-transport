@@ -51,7 +51,6 @@ class PlotControls(QWidget):
     view_changed = pyqtSignal()
     reset_view_requested = pyqtSignal()
     save_pdf_requested = pyqtSignal()
-    fullscreen_requested = pyqtSignal()
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Build the frame/axis/DMS/visibility controls and the Save PDF button."""
@@ -108,7 +107,6 @@ class PlotControls(QWidget):
         self._segmentation_combo.addItem("Vilpellet (Jérémie)", "vilpellet")
         self._segmentation_combo.addItem("Compare side by side", "compare")
         self._chk_climb_only = QCheckBox("Thermals only (climb)")
-        self._btn_fullscreen = QPushButton("Full screen")
         self._btn_save_pdf = QPushButton("Save PDF…")
 
         display_row = FlowLayout()
@@ -118,7 +116,6 @@ class PlotControls(QWidget):
         display_row.addWidget(labeled_control("Cleaned colour", self._color_combo))
         display_row.addWidget(labeled_control("Segmentation", self._segmentation_combo))
         display_row.addWidget(self._chk_climb_only)
-        display_row.addWidget(self._btn_fullscreen)
         display_row.addWidget(self._btn_save_pdf)
 
         layout = QVBoxLayout(self)
@@ -143,7 +140,6 @@ class PlotControls(QWidget):
         self._color_combo.currentIndexChanged.connect(self.changed.emit)
         self._segmentation_combo.currentIndexChanged.connect(self.changed.emit)
         self._chk_climb_only.toggled.connect(self.changed.emit)
-        self._btn_fullscreen.clicked.connect(self.fullscreen_requested.emit)
         self._btn_save_pdf.clicked.connect(self.save_pdf_requested.emit)
 
         for slider, label, suffix in (

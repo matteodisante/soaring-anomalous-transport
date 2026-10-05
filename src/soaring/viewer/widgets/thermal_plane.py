@@ -181,6 +181,7 @@ class ThermalPlane(QWidget):
         self._neighbour_levels = OrderedDict()
         self._plane_limits = ((0, 5), (0, 5))
         self._pending_limits = None
+        self._focused_axes = None
         self._build = QPushButton("Reload SSD data")
         self._build.setToolTip(
             "Read the completed thermal-planes.sqlite3 file from the SSD."
@@ -423,6 +424,33 @@ class ThermalPlane(QWidget):
         """Hide status and provenance lines so the plots fill a full-screen window."""
         self._status.setVisible(not compact)
         self._image_info.setVisible(not compact)
+
+    def set_map_focus(self, focused):
+        """Enlarge horizontal planes without rebuilding axes or changing their zoom."""
+        if focused and self._focused_axes is None:
+            if self._map_ax is None or not self._plane_axes:
+                return
+            from matplotlib.gridspec import GridSpec
+
+            self._focused_axes = (
+                self._map_ax,
+                self._map_ax.get_visible(),
+                self._map_ax.get_in_layout(),
+                [(ax, ax.get_subplotspec()) for ax in self._plane_axes],
+            )
+            self._map_ax.set_visible(False)
+            self._map_ax.set_in_layout(False)
+            grid = GridSpec(1, len(self._plane_axes), figure=self._figure)
+            for i, ax in enumerate(self._plane_axes):
+                ax.set_subplotspec(grid[i])
+        elif not focused and self._focused_axes is not None:
+            map_ax, visible, in_layout, specs = self._focused_axes
+            map_ax.set_visible(visible)
+            map_ax.set_in_layout(in_layout)
+            for ax, spec in specs:
+                ax.set_subplotspec(spec)
+            self._focused_axes = None
+        self._canvas.draw_idle()
 
     def ensure_loaded(self):
         """Read saved data only; opening a tab never starts expensive preparation."""

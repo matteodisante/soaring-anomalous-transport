@@ -437,11 +437,14 @@ France alone, or one chosen period alone. In whole-interval mode it offers
 France plus the horizontal plane, France alone, or the horizontal plane alone.
 Changing **View** uses the loaded results and preserves dates, z and segmentation.
 
-**Full screen**, at the top right of the application, enlarges the active tab and
-hides the flight-picker sidebar. Settings remain above the maps. It works in the
-Trajectory, Map and Thermal planes tabs. **Esc**, **F11**, or **Exit full screen**
-returns to the previous window layout. Choose a single map in **View** before
-entering full screen to dedicate the plotting area to that map.
+**Map full screen**, at the top right of the application, enlarges the active map
+and hides the flight-picker sidebar, settings and France overview. The tab strip
+and the same button remain visible: click **Exit map full screen** to restore the
+previous layout. Only this button changes the map layout. The macOS green window
+button instead puts the complete viewer in native full screen, with sidebar,
+tabs and settings intact. Exiting map focus restores that native fullscreen state
+if it was already active. Choose a single period in **View** before entering map
+full screen to dedicate the plotting area to that period.
 
 Controls are compact: only the active time-selection controls are shown. The
 long ground-reference summary is available through **Cell details**; acquisition

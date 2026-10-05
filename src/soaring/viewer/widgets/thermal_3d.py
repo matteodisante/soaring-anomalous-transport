@@ -24,6 +24,7 @@ from PyQt6.QtWidgets import (
 from ..thermal_3d import cell_label, load_scene
 from ..thermal_daily import PARIS
 from .flow_layout import FlowLayout
+from .map_focus import MapFocus
 from .terrain_surface import TerrainSurface
 from .thermal_plane import _Worker
 
@@ -203,6 +204,7 @@ class Thermal3D(QDialog):
         self._scene = None
         self._cloud = self._surface = None
         self._request = None
+        self._map_focus = None
         self._heading = QLabel("Vilpellet · planes every 20 m")
         self._heading.setWordWrap(True)
         self._summary = QLabel()
@@ -242,7 +244,12 @@ class Thermal3D(QDialog):
         self._surface_mode.setEnabled(False)
         reset = QPushButton("Reset view")
         top = QPushButton("Top view")
-        self._fullscreen = QPushButton("Full screen")
+        self._fullscreen = QPushButton("Map full screen")
+        self._fullscreen.setCheckable(True)
+        self._fullscreen.setAutoDefault(False)
+        self._fullscreen.setToolTip(
+            "Enlarge the terrain. Click again to restore the viewer controls."
+        )
         self._cancel = QPushButton("Cancel loading")
         self._cancel.setEnabled(False)
         controls = FlowLayout()
@@ -254,7 +261,6 @@ class Thermal3D(QDialog):
             self._surface_mode,
             reset,
             top,
-            self._fullscreen,
             self._cancel,
         ):
             controls.addWidget(widget)
@@ -271,6 +277,7 @@ class Thermal3D(QDialog):
         self._source.setWordWrap(True)
         self._source.setOpenExternalLinks(True)
         layout = QVBoxLayout(self)
+        layout.addWidget(self._fullscreen, alignment=Qt.AlignmentFlag.AlignRight)
         layout.addWidget(self._heading)
         layout.addWidget(self._summary)
         layout.addLayout(controls)
@@ -526,18 +533,30 @@ class Thermal3D(QDialog):
         )
 
     def _toggle_fullscreen(self):
-        """Enlarge the 3D window independently of the parent viewer."""
-        if self.isFullScreen():
-            self.showNormal()
-            self._fullscreen.setText("Full screen")
+        """Give just the terrain the complete screen, preserving its GL context."""
+        if self._map_focus is not None:
+            self._map_focus.restore()
+            self._map_focus = None
+            state, geometry = self._normal_state
+            self.setWindowState(state)
+            if not state & (
+                Qt.WindowState.WindowMaximized | Qt.WindowState.WindowFullScreen
+            ):
+                self.setGeometry(geometry)
+            self._fullscreen.setChecked(False)
+            self._fullscreen.setText("Map full screen")
         else:
+            self._normal_state = self.windowState(), self.geometry()
+            self._fullscreen.setChecked(True)
+            self._fullscreen.setText("Exit map full screen")
+            self._map_focus = MapFocus(self, self._view, keep=(self._fullscreen,))
             self.showFullScreen()
-            self._fullscreen.setText("Exit full screen")
+            self._view.setFocus()
 
     def keyPressEvent(self, event):  # noqa: N802
-        """Escape first exits full screen, then closes the ordinary dialog."""
-        if event.key() == Qt.Key.Key_Escape and self.isFullScreen():
-            self._toggle_fullscreen()
+        """Leave map focus to its explicit toggle; Escape closes ordinary dialogs."""
+        if event.key() == Qt.Key.Key_Escape and self._map_focus is not None:
+            event.accept()
         else:
             super().keyPressEvent(event)
 

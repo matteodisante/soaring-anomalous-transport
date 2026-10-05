@@ -11,8 +11,7 @@ from typing import TYPE_CHECKING, cast
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.figure import Figure
-from PyQt6.QtCore import QEvent, QSize, Qt
-from PyQt6.QtGui import QKeySequence, QShortcut
+from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWidgets import (
     QFileDialog,
     QMainWindow,
@@ -28,6 +27,7 @@ from soaring.reporting.style import DISCIPLINE_COLORS
 
 from . import data, plotting
 from .widgets.flight_picker import FlightPicker
+from .widgets.map_focus import MapFocus
 from .widgets.map_view import MapView
 from .widgets.plot_controls import PlotControls
 from .widgets.route_comparison import RouteComparison
@@ -112,7 +112,6 @@ class MainWindow(QMainWindow):
         self._controls.view_changed.connect(self._apply_view)
         self._controls.reset_view_requested.connect(self._reset_view)
         self._controls.save_pdf_requested.connect(self._on_save_pdf)
-        self._controls.fullscreen_requested.connect(self._toggle_full_screen)
 
         self._figure = Figure(figsize=(7.5, 6.5))
         self._canvas = FigureCanvasQTAgg(self._figure)
@@ -146,17 +145,15 @@ class MainWindow(QMainWindow):
         # disciplines is seconds of work the app should not pay before its window
         # even appears, for a tab the user may never open.
         self._tabs.currentChanged.connect(self._on_tab_changed)
-        self._fullscreen_button = QPushButton("Full screen")
+        self._fullscreen_button = QPushButton("Map full screen")
+        self._fullscreen_button.setCheckable(True)
         self._fullscreen_button.setToolTip(
-            "Enlarge the active view and hide the flight picker. Esc to return."
+            "Enlarge the current map. Click again to restore the viewer controls."
         )
         self._fullscreen_button.clicked.connect(self._toggle_full_screen)
         self._tabs.setCornerWidget(self._fullscreen_button)
         self._fullscreen_state = None
-        self._escape_fullscreen = QShortcut(QKeySequence("Esc"), self)
-        self._escape_fullscreen.activated.connect(self._exit_full_screen)
-        self._fullscreen_shortcut = QShortcut(QKeySequence("F11"), self)
-        self._fullscreen_shortcut.activated.connect(self._toggle_full_screen)
+        self._map_focus: MapFocus | None = None
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(self._picker)
@@ -170,8 +167,8 @@ class MainWindow(QMainWindow):
         self._redraw()
 
     def _toggle_full_screen(self):
-        """Enlarge the active tab, preserving every scientific control and result."""
-        if self.isFullScreen() or self._fullscreen_state is not None:
+        """Toggle map focus explicitly, independently of native window fullscreen."""
+        if self._fullscreen_state is not None:
             self._exit_full_screen()
         else:
             self._fullscreen_state = (
@@ -180,58 +177,65 @@ class MainWindow(QMainWindow):
                 self._splitter.sizes(),
                 not self._picker.isHidden(),
             )
+            self._fullscreen_button.setChecked(True)
+            self._fullscreen_button.setText("Exit map full screen")
+            self._focus_map()
             self.showFullScreen()
 
     def _exit_full_screen(self):
-        """Return to the previous window size and picker layout with Escape."""
-        if self.isFullScreen() or self._fullscreen_state is not None:
+        """Restore the prior layout and native window state from the map toggle."""
+        if self._fullscreen_state is not None:
             state = self._fullscreen_state
-            self.setWindowState(state[0] if state else Qt.WindowState.WindowNoState)
-            if (
-                state
-                and state[1] is not None
-                and not state[0] & Qt.WindowState.WindowMaximized
+            self.setWindowState(state[0])
+            if not state[0] & (
+                Qt.WindowState.WindowMaximized | Qt.WindowState.WindowFullScreen
             ):
                 self.setGeometry(state[1])
             self._restore_full_screen_layout(state)
 
     def _restore_full_screen_layout(self, state):
         """Restore the sidebar even if a resize already cleared the Qt window flag."""
+        if self._map_focus is not None:
+            self._map_focus.restore()
+            self._map_focus = None
+        self._thermal_plane.set_map_focus(False)
         if state:
             self._picker.setVisible(state[3])
             self._splitter.setSizes(state[2])
         self._fullscreen_state = None
-        self._fullscreen_button.setText("Full screen")
-        self._set_compact(False)
+        self._fullscreen_button.setChecked(False)
+        self._fullscreen_button.setText("Map full screen")
 
-    def changeEvent(self, event):  # noqa: N802
-        """Handle the button and native macOS full-screen transitions alike."""
-        super().changeEvent(event)
-        if event.type() != QEvent.Type.WindowStateChange or not hasattr(
-            self, "_splitter"
-        ):
+    def _focus_map(self):
+        """Fill the window with the active plot while keeping its canvas and camera."""
+        if self._map_focus is not None:
             return
-        if self.isFullScreen():
-            if self._fullscreen_state is None:
-                self._fullscreen_state = (
-                    event.oldState(),
-                    None,
-                    self._splitter.sizes(),
-                    not self._picker.isHidden(),
-                )
-            self._picker.hide()
-            self._fullscreen_button.setText("Exit full screen (Esc)")
-            self._set_compact(True)
+        tab = self._tabs.currentWidget()
+        hide = ()
+        if tab is self._route_comparison:
+            target = tab._scene_panel
+            hide = (tab._locator,)
+        elif self._tabs.currentIndex() == 0:
+            target = self._canvas
         else:
-            self._restore_full_screen_layout(self._fullscreen_state)
-
-    def _set_compact(self, compact: bool) -> None:
-        """Give the interactive plots the space of the status and provenance lines."""
-        self._thermal_plane.set_compact(compact)
-        self._thermal_density.set_compact(compact)
+            target = getattr(tab, "_canvas", tab)
+        if tab is self._thermal_plane:
+            tab.set_map_focus(True)
+        self._map_focus = MapFocus(
+            self._splitter,
+            target,
+            hide=hide,
+            keep=(self._tabs.tabBar(), self._fullscreen_button),
+        )
+        target.setFocus()
 
     def _on_tab_changed(self, index: int) -> None:
         """Load a tab's own data only the first time it is actually shown."""
+        if self._map_focus is not None:
+            self._map_focus.restore()
+            self._map_focus = None
+            self._thermal_plane.set_map_focus(False)
+            self._focus_map()
         if self._tabs.widget(index) is self._map_view:
             self._map_view.ensure_loaded()
         elif self._tabs.widget(index) is self._thermal_plane:
