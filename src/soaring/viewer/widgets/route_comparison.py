@@ -39,6 +39,7 @@ from ..route_scene import load_scene, terrain_mesh
 from ..thermal_daily import PARIS
 from ..thermal_geometry import unproject
 from ..thermal_index import CancelledError
+from .departure_filter import DepartureFilter
 from .flow_layout import FlowLayout
 from .route_density import RouteDensity
 from .route_locator import RouteLocator
@@ -134,6 +135,7 @@ class RouteComparison(QWidget):
         self._cancel = QPushButton("Cancel")
         self._cancel.setEnabled(False)
         self._info = InfoButton("routes", self)
+        self._departure = DepartureFilter(self)
         controls = FlowLayout()
         for widget in (
             self._build,
@@ -253,6 +255,7 @@ class RouteComparison(QWidget):
         self._layout = QVBoxLayout(self)
         self._layout.addLayout(controls)
         self._layout.addWidget(self._pairs)
+        self._layout.addWidget(self._departure)
         self._layout.addWidget(self._summary)
         self._layout.addLayout(style)
         self._layout.addWidget(self._legend)
@@ -277,6 +280,8 @@ class RouteComparison(QWidget):
         self._reset.clicked.connect(self._reset_view)
         self._top.clicked.connect(self._top_view)
         self._table.itemSelectionChanged.connect(self._style_changed)
+        self._departure.changed.connect(self._departure_changed)
+        self._departure.apply_requested.connect(self._apply_departure)
         self._set_busy(False)
 
     def ensure_loaded(self):
@@ -377,6 +382,7 @@ class RouteComparison(QWidget):
             widget.setEnabled(not busy)
         self._load.setEnabled(not busy and self._pairs.count() > 0)
         self._cancel.setEnabled(busy)
+        self._departure.set_busy(busy)
 
     def _cancel_work(self):
         """Request cancellation at the next bounded I/O boundary."""
@@ -401,6 +407,7 @@ class RouteComparison(QWidget):
         self.shutdown()
         self._index = self._flights = None
         self._tried = False
+        self._departure.reset()
         self._pairs.clear()
         self._clear_scene()
         self._set_busy(False)
@@ -411,6 +418,7 @@ class RouteComparison(QWidget):
 
     def _refresh_pairs(self, *_):
         """Offer actual directed pairs, including sparse populations honestly."""
+        self._departure.reset()
         self._clear_scene()
         self._pairs.blockSignals(True)
         self._pairs.clear()
@@ -475,10 +483,21 @@ class RouteComparison(QWidget):
 
     def _pair_changed(self, *_):
         """Clear the old scene immediately when its endpoint pair changes."""
+        self._departure.reset()
         self._clear_scene()
         self._status.setText(
             "Load the selected pair to display its cleaned trajectories."
         )
+
+    def _departure_changed(self):
+        """Never leave the previous cohort plotted under a changed time window."""
+        self._clear_scene()
+        self._status.setText("Departure selection changed. Click Apply to load it.")
+
+    def _apply_departure(self):
+        """Show the complete new departure cohort before optional speed filtering."""
+        self._mode.setCurrentIndex(0)
+        self._load_pair()
 
     def _selected_discipline(self):
         """A shared-pair requirement retains both disciplines in the same cohort."""
@@ -514,8 +533,16 @@ class RouteComparison(QWidget):
             self._flights,
             self._selected_discipline(),
         )
+        departure_window = self._departure.selection()
         self._start(
-            lambda **kwargs: load_scene(index, flights, pair, discipline, **kwargs),
+            lambda **kwargs: load_scene(
+                index,
+                flights,
+                pair,
+                discipline,
+                departure_window=departure_window,
+                **kwargs,
+            ),
             "scene",
         )
 
@@ -532,6 +559,7 @@ class RouteComparison(QWidget):
 
         self._clear_scene()
         self._scene = scene
+        self._departure.set_cohort(scene.departure_cohort)
         if self._view is None:
             self._view = TerrainView(self)
             self._scene_layout.replaceWidget(self._placeholder, self._view)

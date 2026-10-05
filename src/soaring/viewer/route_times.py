@@ -2,12 +2,81 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from datetime import date, time
+
 import numpy as np
 import pandas as pd
 
 from ..analysis.igc import first_fix
 from .catalog_index import resolve_igc_path
+from .thermal_daily import PARIS
 from .thermal_index import _check_cancel
+
+
+@dataclass(frozen=True)
+class DepartureWindow:
+    """One Paris civil day and a half-open wall-clock interval within that day."""
+
+    day: date
+    start: time
+    minutes: int = 30
+
+    def __post_init__(self):
+        """Require minute precision and keep the entire interval on one day."""
+        if self.start.tzinfo or self.start.second or self.start.microsecond:
+            raise ValueError("Departure start must be a local hour and minute")
+        if not 1 <= self.minutes <= 1440 - self.start_minute:
+            raise ValueError("Departure interval must stay within the selected day")
+
+    @property
+    def start_minute(self):
+        """Wall-clock minutes since midnight."""
+        return self.start.hour * 60 + self.start.minute
+
+    @property
+    def end_label(self):
+        """Exclusive local end, allowing 24:00 at the end of the selected day."""
+        end = self.start_minute + self.minutes
+        return f"{end // 60:02}:{end % 60:02}"
+
+    @property
+    def label(self):
+        """Human-readable interval with an explicit timezone and boundary."""
+        return (
+            f"{self.day:%d/%m/%Y} {self.start:%H:%M} to {self.end_label} "
+            "Europe/Paris (end excluded)"
+        )
+
+
+def local_departures(flights):
+    """Convert recovered UTC timestamps to Paris dates, retaining missing clocks."""
+    return pd.to_datetime(
+        flights.departure_utc, unit="s", utc=True, errors="coerce"
+    ).dt.tz_convert(PARIS)
+
+
+def filter_departures(flights, window):
+    """Filter the full cohort before sampling; missing clocks cannot match a day.
+
+    Wall-clock filtering includes both occurrences of a repeated autumn hour.
+    Arrival times do not affect membership, including arrivals the next day.
+    """
+    if window is None:
+        return flights
+    local = local_departures(flights)
+    seconds = (
+        local.dt.hour * 3600
+        + local.dt.minute * 60
+        + local.dt.second
+        + local.dt.microsecond / 1e6
+    )
+    mask = (
+        local.dt.date.eq(window.day)
+        & (seconds >= window.start_minute * 60)
+        & (seconds < (window.start_minute + window.minutes) * 60)
+    )
+    return flights.loc[mask].copy()
 
 
 def with_flight_times(selected, disciplines, *, progress=lambda _: None, cancel=None):

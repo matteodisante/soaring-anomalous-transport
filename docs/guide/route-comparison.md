@@ -64,11 +64,43 @@ refer to the first and last retained fixes of the displayed trajectory. Both sho
 `DD/MM/YYYY HH:MM:SS` in **Europe/Paris**, with CET/CEST stated explicitly.
 They restore the original IGC date/time plus `ground_phase_start_s` and the saved
 endpoint time (`t0` or `t1`); archive times alone are relative, not UTC timestamps.
-Only the selected flights' IGC headers/first fixes are read, in the background;
+The candidate pair's IGC headers/first fixes are read in the background, before
+any temporal selection or 300-flight sampling;
 the endpoint index does not need rebuilding. Missing clock information is shown
 as **Unavailable**, never replaced with a guessed catalogue date. Columns keep
 dates legible; narrow windows provide horizontal scrolling.
 If fewer than 300 exist, all are displayed and both counts are stated explicitly.
+
+### Same-day departure cohorts
+
+Load a pair, enable **Departure window**, choose **Day (Paris)**, **From** and
+the window length, then click **Apply**. The initial length is **30 minutes**.
+The day selector lists every available departure date and its flight count in
+the complete pair/discipline population, including flights not in the initial
+300-flight sample. Its initial choice is the day with most dated departures
+(earliest date on a tie), with the first departure's half-hour selected.
+
+For example, 12:00 with a 30-minute window keeps departures on the selected day
+with **12:00 ≤ departure < 12:30**, in Europe/Paris. Only departure matters;
+arrival can be on a later day. The window is limited to the same civil day and
+may end at 24:00. In a repeated autumn hour, both CET/CEST occurrences match the
+local clock window; each flight's table timestamp states its offset designation.
+
+The preview counts matches and unavailable dates. Flights without a recoverable
+UTC origin cannot enter a dated cohort, but remain available with the filter off.
+Changing the controls clears the old trajectories; **Apply** loads the new cohort.
+An empty interval shows zero matches. Untick the filter and Apply to return to
+all departures. Changing the route or discipline resets the time filter.
+
+The backend applies the date/time filter to **all matching flights before**
+duration ranking and the 300-flight limit. The fastest/slowest ranks are therefore
+relative to the selected cohort. The thermal background still includes **all
+archived flights**; it is not a density estimate of just the displayed group.
+
+This supports exploration of solo versus group flight. Nearby departure times
+identify candidate cohorts; establishing shared flight also requires simultaneous
+spatial proximity along the paths. Departure still refers to the first retained
+cleaned fix, rather than an independently measured physical takeoff event.
 
 **5 fastest**, **5 slowest**, and **Fastest + slowest** isolate the groups without
 moving the camera. They are cyan and lime green respectively, with a dark outline

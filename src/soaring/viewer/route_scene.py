@@ -20,8 +20,8 @@ from PIL import Image
 from ..analysis.preproc.enu import LocalFrame
 from .geodesy import enu_to_geodetic
 from .route_density import DensityAtlas, load_density
-from .route_index import FIX_COLUMNS, ROUTE_CELL_M, select_flights
-from .route_times import with_flight_times
+from .route_index import FIX_COLUMNS, ROUTE_CELL_M, matching_flights, select_flights
+from .route_times import DepartureWindow, filter_departures, with_flight_times
 from .thermal_geometry import continuous_edges, project
 from .thermal_index import _check_cancel
 from .thermal_ridges import DATASET_URL, LAYER, SERVICE
@@ -48,6 +48,8 @@ class RouteScene:
     aerial_error: str | None = None
     density: DensityAtlas | None = None
     density_error: str | None = None
+    departure_cohort: pd.DataFrame | None = None
+    departure_window: DepartureWindow | None = None
 
 
 def track_segments(fixes, frame):
@@ -253,16 +255,31 @@ def load_aerial(bounds, folder, *, cancel=None):
 
 
 def load_scene(
-    index, flights, pair, discipline=None, *, progress=lambda _: None, cancel=None
+    index,
+    flights,
+    pair,
+    discipline=None,
+    *,
+    departure_window=None,
+    progress=lambda _: None,
+    cancel=None,
 ):
-    """Read each necessary Parquet group once, keeping only the selected flights."""
+    """Filter complete endpoint cohorts before sampling or reading their geometry."""
     index.verify()
-    selected, total = select_flights(flights, pair, discipline)
-    if selected.empty:
+    candidates = matching_flights(flights, pair, discipline)
+    if candidates.empty:
         raise ValueError("No cleaned flights match these directed cells")
-    selected = with_flight_times(
-        selected, index.disciplines, progress=progress, cancel=cancel
+    cohort = with_flight_times(
+        candidates, index.disciplines, progress=progress, cancel=cancel
     )
+    selected, total = select_flights(filter_departures(cohort, departure_window), pair)
+    if selected.empty:
+        unknown = int(cohort.departure_utc.isna().sum())
+        raise ValueError(
+            f"No departures in {departure_window.label}. "
+            f"{unknown} flights have unavailable departure dates. "
+            "Choose another window or disable the departure filter."
+        )
     pieces = {(r.discipline, r.flight_id): [] for r in selected.itertuples()}
     with sqlite3.connect(index.path) as db:
         for disc in index.disciplines:
@@ -310,7 +327,16 @@ def load_scene(
         for i, segment in enumerate(track):
             segment[:, :2] -= origin
             track[i] = segment.astype(np.float32)
-    scene = RouteScene(selected, total, tuple(pair), tracks, bounds, origin)
+    scene = RouteScene(
+        selected,
+        total,
+        tuple(pair),
+        tracks,
+        bounds,
+        origin,
+        departure_cohort=cohort,
+        departure_window=departure_window,
+    )
     _check_cancel(cancel)
     progress("Reading thermal hours from all archived flights crossing the area…")
     try:

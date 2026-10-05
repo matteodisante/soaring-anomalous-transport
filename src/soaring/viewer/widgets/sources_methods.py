@@ -141,7 +141,9 @@ counts.</td></tr>
 <tr><td><a name="tab-routes"></a><b>Routes · 50&ndash;300 km</b></td><td>
 Cleaned flights sharing directed 10 &times; 10 km endpoint cells. Distance is between
 cell centres; ranks use retained elapsed duration. At most 300 flights preserve
-both groups of five duration extremes. The table includes departure/arrival dates
+both groups of five duration extremes. An optional day and departure-time window
+filters the entire pair before ranking and sampling, for comparing departure cohorts.
+The table includes departure/arrival dates
 in Europe/Paris. Terrain and imagery provide context; the thermal overlay uses
 all classified flights, independently of the displayed route sample.</td></tr>
 <tr><td><a name="tab-3d"></a><b>3D terrain</b></td><td>

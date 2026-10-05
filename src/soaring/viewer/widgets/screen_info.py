@@ -126,6 +126,25 @@ The fastest/slowest labels refer to this duration ranking, not measured airspeed
 plus {MAX_FLIGHTS - 10} evenly spaced interior duration ranks. If fewer exist,
 show all. The displayed and matching counts remain separate.</li>
 </ol>
+<h3>Flights departing together</h3>
+<p>Load a pair, enable <b>Departure window</b>, choose <b>Day (Paris)</b>,
+<b>From</b> and the window length, then click <b>Apply</b>. The initial window
+is 30 minutes. Days and their counts cover every flight in the pair, including
+those outside the 300-flight sample; the initial day has the most dated departures.</p>
+<p>The interval includes its start and excludes its end: 12:00 for 30 minutes
+means 12:00 &le; departure &lt; 12:30 on that local day. The live count shows
+how many match before loading. The interval stays within one civil day;
+unavailable dates are counted and excluded from an active filter.</p>
+<p>Filtering happens <b>before</b> duration ranking and sampling. Ranks and the
+fastest/slowest groups are recomputed within the chosen departure cohort.
+The first/last retained-fix definitions remain unchanged. Arrival may be on a
+later day. Untick the filter and Apply to restore all departures; changing the
+route or discipline resets the time filter. CET/CEST appears in the flight table;
+if a local autumn hour repeats, both occurrences match the clock window.</p>
+<p>This selects candidate groups for comparing solo and group flight. Close
+departure times alone do not establish shared flight: examine simultaneous
+spatial proximity along the trajectories too. The thermal overlay continues
+to use all archived flights, independent of the day and time filter.</p>
 <h3>Table and trajectory controls</h3>
 <ul>
 <li><b>Departure / arrival:</b> dates and times of the retained endpoints in
@@ -160,7 +179,7 @@ Missing terrain remains missing. The France/world locator uses
 <p>{FLIGHT_SOURCE_HTML} supplies recordings. Prepare / refresh index builds a
 reusable endpoint census and all-flight thermal product on the SSD. Loading a pair
 reads its saved tracks and small terrain/image windows; cached windows work offline.
-Dates read the selected recordings' headers/first fixes without rerunning
+Dates read the candidate recordings' headers/first fixes without rerunning
 cleaning.</p>
 <p>GNSS and IGN height datums are not harmonised; no precise ground clearance is
 implied. Photo dates differ from flight dates. The comparison sample preserves

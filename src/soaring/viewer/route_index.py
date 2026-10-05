@@ -306,6 +306,14 @@ def route_pairs(
     ).reset_index(drop=True)
 
 
+def matching_flights(flights, pair, discipline=None):
+    """Return every flight in the directed pair before any sampling or ranking."""
+    mask = (flights[PAIR_COLUMNS].to_numpy() == np.asarray(pair)).all(axis=1)
+    if discipline is not None:
+        mask &= flights.discipline.eq(discipline).to_numpy()
+    return flights.loc[mask].copy()
+
+
 def select_flights(flights, pair, discipline=None):
     """Choose at most 300 reproducible flights, always including both extremes.
 
@@ -313,11 +321,8 @@ def select_flights(flights, pair, discipline=None):
     remaining slots are evenly spaced duration ranks. This is a comparison sample,
     not a random population estimate. Ties break by discipline and flight ID.
     """
-    mask = (flights[PAIR_COLUMNS].to_numpy() == np.asarray(pair)).all(axis=1)
-    if discipline is not None:
-        mask &= flights.discipline.eq(discipline).to_numpy()
     matching = (
-        flights.loc[mask]
+        matching_flights(flights, pair, discipline)
         .sort_values(["duration_s", "discipline", "flight_id"])
         .reset_index(drop=True)
     )

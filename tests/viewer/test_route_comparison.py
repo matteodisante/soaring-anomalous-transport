@@ -163,6 +163,80 @@ def cohort(count=301):
     return rows.sample(frac=1, random_state=42)
 
 
+def test_scene_filters_all_departures_before_duration_sampling(
+    archive, tmp_path, monkeypatch
+):
+    from datetime import date, time
+
+    from soaring.viewer.route_times import DepartureWindow
+
+    disc, root, _ = archive
+    ids = [str(i) for i in range(12)]
+    frames = [
+        pd.DataFrame(
+            {
+                "flight_id": fid,
+                "segment_id": 0,
+                "t": [0.0, 1000.0 + i],
+                "E": [0.0, 100000.0],
+                "N": 0.0,
+                "z": 2000.0,
+            }
+        )
+        for i, fid in enumerate(ids)
+    ]
+    pq.write_table(
+        pa.Table.from_pandas(pd.concat(frames, ignore_index=True)),
+        root / "fixes.parquet",
+        row_group_size=2,
+    )
+    pd.DataFrame(
+        {
+            "flight_id": ids,
+            "lat0": 44.0,
+            "lon0": 6.0,
+            "alt0": 2000.0,
+            "n_segments_kept": 1,
+            "drop_reason": None,
+        }
+    ).to_parquet(root / "flights_meta.parquet")
+    index = ri.build_index([disc], path=tmp_path / "routes.sqlite3")
+    flights = index.flights()
+    pair = flights.iloc[0][ri.PAIR_COLUMNS].to_numpy(dtype=int)
+    monkeypatch.setattr(ri, "MAX_FLIGHTS", 10)
+    sampled, _ = ri.select_flights(flights, pair)
+    assert not {"5", "6"} & set(sampled.flight_id)
+    base = pd.Timestamp("2024-06-15T10:00:00Z").timestamp()
+
+    def dates(candidates, *_args, **_kwargs):
+        assert len(candidates) == 12  # Must not recover dates only for sampled tracks.
+        result = candidates.assign(departure_utc=base + 86400)
+        result.loc[result.flight_id.isin(["5", "6"]), "departure_utc"] = base + 300
+        result.loc[result.flight_id == "0", "departure_utc"] = np.nan
+        result["arrival_utc"] = result.departure_utc + result.duration_s
+        return result
+
+    monkeypatch.setattr(rs, "with_flight_times", dates)
+    monkeypatch.setattr(rs, "load_terrain", lambda *a, **kw: None)
+    monkeypatch.setattr(rs, "load_density", lambda *a, **kw: None)
+    window = DepartureWindow(date(2024, 6, 15), time(12), 30)
+    scene = rs.load_scene(index, flights, pair, departure_window=window)
+    assert scene.selected.flight_id.tolist() == ["5", "6"]
+    assert scene.total == len(scene.tracks) == 2
+    assert scene.selected["rank"].tolist() == [1, 2]
+    assert len(scene.departure_cohort) == 12 and scene.departure_window == window
+    monkeypatch.setattr(
+        rs.pq, "ParquetFile", lambda *_: pytest.fail("empty window read tracks")
+    )
+    with pytest.raises(ValueError, match=r"No departures.*1 flights have unavailable"):
+        rs.load_scene(
+            index,
+            flights,
+            pair,
+            departure_window=DepartureWindow(date(2024, 6, 15), time(13), 30),
+        )
+
+
 def test_limit_preserves_true_extremes_direction_and_disciplines():
     flights = cohort()
     pair = (90, 650, 100, 650)
