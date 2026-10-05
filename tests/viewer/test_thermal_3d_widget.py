@@ -1,6 +1,7 @@
 """The terrain window preserves geometry and camera while appearance changes."""
 
 import os
+from dataclasses import replace
 from types import SimpleNamespace
 
 import numpy as np
@@ -61,15 +62,17 @@ def test_opacity_size_and_terrain_toggle_keep_positions_and_camera(qapp, scene):
         view.close()
 
 
-def test_button_captures_active_time_interval_and_reuses_window(qapp, monkeypatch):
+def test_button_captures_selected_cell_and_dates_and_reuses_window(
+    qapp, scene, monkeypatch
+):
     calls = []
 
     class Window:
         def __init__(self, parent):
             self.parent = parent
 
-        def load(self, store, start, end):
-            calls.append((store, start, end))
+        def load(self, store, cell, start, end):
+            calls.append((store, cell, start, end))
 
         def show(self):
             pass
@@ -84,16 +87,23 @@ def test_button_captures_active_time_interval_and_reuses_window(qapp, monkeypatc
     view = ThermalPlane()
     try:
         assert not view._terrain_3d.isEnabled()
-        store = view._index = SimpleNamespace(has_climb_ranking=True)
+        store = view._index = SimpleNamespace(has_climb_ranking=True, has_points=True)
+        view._set_busy(False)
+        assert not view._terrain_3d.isEnabled()
+        cells = [scene.cell, replace(scene.cell, ix=89, iy=1375, terrain="Plains")]
+        view._cells.blockSignals(True)
+        for cell in cells:
+            view._cells.addItem(cell.terrain, cell)
         view._set_busy(False)
         assert view._terrain_3d.isEnabled()
         monkeypatch.setattr(view, "_read_bounds", lambda: (100, 200))
         view._terrain_3d.click()
         panel = view._terrain_3d_panel
+        view._cells.setCurrentIndex(1)
         monkeypatch.setattr(view, "_read_bounds", lambda: (300, 400))
         view._terrain_3d.click()
         assert view._terrain_3d_panel is panel
-        assert calls == [(store, 100, 200), (store, 300, 400)]
+        assert calls == [(store, cells[0], 100, 200), (store, cells[1], 300, 400)]
     finally:
         view.shutdown()
         view.close()

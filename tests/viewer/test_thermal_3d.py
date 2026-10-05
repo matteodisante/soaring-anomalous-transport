@@ -11,7 +11,7 @@ import pytest
 from PIL import Image
 
 from soaring.viewer.thermal_3d import (
-    high_mountains_second,
+    cell_label,
     load_scene,
     points_every_20m,
     read_surface,
@@ -52,10 +52,13 @@ def test_rank_uses_vilpellet_climbs_and_stable_cell_ties(cell):
             (194, 1309): {"climb_runs": 5},
         },
     )
-    assert high_mountains_second(store) is cell
+    assert cell_label(store, cell) == "High mountains #2"
+    assert cell_label(store, cells[1]) == "High mountains #1"
+    with pytest.raises(ValueError, match="missing or changed"):
+        cell_label(store, replace(cell, ground_m=cell.ground_m + 1))
     store.has_climb_ranking = False
     with pytest.raises(ValueError, match="climb-ranked"):
-        high_mountains_second(store)
+        cell_label(store, cell)
 
 
 def test_20m_levels_exclude_irregular_ceiling_and_keep_absolute_altitude(cell, points):
@@ -117,9 +120,13 @@ def test_changed_dem_and_inconsistent_mean_are_rejected(raster_store):
         read_surface(store, cell)
 
 
-def test_scene_always_reads_vilpellet_with_the_requested_dates(
-    cell, points, monkeypatch, tmp_path
+@pytest.mark.parametrize(
+    "terrain", ["Plains", "Hills", "Low mountains", "High mountains"]
+)
+def test_scene_reads_selected_cell_vilpellet_and_requested_dates(
+    cell, points, monkeypatch, tmp_path, terrain
 ):
+    cell = replace(cell, terrain=terrain)
     calls = []
     plane = PlaneData(pd.DataFrame(), 4, 3, 1, 1, 2, points=points)
 
@@ -131,7 +138,7 @@ def test_scene_always_reads_vilpellet_with_the_requested_dates(
         has_points=True,
         has_climb_ranking=True,
         path=tmp_path / "snapshot",
-        cells=lambda: [replace(cell, ix=192), cell],
+        cells=lambda: [replace(cell, ix=192, terrain="High mountains"), cell],
         activity_counts={
             (192, 1309): {"climb_runs": 20},
             (193, 1309): {"climb_runs": 10},
@@ -142,12 +149,14 @@ def test_scene_always_reads_vilpellet_with_the_requested_dates(
         "soaring.viewer.thermal_3d.read_surface",
         lambda *args: (np.arange(2), np.arange(2), np.ones((2, 2)), {}),
     )
-    scene = load_scene(store, 100, 200)
+    scene = load_scene(store, cell, 100, 200)
     assert calls == [(cell, 100, 200, "vilpellet")]
+    assert scene.cell == cell
+    assert scene.label == f"{terrain} #{2 if terrain == 'High mountains' else 1}"
     assert len(scene.points) == 2 and scene.contributing_flights == 2
     assert scene.climb_runs == 10 and scene.unavailable_flights == 1
     cancel = Event()
     cancel.set()
     with pytest.raises(CancelledError):
-        load_scene(store, 100, 200, cancel=cancel)
+        load_scene(store, cell, 100, 200, cancel=cancel)
     assert len(calls) == 1

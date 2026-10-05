@@ -1,4 +1,4 @@
-"""Verified terrain and saved 20 m climb intersections for the first 3D cell."""
+"""Verified terrain and saved 20 m climb intersections for any prepared cell."""
 
 from __future__ import annotations
 
@@ -34,19 +34,22 @@ class TerrainScene:
     unknown_clock_flights: int
     start: float
     end: float
+    label: str = ""
 
 
-def high_mountains_second(store):
-    """Select rank two by Vilpellet climbs, never by visitor or launch counts."""
+def cell_label(store, cell):
+    """Validate the selected saved cell and identify its Vilpellet category rank."""
     if not store.has_climb_ranking:
         raise ValueError("The 3D view requires the Vilpellet climb-ranked snapshot")
     cells = sorted(
-        (c for c in store.cells() if c.terrain == "High mountains"),
+        (c for c in store.cells() if c.terrain == cell.terrain),
         key=lambda c: (-store.activity_counts[c.ix, c.iy]["climb_runs"], c.ix, c.iy),
     )
-    if len(cells) < 2:
-        raise ValueError("High mountains #2 is missing from the prepared snapshot")
-    return cells[1]
+    if cell not in cells:
+        raise ValueError(
+            "The selected cell is missing or changed in the prepared snapshot"
+        )
+    return f"{cell.terrain} #{cells.index(cell) + 1}"
 
 
 def read_surface(store, cell):
@@ -143,8 +146,8 @@ def points_every_20m(frame, cell, start, end):
     return xyz, flights
 
 
-def load_scene(store, start, end, *, progress=lambda _: None, cancel=None):
-    """Load only High mountains #2, Vilpellet and the requested UTC interval."""
+def load_scene(store, cell, start, end, *, progress=lambda _: None, cancel=None):
+    """Load the selected saved cell, Vilpellet and the requested UTC interval."""
     if not np.isfinite([start, end]).all() or end < start:
         raise ValueError("Choose a valid time interval in Thermal planes")
     if not store.has_points:
@@ -155,8 +158,8 @@ def load_scene(store, start, end, *, progress=lambda _: None, cancel=None):
             raise CancelledError("Cancelled")
 
     check_cancel()
-    cell = high_mountains_second(store)
-    progress("Reading verified IGN terrain for High mountains #2…")
+    label = cell_label(store, cell)
+    progress(f"Reading verified IGN terrain for {label}…")
     x, y, terrain, reference = read_surface(store, cell)
     check_cancel()
     progress("Reading saved Vilpellet intersections for the selected dates…")
@@ -180,4 +183,5 @@ def load_scene(store, start, end, *, progress=lambda _: None, cancel=None):
         plane.unknown_clock,
         start,
         end,
+        label,
     )

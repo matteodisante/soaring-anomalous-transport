@@ -19,7 +19,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
-from ..thermal_3d import load_scene
+from ..thermal_3d import cell_label, load_scene
 from ..thermal_daily import PARIS
 from .flow_layout import FlowLayout
 from .thermal_plane import _Worker
@@ -65,13 +65,13 @@ class Thermal3D(QDialog):
     def __init__(self, parent=None):
         """Create controls and defer all saved-data reads to an explicit request."""
         super().__init__(parent)
-        self.setWindowTitle("3D terrain · High mountains #2 · Vilpellet")
+        self.setWindowTitle("3D terrain · Vilpellet")
         self.resize(1200, 850)
         self._worker = None
         self._scene = None
         self._cloud = self._surface = None
         self._request = None
-        self._heading = QLabel("High mountains #2 · Vilpellet · planes every 20 m")
+        self._heading = QLabel("Vilpellet · planes every 20 m")
         self._heading.setWordWrap(True)
         self._summary = QLabel()
         self._summary.setWordWrap(True)
@@ -133,26 +133,31 @@ class Thermal3D(QDialog):
         self._fullscreen.clicked.connect(self._toggle_fullscreen)
         self._cancel.clicked.connect(self._cancel_loading)
 
-    def load(self, store, start, end):
-        """Replace the displayed snapshot with one explicit date selection."""
-        self.shutdown()
-        self._view.clear()
-        self._cloud = self._surface = self._scene = None
-        self._request = (start, end)
+    def _set_heading(self, label, start, end):
+        """Identify the displayed cell and dates in the window and scene titles."""
+        self.setWindowTitle(f"3D terrain · {label} · Vilpellet")
         dates = [
             datetime.fromtimestamp(t, PARIS).strftime("%Y-%m-%d %H:%M:%S")
             for t in (start, end)
         ]
         self._heading.setText(
-            "High mountains #2 · Vilpellet · planes every 20 m\n"
+            f"{label} · Vilpellet · planes every 20 m\n"
             f"{dates[0]} → {dates[1]} · Europe/Paris"
         )
+
+    def load(self, store, cell, start, end):
+        """Replace the displayed snapshot with an explicit cell and date selection."""
+        self.shutdown()
+        self._view.clear()
+        self._cloud = self._surface = self._scene = None
+        self._request = (cell, start, end)
+        self._set_heading(cell_label(store, cell), start, end)
         self._summary.setText("Loading the selected interval from the SSD…")
         self._source.clear()
         self._status.clear()
         self._cancel.setEnabled(True)
         worker = self._worker = _Worker(
-            lambda **kw: load_scene(store, start, end, **kw), self
+            lambda **kw: load_scene(store, cell, start, end, **kw), self
         )
         worker.progress.connect(self._progress)
         worker.succeeded.connect(self._loaded)
@@ -190,6 +195,12 @@ class Thermal3D(QDialog):
     def set_scene(self, scene):
         """Render exact metric positions without vertical exaggeration or thinning."""
         self._scene = scene
+        self._set_heading(
+            scene.label
+            or f"{scene.cell.terrain} · cell {scene.cell.ix}/{scene.cell.iy}",
+            scene.start,
+            scene.end,
+        )
         self._view.clear()
         terrain = scene.terrain
         lo, hi = float(terrain.min()), float(terrain.max())

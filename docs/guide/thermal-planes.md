@@ -323,16 +323,22 @@ ranked-cell reads never repair or rebuild missing products.
 
 ### 3D terrain and intersections
 
-**3D terrain · High mountains #2** opens a separate navigable 3D window for the
-second high-mountain cell in the **Vilpellet climb-run ranking**. The pilot is
-limited to this cell, independently of the cell currently selected in the 2D
-view. The prepared October 2026 snapshot selects cell **193/1309**, with 13,764
-Vilpellet climb runs. The cell is resolved from the ranking on each load.
+**3D terrain · selected cell** opens a separate navigable 3D window for the
+cell currently selected in **Thermal planes**. All twelve prepared **5 × 5 km**
+cells are available: three each in Plains, Hills, Low mountains and High
+mountains, ranked by **Vilpellet climb runs**. The title identifies the selected
+category and rank; the summary includes its grid coordinates. The previous
+High mountains #2 pilot is now one of these twelve choices.
 
 The window uses the current **From/To interval**, or the selected pooled civil
 days in daily-comparison mode, and always uses **Vilpellet**. Both disciplines
 contribute. Dates and source are printed above the scene. This is a snapshot of
-that selection: click the 3D button again after changing dates to reload it.
+that selection: click the 3D button again after changing the cell or dates to
+reload the same window. Point opacity and point size are retained.
+
+These twelve cells already have their DEMs, orthophotos and intersection
+lattices saved on the SSD. Enabling their 3D views creates no additional cache
+or imagery copies. This does not prepare new cells across the national grid.
 
 The surface is the original **IGN RGE ALTI elevation raster at 25 m sampling**.
 Its hash, extent and mean are checked against the saved cell reference. The

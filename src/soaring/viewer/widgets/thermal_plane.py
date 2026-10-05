@@ -303,9 +303,9 @@ class ThermalPlane(QWidget):
         self._info.setToolTip("Data sources, terrain reference and climb intersections")
         self._info_panel: ThermalInfo | None = None
         self._terrain_3d_panel = None
-        self._terrain_3d = QPushButton("3D terrain · High mountains #2")
+        self._terrain_3d = QPushButton("3D terrain · selected cell")
         self._terrain_3d.setToolTip(
-            "Open the second high-mountain cell by Vilpellet climb count: "
+            "Open the selected cell in 3D: "
             "IGN terrain and all intersections every 20 m, for the selected dates"
         )
         self._terrain_3d.clicked.connect(self._show_terrain_3d)
@@ -483,7 +483,10 @@ class ThermalPlane(QWidget):
         self._build.setEnabled(not busy)
         self._cancel.setEnabled(busy)
         self._terrain_3d.setEnabled(
-            not busy and bool(getattr(self._index, "has_climb_ranking", False))
+            not busy
+            and bool(getattr(self._index, "has_climb_ranking", False))
+            and bool(getattr(self._index, "has_points", False))
+            and self._cells.currentData() is not None
         )
         for widget in (
             self._cells,
@@ -1038,8 +1041,9 @@ class ThermalPlane(QWidget):
         self._draw_plane()
 
     def _show_terrain_3d(self):
-        """Open the fixed pilot cell with this tab's current time selection."""
-        if self._index is None:
+        """Open this tab's selected cell and capture its current time interval."""
+        cell = self._cells.currentData()
+        if self._index is None or cell is None:
             return
         try:
             from .thermal_3d import Thermal3D
@@ -1051,7 +1055,7 @@ class ThermalPlane(QWidget):
             return
         if self._terrain_3d_panel is None:
             self._terrain_3d_panel = Thermal3D(self)
-        self._terrain_3d_panel.load(self._index, *self._read_bounds())
+        self._terrain_3d_panel.load(self._index, cell, *self._read_bounds())
         self._terrain_3d_panel.show()
         self._terrain_3d_panel.raise_()
 
