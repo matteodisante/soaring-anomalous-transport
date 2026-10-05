@@ -105,12 +105,14 @@ For a terrain mean of 289 m and z = 100 m, only crossings at H = 389 m count.</p
 <ul>
 <li><b>3D terrain · selected cell:</b> opens the cell selected in this tab,
 with IGN terrain and all intersections every 20 m above the cell
-mean. It uses the selected dates and always Vilpellet. Left drag rotates, right
-drag pans and the wheel zooms. Point opacity and size are adjustable; turning off
+mean. It uses the selected dates and always Vilpellet. Choose a 5 or 10 km square
+centred on the cell. Left drag rotates, Shift + drag (or right drag) pans, and
+scroll/pinch zooms. Point opacity and size are adjustable; turning off
 Terrain reveals points behind it. All axes use metres without vertical
 exaggeration. Choose Terrain colours or Aerial photo · IGN to change the surface
 appearance. Both use existing offline data. Click the 3D button again to apply
-a changed cell or date selection.</li>
+a changed cell or date selection. The 3D window's own <b>Info</b> explains
+its point selection, terrain, snapshot behaviour and navigation.</li>
 <li><b>Zoom + / &minus;:</b> visible width 0.5&ndash;10 km. Drag with the toolbar's
 hand tool. Navigation covers the selected cell and its eight neighbours.
 <b>Reset cell</b> returns to the central {cell_km} &times; {cell_km} km square.</li>

@@ -25,6 +25,7 @@ from PyQt6.QtWidgets import (
 )
 
 from .flow_layout import FlowLayout, labeled_control
+from .screen_info import InfoButton
 
 _GEOGRAPHIC_AXES = [("lon", "Longitude"), ("lat", "Latitude"), ("alt", "Altitude")]
 _ENU_AXES = [("E", "East"), ("N", "North"), ("z", "Altitude (z)")]
@@ -108,6 +109,7 @@ class PlotControls(QWidget):
         self._segmentation_combo.addItem("Compare side by side", "compare")
         self._chk_climb_only = QCheckBox("Thermals only (climb)")
         self._btn_save_pdf = QPushButton("Save PDF…")
+        self._info = InfoButton("trajectory", self)
 
         display_row = FlowLayout()
         display_row.addWidget(self._chk_dms)
@@ -117,6 +119,7 @@ class PlotControls(QWidget):
         display_row.addWidget(labeled_control("Segmentation", self._segmentation_combo))
         display_row.addWidget(self._chk_climb_only)
         display_row.addWidget(self._btn_save_pdf)
+        display_row.addWidget(self._info)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)

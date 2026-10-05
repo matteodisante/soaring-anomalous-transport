@@ -7,6 +7,11 @@ Endpoint preparation is cancellable and resumes from completed Parquet row group
 The same button also prepares the all-flight thermal background. Its separate
 archive scan is cancellable and publishes only a complete density product.
 
+**Info** explains this screen's endpoint selection, duration ranks, dates, terrain,
+imagery and independent all-flight thermal overlay. The expanded locator also
+has **Info**. **Sources & methods** is the viewer-wide summary; each view keeps
+its own detailed explanation next to its controls.
+
 Every displayed flight starts in the same 10 x 10 km cell A and ends in the same
 10 x 10 km cell B. These are the first and last **retained cleaned fixes**, not
 catalogue takeoff/landing labels or an inferred physical touchdown. Flights that

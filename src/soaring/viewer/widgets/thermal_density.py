@@ -147,8 +147,7 @@ class ThermalDensity(QWidget):
             self._background.addItem(text, kind)
         self._terrain = self._opacity(85, "% terrain")
         self._strength = self._opacity(80, "% density")
-        self._info = QPushButton("i")
-        self._info.setFixedWidth(28)
+        self._info = QPushButton("Info")
         self._info.setToolTip("How hours/km² are computed")
         self._reload = QPushButton("Reload SSD data")
         self._status = QLabel(

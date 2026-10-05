@@ -25,6 +25,7 @@ from ..thermal_3d import cell_label, load_scene
 from ..thermal_daily import PARIS
 from .flow_layout import FlowLayout
 from .map_focus import MapFocus
+from .screen_info import InfoButton
 from .terrain_surface import TerrainSurface
 from .thermal_plane import _Worker
 
@@ -252,6 +253,7 @@ class Thermal3D(QDialog):
         )
         self._cancel = QPushButton("Cancel loading")
         self._cancel.setEnabled(False)
+        self._info = InfoButton("terrain", self)
         controls = FlowLayout()
         for widget in (
             self._area,
@@ -262,6 +264,7 @@ class Thermal3D(QDialog):
             reset,
             top,
             self._cancel,
+            self._info,
         ):
             controls.addWidget(widget)
         self._view = TerrainView(self)

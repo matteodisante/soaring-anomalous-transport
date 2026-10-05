@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
 from ..geography import FRANCE_EXTENT, WORLD_EXTENT, draw_land, load_basemap
 from ..route_index import ROUTE_CELL_M
 from ..thermal_geometry import unproject
+from .screen_info import InfoButton
 
 
 def geographic_outline(bounds):
@@ -58,6 +59,8 @@ class RouteLocator(QWidget):
         layout.addLayout(controls)
         layout.addWidget(self.canvas, 1)
         if expanded:
+            self._info = InfoButton("locator", self)
+            controls.addWidget(self._info)
             layout.addWidget(NavigationToolbar2QT(self.canvas, self))
         else:
             button = QPushButton("Expand map")

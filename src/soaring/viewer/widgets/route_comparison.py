@@ -42,6 +42,7 @@ from ..thermal_index import CancelledError
 from .flow_layout import FlowLayout
 from .route_density import RouteDensity
 from .route_locator import RouteLocator
+from .screen_info import InfoButton
 
 COLOURS = {"fast": "#00e5ff", "slow": "#7cff32", "other": "#edf6ff", "both": "#65aaff"}
 SELECTED_COLOUR = "#1464ff"
@@ -132,6 +133,7 @@ class RouteComparison(QWidget):
         self._load = QPushButton("Load selected pair")
         self._cancel = QPushButton("Cancel")
         self._cancel.setEnabled(False)
+        self._info = InfoButton("routes", self)
         controls = FlowLayout()
         for widget in (
             self._build,
@@ -141,6 +143,7 @@ class RouteComparison(QWidget):
             self._maximum,
             self._load,
             self._cancel,
+            self._info,
         ):
             controls.addWidget(widget)
         self._mode = QComboBox()
