@@ -360,6 +360,17 @@ unharmonised, as in the 2D view.
 
 GPU rendering uses PyQtGraph and PyOpenGL from the `viewer` dependency group.
 Existing environments can add them with `uv sync --group viewer --inexact`.
+The entry point configures a common OpenGL core profile and context sharing
+before creating the Qt application. This is required on macOS for the 3D
+dialog's texture to appear in the window compositor. Restart the full viewer
+after updating this initialization; reopening only the 3D dialog cannot update
+contexts that were created at application startup.
+
+On a Mac with a native display, the context/compositing regression check is:
+
+```bash
+QT_QPA_PLATFORM=cocoa SOARING_TEST_NATIVE_OPENGL=1 uv run --group viewer pytest tests/viewer/test_thermal_3d_widget.py
+```
 
 ### 2D views
 

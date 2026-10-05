@@ -1,5 +1,6 @@
 """The terrain window preserves geometry and camera while appearance changes."""
 
+import os
 from types import SimpleNamespace
 
 import numpy as np
@@ -96,3 +97,55 @@ def test_button_captures_active_time_interval_and_reuses_window(qapp, monkeypatc
     finally:
         view.shutdown()
         view.close()
+
+
+@pytest.mark.skipif(
+    os.environ.get("SOARING_TEST_NATIVE_OPENGL") != "1",
+    reason="Requires a native display and GPU; offscreen Qt cannot test compositing",
+)
+def test_visible_dialog_shares_context_and_keeps_rendering(qapp, scene, monkeypatch):
+    from PyQt6.QtCore import QPoint
+    from PyQt6.QtGui import QImage, QOpenGLContext
+    from PyQt6.QtTest import QTest
+
+    from soaring.viewer.main_window import MainWindow
+    from soaring.viewer.widgets.flight_picker import FlightPicker
+
+    monkeypatch.setattr(FlightPicker, "_repopulate_filter_combos", lambda _: None)
+    window = MainWindow()
+    panel = Thermal3D(window._thermal_plane)
+    try:
+        window.show()
+        assert QTest.qWaitForWindowExposed(window)
+        panel.show()
+        assert QTest.qWaitForWindowExposed(panel)
+        panel.set_scene(scene)
+        qapp.processEvents()
+        context = panel._view.context()
+        shared = QOpenGLContext.globalShareContext()
+        assert context is not None and context.isValid()
+        assert shared is not None and QOpenGLContext.areSharing(context, shared)
+        for terrain in (True, False, True):
+            panel._terrain.setChecked(terrain)
+            panel._point_size.setValue(1)
+            panel._point_strength.setValue(75)
+            panel.resize(1000 if terrain else 900, 750)
+            panel._view.orbit(20, 10)
+            qapp.processEvents()
+            # Inspect Qt's composed dialog, not just the independent GL buffer.
+            image = panel.grab().toImage()
+            origin = panel._view.mapTo(panel, QPoint(0, 0))
+            ratio = image.devicePixelRatio()
+            image = image.copy(
+                int(origin.x() * ratio),
+                int(origin.y() * ratio),
+                int(panel._view.width() * ratio),
+                int(panel._view.height() * ratio),
+            ).convertToFormat(QImage.Format.Format_RGBA8888)
+            pixels = np.frombuffer(
+                image.bits().asstring(image.sizeInBytes()), dtype=np.uint8
+            ).reshape(image.height(), image.width(), 4)
+            assert np.mean(pixels[:, :, :3].max(axis=2) < 10) < 0.05
+    finally:
+        panel.close()
+        window.close()

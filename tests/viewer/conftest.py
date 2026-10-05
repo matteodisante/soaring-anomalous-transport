@@ -30,7 +30,12 @@ collect_ignore = (
 
 @pytest.fixture(scope="session")
 def qapp():
-    QApplication = pytest.importorskip("PyQt6.QtWidgets").QApplication
+    qt_widgets = pytest.importorskip("PyQt6.QtWidgets")
 
-    app = QApplication.instance() or QApplication([])
+    from soaring.viewer.app import configure_graphics
+
+    app = qt_widgets.QApplication.instance()
+    if app is None:
+        configure_graphics()
+        app = qt_widgets.QApplication([])
     yield app

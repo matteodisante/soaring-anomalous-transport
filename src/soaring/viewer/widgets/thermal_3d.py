@@ -9,7 +9,7 @@ import pyqtgraph.opengl as gl
 from matplotlib import colormaps
 from OpenGL import GL
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QSurfaceFormat, QVector3D
+from PyQt6.QtGui import QVector3D
 from PyQt6.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -29,14 +29,8 @@ class TerrainView(gl.GLViewWidget):
     """Orbit with left drag, pan with right drag, zoom with the wheel."""
 
     def __init__(self, parent=None):
-        """Request a depth buffer for correct terrain/point occlusion."""
+        """Inherit the application's shared OpenGL format and depth buffer."""
         super().__init__(parent)
-        fmt = QSurfaceFormat()
-        fmt.setVersion(3, 3)
-        fmt.setProfile(QSurfaceFormat.OpenGLContextProfile.CoreProfile)
-        fmt.setDepthBufferSize(24)
-        fmt.setSamples(4)
-        self.setFormat(fmt)
         self.setBackgroundColor("#eef1f4")
         self.setMinimumSize(320, 240)
 
