@@ -53,7 +53,16 @@ At most **300 flights total per selected pair** are displayed. If more match, th
 the five shortest and five longest durations from the entire matching population,
 plus 290 evenly spaced ranks from the interior duration ordering. This reproducible
 comparison sample is not a random population estimate. Ties break by discipline
-and flight ID. The table shows the original rank, identity and elapsed duration.
+and flight ID. The table shows the original rank, identity, departure and arrival
+dates/times, and elapsed duration. **Departure (Paris)** and **Arrival (Paris)**
+refer to the first and last retained fixes of the displayed trajectory. Both show
+`DD/MM/YYYY HH:MM:SS` in **Europe/Paris**, with CET/CEST stated explicitly.
+They restore the original IGC date/time plus `ground_phase_start_s` and the saved
+endpoint time (`t0` or `t1`); archive times alone are relative, not UTC timestamps.
+Only the selected flights' IGC headers/first fixes are read, in the background;
+the endpoint index does not need rebuilding. Missing clock information is shown
+as **Unavailable**, never replaced with a guessed catalogue date. Columns keep
+dates legible; narrow windows provide horizontal scrolling.
 If fewer than 300 exist, all are displayed and both counts are stated explicitly.
 
 **5 fastest**, **5 slowest**, and **Fastest + slowest** isolate the groups without

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from itertools import pairwise, product
 from threading import Event
 
@@ -35,6 +36,7 @@ from ..route_index import (
     route_pairs,
 )
 from ..route_scene import load_scene, terrain_mesh
+from ..thermal_daily import PARIS
 from ..thermal_geometry import unproject
 from ..thermal_index import CancelledError
 from .flow_layout import FlowLayout
@@ -49,6 +51,13 @@ MODES = [
     ("5 slowest", "slow"),
     ("Fastest + slowest", "extremes"),
 ]
+
+
+def _flight_datetime(timestamp):
+    """Show the local date, seconds and DST designation, or an explicit absence."""
+    if timestamp is None or not np.isfinite(timestamp):
+        return "Unavailable"
+    return datetime.fromtimestamp(timestamp, PARIS).strftime("%d/%m/%Y %H:%M:%S %Z")
 
 
 class _RouteWorker(QThread):
@@ -206,16 +215,30 @@ class RouteComparison(QWidget):
         self._scene_layout.setContentsMargins(0, 0, 0, 0)
         self._scene_layout.addWidget(self._placeholder, 3)
         self._scene_layout.addWidget(self._locator, 1)
-        self._table = QTableWidget(0, 5)
+        self._table = QTableWidget(0, 7)
         self._table.setHorizontalHeaderLabels(
-            ["Rank", "Discipline", "Flight ID", "Elapsed time", "Group"]
+            [
+                "Rank",
+                "Discipline",
+                "Flight ID",
+                "Departure (Paris)",
+                "Arrival (Paris)",
+                "Elapsed time",
+                "Group",
+            ]
         )
+        for column, endpoint in ((3, "First"), (4, "Last")):
+            self._table.horizontalHeaderItem(column).setToolTip(
+                f"{endpoint} retained fix of the displayed trajectory. "
+                "Date and time in Europe/Paris (CET/CEST)."
+            )
         self._table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self._table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self._table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self._table.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.Stretch
+            QHeaderView.ResizeMode.ResizeToContents
         )
+        self._table.horizontalHeader().setStretchLastSection(True)
         self._table.verticalHeader().hide()
         self._table.setMaximumHeight(135)
         self._table.hide()
@@ -618,6 +641,8 @@ class RouteComparison(QWidget):
                 str(row.rank),
                 row.discipline,
                 row.flight_id,
+                _flight_datetime(getattr(row, "departure_utc", None)),
+                _flight_datetime(getattr(row, "arrival_utc", None)),
                 f"{seconds // 3600}:{seconds % 3600 // 60:02}:{seconds % 60:02}",
                 row.speed_group,
             ]

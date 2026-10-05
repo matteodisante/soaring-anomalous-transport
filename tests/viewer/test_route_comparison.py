@@ -112,6 +112,42 @@ def test_resumes_census_after_cancellation_and_rejects_incomplete_archive(
         ri.load_saved_index([disc], path=path)
 
 
+def test_scene_dates_match_retained_endpoints_after_trimming(
+    archive, tmp_path, monkeypatch
+):
+    from soaring.acquisition.ffvl.naming import igc_path
+
+    disc, root, _ = archive
+    cfg = SimpleNamespace(
+        derived_dir=root,
+        catalog_path=tmp_path / "catalog.csv",
+        igc_dir=tmp_path / "igc",
+    )
+    disc.config = lambda: cfg
+    meta = pd.read_parquet(root / "flights_meta.parquet")
+    meta["ground_phase_start_s"] = 120.0
+    meta.to_parquet(root / "flights_meta.parquet")
+    pd.DataFrame(
+        {
+            "flight_id": ["a", "b"],
+            "season_year": [2024, 2024],
+            "date": ["2024-06-15", "2024-06-15"],
+        }
+    ).to_csv(cfg.catalog_path, index=False)
+    path = igc_path(cfg.igc_dir, 2024, "2024-06-15", "a")
+    path.parent.mkdir(parents=True)
+    path.write_text("HFDTE150624\nB1200004432469N00542796EA010000010000\n")
+    index = ri.build_index([disc], path=tmp_path / "index.sqlite3")
+    flights = index.flights()
+    pair = flights.set_index("flight_id").loc["a", ri.PAIR_COLUMNS].to_numpy(dtype=int)
+    monkeypatch.setattr(rs, "load_terrain", lambda *args, **kwargs: None)
+    scene = rs.load_scene(index, flights, pair)
+    row = scene.selected.iloc[0]
+    assert row.departure_utc == pd.Timestamp("2024-06-15T12:02:05Z").timestamp()
+    assert row.arrival_utc == pd.Timestamp("2024-06-15T12:02:45Z").timestamp()
+    assert row.arrival_utc - row.departure_utc == row.duration_s == 40
+
+
 def cohort(count=301):
     rows = pd.DataFrame(
         {
@@ -342,6 +378,9 @@ def test_widget_speed_filters_keep_camera_and_clear_stale_scene(qapp):
     from soaring.viewer.widgets.route_comparison import RouteComparison
 
     selected, total = ri.select_flights(cohort(12), (90, 650, 100, 650))
+    selected["departure_utc"] = pd.Timestamp("2024-06-15T21:59:55Z").timestamp()
+    selected["arrival_utc"] = selected.departure_utc + selected.duration_s
+    selected.loc[1, ["departure_utc", "arrival_utc"]] = np.nan
     scene = rs.RouteScene(
         selected,
         total,
@@ -356,6 +395,12 @@ def test_widget_speed_filters_keep_camera_and_clear_stale_scene(qapp):
     widget = RouteComparison()
     try:
         widget.set_scene(scene)
+        assert widget._table.columnCount() == 7
+        assert widget._table.item(0, 3).text() == "15/06/2024 23:59:55 CEST"
+        assert widget._table.item(0, 4).text() == "16/06/2024 00:16:35 CEST"
+        assert widget._table.item(0, 5).text() == "0:16:40"
+        assert widget._table.item(1, 3).text() == "Unavailable"
+        assert widget._table.item(1, 4).text() == "Unavailable"
         before = widget._view.cameraParams()
         for mode, count in (("fast", 5), ("slow", 5), ("extremes", 10), ("all", 12)):
             widget._mode.setCurrentIndex(widget._mode.findData(mode))

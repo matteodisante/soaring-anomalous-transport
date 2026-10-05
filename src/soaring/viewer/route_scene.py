@@ -21,6 +21,7 @@ from ..analysis.preproc.enu import LocalFrame
 from .geodesy import enu_to_geodetic
 from .route_density import DensityAtlas, load_density
 from .route_index import FIX_COLUMNS, ROUTE_CELL_M, select_flights
+from .route_times import with_flight_times
 from .thermal_geometry import continuous_edges, project
 from .thermal_index import _check_cancel
 from .thermal_ridges import DATASET_URL, LAYER, SERVICE
@@ -259,6 +260,9 @@ def load_scene(
     selected, total = select_flights(flights, pair, discipline)
     if selected.empty:
         raise ValueError("No cleaned flights match these directed cells")
+    selected = with_flight_times(
+        selected, index.disciplines, progress=progress, cancel=cancel
+    )
     pieces = {(r.discipline, r.flight_id): [] for r in selected.itertuples()}
     with sqlite3.connect(index.path) as db:
         for disc in index.disciplines:
