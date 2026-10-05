@@ -7,7 +7,6 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolb
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import LogNorm
 from matplotlib.figure import Figure
-from matplotlib.patches import Polygon
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -23,7 +22,6 @@ from ...analysis.segmentation.config import load_segmentation_config
 from .. import geography, thermal_regions
 from ..density_maps import view_request
 from ..density_view import AdaptiveDensity
-from ..thermal_geometry import project
 from ..thermal_store import load_store
 from ..thermal_time import cache_path, load_grids
 from .density_background import DensityBackgrounds
@@ -357,8 +355,6 @@ class ThermalDensity(QWidget):
                 ax.set_xlim(self._limits[frame][0])
                 ax.set_ylim(self._limits[frame][1])
             self._axes_by_key[key] = ax
-            if key.startswith("region/"):
-                self._outline(ax, title)
             density = AdaptiveDensity(
                 ax,
                 grid.window,
@@ -392,32 +388,6 @@ class ThermalDensity(QWidget):
         self._toolbar.update()
         self._canvas.draw_idle()
         self._background_changed()
-
-    @staticmethod
-    def _outline(ax, name):
-        west, east, south, north = thermal_regions.REGIONS[name]
-        lon = np.r_[
-            np.linspace(west, east, 40),
-            np.full(40, east),
-            np.linspace(east, west, 40),
-            np.full(40, west),
-        ]
-        lat = np.r_[
-            np.full(40, south),
-            np.linspace(south, north, 40),
-            np.full(40, north),
-            np.linspace(north, south, 40),
-        ]
-        x, y = project(lon, lat)
-        ax.add_patch(
-            Polygon(
-                np.column_stack((x, y)) / 1000,
-                fill=False,
-                edgecolor="#35424a",
-                linewidth=0.8,
-                zorder=5,
-            )
-        )
 
     def _terrain_changed(self, *_):
         for artist in self._backdrops.values():

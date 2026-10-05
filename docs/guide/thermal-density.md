@@ -64,9 +64,9 @@ trasparente può essere inesplorato oppure esplorato senza climb osservati.
 
 Nelle regioni contribuiscono tutti i segmenti che attraversano il riquadro,
 **anche se il decollo è fuori dalla regione**. È un cambiamento rispetto alla
-precedente mappa di conteggi, che filtrava per decollo. Il contorno sottile indica
-il box geografico della regione; la cornice metrica comprende quel box e il
-margine circostante. Il totale nel titolo è riferito a tutta la cornice e rimane
+precedente mappa di conteggi, che filtrava per decollo. La cornice metrica comprende
+il box geografico della regione e il margine circostante, senza sovrapporre il
+contorno del box. Il totale nel titolo è riferito a tutta la cornice e rimane
 invariato durante lo zoom. Le cornici regionali si sovrappongono: non sommare i
 loro totali per stimare un totale nazionale.
 
