@@ -2,35 +2,40 @@
 \newcommand{\TalkShort}{Paper review: Neggers et al.\ (2003)}
 \input{../theme.tex}
 \input{paper-review.tex}
-\hypersetup{pdftitle={Neggers et al. (2003): cloud-size statistics},pdfsubject={Five-slide paper review}}
+\hypersetup{pdftitle={Neggers et al. (2003): cloud-size statistics},pdfsubject={Five-slide paper review with one appendix slide}}
 \newcommand{\figdir}{assets/neggers2003}
 \begin{document}
 
 % 1: measured objects and definitions ---------------------------------
 \begin{frame}[plain]\frametitle{Neggers et al. (2003): cloud-size statistics}\startslide{Neggers et al.\ (2003): cloud-size statistics}
- \lead{Large-eddy simulations (LES) of shallow cumulus. Each cloud gets one size; the size histogram shows which clouds dominate cloud cover and vertical transport.}
- \figat{8}{26}{50}{40}{\figdir/fig3.png}
- \txt[font=\fontsize{15}{18}\selectfont]{64}{26}{44}{$l=\sqrt{A^p}$}
- \txt[font=\fontsize{13}{16}\selectfont]{64}{37}{44}{$N=\displaystyle\int_0^\infty\mathcal N(l)\,dl$}
- \smalltxt{64}{53}{44}{\textbf{Three LES cases}\\BOMEX: ocean, trade winds.\\SCMS: land, Florida.\\ARM: land, diurnal cycle.}
+ \lead{Large-eddy simulations (LES) of shallow cumulus: simulated clouds, not measurements. Each cloud gets one size, and the paper studies, among other things, the histogram of these sizes.}
+ \figat{8}{25}{57}{47}{\figdir/fig3.png}
+ \txt[font=\fontsize{15}{18}\selectfont]{69}{26}{40}{$l=\sqrt{A^p}$}
+ \txt[font=\fontsize{13}{16}\selectfont]{69}{37}{40}{$N=\displaystyle\int_0^\infty\mathcal N(l)\,dl$}
+ \smalltxt{69}{49}{40}{\textbf{Three simulated cases}, set up like real campaigns:
+ \begin{itemize}\setlength{\itemsep}{0pt}\setlength{\topsep}{0pt}\setlength{\parsep}{0pt}
+ \item BOMEX: Barbados, ocean.
+ \item SCMS: Florida, land.
+ \item ARM: Oklahoma, land, diurnal cycle.
+ \end{itemize}}
  \symbox{110}{25}{40}{%
-  \sym{cloud}{connected set of saturated grid cells}
+  \sym{cloud:}{group of touching saturated grid cells in 3D}
   \sym{$A^p$}{vertically projected area of one cloud: its footprint seen from above}
   \sym{$l$}{cloud size, m}
   \sym{$\mathcal N(l)$}{number of clouds per unit size, m$^{-1}$}
   \sym{$N$}{total number of clouds in the domain}}
  \bottomline{Find each cloud in 3D $\;\to\;$ project it vertically $\;\to\;$ histogram of the sizes $l$}
  \credit{Neggers, Jonker \& Siebesma, J. Atmos. Sci. 60, 1060--1074 (2003). \S2--3, Fig. 3, Eqs. (1)--(2). Grid 50 m, domain 6.4 km.}
-\notetext{Size Statistics of Cumulus Cloud Populations in Large-Eddy Simulations, Neggers, Jonker and Siebesma (2003). The study measures the sizes of shallow cumulus clouds in LES and their contributions to cloud cover and vertical transport. BOMEX represents steady trade-wind cumulus over the ocean. SCMS and ARM represent continental shallow cumulus, with a diurnal cycle in ARM. The reference horizontal grid spacing is 50 m, in a 6.4 km domain. Repeated snapshots sample tens of thousands of clouds per case.\par\smallskip A cloud is a connected set of saturated grid cells. Figure 3 shows the distinction between a cross-section at one height and the vertical projection of the whole cloud. The chosen size is $l=\sqrt{A^p}$, the side of a square with the cloud's projected area, not a radius or a diameter. It is chosen so that LES can be compared with satellite images, which see only projections. The size density $\mathcal N(l)$ gives counts per unit size, and its integral is the total count. The bottom line summarizes the actual measurement procedure. Source: Sections 2--3 and Appendix, Figure 3, Equations (1)--(2).}
+\notetext{Size Statistics of Cumulus Cloud Populations in Large-Eddy Simulations, Neggers, Jonker and Siebesma (2003). The study measures the sizes of shallow cumulus clouds in LES and their contributions to cloud cover and vertical transport. BOMEX represents steady trade-wind cumulus over the ocean. SCMS and ARM represent continental shallow cumulus, with a diurnal cycle in ARM. All clouds are simulated: each case is initialised and forced with measurements from a real campaign (Barbados, Cocoa Beach in Florida on 5 August 1995, Oklahoma SGP on 21 June 1997), but the simulated clouds are not the observed ones. Comparison with nature is through published exponents and dominant sizes. The reference horizontal grid spacing is 50 m, in a 6.4 km domain. Repeated snapshots sample tens of thousands of clouds per case.\par\smallskip A cloud is a connected set of saturated grid cells. Figure 3 shows the distinction between a cross-section at one height and the vertical projection of the whole cloud. The chosen size is $l=\sqrt{A^p}$, the side of a square with the cloud's projected area, not a radius or a diameter. It is chosen so that LES can be compared with satellite images, which see only projections. The size density $\mathcal N(l)$ gives counts per unit size, and its integral is the total count. The bottom line summarizes the actual measurement procedure. Source: Sections 2--3 and Appendix, Figure 3, Equations (1)--(2).}
 \finishslide\end{frame}
 
 % 2: fitted size density -----------------------------------------------
 \begin{frame}[plain]\frametitle{A power law below a variable size break}\startslide{A power law below a variable size break}
- \lead{Small clouds are by far the most numerous. Below a size $\ell_d$ their number falls as a power law of size; above $\ell_d$ it falls faster.}
- \figat{8}{26}{42}{37}{\figdir/fig4a.png}
- \figat{54}{26}{42}{37}{\figdir/fig6.png}
- \figcap{8}{64}{42}{Fig. 4a: size density against $l$.}
- \figcap{54}{64}{42}{Fig. 6: against $l/\ell_d$, the cases collapse.}
+ \lead{The histogram counts clouds per size: \textbf{small clouds are by far the most numerous}. Below a size $\ell_d$ their number falls as a power law of size; above $\ell_d$ it falls faster.}
+ \figat{8}{25}{46}{42}{\figdir/fig4a.png}
+ \figat{54.5}{25}{44}{42}{\figdir/fig6.png}
+ \figcap{8}{68.5}{46}{Fig. 4a: size density against $l$.}
+ \figcap{54.5}{68.5}{44}{Fig. 6: against $l/\ell_d$, collapsed.}
  \txt[font=\fontsize{15}{18}\selectfont]{101}{25}{52}{$\mathcal N(l)=a\,l^{\,b}$}
  \txt{101}{34}{52}{$b=-1.70$\ \ for\ \ $l<\ell_d$}
  \symbox{101}{42}{49}{%
@@ -44,51 +49,116 @@
 
 % 3: area weighting ----------------------------------------------------
 \begin{frame}[plain]\frametitle{The size break sets the dominant cloud cover}\startslide{The size break sets the dominant cloud cover}
- \lead{Weighting every cloud by its area gives the cloud cover contributed by each size. It grows up to $\ell_d$ and drops beyond, so mid-size clouds cover most of the sky.}
+ \lead{Weighting every cloud by its area gives the cloud cover contributed by each size. It grows up to $\ell_d$ and drops beyond, so \textbf{mid-size clouds cover most of the sky.}}
  \txt[font=\fontsize{13}{16}\selectfont]{8}{26}{85}{$\alpha^p(l)=\dfrac{l^2\,\mathcal N(l)}{L_xL_y}\ \propto\ l^{\,b+2}=l^{\,0.30}\quad(l<\ell_d)$}
  \txt[font=\fontsize{13}{16}\selectfont]{8}{39}{85}{$a^p=\displaystyle\int_0^\infty\alpha^p(l)\,dl$}
  \symbox{8}{51}{86}{%
   \sym{$\alpha^p(l)$}{cloud cover from clouds of size $l$, per unit size, m$^{-1}$}
   \sym{$a^p$}{projected cloud cover: fraction of the domain covered, seen from above}
   \sym{$L_xL_y$}{horizontal area of the domain}}
- \figat{102}{24}{50}{44}{\figdir/fig7a.png}
- \figcap{102}{69}{50}{Fig. 7a: $\alpha^p(l)$, three cases.}
+ \figat{102}{24.5}{50}{46.5}{\figdir/fig7a.png}
+ \figcap{102}{71.2}{50}{Fig. 7a: $\alpha^p(l)$, three cases.}
  \bottomline{Cloud cover peaks near the break $\ell_d$}
  \credit{\S3--4b, Fig. 7a, Eqs. (3)--(4), (10).}
 \notetext{Figure 7a gives the contribution to projected cloud cover per unit size. Each cloud contributes its projected area $l^2$, so $\alpha^p(l)=l^2\mathcal N(l)/(L_xL_y)$, where $L_xL_y$ is the horizontal domain area. For a power law with exponent $b$, the cover decomposition scales as $l^{b+2}$. Below the break, $b=-1.70$ gives a positive exponent, $0.30$: the many small clouds are too small to dominate. Above the break the density declines faster than $l^{-2}$, so the cover decomposition decreases. The peak therefore lies at an intermediate size near the break. Without a break, an exponent above $-2$ would let the largest clouds dominate.\par\smallskip This is a decomposition per unit linear size, not per logarithmic bin. The total projected cover is $a^p=\int_0^\infty\alpha^p(l)\,dl$. The paper notes that real shallow cumulus fields also show this intermediate dominant size. Source: Section 3, Section 4b, Figure 7a, Equations (3)--(4) and (10).}
 \finishslide\end{frame}
 
 % 4: vertical transport ------------------------------------------------
-\begin{frame}[plain]\frametitle{Mass flux peaks at larger sizes than cover}\startslide{Mass flux peaks at larger sizes than cover}
- \lead{Mass flux is cloud cover times vertical velocity. Larger clouds rise faster, so transport is dominated by somewhat larger clouds; the smallest carry almost nothing.}
- \figat{8}{26}{42}{36}{\figdir/fig7b.png}
- \figat{54}{26}{42}{36}{\figdir/fig7c.png}
- \figcap{8}{63}{42}{Fig. 7b: mean vertical velocity $w$.}
- \figcap{54}{63}{42}{Fig. 7c: mass flux $\mu(l)$.}
- \txt[font=\fontsize{12.5}{15}\selectfont]{100}{24}{53}{$\mu(l,z)=\alpha(l,z)\,w(l,z)$}
- \txt[font=\fontsize{12.5}{15}\selectfont]{100}{31.5}{53}{$\mu(l)=\dfrac1{h_c}\displaystyle\int_{h_c}\mu(l,z)\,dz$}
- \symbox{99}{43.5}{51}{%
+\begin{frame}[plain]\frametitle{Mass flux also peaks at intermediate sizes}\startslide{Mass flux also peaks at intermediate sizes}
+ \lead{Larger clouds rise faster, so mass flux still peaks at \textbf{intermediate} sizes, near the cover peak, but the smallest clouds drop out: their vertical velocity is very low.}
+ \figat{8}{25}{44}{43}{\figdir/fig7b.png}
+ \figat{53.5}{25}{43}{43}{\figdir/fig7c.png}
+ \figcap{8}{68.5}{44}{Fig. 7b: mean vertical velocity $w$.}
+ \figcap{53.5}{68.5}{44}{Fig. 7c: mass flux $\mu(l)$.}
+ \txt[font=\fontsize{12.5}{15}\selectfont]{100}{23.5}{53}{{\small Mass flux:}\\$\mu(l,z)=\alpha(l,z)\,w(l,z)$}
+ \txt[font=\fontsize{12.5}{15}\selectfont]{100}{34}{53}{$\mu(l)=\dfrac1{h_c}\displaystyle\int_{h_c}\mu(l,z)\,dz$}
+ \symbox{99}{44.5}{51}{%
   \sym{$w(l,z)$}{mean vertical velocity of clouds of size $l$ at height $z$, m\,s$^{-1}$}
   \sym{$\alpha(l,z)$}{their cloud cover at height $z$, per unit size}
   \sym{$h_c$}{depth of the cloud layer}
   \sym{$\mu$}{mass flux divided by air density, per unit size, s$^{-1}$}}
- \bottomline{Mass flux peaks at larger cloud sizes than projected cover}
+ \bottomline{Same intermediate dominant size as cover; the smallest clouds carry almost nothing}
  \credit{\S3--4b, Fig. 7b--c, Eqs. (5)--(7). $l$ is always the projected size, also at a single height $z$.}
-\notetext{Figure 7b shows that cloud-mean vertical velocity generally increases with cloud size. Figure 7c shows the resulting mass-flux decomposition. At height $z$, $\mu(l,z)=\alpha(l,z)w(l,z)$, where $\alpha(l,z)$ is the cloud-fraction contribution per unit size at that height. Averaging over the cloud-layer depth $h_c$ gives $\mu(l)$. Its integral over size is the total kinematic mass flux, in m/s under this paper's convention: mass flux divided by air density.\par\smallskip Cloud size is always the projected size, even when evaluating the flux at a specific height, so each cloud stays in one size bin at all heights. Since $w$ increases with size, the mass-flux maximum occurs at somewhat larger cloud sizes than the projected-cover maximum. The smallest clouds contribute very little to total vertical transport, mainly because of their very low vertical velocities.\par\smallskip The intermediate dominant size persists for tested grid spacings of 25--100 m. A 3.2 km domain truncates the largest clouds. Increased shear broadens projected sizes while leaving total mass flux almost unchanged. These sensitivity tests support the main transport result but do not identify the mechanism of the size break. Source: Section 3, Section 4b--e, Figure 7b--c and Figures 9--11.}
+\notetext{Figure 7b shows that cloud-mean vertical velocity generally increases with cloud size. Figure 7c shows the resulting mass-flux decomposition. At height $z$, $\mu(l,z)=\alpha(l,z)w(l,z)$, where $\alpha(l,z)$ is the cloud-fraction contribution per unit size at that height. Averaging over the cloud-layer depth $h_c$ gives $\mu(l)$. Its integral over size is the total kinematic mass flux, in m/s under this paper's convention: mass flux divided by air density.\par\smallskip Cloud size is always the projected size, even when evaluating the flux at a specific height, so each cloud stays in one size bin at all heights. Since $w$ increases with size, the small-cloud side is suppressed relative to the cover: the paper describes the dominant size as better defined and shifted somewhat toward larger sizes. Comparing Figs. 7a and 7c, the peak positions are nearly the same (read off the plots, about 650, 1000 and 1500 m for BOMEX, SCMS and ARM), so the shift is in the weight of the distribution, not in the position of its maximum. The smallest clouds contribute very little to total vertical transport, mainly because of their very low vertical velocities.\par\smallskip The intermediate dominant size persists for tested grid spacings of 25--100 m. A 3.2 km domain truncates the largest clouds. Increased shear broadens projected sizes while leaving total mass flux almost unchanged. These sensitivity tests support the main transport result but do not identify the mechanism of the size break. Source: Section 3, Section 4b--e, Figure 7b--c and Figures 9--11.}
 \finishslide\end{frame}
 
-% 5: scope relative to thermals ----------------------------------------
-\begin{frame}[plain]\frametitle{No 2D distribution of thermals}\startslide{No 2D distribution of thermals}
- \lead{Our question: how are thermals arranged in a horizontal plane? The paper measures clouds seen from above, a different object.}
- \thermalmap
- \symbox[Sought, not in the paper]{87}{25}{63}{%
-  \sym{$R_i$}{radius of thermal $i$ at a fixed height}
-  \sym{$(x_i,y_i)$}{position of its centre}
-  \sym{$d_{ij}$}{distance between thermals $i$ and $j$}}
- \head{87}{46}{66}{Why cloud sizes do not answer it}
- \smalltxt{87}{53}{66}{A cloud is saturated air; a thermal can stay dry and never form a cloud.\\[1mm]Projection merges all heights and widens with tilt and shear.}
- \bottomline{Projected cumulus size does not determine thermal size or spacing}
- \credit{Scope: \S3--5 and Appendix. The sketch defines the quantities sought. It represents no observed or simulated thermal field.}
-\notetext{Our reading sought distributions of thermals in a horizontal plane: their size at a fixed height, their positions and their separations. The diagram only defines these three quantities. Its circles, radii and separation are schematic, not data or a spatial model.\par\smallskip Neggers et al. report projected cloud sizes and cloud transport statistics. A cloud is a saturated object, whereas a thermal can be unsaturated and can feed a cloud without sharing its projected footprint. Projection also combines geometry over height and responds to tilt and shear. The paper does not establish a cloud-to-thermal size mapping and does not report thermal centres or inter-thermal distances. The exponent $-1.70$ and the break $\ell_d$ therefore remain results about the measured cumulus population. Source: Sections 3--5 and Appendix.}
+% 5: climbable clouds versus thermal diameters ---------------------------
+\begin{frame}[plain]\frametitle{``Climbable clouds'' are far wider than thermals}\startslide{``Climbable clouds'' are far wider than thermals}
+ \lead{The paper gives no thermal statistics. Fig.\ 7b gives the mean updraft $w$ of each cloud size: keep the sizes where $w$ beats a pilot's sink rate. Only the two land cases, SCMS and ARM, are used.}
+ \figat{8}{24.5}{60}{45}{\figdir/fig7b.png}
+ % overlay in Fig. 7b axes: x 0--2500 m on px 120--701, w 0--3 m/s on px 606--20; image 760x735 px drawn 45 mm high
+ \fill[black!20,fill opacity=.6](16.06,25.72)rectangle(19.62,61.60);
+ \node[rotate=90,font=\fontsize{6}{7}\selectfont,text=black!75]at(17.84,38){thermals 50--300 m};
+ \draw[expert,line width=.6pt](15.35,48.45)--(50.92,48.45);
+ \draw[pisablue,line width=.6pt](15.35,50.84)--(50.92,50.84);
+ \fill[expert,fill opacity=.75](23.88,57.4)rectangle(42.38,58.6);
+ \fill[pisablue,fill opacity=.75](21.04,58.9)rectangle(43.80,60.1);
+ \figcap{8}{70.3}{60}{Fig. 7b; overlay ours.}
+ \head{57}{24.5}{96}{Climbing needs $w$ above the sink rate}
+ \smalltxt{57}{30}{96}{$w$: mean updraft of clouds of size $l$. Sink rates are for straight flight: a circling wing sinks faster, so \textbf{the real min.\ sink thresholds are higher}.}
+ \txt[font=\fontsize{8.5}{11}\selectfont]{57}{40}{96}{\begin{tabular}{@{}l@{\hspace{3mm}}c@{\hspace{3mm}}c@{\hspace{3mm}}c@{}}
+  & min.\ sink & clouds with $w\ge$ sink & thermal diameter\\\hline
+  {\color{expert!80!black}\textbf{Paraglider}} & 1.1 m/s & 0.6--1.9 km & 50--300 m\\
+  {\color{pisablue}\textbf{Hang glider}} & 0.9 m/s & 0.4--2.0 km & 80--300 m
+ \end{tabular}}
+ \plainbox{57}{55}{93}{\textbf{Clouds of 50--300 m} are the most numerous, but their mean updraft stays below 0.7 m/s: too weak to keep a paraglider or a hang glider climbing.\\[1mm]\textbf{Clouds with enough updraft} are 0.4--2 km wide: several times, up to ten times, the 50--300 m expected for the thermals pilots use.}
+ \bottomline{``Climbable clouds'': 0.4--2 km. Expected thermals: 50--300 m}
+ \credit{\S4b, Fig.\ 7b, $w$ read off the plot. Sink rates: typical straight-flight minimum sink. Thermal diameters: rough estimate, not from a measurement.}
+\notetext{Neggers et al.\ give no statistics of thermals. Figure 7b gives, for each cloud size $l$, the cloud-mean vertical velocity $w$, which grows with size. A pilot climbs only where the air rises faster than the wing sinks, so the minimum sink rate sets a threshold on $w$: about 1.1 m/s for a paraglider and 0.9 m/s for a hang glider, in straight flight. Circling increases the sink rate, so these thresholds are lower bounds and the true climbable ranges would shift to even larger clouds.\par\smallskip Only the two land cases are used. Over the ocean (BOMEX) the surface sensible heat flux is 8 W\,m$^{-2}$, against 150 W\,m$^{-2}$ in SCMS and up to 140 W\,m$^{-2}$ in ARM (Table 1): without a heated ground, the dry thermals pilots use are weak.\par\smallskip Read off the plot, SCMS clouds exceed 0.9 m/s from about 400 m and 1.1 m/s from about 600 m, up to the largest clouds near 1.8 km. ARM clouds exceed 0.9 m/s from about 700 m and 1.1 m/s from about 850 m, up to about 2 km. Taking both cases, the climbable cloud sizes are 0.6--1.9 km for a paraglider and 0.4--2.0 km for a hang glider. The expected thermal diameters are 50--300 m and 80--300 m. Clouds of that size have $w$ well below either sink rate.\par\smallskip The ranges start above the widest expected thermal and reach 2 km. If cloud sizes were read as thermal sizes, the thermals would come out several times too wide: $l$ is the square root of the projected area, which merges all heights (Fig. 3), and a cloud is fed through its base by a narrower thermal. Caveats: $w$ is the in-cloud mean, which includes weak edges and differs from the updraft below cloud base; the statistics are LES snapshots of two land cases. Source: Section 4b, Figure 7b, Table 1.}
+\finishslide\end{frame}
+% A: sink rate in a banked turn ---------------------------------------------
+\begin{frame}[plain]\frametitle{Appendix: sink rate in a banked turn}\startslide{Appendix: sink rate in a banked turn}
+ \lead{Why circling sinks faster than straight flight, at the same angle of attack.}
+ % side view, straight glide; path drawn 15 deg below horizontal
+ \draw[muted,line width=.4pt](8,24.1)--(55,36.7);
+ \draw[-{Latex},black,line width=.8pt](30,30)--(41.6,33.1);
+ \draw[-{Latex},teal,line width=.8pt](30,30)--(22.3,27.9);
+ \draw[-{Latex},pisablue,line width=.8pt](30,30)--(32.3,21.3);
+ \draw[-{Latex},wine,line width=.8pt](30,30)--(30,38);
+ \draw[muted,dashed,line width=.4pt](30,30)--(41.6,30);
+ \draw[-{Latex},black,line width=.6pt](41.6,30)--(41.6,33.1);
+ \fill[black](30,30)circle(1.1);
+ \node[anchor=west,text=pisablue,font=\fontsize{7.5}{8.5}\selectfont]at(32.7,22.5){lift $L$};
+ \node[anchor=south,text=teal,font=\fontsize{7.5}{8.5}\selectfont]at(20.5,26.4){drag $D$};
+ \node[anchor=north,font=\fontsize{7.5}{8.5}\selectfont]at(36.5,32.7){speed $V$};
+ \node[anchor=west,font=\fontsize{7.5}{8.5}\selectfont]at(42,31.4){sink $s$};
+ \node[anchor=east,text=wine,font=\fontsize{7.5}{8.5}\selectfont]at(29.5,36.6){weight $W$};
+ \node[anchor=north west,text=muted,font=\fontsize{6.5}{7.5}\selectfont]at(7,39.2){side view, straight glide};
+ % back view, turn to the left; bank 30 deg, lift arrow 13 mm
+ \draw[muted,densely dotted](33,46)--(33,72);
+ \draw[muted,dashed,line width=.4pt](11,59)--(33,59);
+ \fill[muted](11,59)circle(.8);
+ \node[anchor=north,text=muted,font=\fontsize{6.5}{7.5}\selectfont,align=center]at(11,60.2){centre\\of turn};
+ \draw[black,line width=1.6pt](23.47,64.5)--(42.53,53.5);
+ \fill[black](33,59)circle(1.1);
+ \draw[muted,dashed,line width=.4pt](26.5,47.74)--(33,47.74);
+ \draw[muted,dashed,line width=.4pt](26.5,47.74)--(26.5,59);
+ \draw[-{Latex},pisablue,line width=.8pt](33,59)--(26.5,47.74);
+ \draw[-{Latex},pisablue!70,line width=.6pt](33,59)--(33,47.74);
+ \draw[-{Latex},pisablue!70,line width=.6pt](33,59)--(26.5,59);
+ \draw[-{Latex},wine,line width=.8pt](33,59)--(33,70.26);
+ \draw[black!70,line width=.4pt](33,53.5) arc[start angle=270,end angle=240,radius=5.5];
+ \node[font=\fontsize{7.5}{8.5}\selectfont]at(31.1,51.9){$\varphi$};
+ \node[anchor=south east,text=pisablue,font=\fontsize{7.5}{8.5}\selectfont]at(26.5,47.74){lift $L$};
+ \node[anchor=west,text=pisablue,font=\fontsize{7}{8}\selectfont]at(33.4,50.5){$L\cos\varphi$};
+ \node[anchor=south,text=pisablue,font=\fontsize{6.5}{7.5}\selectfont]at(29.75,59.1){$L\sin\varphi$};
+ \node[anchor=west,text=wine,font=\fontsize{7.5}{8.5}\selectfont]at(33.4,68.6){weight $W$};
+ \node[anchor=west,text=muted,font=\fontsize{6.5}{7.5}\selectfont]at(42.9,53.5){wing, bank $\varphi$};
+ \node[anchor=north west,text=muted,font=\fontsize{6.5}{7.5}\selectfont]at(7,71.8){back view, turn};
+ % derivation: step text on the left, its equation on the right
+ \txt[font=\fontsize{8.5}{10.3}\selectfont]{60}{22}{57}{{\color{pisablue}\bfseries 1\enspace Energy.} Lift does no work; drag uses $D\,V$ per second, paid for by lost height}
+ \txt[font=\fontsize{9.5}{11.5}\selectfont]{122}{22.5}{31}{$W\,s=D\,V$}
+ \txt[font=\fontsize{8.5}{10.3}\selectfont]{60}{31}{57}{{\color{pisablue}\bfseries 2\enspace Glide ratio} $E=L/D$ is set by the angle of attack, so $D=L/E$}
+ \txt[font=\fontsize{9.5}{11.5}\selectfont]{122}{31.5}{31}{$s=V\,L/(E\,W)$}
+ \txt[font=\fontsize{8.5}{10.3}\selectfont]{60}{40}{57}{{\color{pisablue}\bfseries 3\enspace Straight flight:} lift $\approx$ weight, as the path is only $\approx6^\circ$ below horizontal}
+ \txt[font=\fontsize{9.5}{11.5}\selectfont]{122}{40}{31}{$L\approx W,\ \ s_0\approx V_0/E$}
+ \txt[font=\fontsize{8.5}{10.3}\selectfont]{60}{48.5}{57}{{\color{pisablue}\bfseries 4\enspace Turn:} the vertical part of lift holds the weight, $L\cos\varphi=W$}
+ \txt[font=\fontsize{9.5}{11.5}\selectfont]{122}{49}{31}{$L=W/\cos\varphi$}
+ \txt[font=\fontsize{8.5}{10.3}\selectfont]{60}{57}{57}{{\color{pisablue}\bfseries 5\enspace Same angle of attack:} lift grows as $V^2$}
+ \txt[font=\fontsize{9.5}{11.5}\selectfont]{122}{57}{31}{$V=V_0/\sqrt{\cos\varphi}$}
+ \plainbox{60}{62.5}{90}{\fontsize{9.5}{11.5}\selectfont{\color{pisablue}\bfseries Put 3, 4, 5 into 2:}\quad$s=\dfrac{V_0}{\sqrt{\cos\varphi}}\cdot\dfrac{W}{\cos\varphi}\cdot\dfrac{1}{E\,W}=\dfrac{s_0}{(\cos\varphi)^{3/2}}$}
+ \bottomline{Circling sinks faster: $\times1.10$ at $20^\circ$ of bank, $\times1.24$ at $30^\circ$, $\times1.68$ at $45^\circ$}
+ \credit{Steady flight; small glide angle, so $L\approx W$ (error below 1\% for a glide ratio of 9). The extra drag of turning is neglected, so the true factor is larger.}
+\notetext{Derivation of the sink rate in a steady banked turn, used on the previous slide. Step 1: in a steady glide the speed is constant and the lift, perpendicular to the velocity, does no work; the drag dissipates $D V$ per second, and the only source paying for it is height, so $W s=D V$. Step 2: the glide ratio $E=L/D$ depends only on the angle of attack, so $D=L/E$ and $s=V L/(E W)$. Step 3: in straight flight the lift equals the weight, $L=W$, so $s_0=V_0/E$.\par\smallskip Step 4: in a turn banked by $\varphi$ the lift is tilted towards the centre of the turn. Its vertical part must still hold the weight, $L\cos\varphi=W$, so $L=W/\cos\varphi$; its horizontal part, $L\sin\varphi$, bends the path. Step 5: at the same angle of attack the lift grows as the square of the speed, $L=\tfrac12\rho V^2 S C_L$, so a lift $1/\cos\varphi$ times larger needs $V=V_0/\sqrt{\cos\varphi}$, and $E$ is unchanged. Putting 3, 4 and 5 into 2 gives $s=s_0/(\cos\varphi)^{3/2}$: 10\% more at 20$^\circ$ of bank, 24\% at 30$^\circ$, 68\% at 45$^\circ$.\par\smallskip The factor does not depend on the angle of attack: at every angle of attack the turn multiplies the straight-flight sink by $1/(\cos\varphi)^{3/2}$, so the minimum sink in a turn is the straight-flight minimum sink times the same factor. Steps 3 and 4 use $L\approx W$, valid for a small glide angle: with a glide ratio of 9 the path is about 6$^\circ$ below horizontal and the error is below 1\%. Real wings, paragliders in particular, also lose more to turning drag. The straight-flight minimum sink is therefore a lower bound on the updraft needed to climb while circling. The two force balances also give the turn radius, $r=V^2/(g\tan\varphi)$: circling in a narrow thermal needs a steep bank, hence a higher sink rate.}
 \finishslide\end{frame}
 \end{document}

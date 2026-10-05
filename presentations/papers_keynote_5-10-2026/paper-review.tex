@@ -31,6 +31,7 @@
 % The node width is #3 mm plus 3 mm of padding.
 \newcommand{\paperbox}[4]{\node[anchor=north west,inner sep=1.5mm,fill=pisablight!22,draw=pisablue!55,line width=.4pt,text width=#3mm,align=left,font=\fontsize{7.5}{9.3}\selectfont]at(#1,#2){{\color{pisablue}\bfseries In the paper}\\[.8mm]#4};}
 \newcommand{\ideabox}[4]{\node[anchor=north west,inner sep=1.5mm,fill=expert!9,draw=expert,line width=.5pt,text width=#3mm,align=left,font=\fontsize{7.5}{9.3}\selectfont]at(#1,#2){{\color{expert!70!black}\bfseries Proposal, not in the paper}\\[.8mm]#4};}
+\newcommand{\plainbox}[4]{\node[anchor=north west,inner sep=1.5mm,fill=expert!9,draw=expert,line width=.5pt,text width=#3mm,align=left,font=\fontsize{7.5}{9.3}\selectfont]at(#1,#2){#4};}
 \newcommand{\ourtag}{{\color{expert!70!black}\bfseries[ours]}}
 % \coverslide{title}{authors}{journal}{question}{tikz decoration}{speaker note}
 \newcommand{\coverslide}[6]{%
