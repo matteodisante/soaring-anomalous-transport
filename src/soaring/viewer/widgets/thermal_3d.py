@@ -105,7 +105,11 @@ class TerrainView(gl.GLViewWidget):
     def _zoom(self, amount):
         """Allow close inspection while keeping a finite positive camera distance."""
         self.opts["distance"] = float(
-            np.clip(self.opts["distance"] * np.exp(-np.clip(amount, -5, 5)), 1, 100000)
+            np.clip(
+                self.opts["distance"] * np.exp(-np.clip(amount, -5, 5)),
+                1,
+                max(100000, self.scene_span * 4),
+            )
         )
         self.update()
 

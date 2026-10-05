@@ -17,10 +17,19 @@ from soaring.viewer.thermal_time_prepare import prepare  # noqa: E402
 def main():
     """Build all regions and cells, or benchmark a bounded separate output."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--only", choices=["regions", "cells"])
+    parser.add_argument("--only", choices=["regions", "cells", "routes"])
     parser.add_argument("--limit-batches", type=int)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
+    if args.only == "routes":
+        from soaring.viewer.route_density import prepare_density
+
+        if args.limit_batches is not None:
+            parser.error("--only routes requires a complete archive scan")
+        prepare_density(
+            path=args.output, progress=lambda message: print(message, flush=True)
+        )
+        return
     prepare(
         regions=args.only != "cells",
         cells=args.only != "regions",

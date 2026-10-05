@@ -55,3 +55,28 @@ def test_a_raw_and_cleaned_pair_projected_from_the_same_geographic_point_agree()
     )
     assert lat_back[0] == pytest.approx(lat, abs=1e-6)
     assert lon_back[0] == pytest.approx(lon, abs=1e-6)
+
+
+def test_float32_clean_coordinates_recover_locations_300km_away():
+    """Long-route display inversion stays within 2 m in this geographic sweep."""
+    from pyproj import Geod
+
+    geod = Geod(ellps="WGS84")
+    directions = np.arange(0, 360, 5)
+    for lat0 in (42, 45, 50):
+        for altitude in (0, 1000, 4000):
+            lon, lat, _ = geod.fwd(
+                np.full(len(directions), LON0),
+                np.full(len(directions), lat0),
+                directions,
+                np.full(len(directions), 300000),
+            )
+            z = np.full(len(directions), altitude)
+            e, n, _ = geodetic_to_enu(lat, lon, z, lat0, LON0, ALT0)
+            la, lo = enu_to_geodetic(
+                e.astype(np.float32),
+                n.astype(np.float32),
+                z,
+                LocalFrame(lat0, LON0, ALT0),
+            )
+            assert np.max(geod.inv(lon, lat, lo, la)[2]) < 2

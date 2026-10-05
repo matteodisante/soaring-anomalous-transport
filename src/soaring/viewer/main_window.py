@@ -30,6 +30,7 @@ from . import data, plotting
 from .widgets.flight_picker import FlightPicker
 from .widgets.map_view import MapView
 from .widgets.plot_controls import PlotControls
+from .widgets.route_comparison import RouteComparison
 from .widgets.sources_methods import SourcesMethods
 from .widgets.thermal_density import ThermalDensity
 from .widgets.thermal_plane import ThermalPlane
@@ -135,6 +136,8 @@ class MainWindow(QMainWindow):
         self._tabs.addTab(self._thermal_plane, "Thermal planes")
         self._thermal_density = ThermalDensity()
         self._tabs.addTab(self._thermal_density, "Thermal density")
+        self._route_comparison = RouteComparison()
+        self._tabs.addTab(self._route_comparison, "Routes · 50-300 km")
         self._sources_methods = SourcesMethods()
         # "&&": a single "&" would underline the next letter as a shortcut.
         self._tabs.addTab(self._sources_methods, "Sources && methods")
@@ -235,6 +238,8 @@ class MainWindow(QMainWindow):
             self._thermal_plane.ensure_loaded()
         elif self._tabs.widget(index) is self._thermal_density:
             self._thermal_density.ensure_loaded()
+        elif self._tabs.widget(index) is self._route_comparison:
+            self._route_comparison.ensure_loaded()
         elif self._tabs.widget(index) is self._sources_methods:
             self._sources_methods.ensure_loaded()
 
@@ -242,6 +247,7 @@ class MainWindow(QMainWindow):
         """Cancel archive work before Qt destroys the thermal-plane worker."""
         self._thermal_plane.shutdown()
         self._thermal_density.shutdown()
+        self._route_comparison.shutdown()
         super().closeEvent(event)
 
     def _on_folders_changed(self) -> None:
@@ -252,6 +258,7 @@ class MainWindow(QMainWindow):
         self._map_view.invalidate()
         self._thermal_plane.invalidate()
         self._thermal_density.invalidate()
+        self._route_comparison.invalidate()
         if self._tabs.currentWidget() is self._map_view:
             self._map_view.ensure_loaded()
 

@@ -21,6 +21,7 @@ and thermal-route questions.
 | Infer and evaluate flight phases | [Segmentation](guide/flight-phase-segmentation.md) |
 | Compare a second, transferred segmenter | [Vilpellet segmenter](guide/vilpellet-segmentation.md) |
 | Inspect climb intersections by cell, time and height | [Thermal planes](guide/thermal-planes.md) |
+| Compare cleaned flights between two 10 km cells | [Routes at 50–300 km](guide/route-comparison.md) |
 | Rebuild the scientific results | [Complete workflow](guide/rebuilding.md) |
 | Trace a figure or numerical value | [Generated provenance](guide/provenance.md) |
 
