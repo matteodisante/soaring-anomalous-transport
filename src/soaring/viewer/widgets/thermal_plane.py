@@ -268,6 +268,16 @@ class ThermalPlane(QWidget):
         self._relief_strength.setToolTip(
             "Strength of the saved terrain backdrop on both maps"
         )
+        self._point_strength = QDoubleSpinBox()
+        self._point_strength.setRange(0, 100)
+        self._point_strength.setDecimals(0)
+        self._point_strength.setSingleStep(5)
+        self._point_strength.setValue(95)
+        self._point_strength.setSuffix("% points")
+        self._point_strength.setToolTip(
+            "Opacity of intersection points in every horizontal-plane panel: "
+            "0% hides them; 100% makes them fully opaque"
+        )
         self._summary = QLabel(
             "Metropolitan France · both available disciplines · "
             "5 x 5 km Lambert-93 cells.\n"
@@ -309,6 +319,7 @@ class ThermalPlane(QWidget):
         heights.addWidget(self._height)
         heights.addWidget(self._background)
         heights.addWidget(self._relief_strength)
+        heights.addWidget(self._point_strength)
         self._figure = Figure(figsize=(10, 5), layout="constrained")
         self._map_ax, self._plane_ax = self._figure.subplots(
             1, 2, width_ratios=[1, 1.5]
@@ -390,6 +401,7 @@ class ThermalPlane(QWidget):
         self._slider.valueChanged.connect(self._slider_changed)
         self._height.valueChanged.connect(self._height_changed)
         self._relief_strength.valueChanged.connect(self._relief_changed)
+        self._point_strength.valueChanged.connect(self._point_strength_changed)
         self._canvas.mpl_connect("button_press_event", self._map_clicked)
         self._canvas.mpl_connect("button_release_event", self._pan_finished)
         self._zoom_in.clicked.connect(lambda: self._zoom_plane(0.5))
@@ -1042,6 +1054,18 @@ class ThermalPlane(QWidget):
             self._reliefs.popitem(last=False)
         return self._reliefs.get(key)
 
+    def _point_strength_changed(self, *_):
+        """Update point opacity in place, preserving the loaded slice and viewport."""
+        alpha = self._point_strength.value() / 100
+        for ax in self._plane_axes:
+            for artist in ax.collections:
+                artist.set_alpha(alpha)
+            legend = ax.get_legend()
+            if legend is not None:
+                for artist in legend.legend_handles:
+                    artist.set_alpha(alpha)
+        self._canvas.draw_idle()
+
     def _relief_changed(self, *_):
         """Adjust background strength without changing any scientific result."""
         cell, kind = self._cells.currentData(), self._background.currentData()
@@ -1395,7 +1419,7 @@ class ThermalPlane(QWidget):
                         (group.x - west) / 1000,
                         (group.y - south) / 1000,
                         s=23,
-                        alpha=0.95,
+                        alpha=self._point_strength.value() / 100,
                         edgecolors="white",
                         linewidths=0.6,
                         zorder=3,

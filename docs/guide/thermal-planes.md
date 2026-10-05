@@ -252,6 +252,12 @@ and attribution when reused.
 
 ## Colour maps, aerial dates and daily comparison
 
+**% points** adjusts intersection-dot opacity from 0% (hidden) to 100% (fully
+opaque), starting at 95%. It updates all visible plane panels immediately and
+preserves zoom, height, dates, segmentation and intersection counts. The value
+also applies after changing height, cell or view. **% background** controls the
+map opacity separately.
+
 **Topography · IGN**, **Colour map · IGN**, **Aerial photo · IGN**, **Shaded relief**, and **None** are
 available for both maps. The IGN photographs are aerial orthophotos, not a live
 satellite feed. Each 5 km square is saved at 4000 × 4000 pixels (1.25 m per pixel),

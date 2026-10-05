@@ -26,7 +26,9 @@ def info_html() -> str:
     return f"""
 <h2>Thermal planes</h2>
 <p>Each dot is a climb trajectory crossing one horizontal plane.
-Colour identifies the discipline.</p>
+Colour identifies the discipline. <b>% points</b> adjusts dot opacity from 0 to
+100% in every plane panel; it starts at 95%. <b>% background</b> adjusts the map
+separately. Opacity changes preserve the selected intersections and their counts.</p>
 
 <h3>Cell selection</h3>
 <ol>
