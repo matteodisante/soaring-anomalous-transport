@@ -330,15 +330,31 @@ mountains, ranked by **Vilpellet climb runs**. The title identifies the selected
 category and rank; the summary includes its grid coordinates. The previous
 High mountains #2 pilot is now one of these twelve choices.
 
+In the 3D window, choose **5 x 5 km** or **10 x 10 km** in the area selector.
+Both squares are centred on the selected cell. The larger area includes the
+surrounding terrain, aerial photographs and saved neighbour intersections,
+clipped to that 10 km square. Changing the area reloads the captured dates and
+retains point opacity, point size and surface mode. The camera and kilometre
+grid adapt to the selected area; wheel zoom changes only the camera distance.
+
 The window uses the current **From/To interval**, or the selected pooled civil
 days in daily-comparison mode, and always uses **Vilpellet**. Both disciplines
 contribute. Dates and source are printed above the scene. This is a snapshot of
 that selection: click the 3D button again after changing the cell or dates to
-reload the same window. Surface mode, point opacity and point size are retained.
+reload the same window. Area, surface mode, point opacity and point size are retained.
 
 These twelve cells already have their DEMs, orthophotos and intersection
 lattices saved on the SSD. Enabling their 3D views creates no additional cache
 or imagery copies. This does not prepare new cells across the national grid.
+For the 10 km view, existing 2D neighbour products are reused. Complete the
+neighbour elevation cache once, without repeating segmentation or imagery:
+
+```bash
+uv run --group viewer python scripts/pipeline/prepare_thermal_neighbours.py --terrain-only
+```
+
+The full neighbour preparation also includes this step. Missing terrain or
+intersection products are reported explicitly; the viewer does not download them.
 
 The surface is the original **IGN RGE ALTI elevation raster at 25 m sampling**.
 Its hash, extent and mean are checked against the saved cell reference. The
@@ -346,6 +362,8 @@ viewer reads it from the SSD's `exploration/terrain/` folder, falling back to a
 matching repository raster, and does not download or rebuild terrain. Pixel
 centres form the mesh; the outer half-pixel is extended to the boundary with the
 nearest elevation. Surface colours encode relative elevation within the cell.
+For 10 km, the aligned DEM pixels are joined before cropping, without smoothing
+or resampling. Each neighbour's DEM is checked against its own terrain reference.
 
 The surface selector switches between **Terrain colours** and **Aerial photo ·
 IGN** without resetting the camera or changing intersection positions. Photo
@@ -355,6 +373,8 @@ adds surface detail; it does not add geometry finer than the DEM's 25 m sampling
 The saved photo's EPSG:2154 extent must match the cell exactly. It is read from
 the existing `backgrounds` table, without downloads or additional SSD copies.
 Missing or incompatible imagery leaves terrain-colour mode available.
+The 10 km orthophoto joins cropped portions of the nine saved images, retaining
+their sampling, orientation and acquisition dates.
 Photo attribution and acquisition dates appear below the scene; these dates do
 not follow the flight-date selector. Texture mipmaps and any hardware-size
 reduction exist only in GPU memory. Closing or reloading releases the texture.
@@ -367,6 +387,10 @@ level. There is no random thinning, new interpolation or reconnection of edges.
 All points remain in the cloud, including those hidden behind the terrain;
 turn off **Terrain** to see through it. GNSS and IGN vertical datums remain
 unharmonised, as in the 2D view.
+Neighbour intersections use the selected central cell's same absolute-altitude
+planes, as in 2D. Intersection and contributing-flight counts cover the selected
+area and dates, counting each flight once across cells. The all-date climb
+ranking and visitor-availability statistics still describe the central cell.
 
 - Left drag rotates; right drag or Ctrl + drag pans; the wheel zooms.
 - **Point opacity** changes every point's opacity, from 0% (invisible) to 100%

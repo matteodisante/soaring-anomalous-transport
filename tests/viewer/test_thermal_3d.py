@@ -1,6 +1,7 @@
 """The 3D cloud uses the correct cell, altitude datum, saved lattice and DEM."""
 
 import hashlib
+import json
 from dataclasses import replace
 from threading import Event
 from types import SimpleNamespace
@@ -15,10 +16,14 @@ from soaring.viewer.thermal_3d import (
     load_scene,
     points_every_20m,
     read_aerial,
+    read_area_aerial,
+    read_area_surface,
+    read_neighbour_points,
     read_surface,
 )
 from soaring.viewer.thermal_geometry import ThermalCell
-from soaring.viewer.thermal_store import CancelledError, PlaneData
+from soaring.viewer.thermal_ground import terrain_reference
+from soaring.viewer.thermal_store import CancelledError, PlaneData, neighbour_frames
 
 
 @pytest.fixture
@@ -178,3 +183,144 @@ def test_orthophoto_requires_matching_crs_and_bounds(cell):
         read_aerial(store, cell)
     store.background = lambda *_: None
     assert read_aerial(store, cell) == (None, None)
+
+
+def test_10km_dem_keeps_original_pixels_and_neighbours_own_terrain(tmp_path, cell):
+    cell = replace(cell, ground_m=1500)
+    folder = tmp_path / "exploration/terrain"
+    folder.mkdir(parents=True)
+    coordinates = -2500 + (np.arange(200) + 0.5) * 25
+    for tile in [cell, *neighbour_frames(cell)]:
+        x = coordinates + (tile.ix - cell.ix) * 5000
+        y = coordinates + (tile.iy - cell.iy) * 5000
+        z = (1500 + 0.05 * x[None, :] + 0.03 * y[::-1, None]).astype("f4")
+        path = folder / f"ign-terrain-{tile.ix}-{tile.iy}.tif"
+        Image.fromarray(z).save(path)
+        path.with_suffix(".json").write_text(
+            json.dumps(
+                {
+                    "provenance": {
+                        "bounds_epsg2154": tile.bounds,
+                        "raster_bounds_epsg2154": tile.bounds,
+                        "terrain_file": path.name,
+                        "response_sha256": hashlib.sha256(
+                            path.read_bytes()
+                        ).hexdigest(),
+                        "source_url": "https://example.test/dem",
+                        "dataset_url": "https://example.test/terrain",
+                        "retrieved_utc": "2026-10-05",
+                    }
+                }
+            )
+        )
+    store = SimpleNamespace(
+        path=tmp_path / "snapshot",
+        cells=lambda: [cell],
+        terrain_reference=lambda c: terrain_reference(c, folder),
+    )
+    x, y, z, ref = read_area_surface(store, cell, lambda: None, lambda _: None)
+    assert z.shape == (402, 402)
+    assert (x[0], x[-1], y[0], y[-1]) == (-5000, 5000, -5000, 5000)
+    assert np.all(np.diff(x[1:-1]) == 25)
+    expected = 1500 + 0.05 * x[None, 1:-1] + 0.03 * y[1:-1, None]
+    np.testing.assert_allclose(z[1:-1, 1:-1], expected)
+    assert len(ref["tiles"]) == 9
+    assert len({r["mean_m"] for r in ref["tiles"]}) > 1
+    path.write_bytes(b"corrupt neighbour")
+    with pytest.raises(ValueError, match="hash"):
+        read_area_surface(store, cell, lambda: None, lambda _: None)
+
+
+def test_10km_aerial_mosaic_keeps_north_up_crops_and_acquisition_dates(cell):
+    def background(tile, kind):
+        assert kind == "aerial"
+        col = np.arange(4) + (tile.ix - cell.ix + 1) * 4
+        row = np.arange(4) + (1 - tile.iy + cell.iy) * 4
+        image = np.zeros((4, 4, 3), dtype=np.uint8)
+        image[:, :, 0], image[:, :, 1] = col[None, :], row[:, None]
+        return image, {
+            "crs": "EPSG:2154",
+            "extent": tile.bounds,
+            "acquisition_dates": [f"2025-06-{tile.ix - cell.ix + 2:02d}"],
+        }
+
+    store = SimpleNamespace(background=background)
+    image, ref = read_area_aerial(store, cell, lambda: None)
+    assert image.shape == (8, 8, 3)
+    np.testing.assert_array_equal(image[:, :, 0], np.tile(np.arange(2, 10), (8, 1)))
+    np.testing.assert_array_equal(image[:, :, 1], np.tile(np.arange(2, 10), (8, 1)).T)
+    assert ref["acquisition_dates"] == ["2025-06-01", "2025-06-02", "2025-06-03"]
+    assert len(ref["tiles"]) == 9
+    store.background = lambda tile, kind: (
+        background(tile, kind) if tile == cell else None
+    )
+    with pytest.raises(ValueError, match="Missing aerial"):
+        read_area_aerial(store, cell, lambda: None)
+
+
+def test_10km_cloud_uses_central_planes_filters_dates_and_counts_unique_flights(
+    cell, points, monkeypatch
+):
+    west, south, east, north = cell.bounds
+    levels = []
+
+    def neighbours(selected, source, level):
+        assert selected == cell and source == "vilpellet"
+        levels.append(level)
+        return pd.DataFrame(
+            {
+                "x": [west - 2500, east + 2499, east + 2500, west - 1, west - 1],
+                "y": [south] * 4 + [north + 2500],
+                "utc": [100, 200, 150, 99, 150],
+                "flight": [0, 1, 1, 1, 1],
+            }
+        )
+
+    store = SimpleNamespace(
+        has_points=True,
+        has_climb_ranking=True,
+        cells=lambda: [cell],
+        activity_counts={(cell.ix, cell.iy): {"climb_runs": 10}},
+        background=lambda *_: None,
+        read_plane=lambda *_args, **_kw: PlaneData(
+            pd.DataFrame(), 4, 3, 1, 1, 2, points=points.iloc[:6]
+        ),
+        neighbour_flights=lambda *_: [("paragliders", "a"), ("paragliders", "b")],
+        neighbour_points=neighbours,
+    )
+
+    def surface(*_):
+        return np.arange(2), np.arange(2), np.ones((2, 2)), {}
+
+    monkeypatch.setattr("soaring.viewer.thermal_3d.read_area_surface", surface)
+    monkeypatch.setattr("soaring.viewer.thermal_3d.read_surface", surface)
+    scene = load_scene(store, cell, 100, 200, area_km=10)
+    assert levels == [0, 2]  # An irregular 35 m ceiling is not a 20 m plane.
+    assert scene.area_km == 10 and len(scene.points) == 6
+    assert scene.contributing_flights == 3  # Same flight in centre and neighbour.
+    np.testing.assert_allclose(scene.points[2:, 0], [-5000, 4999, -5000, 4999])
+    np.testing.assert_allclose(scene.points[2:, 2], [1550.25] * 2 + [1570.25] * 2)
+    scene = load_scene(store, cell, 100, 200)
+    assert scene.area_km == 5 and len(scene.points) == 2
+    assert levels == [0, 2]  # The smaller area never reads neighbours.
+    store.neighbour_flights = lambda *_: None
+    with pytest.raises(ValueError, match="not prepared"):
+        load_scene(store, cell, 100, 200, area_km=10)
+    with pytest.raises(ValueError, match="Choose a 5"):
+        load_scene(store, cell, 100, 200, area_km=15)
+
+
+def test_neighbour_read_cancels_between_levels(cell):
+    cancel = Event()
+
+    def check_cancel():
+        if cancel.is_set():
+            raise CancelledError("Cancelled")
+
+    def read(*_):
+        cancel.set()
+        return pd.DataFrame(columns=["x", "y", "utc", "flight"])
+
+    store = SimpleNamespace(neighbour_flights=lambda *_: [], neighbour_points=read)
+    with pytest.raises(CancelledError):
+        read_neighbour_points(store, cell, 100, 200, check_cancel, lambda _: None)

@@ -4,16 +4,17 @@ from __future__ import annotations
 
 import hashlib
 import io
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
+import pandas as pd
 from PIL import Image
 
 from .thermal_daily import height_levels
-from .thermal_geometry import ThermalCell
-from .thermal_ground import mean_terrain
+from .thermal_geometry import CELL_M, ThermalCell
+from .thermal_ground import mean_terrain, terrain_reference
 from .thermal_orography import DATA_DIRECTORY
-from .thermal_store import CancelledError
+from .thermal_store import CancelledError, neighbour_frames
 
 
 @dataclass(frozen=True)
@@ -38,6 +39,16 @@ class TerrainScene:
     aerial_reference: dict | None = None
     aerial_error: str | None = None
     label: str = ""
+    area_km: int = 5
+
+
+def area_bounds(cell, area_km):
+    """Centre either supported display square on the selected 5 km cell."""
+    if area_km not in (5, 10):
+        raise ValueError("Choose a 5 x 5 km or 10 x 10 km area")
+    west, south, east, north = cell.bounds
+    margin = (area_km * 1000 - CELL_M) / 2
+    return west - margin, south - margin, east + margin, north + margin
 
 
 def cell_label(store, cell):
@@ -55,14 +66,15 @@ def cell_label(store, cell):
     return f"{cell.terrain} #{cells.index(cell) + 1}"
 
 
-def read_surface(store, cell):
+def read_surface(store, cell, *, reference=None):
     """Read the original IGN floats, checking the snapshot hash and coordinates.
 
     Files remain offline. Raster rows initially run north to south; return a
     south-to-north mesh. Extend the outer half-pixel to the cell boundary with
     the nearest elevation, so the displayed surface covers the complete square.
     """
-    reference = store.terrain_reference(cell)
+    if reference is None:
+        reference = store.terrain_reference(cell)
     name = f"ign-terrain-{cell.ix}-{cell.iy}.tif"
     candidates = (
         store.path.parent / "exploration/terrain" / name,
@@ -109,13 +121,70 @@ def read_surface(store, cell):
     return x, y, np.pad(z, 1, mode="edge"), reference
 
 
-def points_every_20m(frame, cell, start, end):
+def read_neighbour_surface(store, cell):
+    """Validate a neighbour's own DEM without changing the cloud's height datum."""
+    published = {(c.ix, c.iy): c for c in store.cells()}
+    if (cell.ix, cell.iy) in published:
+        return read_surface(store, published[cell.ix, cell.iy])
+    for folder in (store.path.parent / "exploration/terrain", DATA_DIRECTORY):
+        if any(
+            (folder / name).exists()
+            for name in (
+                f"ign-terrain-{cell.ix}-{cell.iy}.json",
+                f"ign-ridges-{cell.ix}-{cell.iy}.geojson",
+            )
+        ):
+            reference = terrain_reference(cell, folder)
+            return read_surface(
+                store, replace(cell, ground_m=reference["mean_m"]), reference=reference
+            )
+    raise ValueError(
+        f"Missing IGN terrain for neighbour {cell.ix}/{cell.iy}. Run "
+        "scripts/pipeline/prepare_thermal_neighbours.py --terrain-only."
+    )
+
+
+def read_area_surface(store, cell, check_cancel, progress):
+    """Join the nine aligned DEM grids and crop a centred 10 km square."""
+    tiles, references = {}, []
+    x, y, z, reference = read_surface(store, cell)
+    tiles[cell.ix, cell.iy] = z[1:-1, 1:-1]
+    references.append(reference)
+    for neighbour in neighbour_frames(cell):
+        check_cancel()
+        progress(f"Reading IGN terrain {neighbour.ix}/{neighbour.iy}…")
+        nx, ny, nz, ref = read_neighbour_surface(store, neighbour)
+        if (
+            nx.shape != x.shape
+            or ny.shape != y.shape
+            or not np.allclose(nx, x, rtol=0, atol=1e-6)
+            or not np.allclose(ny, y, rtol=0, atol=1e-6)
+        ):
+            raise ValueError("Neighbouring terrain grids must use the same sampling")
+        tiles[neighbour.ix, neighbour.iy] = nz[1:-1, 1:-1]
+        references.append(ref)
+    z = np.block(
+        [[tiles[cell.ix + dx, cell.iy + dy] for dx in (-1, 0, 1)] for dy in (-1, 0, 1)]
+    )
+    x = np.concatenate([x[1:-1] + dx * CELL_M for dx in (-1, 0, 1)])
+    y = np.concatenate([y[1:-1] + dy * CELL_M for dy in (-1, 0, 1)])
+    cols, rows = (x >= -5000) & (x < 5000), (y >= -5000) & (y < 5000)
+    return (
+        np.r_[-5000, x[cols], 5000],
+        np.r_[-5000, y[rows], 5000],
+        np.pad(z[np.ix_(rows, cols)], 1, mode="edge"),
+        {"grid_m": reference["grid_m"], "tiles": references},
+    )
+
+
+def points_every_20m(frame, cell, start, end, *, area_km=5):
     """Select true 20 m levels, including neither odd levels nor an off-grid ceiling.
 
     The saved level is an index, not an altitude. The last 10 m lattice entry
     can be an irregular exact ceiling, so index parity alone is insufficient.
     Time and cell masks match the 2D plane view. No point is randomly thinned.
     """
+    west, south, east, north = area_bounds(cell, area_km)
     if frame is None:
         raise ValueError("Saved intersection levels are required for the 3D view")
     if frame.empty:
@@ -130,7 +199,6 @@ def points_every_20m(frame, cell, start, end):
     ):
         raise ValueError("Invalid saved intersection level")
     heights = levels[indices.astype(int)]
-    west, south, east, north = cell.bounds
     keep = (
         np.isclose(heights / 20, np.round(heights / 20), rtol=0, atol=1e-8)
         & frame.x.between(west, east, inclusive="left").to_numpy()
@@ -147,6 +215,39 @@ def points_every_20m(frame, cell, start, end):
     ).astype(np.float32)
     flights = len(selected[["discipline", "flight_id"]].drop_duplicates())
     return xyz, flights
+
+
+def read_neighbour_points(store, cell, start, end, check_cancel, progress):
+    """Read only true 20 m levels, retaining the centre's planes and flight IDs."""
+    flights = store.neighbour_flights(cell, "vilpellet")
+    if flights is None:
+        raise ValueError(
+            "Neighbour intersections are not prepared. Run "
+            "scripts/pipeline/prepare_thermal_neighbours.py."
+        )
+    identities = np.asarray(flights, dtype=object).reshape(-1, 2)
+    west, south, east, north = area_bounds(cell, 10)
+    parts = []
+    for level, height in enumerate(height_levels(cell.max_agl_m)):
+        if not np.isclose(height / 20, round(height / 20), rtol=0, atol=1e-8):
+            continue
+        check_cancel()
+        progress(f"Reading neighbouring intersections at {height:g} m…")
+        frame = store.neighbour_points(cell, "vilpellet", level)
+        frame = frame.loc[
+            frame.utc.between(start, end)
+            & frame.x.between(west, east, inclusive="left")
+            & frame.y.between(south, north, inclusive="left")
+        ].copy()
+        if frame.empty:
+            continue
+        numbers = frame.pop("flight").to_numpy(dtype=np.int64)
+        if (numbers < 0).any() or (numbers >= len(identities)).any():
+            raise ValueError("Invalid saved neighbour flight identity")
+        frame["discipline"], frame["flight_id"] = identities[numbers].T
+        frame["level"] = level
+        parts.append(frame)
+    return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
 
 
 def read_aerial(store, cell):
@@ -167,8 +268,49 @@ def read_aerial(store, cell):
     return image, reference
 
 
-def load_scene(store, cell, start, end, *, progress=lambda _: None, cancel=None):
+def read_area_aerial(store, cell, check_cancel):
+    """Crop saved north-up photographs into a 10 km mosaic without resampling."""
+    centre, reference = read_aerial(store, cell)
+    if centre is None:
+        return None, None
+    height, width = centre.shape[:2]
+    if height % 2 or width % 2:
+        raise ValueError("The 10 km photo requires even-sized saved image tiles")
+    mosaic = np.empty((height * 2, width * 2, 3), dtype=np.uint8)
+    west, south, east, north = area_bounds(cell, 10)
+    references = []
+    for tile in [cell, *neighbour_frames(cell)]:
+        check_cancel()
+        image, ref = (centre, reference) if tile == cell else read_aerial(store, tile)
+        if image is None:
+            raise ValueError(f"Missing aerial photo for neighbour {tile.ix}/{tile.iy}")
+        if image.shape != centre.shape:
+            raise ValueError("Neighbouring aerial photos must use the same sampling")
+        w, s, e, n = tile.bounds
+        cw, cs, ce, cn = max(w, west), max(s, south), min(e, east), min(n, north)
+        x0, x1 = [round((v - w) / CELL_M * width) for v in (cw, ce)]
+        y0, y1 = [round((n - v) / CELL_M * height) for v in (cn, cs)]
+        tx, ty = (
+            round((cw - west) / CELL_M * width),
+            round((north - cn) / CELL_M * height),
+        )
+        mosaic[ty : ty + y1 - y0, tx : tx + x1 - x0] = image[y0:y1, x0:x1]
+        references.append(ref)
+    return mosaic, {
+        "crs": "EPSG:2154",
+        "extent": (west, south, east, north),
+        "tiles": references,
+        "acquisition_dates": sorted(
+            {date for ref in references for date in ref.get("acquisition_dates", [])}
+        ),
+    }
+
+
+def load_scene(
+    store, cell, start, end, *, area_km=5, progress=lambda _: None, cancel=None
+):
     """Load the selected saved cell, Vilpellet and the requested UTC interval."""
+    area_bounds(cell, area_km)
     if not np.isfinite([start, end]).all() or end < start:
         raise ValueError("Choose a valid time interval in Thermal planes")
     if not store.has_points:
@@ -181,12 +323,20 @@ def load_scene(store, cell, start, end, *, progress=lambda _: None, cancel=None)
     check_cancel()
     label = cell_label(store, cell)
     progress(f"Reading verified IGN terrain for {label}…")
-    x, y, terrain, reference = read_surface(store, cell)
+    x, y, terrain, reference = (
+        read_surface(store, cell)
+        if area_km == 5
+        else read_area_surface(store, cell, check_cancel, progress)
+    )
     check_cancel()
     progress("Reading the saved IGN aerial photo…")
     aerial, aerial_reference, aerial_error = None, None, None
     try:
-        aerial, aerial_reference = read_aerial(store, cell)
+        aerial, aerial_reference = (
+            read_aerial(store, cell)
+            if area_km == 5
+            else read_area_aerial(store, cell, check_cancel)
+        )
     except (OSError, ValueError) as exc:
         aerial_error = str(exc)
     check_cancel()
@@ -195,7 +345,15 @@ def load_scene(store, cell, start, end, *, progress=lambda _: None, cancel=None)
         cell, start, end, "vilpellet", progress=progress, cancel=cancel
     )
     check_cancel()
-    points, flights = points_every_20m(plane.points, cell, start, end)
+    frame = plane.points
+    if area_km == 10:
+        neighbours = read_neighbour_points(
+            store, cell, start, end, check_cancel, progress
+        )
+        if frame is not None and not neighbours.empty:
+            frame = pd.concat([frame, neighbours], ignore_index=True)
+    check_cancel()
+    points, flights = points_every_20m(frame, cell, start, end, area_km=area_km)
     return TerrainScene(
         cell,
         x,
@@ -215,4 +373,5 @@ def load_scene(store, cell, start, end, *, progress=lambda _: None, cancel=None)
         aerial_reference,
         aerial_error,
         label,
+        area_km,
     )

@@ -28,6 +28,23 @@ NEIGHBOUR_LATTICE_VERSION = "10m-v1"
 SOURCES = ("own", "vilpellet")
 
 
+def prepare_neighbour_terrain(path, *, progress=print):
+    """Complete the attributed DEM cache for the selectable 10 km 3D areas."""
+    from .thermal_ground import fetch_terrain_reference, terrain_reference
+    from .thermal_orography import DATA_DIRECTORY
+
+    store = ThermalStore(path)
+    folder = store.path.parent / "exploration/terrain"
+    squares = _squares(store)
+    for done, cell in enumerate(squares, 1):
+        # Reuse attributed repository rasters before requesting another copy.
+        try:
+            terrain_reference(cell, DATA_DIRECTORY)
+        except (OSError, ValueError):
+            fetch_terrain_reference(cell, folder)
+        progress(f"Terrain {done}/{len(squares)}: {cell.ix}/{cell.iy}")
+
+
 def _squares(store):
     """Distinct unpublished squares next to any published cell.
 

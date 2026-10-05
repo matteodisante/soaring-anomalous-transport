@@ -80,6 +80,11 @@ class Thermal3D(QDialog):
         self._summary.setWordWrap(True)
         self._status = QLabel()
         self._status.setWordWrap(True)
+        self._area = QComboBox()
+        self._area.addItem("5 x 5 km", 5)
+        self._area.addItem("10 x 10 km", 10)
+        self._area.setToolTip("Area centred on the selected cell, including neighbours")
+        self._area.setEnabled(False)
         self._point_strength = QDoubleSpinBox()
         self._point_strength.setRange(0, 100)
         self._point_strength.setDecimals(0)
@@ -113,6 +118,7 @@ class Thermal3D(QDialog):
         self._cancel.setEnabled(False)
         controls = FlowLayout()
         for widget in (
+            self._area,
             self._point_strength,
             self._point_size,
             self._terrain,
@@ -141,6 +147,7 @@ class Thermal3D(QDialog):
         layout.addWidget(self._source)
         layout.addWidget(self._status)
         self._point_strength.valueChanged.connect(self._style_changed)
+        self._area.currentIndexChanged.connect(self._area_changed)
         self._point_size.valueChanged.connect(self._style_changed)
         self._terrain.toggled.connect(self._style_changed)
         self._surface_mode.currentIndexChanged.connect(self._surface_changed)
@@ -157,7 +164,7 @@ class Thermal3D(QDialog):
             for t in (start, end)
         ]
         self._heading.setText(
-            f"{label} · Vilpellet · planes every 20 m\n"
+            f"{label} · {self._area.currentText()} · Vilpellet · planes every 20 m\n"
             f"{dates[0]} → {dates[1]} · Europe/Paris"
         )
 
@@ -167,20 +174,28 @@ class Thermal3D(QDialog):
         self._view.clear()
         self._cloud = self._surface = self._scene = None
         self._surface_mode.setEnabled(False)
-        self._request = (cell, start, end)
+        self._request = (store, cell, start, end)
+        self._area.setEnabled(True)
+        area_km = self._area.currentData()
         self._set_heading(cell_label(store, cell), start, end)
         self._summary.setText("Loading the selected interval from the SSD…")
         self._source.clear()
         self._status.clear()
         self._cancel.setEnabled(True)
         worker = self._worker = _Worker(
-            lambda **kw: load_scene(store, cell, start, end, **kw), self
+            lambda **kw: load_scene(store, cell, start, end, area_km=area_km, **kw),
+            self,
         )
         worker.progress.connect(self._progress)
         worker.succeeded.connect(self._loaded)
         worker.failed.connect(self._failed)
         worker.finished.connect(self._finished)
         worker.start()
+
+    def _area_changed(self, *_):
+        """Reload the captured cell and dates at the chosen geographic extent."""
+        if self._request is not None:
+            self.load(*self._request)
 
     def _progress(self, message):
         """Ignore progress queued by a superseded request."""
@@ -213,6 +228,9 @@ class Thermal3D(QDialog):
         """Render exact metric positions without vertical exaggeration or thinning."""
         self._release_texture()
         self._scene = scene
+        self._area.blockSignals(True)
+        self._area.setCurrentIndex(self._area.findData(scene.area_km))
+        self._area.blockSignals(False)
         self._set_heading(
             scene.label
             or f"{scene.cell.terrain} · cell {scene.cell.ix}/{scene.cell.iy}",
@@ -255,7 +273,8 @@ class Thermal3D(QDialog):
         self._style_changed()
         self._reset_view()
         self._summary.setText(
-            f"Cell {scene.cell.ix}/{scene.cell.iy} · 5 x 5 km · "
+            f"Area {scene.area_km} x {scene.area_km} km · "
+            f"Central cell {scene.cell.ix}/{scene.cell.iy}: "
             f"{scene.climb_runs:,} Vilpellet climbs in the all-date ranking\n"
             f"{len(scene.points):,} intersections · "
             f"{scene.contributing_flights:,} contributing flights · "
@@ -269,11 +288,14 @@ class Thermal3D(QDialog):
             )
         if scene.unavailable_flights or scene.unclassified_flights:
             message += (
-                f" {scene.unavailable_flights:,} unavailable flights; "
+                f" Central cell: {scene.unavailable_flights:,} unavailable flights; "
                 f"{scene.unclassified_flights:,} unclassified flights."
             )
         if scene.unknown_clock_flights:
-            message += f" {scene.unknown_clock_flights:,} flights have no usable UTC."
+            message += (
+                f" {scene.unknown_clock_flights:,} central-cell flights "
+                "have no usable UTC."
+            )
         if scene.aerial is None:
             message += " Aerial photo unavailable."
             if scene.aerial_error:
@@ -318,16 +340,21 @@ class Thermal3D(QDialog):
     def _add_axes(self, minimum):
         """Add a kilometre grid and labelled east, north and absolute altitude."""
         floor = 500 * np.floor(minimum / 500)
+        width = self._scene.area_km * 1000
+        half = width / 2
         grid = gl.GLGridItem(color=(90, 105, 120, 85), glOptions="translucent")
-        grid.setSize(5000, 5000)
+        grid.setSize(width, width)
         grid.setSpacing(1000, 1000)
         grid.translate(0, 0, floor)
         grid.setDepthValue(20)
         self._view.addItem(grid)
-        labels = [((2700, -2500, floor), "E · 1 km grid"), ((-2500, 2700, floor), "N")]
+        labels = [
+            ((half + 200, -half, floor), "E · 1 km grid"),
+            ((-half, half + 200, floor), "N"),
+        ]
         ceiling = max(self._scene.cell.max_alt_m, self._scene.terrain.max())
         for height in np.arange(floor, ceiling + 1, 500):
-            labels.append(((-2600, -2600, height), f"{height:.0f} m ASL"))
+            labels.append(((-half - 100, -half - 100, height), f"{height:.0f} m ASL"))
         for pos, text in labels:
             item = gl.GLTextItem(pos=pos, text=text, color="#334155")
             item.setDepthValue(30)
@@ -355,7 +382,7 @@ class Thermal3D(QDialog):
         )
         aspect = max(1, self._view.width() / max(self._view.height(), 1))
         half_angle = np.arctan(np.tan(np.deg2rad(30)) / aspect)
-        radius = 0.5 * np.sqrt(2 * 5000**2 + (high - low) ** 2)
+        radius = 0.5 * np.sqrt(2 * (scene.area_km * 1000) ** 2 + (high - low) ** 2)
         distance = 1.1 * radius / np.sin(half_angle)
         self._view.opts["fov"] = 60
         self._view.setCameraPosition(

@@ -167,12 +167,14 @@ def main() -> int:
                     from soaring.viewer.thermal_neighbours import (
                         prepare_neighbour_imagery,
                         prepare_neighbour_points,
+                        prepare_neighbour_terrain,
                     )
 
                     prepare_neighbour_points(
                         staged, workers=args.workers, progress=progress
                     )
                     prepare_neighbour_imagery(staged, progress=progress)
+                    prepare_neighbour_terrain(staged, progress=progress)
                 with sqlite3.connect(staged) as db:
                     if db.execute("PRAGMA quick_check").fetchone() != ("ok",):
                         raise RuntimeError(

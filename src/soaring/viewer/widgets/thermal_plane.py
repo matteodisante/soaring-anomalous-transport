@@ -305,7 +305,7 @@ class ThermalPlane(QWidget):
         self._terrain_3d_panel = None
         self._terrain_3d = QPushButton("3D terrain · selected cell")
         self._terrain_3d.setToolTip(
-            "Open the selected cell in 3D: "
+            "Open the selected cell in 3D, with a 5 x 5 or 10 x 10 km area: "
             "IGN terrain and all intersections every 20 m, for the selected dates"
         )
         self._terrain_3d.clicked.connect(self._show_terrain_3d)

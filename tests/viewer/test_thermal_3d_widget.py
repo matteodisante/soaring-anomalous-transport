@@ -1,6 +1,7 @@
 """The terrain window preserves geometry and camera while appearance changes."""
 
 import os
+import time
 from dataclasses import replace
 from types import SimpleNamespace
 
@@ -95,6 +96,55 @@ def test_orthophoto_switch_preserves_mesh_points_camera_and_hidden_terrain(qapp,
         assert not view._surface_mode.isEnabled()
         assert view._surface_mode.currentIndex() == 0
         assert "Aerial photo unavailable" in view._status.text()
+    finally:
+        view.close()
+
+
+def test_area_selector_reloads_same_dates_and_frames_the_complete_area(
+    qapp, scene, monkeypatch
+):
+    from PyQt6.QtTest import QTest
+
+    calls = []
+    store = SimpleNamespace(
+        has_climb_ranking=True,
+        cells=lambda: [scene.cell],
+        activity_counts={(scene.cell.ix, scene.cell.iy): {"climb_runs": 20}},
+    )
+
+    def load(selected_store, cell, start, end, *, area_km, **kwargs):
+        calls.append((selected_store, cell, start, end, area_km))
+        half = area_km * 500
+        return replace(
+            scene, x=np.array([-half, half]), y=np.array([-half, half]), area_km=area_km
+        )
+
+    monkeypatch.setattr("soaring.viewer.widgets.thermal_3d.load_scene", load)
+    view = Thermal3D()
+    try:
+        assert not view._area.isEnabled()
+        view._point_strength.setValue(65)
+        view._point_size.setValue(4)
+        view.load(store, scene.cell, 100, 200)
+        distances = []
+        for index in (0, 1, 0):
+            view._area.setCurrentIndex(index)
+            deadline = time.monotonic() + 5
+            while view._worker is not None and time.monotonic() < deadline:
+                QTest.qWait(10)
+            assert view._worker is None
+            assert view._scene is not None
+            assert view._area.isEnabled()
+            area = (5, 10)[index]
+            assert view._scene.area_km == area
+            assert f"{area} x {area} km" in view._summary.text()
+            assert view._cloud.color[-1] == 0.65 and view._cloud.size == 4
+            grid = next(i for i in view._view.items if type(i).__name__ == "GLGridItem")
+            assert grid.size()[:2] == [area * 1000, area * 1000]
+            distances.append(view._view.opts["distance"])
+        assert distances[1] > distances[0]
+        assert distances[2] == distances[0]
+        assert calls == [(store, scene.cell, 100, 200, area) for area in (5, 10, 5)]
     finally:
         view.close()
 

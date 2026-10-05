@@ -20,6 +20,7 @@ if str(ROOT / "src") not in sys.path:
 from soaring.viewer.thermal_neighbours import (  # noqa: E402
     prepare_neighbour_imagery,
     prepare_neighbour_points,
+    prepare_neighbour_terrain,
 )
 from soaring.viewer.thermal_store import load_store  # noqa: E402
 
@@ -36,6 +37,11 @@ def main() -> int:
         help="Width of a neighbour background in pixels (published cells: 4000)",
     )
     parser.add_argument("--skip-imagery", action="store_true")
+    parser.add_argument(
+        "--terrain-only",
+        action="store_true",
+        help="Only complete the IGN elevation cache for the 10 km 3D view",
+    )
     args = parser.parse_args()
     store = args.store or load_store().path
     last = 0.0
@@ -55,11 +61,15 @@ def main() -> int:
             print("Another offline preparation is already running.")
             return 1
         try:
-            prepare_neighbour_points(store, workers=args.workers, progress=progress)
-            if not args.skip_imagery:
-                prepare_neighbour_imagery(
-                    store, size=args.image_px, progress=lambda s: print(s, flush=True)
-                )
+            if not args.terrain_only:
+                prepare_neighbour_points(store, workers=args.workers, progress=progress)
+                if not args.skip_imagery:
+                    prepare_neighbour_imagery(
+                        store,
+                        size=args.image_px,
+                        progress=lambda s: print(s, flush=True),
+                    )
+            prepare_neighbour_terrain(store, progress=lambda s: print(s, flush=True))
         except KeyboardInterrupt:
             print("Stopped. Completed work remains on the SSD; run again to resume.")
             return 130
