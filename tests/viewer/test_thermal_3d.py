@@ -14,6 +14,7 @@ from soaring.viewer.thermal_3d import (
     cell_label,
     load_scene,
     points_every_20m,
+    read_aerial,
     read_surface,
 )
 from soaring.viewer.thermal_geometry import ThermalCell
@@ -144,6 +145,7 @@ def test_scene_reads_selected_cell_vilpellet_and_requested_dates(
             (193, 1309): {"climb_runs": 10},
         },
         read_plane=read,
+        background=lambda *_: None,
     )
     monkeypatch.setattr(
         "soaring.viewer.thermal_3d.read_surface",
@@ -160,3 +162,19 @@ def test_scene_reads_selected_cell_vilpellet_and_requested_dates(
     with pytest.raises(CancelledError):
         load_scene(store, cell, 100, 200, cancel=cancel)
     assert len(calls) == 1
+
+
+def test_orthophoto_requires_matching_crs_and_bounds(cell):
+    image = np.zeros((10, 20, 3), dtype=np.uint8)
+    reference = {"crs": "EPSG:2154", "extent": cell.bounds}
+    store = SimpleNamespace(background=lambda *_: (image, reference))
+    actual, metadata = read_aerial(store, cell)
+    assert actual is image and metadata is reference
+    reference["crs"] = "CRS:84"
+    with pytest.raises(ValueError, match="coordinates"):
+        read_aerial(store, cell)
+    reference.update(crs="EPSG:2154", extent=(0, 0, 5000, 5000))
+    with pytest.raises(ValueError, match="coordinates"):
+        read_aerial(store, cell)
+    store.background = lambda *_: None
+    assert read_aerial(store, cell) == (None, None)

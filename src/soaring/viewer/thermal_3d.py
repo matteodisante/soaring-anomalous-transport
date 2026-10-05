@@ -34,6 +34,9 @@ class TerrainScene:
     unknown_clock_flights: int
     start: float
     end: float
+    aerial: np.ndarray | None = None
+    aerial_reference: dict | None = None
+    aerial_error: str | None = None
     label: str = ""
 
 
@@ -146,6 +149,24 @@ def points_every_20m(frame, cell, start, end):
     return xyz, flights
 
 
+def read_aerial(store, cell):
+    """Use the saved north-up orthophoto only when its metric bounds match."""
+    saved = store.background(cell, "aerial")
+    if saved is None:
+        return None, None
+    image, reference = saved
+    if (
+        reference.get("crs") != "EPSG:2154"
+        or tuple(reference.get("extent", ())) != cell.bounds
+    ):
+        raise ValueError(
+            "The saved aerial photo does not match the terrain coordinates"
+        )
+    if image.ndim != 3 or image.shape[2] != 3 or image.dtype != np.uint8:
+        raise ValueError("The saved aerial photo must be an RGB image")
+    return image, reference
+
+
 def load_scene(store, cell, start, end, *, progress=lambda _: None, cancel=None):
     """Load the selected saved cell, Vilpellet and the requested UTC interval."""
     if not np.isfinite([start, end]).all() or end < start:
@@ -161,6 +182,13 @@ def load_scene(store, cell, start, end, *, progress=lambda _: None, cancel=None)
     label = cell_label(store, cell)
     progress(f"Reading verified IGN terrain for {label}…")
     x, y, terrain, reference = read_surface(store, cell)
+    check_cancel()
+    progress("Reading the saved IGN aerial photo…")
+    aerial, aerial_reference, aerial_error = None, None, None
+    try:
+        aerial, aerial_reference = read_aerial(store, cell)
+    except (OSError, ValueError) as exc:
+        aerial_error = str(exc)
     check_cancel()
     progress("Reading saved Vilpellet intersections for the selected dates…")
     plane = store.read_plane(
@@ -183,5 +211,8 @@ def load_scene(store, cell, start, end, *, progress=lambda _: None, cancel=None)
         plane.unknown_clock,
         start,
         end,
+        aerial,
+        aerial_reference,
+        aerial_error,
         label,
     )

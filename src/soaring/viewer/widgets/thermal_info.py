@@ -108,8 +108,9 @@ with IGN terrain and all intersections every 20 m above the cell
 mean. It uses the selected dates and always Vilpellet. Left drag rotates, right
 drag pans and the wheel zooms. Point opacity and size are adjustable; turning off
 Terrain reveals points behind it. All axes use metres without vertical
-exaggeration. Click the 3D button again to apply a changed cell or date
-selection.</li>
+exaggeration. Choose Terrain colours or Aerial photo · IGN to change the surface
+appearance. Both use existing offline data. Click the 3D button again to apply
+a changed cell or date selection.</li>
 <li><b>Zoom + / &minus;:</b> visible width 0.5&ndash;10 km. Drag with the toolbar's
 hand tool. Navigation covers the selected cell and its eight neighbours.
 <b>Reset cell</b> returns to the central {cell_km} &times; {cell_km} km square.</li>

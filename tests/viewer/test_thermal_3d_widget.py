@@ -62,6 +62,43 @@ def test_opacity_size_and_terrain_toggle_keep_positions_and_camera(qapp, scene):
         view.close()
 
 
+def test_orthophoto_switch_preserves_mesh_points_camera_and_hidden_terrain(qapp, scene):
+    scene = replace(
+        scene,
+        aerial=np.zeros((32, 32, 3), dtype=np.uint8),
+        aerial_reference={"acquisition_dates": ["2025-06-25"]},
+    )
+    view = Thermal3D()
+    try:
+        view.set_scene(scene)
+        cloud, surface = view._cloud, view._surface
+        mesh = surface.opts["meshdata"]
+        view._view.setCameraPosition(azimuth=12, elevation=55, distance=7000)
+        for mode in (1, 0, 1):
+            view._surface_mode.setCurrentIndex(mode)
+            assert surface._aerial == bool(mode)
+            assert ("2025-06-25" in view._source.text()) == bool(mode)
+            assert view._surface is surface and surface.opts["meshdata"] is mesh
+            assert view._cloud is cloud
+            np.testing.assert_array_equal(cloud.pos, scene.points)
+            assert [
+                view._view.opts[k] for k in ("azimuth", "elevation", "distance")
+            ] == [
+                12,
+                55,
+                7000,
+            ]
+        view._terrain.setChecked(False)
+        view._surface_mode.setCurrentIndex(0)
+        assert not surface.visible()
+        view.set_scene(replace(scene, aerial=None))
+        assert not view._surface_mode.isEnabled()
+        assert view._surface_mode.currentIndex() == 0
+        assert "Aerial photo unavailable" in view._status.text()
+    finally:
+        view.close()
+
+
 def test_button_captures_selected_cell_and_dates_and_reuses_window(
     qapp, scene, monkeypatch
 ):
@@ -159,3 +196,116 @@ def test_visible_dialog_shares_context_and_keeps_rendering(qapp, scene, monkeypa
     finally:
         panel.close()
         window.close()
+
+
+@pytest.mark.skipif(
+    os.environ.get("SOARING_TEST_NATIVE_OPENGL") != "1",
+    reason="Requires a native display and GPU",
+)
+def test_native_orthophoto_orientation_and_texture_lifecycle(qapp, scene):
+    from PyQt6.QtGui import QImage
+    from PyQt6.QtTest import QTest
+
+    image = np.empty((64, 64, 3), dtype=np.uint8)
+    image[:32, :32] = (255, 0, 0)  # NW
+    image[:32, 32:] = (0, 255, 0)  # NE
+    image[32:, :32] = (0, 0, 255)  # SW
+    image[32:, 32:] = (255, 255, 0)  # SE
+    scene = replace(
+        scene,
+        aerial=image,
+        terrain=np.full((2, 2), 1000, dtype=np.float32),
+        points=np.empty((0, 3), dtype=np.float32),
+    )
+    panel = Thermal3D()
+    try:
+        panel.show()
+        assert QTest.qWaitForWindowExposed(panel)
+        panel.set_scene(scene)
+        panel._surface_mode.setCurrentIndex(1)
+        panel._reset_view(top=True)
+        qapp.processEvents()
+        frame = panel._view.grabFramebuffer().convertToFormat(
+            QImage.Format.Format_RGBA8888
+        )
+        pixels = np.frombuffer(
+            frame.bits().asstring(frame.sizeInBytes()), dtype=np.uint8
+        )
+        pixels = pixels.reshape(frame.height(), frame.width(), 4)
+        cy, cx = frame.height() // 2, frame.width() // 2
+        offset = min(cy, cx) // 4
+        for dy, dx, expected in (
+            (-offset, -offset, (255, 0, 0)),
+            (-offset, offset, (0, 255, 0)),
+            (offset, -offset, (0, 0, 255)),
+            (offset, offset, (255, 255, 0)),
+        ):
+            np.testing.assert_allclose(pixels[cy + dy, cx + dx, :3], expected, atol=3)
+        surface = panel._surface
+        assert surface._texture is not None and surface._texture.isCreated()
+        panel.set_scene(scene)
+        assert surface._texture is None
+        qapp.processEvents()
+        panel._view.grabFramebuffer()
+        assert panel._surface._texture.isCreated()
+        panel.close()
+        assert panel._surface._texture is None
+    finally:
+        panel.close()
+
+
+@pytest.mark.skipif(
+    os.environ.get("SOARING_TEST_NATIVE_OPENGL") != "1",
+    reason="Requires a native display and GPU",
+)
+def test_native_orthophoto_keeps_xy_coordinates_on_slopes(qapp, scene):
+    """Projected landmarks must keep their photo colours on an inclined surface."""
+    from PyQt6.QtCore import QRect
+    from PyQt6.QtGui import QImage, QVector3D
+    from PyQt6.QtTest import QTest
+
+    # Encode east/north position in the photo, independently of the DEM heights.
+    samples = np.rint((np.arange(256) + 0.5) / 256 * 255).astype(np.uint8)
+    image = np.empty((256, 256, 3), dtype=np.uint8)
+    image[:, :, 0] = samples[None, :]
+    image[:, :, 1] = samples[:, None]
+    image[:, :, 2] = 128
+    terrain = 3000 + 0.5 * scene.x[None, :] + 0.2 * scene.y[:, None]
+    scene = replace(
+        scene,
+        aerial=image,
+        terrain=terrain.astype(np.float32),
+        points=np.empty((0, 3), dtype=np.float32),
+    )
+    panel = Thermal3D()
+    try:
+        panel.show()
+        assert QTest.qWaitForWindowExposed(panel)
+        panel.set_scene(scene)
+        panel._surface_mode.setCurrentIndex(1)
+        panel._view.setCameraPosition(azimuth=-60, elevation=45)
+        qapp.processEvents()
+        frame = panel._view.grabFramebuffer().convertToFormat(
+            QImage.Format.Format_RGBA8888
+        )
+        pixels = np.frombuffer(
+            frame.bits().asstring(frame.sizeInBytes()), dtype=np.uint8
+        ).reshape(frame.height(), frame.width(), 4)
+        surface = panel._surface
+        viewport = QRect(0, 0, frame.width(), frame.height())
+        for x, y in [
+            (-1700, -900),
+            (300, -1600),
+            (1200, 800),
+            (-800, 1400),
+            (500, 400),
+        ]:
+            point = QVector3D(x, y, 3000 + 0.5 * x + 0.2 * y)
+            screen = point.project(
+                surface.modelViewMatrix(), surface.projectionMatrix(), viewport
+            )
+            row, col = frame.height() - 1 - int(screen.y()), int(screen.x())
+            expected = [255 * (x + 2500) / 5000, 255 * (2500 - y) / 5000, 128]
+            np.testing.assert_allclose(pixels[row, col, :3], expected, atol=3)
+    finally:
+        panel.close()

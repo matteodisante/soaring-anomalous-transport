@@ -334,7 +334,7 @@ The window uses the current **From/To interval**, or the selected pooled civil
 days in daily-comparison mode, and always uses **Vilpellet**. Both disciplines
 contribute. Dates and source are printed above the scene. This is a snapshot of
 that selection: click the 3D button again after changing the cell or dates to
-reload the same window. Point opacity and point size are retained.
+reload the same window. Surface mode, point opacity and point size are retained.
 
 These twelve cells already have their DEMs, orthophotos and intersection
 lattices saved on the SSD. Enabling their 3D views creates no additional cache
@@ -347,6 +347,18 @@ matching repository raster, and does not download or rebuild terrain. Pixel
 centres form the mesh; the outer half-pixel is extended to the boundary with the
 nearest elevation. Surface colours encode relative elevation within the cell.
 
+The surface selector switches between **Terrain colours** and **Aerial photo ·
+IGN** without resetting the camera or changing intersection positions. Photo
+mode drapes the existing north-up **IGN BD ORTHO** image over that same DEM:
+forest, rock, roads and buildings follow the terrain geometry. The photograph
+adds surface detail; it does not add geometry finer than the DEM's 25 m sampling.
+The saved photo's EPSG:2154 extent must match the cell exactly. It is read from
+the existing `backgrounds` table, without downloads or additional SSD copies.
+Missing or incompatible imagery leaves terrain-colour mode available.
+Photo attribution and acquisition dates appear below the scene; these dates do
+not follow the flight-date selector. Texture mipmaps and any hardware-size
+reduction exist only in GPU memory. Closing or reloading releases the texture.
+
 Every saved intersection on a plane **H = mean cell terrain + 0, 20, 40, … m**
 is displayed simultaneously. These are horizontal absolute-altitude planes,
 not surfaces following the local ground. They are selected from the saved 10 m
@@ -357,7 +369,11 @@ turn off **Terrain** to see through it. GNSS and IGN vertical datums remain
 unharmonised, as in the 2D view.
 
 - Left drag rotates; right drag or Ctrl + drag pans; the wheel zooms.
-- **% points** and **px points** change point opacity and marker size in place.
+- **Point opacity** changes every point's opacity, from 0% (invisible) to 100%
+  (opaque); all intersections remain included. **Point size** changes the marker
+  diameter in screen pixels. Both controls update the scene in place.
+- **Terrain colours / Aerial photo · IGN** changes the surface appearance;
+  **Terrain** hides or shows the surface in either mode.
 - **Reset view**, **Top view**, and **Full screen** control the camera/window.
 - The kilometre grid and altitude labels use metres, with **no vertical
   exaggeration**. Marker diameter is in screen pixels, not a physical radius.

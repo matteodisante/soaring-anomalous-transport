@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from html import escape
 
 import numpy as np
 import pyqtgraph.opengl as gl
@@ -12,6 +13,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QVector3D
 from PyQt6.QtWidgets import (
     QCheckBox,
+    QComboBox,
     QDialog,
     QDoubleSpinBox,
     QLabel,
@@ -22,6 +24,7 @@ from PyQt6.QtWidgets import (
 from ..thermal_3d import cell_label, load_scene
 from ..thermal_daily import PARIS
 from .flow_layout import FlowLayout
+from .terrain_surface import TerrainSurface
 from .thermal_plane import _Worker
 
 
@@ -82,16 +85,27 @@ class Thermal3D(QDialog):
         self._point_strength.setDecimals(0)
         self._point_strength.setSingleStep(5)
         self._point_strength.setValue(30)
-        self._point_strength.setSuffix("% points")
+        self._point_strength.setPrefix("Point opacity: ")
+        self._point_strength.setSuffix("%")
+        self._point_strength.setToolTip(
+            "Opacity of each point: 0% invisible, 100% opaque. "
+            "All intersection points remain included."
+        )
         self._point_size = QDoubleSpinBox()
         self._point_size.setRange(1, 12)
         self._point_size.setSingleStep(0.5)
         self._point_size.setDecimals(1)
         self._point_size.setValue(2)
-        self._point_size.setSuffix(" px points")
+        self._point_size.setPrefix("Point size: ")
+        self._point_size.setSuffix(" px")
+        self._point_size.setToolTip("Point diameter in screen pixels")
         self._terrain = QCheckBox("Terrain")
         self._terrain.setChecked(True)
         self._terrain.setToolTip("Hide the surface to inspect every recorded point")
+        self._surface_mode = QComboBox()
+        self._surface_mode.addItems(["Terrain colours", "Aerial photo · IGN"])
+        self._surface_mode.setToolTip("Drape the saved aerial photo over the same DEM")
+        self._surface_mode.setEnabled(False)
         reset = QPushButton("Reset view")
         top = QPushButton("Top view")
         self._fullscreen = QPushButton("Full screen")
@@ -102,6 +116,7 @@ class Thermal3D(QDialog):
             self._point_strength,
             self._point_size,
             self._terrain,
+            self._surface_mode,
             reset,
             top,
             self._fullscreen,
@@ -128,6 +143,7 @@ class Thermal3D(QDialog):
         self._point_strength.valueChanged.connect(self._style_changed)
         self._point_size.valueChanged.connect(self._style_changed)
         self._terrain.toggled.connect(self._style_changed)
+        self._surface_mode.currentIndexChanged.connect(self._surface_changed)
         reset.clicked.connect(self._reset_view)
         top.clicked.connect(lambda: self._reset_view(top=True))
         self._fullscreen.clicked.connect(self._toggle_fullscreen)
@@ -150,6 +166,7 @@ class Thermal3D(QDialog):
         self.shutdown()
         self._view.clear()
         self._cloud = self._surface = self._scene = None
+        self._surface_mode.setEnabled(False)
         self._request = (cell, start, end)
         self._set_heading(cell_label(store, cell), start, end)
         self._summary.setText("Loading the selected interval from the SSD…")
@@ -194,6 +211,7 @@ class Thermal3D(QDialog):
 
     def set_scene(self, scene):
         """Render exact metric positions without vertical exaggeration or thinning."""
+        self._release_texture()
         self._scene = scene
         self._set_heading(
             scene.label
@@ -207,7 +225,8 @@ class Thermal3D(QDialog):
         colours = colormaps["terrain"](
             0.25 + 0.7 * (terrain.T - lo) / max(hi - lo, 1)
         ).astype(np.float32)
-        self._surface = gl.GLSurfacePlotItem(
+        self._surface = TerrainSurface(
+            image=scene.aerial,
             x=scene.x,
             y=scene.y,
             z=terrain.T,
@@ -217,6 +236,10 @@ class Thermal3D(QDialog):
             glOptions="opaque",
         )
         self._view.addItem(self._surface)
+        self._surface_mode.setEnabled(scene.aerial is not None)
+        if scene.aerial is None:
+            self._surface_mode.setCurrentIndex(0)
+        self._surface_changed()
         self._cloud = gl.GLScatterPlotItem(
             pos=scene.points,
             size=self._point_size.value(),
@@ -238,13 +261,6 @@ class Thermal3D(QDialog):
             f"{scene.contributing_flights:,} contributing flights · "
             f"H = {scene.cell.ground_m:.2f} m + 0, 20, 40, … m"
         )
-        self._source.setText(
-            '<a href="https://www.data.gouv.fr/datasets/rge-alti-r">'
-            "© IGN RGE ALTI · Licence Ouverte 2.0</a> · "
-            f"DEM sampling {scene.reference['grid_m'][0]:g} m · "
-            f"terrain {lo:.0f}-{hi:.0f} m ASL. "
-            "Recorder GNSS heights are not harmonised with IGN terrain heights."
-        )
         message = "All saved intersections at 20 m levels are included; no subsampling."
         if not len(scene.points):
             message = (
@@ -258,7 +274,46 @@ class Thermal3D(QDialog):
             )
         if scene.unknown_clock_flights:
             message += f" {scene.unknown_clock_flights:,} flights have no usable UTC."
+        if scene.aerial is None:
+            message += " Aerial photo unavailable."
+            if scene.aerial_error:
+                message += f" {scene.aerial_error}"
         self._status.setText(message)
+
+    def _surface_changed(self, *_):
+        """Change the drape and its attribution without moving the camera."""
+        if self._scene is None or self._surface is None:
+            return
+        scene = self._scene
+        aerial = self._surface_mode.currentIndex() == 1 and scene.aerial is not None
+        self._surface.set_aerial(aerial)
+        lo, hi = float(scene.terrain.min()), float(scene.terrain.max())
+        source = (
+            '<a href="https://www.data.gouv.fr/datasets/rge-alti-r">'
+            "© IGN RGE ALTI · Licence Ouverte 2.0</a> · "
+            f"DEM sampling {scene.reference['grid_m'][0]:g} m · "
+            f"terrain {lo:.0f}-{hi:.0f} m ASL. "
+            "Recorder GNSS heights are not harmonised with IGN terrain heights."
+        )
+        if aerial:
+            reference = scene.aerial_reference or {}
+            dates = ", ".join(reference.get("acquisition_dates", [])) or "unavailable"
+            source += (
+                '<br><a href="https://www.data.gouv.fr/datasets/bd-ortho-r">'
+                "© IGN BD ORTHO · Licence Ouverte 2.0</a> · "
+                f"Photo acquisition dates: {escape(dates)}. "
+                "Imagery dates differ from the selected flight dates."
+            )
+        self._source.setText(source)
+
+    def _release_texture(self):
+        """Free the previous photo's GPU allocation in its rendering context."""
+        if self._surface is not None and self._view.isValid():
+            self._view.makeCurrent()
+            try:
+                self._surface.release_texture()
+            finally:
+                self._view.doneCurrent()
 
     def _add_axes(self, minimum):
         """Add a kilometre grid and labelled east, north and absolute altitude."""
@@ -338,6 +393,7 @@ class Thermal3D(QDialog):
         if worker is not None:
             worker.cancel.set()
             worker.wait()
+        self._release_texture()
         self._cancel.setEnabled(False)
 
     def reject(self):
