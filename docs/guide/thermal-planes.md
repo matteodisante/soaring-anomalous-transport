@@ -392,7 +392,18 @@ planes, as in 2D. Intersection and contributing-flight counts cover the selected
 area and dates, counting each flight once across cells. The all-date climb
 ranking and visitor-availability statistics still describe the central cell.
 
-- Left drag rotates; right drag or Ctrl + drag pans; the wheel zooms.
+- On a **Mac trackpad**, two-finger scrolling zooms with the original sensitivity;
+  pinching also zooms. **Shift + drag** moves the scene with one finger.
+  Mouse-wheel scrolling and Ctrl + scrolling also zoom.
+- Left drag orbits around the current target. **Alt/Option + drag** looks around
+  from the current camera position, useful after moving inside the scene.
+  Right drag or Ctrl + drag also pans.
+- Click the scene, then hold **W/S** (or Up/Down) to move forward/backward,
+  **A/D** (or Left/Right) to move sideways, and **Q/E** (or Page Down/Up) to
+  descend/ascend. Movement translates the camera and target together, allowing
+  travel past the original orbit centre. Releasing the key, changing focus or
+  closing the window stops movement. Zoom allows distances down to 1 m; nearby
+  and distant terrain remain within the rendering range during close inspection.
 - **Point opacity** changes every point's opacity, from 0% (invisible) to 100%
   (opaque); all intersections remain included. **Point size** changes the marker
   diameter in screen pixels. Both controls update the scene in place.

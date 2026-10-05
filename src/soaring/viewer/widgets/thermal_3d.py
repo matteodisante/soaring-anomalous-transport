@@ -9,8 +9,8 @@ import numpy as np
 import pyqtgraph.opengl as gl
 from matplotlib import colormaps
 from OpenGL import GL
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QVector3D
+from PyQt6.QtCore import QElapsedTimer, QEvent, Qt
+from PyQt6.QtGui import QMatrix4x4, QVector3D
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -29,13 +29,28 @@ from .thermal_plane import _Worker
 
 
 class TerrainView(gl.GLViewWidget):
-    """Orbit with left drag, pan with right drag, zoom with the wheel."""
+    """Navigate with trackpad gestures, mouse drags and camera-relative movement."""
 
     def __init__(self, parent=None):
         """Inherit the application's shared OpenGL format and depth buffer."""
         super().__init__(parent)
         self.setBackgroundColor("#eef1f4")
         self.setMinimumSize(320, 240)
+        self.scene_span = 5000
+        self.noRepeatKeys += [
+            Qt.Key.Key_W,
+            Qt.Key.Key_A,
+            Qt.Key.Key_S,
+            Qt.Key.Key_D,
+            Qt.Key.Key_Q,
+            Qt.Key.Key_E,
+        ]
+        self._movement_clock = QElapsedTimer()
+
+    def mousePressEvent(self, event):  # noqa: N802
+        """Give keyboard movement to the scene when a drag starts."""
+        self.setFocus(Qt.FocusReason.MouseFocusReason)
+        super().mousePressEvent(event)
 
     def paintGL(self, *args, **kwargs):  # noqa: N802
         """Clear depth correctly after a frame with translucent point markers."""
@@ -46,20 +61,130 @@ class TerrainView(gl.GLViewWidget):
             GL.glDepthMask(True)
 
     def mouseMoveEvent(self, event):  # noqa: N802
-        """Offer right-button panning alongside the standard GL gestures."""
-        if event.buttons() == Qt.MouseButton.RightButton:
-            pos = event.position()
-            diff = pos - self.mousePos
+        """Offer one-finger pan and fixed-camera look-around on Mac trackpads."""
+        pos = event.position()
+        diff = pos - getattr(self, "mousePos", pos)
+        left = event.buttons() == Qt.MouseButton.LeftButton
+        if event.buttons() == Qt.MouseButton.RightButton or (
+            left and event.modifiers() & Qt.KeyboardModifier.ShiftModifier
+        ):
             self.mousePos = pos
             self.pan(diff.x(), diff.y(), 0, relative="view")
+        elif left and event.modifiers() & Qt.KeyboardModifier.AltModifier:
+            self.mousePos = pos
+            position = self.cameraPosition()
+            self.orbit(-diff.x() * 0.3, diff.y() * 0.3)
+            self.opts["center"] += position - self.cameraPosition()
+            self.update()
         else:
             super().mouseMoveEvent(event)
 
     def wheelEvent(self, event):  # noqa: N802
-        """Keep zoom usable when repeatedly scrolling a trackpad."""
-        super().wheelEvent(event)
-        self.opts["distance"] = float(np.clip(self.opts["distance"], 100, 100000))
+        """Zoom with two-finger scrolling at the original wheel sensitivity."""
+        self.setFocus(Qt.FocusReason.MouseFocusReason)
+        angles = event.angleDelta()
+        delta = angles.x() or angles.y()
+        if not delta:
+            pixels = event.pixelDelta()
+            delta = pixels.y() or pixels.x()
+        self._zoom(-delta * np.log(0.999))
+        event.accept()
+
+    def event(self, event):
+        """Use macOS native pinch events without changing the field of view."""
+        if (
+            event.type() == QEvent.Type.NativeGesture
+            and event.gestureType() == Qt.NativeGestureType.ZoomNativeGesture
+        ):
+            self.setFocus(Qt.FocusReason.MouseFocusReason)
+            self._zoom(event.value())
+            event.accept()
+            return True
+        return super().event(event)
+
+    def _zoom(self, amount):
+        """Allow close inspection while keeping a finite positive camera distance."""
+        self.opts["distance"] = float(
+            np.clip(self.opts["distance"] * np.exp(-np.clip(amount, -5, 5)), 1, 100000)
+        )
         self.update()
+
+    def projectionMatrix(self, region, viewport):  # noqa: N802
+        """Keep the terrain visible when inspecting it from inside the scene."""
+        x0, y0, width, height = viewport
+        distance = self.opts["distance"]
+        near = max(0.01, min(distance * 0.001, 1))
+        far = max(distance * 4, self.cameraPosition().length() + self.scene_span * 4)
+        right = near * np.tan(np.deg2rad(self.opts["fov"] / 2))
+        top = right * height / width
+        matrix = QMatrix4x4()
+        matrix.frustum(
+            right * ((region[0] - x0) * 2 / width - 1),
+            right * ((region[0] + region[2] - x0) * 2 / width - 1),
+            top * ((region[1] - y0) * 2 / height - 1),
+            top * ((region[1] + region[3] - y0) * 2 / height - 1),
+            near,
+            far,
+        )
+        return matrix
+
+    def keyPressEvent(self, event):  # noqa: N802
+        """Move only while the scene has focus; let Escape reach the dialog."""
+        if event.key() in self.noRepeatKeys:
+            super().keyPressEvent(event)
+        else:
+            event.ignore()
+
+    def keyReleaseEvent(self, event):  # noqa: N802
+        """Stop a released movement key without swallowing other shortcuts."""
+        if event.key() in self.noRepeatKeys:
+            super().keyReleaseEvent(event)
+        else:
+            event.ignore()
+
+    def evalKeyState(self):  # noqa: N802
+        """Translate camera and target together, including past the orbit centre."""
+        if not self.keysPressed:
+            self.stop_movement()
+            return
+        dt = (
+            min(self._movement_clock.restart() / 1000, 0.1)
+            if self.keyTimer.isActive()
+            else 0.016
+        )
+        self._movement_clock.start()
+        keys = self.keysPressed
+        right = any(k in keys for k in (Qt.Key.Key_D, Qt.Key.Key_Right)) - any(
+            k in keys for k in (Qt.Key.Key_A, Qt.Key.Key_Left)
+        )
+        forward = any(k in keys for k in (Qt.Key.Key_W, Qt.Key.Key_Up)) - any(
+            k in keys for k in (Qt.Key.Key_S, Qt.Key.Key_Down)
+        )
+        up = any(k in keys for k in (Qt.Key.Key_E, Qt.Key.Key_PageUp)) - any(
+            k in keys for k in (Qt.Key.Key_Q, Qt.Key.Key_PageDown)
+        )
+        camera_to_world, _ = self.viewMatrix().inverted()
+        direction = camera_to_world.mapVector(QVector3D(right, 0, -forward))
+        direction += QVector3D(0, 0, up)
+        speed = max(5, self.opts["distance"] * 0.05)
+        self.opts["center"] += direction.normalized() * (speed * dt)
+        self.update()
+        self.keyTimer.start(16)
+
+    def stop_movement(self):
+        """Release held keys when focus leaves the scene or the window closes."""
+        self.keysPressed.clear()
+        self.keyTimer.stop()
+
+    def focusOutEvent(self, event):  # noqa: N802
+        """Prevent a lost key release from leaving the camera moving."""
+        self.stop_movement()
+        super().focusOutEvent(event)
+
+    def hideEvent(self, event):  # noqa: N802
+        """Stop navigation while the scene is hidden."""
+        self.stop_movement()
+        super().hideEvent(event)
 
 
 class Thermal3D(QDialog):
@@ -131,7 +256,10 @@ class Thermal3D(QDialog):
             controls.addWidget(widget)
         self._view = TerrainView(self)
         navigation = QLabel(
-            "Left drag: rotate · Right drag or Ctrl + drag: pan · Wheel: zoom · "
+            "Trackpad: two-finger scroll or pinch to zoom · "
+            "Shift + drag: move · Drag: orbit · Alt + drag: look around\n"
+            "Click scene for keyboard: W/S forward/back · A/D left/right · "
+            "Q/E down/up · Mouse wheel: zoom · "
             "Blue: Vilpellet intersections · Scale 1:1 (metres on all axes)"
         )
         navigation.setWordWrap(True)
@@ -228,6 +356,7 @@ class Thermal3D(QDialog):
         """Render exact metric positions without vertical exaggeration or thinning."""
         self._release_texture()
         self._scene = scene
+        self._view.scene_span = scene.area_km * 1000
         self._area.blockSignals(True)
         self._area.setCurrentIndex(self._area.findData(scene.area_km))
         self._area.blockSignals(False)
@@ -417,6 +546,7 @@ class Thermal3D(QDialog):
     def shutdown(self):
         """Join before closing or replacing a request and discard queued results."""
         worker, self._worker = self._worker, None
+        self._view.stop_movement()
         if worker is not None:
             worker.cancel.set()
             worker.wait()
