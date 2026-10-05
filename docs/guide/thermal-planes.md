@@ -321,6 +321,48 @@ ranked-cell reads never repair or rebuild missing products.
 
 ## Enlarged maps and full screen
 
+### 3D terrain and intersections
+
+**3D terrain · High mountains #2** opens a separate navigable 3D window for the
+second high-mountain cell in the **Vilpellet climb-run ranking**. The pilot is
+limited to this cell, independently of the cell currently selected in the 2D
+view. The prepared October 2026 snapshot selects cell **193/1309**, with 13,764
+Vilpellet climb runs. The cell is resolved from the ranking on each load.
+
+The window uses the current **From/To interval**, or the selected pooled civil
+days in daily-comparison mode, and always uses **Vilpellet**. Both disciplines
+contribute. Dates and source are printed above the scene. This is a snapshot of
+that selection: click the 3D button again after changing dates to reload it.
+
+The surface is the original **IGN RGE ALTI elevation raster at 25 m sampling**.
+Its hash, extent and mean are checked against the saved cell reference. The
+viewer reads it from the SSD's `exploration/terrain/` folder, falling back to a
+matching repository raster, and does not download or rebuild terrain. Pixel
+centres form the mesh; the outer half-pixel is extended to the boundary with the
+nearest elevation. Surface colours encode relative elevation within the cell.
+
+Every saved intersection on a plane **H = mean cell terrain + 0, 20, 40, … m**
+is displayed simultaneously. These are horizontal absolute-altitude planes,
+not surfaces following the local ground. They are selected from the saved 10 m
+lattice; an irregular terminal ceiling is excluded unless it is itself a 20 m
+level. There is no random thinning, new interpolation or reconnection of edges.
+All points remain in the cloud, including those hidden behind the terrain;
+turn off **Terrain** to see through it. GNSS and IGN vertical datums remain
+unharmonised, as in the 2D view.
+
+- Left drag rotates; right drag or Ctrl + drag pans; the wheel zooms.
+- **% points** and **px points** change point opacity and marker size in place.
+- **Reset view**, **Top view**, and **Full screen** control the camera/window.
+- The kilometre grid and altitude labels use metres, with **no vertical
+  exaggeration**. Marker diameter is in screen pixels, not a physical radius.
+- **Cancel loading** interrupts the saved-data read; closing the window also
+  cancels it. An empty interval still shows the terrain with zero intersections.
+
+GPU rendering uses PyQtGraph and PyOpenGL from the `viewer` dependency group.
+Existing environments can add them with `uv sync --group viewer --inexact`.
+
+### 2D views
+
 The daily comparison shows **morning, midday and afternoon in one horizontal
 row**, with matching axes. The **View** selector can show the three periods,
 France alone, or one chosen period alone. In whole-interval mode it offers
