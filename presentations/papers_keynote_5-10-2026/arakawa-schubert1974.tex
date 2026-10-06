@@ -2,15 +2,17 @@
 \newcommand{\TalkShort}{Paper review: Arakawa \& Schubert (1974)}
 \input{../theme.tex}
 \input{paper-review.tex}
-\hypersetup{pdftitle={Arakawa and Schubert (1974): cumulus ensemble theory},pdfsubject={Six-slide paper review}}
+\hypersetup{pdftitle={Arakawa and Schubert (1974): cumulus ensemble theory},pdfsubject={Seven-slide paper review}}
 \newcommand{\figdir}{assets/arakawa1974}
 \newcommand{\MB}{\mathcal M_B}
 % Small label under an equation term.
-\newcommand{\termlabel}[2]{\text{\fontsize{7.5}{9}\selectfont\color{#1}#2}}
-% \stepbox{y}{step and sections}{what is done and what it gives}{unknowns left}: one row of the roadmap.
-\newcommand{\stepbox}[4]{%
- \node[anchor=north west,inner sep=1.4mm,fill=pisablight!18,draw=pisablue!45,line width=.3pt,text width=60mm,minimum height=12mm,align=left,font=\fontsize{8}{9.6}\selectfont]at(68,#1){{\color{pisablue}\bfseries #2}\par\vspace{.3mm}#3};
- \node[anchor=west,text=wine,font=\fontsize{9}{11}\selectfont,align=left,text width=20mm]at(134,{#1+6.1}){#4};}
+\newcommand{\termlabel}[2]{\mbox{\fontsize{7.5}{9}\selectfont\spaceskip=0pt\xspaceskip=0pt\relax\color{#1}#2}}
+% \stepbox{x}{step}{slides}{what is done and what it gives}{unknowns left}: one column of the roadmap, 44 mm wide.
+\newcommand{\stepbox}[5]{%
+ \node[anchor=south east,inner sep=0pt,text=muted,font=\fontsize{7.5}{9}\selectfont]at({#1+44},36.3){#3};
+ \node[anchor=north west,inner sep=1.6mm,fill=pisablight!18,draw=pisablue!45,line width=.3pt,text width=40.8mm,minimum height=19mm,align=left,font=\fontsize{9}{11}\selectfont]at(#1,37){\hyphenpenalty=10000\relax{\color{pisablue}\bfseries #2}\par\vspace{.8mm}#4\par};
+ \txt[text=muted,font=\fontsize{7.5}{9}\selectfont]{#1}{60.5}{44}{unknowns left}
+ \txt[text=wine,font=\fontsize{10}{12}\selectfont]{#1}{64.5}{44}{#5}}
 % \taper{x}{base y}{tip y}{base width}{top width}: updraft arrow that widens upward, in y-up coordinates.
 \newcommand{\taper}[5]{\fill[wine]({#1-#4/2},#2)--({#1+#4/2},#2)--({#1+#5/2},{#3-1.9})--({#1+#5/2+.6},{#3-1.9})--(#1,#3)--({#1-#5/2-.6},{#3-1.9})--({#1-#5/2},{#3-1.9})--cycle;}
 % Redraw of the paper's Fig. 1 (schematic, not data): 69 x 52 mm, bottom-left corner at slide (84,73.5).
@@ -34,8 +36,8 @@
  \draw[cloud](2,39)rectangle(16,43.5);
  \draw[cloud](25,5.6)rectangle(31,29);
  \draw[cloud](44,5.6)rectangle(49,17);
- \node[lab,text=muted,anchor=south]at(9,43.6){small $\lambda$: deep};
- \node[lab,text=muted,anchor=south]at(46.5,17.2){large $\lambda$: shallow};
+ \node[lab,text=muted,anchor=south]at(9,43.6){deep cloud};
+ \node[lab,text=muted,anchor=south]at(46.5,17.2){shallow cloud};
  % level z: the clouds crossing it give M_c(z), those ending there give D(z)
  \draw[densely dotted,black!65,line width=.5pt](0,29)--(69,29);
  \node[lab,anchor=east]at(0,29){$z$};
@@ -43,7 +45,7 @@
  \taper{8}{1.2}{41}{.6}{1.5}
  \taper{28}{1.2}{27.6}{.6}{1.5}
  \taper{46.5}{1.2}{15.8}{.6}{1.4}
- \node[lab,text=wine,anchor=west]at(8.9,22){$M_c$};
+ \node[lab,text=wine,anchor=west]at(12.4,16){$M_c$};
  % entrainment at every height
  \foreach \y in {12,20,28,35}{\draw[ent](1.4,\y)--(3.7,\y);\draw[ent](14.6,\y)--(12.3,\y);}
  \foreach \y in {11,19}{\draw[ent](22.4,\y)--(24.7,\y);\draw[ent](33.6,\y)--(31.3,\y);}
@@ -53,141 +55,180 @@
  \draw[det](3,41.2)--(0,41.2);\draw[det](15,41.2)--(18.3,41.2);
  \draw[det](25.6,27.6)--(22.6,27.6);\draw[det](30.4,27.6)--(33.4,27.6);
  \draw[det](44.6,15.4)--(41.6,15.4);\draw[det](48.4,15.4)--(51.4,15.4);
- \node[lab,text=teal,anchor=west]at(18.8,41.3){detrainment $D$ at the tops: air $\hat s,\hat q^*$\\with liquid $\hat l$, which evaporates: cools, moistens};
+ \node[lab,text=teal,anchor=west]at(18.8,41.3){detrainment $D$ at the tops\\evaporating liquid cools, moistens};
  % compensating subsidence between the clouds
  \draw[sub](19.5,35)--(19.5,7.5);
  \draw[sub](38,22)--(38,7.5);
  \node[lab,fill=white,text=wine,align=center]at(19.5,31.6){subsidence\\warms, dries};
- \node[lab,anchor=south east,text width=34mm]at(69,29.4){at height $z$: {\color{wine}$M_c(z)$} sums the clouds crossing it; {\color{teal}$D(z)$} comes from those whose top is there};
- \node[lab,anchor=north west,text=black!75]at(19,51.6){environment between the clouds: $\bar s,\bar q$,\\equal to the area means since the clouds cover little};
+ \node[lab,anchor=south east,text width=30mm]at(69,29.6){at height $z$:\\{\color{wine}$M_c$}: clouds crossing $z$\\{\color{teal}$D$}: clouds ending at $z$};
+ \node[lab,anchor=north east,text=black!75,align=right]at(69,51.6){environment between the clouds:\\$\bar s,\bar q$, the large-scale means};
 \end{scope}}
 \begin{document}
 
 % 1: goal and roadmap --------------------------------------------------
 \begin{frame}[plain]\frametitle{Arakawa--Schubert (1974): goal of the paper}\startslide{Arakawa--Schubert (1974): goal of the paper}
- \lead{Large-scale models predict temperature and humidity averaged over large areas. They do not resolve the cumulus clouds inside, yet the clouds heat, cool, dry and moisten the air.}
- \head{7}{25}{56}{Goal}
- \txt{7}{31}{56}{Compute the collective effect of the clouds from the large-scale fields themselves, so that the large-scale equations close. This is \emph{cumulus parameterization}.}
- \head{68}{25}{64}{How: three steps}
- \smalltxt[text=wine]{134}{25.6}{20}{Unknowns left}
- \stepbox{30.5}{Step 1 \,\textperiodcentered\, \S2--3 \,\textperiodcentered\, slide 2}{Budgets of the air between the clouds: the clouds act only through three profiles in $z$.}{3 profiles\\$M_c,\ D,\ \hat l$}
- \stepbox{45}{Step 2 \,\textperiodcentered\, \S4--5 \,\textperiodcentered\, slide 3}{Clouds as entraining plumes of types $\lambda$: the three profiles follow from one spectrum.}{1 spectrum\\$\MB(\lambda)$}
- \stepbox{59.5}{Step 3 \,\textperiodcentered\, \S6--7 \,\textperiodcentered\, slides 4--5}{Quasi-equilibrium: the large-scale build-up of buoyancy balances its use by the clouds.}{none:\\closed}
- \draw[-{Latex},pisablue,line width=.7pt](98.5,42.7)--(98.5,45);
- \draw[-{Latex},pisablue,line width=.7pt](98.5,57.2)--(98.5,59.5);
- \bottomline{In a model, each time step: $\ \bar s,\bar q\ \to\ \MB(\lambda)\ \to\ M_c,\,D,\,\hat l\ \to\ \bar s,\bar q$ at the next step}
- \credit{Arakawa \& Schubert, J. Atmos. Sci. 31, 674--701 (1974). Abstract, \S1, \S8. Slide 6: what the theory gives for our question, the horizontal layout of thermals. Symbols are defined on slides 2--3.}
-\notetext{Interaction of a Cumulus Cloud Ensemble with the Large-Scale Environment, Part I, Arakawa and Schubert (1974), J. Atmos. Sci. 31, 674--701. A large-scale disturbance contains many cumulus clouds whose time and space scales are much smaller than its own. Because of this scale separation, the paper aims to predict the large-scale fields by describing only the collective influence of the clouds, not each cloud. The paper calls this the goal of cumulus parameterization. The result is meant for prognostic models of the large-scale atmosphere, such as the UCLA general circulation model.\par\smallskip The reduction has three steps. First, budgets for the environment show that the clouds change its dry static energy $\bar s$ and water vapour $\bar q$ only through three profiles: the total cloud mass flux $M_c(z)$, the total detrainment $D(z)$ and the liquid water $\hat l(z)$ in the detraining air. In the subcloud mixed layer they act only on its depth. Second, a spectral ensemble of entraining plumes computes all three profiles from the environment and a single unknown function, the mass flux $\MB(\lambda)$ of each cloud type at the top of the mixed layer. Third, the quasi-equilibrium of the cloud work function gives an integral equation for $\MB(\lambda)$, and the system is closed. Slide 5 shows the observational test of quasi-equilibrium.\par\smallskip The theory describes a two-way interaction: the clouds modify the environment (step 1), and the environment controls the clouds (steps 2 and 3). Earlier parameterizations were largely empirical. Ooyama (1971) had reduced the problem to a cloud-base dispatcher function but left its determination open, so his parameterization was not closed. The bottom line shows how the closed theory is used in a model. Source: Abstract, Sections 1 and 8.}
+ \lead{\textbf{Large-scale models need the combined heating and moistening effects of unresolved cumulus clouds.}}
+ \head{7}{24.5}{14}{Goal}
+ \txt{20}{24.5}{133}{Compute these cloud effects from the large-scale atmosphere itself.}
+ \head{7}{30.5}{60}{How: three steps}
+ \stepbox{7}{Step 1: budgets}{slide 2}{The environmental budgets reduce the cloud effects to three vertical profiles.}{3 profiles: $M_c(z)$, $D(z)$, $\hat l(z)$}
+ \stepbox{58}{Step 2: cloud types}{slides 3--4}{Compute each cloud type, then combine them with one mass-flux spectrum.}{1 spectrum: $\MB(\lambda)$}
+ \stepbox{109}{Step 3: closure}{slides 5--7}{A buoyancy balance determines the spectrum. Tropical data test it.}{none: the system is closed}
+ \draw[-{Latex[length=2mm]},pisablue,line width=.9pt](51.6,46.5)--(57.4,46.5);
+ \draw[-{Latex[length=2mm]},pisablue,line width=.9pt](102.6,46.5)--(108.4,46.5);
+ \bottomline{The environment sets the cloud activity, which in turn changes the environment}
+ \credit{Arakawa \& Schubert, J. Atmos. Sci. 31, 674--701 (1974). Abstract, \S1, \S8. Symbols: slides 2--4.}
+\notetext{Interaction of a Cumulus Cloud Ensemble with the Large-Scale Environment, Part I, Arakawa and Schubert (1974), J. Atmos. Sci. 31, 674--701. A large-scale disturbance contains many cumulus clouds whose time and space scales are much smaller than its own. Because of this scale separation, the paper aims to predict the large-scale fields by describing only the collective influence of the clouds, not each cloud. The paper calls this the goal of cumulus parameterization. The result is meant for prognostic models of the large-scale atmosphere, such as the UCLA general circulation model.\par\smallskip The reduction has three steps. First, budgets for the environment show that the clouds change its dry static energy $\bar s$ and water vapour $\bar q$ only through three profiles: the total cloud mass flux $M_c(z)$, the total detrainment $D(z)$ and the liquid water $\hat l(z)$ in the detraining air. In the subcloud mixed layer they act only on its depth. Second, a spectral ensemble of entraining plumes computes all three profiles from the environment and a single unknown function, the mass flux $\MB(\lambda)$ of each cloud type at the top of the mixed layer. Third, the quasi-equilibrium of the cloud work function gives an integral equation for $\MB(\lambda)$, and the system is closed. Slide 7 shows the observational test of quasi-equilibrium.\par\smallskip The theory describes a two-way interaction: the clouds modify the environment (step 1), and the environment controls the clouds (steps 2 and 3). Earlier parameterizations were largely empirical. Ooyama (1971) had reduced the problem to a cloud-base dispatcher function but left its determination open, so his parameterization was not closed. The bottom line states this two-way interaction. Source: Abstract, Sections 1 and 8.}
 \finishslide\end{frame}
 
 % 2: environmental budgets --------------------------------------------
 \begin{frame}[plain]\frametitle{Step 1: clouds enter through three profiles}\startslide{Step 1: clouds enter through three profiles}
  \lead{Budgets of the air between clouds: the model knows every term except $M_c$, $D$ and $\hat l$.}
- \txt[font=\fontsize{11}{13}\selectfont]{7}{21.5}{76}{$\begin{array}{@{}r@{\;}c@{\;}c@{\;}c@{\;}c@{\;}c@{\;}c@{}}
-  \rho\,\partial_t\bar s&=&\textcolor{teal}{D(\hat s-\bar s-L\hat l)}&+&\textcolor{wine}{M_c\,\partial_z\bar s}&+&\mathrm{LS}_s\\[1.2mm]
+ \txt[font=\fontsize{11}{13}\selectfont]{7}{23}{72}{$\begin{array}{@{}r@{\;}c@{\;}c@{\;}c@{\;}c@{\;}c@{\;}c@{}}
+  \rho\,\partial_t\bar s&=&\textcolor{teal}{D(\hat s-\bar s-L\hat l)}&+&\textcolor{wine}{M_c\,\partial_z\bar s}&+&\mathrm{LS}_s\\[1.6mm]
   \rho\,\partial_t\bar q&=&\textcolor{teal}{D(\hat q^*+\hat l-\bar q)}&+&\textcolor{wine}{M_c\,\partial_z\bar q}&+&\mathrm{LS}_q
  \end{array}$}
- \symbox{7}{33.6}{72}{%
+ \symbox{7}{37}{68}{%
   \sym{$s=c_pT+gz$,\ $q$}{dry static energy; vapour mixing ratio}
   \sym{$\bar s,\,\bar q$}{large-scale means, i.e.\ the environment}
-  \sym{$M_c=\sum_i\rho\,\sigma_iw_i$}{cloud mass flux; $\sigma_i$, $w_i$: area fraction, vertical velocity of cloud $i$}
-  \sym{$D$}{mass detrained per unit volume and time}
-  \sym{$\hat s,\ \hat q^*$}{in the detrained air, saturated; set by $\bar s$, $\bar q$, $\hat l$}
-  \sym{$\hat l$}{liquid water in the detrained air}
+  \sym{$M_c(z)$}{total upward cloud mass flux per unit area}
+  \sym{$D(z)$}{mass detrained per unit volume and time}
+  \sym{$\hat s,\ \hat q^*$}{detrained-air values (star: saturation)}
+  \sym{$\hat l(z)$}{liquid water in the detrained air}
   \sym{$L,\ \rho$}{latent heat of vaporization; air density}
   \sym{$\mathrm{LS}$}{large-scale advection (+ radiation for $s$)}}
  \asmodel
  \bottomline{Unknowns left: three profiles, $M_c(z)$, $D(z)$ and $\hat l(z)$}
- \credit{\S2--4, Eqs. (7), (12), (72)--(75), (126). Figure: our schematic redraw of the paper's Fig. 1; colours match the equation terms. $\lambda$: slide 3.}
-\notetext{These are the equations the large-scale model must integrate. All terms are known to it except the cloud terms. Cloud $i$ covers the area fraction $\sigma_i$ and carries the mass flux $\rho\sigma_iw_i$. The sum $M_c$ drives compensating environmental subsidence. In a stably stratified atmosphere ($\partial_z\bar s>0$) this warms, and since $\partial_z\bar q<0$ it dries. Detrainment supplies cloud air and liquid water, whose evaporation cools ($-L\hat l$) and moistens. The latent heat released inside the clouds does not warm the environment directly: it keeps the clouds buoyant and so maintains $M_c$ and the subsidence warming.\par\smallskip The variables are the dry static energy $s=c_pT+gz$, conserved by a dry parcel moving adiabatically, and the water-vapour mixing ratio $q$. Hats denote detraining-air values, the star denotes saturation, and $L$ is latent heat. $\hat s$ and $\hat q^*$ are not further unknowns: Eqs. (72)--(73) express them through $\bar s$, $\bar q$, $\bar q^*$ and $\hat l$. For legibility the slide groups the large-scale terms as $\mathrm{LS}_s=-\rho\bar{\mathbf v}\cdot\nabla\bar s-\rho\bar w\partial_z\bar s+\tilde Q_R$ and $\mathrm{LS}_q=-\rho\bar{\mathbf v}\cdot\nabla\bar q-\rho\bar w\partial_z\bar q$. $\tilde Q_R$ is the radiative heating, including that inside the clouds, which the paper sets aside.\par\smallskip In the subcloud mixed layer the clouds do not act on temperature and moisture directly. They drain mass through its top, and this cumulus-induced subsidence makes it shallower (Eq. 126). The equations assume a small active cloud fraction and a horizontally uniform environment. The figure redraws the paper's conceptual Fig. 1; it is a schematic, not a measured cloud map. Read it with the equations: the wine arrows are the mass flux $M_c$ rising in the clouds and the subsidence it forces between them, the teal arrows are the detrainment $D$ at the cloud tops. The updraft arrows widen upward because entrainment adds mass at every height. At the dotted level $z$, $M_c(z)$ sums the deep and medium clouds that cross it, and $D(z)$ comes from the medium cloud whose top is there: this is why the cloud terms are profiles in $z$. The labels small and large $\lambda$ anticipate the cloud types of slide 3. Section 4 opens with the conclusion on the slide: the parameterization problem is reduced to finding $M_c(z)$, $D(z)$ and $\hat l(z)$. Source: Sections 2--4, Figure 1, Equations (7), (12), (72)--(75) and (126).}
+ \credit{\S2--4, Eqs. (7), (12), (72)--(75), (126). Figure: schematic redraw of Fig. 1. Colours match the equation terms.}
+\notetext{These are the equations the large-scale model must integrate. All terms are known to it except the cloud terms. Cloud $i$ covers the area fraction $\sigma_i$ and carries the mass flux $\rho\sigma_iw_i$. The sum $M_c$ drives compensating environmental subsidence. In a stably stratified atmosphere ($\partial_z\bar s>0$) this warms, and since $\partial_z\bar q<0$ it dries. Detrainment supplies cloud air and liquid water, whose evaporation cools ($-L\hat l$) and moistens. The latent heat released inside the clouds does not warm the environment directly: it keeps the clouds buoyant and so maintains $M_c$ and the subsidence warming.\par\smallskip The variables are the dry static energy $s=c_pT+gz$, conserved by a dry parcel moving adiabatically, and the water-vapour mixing ratio $q$. Hats denote detraining-air values, the star denotes saturation, and $L$ is latent heat. $\hat s$ and $\hat q^*$ are not further unknowns: Eqs. (72)--(73) express them through $\bar s$, $\bar q$, $\bar q^*$ and $\hat l$. For legibility the slide groups the large-scale terms as $\mathrm{LS}_s=-\rho\bar{\mathbf v}\cdot\nabla\bar s-\rho\bar w\partial_z\bar s+\tilde Q_R$ and $\mathrm{LS}_q=-\rho\bar{\mathbf v}\cdot\nabla\bar q-\rho\bar w\partial_z\bar q$. $\tilde Q_R$ is the radiative heating, including that inside the clouds, which the paper sets aside.\par\smallskip In the subcloud mixed layer the clouds do not act on temperature and moisture directly. They drain mass through its top, and this cumulus-induced subsidence makes it shallower (Eq. 126). The equations assume a small active cloud fraction and a horizontally uniform environment. The figure redraws the paper's conceptual Fig. 1; it is a schematic, not a measured cloud map. Read it with the equations: the wine arrows are the mass flux $M_c$ rising in the clouds and the subsidence it forces between them, the teal arrows are the detrainment $D$ at the cloud tops. The updraft arrows widen upward because entrainment adds mass at every height. At the dotted level $z$, $M_c(z)$ sums the deep and medium clouds that cross it, and $D(z)$ comes from the medium cloud whose top is there: this is why the cloud terms are profiles in $z$. Section 4 opens with the conclusion on the slide: the parameterization problem is reduced to finding $M_c(z)$, $D(z)$ and $\hat l(z)$. Source: Sections 2--4, Figure 1, Equations (7), (12), (72)--(75) and (126).}
 \finishslide\end{frame}
 
-% 3: plume equations and ensemble spectrum -----------------------------
-\begin{frame}[plain]\frametitle{Step 2: one spectrum gives all three profiles}\startslide{Step 2: one spectrum gives all three profiles}
- \lead{Each cloud type $\lambda$ mixes in outside air at every height, at its own rate. Given the environment, each type follows, and summing the types gives $M_c$, $D$ and $\hat l$.}
- \head{7}{24.5}{68}{One cloud type $\lambda$}
- \txt[font=\fontsize{11}{13.5}\selectfont]{7}{30}{68}{$\partial_z\eta=\lambda\eta\ \ \Rightarrow\ \ \eta=e^{\lambda(z-z_B)}$}
- \txt[font=\fontsize{11}{13.5}\selectfont]{7}{36}{68}{$\eta\,h_c=h_M+\lambda\displaystyle\int_{z_B}^{z}\eta\,\bar h\,dz'$}
- \head{7}{47}{68}{All types together}
- \txt[font=\fontsize{11}{13.5}\selectfont]{7}{52.5}{68}{$M_c(z)=\displaystyle\int_0^{\lambda_D(z)}\MB(\lambda)\,\eta(z,\lambda)\,d\lambda$}
- \txt[font=\fontsize{11}{13.5}\selectfont]{7}{63}{68}{$D(z)=-\MB(\lambda_D)\,\eta(z,\lambda_D)\,d\lambda_D/dz$}
- \txt[font=\fontsize{11}{13.5}\selectfont]{7}{69.3}{68}{$\hat l(z)=l(z,\lambda_D)$}
- \symbox{76}{24}{74}{%
-  \sym{$\lambda$}{fractional entrainment rate, km$^{-1}$: the type label. Large $\lambda$: small, diluted cloud with a low top}
-  \sym{$\eta(z,\lambda)$}{mass flux of type $\lambda$, normalized to 1 at $z_B$}
-  \sym{$h=s+Lq$}{moist static energy: conserved also when vapour condenses}
-  \sym{$h_c,\ h_M$}{$h$ inside the cloud; in the subcloud mixed layer}
-  \sym{$z_B$}{mixed-layer top: clouds start here with mixed-layer air}
-  \sym{$z_D(\lambda)$}{cloud top, where buoyancy vanishes: $h_c=\bar h^*$, the saturated $h$ of the environment}
-  \sym{$\lambda_D(z)$}{type whose top is at height $z$}
-  \sym{$l(z,\lambda)$}{liquid water in type $\lambda$; needs a rain model}
-  \sym{$\MB(\lambda)$}{mass flux of type $\lambda$ at $z_B$}}
- \bottomline{Unknown left: one function, the spectrum $\MB(\lambda)$}
- \credit{\S4--5, Eqs. (53), (77)--(97), (129)--(131), Fig. 8. $M_c$, $D$, $\hat l$ as on slide 2.}
-\notetext{The ensemble is divided into entraining plumes with fractional entrainment rate $\lambda$, assumed constant with height. Each plume starts at $z_B$ with mixed-layer air and mixes in environmental air at every height up to its top, where all its mass detrains. The normalized mass flux satisfies $\partial_z\eta=\lambda\eta$ and $\eta(z_B)=1$, so it grows exponentially up to the plume top. The reference level $z_B$ is the mixed-layer top, which can lie below cloud base. Through the tower model of Simpson, $\lambda$ is inversely proportional to the cloud radius: large $\lambda$ means small clouds.\par\smallskip The moist static energy $h=s+Lq$ follows the entraining-plume budget. On the slide, the arguments are suppressed: $\eta(z,\lambda)h_c(z,\lambda)=h_M+\lambda\int_{z_B}^{z}\eta(z',\lambda)\bar h(z')\,dz'$. Entrainment dilutes mixed-layer air with environmental air, which has lower $h$ in the mid-troposphere. The cloud top $z_D$ is the level of vanishing buoyancy, $h_c(z_D)=\hat h^*(z_D)$, approximately $\bar h^*(z_D)$. Figure 8 shows the resulting cloud-top pressure for a tropical sounding: increasing entrainment gives a lower top.\par\smallskip Summing the types gives the three profiles of step 1. $M_c(z)$ sums the types still rising at $z$, those with $\lambda<\lambda_D(z)$ (Eq. 77). $D(z)$ is the mass flux of the types whose top lies at $z$ (Eq. 79). $\hat l(z)$ is the liquid water of the type whose top is at $z$ (Eq. 91). Computing $l(z,\lambda)$ requires a rainfall parameterization, which the paper calls very crude. Cloud-base values come from the mixed layer: $h_c(z_B)=h_M$ (Eqs. 129--131). Everything is then fixed by the environment except the mass-flux density $\MB(\lambda)$, which is not a number or radius density. Source: Sections 4--5, Equations (77)--(97) and (129)--(131), Figure 8.}
+% 3: single-cloud structure --------------------------------------------
+\begin{frame}[plain]\frametitle{Step 2: the structure of one cloud type}\startslide{Step 2: the structure of one cloud type}
+ \lead{Entrainment dilutes a rising plume. The more it entrains, the lower its top.}
+ \txt[font=\fontsize{12}{14}\selectfont]{7}{23}{40}{$\partial_z\eta=\lambda\eta$}
+ \txt[text=black!75,font=\fontsize{7.5}{9.6}\selectfont]{47}{24.3}{42}{mass grows: $\eta=e^{\lambda(z-z_B)}$}
+ \txt[font=\fontsize{12}{14}\selectfont]{7}{30}{40}{$\partial_z h_c=\lambda(\bar h-h_c)$}
+ \txt[text=black!75,font=\fontsize{7.5}{9.6}\selectfont]{47}{30.6}{42}{$h_c$ is pulled toward $\bar h$ over a length $1/\lambda$}
+ \txt[font=\fontsize{12}{14}\selectfont]{7}{37}{40}{$h_c(z_D)=\textcolor{wine}{\bar h^*(z_D)}$}
+ \txt[text=black!75,font=\fontsize{7.5}{9.6}\selectfont]{47}{38.3}{42}{{\color{wine}top $z_D(\lambda)$}: buoyancy vanishes}
+ \smalltxt{7}{44.5}{82}{All types start at $z_B$ with mixed-layer air: $\eta=1$, $h_c=h_M$.}
+ \symbox{7}{49.5}{78}{%
+  \sym{$\lambda$}{fractional entrainment rate: the cloud-type label}
+  \sym{$\eta$}{mass flux normalized at the mixed-layer top $z_B$}
+  \sym{$h=s+Lq$}{moist static energy; $h_M$: its mixed-layer value}
+  \sym{$\bar h,\ \bar h^*$}{environment $h$; the $h$ it would have if saturated}
+  \sym{$h_c>\bar h^*$}{plume warmer than the environment, so buoyant}}
+ \figat{91}{22}{62}{42}{\figdir/fig6.png}
+ % Overlay in the pixel coordinates of fig6.png (975 x 730 px drawn 42 mm high): cloud tops read off the figure.
+ \begin{scope}[shift={(91,22)},x=.057534mm,y=-.057534mm,lab/.style={font=\fontsize{6}{7}\selectfont,inner sep=.3mm,align=left}]
+  \foreach \p in {(824,58),(652,91),(552,152),(500,239),(496,319),(527,389)}\fill[wine]\p circle(9);
+  \node[lab,text=wine,anchor=west]at(150,62){cloud tops: $h_c=\bar h^*$};
+  \draw[wine,line width=.4pt](470,75)--(538,140);
+  \draw[-{Latex[length=1.2mm]},pisablue,line width=.6pt](650,458)--(300,458);
+  \node[lab,text=pisablue,anchor=north west]at(360,472){entrainment pulls\\$h_c$ toward $\bar h$};
+ \end{scope}
+ \figcap{91}{65}{62}{Fig. 6, tropical sounding; up is higher. Dashed: plume $h_c$ for $\lambda=0$--$20\%$ km$^{-1}$, all from $h_M$. Dots (added): cloud tops.}
+ \bottomline{Given the environment and $\lambda$, the plume model fixes $\eta$, $h_c$ and the cloud top $z_D$}
+ \credit{\S4--5, Eqs. (83)--(98), (129)--(131), Fig. 6. $s$, $q$ and $L$: slide 2. $h_c>\bar h^*$ means $s_c>\bar s$ by Eq. (98).}
+\notetext{Cloud types are labelled by the fractional entrainment rate $\lambda$, constant with height. Each type starts at the mixed-layer top $z_B$ with mixed-layer properties, $h_c(z_B,\lambda)=h_M$ (Eq. 131). The first equation gives $\eta=e^{\lambda(z-z_B)}$ up to the top: entrainment adds mass as the plume rises. The second is the moist-static-energy budget of an entraining plume (Eqs. 83--89), with $h=s+Lq$: entrained air pulls $h_c$ toward the environmental $\bar h$. Its integral form is $\eta h_c=h_M+\lambda\int_{z_B}^{z}\eta\bar h\,dz'$ (Eq. 97). Dividing by $\eta$ gives $h_c(z)=e^{-\lambda(z-z_B)}h_M+\lambda\int_{z_B}^{z}e^{-\lambda(z-z')}\bar h(z')\,dz'$: a weighted mean of the mixed-layer value and of the environment below $z$, with the nearest levels weighted most. The plume forgets $h_M$ over a length $1/\lambda$, 5 km for $\lambda=20\%$ km$^{-1}$; for $\lambda=0$ it keeps $h_M$. It never reaches $\bar h$: $\bar h$ changes with height, and since $\bar h<\bar h^*$ the plume stops first, where it meets $\bar h^*$.\par\smallskip Why $h_c>\bar h^*$ means buoyant: the cloud is saturated, and Eq. (98) gives $s_c-\bar s=(h_c-\bar h^*)/(1+\gamma)$ with $\gamma=(L/c_p)(\partial q^*/\partial T)_p>0$. At the same height $s_c-\bar s=c_p(T_c-\bar T)$, so the plume is warmer than its surroundings exactly when $h_c$ lies right of $\bar h^*$, and the top is where they meet. This neglects the vapour and liquid-water corrections, written out on slide 5, and the small difference between $\hat h^*$ and $\bar h^*$.\par\smallskip Reading Figure 6 (Jordan's mean hurricane-season sounding). The vertical axis is pressure, so up is higher. Solid curves are the environment: $\bar h$ has its minimum near 650 mb, the dry middle troposphere; $\bar h^*$ is the value it would have if saturated. Every plume starts at 950 mb with $h_M=82$ cal g$^{-1}$. The line $\lambda=0$ is undiluted and meets $\bar h^*$ only near the tropopause. As $\lambda$ grows, the plume is pulled toward the low $\bar h$, crosses $\bar h^*$ earlier and has a lower top, around 600 mb for $\lambda=20\%$ km$^{-1}$ ($=0.2$ km$^{-1}$). The horizontal gap to $\bar h^*$ is proportional to the temperature excess. The wine dots, added on the slide, mark these crossing points; the arrow marks the leftward pull of entrainment. The paper's Fig. 8 collects the crossing points as $p_D(\lambda)$. Simpson's tower model gives $\lambda=2\alpha/R$ (Eq. 94): large $\lambda$ means a narrow cloud. Source: Sections 4--5, Equations (83)--(98), (129)--(131), Figures 6--8.}
 \finishslide\end{frame}
 
-% 4: work function and closure -----------------------------------------
-\begin{frame}[plain]\frametitle{Step 3: quasi-equilibrium fixes the spectrum}\startslide{Step 3: quasi-equilibrium fixes the spectrum}
- \lead{No theory gives the number, lifetime and mass flux of the clouds of each type. The paper balances energy instead: the large scale builds up $A(\lambda)$, the clouds use it up.}
- % Conceptual feedback map. Net stabilization does not imply K < 0 everywhere.
- \node[anchor=center,text=pisablue,font=\fontsize{9}{11}\selectfont,align=center]at(17,30){Large-scale\\forcing $F$};
- \node[anchor=center,draw=pisablue,line width=.6pt,inner sep=1.5mm,text=pisablue,font=\fontsize{10}{12}\selectfont,align=center]at(51,30){Work function $A$};
- \node[anchor=center,text=pisablue,font=\fontsize{9}{11}\selectfont,align=center]at(86,30){Cloud activity\\$\MB(\lambda)$};
- \draw[-{Latex},pisablue,line width=.8pt](29,30)--(36,30);
- \draw[-{Latex},pisablue,line width=.8pt](66,30)--(74,30);
- \draw[-{Latex},wine,line width=.8pt](86,35)--(86,40)--(51,40)--(51,34.5);
- \node[fill=white,inner sep=.5mm,text=wine,font=\fontsize{8}{10}\selectfont]at(69,40){stabilizes};
- \txt[font=\fontsize{12}{14}\selectfont]{7}{43}{90}{$A(\lambda)=\displaystyle\int_{z_B}^{z_D(\lambda)}\eta\,\underbrace{\frac{g\,(s_{vc}-\bar s_v)}{c_p\bar T}}_{\text{buoyancy}}\,dz$}
- \txt[font=\fontsize{12}{14}\selectfont]{7}{59}{90}{$\dfrac{dA}{dt}=\displaystyle\int K(\lambda,\lambda')\,\MB(\lambda')\,d\lambda'+F(\lambda)\simeq0$}
- \smalltxt[text=muted]{7}{69.5}{90}{$\simeq0$: quasi-equilibrium, clouds adjust much faster than $F$ changes.}
- \symbox{98}{24}{52}{%
-  \sym{$A(\lambda)$}{cloud work function: buoyant kinetic energy of type $\lambda$ per unit mass flux}
-  \sym{$s_v$}{$=s+c_p\bar T(0.608\,q-l)$, virtual static energy: vapour lightens the air, liquid water $l$ weighs it}
-  \sym{$s_{vc},\ \bar s_v$}{in the cloud; in the environment}
-  \sym{$g,\ \bar T$}{gravity; environment temperature}
-  \sym{$A>0$}{type $\lambda$ can grow; $A(0)\approx$ CAPE}
-  \sym{$K(\lambda,\lambda')$}{change of $A(\lambda)$ per unit $\MB(\lambda')$; mostly negative}
-  \sym{$F(\lambda)$}{change of $A$ by large-scale processes}}
- \bottomline{No unknowns left: $\MB(\lambda)$ solves an integral equation, and the system is closed}
- \credit{\S6--7, Eqs. (58), (132)--(133), (142), (145), (150). The balance holds for the types present ($\MB>0$).}
-\notetext{Section 7 first explains why a closure is needed. The spectrum is $\MB(\lambda)=\mathcal N(\lambda)\,m_B(\lambda)/\tau(\lambda)$ (Eq. 145): the number of clouds of type $\lambda$, divided by their lifetime, times the mass a single cloud carries through $z_B$ over its whole life. In 1974 neither theory nor data determined these three separately, and one-dimensional cloud models need cloud-base conditions as an input. Quasi-equilibrium makes the separation unnecessary.\par\smallskip The cloud work function is the buoyancy integral weighted by normalized mass flux. It measures kinetic-energy generation per unit mass flux at the reference level: the kinetic-energy budget is $d\mathcal K/dt=A\MB-\mathcal D$. The environment determines $A$, including the mixed-layer contribution. Positive $A$ permits buoyant energy production but does not by itself prescribe cloud counts or triggering. For non-entraining clouds, $\lambda=0$, the integral is close to what is now called CAPE; entraining types also need a moist environment.\par\smallskip The map shows the feedback: large-scale forcing changes $A$, buoyancy supports cloud activity, and the ensemble modifies the environment and thus its own work function. Net stabilization dominates the adjustment. Individual entries of $K$ need not all be negative, since detrainment by shallow clouds can help deeper clouds.\par\smallskip The tendency equation separates the cloud contribution, $\int_0^{\lambda_{\max}}K(\lambda,\lambda')\MB(\lambda')\,d\lambda'$, from the large-scale forcing $F$: cooling by large-scale ascent, advection, radiation and surface fluxes. Under quasi-equilibrium the tendency is small compared with these two contributions, giving a Fredholm integral equation of the first kind for $\MB(\lambda)$. The equality holds for active cloud types, with a nonnegative spectrum and an inequality for absent types. This closes the system and is the principal result of Part I. It does not impose a steady temperature or moisture profile. Source: Sections 6--7, Equations (132)--(133), (142), (145), (150) and (158).}
+% 4: ensemble profiles -------------------------------------------------
+\begin{frame}[plain]\frametitle{Step 2: one spectrum gives the three profiles}\startslide{Step 2: one spectrum gives the three profiles}
+ \lead{The plume model gives each type's structure; the spectrum $\MB(\lambda)$ weights the types.}
+ \head{7}{22.5}{85}{Clouds still rising at height $z$}
+ \txt[font=\fontsize{12}{14}\selectfont]{7}{28.5}{85}{$M_c(z)=\displaystyle\int_0^{\lambda_D(z)}\MB(\lambda)\,\eta(z,\lambda)\,d\lambda$}
+ \head{7}{43}{85}{Clouds ending at height $z$}
+ \txt[font=\fontsize{11}{13.5}\selectfont]{7}{49}{85}{$D(z)=-\MB(\lambda_D)\,\eta(z,\lambda_D)\,\dfrac{d\lambda_D}{dz}$}
+ \txt[font=\fontsize{12}{14}\selectfont]{7}{62}{85}{$\hat l(z)=l(z,\lambda_D)$}
+ \symbox{96}{21.5}{54}{%
+  \sym{$\MB(\lambda)\,d\lambda$}{mass flux at $z_B$ of the types in $(\lambda,\lambda+d\lambda)$}
+  \sym{$\eta(z,\lambda)$}{normalized mass flux (slide 3)}
+  \sym{$\lambda_D(z)$}{type whose cloud top is at $z$}
+  \sym{$l(z,\lambda)$}{liquid water inside type $\lambda$ (below)}}
+ \node[anchor=north west,inner sep=1.6mm,fill=pisablight!18,draw=pisablue!45,line width=.3pt,text width=54mm,align=left,font=\fontsize{7.8}{9.2}\selectfont]at(96,46.5){{\color{pisablue}\bfseries Where $l$ comes from}\par\vspace{.4mm}Plume water budget (Eq. 85): vapour in by entrainment, rain $r$ out.\par\vspace{.8mm}\hfil$\partial_z\bigl[\eta\,(q_c+l)\bigr]=\lambda\eta\,\bar q-\eta\,r$\hfil\par\vspace{.8mm}Cloud vapour $q_c$ is saturated (Eq. 90), so the rest is $l$. Crude rain: $r=C_0\,l$ (App.~B).};
+ \bottomline{Only the mass-flux spectrum $\MB(\lambda)$ remains to be determined}
+ \credit{\S4--5, Eqs. (77)--(91), (129)--(131), App.~B. $M_c$, $D$, $\hat l$: the three cloud profiles of slide 2. $C_0$: constant fraction of cloud water rained out per unit height.}
+\notetext{Summing the cloud types gives the three profiles needed in the environmental budgets. The spectrum is a mass-flux density over entrainment rate: $\MB(\lambda)d\lambda$ is the mass flux at the mixed-layer top of all clouds with entrainment rate between $\lambda$ and $\lambda+d\lambda$ (the paper's sum over $\lambda_i\in(\lambda,\lambda+d\lambda)$ evaluated at $z_B$, Eqs. 78 and 81). Multiplication by $\eta(z,\lambda)$ gives its mass flux at height $z$.\par\smallskip $M_c(z)$ integrates the types still rising at that level, those with $\lambda<\lambda_D(z)$ (Eq. 77). Detrainment $D(z)$ comes from the types whose top lies at $z$ (Eq. 79). The derivative converts a cloud-type interval to a height interval, and the minus sign gives positive detrainment because $\lambda_D$ decreases with height. Each plume detrains all its mass in a thin layer at its top. The detrained liquid water is that of the type ending there, $\hat l(z)=l(z,\lambda_D)$ (Eq. 91). The liquid water comes from the total-water budget of the plume, $\partial_z[\eta(q_c+l)]=\lambda\eta\bar q-\eta r$ (Eq. 85, using $\partial_z\eta=\lambda\eta$): entrainment brings in environmental vapour, rain $r$ removes water. Above cloud base the cloud vapour $q_c$ is the saturation value, fixed by $h_c$ (Eq. 90), so what remains of the total water is liquid. Appendix B closes the budget with the crude rule $r=C_0l$, a constant fraction $C_0$ rained out per unit height, which gives $\eta l=\int_{z_B}^{z}e^{-C_0(z-z')}\{-\partial_{z'}(\eta q_c)+\lambda\eta\bar q\}\,dz'$ (Eq. B7): water condensed at each level, depleted exponentially by rain on the way up.\par\smallskip For a given environment and these model assumptions, the unknown cloud contribution has therefore reduced from three height profiles to one mass-flux spectrum. This spectrum does not separately prescribe cloud number or lifetime. The next two slides introduce the energy measure and the balance used to determine it. Source: Sections 4--5, Equations (77)--(91), (129)--(131), Appendix B (B7).}
 \finishslide\end{frame}
 
-% 5: observational evidence --------------------------------------------
-\begin{frame}[plain]\frametitle{Step 3 tested: observations support quasi-equilibrium}\startslide{Step 3 tested: observations support quasi-equilibrium}
- \lead{Test with tropical data. If clouds did not respond, $A$ would change as fast as the forcing (dashed line). The observed change of $A$ stays near zero.}
- \figat{7}{25}{48}{40}{\figdir/fig13a.png}
- \figcap{7}{66}{50}{Fig. 13: observed $dA/dt$ against $F_C$, for \mbox{$\lambda=8\%$ km$^{-1}$}.}
- \head{60}{25}{40}{Two timescales}
- \txt[font=\fontsize{12}{14}\selectfont]{60}{32}{40}{$\tau_{\rm adj}\sim10^3\text{--}10^4$ s}
- \smalltxt[text=muted]{60}{38}{40}{15 min to 3 h}
- \txt[font=\fontsize{12}{14}\selectfont]{60}{45}{40}{$\tau_{\rm LS}\gtrsim10^5$ s}
- \smalltxt[text=muted]{60}{51}{40}{a day or more}
- \txt{60}{58}{40}{Observed:}\txt[font=\fontsize{12}{14}\selectfont]{60}{63}{40}{$|dA/dt|\ll|F_C|$}
- \symbox{102}{25}{48}{%
-  \sym{$F_C$}{change of $A$ that large-scale processes in the cloud layer would produce alone}
-  \sym{$dA/dt$}{observed change of $A$}
-  \sym{$\tau_{\rm adj}$}{time for the clouds to remove $A$}
-  \sym{$\tau_{\rm LS}$}{time over which the large-scale forcing changes}
-  \sym{cal\,g$^{-1}$}{energy per unit mass; 1 cal\,g$^{-1}\approx4.2$ kJ\,kg$^{-1}$}}
- \bottomline{Clouds nearly cancel the forcing: $A$ changes much less than $F_C$ predicts}
- \credit{\S7, Eqs. (146)--(154), Fig. 13 (upper panel). Marshall Islands data (Yanai et al. 1973). Mixed-layer forcing $F_M$ not evaluated.}
-\notetext{The paper estimates a cloud adjustment time of $10^3$--$10^4$ s and a large-scale forcing time of at least $10^5$ s. This separation motivates dropping the relatively small work-function tendency in the closure equation. The estimates are orders of magnitude, not measured lifetimes of individual thermals.\par\smallskip Figure 13 compares the observed tendency of the cloud work function with cloud-layer forcing $F_C$ from the Marshall Islands data of Yanai et al. (1973). The upper panel, reproduced here, uses $\lambda=8\%$ km$^{-1}$. Without cloud adjustment, the observations would lie along the dashed line $dA/dt=F_C$. Instead, the tendency is generally much smaller than the forcing, which reaches about 1.5 cal g$^{-1}$ day$^{-1}$. The lower panel for $\lambda=16\%$ km$^{-1}$ gives the same qualitative result.\par\smallskip The test supports quasi-equilibrium in this setting. It omits the mixed-layer forcing $F_M$, which could not be evaluated from the conventional observations. Figure 14 separately shows that temperature and moisture profiles evolve while their combined work function remains small. Numerical solution methods and applications of the closure are deferred to Part II. Source: Section 7, Equations (146)--(154), Figures 13--14, and Section 8.}
+% 5: cloud work function -----------------------------------------------
+\begin{frame}[plain]\frametitle{Step 3: the cloud work function}\startslide{Step 3: the cloud work function}
+ \lead{The work function $A(\lambda)$ adds up buoyancy over the cloud depth, weighted by mass flux. For each cloud type, the environment determines $A$.}
+ \txt[font=\fontsize{12}{14}\selectfont]{7}{28}{100}{\mbox{$A(\lambda)=\displaystyle\int_{z_B}^{z_D(\lambda)}\underbrace{\eta(z,\lambda)}_{\makebox[0pt]{\termlabel{black!70}{weight}}}\;\underbrace{\frac{g}{c_p\bar T(z)}\bigl[s_{vc}(z,\lambda)-\bar s_v(z)\bigr]}_{\makebox[0pt]{\termlabel{wine}{buoyancy}}}\,dz$}}
+ \symbox{7}{48.5}{95}{%
+  \sym{$s_v=s+c_p\bar T\,(0.608\,q-l)$}{virtual static energy (Eq. 58)}
+  \sym{$T,\ q,\ l$}{temperature, vapour, liquid water; $c$: cloud, bar: environment}
+  \sym{$g,\ c_p$}{gravity; specific heat of air at constant pressure}\sym{$\eta$}{mass flux normalized at the mixed-layer top $z_B$}}
+ % Schematic buoyancy profiles of two cloud types (not data), y up from z_B.
+ \begin{scope}[shift={(117,55)},yscale=-1,lab/.style={font=\fontsize{6.8}{8}\selectfont,inner sep=.4mm,align=left}]
+  \fill[pisablight!50](0,0)--(2.5,0)..controls(21,6)and(17,20)..(0,27)--cycle;
+  \fill[wine!14](0,0)--(2,0)..controls(10,3.5)and(8,9)..(0,13)--cycle;
+  \draw[pisablue,line width=.8pt](2.5,0)..controls(21,6)and(17,20)..(0,27);
+  \draw[wine,line width=.8pt,densely dashed](2,0)..controls(10,3.5)and(8,9)..(0,13);
+  \draw[-{Latex[length=1.6mm]},line width=.5pt](0,0)--(0,31);
+  \draw[-{Latex[length=1.6mm]},line width=.5pt](0,0)--(35,0);
+  \node[lab,anchor=east]at(-.3,30.5){$z$};
+  \node[lab,anchor=north east]at(35,-.4){buoyancy};
+  \node[lab,anchor=north]at(0,-.4){$0$};
+  \node[lab,anchor=east]at(-.3,0){$z_B$};
+  \draw[line width=.4pt](-.8,27)--(0,27);\node[lab,anchor=east,text=pisablue]at(-.8,27){$z_D$};
+  \draw[line width=.4pt](-.8,13)--(0,13);\node[lab,anchor=east,text=wine]at(-.8,13){$z_D$};
+  \node[lab,text=pisablue,anchor=west]at(15.5,20.5){solid: small $\lambda$,\\deep cloud};
+  \node[lab,text=wine,anchor=west]at(15.5,6){dashed: large $\lambda$,\\diluted faster};
+  \node[text=pisablue,font=\fontsize{10}{12}\selectfont]at(6.5,17.5){$A$};
+ \end{scope}
+ \figcap{111}{58.5}{42}{Schematic. $A$: area under the buoyancy curve, weighted by $\eta$.}
+ \smalltxt{111}{67}{42}{{\color{pisablue}\bfseries Why ``work''}: kinetic energy\\$d\mathcal K/dt=A\,\MB-\mathcal D$}
+ \bottomline{Positive $A$ allows buoyant energy production, but does not set the cloud activity}
+ \credit{\S3, \S6, Eqs. (58), (132)--(133). $\mathcal K$, $\mathcal D$: kinetic energy and dissipation. $\MB$: mass-flux spectrum (slide 4).}
+\notetext{The cloud work function is the buoyancy integral weighted by normalized mass flux. It measures kinetic-energy generation per unit mass flux at the reference level, as the kinetic-energy budget reads $d\mathcal K/dt=A\MB-\mathcal D$, with $\mathcal K$ the kinetic energy and $\mathcal D$ dissipation. It is not the kinetic energy already stored in the clouds. Its units are energy per mass, for example J kg$^{-1}$.\par\smallskip The integral is Eq. (133). The buoyancy term uses the virtual static energy $s_v=s+c_p\bar T(\delta q-l)$ with $\delta=0.608$ (Eq. 58). Water vapour lightens the air and liquid water adds weight. The subscript $c$ denotes the cloud and the bar denotes the environment. The normalized mass flux $\eta$ weights the contribution of each height. The paper's later algebra (Eqs. 134--139) temporarily drops the virtual corrections and writes buoyancy through $h_c-\bar h^*$, the gap seen in Fig. 6 on slide 3.\par\smallskip The right panel is a schematic, not data. It plots the buoyancy against height for two cloud types: the shaded area is what $A$ adds up, with each height weighted by $\eta$. A larger $\lambda$ dilutes the plume faster, so its buoyancy is weaker and vanishes lower, as in Fig. 6. The kinetic-energy budget of Eq. (132) explains the name: buoyancy generates kinetic energy in type $\lambda$ at the rate $A\MB$, so $A$ is the kinetic energy produced per unit mass flux.\par\smallskip The plume model determines buoyancy and the cloud top for a given environment, including the mixed layer. Thus $A(\lambda)$ is a property of that environment for each type. Positive $A$ permits buoyant energy production, but production also requires cloud activity, $\MB>0$, and triggering. For a non-entraining cloud, $\lambda=0$, the integral is close to modern CAPE. Entraining clouds also depend on environmental moisture. Source: Sections 3 and 6, Equations (58)--(59), (132)--(139).}
 \finishslide\end{frame}
 
-% 6: scope relative to thermals ----------------------------------------
-\begin{frame}[plain]\frametitle{No 2D distribution of thermals}\startslide{No 2D distribution of thermals}
- \lead{Our question: how are thermals arranged in a horizontal plane? The theory sorts clouds by type, not by position.}
- \thermalmap
- \symbox[Sought, not in the paper]{87}{25}{63}{%
-  \sym{$R_i$}{radius of thermal $i$ at a fixed height}
-  \sym{$(x_i,y_i)$}{position of its centre}
-  \sym{$d_{ij}$}{distance between thermals $i$ and $j$}}
- \head{87}{46}{66}{Why the theory does not answer it}
- \smalltxt{87}{53}{66}{A spectrum over $\lambda$ has no positions or distances.\\[1mm]$\MB$ mixes cloud number, lifetime and single-cloud mass flux, never separated.\\[1mm]The environment is assumed horizontally uniform.}
- \bottomline{A mass-flux spectrum leaves the horizontal thermal field unspecified}
- \credit{Scope: \S4 and \S7. The sketch defines the quantities sought. It represents no observed or simulated thermal field.}
-\notetext{The target of our reading was the distribution of thermals in a horizontal plane. The sketch defines sizes, positions and centre-to-centre separations. It is illustrative only. Arakawa and Schubert do not report distributions of these thermal quantities.\par\smallskip The model resolves cloud types through their fractional entrainment and vertical structure, while closing their collective mass-flux contribution. A spectrum over $\lambda$ is not a two-dimensional spatial distribution. The paper explicitly separates mass flux from cloud number, lifetime and single-cloud transport, which are not determined independently (Eq.\ 145). Its use of a relation between entrainment and cloud radius does not yield a measured thermal-radius distribution.\par\smallskip Horizontal uniformity of the environment is a modelling assumption, not evidence for randomly or uniformly positioned thermal centres. The cloud sketch in Figure 1 likewise supplies no spatial statistics. Source: Sections 4 and 7, particularly the discussion of Equations (94) and (145).}
+% 6: quasi-equilibrium closure -----------------------------------------
+\begin{frame}[plain]\frametitle{Step 3: the quasi-equilibrium closure}\startslide{Step 3: the quasi-equilibrium closure}
+ \lead{The rate of change of $A$ is the sum of the large-scale forcing and the cloud response.}
+ \txt[font=\fontsize{14}{17}\selectfont]{13}{21}{140}{\mbox{$\dfrac{dA(\lambda)}{dt}=\textcolor{wine}{\displaystyle\int_0^{\lambda_{\max}}K(\lambda,\lambda')\,\MB(\lambda')\,d\lambda'}+\textcolor{pisablue}{F(\lambda)}$}}
+ % The colours connect the two inputs directly to the terms of Eq. (142).
+ \txt[text=pisablue,font=\bfseries\fontsize{9}{11}\selectfont]{7}{41}{36}{Forcing $F(\lambda)$}
+ \smalltxt{7}{46}{34}{Large-scale processes}
+ \txt[text=wine,font=\bfseries\fontsize{9}{11}\selectfont]{7}{57}{36}{Cloud response}
+ \smalltxt{7}{62}{34}{All types $\lambda'$, through $K$}
+ \draw[-{Latex[length=1.8mm]},pisablue,line width=.9pt](41,46)--(50,46)--(50,50.8);
+ \draw[-{Latex[length=1.8mm]},wine,line width=.9pt](41,62)--(50,62)--(50,57.2);
+ \node[circle,draw=pisablue,line width=.7pt,minimum size=6.4mm,inner sep=0pt,font=\fontsize{14}{16}\selectfont]at(50,54){$+$};
+ \draw[-{Latex[length=1.8mm]},black!75,line width=.9pt](53.5,54)--(61,54);
+ \smalltxt[text=pisablue]{62}{41}{20}{Actual change}
+ \txt[font=\fontsize{16}{19}\selectfont]{63}{48}{16}{$\dfrac{dA}{dt}$}
+ % What the kernel means physically: Eq. (141) and its three parts, Eq. (144), Figs. 11--12.
+ \node[anchor=north west,inner sep=1.6mm,fill=pisablight!18,draw=pisablue!45,line width=.3pt,text width=67.8mm,align=left,font=\fontsize{7.8}{9.2}\selectfont]at(82,35.5){{\color{wine}\bfseries Kernel $K(\lambda,\lambda')$}\par\vspace{.4mm}Change of $A(\lambda)$ per unit time due to unit cloud-base mass flux of type $\lambda'$, acting through the environment. Usually $K<0$: clouds use up $A$.
+  \sym{$K_V$}{mostly $<0$: subsidence driven by $\lambda'$ warms the air, so $\lambda$ is less buoyant}
+  \sym{$K_D$}{$\geq0$: shallower clouds ($\lambda'>\lambda$) detrain, cooling and moistening the air of deeper ones}
+  \sym{$K_M$}{mass drawn up at $z_B$ changes the mixed-layer depth}};
+ \bottomline{Quasi-equilibrium: cloud and forcing terms nearly cancel, giving $dA/dt\simeq0$}
+ \credit{\S6--7, Eqs. (141)--(144), (150), (158), Figs. 11--12. $\MB$: spectrum to determine (slide 4); $\lambda_{\max}$: largest entrainment rate. Balance for active types, $\MB\geq0$.}
+\notetext{The tendency equation separates the cloud response, $\int_0^{\lambda_{\max}}K(\lambda,\lambda')\MB(\lambda')\,d\lambda'$, from the large-scale forcing $F$. The prime labels the cloud type producing the response, while unprimed $\lambda$ labels the work function affected. $F$ includes large-scale ascent and advection, radiation and surface fluxes through both the cloud layer and mixed layer.\par\smallskip The diagram reads Eq. (142) as a sum of two signed rates, forcing and cloud response, giving the actual tendency $dA/dt$. The cloud term carries its sign through $K$. It is a balance of tendencies, not a sequence of causal steps.\par\smallskip The kernel (Eq. 141): $K(\lambda,\lambda')\MB(\lambda')d\lambda'$ is the rate at which type-$\lambda'$ clouds change $A(\lambda)$ by modifying the environment. Each type changes the air that all other types rise through, so each work function feels all types. The paper splits it into three parts (Eq. 144). The vertical mass-flux kernel $K_V$ is dominated by the subsidence that type $\lambda'$ forces between the clouds: it warms the environment, so type $\lambda$ is less buoyant and $A(\lambda)$ falls. Neglecting smaller effects, $K_V$ is symmetric (Fig. 11). The detrainment kernel $K_D$ is zero for $\lambda'<\lambda$, because deeper clouds detrain above the top of type $\lambda$, and nearly always positive for $\lambda'>\lambda$: shallower clouds detrain saturated air and liquid water whose evaporation cools and moistens the layer that deeper clouds cross, raising their buoyancy (Fig. 12). The mixed-layer kernel $K_M$ carries the effect of the cloud-base mass flux on the mixed-layer depth $z_B$. The paper calls $K$ typically negative: the net effect of clouds is to use up $A$.\par\smallskip With the timescale separation of slide 7, $dA/dt$ is small compared with the cloud and forcing terms. Dropping it gives the integral equation for the unknown spectrum. The equality applies to active types with $\MB>0$. Absent types satisfy the paper's inequality, and the full spectrum is nonnegative (Eq. 158). Temperature and moisture can still evolve.\par\smallskip Cloud number, lifetime and single-cloud mass transport are not needed separately: only their combination $\MB$ enters (Eq. 145). The closure, a Fredholm integral equation of the first kind, is the main result of Part I; its solution is deferred to Part II. Source: Sections 6--7, Equations (141)--(145), (146)--(150), (158), Figures 11--12, and Section 8.}
+\finishslide\end{frame}
+
+% 7: timescales and observational evidence -----------------------------
+\begin{frame}[plain]\frametitle{Quasi-equilibrium: timescales and observations}\startslide{Quasi-equilibrium: timescales and observations}
+ \lead{$dA/dt$: change of $A$ per unit time. Observed residual: \mbox{$|dA/dt|\ll|F_C|$}.}
+ \figat{7}{23.5}{52}{41}{\figdir/fig13a.png}
+ \figcap{7}{65.5}{50}{Fig. 13. $F_C$: cloud-layer forcing.\\Dashed line: $dA/dt=F_C$ without cloud response.}
+ % The paper defines both times in words (Sec. 7) and uses them only as orders of magnitude.
+ \txt[text=wine,font=\bfseries\fontsize{10}{12}\selectfont]{61}{23.5}{92}{$\tau_{\rm adj}$: cloud adjustment time}
+ \smalltxt{61}{28.8}{92}{Defined in words (\S7): time for the clouds alone, with no forcing, to bring $A$ to neutral ($A=0$). Estimated from typical $A$ and cloud term (Eqs. 152--154): $\tau_{\rm adj}\sim10^3$--$10^4$ s, 15 min--3 h.}
+ \txt[text=pisablue,font=\bfseries\fontsize{10}{12}\selectfont]{61}{41}{92}{$\tau_{\rm LS}$: forcing time}
+ \smalltxt{61}{46.3}{92}{Defined in words: time over which $F$ changes significantly. Stated as typical, not derived: $\tau_{\rm LS}\gtrsim10^5$ s, a day or more.}
+ \node[anchor=north west,inner sep=1.6mm,fill=pisablight!18,draw=pisablue!45,line width=.3pt,text width=88.8mm,align=left,font=\fontsize{8}{9.6}\selectfont]at(61,55.3){{\color{pisablue}\bfseries Why the net change is small (Eqs. 146--148)}\par\vspace{.6mm}%
+  \begin{tabular}{@{}l@{\hspace{2.5mm}}l@{\hspace{2.5mm}}l@{}}
+   cloud term&$|[dA/dt]_C|\sim A/\tau_{\rm adj}$&clouds could remove $A$ in $\tau_{\rm adj}$\\
+   net change&$|dA/dt|\lesssim A/\tau_{\rm LS}$&$A$ follows the slow forcing\\[.4mm]
+   ratio&$\lesssim\tau_{\rm adj}/\tau_{\rm LS}\ll1$&cloud term and $F$ nearly cancel
+  \end{tabular}};
+ \bottomline{$\tau_{\rm adj}\ll\tau_{\rm LS}$: clouds remove $A$ far faster than $A$ changes, so they nearly cancel $F$}
+ \credit{\S7, Eqs. (146)--(154), Fig. 13. $[dA/dt]_C$: cloud term of Eq. (140). Marshall Islands, $\lambda=8\%$ km$^{-1}$. Mixed-layer forcing omitted.}
+\notetext{$\tau_{\rm adj}$ is the response time of the whole cloud ensemble: with negligible forcing, the clouds alter their environment until $A$ reaches zero. $\tau_{\rm LS}$ is the time over which the large-scale forcing $F$ changes substantially. Neither is an individual cloud lifetime.\par\smallskip Neither time has a formal definition. The paper introduces both in words in Section 7 and uses them only as orders of magnitude. $\tau_{\rm adj}$ is estimated, not derived: with cloud excess temperatures of a few degrees, $A\sim(10^{-1}\,\mathrm{m\,s^{-2}})H_c$ (Eq. 152), with $H_c$ the cloud depth; subsidence warming gives $[dA/dt]_C\sim(10^{-4}$--$10^{-5}\,\mathrm{m\,s^{-3}})H_c$ (Eq. 153); their ratio is $\tau_{\rm adj}\sim10^3$--$10^4$ s (Eq. 154). $\tau_{\rm LS}\gtrsim10^5$ s is stated as typical, without derivation.\par\smallskip $dA/dt$ is the net change, cloud plus large-scale terms. The paper estimates $|[dA/dt]_C|\sim A/\tau_{\rm adj}$ (Eq. 146), while $|dA/dt|\lesssim A/\tau_{\rm LS}$ (Eq. 147). Thus the net tendency is smaller than the cloud term by a factor of order $\tau_{\rm adj}/\tau_{\rm LS}\ll1$ (Eq. 148). The reasoning in words: left alone, the clouds would remove all of $A$ within $\tau_{\rm adj}$, so the cloud term alone is of size $A/\tau_{\rm adj}$. But in quasi-equilibrium $A$ follows the current forcing, which changes only over $\tau_{\rm LS}$, so $A$ itself changes at the much smaller rate $A/\tau_{\rm LS}$. Since $dA/dt$ is the sum of the cloud term and $F$, a sum much smaller than either term means the two nearly cancel. Writing $dA/dt\simeq0$ drops this residual; $A$, temperature and moisture may still evolve slowly.\par\smallskip Figure 13 (Marshall Islands data of Yanai et al. 1973, $\lambda=8\%$ km$^{-1}$; axes in cal g$^{-1}$ day$^{-1}$, 1 cal g$^{-1}\approx4.2$ kJ kg$^{-1}$) plots the observed $dA/dt$ against the cloud-layer forcing $F_C$. The dashed line $dA/dt=F_C$ is what forcing alone would give. The observed tendency stays near zero while $F_C$ reaches about 1.5 cal g$^{-1}$ day$^{-1}$; the panel for $\lambda=16\%$ km$^{-1}$ agrees. This supports quasi-equilibrium in this tropical setting, as a partial test: the mixed-layer forcing $F_M$, part of $F=F_C+F_M$, could not be computed from conventional data. Figure 14 shows temperature and moisture evolving while $A$ stays small. Source: Section 7, Equations (146)--(154), Figures 13--14, and Section 8.}
 \finishslide\end{frame}
 \end{document}
