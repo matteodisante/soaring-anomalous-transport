@@ -69,8 +69,8 @@ comparison.<br>
 IGC links associate each entry with its flight file; calendar timing comes
 from the IGC recording.</td></tr>
 <tr><td><a href="{RGE_ALTI_URL}" title="{DEM_LAYER}">IGN RGE ALTI</a><br>
-Ground elevations</td><td><b>Thermal planes:</b> mean ground elevation sets
-the terrain category and reference for H = mean terrain + z.
+Ground elevations</td><td><b>Thermal planes:</b> the highest ground elevation
+sets the terrain category; the lowest sets the reference for H = lowest terrain + z.
 Each cell uses {samples:,} samples at {grid} m spacing.<br>
 <b>Thermal density → Cells:</b> reuses this terrain-based cell selection.<br>
 <b>3D terrain / Routes:</b> terrain meshes, with the displayed sampling
@@ -128,9 +128,9 @@ launches; zoomed views allow individual-flight inspection. Terrain filters here
 use launch altitude.</td></tr>
 <tr><td><a name="tab-planes"></a><b>Thermal planes</b><br>
 <a name="thermal-points"></a>Intersection points</td><td>
-Twelve fixed 5 &times; 5 km cells: three per mean-ground-elevation category, ranked by
-continuous Vilpellet climb runs. Dots interpolate climb crossings of
-H = mean IGN terrain + z, within the selected dates. One flight may add many dots;
+Twelve fixed 5 &times; 5 km cells: three per highest-ground-elevation category, ranked
+by continuous Vilpellet climb runs. Dots interpolate climb crossings of
+H = lowest IGN terrain + z, within the selected dates. One flight may add many dots;
 unique contributing flights are counted separately. Ranking stays fixed.</td></tr>
 <tr><td><a name="tab-density"></a><b>Thermal density</b></td><td>
 Cumulative climb hours/km² over all dates and heights. Split edge durations over
@@ -148,7 +148,7 @@ in Europe/Paris. Terrain and imagery provide context; the thermal overlay uses
 all classified flights, independently of the displayed route sample.</td></tr>
 <tr><td><a name="tab-3d"></a><b>3D terrain</b></td><td>
 Snapshot of the selected Thermal planes cell and dates, in a 5 or 10 km square.
-All saved Vilpellet crossings every 20 m above the central cell's mean ground,
+All saved Vilpellet crossings every 20 m above the central cell's lowest ground,
 without random thinning. Terrain and points use metres with no vertical
 exaggeration.</td></tr>
 <tr><td><b>Route location</b></td><td>
@@ -168,7 +168,7 @@ def _caveats() -> str:
 <a name="caveats"></a><h3>Limitations</h3>
 <ul>
 <li><b>Altitude:</b> recorder GNSS datums are not harmonised with IGN normal heights.
-z measures height above the cell mean; local terrain clearance varies.</li>
+z measures height above the cell's lowest ground; local terrain clearance varies.</li>
 <li><b>Interpolation:</b> straight segments approximate curved flight paths;
 error grows with fix spacing and curvature.</li>
 <li><b>Thermals:</b> climb labels and crossings do not identify thermal centres.</li>

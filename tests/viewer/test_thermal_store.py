@@ -44,8 +44,8 @@ def store(tmp_path):
                 ("ready", "1"),
                 ("version", "3"),
                 ("disciplines", '["paragliders"]'),
-                ("ground_reference", "ign-dem-cell-mean-v1"),
-                ("ranking_reference", "ign-dem-cell-mean-top-v1"),
+                ("ground_reference", "ign-dem-cell-min-v1"),
+                ("ranking_reference", "ign-dem-cell-max-top-v1"),
             ],
         )
         db.execute(
@@ -55,7 +55,9 @@ def store(tmp_path):
                 cell.iy,
                 json.dumps(
                     {
-                        "mean_m": 260,
+                        "mean_m": 275,
+                        "minimum_m": 260,
+                        "maximum_m": 290,
                         "grid_m": [25, 25],
                         "samples": 40000,
                         "retrieved_utc": "2026-09-22",
@@ -132,6 +134,10 @@ def test_climb_ranking_survives_loading_without_visitor_resort(store):
         db.execute(
             "INSERT INTO cells VALUES (1,?,?,?,?,?)",
             (second.ix, second.iy, json.dumps(asdict(second)), 0, 340),
+        )
+        db.execute(
+            "INSERT INTO terrain SELECT ?,?,metadata FROM terrain",
+            (second.ix, second.iy),
         )
     loaded = ThermalStore(store.path)
     assert loaded.has_climb_ranking
@@ -331,7 +337,7 @@ def test_terrain_upgrade_rebuilds_points_and_resumes_without_changing_source(
     thermal_daily.prepare_daily(store.path, progress=lambda _: None)
     original = store.path.read_bytes()
     cell = store.cells()[0]
-    reference = {**store.terrain_reference(cell), "mean_m": 300}
+    reference = {**store.terrain_reference(cell), "minimum_m": 300, "maximum_m": 700}
     monkeypatch.setattr(thermal_ground, "terrain_reference", lambda *a: reference)
     real_prepare = thermal_daily.prepare_daily
 
@@ -353,7 +359,7 @@ def test_terrain_upgrade_rebuilds_points_and_resumes_without_changing_source(
     assert upgraded.defaults(new_cell)[1] == 300
     for source in ("own", "vilpellet"):
         points = upgraded.read_plane(new_cell, 125, 175, source).points
-        # z=300 above mean terrain is 600 ASL, exactly halfway along this edge.
+        # z=300 above the lowest terrain is 600 ASL, halfway along this edge.
         point = points.loc[points.level == 30].iloc[0]
         assert point.x == cell.bounds[0] + 150
         assert point.utc == 150
@@ -362,11 +368,14 @@ def test_terrain_upgrade_rebuilds_points_and_resumes_without_changing_source(
     assert store.path.stat().st_mtime_ns == modified
 
 
-def test_legacy_launch_reference_cannot_be_displayed_as_mean_terrain(store):
+@pytest.mark.parametrize("legacy", [None, "ign-dem-cell-mean-v1"])
+def test_other_ground_reference_cannot_be_displayed_as_lowest_terrain(store, legacy):
     store.path.chmod(0o644)
     with sqlite3.connect(store.path) as db:
-        db.execute("DELETE FROM metadata WHERE key='ground_reference'")
-    with pytest.raises(ValueError, match=r"prepare_thermal_ground\.py"):
+        db.execute(
+            "UPDATE metadata SET value=? WHERE key='ground_reference'", (legacy,)
+        )
+    with pytest.raises(ValueError, match=r"prepare_thermal_planes\.py"):
         ThermalStore(store.path)
 
 
@@ -550,6 +559,7 @@ def test_legacy_launch_categories_are_corrected_without_touching_snapshot(store)
             launch_median_m=959,
         ),
     ]
+    highest = {(196, 1312): 2100.0, (191, 1307): 1400.0, (185, 1294): 1944.2}
     with sqlite3.connect(store.path) as db:
         db.execute("DELETE FROM metadata WHERE key='ranking_reference'")
         db.execute("DELETE FROM cells")
@@ -560,13 +570,20 @@ def test_legacy_launch_categories_are_corrected_without_touching_snapshot(store)
                 for i, c in enumerate(cells)
             ],
         )
+        db.executemany(
+            "INSERT INTO terrain VALUES (?,?,?)",
+            [
+                (ix, iy, json.dumps({"minimum_m": 0.0, "maximum_m": top}))
+                for (ix, iy), top in highest.items()
+            ],
+        )
     original = store.path.read_bytes()
     saved = ThermalStore(store.path)
     corrected = saved.cells()
     assert [(c.ix, c.iy, c.terrain) for c in corrected] == [
-        (185, 1294, "Hills"),
         (191, 1307, "Low mountains"),
-        (196, 1312, "Low mountains"),
+        (185, 1294, "High mountains"),
+        (196, 1312, "High mountains"),
     ]
     for before in cells:
         after = next(c for c in corrected if (c.ix, c.iy) == (before.ix, before.iy))

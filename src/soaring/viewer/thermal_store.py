@@ -19,8 +19,8 @@ from .thermal_ground import (
     CLIMB_RANKING,
     GROUND_REFERENCE,
     TERRAIN_RANKING,
+    cell_band,
     order_terrain_cells,
-    terrain_category,
     terrain_cell,
     terrain_reference,
 )
@@ -36,7 +36,7 @@ def neighbour_frames(cell):
     """The eight squares around ``cell``, carrying its ground and ceiling.
 
     Zoom - shows them on the selected cell's planes, so only ix/iy change: their
-    own terrain means never tilt or step the plane.
+    own terrain minima never tilt or step the plane.
     """
     return [
         replace(cell, ix=cell.ix + dx, iy=cell.iy + dy) for dx, dy in NEIGHBOUR_OFFSETS
@@ -90,9 +90,9 @@ class ThermalStore:
                 )
             if metadata.get("ground_reference") != GROUND_REFERENCE:
                 raise ValueError(
-                    "This snapshot uses launch altitudes. Run "
-                    "scripts/pipeline/prepare_thermal_ground.py to prepare "
-                    "mean terrain references and interpolated intersections."
+                    "This snapshot uses another ground reference. Run "
+                    "scripts/pipeline/prepare_thermal_planes.py to select cells "
+                    "by highest terrain and start planes at the lowest."
                 )
             from .thermal_daily import POINT_LATTICE_VERSION
 
@@ -116,31 +116,34 @@ class ThermalStore:
             )
 
     def cells(self):
-        """Classify the saved subset by DEM mean, including legacy snapshots.
+        """Classify the saved subset by its saved DEM maxima, never by payload labels.
 
         Reordering saved cells does not claim a new archive-wide top three.
         Heights, grid IDs and point products remain unchanged.
         """
         with _connect(self.path) as db:
+            bands = {
+                (ix, iy): cell_band(json.loads(metadata))
+                for ix, iy, metadata in db.execute("SELECT ix,iy,metadata FROM terrain")
+            }
             cells = [
                 ThermalCell(**json.loads(row[0]))
                 for row in db.execute("SELECT payload FROM cells ORDER BY position")
             ]
+        cells = [replace(c, terrain=bands[c.ix, c.iy]) for c in cells]
         if self.has_climb_ranking:
             from .geography import TERRAIN_ORDER
 
             return sorted(
                 cells,
                 key=lambda c: (
-                    TERRAIN_ORDER.index(terrain_category(c.ground_m)),
+                    TERRAIN_ORDER.index(c.terrain),
                     -self.activity_counts[c.ix, c.iy]["climb_runs"],
                     c.ix,
                     c.iy,
                 ),
             )
-        return order_terrain_cells(
-            replace(cell, terrain=terrain_category(cell.ground_m)) for cell in cells
-        )
+        return order_terrain_cells(cells)
 
     def relief(self, cell=None, key=None):
         """Read prepared relief and its exact coordinates, without networking."""
@@ -232,7 +235,7 @@ class ThermalStore:
             ).fetchone()
 
     def terrain_reference(self, cell):
-        """Read the DEM mean, sampling, coverage and attribution saved offline."""
+        """Read the DEM summary, sampling, coverage and attribution saved offline."""
         with _connect(self.path) as db:
             row = db.execute(
                 "SELECT metadata FROM terrain WHERE ix=? AND iy=?",
@@ -390,7 +393,7 @@ def load_store():
         raise ValueError(
             "This snapshot still contains the old launch-selected cells. Run "
             "scripts/pipeline/prepare_thermal_planes.py to prepare the three "
-            "most populated cells per mean terrain category."
+            "most populated cells per highest-terrain category."
         )
     return store
 

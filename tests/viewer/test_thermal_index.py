@@ -302,7 +302,7 @@ def test_offline_export_requires_both_complete_methods_and_is_standalone(
     cell = index.cells()[0]
     monkeypatch.setattr(
         "soaring.viewer.thermal_store.terrain_reference",
-        lambda c: {"mean_m": c.ground_m},
+        lambda c: {"minimum_m": c.ground_m, "maximum_m": c.ground_m},
     )
     edges = pd.DataFrame(
         {
@@ -333,7 +333,7 @@ def test_offline_export_requires_both_complete_methods_and_is_standalone(
     # launch category differs and no repository raster exists for the winner.
     monkeypatch.setattr(
         "soaring.viewer.thermal_ranking._cell_terrain",
-        lambda *a: {"mean_m": 350},
+        lambda *a: {"minimum_m": 350, "maximum_m": 700},
     )
     ranked = rank_cells(index)
     monkeypatch.setattr(
@@ -362,7 +362,7 @@ def test_offline_export_requires_both_complete_methods_and_is_standalone(
     assert store.cells() == [
         replace(cell, terrain="Hills", ground_m=350, launch_median_m=cell.ground_m)
     ]
-    assert store.terrain_reference(store.cells()[0])["mean_m"] == 350
+    assert store.terrain_reference(store.cells()[0])["minimum_m"] == 350
     assert store.defaults(cell) == (0, 150)
     for source in ("own", "vilpellet"):
         result = store.read_plane(cell, 1080, 1090, source)
@@ -377,7 +377,7 @@ def test_quality_changes_launch_audit_without_changing_terrain_or_crossing_fligh
 
     monkeypatch.setattr(
         "soaring.viewer.thermal_ranking._cell_terrain",
-        lambda *a: {"mean_m": 200},
+        lambda *a: {"minimum_m": 200, "maximum_m": 250},
     )
     assert rank_cells(index).cells()[0].terrain == "Plains"
     quality = tmp_path / "quality.sqlite3"
@@ -413,7 +413,7 @@ def test_top_three_use_all_crossers_and_break_ties_by_grid_position(index, monke
 
     monkeypatch.setattr(
         "soaring.viewer.thermal_ranking._cell_terrain",
-        lambda *a: {"mean_m": 200},
+        lambda *a: {"minimum_m": 200, "maximum_m": 250},
     )
     with sqlite3.connect(index.path) as db:
         for ix in range(2, 5):

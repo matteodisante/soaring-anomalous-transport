@@ -1,4 +1,8 @@
-"""Mean terrain references from attributed, offline IGN elevation rasters."""
+"""Cell terrain references from attributed, offline IGN elevation rasters.
+
+A cell's altitude band comes from its highest DEM pixel; its planes start at its
+lowest DEM pixel. Both are read from the same area-weighted summary.
+"""
 
 from __future__ import annotations
 
@@ -16,17 +20,33 @@ from PIL import Image
 from .geography import TERRAIN_ORDER, classify_terrain
 from .thermal_orography import DATA_DIRECTORY
 
-GROUND_REFERENCE = "ign-dem-cell-mean-v1"
-TERRAIN_RANKING = "ign-dem-cell-mean-top-v1"
-CLIMB_RANKING = "vilpellet-climb-runs-dem-top-v1"
+GROUND_REFERENCE = "ign-dem-cell-min-v1"
+TERRAIN_RANKING = "ign-dem-cell-max-top-v1"
+CLIMB_RANKING = "vilpellet-climb-runs-dem-max-top-v1"
 
 
-def terrain_category(mean_m):
-    """Use the plane's finite DEM mean for the cell's altitude band too."""
-    category = classify_terrain([mean_m])[0]
+class IncompleteTerrainError(ValueError):
+    """The IGN DEM leaves part of the cell empty, e.g. beyond the French border."""
+
+
+def terrain_category(highest_m):
+    """Band a cell by its finite highest DEM elevation."""
+    category = classify_terrain([highest_m])[0]
     if not category:
-        raise ValueError("Cell classification requires a finite mean terrain elevation")
+        raise ValueError(
+            "Cell classification requires a finite highest terrain elevation"
+        )
     return category
+
+
+def cell_band(reference):
+    """The altitude band of the cell a DEM summary describes."""
+    return terrain_category(reference["maximum_m"])
+
+
+def cell_ground(reference):
+    """The plane reference: the lowest DEM elevation inside the cell."""
+    return reference["minimum_m"]
 
 
 def order_terrain_cells(cells):
@@ -61,7 +81,9 @@ def mean_terrain(z, raster_bounds, cell_bounds):
     inside = weights > 0
     values = z[inside]
     if not np.isfinite(values).all() or (values < -500).any() or (values > 9000).any():
-        raise ValueError("Missing or invalid terrain elevations inside the cell")
+        raise IncompleteTerrainError(
+            "Missing or invalid terrain elevations inside the cell"
+        )
     area = (ce - cw) * (cn - cs)
     if not np.isclose(weights.sum(), area, rtol=1e-10):
         raise ValueError("Terrain does not cover the complete cell area")
@@ -76,7 +98,7 @@ def mean_terrain(z, raster_bounds, cell_bounds):
 
 
 def terrain_reference(cell, folder=None):
-    """Validate the saved raster and return its mean and reproducible provenance."""
+    """Validate the saved raster; return its elevation summary and provenance."""
     folder = DATA_DIRECTORY if folder is None else Path(folder)
     terrain_path = folder / f"ign-terrain-{cell.ix}-{cell.iy}.json"
     provenance_path = (
@@ -111,7 +133,10 @@ def terrain_reference(cell, folder=None):
         "dataset_url": provenance["dataset_url"],
         "retrieved_utc": provenance["retrieved_utc"],
         "attribution": "© IGN RGE ALTI · Licence Ouverte 2.0",
-        "method": "Area-weighted mean of unsmoothed DEM pixels inside the cell",
+        "method": (
+            "Area-weighted mean, minimum and maximum over the unsmoothed DEM "
+            "pixels inside the cell"
+        ),
         "vertical_reference": "IGN normal heights; recorder GNSS datum not harmonised",
     }
 
@@ -169,11 +194,14 @@ def fetch_terrain_reference(cell, folder):
 
 
 def terrain_cell(cell, reference):
-    """Classify by the DEM mean, retaining the old launch median only as an audit."""
+    """Band by the DEM maximum, start planes at the DEM minimum.
+
+    The old launch median is retained only as an audit.
+    """
     return replace(
         cell,
-        terrain=terrain_category(reference["mean_m"]),
-        ground_m=reference["mean_m"],
+        terrain=cell_band(reference),
+        ground_m=cell_ground(reference),
         launch_median_m=(
             cell.ground_m
             if cell.launch_median_m is None and cell.launches
@@ -209,7 +237,7 @@ def upgrade_terrain_store(path, *, folder=None, progress=print):
             and metadata.get("point_lattice") == POINT_LATTICE_VERSION
             and metadata.get("ground_reference") == GROUND_REFERENCE
         ):
-            progress("Mean terrain references and intersections already prepared")
+            progress("Terrain references and intersections already prepared")
             return path
         identity = json.dumps(
             [path.stat().st_size, path.stat().st_mtime_ns, reference_signature]
@@ -260,7 +288,7 @@ def upgrade_terrain_store(path, *, folder=None, progress=print):
                     (cell.ix, cell.iy, json.dumps(reference)),
                 )
                 progress(
-                    f"{cell.ix}/{cell.iy}: mean terrain {updated.ground_m:.2f} m "
+                    f"{cell.ix}/{cell.iy}: lowest terrain {updated.ground_m:.2f} m "
                     f"({reference['samples']:,} DEM pixels)"
                 )
             db.executemany(

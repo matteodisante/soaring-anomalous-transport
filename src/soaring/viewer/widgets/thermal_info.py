@@ -37,33 +37,35 @@ metropolitan-France map window, in Lambert-93 (EPSG:2154).</li>
 <li><b>Count:</b> continuous Vilpellet climb runs, all archived dates and both
 disciplines. Each run counts once per cell, including re-entry. Separate runs
 from one flight count separately; duration and number of fixes add no weight.</li>
-<li><b>Group:</b> by mean IGN terrain elevation over the entire cell.</li>
+<li><b>Group:</b> by the highest IGN terrain elevation inside the cell.</li>
 <li><b>Keep:</b> the three cells with most climbs in each group: 12 total.
 Ties use grid coordinates (ix, then iy).</li>
 </ol>
-<p><b>Mean elevation bands:</b> Plains &lt; {lo} m; Hills {lo}&ndash;&lt;{mid} m;
+<p><b>Highest-elevation bands:</b> Plains &lt; {lo} m; Hills {lo}&ndash;&lt;{mid} m;
 Low mountains {mid}&ndash;&lt;{hi} m; High mountains &ge; {hi} m.</p>
 <ul>
 <li><b>Ranking stays fixed</b> when dates, height or segmentation change.
 P, H, L and M identify the groups; rank 1 leads its group.</li>
 <li><b>No regional quota or minimum spacing.</b> Nearby alpine cells can win
-several places. A low valley can qualify as Plains; categories describe elevation.</li>
+several places. One summit pixel is enough to lift a cell into a higher band;
+categories describe the highest relief, not the typical ground.</li>
 <li><b>Whole flights are labelled before clipping.</b> Take-off may be elsewhere.
 Only continuous climb segments count; gaps, phase boundaries and isolated fixes
 add no crossings.</li>
 </ul>
 
 <h3>Plane height and terrain source</h3>
-<p><b>H = mean terrain elevation + selected z.</b></p>
+<p><b>H = lowest terrain elevation + selected z.</b></p>
 <ul>
 <li><a href="{RGE_ALTI_URL}">IGN RGE ALTI</a> supplies ground elevations:
-{samples:,} samples per cell, {grid} m apart. The area-weighted mean uses unsmoothed
-values inside the square, excludes any outer buffer and requires complete coverage.</li>
-<li>This mean sets both the <b>terrain category</b> and the <b>plane reference</b>.
+{samples:,} samples per cell, {grid} m apart. Minimum and maximum use unsmoothed
+values inside the square, exclude any outer buffer and require complete coverage.</li>
+<li>The highest sample sets the <b>terrain category</b>; the lowest sets the
+<b>plane reference</b>, so every climb inside the cell reaches some plane.
 Launch-altitude statistics in Cell details are retained for comparison only.</li>
-<li><b>z</b> is height above the cell mean. Local clearance varies with the ground
-under each dot. The upper limit is the highest supported trajectory altitude
-inside the cell minus its terrain mean.</li>
+<li><b>z</b> is height above the cell's lowest ground. Local clearance varies with
+the ground under each dot. The upper limit is the highest supported trajectory
+altitude inside the cell minus its lowest terrain.</li>
 <li><b>Height increment:</b> spacing between selectable planes (10, 20, 50, 100
 or 200 m). Each plane has zero thickness. Intersections are saved every 10 m,
 plus the exact highest level; the same z always gives the same dots.</li>
@@ -99,15 +101,15 @@ and selected interval. One flight can add several.</td></tr>
 points.</td></tr>
 </table>
 <p>A busy cell can show few dots: flights wholly above or below H contribute none.
-For a terrain mean of 289 m and z = 100 m, only crossings at H = 389 m count.</p>
+For a lowest terrain of 289 m and z = 100 m, only crossings at H = 389 m count.</p>
 
 <h3>Navigation and time</h3>
 <ul>
 <li><b>3D terrain · selected cell:</b> opens the cell selected in this tab,
-with IGN terrain and all intersections every 20 m above the cell
-mean. It uses the selected dates and always Vilpellet. Choose a 5 or 10 km square
-centred on the cell. Left drag rotates, Shift + drag (or right drag) pans, and
-scroll/pinch zooms. Point opacity and size are adjustable; turning off
+with IGN terrain and all intersections every 20 m above the cell's
+lowest terrain. It uses the selected dates and always Vilpellet. Choose a 5 or
+10 km square centred on the cell. Left drag rotates, Shift + drag (or right
+drag) pans, and scroll/pinch zooms. Point opacity and size are adjustable; turning off
 Terrain reveals points behind it. All axes use metres without vertical
 exaggeration. Choose Terrain colours or Aerial photo · IGN to change the surface
 appearance. Both use existing offline data. Click the 3D button again to apply
@@ -153,7 +155,7 @@ thermal centres are not estimated.</li>
 not positional accuracy. Background opacity starts at 85%.</li>
 <li><b>Offline:</b> prepared crossings, neighbours and maps are read from the SSD.</li>
 <li><b>Provenance:</b> saved elevation queries, retrieval dates, raster hashes
-and coverage make the terrain mean traceable.
+and coverage make the terrain references traceable.
 IGN data: <a href="{LICENCE_OUVERTE}">Licence Ouverte 2.0</a>.</li>
 </ul>
 """

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rebase saved climb intersections on each cell's mean IGN terrain elevation."""
+"""Rebase saved climb intersections on each cell's lowest IGN terrain elevation."""
 
 import argparse
 import fcntl

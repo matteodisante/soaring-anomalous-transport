@@ -39,7 +39,12 @@ def reuse_prepared_points(path, previous):
 
     if not Path(previous).exists() or Path(path).resolve() == Path(previous).resolve():
         return
-    current, old = ThermalStore(path), ThermalStore(previous)
+    current = ThermalStore(path)
+    try:
+        old = ThermalStore(previous)
+    except ValueError:
+        # Another ground reference shifts every level: nothing can be reused.
+        return
     cells = current.cells()
     old_cells = {(c.ix, c.iy): c for c in old.cells()}
     shared = [

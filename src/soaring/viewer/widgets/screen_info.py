@@ -79,7 +79,7 @@ contributes one launch location, regardless of its duration or number of fixes.<
 archive, after ground trimming. Catalogue metadata supplies the flight identity.</li>
 <li>Apply the discipline, region and terrain filters. A region is a geographic
 rectangle; terrain categories here use launch altitude. They do not use the
-mean ground elevation that defines the Thermal planes categories.</li>
+highest ground elevation that defines the Thermal planes categories.</li>
 <li>Count launches in a longitude/latitude grid. Cell width is
 max({_MIN_CELL_DEG:g}°, visible longitude span / {_TARGET_CELLS_ACROSS}).
 The grid is recalculated after zooming or panning.</li>
@@ -209,7 +209,7 @@ It shows the terrain and climb intersections at horizontal levels every 20 m.</p
 <h3>How the points are obtained</h3>
 <ol>
 <li>Use the saved <b>Vilpellet</b> climb intersections, even when the parent
-2D view displays HMM. For each level, H = central cell mean terrain + z.</li>
+2D view displays HMM. For each level, H = central cell lowest terrain + z.</li>
 <li>Linearly interpolate crossings of consecutive climb fixes with each plane.
 Keep the selected date interval and the 5 &times; 5 or 10 &times; 10 km area
 centred on the cell. Neighbouring points use the same absolute reference planes.</li>
@@ -228,7 +228,7 @@ left/right, Q/E down/up. Top view and Reset view reframe the scene.</p>
 click <b>3D terrain · selected cell</b> again to apply the new selection.</p>
 <h3>Sources and limits</h3>
 <p>{FLIGHT_SOURCE_HTML}: IGC paths and times; Vilpellet supplies climb labels.
-<a href="{RGE_ALTI_URL}">IGN RGE ALTI</a>: terrain and mean ground reference.
+<a href="{RGE_ALTI_URL}">IGN RGE ALTI</a>: terrain and lowest-ground reference.
 <a href="{BD_ORTHO}">IGN BD ORTHO</a>: aerial appearance. Prepared products
 are read from the SSD. GNSS and terrain height datums are not harmonised, and
 linear interpolation approximates curved paths. Photos may predate the flights.</p>

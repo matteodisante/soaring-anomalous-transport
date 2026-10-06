@@ -1,4 +1,4 @@
-"""The plane datum is the complete cell's unsmoothed area mean."""
+"""Cells are banded by their highest DEM pixel; planes start at their lowest."""
 
 import hashlib
 import json
@@ -17,7 +17,7 @@ from soaring.viewer.thermal_ground import (
 
 
 @pytest.mark.parametrize(
-    ("mean", "category"),
+    ("highest", "category"),
     [
         (299.999, "Plains"),
         (300, "Hills"),
@@ -28,24 +28,27 @@ from soaring.viewer.thermal_ground import (
         (1500, "High mountains"),
     ],
 )
-def test_category_follows_dem_mean_at_exact_band_boundaries(mean, category):
+def test_category_follows_dem_maximum_at_exact_band_boundaries(highest, category):
     cell = ThermalCell(196, 1312, "Plains", 1596, 1, 188, 3584)
-    updated = terrain_cell(cell, {"mean_m": mean})
+    updated = terrain_cell(
+        cell, {"mean_m": 1.0, "minimum_m": 0.5, "maximum_m": highest}
+    )
     assert updated.terrain == category
-    assert updated.ground_m == mean
+    assert updated.ground_m == 0.5
     assert updated.launch_median_m == 188
     assert updated.bounds == cell.bounds
 
 
-@pytest.mark.parametrize("mean", [np.nan, np.inf, -np.inf])
-def test_category_never_falls_back_to_launch_when_mean_is_missing(mean):
-    with pytest.raises(ValueError, match="finite mean terrain"):
-        terrain_category(mean)
+@pytest.mark.parametrize("highest", [np.nan, np.inf, -np.inf])
+def test_category_never_falls_back_to_launch_when_maximum_is_missing(highest):
+    with pytest.raises(ValueError, match="finite highest terrain"):
+        terrain_category(highest)
 
 
 def test_terrain_publication_does_not_invent_a_launch_median_for_a_visitor_only_cell():
     cell = ThermalCell(0, 0, "Hills", 10, 0, 500, 1800)
-    assert terrain_cell(cell, {"mean_m": 500}).launch_median_m is None
+    reference = {"minimum_m": 500, "maximum_m": 900}
+    assert terrain_cell(cell, reference).launch_median_m is None
 
 
 def test_mean_uses_whole_cell_without_the_crest_buffer():
@@ -53,6 +56,7 @@ def test_mean_uses_whole_cell_without_the_crest_buffer():
     z[20:220, 20:220] = np.arange(200)[None, :] + 100
     actual = mean_terrain(z, (-500, -500, 5500, 5500), (0, 0, 5000, 5000))
     assert actual["mean_m"] == pytest.approx(199.5)
+    assert (actual["minimum_m"], actual["maximum_m"]) == (100, 299)
     assert actual["samples"] == 40000
     assert actual["grid_m"] == [25, 25]
     assert actual["coverage_fraction"] == 1
@@ -63,6 +67,7 @@ def test_partial_pixels_are_area_weighted_and_rows_run_north_to_south():
     # and only the northern row: (100*25 + 400*5) / 30 = 150.
     actual = mean_terrain([[100, 400], [800, 900]], (0, 0, 50, 50), (0, 25, 30, 50))
     assert actual["mean_m"] == 150
+    assert (actual["minimum_m"], actual["maximum_m"]) == (100, 400)
 
 
 @pytest.mark.parametrize("bad", [np.nan, np.inf, -99999])

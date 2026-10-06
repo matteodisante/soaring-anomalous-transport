@@ -12,7 +12,7 @@ from PIL import Image
 
 from .thermal_daily import height_levels
 from .thermal_geometry import CELL_M, ThermalCell
-from .thermal_ground import mean_terrain, terrain_reference
+from .thermal_ground import cell_ground, mean_terrain, terrain_reference
 from .thermal_orography import DATA_DIRECTORY
 from .thermal_store import CancelledError, neighbour_frames
 
@@ -103,8 +103,8 @@ def read_surface(store, cell, *, reference=None):
         z = np.asarray(im).copy()
     bounds = reference["raster_bounds_epsg2154"]
     summary = mean_terrain(z, bounds, cell.bounds)
-    if not np.isclose(summary["mean_m"], cell.ground_m, rtol=0, atol=1e-5):
-        raise ValueError("DEM mean differs from the saved intersection reference")
+    if not np.isclose(cell_ground(summary), cell.ground_m, rtol=0, atol=1e-5):
+        raise ValueError("DEM minimum differs from the saved intersection reference")
     west, south, east, north = cell.bounds
     w, s, e, n = bounds
     dx, dy = (e - w) / z.shape[1], (n - s) / z.shape[0]
@@ -136,7 +136,9 @@ def read_neighbour_surface(store, cell):
         ):
             reference = terrain_reference(cell, folder)
             return read_surface(
-                store, replace(cell, ground_m=reference["mean_m"]), reference=reference
+                store,
+                replace(cell, ground_m=cell_ground(reference)),
+                reference=reference,
             )
     raise ValueError(
         f"Missing IGN terrain for neighbour {cell.ix}/{cell.iy}. Run "

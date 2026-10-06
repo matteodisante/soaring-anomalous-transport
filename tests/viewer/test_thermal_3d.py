@@ -90,7 +90,7 @@ def test_regular_ceiling_is_kept_and_invalid_level_is_rejected(cell, points):
 @pytest.fixture
 def raster_store(tmp_path, cell):
     z = (1500 + np.arange(200)[:, None] + np.arange(200)[None, :] / 2).astype("f4")
-    cell = replace(cell, ground_m=float(z.mean(dtype=float)))
+    cell = replace(cell, ground_m=float(z.min()))
     path = tmp_path / "exploration/terrain/ign-terrain-193-1309.tif"
     path.parent.mkdir(parents=True)
     Image.fromarray(z).save(path)
@@ -117,9 +117,9 @@ def test_dem_rows_become_south_to_north_and_surface_covers_exact_cell(raster_sto
     assert terrain[-1, -1] == original[0, -1]
 
 
-def test_changed_dem_and_inconsistent_mean_are_rejected(raster_store):
+def test_changed_dem_and_inconsistent_minimum_are_rejected(raster_store):
     store, cell, _, path, _ = raster_store
-    with pytest.raises(ValueError, match="DEM mean"):
+    with pytest.raises(ValueError, match="DEM minimum"):
         read_surface(store, replace(cell, ground_m=cell.ground_m + 1))
     path.write_bytes(b"changed")
     with pytest.raises(ValueError, match="missing or changed"):
@@ -186,7 +186,6 @@ def test_orthophoto_requires_matching_crs_and_bounds(cell):
 
 
 def test_10km_dem_keeps_original_pixels_and_neighbours_own_terrain(tmp_path, cell):
-    cell = replace(cell, ground_m=1500)
     folder = tmp_path / "exploration/terrain"
     folder.mkdir(parents=True)
     coordinates = -2500 + (np.arange(200) + 0.5) * 25
@@ -194,6 +193,8 @@ def test_10km_dem_keeps_original_pixels_and_neighbours_own_terrain(tmp_path, cel
         x = coordinates + (tile.ix - cell.ix) * 5000
         y = coordinates + (tile.iy - cell.iy) * 5000
         z = (1500 + 0.05 * x[None, :] + 0.03 * y[::-1, None]).astype("f4")
+        if tile == cell:
+            lowest = float(z.min())
         path = folder / f"ign-terrain-{tile.ix}-{tile.iy}.tif"
         Image.fromarray(z).save(path)
         path.with_suffix(".json").write_text(
@@ -213,6 +214,7 @@ def test_10km_dem_keeps_original_pixels_and_neighbours_own_terrain(tmp_path, cel
                 }
             )
         )
+    cell = replace(cell, ground_m=lowest)
     store = SimpleNamespace(
         path=tmp_path / "snapshot",
         cells=lambda: [cell],
@@ -225,7 +227,7 @@ def test_10km_dem_keeps_original_pixels_and_neighbours_own_terrain(tmp_path, cel
     expected = 1500 + 0.05 * x[None, 1:-1] + 0.03 * y[1:-1, None]
     np.testing.assert_allclose(z[1:-1, 1:-1], expected)
     assert len(ref["tiles"]) == 9
-    assert len({r["mean_m"] for r in ref["tiles"]}) > 1
+    assert len({r["minimum_m"] for r in ref["tiles"]}) > 1
     path.write_bytes(b"corrupt neighbour")
     with pytest.raises(ValueError, match="hash"):
         read_area_surface(store, cell, lambda: None, lambda _: None)

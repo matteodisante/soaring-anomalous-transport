@@ -179,11 +179,20 @@ def test_dem_ranked_cell_without_internal_starts_can_be_selected(widget, monkeyp
         cells=lambda: [cell],
         defaults=lambda _: (widget._utc_bounds()[0], 500),
         reference_audit=lambda _: (0, None),
+        terrain_reference=lambda _: {
+            "minimum_m": cell.ground_m,
+            "maximum_m": 1234.5,
+            "grid_m": [25, 25],
+            "samples": 40000,
+            "retrieved_utc": "2026-09-22",
+            "source_url": "https://data.geopf.fr/",
+        },
         has_terrain_ranking=True,
     )
     monkeypatch.setattr(widget, "_start_plane", lambda: None)
     widget._index_ready(index)
-    assert "Category bands use mean terrain" in widget._summary.text()
+    assert "Category bands use highest terrain" in widget._summary.text()
+    assert "Highest terrain (category): 1234.50 m ASL" in widget._summary.text()
     assert "no usable launch altitude" in widget._summary.text()
     assert "Launch median" not in widget._summary.text()
     assert widget._height.maximum() == cell.max_agl_m

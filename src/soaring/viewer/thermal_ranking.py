@@ -19,8 +19,10 @@ from .thermal_geometry import ThermalCell
 from .thermal_ground import (
     CLIMB_RANKING,
     TERRAIN_RANKING,
+    IncompleteTerrainError,
+    cell_band,
+    cell_ground,
     fetch_terrain_reference,
-    terrain_category,
     terrain_reference,
 )
 from .thermal_orography import DATA_DIRECTORY
@@ -195,13 +197,14 @@ def _cell_terrain(cell, index):
 def rank_cells(
     index, *, per_category=3, quality=None, activity=None, progress=lambda _: None
 ):
-    """Select the busiest visited cells in each band of mean IGN terrain elevation.
+    """Select the busiest visited cells in each band of highest IGN terrain elevation.
 
     With an activity census, rank Vilpellet climb runs instead of visitors.
     Visit candidates in descending score order and stop when every band is
     full. No unexamined cell can outrank a winner. Starts are audit data only;
-    a visited cell needs no internal launch to qualify. A missing/invalid DEM
-    aborts preparation instead of silently biasing the ranking.
+    a visited cell needs no internal launch to qualify. A cell the IGN DEM does
+    not fully cover (beyond the border) cannot be banded: it is skipped and
+    listed in the summary. Any other terrain failure aborts preparation.
     """
     if per_category < 1:
         raise ValueError("per_category must be at least 1")
@@ -261,6 +264,7 @@ def rank_cells(
     groups = {band: [] for band in TERRAIN_ORDER}
     references = {}
     activity_counts = {}
+    excluded = []
     examined = 0
     for c in cells.itertuples(index=False):
         cell = ThermalCell(
@@ -273,17 +277,23 @@ def rank_cells(
             float(c.max_alt),
             float(c.launch_median) if pd.notna(c.launch_median) else None,
         )
-        reference = _cell_terrain(cell, index)
-        band = terrain_category(reference["mean_m"])
         examined += 1
+        try:
+            reference = _cell_terrain(cell, index)
+        except IncompleteTerrainError:
+            excluded.append([cell.ix, cell.iy])
+            progress(f"Terrain candidate {examined}: {cell.ix}/{cell.iy} excluded")
+            continue
+        band = cell_band(reference)
         progress(
             f"Terrain candidate {examined}: {cell.ix}/{cell.iy}, "
             + (f"{int(c.climb_runs):,} Vilpellet climbs, " if activity else "")
-            + f"{cell.flights:,} flights, {reference['mean_m']:.1f} m, {band}"
+            + f"{cell.flights:,} flights, highest {reference['maximum_m']:.1f} m, "
+            + band
         )
         if len(groups[band]) < per_category:
             groups[band].append(
-                replace(cell, terrain=band, ground_m=reference["mean_m"])
+                replace(cell, terrain=band, ground_m=cell_ground(reference))
             )
             references[cell.ix, cell.iy] = reference
             if activity is not None:
@@ -296,5 +306,6 @@ def rank_cells(
     result = [cell for group in groups.values() for cell in group]
     summary["ranking_reference"] = CLIMB_RANKING if activity else TERRAIN_RANKING
     summary["terrain_candidates_examined"] = examined
+    summary["terrain_excluded"] = excluded
     summary["visited_cells"] = len(visits)
     return RankedIndex(index, tuple(result), summary, references, activity_counts)

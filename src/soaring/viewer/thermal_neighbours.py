@@ -1,7 +1,7 @@
 """Offline 3 x 3 neighbourhoods around each published square; never imported by Qt.
 
 Zoom - shows the eight squares around the selected cell on the selected cell's
-planes: one absolute altitude per level, so a neighbour's own DEM mean plays no
+planes: one absolute altitude per level, so a neighbour's own DEM minimum plays no
 part. Their crossings are ``lattice_points`` of the neighbour's climb products,
 with the neighbour's bounds and the centre's levels. A neighbour that is itself
 published reuses the snapshot's own products; any other square takes the shared

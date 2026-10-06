@@ -24,7 +24,7 @@ from PIL import Image
 
 from .thermal_daily import PARIS
 from .thermal_geometry import ThermalCell
-from .thermal_ground import fetch_terrain_reference
+from .thermal_ground import cell_ground, fetch_terrain_reference
 from .thermal_imagery import acquisition_dates, fetch_image
 from .thermal_store import CancelledError, PlaneData, load_store
 
@@ -67,7 +67,7 @@ class ThermalExplorer:
     def resolve_cell(
         self, ix, iy, *, kind="topography", progress=lambda _: None, cancel=None
     ):
-        """Load the target square's own population and complete mean terrain."""
+        """Load the target square's own population and complete terrain summary."""
         _check(cancel)
         for cell in self.store.cells():
             if (cell.ix, cell.iy) == (ix, iy):
@@ -89,8 +89,8 @@ class ThermalExplorer:
             )
             cell = replace(
                 cell,
-                ground_m=reference["mean_m"],
-                max_alt_m=maximum if maximum is not None else reference["mean_m"],
+                ground_m=cell_ground(reference),
+                max_alt_m=maximum if maximum is not None else cell_ground(reference),
             )
             _check(cancel)
             self._extras[ix, iy] = (cell, reference)
@@ -103,7 +103,7 @@ class ThermalExplorer:
         return item[1] if item else self.store.terrain_reference(cell)
 
     def reference_audit(self, cell):
-        """Explored cells use DEM means and carry no launch-based ranking audit."""
+        """Explored cells use DEM minima and carry no launch-based ranking audit."""
         if (cell.ix, cell.iy) in self._extras:
             return None
         return self.store.reference_audit(cell)

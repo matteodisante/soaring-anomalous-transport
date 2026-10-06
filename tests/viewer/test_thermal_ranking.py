@@ -55,12 +55,12 @@ def test_dem_ranking_includes_cells_without_starts_and_stops_after_all_bands(
                     for i in range(population)
                 ],
             )
-    means = [1030.758, 875.409, 1500, 300, 299.999]
+    highest = [1030.758, 875.409, 1500, 300, 299.999]
     fetched = []
 
     def terrain(cell, index):
         fetched.append(cell.ix)
-        return {"mean_m": means[cell.ix]}
+        return {"minimum_m": highest[cell.ix] - 100, "maximum_m": highest[cell.ix]}
 
     monkeypatch.setattr("soaring.viewer.thermal_ranking._cell_terrain", terrain)
     index = ThermalIndex(path, ("paragliders",))
@@ -74,11 +74,12 @@ def test_dem_ranking_includes_cells_without_starts_and_stops_after_all_bands(
         "Low mountains",
         "High mountains",
     ]
+    assert [c.ground_m for c in cells] == [highest[c.ix] - 100 for c in cells]
     assert cells[2].launch_median_m == 188
     assert cells[0].launch_median_m is None
     assert cells[0].launches == 0
     assert ranked.quality_summary["ranking_reference"] == TERRAIN_RANKING
-    assert ranked.terrain_references[0, 0]["mean_m"] == 1030.758
+    assert ranked.terrain_references[0, 0]["maximum_m"] == 1030.758
 
 
 def test_vilpellet_runs_determine_ranking_instead_of_visitors(tmp_path, monkeypatch):
@@ -110,12 +111,12 @@ def test_vilpellet_runs_determine_ranking_instead_of_visitors(tmp_path, monkeypa
             "INSERT INTO activity VALUES ('paragliders','a',?,0,?)",
             enumerate([10, 30, 30, 29, 28, 27]),
         )
-    means = [100, 200, 250, 600, 1200, 1800]
+    highest = [100, 200, 250, 600, 1200, 1800]
     examined = []
 
     def terrain(cell, index):
         examined.append(cell.ix)
-        return {"mean_m": means[cell.ix]}
+        return {"minimum_m": 0, "maximum_m": highest[cell.ix]}
 
     monkeypatch.setattr("soaring.viewer.thermal_ranking._cell_terrain", terrain)
     ranked = rank_cells(
@@ -126,3 +127,47 @@ def test_vilpellet_runs_determine_ranking_instead_of_visitors(tmp_path, monkeypa
     assert ranked.cells()[0].flights == 2
     assert ranked.activity_counts[1, 0] == {"climb_runs": 30, "climb_flights": 1}
     assert ranked.quality_summary["ranking_reference"] == CLIMB_RANKING
+
+
+def test_cell_beyond_dem_coverage_is_skipped_but_other_terrain_errors_abort(
+    tmp_path, monkeypatch
+):
+    import sqlite3
+
+    import pytest
+
+    from soaring.viewer.thermal_ground import IncompleteTerrainError
+    from soaring.viewer.thermal_index import ThermalIndex, _create_tables
+    from soaring.viewer.thermal_ranking import rank_cells
+
+    path = tmp_path / "census.sqlite3"
+    with sqlite3.connect(path) as db:
+        _create_tables(db)
+        for ix, population in enumerate([6, 5, 4, 3, 2]):
+            db.executemany(
+                "INSERT INTO visits VALUES (?,?,?,?,?,?,?)",
+                [
+                    ("paragliders", str(i), ix, 0, 0, 100, 2000)
+                    for i in range(population)
+                ],
+            )
+    highest = [None, 200, 500, 1000, 2000]  # cell 0 lies beyond the border
+
+    def terrain(cell, index):
+        if highest[cell.ix] is None:
+            raise IncompleteTerrainError("Missing or invalid terrain elevations")
+        return {"minimum_m": 0, "maximum_m": highest[cell.ix]}
+
+    monkeypatch.setattr("soaring.viewer.thermal_ranking._cell_terrain", terrain)
+    index = ThermalIndex(path, ("paragliders",))
+    ranked = rank_cells(index, per_category=1)
+    assert [c.ix for c in ranked.cells()] == [1, 2, 3, 4]
+    assert ranked.quality_summary["terrain_excluded"] == [[0, 0]]
+    assert ranked.quality_summary["terrain_candidates_examined"] == 5
+
+    def tampered(cell, index):
+        raise ValueError("Terrain raster hash differs from its provenance")
+
+    monkeypatch.setattr("soaring.viewer.thermal_ranking._cell_terrain", tampered)
+    with pytest.raises(ValueError, match="hash"):
+        rank_cells(index, per_category=1)

@@ -222,9 +222,9 @@ class ThermalPlane(QWidget):
         )
         self._height = QDoubleSpinBox()
         self._height.setDecimals(2)
-        self._height.setSuffix(" m above mean terrain")
+        self._height.setSuffix(" m above lowest terrain")
         self._height.setToolTip(
-            "Plane altitude = mean IGN terrain elevation inside this 5 km cell + z"
+            "Plane altitude = lowest IGN terrain elevation inside this 5 km cell + z"
         )
         self._height.setRange(0, 0)
         self._height.setSingleStep(10)
@@ -295,7 +295,7 @@ class ThermalPlane(QWidget):
             "Metropolitan France · both available disciplines · "
             "5 x 5 km Lambert-93 cells.\n"
             "Ranked by all-time Vilpellet climb runs. Plane reference: "
-            "mean IGN terrain elevation inside the cell."
+            "lowest IGN terrain elevation inside the cell."
         )
         self._summary.setWordWrap(True)
         self._status = QLabel(
@@ -633,7 +633,7 @@ class ThermalPlane(QWidget):
             )
             self._cells.addItem(
                 f"{cell.terrain} #{ranks[cell.terrain]} · "
-                f"{population} · mean terrain {cell.ground_m:.1f} m",
+                f"{population} · lowest terrain {cell.ground_m:.1f} m",
                 cell,
             )
         if getattr(index, "has_climb_ranking", False):
@@ -729,6 +729,7 @@ class ThermalPlane(QWidget):
             activity = getattr(self._index, "activity_counts", {}).get(
                 (cell.ix, cell.iy)
             )
+            highest = (self._terrain_info or {}).get("maximum_m")
             self._summary.setText(
                 f"{cell.terrain} #{self._rank(cell)} · 5 x 5 km (Lambert-93) · "
                 + (
@@ -739,9 +740,14 @@ class ThermalPlane(QWidget):
                 )
                 + f"{cell.flights:,} distinct "
                 f"crossing flights, all dates. "
-                f"Mean terrain: {cell.ground_m:.2f} m ASL. "
-                f"Maximum height above mean terrain: {cell.max_agl_m:.1f} m.\n"
-                "Category bands use mean terrain: <300 / 300-<800 / "
+                f"Lowest terrain (plane reference): {cell.ground_m:.2f} m ASL. "
+                + (
+                    f"Highest terrain (category): {highest:.2f} m ASL. "
+                    if highest is not None
+                    else ""
+                )
+                + f"Maximum height above lowest terrain: {cell.max_agl_m:.1f} m.\n"
+                "Category bands use highest terrain: <300 / 300-<800 / "
                 "800-<1500 / ≥1500 m. "
                 + (
                     f"Launch median (audit only): {launch:.1f} m "
@@ -1339,9 +1345,9 @@ class ThermalPlane(QWidget):
             0.02,
             "P: Plains   H: Hills\nL: Low mountains   M: High mountains\n"
             + (
-                "Count = Vilpellet climb runs; m = mean terrain\n"
+                "Count = Vilpellet climb runs; m = lowest terrain\n"
                 if getattr(self._index, "has_climb_ranking", False)
-                else "Count = cell visitors; m = mean terrain\n"
+                else "Count = cell visitors; m = lowest terrain\n"
             )
             + "Number after letter = rank within category",
             transform=ax.transAxes,
@@ -1354,9 +1360,9 @@ class ThermalPlane(QWidget):
             "Top Vilpellet climb cells per terrain category"
             if getattr(self._index, "has_climb_ranking", False)
             else (
-                "Top visitor cells per mean terrain altitude category"
+                "Top visitor cells per highest-terrain category"
                 if getattr(self._index, "has_terrain_ranking", True)
-                else "Prepared cells by mean terrain altitude"
+                else "Prepared cells by highest-terrain category"
             ),
             fontsize=11,
         )
@@ -1609,7 +1615,7 @@ class ThermalPlane(QWidget):
             if crossing is not None:
                 prefix += f"{crossing:,} cell visitors · any altitude / flight phase\n"
             ax.set_title(
-                f"{prefix}z = {height:.2f} m above mean terrain\n"
+                f"{prefix}z = {height:.2f} m above lowest terrain\n"
                 + (f"Plane: {cell.ground_m + height:.1f} m ASL · " if cell else "")
                 + f"{count:,} climb intersections · {flights:,} contributing flights",
                 fontsize=10,

@@ -18,11 +18,11 @@ archive on the SSD. With the current configuration this is:
 /Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/viewer/thermal-planes/
 ```
 
-`thermal-planes.sqlite3` (format 3) contains the twelve selected cells, their mean terrain references
-and maxima, UTC visitor intervals, and compressed climb edges for both methods
+`thermal-planes.sqlite3` (format 3) contains the twelve selected cells, their terrain references
+(DEM minimum, mean and maximum) and trajectory maxima, UTC visitor intervals, and compressed climb edges for both methods
 and all dates. It works without opening the original IGC files, parquet tables or
 models. The enriched file also contains **already interpolated intersections**
-at every 10 m above mean terrain and at each cell’s exact maximum. The
+at every 10 m above the lowest terrain and at each cell’s exact maximum. The
 **Height increment** options of 10, 20, 50, 100 and 200 m select subsets of this
 same lattice. They are the distance between selectable planes: **each plane has
 zero thickness**, and a fix need not fall exactly on it. The viewer reads, filters
@@ -96,8 +96,10 @@ that only glide or descend and flights launched elsewhere. Repeated visits by on
 flight count once in that visitor statistic. This count does not determine the
 climb-run ranking. Displaying this work's HMM does not change the Vilpellet-selected cells.
 
-The **plane ground reference** is the area-weighted arithmetic mean of unsmoothed
-IGN RGE ALTI elevations over the entire 5 × 5 km square. Each saved window has
+The **plane ground reference** is the lowest unsmoothed IGN RGE ALTI elevation
+inside the entire 5 × 5 km square. Starting at the lowest ground means every climb
+inside the cell reaches some plane, including those in valleys below the cell's
+average terrain. Each saved window has
 25 m sampling, giving **40,000 elevation values inside the cell**. The 500 m
 buffer used for crest detection is excluded. Full valid coverage is required;
 missing terrain never falls back to launch altitudes. Source query, retrieval
@@ -105,19 +107,21 @@ date, raster hash, extent, sampling, coverage and extrema are embedded in the
 standalone file. The viewer displays attribution, the dataset link and the exact
 WMS download request for the selected cell, independently of the map background.
 
-The **cell selection and altitude categories** use that same mean IGN terrain
-elevation: Plains (<300 m), Hills (300 to <800 m), Low mountains (800 to <1500 m),
+The **cell selection and altitude categories** use the **highest** unsmoothed IGN
+terrain elevation inside the same square: Plains (<300 m), Hills (300 to <800 m), Low mountains (800 to <1500 m),
 or High mountains (≥1500 m). Preparation examines all visited cells in descending
 Vilpellet climb-run count, with grid coordinates breaking ties, until the three
-highest-count cells in every band have been found. Complete DEM coverage is required;
-missing or invalid terrain stops preparation instead of silently excluding a
-candidate. Existing attributed rasters are reused; missing candidate rasters are
+highest-count cells in every band have been found. Complete DEM coverage is required.
+A candidate the IGN DEM does not fully cover, such as a cell beyond the French
+border, cannot be banded: it is skipped and listed as `terrain_excluded` in the
+ranking summary. Any other terrain failure stops preparation. Existing attributed rasters are reused; missing candidate rasters are
 downloaded into the SSD's `exploration/terrain/` cache. Cells without internal
-starts are eligible. Categories are bands of **mean terrain elevation**, not a
-classification of slope or relief; a low valley can still fall in Plains.
+starts are eligible. Categories are bands of **highest terrain elevation**, not a
+classification of slope or typical ground: one 25 m summit pixel is enough to lift
+a cell into a higher band, and a High-mountains cell can contain a deep valley.
 
 The median GNSS altitude of first raw, parseable fixes starting inside the cell
-is retained **only as an audit**, separately from the DEM mean. These fixes are
+is retained **only as an audit**, separately from the DEM references. These fixes are
 read before trimming. Zero/missing altitudes and values outside preprocessing
 plausibility bounds are excluded, with no barometric or post-trim substitute.
 Neither this median nor its supporting count determines the cell's category.
@@ -141,10 +145,10 @@ ten as a limitation of that audit, not of the DEM category. The rankings, launch
 medians and maximum heights use **all dates** and do not change with the selected
 time interval or segmentation.
 
-Older snapshots selected cells by launch median and subsequently replaced only
-the plane reference with the DEM mean. This could label a cell with mean terrain
-above 1,000 m as Plains. Reclassifying that subset does not produce the three
-highest-count cells per terrain category. The viewer therefore requires a
+Older snapshots selected cells by launch median, and later ones by the DEM mean
+with planes starting at that mean (`ign-dem-cell-mean-v1`, archived on the SSD as
+`archive/thermal-planes-dem-mean-v1.sqlite3`). Reclassifying such a subset does not
+produce the three highest-count cells per highest-terrain category. The viewer therefore requires a
 DEM-ranked snapshot; an older selection prompts offline preparation instead of
 displaying a substitute ranking. Run `prepare_thermal_planes.py --with-neighbours`
 to build the new selection and its zoom/pan products. The terrain reference
@@ -154,8 +158,8 @@ The height slider runs from zero to the highest supported trajectory altitude
 **inside the cell**, minus its ground reference. Boundary intersections contribute
 to this maximum too. It is not the maximum of entire flights outside the square,
 nor the maximum restricted to climb-labelled fixes. The selected z means height
-above one fixed **mean terrain elevation** per cell. Thus the absolute plane is
-`H = mean_terrain + z`; this is distinct from terrain clearance below each dot.
+above one fixed **lowest terrain elevation** per cell. Thus the absolute plane is
+`H = lowest_terrain + z`; this is distinct from terrain clearance below each dot.
 The plot displays both z and H. IGN provides normal terrain heights, while the
 geoid/ellipsoid convention of the recorder GNSS altitude is not harmonised across
 IGC files; that datum uncertainty remains in the height difference.
@@ -163,7 +167,7 @@ IGC files; that datum uncertainty remains in the height difference.
 ## Ranked map and shaded terrain
 
 The dropdown and map callouts show category, within-category rank, Vilpellet
-climb runs, and mean terrain elevation in metres ASL. Cell details show the number
+climb runs, and lowest terrain elevation in metres ASL. Cell details show the number
 of distinct flights contributing climbs and the separate total visitor count.
 Visitor-ranked older snapshots explicitly retain their visitor labels.
 The cell summary also reports the raw support and median before the origin screen, so
@@ -208,7 +212,7 @@ triangles are no longer displayed.
 Source attribution: Esri, Vantor, Airbus DS, USGS, NGA, NASA, CGIAR, N Robinson,
 NCEAS, NLS, OS, NMA, Geodatastyrelsen, Rijkswaterstaat, GSA, Geoland, FEMA, Intermap,
 and the GIS user community. The hillshade is only a visual background: it does not
-change the DEM mean or the meaning of the height slider.
+change the DEM references or the meaning of the height slider.
 
 ## Time and segmentation
 
@@ -245,7 +249,7 @@ The complete census is published atomically. Every whole-flight climb product is
 committed independently, so resuming preparation skips finished products. Original
 IGC files, processed tables and segmentation models are never modified.
 When the selected set changes, unchanged cell and neighbour intersections are
-reused only when archive and segmentation signatures, terrain mean, trajectory
+reused only when archive and segmentation signatures, ground reference, trajectory
 ceiling and lattice version match. Backgrounds keep their original grid extents
 and attribution when reused.
 
@@ -282,13 +286,13 @@ Changing hour boundaries only filters points in memory. Each panel reports both
 intersections and distinct contributing flights; these differ from the all-time
 cell population. Cell visitors include all altitudes and flight phases, including
 glides and descents. A busy cell can have very few climb intersections at a low
-plane; unclassified flights cannot contribute any. For example, a cell mean of
-289 m and z = 100 m select 389 m above sea level, not the altitude at which most
+plane; unclassified flights cannot contribute any. For example, a lowest terrain
+of 289 m and z = 100 m select 389 m above sea level, not the altitude at which most
 visiting flights necessarily pass. Empty panels remain visibly empty.
 
 The national ranking imposes no regional quota or minimum separation. Its
-mean-elevation bands can therefore select several low alpine valley cells as
-Plains or Hills. It represents observed Vilpellet climb episodes in the available
+highest-elevation bands can therefore select several alpine cells whose valleys
+lie far below their band. It represents observed Vilpellet climb episodes in the available
 archive, not geographic diversity or an estimate of thermal centres.
 
 Each cell starts its comparison at its **busiest June–August civil day**, ranked
@@ -366,7 +370,7 @@ The full neighbour preparation also includes this step. Missing terrain or
 intersection products are reported explicitly; the viewer does not download them.
 
 The surface is the original **IGN RGE ALTI elevation raster at 25 m sampling**.
-Its hash, extent and mean are checked against the saved cell reference. The
+Its hash, extent and minimum are checked against the saved cell reference. The
 viewer reads it from the SSD's `exploration/terrain/` folder, falling back to a
 matching repository raster, and does not download or rebuild terrain. Pixel
 centres form the mesh; the outer half-pixel is extended to the boundary with the
@@ -388,7 +392,7 @@ Photo attribution and acquisition dates appear below the scene; these dates do
 not follow the flight-date selector. Texture mipmaps and any hardware-size
 reduction exist only in GPU memory. Closing or reloading releases the texture.
 
-Every saved intersection on a plane **H = mean cell terrain + 0, 20, 40, … m**
+Every saved intersection on a plane **H = lowest cell terrain + 0, 20, 40, … m**
 is displayed simultaneously. These are horizontal absolute-altitude planes,
 not surfaces following the local ground. They are selected from the saved 10 m
 lattice; an irregular terminal ceiling is excluded unless it is itself a 20 m
@@ -492,7 +496,7 @@ Each redraw crops the backgrounds to the view and thins them to about one image
 pixel per screen pixel, so nine 4000-pixel squares stay responsive.
 
 All points use **one horizontal absolute plane**:
-`H = selected_cell_mean_terrain + z`. The reference does not jump at cell boundaries.
-Neighbour means are recorded separately and do not redefine H. Intersection and
+`H = selected_cell_lowest_terrain + z`. The reference does not jump at cell boundaries.
+Neighbour minima are recorded separately and do not redefine H. Intersection and
 contributing-flight counts refer to the visible viewport; the central-cell
 visitor count remains explicitly labelled as such.
