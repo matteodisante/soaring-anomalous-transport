@@ -119,9 +119,10 @@ def prepare_neighbour_points(path, *, workers=4, progress=print):
                         ).fetchall()
                     else:
                         visitors = census.flights(frame)
-                        known = visitors.loc[
-                            np.isfinite(visitors.start_utc + visitors.trim_start)
-                        ]
+                        # A square nobody crossed (e.g. at sea) comes back from
+                        # SQL with object columns; cast before testing the clock.
+                        utc = visitors.start_utc.astype(float) + visitors.trim_start
+                        known = visitors.loc[np.isfinite(utc.astype(float))]
                         expected = set(
                             zip(known.discipline, known.flight_id, strict=True)
                         )

@@ -393,8 +393,11 @@ def _neighbour_census(store, tmp_path, monkeypatch, products):
     )
     census = SimpleNamespace(
         path=tmp_path / "thermal-cells.sqlite3",
+        # An uncrossed square comes back from SQL with object-typed columns.
         flights=lambda c: (
-            visitors if (c.ix, c.iy) == (cell.ix + 1, cell.iy) else visitors.iloc[:0]
+            visitors
+            if (c.ix, c.iy) == (cell.ix + 1, cell.iy)
+            else visitors.iloc[:0].astype(object)
         ),
     )
     with sqlite3.connect(tmp_path / "thermal-climbs.sqlite3") as db:
