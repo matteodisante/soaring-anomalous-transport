@@ -30,16 +30,15 @@ OUT = Path(__file__).resolve().parent / "assets" / "cells-map.pdf"
 LAND, SEA, COAST, INK = "#efece6", "#dce7ef", "#9aa5ae", "#13233A"
 # Ordered bands, light green to dark brown: lightness alone tells them apart.
 BANDS = {
-    "Plains": ("#6BA34A", "2.3-2.4 km"),
-    "Hills": ("#D4A72C", "3.8-3.9 km"),
-    "Low mountains": ("#B5652B", "3.7-3.9 km"),
-    "High mountains": ("#5E3A2E", "3.9-4.3 km"),
+    "Plains": ("#6BA34A", "2.1-2.3 km"),
+    "Hills": ("#D4A72C", "2.4 km"),
+    "Low mountains": ("#B5652B", "3.1-3.7 km"),
+    "High mountains": ("#5E3A2E", "3.7-3.9 km"),
 }
 FRANCE = (-5.2, 41.3, 9.8, 51.2)
-ALPS = (5.45, 43.8, 7.15, 46.2)
+ALPS = (5.45, 45.0, 6.5, 46.05)
 # Reference towns for the inset (approximate centres).
-TOWNS = {"Grenoble": (5.72, 45.19), "Annecy": (6.13, 45.90), "Chamonix": (6.87, 45.92),
-         "Digne": (6.24, 44.09)}
+TOWNS = {"Grenoble": (5.72, 45.19), "Chambéry": (5.92, 45.57), "Annecy": (6.13, 45.90)}
 TO_LONLAT = Transformer.from_crs(2154, 4326, always_xy=True)
 
 
@@ -82,20 +81,22 @@ def main() -> None:
                                alpha=0.9, zorder=3))
     ax.add_patch(Rectangle(ALPS[:2], ALPS[2] - ALPS[0], ALPS[3] - ALPS[1], fill=False,
                            ec=INK, lw=0.9, zorder=4))
-    for text, lon, lat, ha in (("Normandy, 2 cells", -0.45, 49.45, "center"),
-                               ("South-west, 1 cell", 1.4, 43.85, "center"),
-                               ("Alps, 9 cells", 6.3, 46.75, "center")):
+    for text, lon, lat, ha in (("Normandy, 4 cells", -0.45, 49.5, "center"),
+                               ("North-east, 1 cell", 5.0, 50.1, "center"),
+                               ("South-west, 1 cell", 1.4, 45.0, "center"),
+                               ("Pyrenees, 1 cell", 0.9, 42.45, "center"),
+                               ("Alps, 5 cells", 6.0, 46.75, "center")):
         ax.text(lon, lat, text, ha=ha, va="center", fontsize=12, color=INK)
     for name, (lon, lat) in TOWNS.items():
         zoom.plot(lon, lat, "o", ms=3, color="#5B6572", zorder=2)
-        left = name == "Annecy"  # its cells sit just east of the town
+        left = name in ("Annecy", "Grenoble")  # their cells sit just east of the town
         zoom.text(lon + (-0.05 if left else 0.04), lat - 0.06, name, fontsize=10,
                   color="#5B6572", ha="right" if left else "left", zorder=2)
     zoom.set_title("Alps: windows at true size", fontsize=12, color=INK)
     handles = [plt.Line2D([], [], marker="s", ls="", ms=11, color=c) for c, _ in BANDS.values()]
     labels = [f"{band}\nclimbs to {top}" for band, (_, top) in BANDS.items()]
     fig.legend(handles, labels, loc="center left", bbox_to_anchor=(0.72, 0.5), frameon=False,
-               fontsize=12, labelspacing=1.3, title="Terrain band (provisional)", title_fontsize=13,
+               fontsize=12, labelspacing=1.3, title="Terrain band", title_fontsize=13,
                alignment="left")
     fig.savefig(OUT)
     print(f"Wrote {OUT}")
