@@ -89,6 +89,21 @@ def test_census_extrema_across_groups_and_scene_retains_gaps(
         rs.load_scene(index, index.flights(), pair)
 
 
+def test_clean_path_and_time_metrics_exclude_gaps(archive, tmp_path):
+    disc, _, _ = archive
+    index = ri.build_index([disc], path=tmp_path / "index.sqlite3")
+    selected = index.flights().query("flight_id == 'a'")
+    tracks, metrics = rs.read_tracks(index, selected)
+    assert [len(segment) for segment in tracks[0]] == [3, 4]
+    row = metrics.iloc[0]
+    assert row.retained_s == 25
+    assert row.gap_s == 15
+    assert row.clean_segments == 2
+    # 20 km + 50 km of supported edges; the 30 km jump is never added.
+    assert row.path_km == pytest.approx(70, abs=0.5)
+    assert row.net_km == pytest.approx(100, abs=0.5)
+
+
 def test_resumes_census_after_cancellation_and_rejects_incomplete_archive(
     archive, tmp_path
 ):

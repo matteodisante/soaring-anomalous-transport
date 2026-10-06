@@ -18,7 +18,6 @@ from PyQt6.QtWidgets import (
 )
 
 from ..geography import FRANCE_EXTENT, WORLD_EXTENT, draw_land, load_basemap
-from ..route_index import ROUTE_CELL_M
 from ..thermal_geometry import unproject
 from .screen_info import InfoButton
 
@@ -90,14 +89,15 @@ class RouteLocator(QWidget):
             lon, lat = geographic_outline(scene.bounds)
             self.ax.fill(lon, lat, facecolor="#ee5522", alpha=0.18, zorder=2)
             self.ax.plot(lon, lat, color="#c34218", linewidth=1.5, zorder=3)
+            cells = np.asarray(scene.pair).reshape(-1, 2)
             for label, colour, (ix, iy) in zip(
-                ("A", "B"),
-                ("#16874a", "#b02783"),
-                np.asarray(scene.pair).reshape(2, 2),
+                ("A", "B")[: len(cells)],
+                ("#16874a", "#b02783")[: len(cells)],
+                cells,
                 strict=True,
             ):
-                x, y = ix * ROUTE_CELL_M, iy * ROUTE_CELL_M
-                cl, ca = geographic_outline((x, y, x + ROUTE_CELL_M, y + ROUTE_CELL_M))
+                x, y = ix * scene.cell_m, iy * scene.cell_m
+                cl, ca = geographic_outline((x, y, x + scene.cell_m, y + scene.cell_m))
                 self.ax.fill(cl, ca, color=colour, alpha=0.8, zorder=4)
                 if not world:
                     self.ax.annotate(

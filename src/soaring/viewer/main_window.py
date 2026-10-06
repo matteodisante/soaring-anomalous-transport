@@ -27,6 +27,7 @@ from soaring.reporting.style import DISCIPLINE_COLORS
 
 from . import data, plotting
 from .widgets.flight_picker import FlightPicker
+from .widgets.group_flights import GroupFlights
 from .widgets.map_focus import MapFocus
 from .widgets.map_view import MapView
 from .widgets.plot_controls import PlotControls
@@ -137,6 +138,8 @@ class MainWindow(QMainWindow):
         self._tabs.addTab(self._thermal_density, "Thermal density")
         self._route_comparison = RouteComparison()
         self._tabs.addTab(self._route_comparison, "Routes · 50-300 km")
+        self._group_flights = GroupFlights()
+        self._tabs.addTab(self._group_flights, "Group flights")
         self._sources_methods = SourcesMethods()
         # "&&": a single "&" would underline the next letter as a shortcut.
         self._tabs.addTab(self._sources_methods, "Sources && methods")
@@ -215,6 +218,9 @@ class MainWindow(QMainWindow):
         if tab is self._route_comparison:
             target = tab._scene_panel
             hide = (tab._locator,)
+        elif tab is self._group_flights:
+            target = tab._viewer._scene_panel
+            hide = (tab._viewer._locator,)
         elif self._tabs.currentIndex() == 0:
             target = self._canvas
         else:
@@ -244,6 +250,8 @@ class MainWindow(QMainWindow):
             self._thermal_density.ensure_loaded()
         elif self._tabs.widget(index) is self._route_comparison:
             self._route_comparison.ensure_loaded()
+        elif self._tabs.widget(index) is self._group_flights:
+            self._group_flights.ensure_loaded()
         elif self._tabs.widget(index) is self._sources_methods:
             self._sources_methods.ensure_loaded()
 
@@ -252,6 +260,7 @@ class MainWindow(QMainWindow):
         self._thermal_plane.shutdown()
         self._thermal_density.shutdown()
         self._route_comparison.shutdown()
+        self._group_flights.shutdown()
         super().closeEvent(event)
 
     def _on_folders_changed(self) -> None:
@@ -263,6 +272,7 @@ class MainWindow(QMainWindow):
         self._thermal_plane.invalidate()
         self._thermal_density.invalidate()
         self._route_comparison.invalidate()
+        self._group_flights.invalidate()
         if self._tabs.currentWidget() is self._map_view:
             self._map_view.ensure_loaded()
 

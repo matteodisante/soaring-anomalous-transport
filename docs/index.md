@@ -22,6 +22,7 @@ and thermal-route questions.
 | Compare a second, transferred segmenter | [Vilpellet segmenter](guide/vilpellet-segmentation.md) |
 | Inspect climb intersections by cell, time and height | [Thermal planes](guide/thermal-planes.md) |
 | Compare cleaned flights between two 10 km cells | [Routes at 50–300 km](guide/route-comparison.md) |
+| Compare flights sharing a departure cell and time window | [Group flights](guide/group-flights.md) |
 | Rebuild the scientific results | [Complete workflow](guide/rebuilding.md) |
 | Trace a figure or numerical value | [Generated provenance](guide/provenance.md) |
 

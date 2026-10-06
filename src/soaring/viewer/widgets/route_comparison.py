@@ -7,7 +7,7 @@ from itertools import pairwise, product
 from threading import Event
 
 import numpy as np
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor, QVector3D
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QPushButton,
     QSpinBox,
+    QSplitter,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -90,7 +91,7 @@ class _RouteWorker(QThread):
 class RouteComparison(QWidget):
     """Lazy SSD census, explicit directed pair selection and an IGN terrain view."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *, scene_only=False):
         """Build the controls without opening the archive or creating an OpenGL view."""
         super().__init__(parent)
         self._worker = self._index = self._flights = self._scene = None
@@ -245,7 +246,18 @@ class RouteComparison(QWidget):
         )
         self._table.horizontalHeader().setStretchLastSection(True)
         self._table.verticalHeader().hide()
-        self._table.setMaximumHeight(135)
+        self._table.setMinimumHeight(80)
+        self._flight_splitter = QSplitter(Qt.Orientation.Vertical)
+        self._flight_splitter.setChildrenCollapsible(False)
+        self._flight_splitter.setHandleWidth(8)
+        self._flight_splitter.addWidget(self._scene_panel)
+        self._flight_splitter.addWidget(self._table)
+        self._flight_splitter.setStretchFactor(0, 1)
+        self._flight_splitter.setStretchFactor(1, 0)
+        self._flight_splitter.setSizes([600, 180])
+        self._flight_splitter.handle(1).setToolTip(
+            "Drag up to show more flights; drag down to enlarge the map"
+        )
         self._table.hide()
         self._source = QLabel()
         self._source.setWordWrap(True)
@@ -253,15 +265,19 @@ class RouteComparison(QWidget):
         self._status = QLabel()
         self._status.setWordWrap(True)
         self._layout = QVBoxLayout(self)
-        self._layout.addLayout(controls)
-        self._layout.addWidget(self._pairs)
-        self._layout.addWidget(self._departure)
+        self._queries = QWidget(self)
+        query_layout = QVBoxLayout(self._queries)
+        query_layout.setContentsMargins(0, 0, 0, 0)
+        query_layout.addLayout(controls)
+        query_layout.addWidget(self._pairs)
+        query_layout.addWidget(self._departure)
+        self._layout.addWidget(self._queries)
+        self._queries.setVisible(not scene_only)
         self._layout.addWidget(self._summary)
         self._layout.addLayout(style)
         self._layout.addWidget(self._legend)
         self._layout.addWidget(self._density)
-        self._layout.addWidget(self._scene_panel, 1)
-        self._layout.addWidget(self._table)
+        self._layout.addWidget(self._flight_splitter, 1)
         self._layout.addWidget(self._source)
         self._layout.addWidget(self._status)
         self._build.clicked.connect(self._prepare)
@@ -648,12 +664,12 @@ class RouteComparison(QWidget):
                 self._scene_items.append(line)
             self._lines.append(lines)
         anchors = []
-        for ix, iy in np.asarray(scene.pair).reshape(2, 2):
+        for ix, iy in np.asarray(scene.pair).reshape(-1, 2):
             corners = np.array(
                 [[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]]
-            ) * ROUTE_CELL_M + [
-                ix * ROUTE_CELL_M,
-                iy * ROUTE_CELL_M,
+            ) * scene.cell_m + [
+                ix * scene.cell_m,
+                iy * scene.cell_m,
             ]
             xy = np.concatenate(
                 [np.linspace(a, b, 25, endpoint=False) for a, b in pairwise(corners)]
@@ -684,61 +700,16 @@ class RouteComparison(QWidget):
             item.updateGLOptions({GL.GL_DEPTH_TEST: False})
             item.setDepthValue(20)
             self._view.addItem(item)
-            centre = np.array([ix + 0.5, iy + 0.5]) * ROUTE_CELL_M
+            centre = np.array([ix + 0.5, iy + 0.5]) * scene.cell_m
             ground = float(np.nanmedian(height)) if np.isfinite(height).any() else 0
             anchors.append([*(centre - scene.origin), ground])
             self._scene_items.append(item)
         self._annotations = RouteAnnotations(scene.tracks, anchors)
         self._view.addItem(self._annotations)
         self._scene_items.append(self._annotations)
-        self._table.blockSignals(True)
-        self._table.setRowCount(len(scene.selected))
-        for i, row in enumerate(scene.selected.itertuples(index=False)):
-            seconds = round(row.duration_s)
-            values = [
-                str(row.rank),
-                row.discipline,
-                row.flight_id,
-                _flight_datetime(getattr(row, "departure_utc", None)),
-                _flight_datetime(getattr(row, "arrival_utc", None)),
-                f"{seconds // 3600}:{seconds % 3600 // 60:02}:{seconds % 60:02}",
-                row.speed_group,
-            ]
-            for col, value in enumerate(values):
-                item = QTableWidgetItem(value)
-                if self._table.palette().base().color().lightness() < 128:
-                    item.setForeground(QColor(COLOURS[row.speed_group]))
-                self._table.setItem(i, col, item)
-        self._table.blockSignals(False)
-        self._table.show()
-        self._mode.setItemText(1, f"{min(5, len(scene.selected))} fastest")
-        self._mode.setItemText(2, f"{min(5, len(scene.selected))} slowest")
-        cells = np.asarray(scene.pair).reshape(2, 2)
-        lon, lat = unproject(*(cells * ROUTE_CELL_M + ROUTE_CELL_M / 2).T)
-        distance = np.linalg.norm(cells[1] - cells[0]) * ROUTE_CELL_M / 1000
-        self._summary.setText(
-            f"{len(scene.selected)} displayed / {scene.total:,} matching flights · "
-            f"10 x 10 km cells · A → B: {distance:.1f} km between centres\n"
-            f"A: {lat[0]:.3f}° N, {lon[0]:.3f}° E · "
-            f"B: {lat[1]:.3f}° N, {lon[1]:.3f}° E · "
-            + ", ".join(
-                f"{name}: {count}"
-                for name, count in scene.selected.discipline.value_counts().items()
-            )
-            + "\nDisplayed departures: "
-            + (scene.departure_window.label if scene.departure_window else "All dates")
-        )
-        source = (
-            "Cleaned archive endpoints; elapsed time = last - first retained fix, "
-            "including gaps. Gaps are not connected. "
-        )
-        if len(scene.selected) < 10:
-            source += "Fastest/slowest groups overlap for fewer than 10 flights. "
-        if scene.total > MAX_FLIGHTS:
-            source += (
-                "Sample: both groups of 5 extremes plus "
-                f"{MAX_FLIGHTS - 10} evenly spaced duration ranks. "
-            )
+        self._populate_table(scene)
+        self._set_scene_summary(scene)
+        source = self._flight_source(scene)
         if scene.terrain is not None:
             ref = scene.terrain[3]
             source += (
@@ -768,6 +739,66 @@ class RouteComparison(QWidget):
         self._scale_changed()
         self._layout.activate()
         self._reset_view()
+        # Fit once the table and parent controls have their final dimensions.
+        QTimer.singleShot(0, self._reset_view)
+
+    def _populate_table(self, scene):
+        """List the cohort with its selection and timing fields."""
+        self._table.blockSignals(True)
+        self._table.setRowCount(len(scene.selected))
+        for i, row in enumerate(scene.selected.itertuples(index=False)):
+            seconds = round(row.duration_s)
+            values = [
+                str(row.rank),
+                row.discipline,
+                row.flight_id,
+                _flight_datetime(getattr(row, "departure_utc", None)),
+                _flight_datetime(getattr(row, "arrival_utc", None)),
+                f"{seconds // 3600}:{seconds % 3600 // 60:02}:{seconds % 60:02}",
+                row.speed_group,
+            ]
+            for col, value in enumerate(values):
+                item = QTableWidgetItem(value)
+                if self._table.palette().base().color().lightness() < 128:
+                    item.setForeground(QColor(COLOURS[row.speed_group]))
+                self._table.setItem(i, col, item)
+        self._table.blockSignals(False)
+        self._table.show()
+        self._mode.setItemText(1, f"{min(5, len(scene.selected))} fastest")
+        self._mode.setItemText(2, f"{min(5, len(scene.selected))} slowest")
+
+    def _set_scene_summary(self, scene):
+        """Describe the route's two shared endpoints and applied departure filter."""
+        cells = np.asarray(scene.pair).reshape(2, 2)
+        lon, lat = unproject(*(cells * ROUTE_CELL_M + ROUTE_CELL_M / 2).T)
+        distance = np.linalg.norm(cells[1] - cells[0]) * ROUTE_CELL_M / 1000
+        self._summary.setText(
+            f"{len(scene.selected)} displayed / {scene.total:,} matching flights · "
+            f"10 x 10 km cells · A → B: {distance:.1f} km between centres\n"
+            f"A: {lat[0]:.3f}° N, {lon[0]:.3f}° E · "
+            f"B: {lat[1]:.3f}° N, {lon[1]:.3f}° E · "
+            + ", ".join(
+                f"{name}: {count}"
+                for name, count in scene.selected.discipline.value_counts().items()
+            )
+            + "\nDisplayed departures: "
+            + (scene.departure_window.label if scene.departure_window else "All dates")
+        )
+
+    def _flight_source(self, scene):
+        """Explain the displayed route population without changing terrain credits."""
+        source = (
+            "Cleaned archive endpoints; elapsed time = last - first retained fix, "
+            "including gaps. Gaps are not connected. "
+        )
+        if len(scene.selected) < 10:
+            source += "Fastest/slowest groups overlap for fewer than 10 flights. "
+        if scene.total > MAX_FLIGHTS:
+            source += (
+                "Sample: both groups of 5 extremes plus "
+                f"{MAX_FLIGHTS - 10} evenly spaced duration ranks. "
+            )
+        return source
 
     def _surface_changed(self, *_):
         """Drape aerial imagery on the same DEM without moving geometry or camera."""
@@ -873,9 +904,12 @@ class RouteComparison(QWidget):
             self._view.opts["center"] = QVector3D(
                 0, 0, float((low + high) / 2) * vertical
             )
-            cells = np.asarray(self._scene.pair).reshape(2, 2)
-            dx, dy = cells[1] - cells[0]
-            azimuth = np.degrees(np.arctan2(dy, dx)) - 90
+            cells = np.asarray(self._scene.pair).reshape(-1, 2)
+            if len(cells) == 2:
+                dx, dy = cells[1] - cells[0]
+                azimuth = np.degrees(np.arctan2(dy, dx)) - 90
+            else:
+                azimuth = -55
             az, el = np.radians([azimuth, 45])
             right = np.array([-np.sin(az), np.cos(az), 0])
             up = np.array(

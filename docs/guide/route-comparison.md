@@ -69,6 +69,8 @@ any temporal selection or 300-flight sampling;
 the endpoint index does not need rebuilding. Missing clock information is shown
 as **Unavailable**, never replaced with a guessed catalogue date. Columns keep
 dates legible; narrow windows provide horizontal scrolling.
+Drag the horizontal divider immediately above the flight table upward to show
+more rows, or downward to give the map more room.
 If fewer than 300 exist, all are displayed and both counts are stated explicitly.
 
 ### Same-day departure cohorts

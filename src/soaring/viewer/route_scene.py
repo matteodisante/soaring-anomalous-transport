@@ -33,7 +33,7 @@ AERIAL_MAX_SIDE = 3072
 
 @dataclass
 class RouteScene:
-    """A maximum of 300 full cleaned tracks in one common metric frame."""
+    """Selected full cleaned tracks in one common metric frame."""
 
     selected: pd.DataFrame
     total: int
@@ -50,6 +50,7 @@ class RouteScene:
     density_error: str | None = None
     departure_cohort: pd.DataFrame | None = None
     departure_window: DepartureWindow | None = None
+    cell_m: float = ROUTE_CELL_M
 
 
 def track_segments(fixes, frame):
@@ -67,13 +68,13 @@ def track_segments(fixes, frame):
     ]
 
 
-def scene_bounds(tracks, pair):
+def scene_bounds(tracks, pair, cell_m=ROUTE_CELL_M):
     """Cover all retained geometry and both full endpoint cells, with a margin."""
     minima = [segment.min(axis=0)[:2] for track in tracks for segment in track]
     maxima = [segment.max(axis=0)[:2] for track in tracks for segment in track]
-    cells = np.asarray(pair).reshape(2, 2) * ROUTE_CELL_M
+    cells = np.asarray(pair).reshape(-1, 2) * cell_m
     low = np.min([*minima, *cells], axis=0) - 2000
-    high = np.max([*maxima, *(cells + ROUTE_CELL_M)], axis=0) + 2000
+    high = np.max([*maxima, *(cells + cell_m)], axis=0) + 2000
     return (*np.floor(low / 1000) * 1000, *np.ceil(high / 1000) * 1000)
 
 
@@ -280,6 +281,30 @@ def load_scene(
             f"{unknown} flights have unavailable departure dates. "
             "Choose another window or disable the departure filter."
         )
+    tracks, _ = read_tracks(index, selected, progress=progress, cancel=cancel)
+    index.verify()
+    bounds = scene_bounds(tracks, pair)
+    origin = (np.asarray(bounds[:2]) + bounds[2:]) / 2
+    for track in tracks:
+        for i, segment in enumerate(track):
+            segment[:, :2] -= origin
+            track[i] = segment.astype(np.float32)
+    scene = RouteScene(
+        selected,
+        total,
+        tuple(pair),
+        tracks,
+        bounds,
+        origin,
+        departure_cohort=cohort,
+        departure_window=departure_window,
+    )
+    return load_background(scene, index, progress=progress, cancel=cancel)
+
+
+def read_tracks(index, selected, *, progress=lambda _: None, cancel=None):
+    """Read selected cleaned fixes once, retaining boundaries and measuring paths."""
+    index.verify()
     pieces = {(r.discipline, r.flight_id): [] for r in selected.itertuples()}
     with sqlite3.connect(index.path) as db:
         for disc in index.disciplines:
@@ -304,7 +329,7 @@ def load_scene(
                 frame = frame.loc[frame.flight_id.isin(ids)]
                 for fid, flight in frame.groupby("flight_id", sort=False):
                     pieces[disc.name, fid].append(flight)
-    tracks = []
+    tracks, metrics = [], []
     for row in selected.itertuples():
         _check_cancel(cancel)
         parts = pieces[row.discipline, row.flight_id]
@@ -319,35 +344,41 @@ def load_scene(
             raise ValueError(
                 "Track endpoints disagree with the route census; rebuild it"
             )
-        tracks.append(track_segments(fixes, LocalFrame(row.lat0, row.lon0, row.alt0)))
+        track = track_segments(fixes, LocalFrame(row.lat0, row.lon0, row.alt0))
+        tracks.append(track)
+        edges = continuous_edges(fixes.sort_values("t", kind="stable"))
+        retained_s = float(np.diff(np.sort(fixes.t.to_numpy()))[edges].sum())
+        metrics.append(
+            {
+                "path_km": sum(
+                    np.linalg.norm(np.diff(s[:, :2], axis=0), axis=1).sum()
+                    for s in track
+                )
+                / 1000,
+                "net_km": float(np.linalg.norm(track[-1][-1, :2] - track[0][0, :2]))
+                / 1000,
+                "retained_s": retained_s,
+                "gap_s": max(0.0, row.duration_s - retained_s),
+                "clean_segments": len(track),
+            }
+        )
     index.verify()
-    bounds = scene_bounds(tracks, pair)
-    origin = (np.asarray(bounds[:2]) + bounds[2:]) / 2
-    for track in tracks:
-        for i, segment in enumerate(track):
-            segment[:, :2] -= origin
-            track[i] = segment.astype(np.float32)
-    scene = RouteScene(
-        selected,
-        total,
-        tuple(pair),
-        tracks,
-        bounds,
-        origin,
-        departure_cohort=cohort,
-        departure_window=departure_window,
-    )
+    return tracks, pd.DataFrame(metrics, index=selected.index)
+
+
+def load_background(scene, index, *, progress=lambda _: None, cancel=None):
+    """Attach the same all-flight heat texture and bounded IGN layers to any cohort."""
     _check_cancel(cancel)
     progress("Reading thermal hours from all archived flights crossing the area…")
     try:
-        scene.density = load_density(bounds, index.disciplines)
+        scene.density = load_density(scene.bounds, index.disciplines)
     except (OSError, ValueError) as exc:
         scene.density_error = str(exc)
     _check_cancel(cancel)
     progress("Reading IGN terrain for the selected flight area…")
     try:
         scene.terrain = load_terrain(
-            bounds, index.path.parent / "route-terrain", cancel=cancel
+            scene.bounds, index.path.parent / "route-terrain", cancel=cancel
         )
     except (OSError, ValueError) as exc:
         scene.terrain_error = str(exc)
@@ -356,7 +387,7 @@ def load_scene(
         progress("Reading IGN aerial imagery for the same terrain extent…")
         try:
             scene.aerial, scene.aerial_reference = load_aerial(
-                bounds, index.path.parent / "route-terrain", cancel=cancel
+                scene.bounds, index.path.parent / "route-terrain", cancel=cancel
             )
         except (OSError, ValueError) as exc:
             scene.aerial_error = str(exc)

@@ -153,6 +153,8 @@ spatial proximity along the trajectories too. The thermal overlay continues
 to use all archived flights, independent of the day and time filter.</p>
 <h3>Table and trajectory controls</h3>
 <ul>
+<li>Drag the divider above the flight table upward to show more rows, or downward
+to enlarge the map.</li>
 <li><b>Departure / arrival:</b> dates and times of the retained endpoints in
 Europe/Paris, with CET/CEST. Restore the IGC UTC origin, trimming offset and
 relative endpoint times. Unavailable clocks are labelled explicitly.</li>

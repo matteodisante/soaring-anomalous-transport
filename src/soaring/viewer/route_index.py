@@ -120,7 +120,7 @@ def reduce_group(frame, discipline, group):
     ]
 
 
-def _endpoint_rows(db, disciplines, progress, cancel):
+def _endpoint_rows(db, disciplines, progress, cancel, *, departure_only=False):
     """Recover geographic endpoints from each flight's own ENU origin."""
     result = []
     west, south, east, north = FRANCE_EXTENT
@@ -172,9 +172,8 @@ def _endpoint_rows(db, disciplines, progress, cancel):
                 [row.z0, row.z1],
                 LocalFrame(row.lat0, row.lon0, row.alt0),
             )
-            if not (
-                (lon >= west) & (lon < east) & (lat >= south) & (lat < north)
-            ).all():
+            inside = (lon >= west) & (lon < east) & (lat >= south) & (lat < north)
+            if not (inside[0] if departure_only else inside.all()):
                 continue
             x, y = project(lon, lat)
             cells = np.floor(np.column_stack((x, y)) / INDEX_CELL_M).astype(int).ravel()

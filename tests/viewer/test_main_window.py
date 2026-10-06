@@ -160,6 +160,7 @@ def test_all_tabs_resize_and_keep_controls_inside_window(
         window._thermal_plane,
         window._thermal_density,
         window._route_comparison,
+        window._group_flights,
     ):
         monkeypatch.setattr(view, "ensure_loaded", lambda: None)
     # Prepared cell descriptions must not grow the minimum window width either.
@@ -194,7 +195,7 @@ def test_initial_window_fits_available_screen(window, qapp):
     assert window.height() <= available.height()
 
 
-@pytest.mark.parametrize("index", [1, 2, 3, 4])
+@pytest.mark.parametrize("index", [1, 2, 3, 4, 5])
 def test_map_only_fullscreen_preserves_canvas_zoom_and_optional_panels(
     window, qapp, monkeypatch, index
 ):
@@ -203,9 +204,10 @@ def test_map_only_fullscreen_preserves_canvas_zoom_and_optional_panels(
     window._tabs.setCurrentIndex(index)
     window.show()
     qapp.processEvents()
-    if index == 4:
-        plot = tab._scene_panel
-        hidden = tab._table.isHidden()
+    if index in (4, 5):
+        viewer = tab if index == 4 else tab._viewer
+        plot = viewer._scene_panel
+        hidden = viewer._table.isHidden()
     else:
         plot = tab._canvas
         if not tab._figure.axes:
@@ -217,15 +219,15 @@ def test_map_only_fullscreen_preserves_canvas_zoom_and_optional_panels(
     assert plot.width() >= window.width() - 8
     assert plot.height() >= _focused_map_height(window)
     assert window._tabs.tabBar().isVisible()
-    if index == 4:
-        assert tab._locator.isHidden() and tab._table.isHidden()
+    if index in (4, 5):
+        assert viewer._locator.isHidden() and viewer._table.isHidden()
     if index == 2:
         assert not tab._map_ax.get_visible()
         assert tab._plane_ax.get_visible()
     _click_map_toggle(window._fullscreen_button, qapp)
-    if index == 4:
-        assert not tab._locator.isHidden()
-        assert tab._table.isHidden() == hidden
+    if index in (4, 5):
+        assert not viewer._locator.isHidden()
+        assert viewer._table.isHidden() == hidden
     else:
         assert tuple(tab._figure.axes) == axes
         assert axes[-1].get_xlim() == (1, 3)
