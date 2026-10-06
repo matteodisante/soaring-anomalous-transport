@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from html import escape
 from itertools import pairwise
 from threading import Event
@@ -176,6 +176,7 @@ class ThermalPlane(QWidget):
         self._dates_initialized = False
         self._daily_info = ""
         self._daily_days = {}
+        self._daily_ranges = {}
         self._terrain_info = None
         self._neighbours = None
         self._neighbour_levels = OrderedDict()
@@ -239,10 +240,21 @@ class ThermalPlane(QWidget):
         self._mode = QComboBox()
         self._mode.addItems(["Whole interval", "Morning / midday / afternoon"])
         self._day = QDateEdit(QDate.currentDate())
-        self._day.setDisplayFormat("yyyy-MM-dd")
-        self._day.setCalendarPopup(True)
-        self._day.setKeyboardTracking(False)
+        self._daily_start = QDateEdit(QDate.currentDate())
+        self._daily_end = QDateEdit(QDate.currentDate())
+        for edit in (self._day, self._daily_start, self._daily_end):
+            edit.setDisplayFormat("yyyy-MM-dd")
+            edit.setCalendarPopup(True)
+            edit.setKeyboardTracking(False)
+        self._daily_date_mode = QComboBox()
+        self._daily_date_mode.addItem("Start / end dates", "range")
+        self._daily_date_mode.addItem("Days around a date", "around")
+        self._daily_start.setToolTip("First included civil day in Europe/Paris")
+        self._daily_end.setToolTip("Last included civil day in Europe/Paris")
         self._best_day = QPushButton("Busiest summer day")
+        self._best_day.setToolTip(
+            "Select the busiest summer day; in Start / end dates, select that day only"
+        )
         self._before, self._after = QSpinBox(), QSpinBox()
         for spin in (self._before, self._after):
             spin.setRange(0, 365)
@@ -343,13 +355,22 @@ class ThermalPlane(QWidget):
         self._daily_settings = QWidget()
         daily = FlowLayout(self._daily_settings)
         daily.setContentsMargins(0, 0, 0, 0)
+        self._daily_range_fields = [
+            labeled_control("From day", self._daily_start),
+            labeled_control("To day", self._daily_end),
+        ]
+        self._daily_relative_fields = [
+            labeled_control("Day", self._day),
+            labeled_control("Days before", self._before),
+            labeled_control("after", self._after),
+        ]
+        for field in self._daily_relative_fields:
+            field.hide()
         for item in (
-            self._day,
+            self._daily_date_mode,
+            *self._daily_range_fields,
+            *self._daily_relative_fields,
             self._best_day,
-            QLabel("Days before"),
-            self._before,
-            QLabel("after"),
-            self._after,
             QLabel("Paris hours"),
         ):
             daily.addWidget(item)
@@ -402,6 +423,9 @@ class ThermalPlane(QWidget):
         self._mode.currentIndexChanged.connect(self._mode_changed)
         self._view.currentIndexChanged.connect(self._layout_changed)
         self._best_day.clicked.connect(self._select_best_day)
+        self._daily_date_mode.currentIndexChanged.connect(self._daily_date_mode_changed)
+        self._daily_start.dateChanged.connect(self._daily_range_changed)
+        self._daily_end.dateChanged.connect(self._daily_range_changed)
         self._day.dateChanged.connect(self._daily_changed)
         self._before.valueChanged.connect(self._daily_changed)
         self._after.valueChanged.connect(self._daily_changed)
@@ -517,12 +541,16 @@ class ThermalPlane(QWidget):
             and self._cells.currentData() is not None
         )
         for widget in (
+            self._mode,
             self._cells,
             self._source,
             self._start,
             self._end,
             self._load,
             self._day,
+            self._daily_date_mode,
+            self._daily_start,
+            self._daily_end,
             self._best_day,
             self._before,
             self._after,
@@ -668,6 +696,7 @@ class ThermalPlane(QWidget):
             )
             self._update_provenance()
             _, height = self._index.defaults(cell)
+            self._daily_info = ""
             if hasattr(self._index, "summer_days"):
                 days = self._index.summer_days(cell)
                 if days:
@@ -683,6 +712,13 @@ class ThermalPlane(QWidget):
                         f"Busiest summer day: {days[0][0]} · "
                         f"{days[0][1]} crossing flights"
                     )
+            days = (
+                self._day.date().addDays(-self._before.value()),
+                self._day.date().addDays(self._after.value()),
+            )
+            if self._daily_date_mode.currentData() == "range":
+                days = self._daily_ranges.get((cell.ix, cell.iy), days)
+            self._set_daily_range(*days)
             self._levels = height_levels(cell.max_agl_m, self._step.currentData())
             height = self._levels[np.argmin(abs(self._levels - height))]
             self._height.blockSignals(True)
@@ -771,7 +807,9 @@ class ThermalPlane(QWidget):
         self._update_provenance()
         self._set_busy(self._worker is not None)
         self._status.setText(
-            "Selection changed. Load climb intersections for this interval."
+            "The end date must be at or after the start date."
+            if self._read_bounds()[1] < self._read_bounds()[0]
+            else "Selection changed. Load climb intersections for this interval."
         )
         self._draw_plane()
 
@@ -961,13 +999,13 @@ class ThermalPlane(QWidget):
         """Comparison dates are independent of the user's full interval."""
         if not self._mode.currentIndex():
             return self._utc_bounds()
-        day = date.fromisoformat(self._day.date().toString("yyyy-MM-dd"))
         return (
-            local_bounds(day - timedelta(days=self._before.value()))[0],
-            local_bounds(day + timedelta(days=self._after.value()))[1] - 1e-6,
+            local_bounds(self._daily_start.date().toPyDate())[0],
+            local_bounds(self._daily_end.date().toPyDate())[1] - 1e-6,
         )
 
     def _select_best_day(self):
+        """Restore the recommendation as one day or as the relative anchor."""
         cell = self._cells.currentData()
         if (
             self._index is not None
@@ -976,15 +1014,54 @@ class ThermalPlane(QWidget):
         ):
             days = self._index.summer_days(cell)
             if days:
-                self._day.setDate(QDate.fromString(days[0][0], "yyyy-MM-dd"))
+                day = QDate.fromString(days[0][0], "yyyy-MM-dd")
+                if self._daily_date_mode.currentData() == "range":
+                    self._set_daily_range(day, day)
+                    self._daily_range_changed()
+                else:
+                    self._day.setDate(day)
+
+    def _set_daily_range(self, first, last):
+        """Update both calendar fields without loading an intermediate range."""
+        for edit, day in ((self._daily_start, first), (self._daily_end, last)):
+            edit.blockSignals(True)
+            edit.setDate(day)
+            edit.blockSignals(False)
+
+    def _daily_range_changed(self, *_):
+        """Remember explicit inclusive dates and wait for the user's load request."""
+        cell = self._cells.currentData()
+        if cell is not None:
+            self._daily_ranges[(cell.ix, cell.iy)] = (
+                self._daily_start.date(),
+                self._daily_end.date(),
+            )
+        if self._mode.currentIndex():
+            self._invalidate_plane()
+
+    def _daily_date_mode_changed(self, *_):
+        """Switch between direct dates and the saved reference-day controls."""
+        direct = self._daily_date_mode.currentData() == "range"
+        for field in self._daily_range_fields:
+            field.setVisible(direct)
+        for field in self._daily_relative_fields:
+            field.setVisible(not direct)
+        if not direct:
+            # Keep the relative controls' own anchor and offsets when returning.
+            self._daily_changed()
+        elif self._mode.currentIndex():
+            self._invalidate_plane()
 
     def _daily_changed(self, *_):
+        """Convert the relative window into dates without starting partial loads."""
         cell = self._cells.currentData()
         if cell is not None:
             self._daily_days[(cell.ix, cell.iy)] = self._day.date()
-        if self._mode.currentIndex():
-            self._invalidate_plane()
-            self._start_plane()
+        self._set_daily_range(
+            self._day.date().addDays(-self._before.value()),
+            self._day.date().addDays(self._after.value()),
+        )
+        self._daily_range_changed()
 
     def _mode_changed(self, *_):
         """Change time selection independently from the visual layout."""
@@ -1073,6 +1150,10 @@ class ThermalPlane(QWidget):
         cell = self._cells.currentData()
         if self._index is None or cell is None:
             return
+        start, end = self._read_bounds()
+        if end < start:
+            self._status.setText("The end date must be at or after the start date.")
+            return
         try:
             from .thermal_3d import Thermal3D
         except ImportError:
@@ -1083,7 +1164,7 @@ class ThermalPlane(QWidget):
             return
         if self._terrain_3d_panel is None:
             self._terrain_3d_panel = Thermal3D(self)
-        self._terrain_3d_panel.load(self._index, cell, *self._read_bounds())
+        self._terrain_3d_panel.load(self._index, cell, start, end)
         self._terrain_3d_panel.show()
         self._terrain_3d_panel.raise_()
 
@@ -1534,13 +1615,17 @@ class ThermalPlane(QWidget):
                 fontsize=10,
             )
         if self._mode.currentIndex():
-            day = self._day.date()
-            first = day.addDays(-self._before.value()).toString("yyyy-MM-dd")
-            last = day.addDays(self._after.value()).toString("yyyy-MM-dd")
+            start, end = self._read_bounds()
+            first = datetime.fromtimestamp(start, PARIS).date()
+            last = datetime.fromtimestamp(end, PARIS).date()
+            days = (last - first).days + 1
             self._figure.suptitle(
-                f"{first} → {last} · "
-                f"{1 + self._before.value() + self._after.value()} days pooled · "
-                f"{self._daily_info}",
+                (
+                    f"{first} → {last} · {days} days pooled"
+                    + (f" · {self._daily_info}" if self._daily_info else "")
+                    if end >= start
+                    else "Invalid date range: end day is before start day"
+                ),
                 fontsize=10,
             )
         else:

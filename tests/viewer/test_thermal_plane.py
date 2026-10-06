@@ -243,6 +243,113 @@ def test_reversed_interval_has_no_background_request(widget):
     assert "end time" in widget._status.text()
 
 
+@pytest.mark.parametrize(
+    "first,last,hours",
+    [
+        ("2024-06-15", "2024-06-15", 24),
+        ("2024-03-30", "2024-03-31", 47),
+        ("2024-10-26", "2024-10-27", 49),
+        ("2024-12-31", "2025-01-01", 48),
+    ],
+)
+def test_daily_date_range_uses_whole_paris_days_and_loads_on_request(
+    widget, monkeypatch, first, last, hours
+):
+    from PyQt6.QtCore import QDate
+
+    from soaring.viewer.thermal_daily import local_bounds
+
+    original = widget._utc_bounds()
+    operations, reads = [], []
+    monkeypatch.setattr(widget, "_run", lambda op, _: operations.append(op))
+    widget._index.read_plane = lambda *args, **kw: reads.append(args)
+    widget._mode.setCurrentIndex(1)
+    operations.clear()
+    widget._daily_start.setDate(QDate.fromString(first, "yyyy-MM-dd"))
+    widget._daily_end.setDate(QDate.fromString(last, "yyyy-MM-dd"))
+    assert operations == []
+    assert widget._plane is None
+    start, end = widget._read_bounds()
+    assert start == local_bounds(first)[0]
+    assert end == local_bounds(last)[1] - 1e-6
+    assert end - start == pytest.approx(hours * 3600)
+    assert widget._utc_bounds() == original
+    assert f"{first} → {last}" in widget._figure._suptitle.get_text()
+    widget._load.click()
+    assert len(operations) == 1
+    operations[0]()
+    assert reads == [(widget._cells.currentData(), start, end, "vilpellet")]
+
+
+def test_reversed_daily_dates_reject_plane_and_3d_loads(widget, monkeypatch):
+    from PyQt6.QtCore import QDate
+
+    with monkeypatch.context() as m:
+        m.setattr(widget, "_start_plane", lambda: None)
+        widget._mode.setCurrentIndex(1)
+    widget._daily_start.setDate(QDate(2024, 6, 20))
+    widget._daily_end.setDate(QDate(2024, 6, 19))
+    assert "end date" in widget._status.text()
+    assert "Invalid date range" in widget._figure._suptitle.get_text()
+    monkeypatch.setattr(widget, "_run", lambda *_: pytest.fail("invalid dates loaded"))
+    widget._start_plane()
+    assert widget._worker is None
+    widget._show_terrain_3d()
+    assert widget._terrain_3d_panel is None
+    assert "end date" in widget._status.text()
+
+
+def test_daily_range_survives_cell_switch_reload_and_relative_shortcuts(
+    widget, monkeypatch
+):
+    from dataclasses import replace
+
+    from PyQt6.QtCore import QDate
+
+    first = widget._cells.currentData()
+    second = replace(first, ix=first.ix + 1)
+    index = SimpleNamespace(
+        disciplines=("paragliders",),
+        cells=lambda: [first, second],
+        defaults=lambda _: (widget._utc_bounds()[0], 500),
+        summer_days=lambda cell: [
+            ("2024-06-15" if cell == first else "2024-07-10", 5)
+        ],
+    )
+    monkeypatch.setattr(widget, "_start_plane", lambda: None)
+    widget._index_ready(index)
+    widget._mode.setCurrentIndex(1)
+    assert widget._daily_start.date() == widget._daily_end.date() == QDate(2024, 6, 15)
+    widget._daily_start.setDate(QDate(2024, 5, 1))
+    widget._daily_end.setDate(QDate(2024, 9, 30))
+    chosen = widget._read_bounds()
+    widget._cells.setCurrentIndex(1)
+    assert widget._daily_start.date() == QDate(2024, 7, 10)
+    widget._cells.setCurrentIndex(0)
+    widget._index_ready(index)
+    assert widget._read_bounds() == chosen
+    widget._best_day.click()
+    assert widget._daily_start.date() == widget._daily_end.date() == QDate(2024, 6, 15)
+    widget._daily_date_mode.setCurrentIndex(1)
+    widget._before.setValue(3)
+    widget._after.setValue(5)
+    around = widget._read_bounds()
+    widget._daily_date_mode.setCurrentIndex(0)
+    assert widget._read_bounds() == around
+    assert widget._daily_start.date() == QDate(2024, 6, 12)
+    assert widget._daily_end.date() == QDate(2024, 6, 20)
+    widget._daily_date_mode.setCurrentIndex(1)
+    widget._cells.setCurrentIndex(1)
+    around_second = widget._read_bounds()
+    widget._daily_date_mode.setCurrentIndex(0)
+    assert widget._read_bounds() == around_second
+    assert widget._daily_start.date() == QDate(2024, 7, 7)
+    assert widget._daily_end.date() == QDate(2024, 7, 15)
+    widget._set_busy(True)
+    assert not widget._daily_start.isEnabled() and not widget._daily_end.isEnabled()
+    assert not widget._daily_date_mode.isEnabled()
+
+
 def test_archive_change_clears_four_cells_and_old_results(widget):
     widget.invalidate()
     assert widget._index is None

@@ -293,11 +293,20 @@ archive, not geographic diversity or an estimate of thermal centres.
 
 Each cell starts its comparison at its **busiest June–August civil day**, ranked
 by distinct crossing flights from both disciplines, independent of segmentation
-or climb duration. Ties use the earliest date. **Days before** and **after** pool
-consecutive days around that reference; the date is also editable, and **Busiest
-summer day** restores the saved recommendation. These comparison dates do not
-modify the general From/To interval. Civil days and hour bands use Europe/Paris,
-including daylight-saving transitions. All storage timestamps remain UTC.
+or climb duration. Ties use the earliest date. **Start / end dates** lets you
+choose **From day** and **To day** directly, with both days included. Equal dates
+select one civil day. Edit both dates, then click **Load climb intersections**;
+editing clears the previous intersections without starting an intermediate load.
+The selected range is remembered for each cell, including when SSD data is reloaded.
+
+Choose **Days around a date** to use the reference day with **Days before** and
+**after** instead. Switching back to direct dates retains that computed range.
+**Busiest summer day** selects the recommended day alone in direct-date mode,
+or restores the reference day while retaining the offsets in relative mode.
+These comparison dates do not modify the general From/To interval. Civil days
+and hour bands use Europe/Paris, including daylight-saving transitions. The
+morning, midday and afternoon bands apply on every included day. All storage
+timestamps remain UTC. Reversed dates show an error and cannot load data.
 
 The figure states the actual inclusive day range and number of pooled days.
 Pooled panels show recurring locations at similar local hours across days; they

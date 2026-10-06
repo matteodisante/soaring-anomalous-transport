@@ -123,7 +123,13 @@ and background changes.</li>
 and trimming offset. Flights without recoverable UTC remain in the cell population
 but cannot enter a calendar interval.</li>
 <li><b>Daily panels:</b> default bands 08&ndash;11, 11&ndash;15, 15&ndash;18,
-end excluded, at the same z. The default day is the busiest June&ndash;August day.</li>
+end excluded, at the same z. <b>Start / end dates</b> offers <b>From day</b> and
+<b>To day</b>, both included. Set both dates, then click <b>Load climb
+intersections</b>; the hour bands repeat on each day. The range is remembered
+per cell and is independent of Whole interval.</li>
+<li><b>Days around a date:</b> retains the reference day and before/after offsets.
+<b>Busiest summer day</b> selects the recommended June&ndash;August day alone
+in direct-date mode, or resets the reference day in relative mode.</li>
 </ul>
 
 <h3>Flight data and limits</h3>
