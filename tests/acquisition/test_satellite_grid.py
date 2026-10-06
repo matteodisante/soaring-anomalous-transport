@@ -26,7 +26,7 @@ def test_axis_from_values_and_index():
 
 def test_window_box_holds_the_cell_and_reaches_further_north():
     cfg = load_config()
-    cell = cfg.cells[5]  # 189/1305, near Annecy
+    cell = cfg.cells[9]  # 190/1306, near Annecy
     x = Axis(-5567248.07, 3000.403, 3712)
     y = Axis(1393687.27, 3000.403, 1392)
     box = pixel_box(SEVIRI_RSS, *window_outline(cfg, cell), x, y)

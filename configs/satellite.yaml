@@ -21,20 +21,21 @@ window:
   side_margin_m: 1000
 
 # The twelve Thermal-planes cells, frozen from thermal-planes.sqlite3 (ranking
-# vilpellet-climb-runs-dem-top-v1) on 2026-10-06. Cell (ix, iy) is the Lambert-93
-# square [ix, ix + 1) x [iy, iy + 1) times cell_size_m. Freezing them keeps the
-# dataset consistent if the viewer ranking changes.
+# vilpellet-climb-runs-dem-max-top-v1) on 2026-10-06: the three cells with most
+# Vilpellet climbs in each band of the highest IGN DEM elevation inside the cell.
+# Cell (ix, iy) is the Lambert-93 square [ix, ix + 1) x [iy, iy + 1) times
+# cell_size_m. Freezing them keeps the dataset consistent if the viewer ranking changes.
 cell_size_m: 5000
 cells:
   - {ix: 89, iy: 1375, terrain: Plains}
-  - {ix: 89, iy: 1374, terrain: Plains}
-  - {ix: 114, iy: 1275, terrain: Plains}
-  - {ix: 184, iy: 1293, terrain: Hills}
-  - {ix: 185, iy: 1294, terrain: Hills}
-  - {ix: 189, iy: 1305, terrain: Hills}
-  - {ix: 190, iy: 1306, terrain: Low mountains}
-  - {ix: 195, iy: 1265, terrain: Low mountains}
-  - {ix: 184, iy: 1294, terrain: Low mountains}
-  - {ix: 197, iy: 1309, terrain: High mountains}
-  - {ix: 193, iy: 1309, terrain: High mountains}
-  - {ix: 194, iy: 1308, terrain: High mountains}
+  - {ix: 88, iy: 1376, terrain: Plains}
+  - {ix: 89, iy: 1373, terrain: Plains}
+  - {ix: 89, iy: 1374, terrain: Hills}
+  - {ix: 114, iy: 1275, terrain: Hills}
+  - {ix: 169, iy: 1388, terrain: Hills}
+  - {ix: 105, iy: 1242, terrain: Low mountains}
+  - {ix: 183, iy: 1292, terrain: Low mountains}
+  - {ix: 183, iy: 1300, terrain: Low mountains}
+  - {ix: 190, iy: 1306, terrain: High mountains}
+  - {ix: 184, iy: 1293, terrain: High mountains}
+  - {ix: 185, iy: 1294, terrain: High mountains}
