@@ -1,0 +1,316 @@
+\documentclass[11pt,aspectratio=169]{beamer}
+\newcommand{\TalkShort}{Satellite cloud data over France}
+\input{../theme.tex}
+\usepackage{tabularx}
+\usepackage{textcomp}
+\usepackage{animate}
+\hypersetup{pdftitle={Satellite cloud data over France},pdfsubject={Data survey for the Thermal-planes cells}}
+\definecolor{sevfull}{HTML}{8FB0C9}
+\definecolor{sevrss}{HTML}{2F6690}
+\definecolor{mtg}{HTML}{C2610F}
+\definecolor{mtglight}{HTML}{E8913A}
+\definecolor{gap}{HTML}{E8C9A6}
+\definecolor{feasible}{HTML}{9C4A06}
+\newcommand{\faint}[1]{{\small\color{muted}#1}}
+\newcommand{\stepitem}[2]{\noindent\makebox[6mm][l]{\textcolor{pisablue}{\bfseries #1}}\parbox[t]{\dimexpr\linewidth-6mm}{\raggedright #2}\par}
+\newcommand{\bignum}[2]{{\color{#1}\LARGE\bfseries #2}}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\title{Satellite cloud data over France}
+\begin{document}
+
+\begin{frame}[plain]
+\begin{tikzpicture}[remember picture,overlay]
+ \fill[pisablue](current page.south west)rectangle(current page.north east);
+ \fill[pisablight](current page.south west)rectangle([yshift=20mm]current page.south east);
+ \node[text=white,align=center,text width=.9\paperwidth]at([yshift=8mm]current page.center)
+  {{\LARGE\bfseries Satellite cloud data over France}\\[5mm]
+   {\large What exists, what it shows,\\and what our Thermal-planes study needs}};
+ \node[text=pisablue,align=center]at([yshift=10mm]current page.south)
+  {{\normalsize Matteo Di Sante}\\[1mm]{\small Data survey, 7 October 2026}};
+\end{tikzpicture}
+\speaker{First an overview of the satellite cloud data available over France: which satellites, which years, how sharp, which products, and their limits. Then what our study of the twelve Thermal-planes cells needs, and how much space that takes.}
+\end{frame}
+
+\section{Overview}
+
+\begin{frame}{Two kinds of satellites}
+\vfill
+\begin{columns}[T,onlytextwidth]
+\column{.46\textwidth}
+{\Large\textcolor{mtg}{\textbf{Geostationary}}}\par\medskip
+{\large A film of the whole day}\par\bigskip
+An image every 2.5--15\,min\par
+Pixels of 0.6--5\,km
+\column{.46\textwidth}
+{\Large\textcolor{sevrss}{\textbf{Polar orbiting}}}\par\medskip
+{\large A sharp photo, once or twice a day}\par\bigskip
+Pixels of 10\,m--1\,km\par
+Sentinel-2, Landsat, MODIS, VIIRS
+\end{columns}
+\vfill
+\takeaway{Geostationary images follow the clouds through the day. A polar image, on the few days it exists, shows the single cumuli that the coarser pixels merge.}
+\speaker{Geostationary: Meteosat SEVIRI and MTG FCI, fixed above the equator, imaging Europe every few minutes. Polar orbiting satellites pass at 700--800 km and see a given place once or twice a day: Sentinel-2 (10--60 m, every 2--5 days, about 10:30), Landsat 8 and 9 (30 m, every 8 days), MODIS (250 m--1 km, about 10:30 and 13:30), VIIRS (375 m, about 13:30). Sentinel-2 resolves single cumuli and is the best validation source. Other SEVIRI-based options: CM SAF CLAAS-3, a climate-quality cloud record every 15 minutes from 2004; the NWC SAF software of Meteo-France, which needs the full image files.}
+\end{frame}
+
+\begin{frame}{Full disc or rapid scan: the whole view or only Europe}
+\vfill
+\begin{columns}[c,onlytextwidth]
+\column{.36\textwidth}\centering
+\begin{tikzpicture}
+ \fill[sevfull](0,0)circle(2.2);
+ \begin{scope}\clip(0,0)circle(2.2);\fill[sevrss](-2.3,0.85)rectangle(2.3,2.3);\end{scope}
+ \draw[pisablue,line width=.6pt](0,0)circle(2.2);
+ \node[text=white,font=\small\bfseries]at(0,1.45){rapid scan};
+ \node[text=pisablue,font=\small\bfseries]at(0,-.4){full disc};
+ \node[font=\footnotesize,text=muted]at(0,-2.65){the Earth as the satellite sees it};
+\end{tikzpicture}
+\column{.6\textwidth}
+{\large\textcolor{sevfull!70!black}{\textbf{Full disc}}}\par\smallskip
+All the Earth the satellite sees, about 40\% of the globe\par\bigskip
+{\large\textcolor{sevrss}{\textbf{Rapid scan}}}\par\smallskip
+Only the northern third: Europe and North Africa.\par
+Smaller area, scanned more often: with SEVIRI every 5\,min instead of 15.
+\end{columns}
+\vfill
+\takeaway{France is in both}
+\speaker{SEVIRI full disc: every 15 minutes, from the prime Meteosat above 0 degrees. SEVIRI rapid scan: the top third of the disc, about 15 to 70 degrees north, every 5 minutes, from a second Meteosat rectified to 9.5 degrees east (EUMETSAT product description). MTG: full disc every 10 minutes; its rapid scan, every 2.5 minutes, comes with MTG-I2. A geostationary satellite never sees the whole world, only the hemisphere facing it. The rapid scan has service gaps that the full disc can fill at 15 minutes.}
+\end{frame}
+
+\begin{frame}{Which geostationary satellite covers which years}
+\vfill\centering
+\begin{tikzpicture}[x=3.8mm,y=-9mm,font=\small]
+ \foreach \row/\name/\detail in {0/SEVIRI full disc/{every 15 min},1/SEVIRI rapid scan/{every 5 min},2/MTG FCI/{every 10 min},3/MTG-I2 rapid scan/{every 2.5 min, from 2027}}{
+  \node[anchor=east,align=right]at(-0.6,\row){\textbf{\name}\\[-.5mm]{\footnotesize\color{muted}\detail}};}
+ \fill[sevfull,rounded corners=1pt](0.08,-0.28)rectangle(22.77,0.28);
+ \fill[sevrss,rounded corners=1pt](4.35,0.72)rectangle(22.77,1.28);
+ \fill[mtg,rounded corners=1pt](20.73,1.72)rectangle(22.77,2.28);
+ \draw[mtg,dashed,line width=.8pt,rounded corners=1pt](23,2.72)rectangle(24,3.28);
+ \draw[line width=.8pt](22.77,-0.6)--(22.77,3.55);
+ \node[above,font=\footnotesize]at(22.77,-0.6){today};
+ \draw[muted](0,3.7)--(24,3.7);
+ \foreach \y in {2004,2008,...,2024}{\draw[muted](\y-2004,3.7)--++(0,.12);
+  \node[below,font=\footnotesize,text=muted]at(\y-2004,3.8){\y};}
+\end{tikzpicture}
+\vfill
+\speaker{Start dates are the first products in the EUMETSAT Data Store: SEVIRI full disc January 2004, SEVIRI rapid scan May 2008, MTG FCI (Meteosat-12) September 2024, operational since 4 December 2024. MTG-I2 launched on 27 August 2026; its 2.5-minute rapid scan starts after commissioning, in 2027.}
+\end{frame}
+
+\begin{frame}{Three kinds of channels, three questions}
+\vfill
+\renewcommand{\arraystretch}{2}
+\begin{tabularx}{\linewidth}{@{}P{45mm}L@{}}
+{\large\textcolor{sevrss}{\textbf{Visible}}}\newline\faint{daytime} & {\large Where are the clouds?}\\
+{\large\textcolor{feasible}{\textbf{Near-infrared}}}\newline\faint{daytime} & {\large Cloud or snow? Ice or water?}\\
+{\large\textcolor{mtg}{\textbf{Thermal infrared}}}\newline\faint{day and night} & {\large How cold, so how high?}\\
+\end{tabularx}
+\vfill
+\takeaway{Every SEVIRI image has 12 channels: 11 with 3\,km pixels (about $3\times5$\,km over France) and the visible HRV with 1\,km pixels (about $1\times2$\,km). MTG has 16.}
+\speaker{SEVIRI channels. Visible: HRV (broadband 0.4--1.1 micrometres, 1 km sampling), VIS0.6 (0.56--0.71) and VIS0.8 (0.74--0.88, at the edge of the near-infrared). Near-infrared: NIR1.6. Thermal infrared, day and night: IR3.9, WV6.2, WV7.3, IR8.7, IR9.7, IR10.8, IR12.0, IR13.4. All 12 come from the same scan, in the same file. MTG FCI: VIS0.4, 0.5, 0.6, 0.8, 0.9, NIR1.3, 1.6, 2.2, and eight infrared channels, on a 1 or 2 km grid; VIS0.6, NIR2.2, IR3.8 and IR10.5 also at 0.5 or 1 km.}
+\end{frame}
+
+\section{The datasets}
+
+\begin{frame}{What can be downloaded}
+\vfill
+\large\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\linewidth}{@{}Lrrr@{}}\toprule
+ & Every & Years & Whole archive\\\midrule
+\multicolumn{4}{@{}l}{\textcolor{sevrss}{\normalsize\bfseries Images: what the instrument measures}}\\
+SEVIRI rapid scan & 5\,min & May 2008 $\to$ & 101\,TB\\
+SEVIRI, copy by Open Climate Fix & 5\,min & 2008--2022 & 62\,TB\\
+MTG & 10\,min & Sep 2024 $\to$ & 107\,TB\\[1mm]
+\multicolumn{4}{@{}l}{\textcolor{feasible}{\normalsize\bfseries Products: one answer per pixel, by EUMETSAT}}\\
+SEVIRI cloud mask & 5\,min & Oct 2008 $\to$ & 0.15\,TB\\
+SEVIRI cloud-top height & 15\,min & Jun 2005 $\to$ & 0.24\,TB\\
+MTG cloud mask & 10\,min & Jan 2025 $\to$ & 0.45\,TB\\
+MTG cloud-top height, cloud type & 10\,min & Dec 2025 $\to$ & 3.9\,TB\\\bottomrule
+\end{tabularx}
+\vfill
+\source{First product in the EUMETSAT Data Store (6 Oct 2026); MTG operational since 4 Dec 2024.}
+\speaker{All free with a EUMETSAT account; the Open Climate Fix copy needs none. MTG data are public from 24 September 2024, pre-operational until 4 December 2024. Sizes are product counts times mean file size; $\to$ means up to today. Per year the two SEVIRI archives are similar: about 5.5 TB from EUMETSAT and 4.4 TB in the Open Climate Fix copy, which is 25 percent smaller thanks to 16-bit values compressed with zstd; 62 TB is our estimate from the measured 2020 store, close to the 60 TB Open Climate Fix states. SEVIRI images: 58 MB every 5 minutes, all of Europe in one file; a recalibrated record (FCDR, 2008--2021, 102 TB) also exists. MTG images: the 4 high-resolution channels (107 TB) and all 16 channels (105 TB), about 1 GB every 10 minutes each, in 40 horizontal strips of which a French region needs 3. SEVIRI full-disc cloud mask: every 15 minutes since 2004, 0.45 TB. MTG cloud mask since January 2025; cloud-top height and cloud type since December 2025. The rapid scan misses about 7 percent of summer daytime images (70 percent present in 2008, 84--93 percent in 2009--2012, 2017 and 2022, 97--100 percent otherwise); the official archive has the same gaps.}
+\end{frame}
+
+\begin{frame}{Two ways to get the same SEVIRI images}
+\vfill
+\large\renewcommand{\arraystretch}{1.4}
+\begin{tabularx}{\linewidth}{@{}P{38mm}LL@{}}\toprule
+ & \textbf{EUMETSAT} & \textbf{Open Climate Fix copy}\\\midrule
+Years & 2008 $\to$ today & 2008--2022\\
+Archive 2008--2022 & $\approx$\,81\,TB & $\approx$\,62\,TB\\
+One download & all Europe, one scan & 1 hour, 100$\times$100 pixels\\
+Our cells, one day & $\approx$\,8.4\,GB & $\approx$\,0.07\,GB (measured)\\\bottomrule
+\end{tabularx}
+\vfill
+\takeaway{Similar total size; the difference is the cut: the copy lets us download only the blocks over our cells.}
+\speaker{Open Climate Fix, a non-profit lab for solar forecasting, converted the EUMETSAT rapid-scan files into Zarr arrays in the public Google Cloud bucket public-datasets-eumetsat-solar-forecasting, folder satellite/EUMETSAT/SEVIRI\_RSS/v4: one store per year for the 11 standard channels and one for HRV. No account is needed. A block is one hour of images over about 300 by 500 km (standard channels) or 100 by 200 km (HRV). Values are the calibrated reflectances and temperatures rescaled to 0--1 with fixed bounds from their Satip code; we undo the scaling. Its image count matches the official archive within 1 percent from 2014 on. EUMETSAT: one 58 MB file per scan, 144 scans between 08:00 and 20:00, so 8.4 GB a day. The 0.07 GB is what our pilot day, 25 July 2020, downloaded.}
+\end{frame}
+
+\begin{frame}{One pixel, two answers: image or cloud mask}
+\vfill
+\begin{columns}[c,onlytextwidth]
+\column{.28\textwidth}\centering
+\begin{tikzpicture}[x=1mm,y=1mm]
+ \fill[black!62](0,0)rectangle(24,40);
+ \fill[white](15,27)circle(4.6);\fill[white](19.5,28.5)circle(3.8);\fill[white](11,29)circle(3.4);\fill[white](15.5,31.5)circle(3.8);
+ \draw[pisablue,line width=.8pt](0,0)rectangle(24,40);
+ \node[below,font=\footnotesize,align=center]at(12,-1){a $3\times5$\,km pixel,\\15\% cumulus};
+\end{tikzpicture}
+\column{.68\textwidth}
+{\large\textcolor{sevrss}{\textbf{Image}}}\quad $0.85\times10\%+0.15\times70\%=\mathbf{19\%}$\par\smallskip
+Brighter than clear ground (10\%): the cloud is still there.\par\bigskip
+{\large\textcolor{feasible}{\textbf{Cloud mask}}}\quad cloud or clear, nothing in between\par\smallskip
+Mostly ``cloud'' for all 15\,km$^2$; ``clear'' for the smallest cumuli.
+\end{columns}
+\vfill
+\takeaway{We want the images, the HRV above all: the mask throws away how much cloud there is, and where.}
+\source{Illustrative reflectances. Mask behaviour: Bley and Deneke (2013).}
+\speaker{A pixel that a cloud covers only in part is a mixed pixel: its brightness is a weighted average of cloud and ground, so a small cumulus raises it from 10 to about 19 percent. The cloud mask is a product computed by EUMETSAT from the 3 km channels only, without HRV; it gives one class per pixel: cloud, clear land, clear water. Bley and Deneke compared it with the 1 km HRV channel: most partly cloudy 3 km pixels are classified cloudy, which overestimates cloud cover, while small convective clouds below the pixel size are missed. HRV, one of SEVIRI's 12 channels in the same images, gives about 70 brightness values per 10 km cell instead of about 13 yes or no answers, and the same cumulus fills more of a smaller pixel. The 10 and 70 percent reflectances are illustrative; EUMETSAT combines tests on several channels rather than one threshold.}
+\end{frame}
+
+\section{Limits}
+
+\begin{frame}{Parallax: clouds appear north of where they are}
+\vfill
+\begin{columns}[c,onlytextwidth]
+\column{.52\textwidth}
+\centering
+\begin{tikzpicture}[x=.85mm,y=.85mm,font=\footnotesize]
+ \draw[muted,line width=.8pt](0,0)--(70,0);
+ \draw[muted,dashed](20,22)--(20,0);
+ \draw[mtg,line width=1pt](2,45)--(48.3,0);
+ \fill[white,draw=sevfull,line width=.8pt](20,24)ellipse(8 and 3.5);
+ \draw[muted,dashed](48.3,0)--(48.3,15);
+ \draw[mtg](48.3,8)arc(90:135.8:8);\node[text=mtg]at(44.6,11.4){$\theta$};
+ \fill[sevrss](20,0)circle(1.2);\fill[mtg](48.3,0)circle(1.2);
+ \draw[|-|](20,-5)--node[below]{shift}(48.3,-5);
+ \node[anchor=west]at(29,25){cloud at height $h$};
+ \node[anchor=south west,text=mtg]at(4,40){line of sight};
+ \node[anchor=north,text=sevrss]at(14,-1.5){true};
+ \node[anchor=south,text=mtg]at(55,1.5){seen};
+ \node[anchor=east,text=muted]at(-1,0){S};\node[anchor=west,text=muted]at(71,0){N};
+\end{tikzpicture}
+\column{.44\textwidth}
+\large
+\[\text{shift}=h\,\tan\theta\approx1.3\text{--}1.5\times h\]
+{\small $\theta$: angle of the line of sight from vertical,\\ 52--57$^\circ$ over France}\par\medskip
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{@{}lr@{}}
+Cloud at 2.5\,km & 3--4\,km north\\
+Cloud at 4\,km & 5--6\,km north\\
+\end{tabular}
+\end{columns}
+\vfill
+\takeaway{A cloud above a 10\,km cell can show up in the next cell to the north.}
+\speaker{How theta is found, treating the Earth as a sphere (R = 6371 km; satellite at Rgeo = 42164 km from the centre, above the equator at longitude ls: 9.5 E for the SEVIRI rapid scan, 0 for MTG). (1) The angle c at the Earth's centre between the place (latitude phi, longitude l) and the point below the satellite: cos c = cos(phi) cos(l - ls). (2) The distance place--satellite: d squared = R squared + Rgeo squared - 2 R Rgeo cos c. (3) The angle from the local vertical: sin(theta) = (Rgeo / d) sin c. Example near Annecy (45.3 N, 5.9 E, SEVIRI): c = 45.4 degrees, d = 37960 km, theta = 52.3 degrees, tan(theta) = 1.29. Normandy (49 N, 0.45 W): theta = 57 degrees, tan 1.54, being further from the point below the satellite. Why theta is close to, but larger than, the latitude: in the triangle centre--place--satellite, theta = c + beta (exterior angle), where c is roughly the latitude (slightly more, because France is west of the satellite) and beta, about 7 degrees, is the angle under which the satellite sees the Earth's radius; beta would vanish only for a satellite infinitely far away. Annecy: c = 45.4, beta = 6.9, theta = 52.3 degrees; Normandy: c = 49.7, beta = 7.3, theta = 57.0 degrees. Seen from France, Meteosat stands 90 - theta, about 33--38 degrees, above the southern horizon. The shifts in km were computed with pyproj on the WGS84 ellipsoid, tracing the line from the satellite through the cloud to the ground; the angles agree within a fraction of a degree. The satellite assumes everything sits at sea level. A cloud at height h is seen along a slanted line, about 52 degrees from vertical over France, and appears further from the satellite, so north. Even 2000 m terrain appears about 2.5 km off. For our cells: 3--3.6 km in the plains, 5--6 km in the Alps. Height maps exist (SEVIRI cloud-top height every 15 minutes since 2005; MTG cloud-top height every 10 minutes since December 2025), but they come from infrared temperature, and EUMETSAT states for MTG: fractional clouds are excluded, because they are contaminated by radiation emitted by the underlying surface. Fair-weather cumuli are that case; the highest altitude reached in climbs is a better estimate of cloud base. satpy provides the per-pixel correction when a height map is available.}
+\end{frame}
+
+\begin{frame}{So we download a larger window and shift it back}
+\vfill
+\begin{columns}[c,onlytextwidth]
+\column{.38\textwidth}\centering
+\begin{tikzpicture}[x=2.5mm,y=2.5mm,font=\footnotesize]
+ \fill[sevrss!12](-1,0)rectangle(11,17);
+ \draw[sevrss,dashed,line width=.9pt](-1,0)rectangle(11,17);
+ \fill[white](0,0)rectangle(10,10);
+ \draw[mtg,line width=1.2pt](0,0)rectangle(10,10);
+ \node[text=mtg,anchor=north]at(5,-.3){10\,km cell};
+ \node[text=sevrss,align=center]at(5,15.3){downloaded\\$12\times17$\,km};
+ \fill[white,draw=sevfull,line width=.6pt](4,5)ellipse(1.5 and .8);
+ \fill[sevfull](4,11.5)ellipse(1.5 and .8);
+ \draw[-{Latex[length=1.6mm]},mtg](4,6)--(4,10.6);
+ \node[anchor=west,text=mtg]at(5.7,11.5){seen};
+ \node[anchor=west]at(5.7,5){true};
+ \draw[-{Latex[length=1.6mm]},muted](13,12)--(13,16);\node[text=muted]at(13,16.9){N};
+\end{tikzpicture}
+\column{.58\textwidth}
+\stepitem{1}{Download the cell plus 7\,km to the north and 1\,km on each side}\medskip
+\stepitem{2}{Take the cloud height from the climbs of that day: satellite height maps miss small cumuli}\medskip
+\stepitem{3}{Shift each image back by $1.3$--$1.5\times h$, in Python with satpy}
+\end{columns}
+\vfill
+\takeaway{The margin costs a little more data; the correction is one function call, and can change later without downloading again.}
+\source{satpy.modifiers.parallax: get\_parallax\_corrected\_lonlats takes the satellite position, the pixel positions and a cloud height.}
+\speaker{Clouds above the cell can appear up to about 6 km further north, so the crop is 12 by 17 km instead of 10 by 10: this is the north margin in our configuration (half size 5 km, north margin 7 km, side margin 1 km). The shift points almost due north for both satellites, slightly west for SEVIRI and slightly east for MTG, hence the 1 km side margins. The correction needs the cloud height h above sea level. Satellite cloud-top height maps exist, but they come from infrared temperature and EUMETSAT excludes fractional clouds from the MTG product; fair-weather cumuli are that case. The highest altitude reached in the climbs of that day and cell is close to cloud base. satpy's get\_parallax\_corrected\_lonlats accepts a single height as well as a map; its ParallaxCorrection class instead needs a full cloud-top height field. The stored data stay uncorrected, so the choice of height can change later.}
+\end{frame}
+
+\section{Our study}
+
+\begin{frame}{Our study: twelve 10 km windows}
+\centering\includegraphics[width=\linewidth,height=50mm,keepaspectratio]{assets/cells-map.pdf}\par
+\takeaway{Every 5\,min? 15min?, 2008--2026? 2008--2023?, 08:00--20:00 ?}
+\source{Terrain bands as in use now: mean DEM elevation of each cell. Next: the highest DEM elevation in the cell, which may change the twelve cells.}
+\speaker{The three cells with the most Vilpellet climbs in each band of mean IGN elevation (below 300 m, 300--800, 800--1500, above 1500 m). This classification is the one in use now, not the final one: it will be replaced by a classification on the highest elevation in the cell, still computed from the IGN digital elevation model. The cells selected in each band may then change, and the satellite crop would be rerun for any new cell. Cells (ix/iy, 5 km Lambert-93 lattice): plains 89/1375, 89/1374, 114/1275; hills 184/1293, 185/1294, 189/1305; low mountains 190/1306, 184/1294, 195/1265; high mountains 197/1309, 193/1309, 194/1308. Each window is the 10 by 10 km Zoom-out view of Thermal planes, centred on the 5 km cell, plus 7 km to the north for parallax. Highest climb: the highest altitude any flight reached in the cell. Source: viewer store thermal-planes.sqlite3, ranking vilpellet-climb-runs-dem-top-v1.}
+\end{frame}
+
+\begin{frame}{How the pixels fall on a 10 km cell}
+\centering\includegraphics[width=\linewidth]{assets/expected/grids.pdf}
+\takeaway{Cumuli are 0.5--2\,km wide: SEVIRI's 3\,km channels are too coarse for our analyses; its HRV channel sees the larger cumuli, MTG single clouds.}
+\speaker{Pixel spacing over France, about 45 N, from the viewing geometry: 3 by 5 km for the SEVIRI standard channels, 1 by 2 km for SEVIRI HRV (same images, sharper channel), 0.6 by 0.9 km for the sharpest MTG channels. France is seen about 50 degrees off vertical, so pixels stretch north to south. Each pixel sees a somewhat wider spot than its spacing: 4.8 km for the 3 km channels and 1.67 km for HRV at nadir (EUMETSAT, WMO OSCAR). The background clouds are synthetic.}
+\end{frame}
+
+\begin{frame}{What each dataset would show in a 10 km cell, over one hour}
+\centering
+\ifdefined\Speakernotes
+ \includegraphics[width=\linewidth]{assets/expected/frames/frame-33.png}
+\else
+ \animategraphics[autoplay,loop,poster=first,width=\linewidth]{4}{assets/expected/frames/frame-}{00}{60}
+\fi\par
+\hfill{\footnotesize\href{run:assets/expected/expected-views.gif}{Open GIF}}
+\takeaway{Illustration, not data. At $3\times5$\,km, SEVIRI is too coarse for our analyses; HRV shows the larger cumuli, MTG single clouds. Each panel changes only when its satellite takes an image.}
+\speaker{The first panel is an invented field of fair-weather cumuli at 50 m resolution, the others what each dataset would record: the brightness averaged over its pixels, from the latest image it would have taken. The cloud mask marks a pixel cloudy above a quarter of cloud cover, a rough imitation of the documented behaviour. The 3 by 5 km channels cannot locate cumuli inside the cell; we still download them for what they do well: the infrared for cloud temperature and the 1.6 micrometre channel to tell snow from cloud. Real images are blurrier and shifted north by parallax; both are left out on purpose. One synthetic hour, one frame per minute. Cumuli are born mostly over four fixed hot spots, as above thermal sources, live 15 to 35 minutes and drift east at 2 m/s. The dots mark when SEVIRI (every 5 minutes) and MTG (every 10) take an image; in between, a panel stays frozen. A 15-minute cumulus appears in about three SEVIRI images and one or two MTG images.}
+\end{frame}
+
+\begin{frame}{Three quarters of our flight-days fall in the cheap years}
+\vfill\centering
+\begin{tikzpicture}[x=1mm,y=1mm]
+ \fill[pisablight](0,0)rectangle(1.8,12);
+ \fill[sevrss](1.8,0)rectangle(103,12);\node[text=white,font=\large\bfseries]at(52.4,6){75\%};
+ \fill[gap](103,0)rectangle(122.8,12);\node[font=\large\bfseries]at(112.9,6){15\%};
+ \fill[mtglight](122.8,0)rectangle(135.5,12);\node[font=\bfseries]at(129.2,6){9\%};
+ \foreach \x/\y in {1.8/2008,103/2023,122.8/2025,135.5/2026}{\node[below,font=\footnotesize,text=muted]at(\x,0){\y};}
+\end{tikzpicture}
+\vfill
+\begin{columns}[T,onlytextwidth]
+\column{.32\textwidth}\textcolor{sevrss}{\textbf{2008--2022}}\par\small SEVIRI copy: cheap
+\column{.32\textwidth}\textcolor{feasible}{\textbf{2023--2024}}\par\small SEVIRI files: expensive
+\column{.32\textwidth}\textcolor{mtg}{\textbf{2025--2026}}\par\small MTG: feasible
+\end{columns}
+\vfill
+\takeaway{SEVIRI runs to today; only its cheap copy stops in 2022. The cloud mask covers 2023--2024 cheaply.}
+\speaker{Flight-days in the 12 cells: summer days times cells crossed, from the viewer table summer\_days, 48,755 in total; 1 percent fall before 2008, without 5-minute data. In 2023--2024 the SEVIRI images exist only as whole-Europe EUMETSAT files, 58 MB every 5 minutes. From late 2024, MTG offers sharper images every 10 minutes at a feasible cost.}
+\end{frame}
+
+\begin{frame}{Plan and space needed}
+\vfill
+\large\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{\linewidth}{@{}rLrr@{}}\toprule
+ & & Kept & Downloaded\\\midrule
+1 & SEVIRI images 2008--2022, OCF copy & 5.5\,GB & 330\,GB\\
+2 & SEVIRI cloud mask 2008--2026 & 0.17\,GB & 85\,GB\\
+3 & MTG images 2024--2026, 3 strips & 1.1\,GB & 3.3\,TB\\
+4 & Optional: SEVIRI cloud-top height & 0.13\,GB & 149\,GB\\\midrule
+ & \textbf{Total} & \textbf{$\approx$\,7\,GB} & \textbf{$\approx$\,3.9\,TB}\\\bottomrule
+\end{tabularx}
+\vfill
+\takeaway{Left out: SEVIRI images for 2023--2026, 11.6\,TB to download for 1.2\,GB kept.}
+\speaker{Kept: 10 km windows plus the 7 km northern margin, 08:00--20:00 only. Downloaded: the files or blocks that hold the cells; about 3.6 days at 100 Mbit/s in total. Row 1 is measured on a pilot day (25 July 2020: 69 MB downloaded in 11 seconds, 1.1 MB kept; HRV and the 3 km visible channels match best at zero shift, correlation 0.995) and scaled to the days the archive holds. The other rows use catalogue file sizes. Also not planned: MTG all 16 channels (3.2 TB), MTG cloud products (2.2 TB). Each block is cropped in memory and dropped; parallax is not applied to the stored data. Rows 2--4 need a free EUMETSAT account.}
+\end{frame}
+
+\begin{frame}{Sources}
+\footnotesize
+\refitem{https://data.eumetsat.int}{EUMETSAT Data Store: product descriptions, counts and file sizes}{queried 6 Oct 2026}
+\refitem{https://console.cloud.google.com/storage/browser/public-datasets-eumetsat-solar-forecasting/satellite/EUMETSAT/SEVIRI_RSS/v4}{Open Climate Fix SEVIRI rapid-scan Zarr, public bucket}{block sizes measured 6 Oct 2026}
+\refitem{https://github.com/openclimatefix/Satip}{Open Climate Fix Satip: channel scaling constants}{satip/constants.py}
+\refitem{https://www-cdn.eumetsat.int/files/2020-07/pdf_mtg_fci_l1_pug.pdf}{MTG FCI Level 1 Product User Guide}{40 strips per scan}
+\refitem{https://www.businesswire.com/news/home/20241204214350/de}{Meteosat-12 declared operational}{4 Dec 2024}
+\refitem{https://asdnews.com/news/aerospace/2026/08/27/arianespace-successfully-launches-weather-satellite-mtgi2-ariane-6s-first-mission-geostationary-orbit}{MTG-I2 launch}{27 Aug 2026}
+\refitem{https://doi.org/10.5194/amt-6-2713-2013}{Bley and Deneke (2013), HRV cloud mask}{EUMETSAT mask and sub-pixel cumuli}
+\refitem{https://space.oscar.wmo.int/instruments/view/seviri}{WMO OSCAR: SEVIRI}{sampling and field of view}
+\refitem{https://satpy.readthedocs.io/en/latest/api/satpy.modifiers.parallax.html}{satpy parallax correction}{needs cloud-top height}
+\par\medskip
+Cells and flight-days: viewer store thermal-planes.sqlite3. Pixel sizes, parallax shifts and download times are computed, except where marked as measured. Cloud drawings and animation are synthetic.
+\speaker{Everything marked as measured was queried or downloaded on 6 October 2026.}
+\end{frame}
+
+\end{document}

@@ -16,6 +16,21 @@ mostrano i contributi open/closed dentro ogni classe di quota e motivano
 l'analisi fattoriale futura per group/solo. Il deck non segue la vecchia
 numerazione delle presentazioni estese riportate sotto.
 
+## Dati satellitari delle nuvole
+
+[Satellite cloud data over France](satellite-clouds/satellite-clouds.pdf), in
+inglese, 16 slide: prima una panoramica dei dataset disponibili (SEVIRI, MTG,
+prodotti di nubi, polari), con canali, risoluzione sulla Francia, periodi,
+peso degli archivi e limiti (altezza delle nubi, parallasse); poi cosa serve
+per le 12 celle di Thermal planes e quanto spazio occupa. Due slide mostrano,
+con nubi sintetiche e non con dati reali, cosa vedrebbe ciascun dataset su una
+cella di 10 km: le griglie dei pixel e un'ora animata (anche come
+[GIF](satellite-clouds/assets/expected/expected-views.gif)). C'è anche la
+[versione con note](satellite-clouds/satellite-clouds-notes.pdf). Le figure si
+rigenerano con `uv run python presentations/satellite-clouds/render_expected_views.py`
+e `render_cells_map.py` (mappa delle celle),
+il PDF con `python3 presentations/satellite-clouds/build.py`.
+
 ## Presentazioni estese per discussione
 
 Queste presentazioni raccontano la tesi revisionata il 14 settembre 2026, con
