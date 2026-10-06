@@ -8,14 +8,15 @@ extracts](https://www.data.gouv.fr/datasets/rge-alti-r), under **Licence Ouverte
 2.0**. They are approximate, scale-dependent height ridges, not official mapped
 crest vectors or an exhaustive inventory of every local maximum.
 
-Only the twelve saved 5 × 5 km viewer cells were downloaded, each with a 500 m
-buffer for differentiation. Each terrain response is a 240 × 240 float32 TIFF
-(25 m sampling, 230,534 bytes); total **2,766,408 bytes**, approximately 2.64 MiB.
+Only 5 × 5 km viewer cells were downloaded: the twelve current ones and those of
+earlier selections, 19 in all, each with a 500 m buffer for differentiation. Each
+terrain response is a 240 × 240 float32 TIFF (25 m sampling, 230,534 bytes); total
+**4,380,146 bytes**, approximately 4.18 MiB.
 WMS source: `https://data.geopf.fr/wms-r/wms`, layer
 `ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES`, `STYLES=normal`, `FORMAT=image/tiff`,
 `CRS=EPSG:2154`. RGE ALTI is originally a finer terrain product; 25 m is the
 requested sampling interval of these windows, not its native accuracy.
-Retrieved 22 September 2026. The TIFFs contain heights, not a coloured map.
+Retrieved 22 September 2026 (the seven cells added on 6 October 2026 on that date). The TIFFs contain heights, not a coloured map.
 
 ## Reproducible derivation
 
@@ -55,15 +56,15 @@ The viewer and figure exporter share `thermal_ridges.load_ridges` and
 `thermal_ridges.draw_ridges`; neither downloads data. Terrain lines do not
 change the flight sample or counts.
 
-## Mean terrain reference for the viewer
+## Terrain references for the viewer
 
 `thermal_ground.terrain_reference` reuses these elevation TIFFs to compute the
-area-weighted mean inside the exact 5 × 5 km cell. It verifies each raster's hash
-against its saved provenance and requires complete finite coverage. The mean
-uses the original elevations, before ridge smoothing, excluding the 500 m buffer:
-200 × 200 = 40,000 values per cell at 25 m sampling. This replaces the launch
-median as the thermal plane's reference elevation. Launch medians remain separate
-metadata for the existing cell ranking.
+area-weighted mean, the minimum and the maximum inside the exact 5 × 5 km cell. It
+verifies each raster's hash against its saved provenance and requires complete
+finite coverage. All three use the original elevations, before ridge smoothing,
+excluding the 500 m buffer: 200 × 200 = 40,000 values per cell at 25 m sampling.
+The maximum sets the cell's altitude band; the minimum is the thermal plane's
+reference elevation. Launch medians remain separate audit metadata.
 
 ```bash
 .venv/bin/python scripts/pipeline/prepare_thermal_ground.py
@@ -101,5 +102,5 @@ Additional elevation extracts requested by viewer navigation are stored on the
 SSD in `exploration/terrain/` beside `thermal-planes.sqlite3`, not in this folder.
 They use the same official IGN elevation layer, with a 200 × 200 float TIFF over
 the exact 5 km square. A JSON sidecar retains the query, hash, sampling and
-retrieval date. These extracts supply mean terrain references; no red crest
+retrieval date. These extracts supply terrain references; no red crest
 geometry is automatically inferred for neighbouring cells.

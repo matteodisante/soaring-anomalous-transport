@@ -1,0 +1,65 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "detail_orographique.24465",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          444435.90020475,
+          6881733.50462585
+        ]
+      },
+      "geometry_name": "geometrie",
+      "properties": {
+        "cleabs": "PAIOROGR0000000013905283",
+        "nature": "Sommet",
+        "nature_detaillee": null,
+        "toponyme": "Colline d'Enfer",
+        "statut_du_toponyme": "Validé",
+        "importance": "5",
+        "date_creation": "2006-08-25T13:32:02.985Z",
+        "date_modification": "2019-09-20T16:10:23.317Z",
+        "date_d_apparition": null,
+        "date_de_confirmation": null,
+        "sources": null,
+        "identifiants_sources": null,
+        "methode_d_acquisition_planimetrique": "BDNyme",
+        "precision_planimetrique": 30,
+        "insee_commune": "14689",
+        "identifiant_voie_ban": null,
+        "id_ban_odonyme": null
+      }
+    }
+  ],
+  "totalFeatures": 1,
+  "numberMatched": 1,
+  "numberReturned": 1,
+  "timeStamp": "2026-10-06T17:43:43.892Z",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:EPSG::2154"
+    }
+  },
+  "provenance": {
+    "source_url": "https://data.geopf.fr/wfs/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=BDTOPO_V3%3Adetail_orographique&SRSNAME=EPSG%3A2154&CQL_FILTER=BBOX%28geometrie%2C440000%2C6.88e%2B06%2C445000%2C6.885e%2B06%2C%27EPSG%3A2154%27%29+AND+nature+IN+%28%27Sommet%27%2C%27Pic%27%29&OUTPUTFORMAT=application%2Fjson&COUNT=1000",
+    "dataset_url": "https://www.data.gouv.fr/datasets/bd-topo-r",
+    "layer": "BDTOPO_V3:detail_orographique",
+    "attribution": "Summits: © IGN · BD TOPO · Licence Ouverte 2.0",
+    "licence": "Licence Ouverte 2.0",
+    "retrieved_utc": "2026-10-06T17:43:43.910266+00:00",
+    "response_sha256": "c9cb53c566daeec6057c62bf3087b2886896feab1555957c96fb7b5639fc03d3",
+    "response_bytes": 871,
+    "response_feature_count": 1,
+    "bounds_epsg2154": [
+      440000.0,
+      6880000.0,
+      445000.0,
+      6885000.0
+    ],
+    "selection": "Sommet/Pic only; exact Lambert-93 cell bounds.",
+    "note": "Named summits; not a complete ridge network or DEM maxima."
+  }
+}

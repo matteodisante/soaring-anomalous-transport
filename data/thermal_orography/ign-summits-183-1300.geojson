@@ -1,0 +1,65 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "detail_orographique.22746",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          916059.79983315,
+          6504878.2047498
+        ]
+      },
+      "geometry_name": "geometrie",
+      "properties": {
+        "cleabs": "PAIOROGR0000000012527548",
+        "nature": "Sommet",
+        "nature_detaillee": null,
+        "toponyme": "la Marche",
+        "statut_du_toponyme": "Validé",
+        "importance": "5",
+        "date_creation": "2006-08-16T13:05:26.711Z",
+        "date_modification": "2019-09-20T16:10:23.317Z",
+        "date_d_apparition": null,
+        "date_de_confirmation": null,
+        "sources": null,
+        "identifiants_sources": null,
+        "methode_d_acquisition_planimetrique": "BDNyme",
+        "precision_planimetrique": 30,
+        "insee_commune": "73191",
+        "identifiant_voie_ban": null,
+        "id_ban_odonyme": null
+      }
+    }
+  ],
+  "totalFeatures": 1,
+  "numberMatched": 1,
+  "numberReturned": 1,
+  "timeStamp": "2026-10-06T17:43:44.706Z",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:EPSG::2154"
+    }
+  },
+  "provenance": {
+    "source_url": "https://data.geopf.fr/wfs/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=BDTOPO_V3%3Adetail_orographique&SRSNAME=EPSG%3A2154&CQL_FILTER=BBOX%28geometrie%2C915000%2C6.5e%2B06%2C920000%2C6.505e%2B06%2C%27EPSG%3A2154%27%29+AND+nature+IN+%28%27Sommet%27%2C%27Pic%27%29&OUTPUTFORMAT=application%2Fjson&COUNT=1000",
+    "dataset_url": "https://www.data.gouv.fr/datasets/bd-topo-r",
+    "layer": "BDTOPO_V3:detail_orographique",
+    "attribution": "Summits: © IGN · BD TOPO · Licence Ouverte 2.0",
+    "licence": "Licence Ouverte 2.0",
+    "retrieved_utc": "2026-10-06T17:43:44.692016+00:00",
+    "response_sha256": "b421a22bc7f4db1ce8aab6c070803f13b225f333711e4620d095e8911b48ed4f",
+    "response_bytes": 864,
+    "response_feature_count": 1,
+    "bounds_epsg2154": [
+      915000.0,
+      6500000.0,
+      920000.0,
+      6505000.0
+    ],
+    "selection": "Sommet/Pic only; exact Lambert-93 cell bounds.",
+    "note": "Named summits; not a complete ridge network or DEM maxima."
+  }
+}

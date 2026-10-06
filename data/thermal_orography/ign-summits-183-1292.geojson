@@ -1,0 +1,65 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "detail_orographique.11387",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          918643.09983215,
+          6464991.80475241
+        ]
+      },
+      "geometry_name": "geometrie",
+      "properties": {
+        "cleabs": "PAIOROGR0000000007454604",
+        "nature": "Sommet",
+        "nature_detaillee": null,
+        "toponyme": "Mont Saint-Eynard",
+        "statut_du_toponyme": "Validé",
+        "importance": "3",
+        "date_creation": "2006-07-11T13:39:39.862Z",
+        "date_modification": "2019-09-20T16:10:23.317Z",
+        "date_d_apparition": null,
+        "date_de_confirmation": null,
+        "sources": null,
+        "identifiants_sources": null,
+        "methode_d_acquisition_planimetrique": "BDNyme",
+        "precision_planimetrique": 30,
+        "insee_commune": "38045",
+        "identifiant_voie_ban": null,
+        "id_ban_odonyme": null
+      }
+    }
+  ],
+  "totalFeatures": 1,
+  "numberMatched": 1,
+  "numberReturned": 1,
+  "timeStamp": "2026-10-06T17:43:44.585Z",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:EPSG::2154"
+    }
+  },
+  "provenance": {
+    "source_url": "https://data.geopf.fr/wfs/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=BDTOPO_V3%3Adetail_orographique&SRSNAME=EPSG%3A2154&CQL_FILTER=BBOX%28geometrie%2C915000%2C6.46e%2B06%2C920000%2C6.465e%2B06%2C%27EPSG%3A2154%27%29+AND+nature+IN+%28%27Sommet%27%2C%27Pic%27%29&OUTPUTFORMAT=application%2Fjson&COUNT=1000",
+    "dataset_url": "https://www.data.gouv.fr/datasets/bd-topo-r",
+    "layer": "BDTOPO_V3:detail_orographique",
+    "attribution": "Summits: © IGN · BD TOPO · Licence Ouverte 2.0",
+    "licence": "Licence Ouverte 2.0",
+    "retrieved_utc": "2026-10-06T17:43:44.568740+00:00",
+    "response_sha256": "410437ed82b4b5a845ca3aa7d4aaf828c182be80c6ebcbf404b86abd355bdc84",
+    "response_bytes": 873,
+    "response_feature_count": 1,
+    "bounds_epsg2154": [
+      915000.0,
+      6460000.0,
+      920000.0,
+      6465000.0
+    ],
+    "selection": "Sommet/Pic only; exact Lambert-93 cell bounds.",
+    "note": "Named summits; not a complete ridge network or DEM maxima."
+  }
+}
