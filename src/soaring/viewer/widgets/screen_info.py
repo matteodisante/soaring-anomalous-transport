@@ -130,11 +130,17 @@ show all. The displayed and matching counts remain separate.</li>
 <p>Load a pair, enable <b>Departure window</b>, choose <b>Day (Paris)</b>,
 <b>From</b> and the window length, then click <b>Apply</b>. The initial window
 is 30 minutes. Days and their counts cover every flight in the pair, including
-those outside the 300-flight sample; the initial day has the most dated departures.</p>
+those outside the 300-flight sample; the initial day has the most dated departures.
+The start follows the first departure's minute. Changing day keeps a matching
+interval, or moves the start to that day's first departure if it would be empty.</p>
 <p>The interval includes its start and excludes its end: 12:00 for 30 minutes
 means 12:00 &le; departure &lt; 12:30 on that local day. The live count shows
 how many match before loading. The interval stays within one civil day;
 unavailable dates are counted and excluded from an active filter.</p>
+<p>The controls show a <b>Preview</b>; <b>Displayed departures</b> above the map
+identifies the applied selection. Editing keeps the current scene visible until
+Apply finishes loading. Empty previews disable loading. Failed or cancelled loads
+retain the previous scene and explain that it is still displayed.</p>
 <p>Filtering happens <b>before</b> duration ranking and sampling. Ranks and the
 fastest/slowest groups are recomputed within the chosen departure cohort.
 The first/last retained-fix definitions remain unchanged. Arrival may be on a

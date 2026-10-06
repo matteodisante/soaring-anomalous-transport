@@ -39,10 +39,12 @@ class DepartureFilter(QWidget):
         )
         self._start = QTimeEdit(QTime(12, 0))
         self._start.setDisplayFormat("HH:mm")
+        self._start.setKeyboardTracking(False)
         self._minutes = QSpinBox()
         self._minutes.setRange(1, 1440)
         self._minutes.setValue(30)
         self._minutes.setSuffix(" min")
+        self._minutes.setKeyboardTracking(False)
         self._minutes.setToolTip(
             "Window length in local clock minutes; ends on the same day"
         )
@@ -65,7 +67,7 @@ class DepartureFilter(QWidget):
         layout.addLayout(row)
         layout.addWidget(self._note)
         self._active.toggled.connect(self._changed)
-        self._day.currentIndexChanged.connect(self._changed)
+        self._day.currentIndexChanged.connect(self._day_changed)
         self._start.timeChanged.connect(self._changed)
         self._minutes.valueChanged.connect(self._changed)
         self._apply.clicked.connect(self.apply_requested.emit)
@@ -99,10 +101,11 @@ class DepartureFilter(QWidget):
             self._day.addItem(f"{day:%d/%m/%Y} · {count} flights", day)
         if len(counts):
             day = selected_day if selected_day in counts.index else counts.idxmax()
-            self._day.setCurrentIndex(self._day.findData(day))
-            if first:
-                earliest = local.loc[local.dt.date.eq(day)].min()
-                self._start.setTime(QTime(earliest.hour, earliest.minute // 30 * 30))
+            # Qt's findData does not compare Python date objects by value.
+            # Rebuilding the menu creates new objects, even for the same dates.
+            self._day.setCurrentIndex(int(counts.index.get_loc(day)))
+            if first or day != selected_day:
+                self._suggest_start()
         self._day.blockSignals(False)
         self._update()
         self.blockSignals(False)
@@ -122,8 +125,32 @@ class DepartureFilter(QWidget):
         self._busy = busy
         self._update()
 
+    def has_matches(self):
+        """Whether the preview contains departures that can actually be loaded."""
+        return self._matches > 0
+
+    def _suggest_start(self):
+        """Start at a real departure, including when the window is only one minute."""
+        local = local_departures(self._cohort)
+        earliest = local.loc[local.dt.date.eq(self._day.currentData())].min()
+        self._start.blockSignals(True)
+        self._start.setTime(QTime(earliest.hour, earliest.minute))
+        self._start.blockSignals(False)
+
+    def _day_changed(self, *_):
+        """Keep a useful time, or move to the first departure on the new day."""
+        if self._cohort is not None and self._day.currentData() is not None:
+            window = DepartureWindow(
+                self._day.currentData(),
+                self._start.time().toPyTime(),
+                self._minutes.value(),
+            )
+            if filter_departures(self._cohort, window).empty:
+                self._suggest_start()
+        self._changed()
+
     def _changed(self, *_):
-        """Update the preview and invalidate trajectories from the previous request."""
+        """Update the draft preview without applying it to displayed trajectories."""
         self._update()
         self.changed.emit()
 
@@ -147,14 +174,17 @@ class DepartureFilter(QWidget):
             matches = len(filter_departures(self._cohort, window))
             unknown = int(self._cohort.departure_utc.isna().sum())
             text = (
-                f"Until {window.end_label} (end excluded) · "
+                f"Preview · {window.label} · "
                 f"{matches} / {len(self._cohort)} departures"
                 if window
-                else f"All departures · {len(self._cohort)} flights"
+                else f"Preview · All departures · {len(self._cohort)} flights"
             )
+            if not matches:
+                text += " · No departures: choose another time or day"
             if unknown:
                 text += f" · unavailable dates: {unknown}"
             self._note.setText(text)
         else:
             self._note.clear()
+        self._matches = matches
         self._apply.setEnabled(not self._busy and matches > 0)

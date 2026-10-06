@@ -475,6 +475,7 @@ def test_widget_speed_filters_keep_camera_and_clear_stale_scene(qapp):
         assert widget._table.item(0, 5).text() == "0:16:40"
         assert widget._table.item(1, 3).text() == "Unavailable"
         assert widget._table.item(1, 4).text() == "Unavailable"
+        assert "Displayed departures: All dates" in widget._summary.text()
         before = widget._view.cameraParams()
         for mode, count in (("fast", 5), ("slow", 5), ("extremes", 10), ("all", 12)):
             widget._mode.setCurrentIndex(widget._mode.findData(mode))

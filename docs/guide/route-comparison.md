@@ -78,7 +78,9 @@ the window length, then click **Apply**. The initial length is **30 minutes**.
 The day selector lists every available departure date and its flight count in
 the complete pair/discipline population, including flights not in the initial
 300-flight sample. Its initial choice is the day with most dated departures
-(earliest date on a tie), with the first departure's half-hour selected.
+(earliest date on a tie), starting at the first departure's minute. Changing day
+keeps your chosen interval if it contains departures; otherwise **From** moves
+to the first departure on the new day, including for a one-minute window.
 
 For example, 12:00 with a 30-minute window keeps departures on the selected day
 with **12:00 ≤ departure < 12:30**, in Europe/Paris. Only departure matters;
@@ -88,9 +90,13 @@ local clock window; each flight's table timestamp states its offset designation.
 
 The preview counts matches and unavailable dates. Flights without a recoverable
 UTC origin cannot enter a dated cohort, but remain available with the filter off.
-Changing the controls clears the old trajectories; **Apply** loads the new cohort.
-An empty interval shows zero matches. Untick the filter and Apply to return to
-all departures. Changing the route or discipline resets the time filter.
+The controls show a **Preview**, while **Displayed departures** above the map
+identifies the applied selection. Editing keeps the current trajectories and camera
+visible; **Apply** replaces them only when the new cohort has finished loading.
+Failed or cancelled loads retain the previous selection with an explicit message.
+An empty interval shows zero matches and disables both load buttons. Untick the
+filter and Apply to return to all departures. Changing the route or discipline
+resets the time filter and clears the previous route.
 
 The backend applies the date/time filter to **all matching flights before**
 duration ranking and the 300-flight limit. The fastest/slowest ranks are therefore

@@ -82,7 +82,7 @@ class _RouteWorker(QThread):
             if not self.cancel.is_set():
                 self.succeeded.emit(result)
         except CancelledError:
-            self.failed.emit("Loading cancelled. No partial scene is displayed.")
+            self.failed.emit("Loading cancelled.")
         except Exception as exc:
             self.failed.emit(str(exc))
 
@@ -323,8 +323,10 @@ class RouteComparison(QWidget):
             self._status.setText(message)
 
     def _failed(self, message):
-        """Expose an archive or terrain error without a stale comparison."""
+        """Expose the error while retaining the explicitly labelled previous scene."""
         if self.sender() is self._worker:
+            if self._scene is not None:
+                message += " Previous departure selection is still displayed."
             self._status.setText(message)
 
     def _loaded(self, result):
@@ -362,7 +364,12 @@ class RouteComparison(QWidget):
             if worker.cancel.is_set():
                 self._pending_scene = False
                 self._status.setText(
-                    "Loading cancelled. No partial scene is displayed."
+                    "Loading cancelled. "
+                    + (
+                        "Previous departure selection is still displayed."
+                        if self._scene is not None
+                        else "No partial scene is displayed."
+                    )
                 )
             if self._pending_scene:
                 self._pending_scene = False
@@ -380,7 +387,11 @@ class RouteComparison(QWidget):
             self._pairs,
         ):
             widget.setEnabled(not busy)
-        self._load.setEnabled(not busy and self._pairs.count() > 0)
+        self._load.setEnabled(
+            not busy
+            and self._pairs.count() > 0
+            and (self._departure.selection() is None or self._departure.has_matches())
+        )
         self._cancel.setEnabled(busy)
         self._departure.set_busy(busy)
 
@@ -490,9 +501,21 @@ class RouteComparison(QWidget):
         )
 
     def _departure_changed(self):
-        """Never leave the previous cohort plotted under a changed time window."""
-        self._clear_scene()
-        self._status.setText("Departure selection changed. Click Apply to load it.")
+        """Keep the applied scene visible while the controls preview a new request."""
+        if (
+            self._scene is not None
+            and self._scene.departure_window == self._departure.selection()
+        ):
+            message = "Departure selection matches the displayed flights."
+        elif self._scene is not None:
+            message = (
+                "Departure changes not applied. Previous selection is still "
+                "displayed. Click Apply to load the preview."
+            )
+        else:
+            message = "Departure selection changed. Click Apply to load it."
+        self._status.setText(message)
+        self._set_busy(self._worker is not None)
 
     def _apply_departure(self):
         """Show the complete new departure cohort before optional speed filtering."""
@@ -527,7 +550,11 @@ class RouteComparison(QWidget):
         pair = self._pairs.currentData()
         if self._index is None or pair is None or self._worker is not None:
             return
-        self._clear_scene()
+        if (
+            self._departure.selection() is not None
+            and not self._departure.has_matches()
+        ):
+            return
         index, flights, discipline = (
             self._index,
             self._flights,
@@ -698,6 +725,8 @@ class RouteComparison(QWidget):
                 f"{name}: {count}"
                 for name, count in scene.selected.discipline.value_counts().items()
             )
+            + "\nDisplayed departures: "
+            + (scene.departure_window.label if scene.departure_window else "All dates")
         )
         source = (
             "Cleaned archive endpoints; elapsed time = last - first retained fix, "

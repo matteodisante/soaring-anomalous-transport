@@ -159,11 +159,15 @@ def test_departure_controls_list_all_days_preview_and_capture_request(
         assert control._day.count() == 2
         assert control._day.currentData() == date(2024, 6, 15)
         assert control._minutes.value() == 30
-        widget._scene = object()
+        previous = SimpleNamespace(
+            departure_window=None, selected=pd.DataFrame(columns=["speed_group"])
+        )
+        widget._scene = previous
         widget._table.setRowCount(1)
         control._active.setChecked(True)
         control._start.setTime(QTime(12, 0))
-        assert widget._scene is None and widget._table.rowCount() == 0
+        assert widget._scene is previous and widget._table.rowCount() == 1
+        assert "not applied" in widget._status.text()
         assert "2 / 5 departures" in control._note.text()
         assert "unavailable dates: 1" in control._note.text()
         operations = []
@@ -178,15 +182,131 @@ def test_departure_controls_list_all_days_preview_and_capture_request(
         captured = operations[-1]()
         assert captured == DepartureWindow(date(2024, 6, 15), time(12), 30)
         assert widget._mode.currentData() == "all"
+        assert widget._scene is previous and widget._table.rowCount() == 1
         control._start.setTime(QTime(13, 0))
         assert "0 / 5 departures" in control._note.text()
         assert not control._apply.isEnabled()
+        assert not widget._load.isEnabled()
+        assert "choose another time or day" in control._note.text()
+        widget._load_pair()
+        assert len(operations) == 1
         assert operations[-1]() == captured
         control._active.setChecked(False)
+        assert widget._load.isEnabled()
+        assert "matches the displayed" in widget._status.text()
         control._apply.click()
         assert operations[-1]() is None
         widget._pair_changed()
         assert control._day.count() == 0 and not control._active.isChecked()
+        assert widget._scene is None and widget._table.rowCount() == 0
+    finally:
+        widget.shutdown()
+        widget.close()
+
+
+def test_changing_day_finds_departures_but_keeps_a_matching_custom_window(qapp):
+    from PyQt6.QtCore import QTime
+
+    from soaring.viewer.widgets.departure_filter import DepartureFilter
+
+    times = pd.to_datetime(
+        [
+            "2024-06-15T10:05:47Z",
+            "2024-06-15T10:15:00Z",
+            "2024-06-16T08:58:27Z",
+            "2024-06-17T08:58:59Z",
+        ],
+        utc=True,
+    )
+    control = DepartureFilter()
+    try:
+        control.set_cohort(pd.DataFrame({"departure_utc": times.as_unit("s").asi8}))
+        control._active.setChecked(True)
+        assert control.selection() == DepartureWindow(date(2024, 6, 15), time(12, 5))
+        control._minutes.setValue(1)
+        control._day.setCurrentIndex(1)
+        assert control.selection() == DepartureWindow(
+            date(2024, 6, 16), time(10, 58), 1
+        )
+        assert control.has_matches() and control._apply.isEnabled()
+        control._start.setTime(QTime(10, 55))
+        control._minutes.setValue(10)
+        control._day.setCurrentIndex(2)
+        assert control.selection() == DepartureWindow(
+            date(2024, 6, 17), time(10, 55), 10
+        )
+        assert control.has_matches()
+    finally:
+        control.close()
+
+
+def test_applying_departure_window_preserves_day_time_and_preview(qapp):
+    from PyQt6.QtCore import QTime
+
+    from soaring.viewer.widgets.departure_filter import DepartureFilter
+
+    times = pd.to_datetime(
+        ["2024-06-15T10:05Z", "2024-06-16T08:58Z"], utc=True
+    )
+    cohort = pd.DataFrame({"departure_utc": times.as_unit("s").asi8})
+    control = DepartureFilter()
+    try:
+        control.set_cohort(cohort)
+        control._active.setChecked(True)
+        control._day.setCurrentIndex(1)
+        control._start.setTime(QTime(10, 50))
+        control._minutes.setValue(15)
+        requested = DepartureWindow(date(2024, 6, 16), time(10, 50), 15)
+        assert control.selection() == requested
+        for _ in range(2):
+            # Each completed scene repopulates the menu from the full cohort.
+            control.set_cohort(cohort.copy())
+            assert control._day.currentData() == date(2024, 6, 16)
+            assert control.selection() == requested
+            assert "1 / 2 departures" in control._note.text()
+            assert control._apply.isEnabled()
+    finally:
+        control.close()
+
+
+def test_departure_duration_edit_is_committed_as_one_value(qapp):
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtTest import QTest
+
+    from soaring.viewer.widgets.departure_filter import DepartureFilter
+
+    control = DepartureFilter()
+    changes = []
+    try:
+        control.set_cohort(
+            pd.DataFrame(
+                {"departure_utc": [pd.Timestamp("2024-06-15T10:05Z").timestamp()]}
+            )
+        )
+        control._active.setChecked(True)
+        control.changed.connect(lambda: changes.append(control.selection()))
+        control._minutes.selectAll()
+        QTest.keyClicks(control._minutes, "120")
+        assert changes == []
+        QTest.keyClick(control._minutes, Qt.Key.Key_Return)
+        assert changes == [DepartureWindow(date(2024, 6, 15), time(12, 5), 120)]
+    finally:
+        control.close()
+
+
+def test_failed_departure_load_retains_scene_and_explains_it(qapp, monkeypatch):
+    from soaring.viewer.widgets.route_comparison import RouteComparison
+
+    widget = RouteComparison()
+    previous = object()
+    widget._scene = previous
+    widget._table.setRowCount(1)
+    monkeypatch.setattr(widget, "sender", lambda: widget._worker)
+    try:
+        widget._failed("Archive unavailable.")
+        assert widget._scene is previous and widget._table.rowCount() == 1
+        assert "Archive unavailable" in widget._status.text()
+        assert "selection is still displayed" in widget._status.text()
     finally:
         widget.shutdown()
         widget.close()
