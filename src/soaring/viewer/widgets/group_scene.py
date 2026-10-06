@@ -33,7 +33,7 @@ class GroupScene(RouteComparison):
         self._table.setColumnCount(11)
         self._table.setHorizontalHeaderLabels(
             [
-                "Order",
+                "Show / order",
                 "Discipline",
                 "Flight ID",
                 "Departure (Paris)",
@@ -45,6 +45,9 @@ class GroupScene(RouteComparison):
                 "Gaps (min)",
                 "Segments",
             ]
+        )
+        self._table.horizontalHeaderItem(0).setToolTip(
+            "Tick to show a flight; untick to hide it. The number is its launch order."
         )
         self._table.horizontalHeaderItem(7).setToolTip(
             "Horizontal length of supported cleaned edges in Lambert-93; gaps excluded."
@@ -88,6 +91,7 @@ class GroupScene(RouteComparison):
             for col, value in enumerate(values):
                 item = QTableWidgetItem(value)
                 if col == 0:
+                    self._make_flight_checkable(item)
                     item.setBackground(self._colours[i])
                     item.setForeground(QColor("#061725"))
                 self._table.setItem(i, col, item)
@@ -100,7 +104,7 @@ class GroupScene(RouteComparison):
         lon, lat = unproject((ix + 0.5) * scene.cell_m, (iy + 0.5) * scene.cell_m)
         first, last = scene.selected.departure_utc.iloc[[0, -1]]
         self._summary.setText(
-            f"{len(scene.selected)} flights · "
+            f"{len(scene.selected)} loaded flights · "
             f"{scene.cell_m / 1000:g} x {scene.cell_m / 1000:g} km departure cell "
             f"[{ix}, {iy}] · {float(lat):.3f}° N, {float(lon):.3f}° E\n"
             f"First departure: {_flight_datetime(first)} · "
@@ -115,8 +119,8 @@ class GroupScene(RouteComparison):
             "Elapsed time includes gaps. "
             "Path = horizontal Lambert-93 length of supported cleaned edges, "
             "excluding gaps. "
-            "All group members are displayed; "
-            "path length and destination are unrestricted. "
+            "All group members are loaded; checkboxes control visibility. "
+            "Path length and destination are unrestricted. "
         )
 
     def _style_changed(self, *_):
@@ -126,7 +130,9 @@ class GroupScene(RouteComparison):
         selected = {item.row() for item in self._table.selectedItems()}
         visible = []
         for i, lines in enumerate(self._lines):
-            show = self._mode.currentData() == "all" or i in selected
+            show = self._flight_checked(i) and (
+                self._mode.currentData() == "all" or i in selected
+            )
             visible.append(show)
             colour = QColor("#ffffff") if i in selected else self._colours[i]
             for line in lines:
@@ -137,6 +143,7 @@ class GroupScene(RouteComparison):
                     width=self._line_width.value() * (1.75 if i in selected else 1),
                 )
                 line.setDepthValue(15 if i in selected else 5)
+        self._update_visible_count(visible)
         if self._surface is not None:
             self._surface.set_terrain_visible(self._terrain.isChecked())
         if self._annotations is not None:

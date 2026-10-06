@@ -3,7 +3,7 @@
 The **Group flights** tab compares cleaned flights departing from the same cell
 within a chosen time window. Arrival cells and journey lengths are unrestricted.
 It reuses the Routes 3D renderer, IGN elevation model, aerial imagery and thermal
-density layer. Every member of the selected group is displayed, without the
+density layer. Every member of the selected group is loaded, without the
 300-flight sampling limit used by Routes.
 
 ## Selecting a group
@@ -79,6 +79,12 @@ timestamp fields.
 
 Colours progress from blue through cyan to lime in departure order. Selecting table
 rows highlights their trajectories in white; **Selected rows only** isolates them.
+Use the checkboxes in **Show / order** to show or hide individual paths and their
+endpoint markers. Unticked flights stay in the table for easy reactivation, and
+choices persist through style changes. **Hide all flights** clears every checkbox;
+**Show all flights** checks them all and returns to the All view. The counter reports
+the actual visible count. New groups start fully checked; visibility changes do not
+alter membership, ranking, CSV exports or the all-flight thermal background.
 Track width remains adjustable down to 0.1 screen pixels. First and last cleaned fixes
 have distinct circle and square markers, and the departure cell has an outlined border.
 

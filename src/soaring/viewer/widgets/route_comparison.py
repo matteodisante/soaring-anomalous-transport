@@ -152,6 +152,12 @@ class RouteComparison(QWidget):
         self._mode = QComboBox()
         for title, key in MODES:
             self._mode.addItem(title, key)
+        self._show_all = QPushButton("Show all flights")
+        self._hide_all = QPushButton("Hide all flights")
+        self._show_all.setToolTip("Check every flight and return to the All view")
+        self._hide_all.setToolTip("Uncheck every flight; keep the list to choose a few")
+        self._visible_count = QLabel()
+        self._update_visible_count([])
         self._line_width = QDoubleSpinBox()
         self._line_width.setRange(0.1, 12)
         self._line_width.setSingleStep(0.1)
@@ -224,7 +230,7 @@ class RouteComparison(QWidget):
         self._table = QTableWidget(0, 7)
         self._table.setHorizontalHeaderLabels(
             [
-                "Rank",
+                "Show / rank",
                 "Discipline",
                 "Flight ID",
                 "Departure (Paris)",
@@ -232,6 +238,9 @@ class RouteComparison(QWidget):
                 "Elapsed time",
                 "Group",
             ]
+        )
+        self._table.horizontalHeaderItem(0).setToolTip(
+            "Tick to show a flight; untick to hide it. The number is its duration rank."
         )
         for column, endpoint in ((3, "First"), (4, "Last")):
             self._table.horizontalHeaderItem(column).setToolTip(
@@ -275,6 +284,14 @@ class RouteComparison(QWidget):
         self._queries.setVisible(not scene_only)
         self._layout.addWidget(self._summary)
         self._layout.addLayout(style)
+        visibility = FlowLayout()
+        for widget in (
+            self._show_all,
+            self._hide_all,
+            self._visible_count,
+        ):
+            visibility.addWidget(widget)
+        self._layout.addLayout(visibility)
         self._layout.addWidget(self._legend)
         self._layout.addWidget(self._density)
         self._layout.addWidget(self._flight_splitter, 1)
@@ -296,6 +313,9 @@ class RouteComparison(QWidget):
         self._reset.clicked.connect(self._reset_view)
         self._top.clicked.connect(self._top_view)
         self._table.itemSelectionChanged.connect(self._style_changed)
+        self._table.itemChanged.connect(self._flight_visibility_changed)
+        self._show_all.clicked.connect(lambda: self._set_all_flights_visible(True))
+        self._hide_all.clicked.connect(lambda: self._set_all_flights_visible(False))
         self._departure.changed.connect(self._departure_changed)
         self._departure.apply_requested.connect(self._apply_departure)
         self._set_busy(False)
@@ -558,6 +578,7 @@ class RouteComparison(QWidget):
             self._view.clear()
         self._table.setRowCount(0)
         self._table.hide()
+        self._update_visible_count([])
         self._source.clear()
         self._summary.setText("Same departure cell and same arrival cell · 10 x 10 km")
 
@@ -759,6 +780,8 @@ class RouteComparison(QWidget):
             ]
             for col, value in enumerate(values):
                 item = QTableWidgetItem(value)
+                if col == 0:
+                    self._make_flight_checkable(item)
                 if self._table.palette().base().color().lightness() < 128:
                     item.setForeground(QColor(COLOURS[row.speed_group]))
                 self._table.setItem(i, col, item)
@@ -773,7 +796,7 @@ class RouteComparison(QWidget):
         lon, lat = unproject(*(cells * ROUTE_CELL_M + ROUTE_CELL_M / 2).T)
         distance = np.linalg.norm(cells[1] - cells[0]) * ROUTE_CELL_M / 1000
         self._summary.setText(
-            f"{len(scene.selected)} displayed / {scene.total:,} matching flights · "
+            f"{len(scene.selected)} loaded / {scene.total:,} matching flights · "
             f"10 x 10 km cells · A → B: {distance:.1f} km between centres\n"
             f"A: {lat[0]:.3f}° N, {lon[0]:.3f}° E · "
             f"B: {lat[1]:.3f}° N, {lon[1]:.3f}° E · "
@@ -839,6 +862,45 @@ class RouteComparison(QWidget):
             finally:
                 self._view.doneCurrent()
 
+    @staticmethod
+    def _make_flight_checkable(item):
+        """Start each freshly loaded flight visible, independently of row selection."""
+        item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+        item.setCheckState(Qt.CheckState.Checked)
+        item.setToolTip(
+            "Tick to show this flight; untick to hide its path and endpoints"
+        )
+
+    def _flight_checked(self, row):
+        """Read visibility from the persistent checkbox, not the highlighted rows."""
+        return self._table.item(row, 0).checkState() == Qt.CheckState.Checked
+
+    def _flight_visibility_changed(self, item):
+        """Refresh paths and endpoint markers after a mouse or keyboard toggle."""
+        if item.column() == 0:
+            self._style_changed()
+
+    def _set_all_flights_visible(self, visible):
+        """Batch checkbox updates without rebuilding geometry or moving the camera."""
+        if self._scene is None:
+            return
+        state = Qt.CheckState.Checked if visible else Qt.CheckState.Unchecked
+        self._table.blockSignals(True)
+        for row in range(self._table.rowCount()):
+            self._table.item(row, 0).setCheckState(state)
+        self._table.blockSignals(False)
+        if visible:
+            self._mode.blockSignals(True)
+            self._mode.setCurrentIndex(self._mode.findData("all"))
+            self._mode.blockSignals(False)
+        self._style_changed()
+
+    def _update_visible_count(self, mask):
+        """Show the actual number of paths enabled by both checkboxes and mode."""
+        self._visible_count.setText(f"{sum(mask)} / {len(mask)} flights visible")
+        self._show_all.setEnabled(bool(len(mask)))
+        self._hide_all.setEnabled(bool(len(mask)))
+
     def _style_changed(self, *_):
         """Select the requested speed groups while preserving the camera."""
         if self._scene is None:
@@ -849,12 +911,13 @@ class RouteComparison(QWidget):
         for i, (row, lines) in enumerate(
             zip(self._scene.selected.itertuples(), self._lines, strict=True)
         ):
-            visible = (
+            matches_mode = (
                 mode == "all"
                 or row.speed_group == mode
                 or row.speed_group == "both"
                 or (mode == "extremes" and row.speed_group != "other")
             )
+            visible = matches_mode and self._flight_checked(i)
             selected = i in chosen
             mask.append(visible)
             group = mode if mode in ("fast", "slow") else row.speed_group
@@ -874,7 +937,9 @@ class RouteComparison(QWidget):
                 line.setDepthValue(
                     15 if selected else 10 if row.speed_group != "other" else 5
                 )
-            self._table.setRowHidden(i, not visible)
+            # Unchecked flights remain available to tick again in the current mode.
+            self._table.setRowHidden(i, not matches_mode)
+        self._update_visible_count(mask)
         if self._surface is not None:
             self._surface.set_terrain_visible(self._terrain.isChecked())
         if self._annotations is not None:

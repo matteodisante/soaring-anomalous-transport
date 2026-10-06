@@ -116,6 +116,15 @@ to separate them from the thermal palette and imagery. Other flights are white.
 Selecting table rows highlights individual flights in blue. For fewer than ten flights the two groups
 overlap; shared members are marked `both` and the controls state the available count.
 
+The checkbox beside each **Show / rank** value controls that flight's visibility,
+including its endpoint markers. Unticking a flight keeps its row available in the
+current speed mode so it can be shown again with one click. The checkboxes are
+independent of row highlighting and persist when changing the speed mode, width,
+background or camera. **Hide all flights** clears every checkbox; **Show all flights**
+checks them all and returns to the All view. The adjacent counter reports how many
+loaded flights are currently visible. A newly loaded scene starts with every flight
+checked. These display choices leave ranks, cohort counts and thermal density intact.
+
 **Track width** ranges from **0.1 to 12 screen pixels**, in 0.1-pixel steps.
 The outline shrinks along with thin strokes. Fast/slow strokes are 1.25 times this
 base width and selected rows 1.75 times. The GPU expands the original cleaned

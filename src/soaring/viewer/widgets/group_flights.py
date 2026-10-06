@@ -43,6 +43,9 @@ DST changes. Cleaned relative times use the IGC clock origin and trimming offset
 Geometry always comes from cleaned fixes. No geometry is drawn from raw files.</p>
 <p><b>Map:</b> all group members, without sampling. Blue → cyan → lime follows departure
 order; select rows to highlight paths in white. Selected rows only isolates them.
+Tick or untick Show / order to show or hide individual paths and endpoint markers.
+Hidden flights stay in the list. Show all flights checks every row and restores the
+All view; Hide all flights clears the checkboxes. A newly loaded group starts checked.
 Path distance sums supported horizontal Lambert-93 edges; gaps are excluded.
 The heat layer uses <b>all available HMM flights crossing the area, all dates</b>,
 exactly like Routes. It does not describe weather on the selected group's day.</p>
