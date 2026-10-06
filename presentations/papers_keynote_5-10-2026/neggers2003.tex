@@ -2,7 +2,7 @@
 \newcommand{\TalkShort}{Paper review: Neggers et al.\ (2003)}
 \input{../theme.tex}
 \input{paper-review.tex}
-\hypersetup{pdftitle={Neggers et al. (2003): cloud-size statistics},pdfsubject={Five-slide paper review with one appendix slide}}
+\hypersetup{pdftitle={Neggers et al. (2003): cloud-size statistics},pdfsubject={Five-slide paper review}}
 \newcommand{\figdir}{assets/neggers2003}
 \begin{document}
 
@@ -105,60 +105,5 @@
  \bottomline{``Climbable clouds'': 0.4--2 km. Expected thermals: 50--300 m}
  \credit{\S4b, Fig.\ 7b, $w$ read off the plot. Sink rates: typical straight-flight minimum sink. Thermal diameters: rough estimate, not from a measurement.}
 \notetext{Neggers et al.\ give no statistics of thermals. Figure 7b gives, for each cloud size $l$, the cloud-mean vertical velocity $w$, which grows with size. A pilot climbs only where the air rises faster than the wing sinks, so the minimum sink rate sets a threshold on $w$: about 1.1 m/s for a paraglider and 0.9 m/s for a hang glider, in straight flight. Circling increases the sink rate, so these thresholds are lower bounds and the true climbable ranges would shift to even larger clouds.\par\smallskip Only the two land cases are used. Over the ocean (BOMEX) the surface sensible heat flux is 8 W\,m$^{-2}$, against 150 W\,m$^{-2}$ in SCMS and up to 140 W\,m$^{-2}$ in ARM (Table 1): without a heated ground, the dry thermals pilots use are weak.\par\smallskip Read off the plot, SCMS clouds exceed 0.9 m/s from about 400 m and 1.1 m/s from about 600 m, up to the largest clouds near 1.8 km. ARM clouds exceed 0.9 m/s from about 700 m and 1.1 m/s from about 850 m, up to about 2 km. Taking both cases, the climbable cloud sizes are 0.6--1.9 km for a paraglider and 0.4--2.0 km for a hang glider. The expected thermal diameters are 50--300 m and 80--300 m. Clouds of that size have $w$ well below either sink rate.\par\smallskip The ranges start above the widest expected thermal and reach 2 km. If cloud sizes were read as thermal sizes, the thermals would come out several times too wide: $l$ is the square root of the projected area, which merges all heights (Fig. 3), and a cloud is fed through its base by a narrower thermal. Caveats: $w$ is the in-cloud mean, which includes weak edges and differs from the updraft below cloud base; the statistics are LES snapshots of two land cases. Source: Section 4b, Figure 7b, Table 1.}
-\finishslide\end{frame}
-% A: sink rate in a banked turn ---------------------------------------------
-\begin{frame}[plain]\frametitle{Appendix: sink rate in a banked turn}\startslide{Appendix: sink rate in a banked turn}
- \lead{Why circling sinks faster than straight flight, at the same angle of attack.}
- % side view, straight glide; path drawn 15 deg below horizontal
- \draw[muted,line width=.4pt](8,24.1)--(55,36.7);
- \draw[-{Latex},black,line width=.8pt](30,30)--(41.6,33.1);
- \draw[-{Latex},teal,line width=.8pt](30,30)--(22.3,27.9);
- \draw[-{Latex},pisablue,line width=.8pt](30,30)--(32.3,21.3);
- \draw[-{Latex},wine,line width=.8pt](30,30)--(30,38);
- \draw[muted,dashed,line width=.4pt](30,30)--(41.6,30);
- \draw[-{Latex},black,line width=.6pt](41.6,30)--(41.6,33.1);
- \fill[black](30,30)circle(1.1);
- \node[anchor=west,text=pisablue,font=\fontsize{7.5}{8.5}\selectfont]at(32.7,22.5){lift $L$};
- \node[anchor=south,text=teal,font=\fontsize{7.5}{8.5}\selectfont]at(20.5,26.4){drag $D$};
- \node[anchor=north,font=\fontsize{7.5}{8.5}\selectfont]at(36.5,32.7){speed $V$};
- \node[anchor=west,font=\fontsize{7.5}{8.5}\selectfont]at(42,31.4){sink $s$};
- \node[anchor=east,text=wine,font=\fontsize{7.5}{8.5}\selectfont]at(29.5,36.6){weight $W$};
- \node[anchor=north west,text=muted,font=\fontsize{6.5}{7.5}\selectfont]at(7,39.2){side view, straight glide};
- % back view, turn to the left; bank 30 deg, lift arrow 13 mm
- \draw[muted,densely dotted](33,46)--(33,72);
- \draw[muted,dashed,line width=.4pt](11,59)--(33,59);
- \fill[muted](11,59)circle(.8);
- \node[anchor=north,text=muted,font=\fontsize{6.5}{7.5}\selectfont,align=center]at(11,60.2){centre\\of turn};
- \draw[black,line width=1.6pt](23.47,64.5)--(42.53,53.5);
- \fill[black](33,59)circle(1.1);
- \draw[muted,dashed,line width=.4pt](26.5,47.74)--(33,47.74);
- \draw[muted,dashed,line width=.4pt](26.5,47.74)--(26.5,59);
- \draw[-{Latex},pisablue,line width=.8pt](33,59)--(26.5,47.74);
- \draw[-{Latex},pisablue!70,line width=.6pt](33,59)--(33,47.74);
- \draw[-{Latex},pisablue!70,line width=.6pt](33,59)--(26.5,59);
- \draw[-{Latex},wine,line width=.8pt](33,59)--(33,70.26);
- \draw[black!70,line width=.4pt](33,53.5) arc[start angle=270,end angle=240,radius=5.5];
- \node[font=\fontsize{7.5}{8.5}\selectfont]at(31.1,51.9){$\varphi$};
- \node[anchor=south east,text=pisablue,font=\fontsize{7.5}{8.5}\selectfont]at(26.5,47.74){lift $L$};
- \node[anchor=west,text=pisablue,font=\fontsize{7}{8}\selectfont]at(33.4,50.5){$L\cos\varphi$};
- \node[anchor=south,text=pisablue,font=\fontsize{6.5}{7.5}\selectfont]at(29.75,59.1){$L\sin\varphi$};
- \node[anchor=west,text=wine,font=\fontsize{7.5}{8.5}\selectfont]at(33.4,68.6){weight $W$};
- \node[anchor=west,text=muted,font=\fontsize{6.5}{7.5}\selectfont]at(42.9,53.5){wing, bank $\varphi$};
- \node[anchor=north west,text=muted,font=\fontsize{6.5}{7.5}\selectfont]at(7,71.8){back view, turn};
- % derivation: step text on the left, its equation on the right
- \txt[font=\fontsize{8.5}{10.3}\selectfont]{60}{22}{57}{{\color{pisablue}\bfseries 1\enspace Energy.} Lift does no work; drag uses $D\,V$ per second, paid for by lost height}
- \txt[font=\fontsize{9.5}{11.5}\selectfont]{122}{22.5}{31}{$W\,s=D\,V$}
- \txt[font=\fontsize{8.5}{10.3}\selectfont]{60}{31}{57}{{\color{pisablue}\bfseries 2\enspace Glide ratio} $E=L/D$ is set by the angle of attack, so $D=L/E$}
- \txt[font=\fontsize{9.5}{11.5}\selectfont]{122}{31.5}{31}{$s=V\,L/(E\,W)$}
- \txt[font=\fontsize{8.5}{10.3}\selectfont]{60}{40}{57}{{\color{pisablue}\bfseries 3\enspace Straight flight:} lift $\approx$ weight, as the path is only $\approx6^\circ$ below horizontal}
- \txt[font=\fontsize{9.5}{11.5}\selectfont]{122}{40}{31}{$L\approx W,\ \ s_0\approx V_0/E$}
- \txt[font=\fontsize{8.5}{10.3}\selectfont]{60}{48.5}{57}{{\color{pisablue}\bfseries 4\enspace Turn:} the vertical part of lift holds the weight, $L\cos\varphi=W$}
- \txt[font=\fontsize{9.5}{11.5}\selectfont]{122}{49}{31}{$L=W/\cos\varphi$}
- \txt[font=\fontsize{8.5}{10.3}\selectfont]{60}{57}{57}{{\color{pisablue}\bfseries 5\enspace Same angle of attack:} lift grows as $V^2$}
- \txt[font=\fontsize{9.5}{11.5}\selectfont]{122}{57}{31}{$V=V_0/\sqrt{\cos\varphi}$}
- \plainbox{60}{62.5}{90}{\fontsize{9.5}{11.5}\selectfont{\color{pisablue}\bfseries Put 3, 4, 5 into 2:}\quad$s=\dfrac{V_0}{\sqrt{\cos\varphi}}\cdot\dfrac{W}{\cos\varphi}\cdot\dfrac{1}{E\,W}=\dfrac{s_0}{(\cos\varphi)^{3/2}}$}
- \bottomline{Circling sinks faster: $\times1.10$ at $20^\circ$ of bank, $\times1.24$ at $30^\circ$, $\times1.68$ at $45^\circ$}
- \credit{Steady flight; small glide angle, so $L\approx W$ (error below 1\% for a glide ratio of 9). The extra drag of turning is neglected, so the true factor is larger.}
-\notetext{Derivation of the sink rate in a steady banked turn, used on the previous slide. Step 1: in a steady glide the speed is constant and the lift, perpendicular to the velocity, does no work; the drag dissipates $D V$ per second, and the only source paying for it is height, so $W s=D V$. Step 2: the glide ratio $E=L/D$ depends only on the angle of attack, so $D=L/E$ and $s=V L/(E W)$. Step 3: in straight flight the lift equals the weight, $L=W$, so $s_0=V_0/E$.\par\smallskip Step 4: in a turn banked by $\varphi$ the lift is tilted towards the centre of the turn. Its vertical part must still hold the weight, $L\cos\varphi=W$, so $L=W/\cos\varphi$; its horizontal part, $L\sin\varphi$, bends the path. Step 5: at the same angle of attack the lift grows as the square of the speed, $L=\tfrac12\rho V^2 S C_L$, so a lift $1/\cos\varphi$ times larger needs $V=V_0/\sqrt{\cos\varphi}$, and $E$ is unchanged. Putting 3, 4 and 5 into 2 gives $s=s_0/(\cos\varphi)^{3/2}$: 10\% more at 20$^\circ$ of bank, 24\% at 30$^\circ$, 68\% at 45$^\circ$.\par\smallskip The factor does not depend on the angle of attack: at every angle of attack the turn multiplies the straight-flight sink by $1/(\cos\varphi)^{3/2}$, so the minimum sink in a turn is the straight-flight minimum sink times the same factor. Steps 3 and 4 use $L\approx W$, valid for a small glide angle: with a glide ratio of 9 the path is about 6$^\circ$ below horizontal and the error is below 1\%. Real wings, paragliders in particular, also lose more to turning drag. The straight-flight minimum sink is therefore a lower bound on the updraft needed to climb while circling. The two force balances also give the turn radius, $r=V^2/(g\tan\varphi)$: circling in a narrow thermal needs a steep bank, hence a higher sink rate.}
 \finishslide\end{frame}
 \end{document}
