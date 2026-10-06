@@ -59,6 +59,13 @@ viewer = [
     "pyproj>=3.6",     # metric 5 km cells in the thermal-plane viewer
     "pyqtgraph>=0.14",
 ]
+# `satellite` e' opt-in: serve solo a scaricare e ritagliare le immagini satellitari
+# delle nuvole sulle celle di Thermal planes (scripts/pipeline/download_satellite.py).
+satellite = [
+    "blosc2>=2.5",     # decodifica dei chunk Zarr dell'archivio SEVIRI di Open Climate Fix
+    "pyproj>=3.6",     # proiezione geostazionaria e Lambert-93 delle finestre
+    "requests>=2.31",  # lettura HTTP dei chunk, con retry
+]
 
 [tool.uv]
 default-groups = ["dev", "analysis"]
