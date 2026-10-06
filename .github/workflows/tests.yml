@@ -1,9 +1,8 @@
 name: Tests
 
-# Runs the test suite on every push to main and every PR. `uv run` alone is enough to get
-# the right environment: `dev` (pytest/pytest-cov) and `analysis` (matplotlib/scipy/
-# pyarrow, needed by a few tests) are uv default dependency groups (pyproject.toml), so
-# no --extra flags are needed here.
+# Runs the test suite on every push to main and every PR. `dev` and `analysis` are
+# uv default dependency groups; include the opt-in `satellite` group so its tests
+# run in CI too.
 on:
   push:
     branches: [main]
@@ -20,7 +19,7 @@ jobs:
           enable-cache: true
 
       - name: Run tests with coverage
-        run: uv run pytest --cov=soaring --cov-report=xml
+        run: uv run --group satellite pytest --cov=soaring --cov-report=xml
 
       # Coverage upload is best-effort: a Codecov hiccup (or the repo not being linked
       # there yet) must never fail the test job / redden the Tests badge.

@@ -3,6 +3,11 @@
 import numpy as np
 import pytest
 
+# Satellite dependencies are opt-in; CI runs with --group satellite.
+pytest.importorskip("blosc2")
+pytest.importorskip("pyproj")
+pytest.importorskip("requests")
+
 from soaring.acquisition.satellite.config import load_config
 from soaring.acquisition.satellite.grid import Axis, pixel_box, window_outline
 from soaring.acquisition.satellite.ocf import SEVIRI_RSS

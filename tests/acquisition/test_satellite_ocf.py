@@ -1,6 +1,12 @@
 """Tests for decoding HRV shifts and assembling windows from Zarr chunks."""
 
 import numpy as np
+import pytest
+
+# Satellite dependencies are opt-in; CI runs with --group satellite.
+pytest.importorskip("blosc2")
+pytest.importorskip("pyproj")
+pytest.importorskip("requests")
 
 from soaring.acquisition.satellite.grid import Axis, Box
 from soaring.acquisition.satellite.ocf import (

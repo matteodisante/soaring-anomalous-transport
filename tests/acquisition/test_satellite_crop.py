@@ -6,6 +6,11 @@ from dataclasses import replace
 import numpy as np
 import pytest
 
+# Satellite dependencies are opt-in; CI runs with --group satellite.
+pytest.importorskip("blosc2")
+pytest.importorskip("pyproj")
+pytest.importorskip("requests")
+
 from soaring.acquisition.satellite.config import load_config
 from soaring.acquisition.satellite.crop import Crop, local_mask, write_crops
 from soaring.acquisition.satellite.grid import Box
