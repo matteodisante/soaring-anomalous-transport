@@ -31,7 +31,34 @@ rigenerano con `uv run python presentations/satellite-clouds/render_expected_vie
 e `render_cells_map.py` (mappa delle celle),
 il PDF con `python3 presentations/satellite-clouds/build.py`.
 
+## Roadmap di internship e tesi
+
+[From flight logs to optimal paths](research-roadmap/research-roadmap.pdf),
+in inglese, 11 slide per i supervisors: piano e timeline da ottobre 2026 a
+febbraio 2027, i sei step (dati, segmentazione, caratterizzazione stocastica,
+modello glide/wait, solo vs group, optimal path), l'organizzazione del codice
+in repository separate e il tool grafico.
+C'è anche la [versione con note](research-roadmap/research-roadmap-notes.pdf).
+Le percentuali di tempo di volo per cadenza si rigenerano dalle tabelle di
+copertura Vilpellet sull'SSD con
+`uv run python presentations/research-roadmap/measure_cadence.py`. La slide
+sull'autocorrelazione della velocità tra glide successivi (parapendii, open/closed,
+coorte fissa: voli con almeno 50 glide in un segmento) si
+rigenera con `measure_glide_autocorrelation.py` (legge SSD, circa 2 minuti) e poi
+`render_glide_autocorrelation.py`, entrambi con `uv run python`; il PDF con
+`python3 presentations/research-roadmap/build.py`.
+La mappa delle ore di salita per km² usa gli stessi prodotti del viewer e si
+rigenera, con l'SSD montato, con
+`PYTHONPATH=src uv run python presentations/research-roadmap/render_thermal_density.py`.
+I dati della finestra e la loro provenienza sono conservati in `assets/`.
+La [prima versione del piano](internship-roadmap/README.md), con 12 slide
+principali e due appendici, è conservata in `internship-roadmap/`.
+
 ## Presentazioni estese per discussione
+
+Il [deck visuale sul modello CTRW](soaring-ctrw/README.md) ha un sorgente
+dedicato, copertina e 11 slide principali senza appendice, con tutte le
+figure incluse.
 
 Queste presentazioni raccontano la tesi revisionata il 14 settembre 2026, con
 cleaning 2.3.0 e risultati del run completo `20260912T133040Z-073601cb`, con
