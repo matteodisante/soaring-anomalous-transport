@@ -67,7 +67,12 @@ is not a harmonised terrain-clearance measurement.</p>
 
 def map_html():
     """Explain the population and adaptive geographic launch histogram."""
-    from .map_view import _MIN_CELL_DEG, _SCATTER_MAX_POINTS, _TARGET_CELLS_ACROSS
+    from .map_view import (
+        _MAX_CELL_DEG,
+        _MIN_CELL_DEG,
+        _SCATTER_MAX_POINTS,
+        _TARGET_CELLS_ACROSS,
+    )
 
     return f"""
 <h2>Map</h2>
@@ -81,7 +86,8 @@ archive, after ground trimming. Catalogue metadata supplies the flight identity.
 rectangle; terrain categories here use launch altitude. They do not use the
 highest ground elevation that defines the Thermal planes categories.</li>
 <li>Count launches in a longitude/latitude grid. Cell width is
-max({_MIN_CELL_DEG:g}°, visible longitude span / {_TARGET_CELLS_ACROSS}).
+visible longitude span / {_TARGET_CELLS_ACROSS}, kept between {_MIN_CELL_DEG:g}°
+and {_MAX_CELL_DEG:g}°.
 The grid is recalculated after zooming or panning.</li>
 </ol>
 <h3>Reading and using the map</h3>

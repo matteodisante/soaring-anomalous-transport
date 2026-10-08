@@ -53,9 +53,11 @@ _SCATTER_MAX_POINTS = 300
 
 # The mesh cell adapts to how much is visible: aim for this many cells across the
 # view's longitude span, no finer than the floor (metres-scale at that point is
-# meaningless -- individual points take over well before it binds in practice).
+# meaningless -- individual points take over well before it binds in practice) and
+# no coarser than the cap, which only binds on wide views such as the whole world.
 _TARGET_CELLS_ACROSS = 70
 _MIN_CELL_DEG = 0.01
+_MAX_CELL_DEG = 1.0
 
 # How long to wait, after the view stops changing (drag, scroll, zone jump), before
 # recomputing the mesh/points -- so a drag or a fast scroll redraws once at the end,
@@ -368,7 +370,13 @@ class MapView(QWidget):
         else:
             self._mode = "mesh"
             span = max(extent[2] - extent[0], 1e-6)
-            cell = float(np.clip(span / _TARGET_CELLS_ACROSS, _MIN_CELL_DEG, span))
+            cell = float(
+                np.clip(
+                    span / _TARGET_CELLS_ACROSS,
+                    _MIN_CELL_DEG,
+                    min(_MAX_CELL_DEG, span),
+                )
+            )
             mesh = geography.draw_density(
                 ax, lon[inside], lat[inside], extent, cell=cell
             )
