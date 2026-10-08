@@ -120,6 +120,30 @@ class TimeGrid:
         self._pending.clear()
         self._levels.clear()
 
+    def crop(self, bounds, *, metadata=None):
+        """The pixels inside ``bounds`` as a new grid, with their seconds unchanged.
+
+        ``bounds`` must lie on this grid's pixel lattice: each pixel then holds the
+        same time it would hold if the edges had been binned into it directly.
+        """
+        bounds = np.asarray(bounds, float)
+        offset = (bounds - np.tile(self.bounds[:2], 2)) / self.step
+        if (
+            (offset != np.round(offset)).any()
+            or (bounds[:2] < self.bounds[:2]).any()
+            or (bounds[2:] > self.bounds[2:]).any()
+        ):
+            raise ValueError("Crop bounds must lie on the grid's lattice and inside it")
+        self.flush()
+        grid = TimeGrid(bounds, step=self.step, metadata=metadata)
+        rows, cols = np.divmod(self.flat, self.nx)
+        rows, cols = rows - int(offset[1]), cols - int(offset[0])
+        inside = (cols >= 0) & (cols < grid.nx) & (rows >= 0) & (rows < grid.ny)
+        # Row-major order survives the shift, so the sparse index stays sorted.
+        grid.flat = rows[inside] * grid.nx + cols[inside]
+        grid.seconds = self.seconds[inside]
+        return grid
+
     @property
     def hours(self):
         """Total in-frame thermal time, counted once per flight trajectory."""

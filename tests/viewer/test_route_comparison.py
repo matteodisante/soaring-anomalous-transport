@@ -518,33 +518,69 @@ def test_widget_speed_filters_keep_camera_and_clear_stale_scene(qapp):
         widget.close()
 
 
+def _vilpellet_products(root, fixes):
+    """Every fix of the archive fixture inside one saved climb run per segment."""
+    folder = root / "segmentation/vilpellet"
+    (folder / "model").mkdir(parents=True)
+    runs = (
+        fixes.groupby(["flight_id", "segment_id"], sort=False)
+        .t.agg(t_start="min", t_end="max", n_fixes="size")
+        .reset_index()
+    )
+    runs["phase"] = "climb"
+    runs.to_parquet(folder / "phase_segments.parquet")
+    pd.DataFrame({"flight_id": ["a", "b"], "n_native_fixes": [7, 2]}).to_parquet(
+        folder / "phase_coverage.parquet"
+    )
+    (folder / "model/parameters.json").write_text("{}")
+    return folder
+
+
 def test_all_flight_density_preparation_preserves_gaps_and_detects_stale_sources(
     archive, tmp_path, monkeypatch
 ):
+    import os
+
     from soaring.viewer import route_density as rd
     from soaring.viewer.thermal_time import load_grids
 
     disc, root, fixes = archive
-    phases = fixes.copy()
-    phases["phase"] = "climb"
-    folder = root / "segmentation"
-    folder.mkdir()
-    phases.to_parquet(folder / "phase_points.parquet")
+    folder = _vilpellet_products(root, fixes)
+    # Batches end inside flights: the held-back flight must still be whole.
+    monkeypatch.setattr(rd, "BATCH_ROWS", 2)
     path = rd.prepare_density([disc], path=tmp_path / "density.npz")
     grids, report = load_grids(path)
     assert report["complete"]
+    assert report["version"] == rd.VERSION
     # 25 supported seconds from flight a, plus 10 from b. The 15-second
     # segment boundary in a and the boundary between flights never contribute.
-    assert grids["archive/own"].hours * 3600 == pytest.approx(35)
-    monkeypatch.setattr(rd.pq, "ParquetFile", lambda *_: pytest.fail("cache reuse"))
-    assert rd.prepare_density([disc], path=path) == path
+    assert grids["archive/vilpellet"].hours * 3600 == pytest.approx(35)
+    with monkeypatch.context() as m:
+        m.setattr(rd.pq, "ParquetFile", lambda *_: pytest.fail("cache reuse"))
+        assert rd.prepare_density([disc], path=path) == path
     with pytest.raises(ValueError, match="exceeds"):
-        rd.raster_window(grids["archive/own"], (-600000, 6000000, 0, 6100000))
+        rd.raster_window(grids["archive/vilpellet"], (-600000, 6000000, 0, 6100000))
     meta = pd.read_parquet(root / "flights_meta.parquet")
     meta.loc[0, "lon0"] += 1
     meta.to_parquet(root / "flights_meta.parquet")
     with pytest.raises(ValueError, match="changed"):
         rd.load_density((900000, 6400000, 1010000, 6500000), [disc], path=path)
+    old = (root / "fixes.parquet").stat().st_mtime_ns - 10**9
+    os.utime(folder / "phase_segments.parquet", ns=(old, old))
+    with pytest.raises(ValueError, match="predate"):
+        rd.prepare_density([disc], path=path)
+
+
+def test_density_preparation_rejects_incomplete_vilpellet_coverage(archive, tmp_path):
+    from soaring.viewer import route_density as rd
+
+    disc, root, fixes = archive
+    folder = _vilpellet_products(root, fixes)
+    pd.DataFrame({"flight_id": ["a"], "n_native_fixes": [7]}).to_parquet(
+        folder / "phase_coverage.parquet"
+    )
+    with pytest.raises(ValueError, match="Incomplete Vilpellet coverage"):
+        rd.prepare_density([disc], path=tmp_path / "density.npz")
 
 
 def test_density_coarsening_conserves_time_and_geographic_footprint():

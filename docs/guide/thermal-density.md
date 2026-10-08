@@ -48,19 +48,21 @@ trasparente può essere inesplorato oppure esplorato senza climb osservati.
 
 ## Popolazioni delle mappe
 
-- **Regions · HMM:** Alps, Pyrenees, Massif Central, Channel Coast e
-  Champagne-Lorraine. Si leggono le decisioni HMM in `phase_points.parquet` e le
-  origini geografiche in `flights_meta.parquet`. Si collegano solo decisioni
-  consecutive `climb` dello stesso volo e segmento, con durata positiva non
-  superiore a 1,5 passi decisionali nominali: con la configurazione corrente,
-  passo 10 s e massimo 15 s. La geometria è quindi un'approssimazione alla
-  risoluzione temporale delle decisioni HMM.
+- **Regions:** Alps, Pyrenees, Massif Central, Channel Coast e
+  Champagne-Lorraine. Sono ritagli della griglia nazionale Vilpellet di
+  [Routes](route-comparison.md), allineati ai suoi pixel da 50 m: ogni pixel
+  conserva esattamente i suoi secondi. La griglia nazionale legge i fix nativi
+  di `fixes.parquet`, le run `climb` salvate in
+  `segmentation/vilpellet/phase_segments.parquet` e le origini geografiche in
+  `flights_meta.parquet`. Si collegano solo fix consecutivi della stessa run,
+  con passo positivo non superiore a 1,5 volte il passo mediano del segmento:
+  i buchi di registrazione non contribuiscono.
 - **Cells:** le stesse dodici celle da 5 × 5 km selezionate per Thermal planes.
-  Si riusano gli archi continui, con tempi UTC, di `thermal-planes.sqlite3`,
-  scegliendo **This work (HMM)** oppure **Jérémie (Vilpellet)**. Non si usano i
-  punti di intersezione già campionati per quota. Gli archi conservano il
-  supporto temporale dei prodotti preparati, che può differire dalla griglia
-  decisionale usata per le regioni.
+  Si riusano gli archi continui Vilpellet, con tempi UTC, di
+  `thermal-planes.sqlite3`. Non si usano i punti di intersezione già campionati
+  per quota.
+
+La segmentazione HMM non è più mostrata.
 
 Nelle regioni contribuiscono tutti i segmenti che attraversano il riquadro,
 **anche se il decollo è fuori dalla regione**. È un cambiamento rispetto alla
@@ -111,16 +113,20 @@ uv run --group viewer python scripts/pipeline/prepare_thermal_density.py
 ```
 
 Scrive `thermal-duration.npz` e il relativo rapporto JSON accanto a
-`thermal-planes.sqlite3`. Il viewer apre soltanto questo prodotto compatto;
+`thermal-planes.sqlite3`. La fase delle regioni prepara prima, se manca o non è
+aggiornata, la griglia nazionale `route-thermal-duration-vilpellet.npz`
+(un passaggio su tutti i fix nativi), poi la ritaglia. Il viewer apre soltanto questo prodotto compatto;
 **Reload SSD data** non avvia scansioni dell'archivio. Il vecchio
 `thermal-regions.npz`, contenente conteggi, non viene interpretato come ore.
 La pubblicazione è atomica. Un checkpoint regionale permette di riprendere
 con `--only cells` dopo un'interruzione nella fase delle celle; `--only regions`
 aggiorna solo le regioni preservando eventuali celle già preparate.
-Un benchmark limitato richiede `--limit-batches N --output /percorso/separato.npz`;
+Un benchmark limitato, solo per le celle, richiede
+`--only cells --limit-batches N --output /percorso/separato.npz`;
 i prodotti incompleti vengono rifiutati dal viewer.
 
-Verifica del **3 ottobre 2026**, su questa macchina macOS con 8 GiB di RAM:
+Verifica del **3 ottobre 2026**, con la precedente versione HMM delle regioni,
+su questa macchina macOS con 8 GiB di RAM:
 
 | Misura | Risultato |
 | --- | ---: |
@@ -143,6 +149,15 @@ controllo nativo Qt il caricamento con disegno delle cinque regioni ha richiesto
 2,03 s; il processo ha raggiunto circa 1,08 GB di RAM residente durante la
 navigazione tra mappe e sfondi. Sono misure di questa esecuzione, non limiti
 massimi garantiti.
+
+Preparazione Vilpellet del **7 ottobre 2026**, stessa macchina, con
+`--only regions`: la griglia nazionale ha letto 1.369.807.970 fix di parapendio e
+34.567.535 di deltaplano e ha sommato 389.724.240 + 8.311.492 lati di salita, in
+643 s complessivi con un picco di 1,50 GB di RAM residente. Il numero di lati è
+esattamente quello dei fix nelle run `climb` meno il numero di run: nessun lato
+attraversa due run e nessun passo interno a una run supera la soglia di
+continuità. `route-thermal-duration-vilpellet.npz` occupa 137 MB e contiene
+105.388 ore (la versione HMM ne conteneva 137.893).
 
 Al controllo restavano circa **28 GiB liberi sull'SSD**. Il prodotto e una cache
 piena richiedono complessivamente circa **0,61 GiB aggiuntivi**. Durante la

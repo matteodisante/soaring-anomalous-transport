@@ -17,7 +17,6 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ...analysis.segmentation.config import load_segmentation_config
 from .flow_layout import FlowLayout
 
 
@@ -31,7 +30,7 @@ class RouteDensity(QWidget):
         self.enabled = QCheckBox("Thermal hours · all flights")
         self.enabled.setChecked(True)
         self.enabled.setToolTip(
-            "All available HMM-classified flights crossing this area, both "
+            "All available Vilpellet-classified flights crossing this area, both "
             "disciplines, all dates and heights; independent of the route filters"
         )
         self.opacity = QSpinBox()
@@ -132,7 +131,7 @@ class RouteDensity(QWidget):
         self.range.setText(f"0.01 — {data.maximum:.0f} h/km² · log")
         self.details.setText(
             f"{data.hours:,.1f} recorded climb hours in the density frame · "
-            f"{data.step:g} m pixels · HMM, all dates / heights / disciplines"
+            f"{data.step:g} m pixels · Vilpellet, all dates / heights / disciplines"
         )
         self.details.setToolTip(
             "Cumulative recorded climb time divided by ground area. "
@@ -163,7 +162,6 @@ class RouteDensity(QWidget):
 
     def show_help(self):
         """Explain accumulated flight time with a concrete area-normalised example."""
-        step = load_segmentation_config().decision_step_s
         QMessageBox.information(
             self,
             "What does thermal density measure?",
@@ -178,10 +176,10 @@ class RouteDensity(QWidget):
             "only 36 recorded seconds, not four hours.<br><br>"
             "Larger pixels sum the original seconds and divide by their new area. "
             "They do not create observations between flights.<br><br>"
-            "<b>Source:</b> the same saved HMM climb decisions as Thermal density "
-            f"regions, every {step:g} seconds; consecutive climb decisions only, "
-            "in the same flight and segment, "
-            f"with gaps above {1.5 * step:g} seconds excluded. "
+            "<b>Source:</b> the same saved Vilpellet climb runs as Thermal density "
+            "regions, on the native fixes; consecutive fixes in one climb run only, "
+            "with data gaps (steps above 1.5 times the segment's median sampling "
+            "interval) excluded. "
             "Time is split at pixel boundaries assuming linear motion.<br><br>"
             "This measures cumulative recorded climb time, not thermal counts, "
             "probability, or yearly frequency. No recorded climb time can also "

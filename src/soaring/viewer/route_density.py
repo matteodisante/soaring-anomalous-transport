@@ -1,4 +1,4 @@
-"""All-archive HMM residence time, shared in definition with Thermal density.
+"""All-archive Vilpellet residence time, shared in definition with Thermal density.
 
 One sparse 50 m grid covers France and its surroundings. Route selection never
 filters this background. Only a bounded, conservatively aggregated raster enters
@@ -17,16 +17,20 @@ import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 
-from ..analysis.segmentation.config import load_segmentation_config
 from .route_index import available_archives, route_cache_path
 from .thermal_index import _check_cancel
 from .thermal_time import BASE_M, TimeGrid, load_grids, save_grids
-from .thermal_time_prepare import phase_edges
+from .thermal_time_prepare import SOURCE, climb_edges
 
 # 2.5 billion possible pixels, within save_grids' uint32 index limit; only
 # occupied pixels are stored. This also covers excursions beyond French borders.
 BOUNDS = (-500000, 5500000, 2000000, 8000000)
-FILE_NAME = "route-thermal-duration.npz"
+FILE_NAME = "route-thermal-duration-vilpellet.npz"
+# Bump on purpose whenever the calculation changes; saved products then rebuild.
+VERSION = "vilpellet-climb-residence-v1"
+FIX_COLUMNS = ["flight_id", "segment_id", "t", "E", "N", "z"]
+BATCH_ROWS = 1 << 20
+RUN_COLUMNS = ["flight_id", "segment_id", "t_start", "t_end", "n_fixes"]
 
 
 def density_path(disciplines=None):
@@ -34,43 +38,68 @@ def density_path(disciplines=None):
     return route_cache_path(disciplines).with_name(FILE_NAME)
 
 
+def _inputs(disc):
+    """The cleaned archive and the saved Vilpellet products it is binned from."""
+    root = disc.config().derived_dir
+    folder = root / "segmentation/vilpellet"
+    return {
+        "fixes": root / "fixes.parquet",
+        "meta": root / "flights_meta.parquet",
+        "runs": folder / "phase_segments.parquet",
+        "coverage": folder / "phase_coverage.parquet",
+        "parameters": folder / "model/parameters.json",
+    }
+
+
 def source_signature(disciplines):
-    """Bind saved seconds to the classified archives, origins and calculation."""
-    parts = [load_segmentation_config().decision_step_s]
-    for name in (
-        "geodesy.py",
-        "thermal_time.py",
-        "thermal_time_prepare.py",
-        "route_density.py",
-    ):
-        parts.append(
-            hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
-        )
+    """Bind saved seconds to the archives, origins, saved runs and calculation."""
+    parts = [VERSION, BASE_M]
     for disc in disciplines:
         root = disc.config().derived_dir
         if (root / ".run_incomplete").exists():
             raise ValueError(f"{disc.name}: preprocessing is incomplete")
-        for name in (
-            "segmentation/phase_points.parquet",
-            "flights_meta.parquet",
-            "fixes.parquet",
-        ):
-            path = root / name
+        paths = _inputs(disc)
+        for path in paths.values():
             stat = path.stat()
             parts.append((str(path.resolve()), stat.st_size, stat.st_mtime_ns))
-        if (root / "segmentation/phase_points.parquet").stat().st_mtime_ns < (
-            root / "fixes.parquet"
-        ).stat().st_mtime_ns:
-            raise ValueError(
-                f"{disc.name}: HMM classifications predate the cleaned archive"
-            )
+        if (
+            min(paths["runs"].stat().st_mtime_ns, paths["coverage"].stat().st_mtime_ns)
+            < paths["fixes"].stat().st_mtime_ns
+        ):
+            raise ValueError(f"{disc.name}: Vilpellet runs predate the cleaned archive")
     return hashlib.sha256(json.dumps(parts).encode()).hexdigest()
+
+
+def _climb_runs(path):
+    """Saved climb runs sorted by flight, with each flight's slice of rows."""
+    runs = pq.read_table(path, columns=RUN_COLUMNS, filters=[("phase", "=", "climb")])
+    runs = runs.to_pandas()
+    runs["flight_id"] = runs.flight_id.astype(str)
+    runs = runs.sort_values(["flight_id", "segment_id", "t_start"], kind="stable")
+    runs = runs.reset_index(drop=True)
+    flights, first = np.unique(runs.flight_id.to_numpy(), return_index=True)
+    stops = np.r_[first[1:], len(runs)]
+    return runs, {str(f): (a, b) for f, a, b in zip(flights, first, stops, strict=True)}
+
+
+def _add_flights(grid, frame, runs, spans, origins):
+    """Bin the climb edges of whole flights; return their count and seconds."""
+    rows = [np.arange(*spans[f]) for f in pd.unique(frame.flight_id) if f in spans]
+    if not rows:
+        return 0, 0.0
+    a, b, dt = climb_edges(frame, runs.iloc[np.concatenate(rows)], origins)
+    grid.add(a, b, dt)
+    return len(dt), float(dt.sum())
 
 
 def prepare_density(
     disciplines=None, *, path=None, progress=lambda _: None, cancel=None
 ):
-    """Stream each saved HMM archive once; reuse a complete matching product."""
+    """Stream each cleaned archive once with its saved Vilpellet climb runs.
+
+    No decoder runs: the runs are the saved whole-flight Vilpellet segmentation.
+    A complete product with a matching signature is reused.
+    """
     import fcntl
 
     disciplines = available_archives() if disciplines is None else disciplines
@@ -88,57 +117,69 @@ def prepare_density(
                     return path
         grid = TimeGrid(
             BOUNDS,
-            metadata={"population": "all crossing archived flights", "source": "HMM"},
+            metadata={"population": "all crossing archived flights", "source": SOURCE},
         )
         stages = {}
         for disc in disciplines:
             _check_cancel(cancel)
-            root = disc.config().derived_dir
+            paths = _inputs(disc)
+            archive = pq.ParquetFile(paths["fixes"])
+            covered = pq.read_table(paths["coverage"], columns=["n_native_fixes"])
+            if int(covered.column(0).to_numpy().sum()) != archive.metadata.num_rows:
+                raise ValueError(f"Incomplete Vilpellet coverage for {disc.name}")
             meta = pd.read_parquet(
-                root / "flights_meta.parquet",
-                columns=["flight_id", "lat0", "lon0", "alt0"],
+                paths["meta"], columns=["flight_id", "lat0", "lon0", "alt0"]
             )
             origins = {
                 str(r.flight_id): (r.lat0, r.lon0, r.alt0)
                 for r in meta.itertuples(index=False)
             }
-            archive = pq.ParquetFile(root / "segmentation/phase_points.parquet")
-            previous = None
+            runs, spans = _climb_runs(paths["runs"])
             rows = edges = 0
+            seconds = 0.0
+            carry = None
             for batch in archive.iter_batches(
-                batch_size=131072,
-                columns=["flight_id", "segment_id", "t", "E", "N", "z", "phase"],
+                batch_size=BATCH_ROWS, columns=FIX_COLUMNS
             ):
                 _check_cancel(cancel)
                 frame = batch.to_pandas()
+                frame["flight_id"] = frame.flight_id.astype(str)
                 rows += len(frame)
-                if previous is not None:
-                    frame = pd.concat([previous, frame], ignore_index=True)
-                previous = frame.iloc[-1:].copy()
-                a, b, seconds = phase_edges(
-                    frame, origins, 1.5 * load_segmentation_config().decision_step_s
+                if carry is not None:
+                    frame = pd.concat([carry, frame], ignore_index=True)
+                # Flights are contiguous: hold back the last one, it may continue.
+                ids = frame.flight_id.to_numpy()
+                others = np.flatnonzero(ids != ids[-1])
+                cut = others[-1] + 1 if len(others) else 0
+                carry = frame.iloc[cut:]
+                count, total = _add_flights(
+                    grid, frame.iloc[:cut], runs, spans, origins
                 )
-                grid.add(a, b, seconds)
-                edges += len(seconds)
+                edges, seconds = edges + count, seconds + total
                 progress(
                     f"Thermal hours · {disc.name}: "
-                    f"{rows:,}/{archive.metadata.num_rows:,} decisions"
+                    f"{rows:,}/{archive.metadata.num_rows:,} fixes"
                 )
-            stages[disc.name] = {"rows": rows, "edges": edges}
+            if carry is not None:
+                count, total = _add_flights(grid, carry, runs, spans, origins)
+                edges, seconds = edges + count, seconds + total
+            stages[disc.name] = {"rows": rows, "edges": edges, "seconds": seconds}
         _check_cancel(cancel)
         if source_signature(disciplines) != signature:
             raise ValueError("Thermal source archive changed during preparation")
         save_grids(
-            {"archive/own": grid},
+            {f"archive/{SOURCE}": grid},
             path,
             {
                 "complete": True,
                 "signature": signature,
+                "version": VERSION,
                 "stages": stages,
                 "created": datetime.now(UTC).isoformat(),
                 "base_m": BASE_M,
-                "method": "HMM consecutive climb decisions; "
-                "same calculation as Thermal density regions",
+                "method": "consecutive fixes inside one saved Vilpellet climb run, "
+                "along continuous edges; same calculation as Thermal density "
+                "regions",
             },
         )
     return path
@@ -206,7 +247,7 @@ def load_density(bounds, disciplines=None, *, path=None):
     grids, metadata = load_grids(path)
     if metadata.get("signature") != source_signature(disciplines):
         raise ValueError("Thermal archive changed; use Prepare / refresh index")
-    grid = grids["archive/own"]
+    grid = grids[f"archive/{SOURCE}"]
     span = max(np.asarray(bounds[2:]) - bounds[:2])
     steps = [step for step in (250, 500, 1000, 2000) if span / step <= 1600]
     if not steps:

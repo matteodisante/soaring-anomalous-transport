@@ -45,9 +45,9 @@ def test_background_opacity_and_layer_preserve_zoom_and_history(qapp):
     grid = TimeGrid((800000, 6400000, 805000, 6405000))
     grid.add([[802000, 6402000]], [[802100, 6402100]], [60])
     grid.flush()
-    view._grids = {"region/Alps/own": grid}
+    view._grids = {"region/Alps/vilpellet": grid}
     view._draw()
-    ax = view._axes_by_key["region/Alps/own"]
+    ax = view._axes_by_key["region/Alps/vilpellet"]
     view._toolbar.push_current()
     ax.set_xlim(801, 803)
     ax.set_ylim(6401, 6403)
@@ -55,11 +55,11 @@ def test_background_opacity_and_layer_preserve_zoom_and_history(qapp):
     view._terrain.setValue(30)
     view._strength.setValue(20)
     view._background.setCurrentIndex(0)
-    assert view._axes_by_key["region/Alps/own"] is ax
+    assert view._axes_by_key["region/Alps/vilpellet"] is ax
     assert ax.get_xlim() == pytest.approx((801, 803))
     assert ax.get_ylim() == pytest.approx((6401, 6403))
     view._map_received(
-        "region/Alps/own",
+        "region/Alps/vilpellet",
         (
             {
                 "extent": (801000, 6401000, 803000, 6403000),

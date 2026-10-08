@@ -18,12 +18,12 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ...analysis.segmentation.config import load_segmentation_config
 from .. import geography, thermal_regions
 from ..density_maps import view_request
 from ..density_view import AdaptiveDensity
 from ..thermal_store import load_store
 from ..thermal_time import cache_path, load_grids
+from ..thermal_time_prepare import SOURCE
 from .density_background import DensityBackgrounds
 from .flow_layout import FlowLayout
 from .info_browser import info_browser
@@ -37,7 +37,7 @@ All archived dates and heights; paragliders and hang gliders pooled.</p>
 
 <h3>Calculation</h3>
 <ol>
-<li><b>Select:</b> consecutive fixes in the same climb run. Keep gaps,
+<li><b>Select:</b> consecutive fixes in the same Vilpellet climb run. Keep gaps,
 phase boundaries and separate flights apart.</li>
 <li><b>Project:</b> positions to Lambert-93. Pool every altitude.</li>
 <li><b>Split time:</b> assume linear motion along each edge and assign its time
@@ -50,11 +50,12 @@ to its pixel.</li>
 
 <h3>Regions and cells</h3>
 <ul>
-<li><b>Regions:</b> five thesis areas plus a margin. HMM decisions,
-one every {load_segmentation_config().decision_step_s:g} s;
-gaps longer than 1.5 decision steps are excluded.</li>
-<li><b>Cells:</b> the twelve Thermal planes squares; saved climb edges
-from the selected HMM or Vilpellet method.</li>
+<li><b>Regions:</b> five thesis areas plus a margin, cut from the national
+grid of the Routes tab. Native fixes of the saved Vilpellet climb runs; steps
+longer than 1.5 times the segment's median sampling interval are gaps and are
+excluded.</li>
+<li><b>Cells:</b> the twelve Thermal planes squares; their saved Vilpellet
+climb edges.</li>
 <li><b>Coverage:</b> all trajectories crossing the frame, including take-offs
 elsewhere. This tab has no date or height filter.</li>
 </ul>
@@ -79,7 +80,7 @@ Terrain and Density adjust background and density opacity separately.</li>
 
 <h3>Sources and backgrounds</h3>
 <p>{FLIGHT_SOURCE_HTML}: processed IGC positions and times supply the paths
-and durations. HMM / Vilpellet climb labels select which intervals contribute.</p>
+and durations. Vilpellet climb labels select which intervals contribute.</p>
 {background_sources_html()}
 <ul>
 <li><b>Access:</b> time grids are saved on the SSD. Detailed saved cell maps are
@@ -125,17 +126,13 @@ class ThermalDensity(QWidget):
         self._info_panel = None
         self._norm = LogNorm(0.01, 1, clip=True)
         self._area = QComboBox()
-        self._area.addItem("Regions · HMM", "regions")
+        self._area.addItem("Regions", "regions")
         self._area.addItem("Cells", "cells")
         self._item = QComboBox()
         self._item.setMinimumContentsLength(24)
         self._item.setSizeAdjustPolicy(
             QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
         )
-        self._source = QComboBox()
-        self._source.addItem("This work (HMM)", "own")
-        self._source.addItem("Jérémie (Vilpellet)", "vilpellet")
-        self._source.setCurrentIndex(1)
         self._background = QComboBox()
         for text, kind in (
             ("Topography + contours · IGN", "topography"),
@@ -164,7 +161,7 @@ class ThermalDensity(QWidget):
         self._canvas.mpl_connect("resize_event", lambda _: self._debounce.start())
         self._canvas.mpl_connect("scroll_event", self._scroll)
         top, look = FlowLayout(), FlowLayout()
-        for widget in (self._area, self._item, self._source, self._reload, self._info):
+        for widget in (self._area, self._item, self._reload, self._info):
             top.addWidget(widget)
         look.addWidget(QLabel("Background"))
         for widget in (self._background, self._terrain, self._strength, self._toolbar):
@@ -176,7 +173,6 @@ class ThermalDensity(QWidget):
         layout.addWidget(self._status)
         self._area.currentIndexChanged.connect(self._area_changed)
         self._item.currentIndexChanged.connect(self._draw)
-        self._source.currentIndexChanged.connect(self._draw)
         self._background.currentIndexChanged.connect(self._background_changed)
         self._terrain.valueChanged.connect(self._terrain_changed)
         self._strength.valueChanged.connect(self._strength_changed)
@@ -279,7 +275,6 @@ class ThermalDensity(QWidget):
 
     def _area_changed(self, *_):
         cells = self._area.currentData() == "cells"
-        self._source.setVisible(cells)
         self._item.blockSignals(True)
         self._item.clear()
         if cells:
@@ -305,7 +300,7 @@ class ThermalDensity(QWidget):
         data = self._item.currentData()
         if self._area.currentData() == "regions":
             names = list(thermal_regions.REGIONS) if data is None else [data]
-            return [(f"region/{name}/own", name) for name in names]
+            return [(f"region/{name}/{SOURCE}", name) for name in names]
         if data is None:
             return []
         what, value = data
@@ -314,9 +309,8 @@ class ThermalDensity(QWidget):
             for c in self._cells
             if (c.terrain == value if what == "group" else (c.ix, c.iy) == value)
         ]
-        source = self._source.currentData()
         return [
-            (f"cell/{c.ix}/{c.iy}/{source}", f"{c.terrain} #{self._rank(c)}")
+            (f"cell/{c.ix}/{c.iy}/{SOURCE}", f"{c.terrain} #{self._rank(c)}")
             for c in cells
         ]
 
@@ -331,6 +325,12 @@ class ThermalDensity(QWidget):
         self._figure.clear()
         panels = [(key, title) for key, title in self._panels() if key in self._grids]
         if not panels:
+            if self._grids and self._panels():
+                only = self._area.currentData()
+                self._status.setText(
+                    f"Vilpellet {only} not prepared. Run "
+                    f"scripts/pipeline/prepare_thermal_density.py --only {only}."
+                )
             self._canvas.draw_idle()
             return
         columns = min(3, len(panels))
@@ -460,13 +460,8 @@ class ThermalDensity(QWidget):
     def _update_status(self):
         if not self._grids:
             return
-        source = (
-            "HMM"
-            if self._area.currentData() == "regions"
-            else self._source.currentText()
-        )
         self._status.setText(
-            f"{source} · all archived dates and heights · 50 m grid · hours/km² "
+            "Vilpellet · all archived dates and heights · 50 m grid · hours/km² "
             f"(not probability). {self._map_note} "
             + (
                 f"{len(self._map_errors)} map(s) unavailable; "

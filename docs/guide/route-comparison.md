@@ -176,16 +176,18 @@ ground or precise height-above-ground measurement is implied by the overlay.
 
 ## Thermal hours on the terrain
 
-**Thermal hours · all flights** uses every available HMM-classified flight crossing
-the area, including departures/arrivals elsewhere, both disciplines and all dates
-and heights. Selecting a route, a discipline or the five fastest/slowest flights
-does **not** filter this background population. It is the same quantity and uses
-the same `phase_edges` and `TimeGrid` calculation as the regional Thermal density tab:
+**Thermal hours · all flights** uses every available Vilpellet-classified flight
+crossing the area, including departures/arrivals elsewhere, both disciplines and all
+dates and heights. Selecting a route, a discipline or the five fastest/slowest flights
+does **not** filter this background population. The regional Thermal density maps
+are crops of this same grid. The calculation (`climb_edges`, then `TimeGrid`) is:
 
-1. Read saved `derived/segmentation/phase_points.parquet` HMM decisions (currently
-   every 10 seconds), recovering locations with each flight's stored origin.
-2. Keep edges between consecutive `climb` decisions in the same flight and cleaned
-   segment, with positive duration and no gap above 1.5 decision steps (15 s).
+1. Stream the native fixes of `derived/fixes.parquet` once, with the saved Vilpellet
+   `climb` runs of `derived/segmentation/vilpellet/phase_segments.parquet`, recovering
+   locations with each flight's stored origin. No decoder runs.
+2. Keep edges between consecutive fixes of one climb run, with positive duration
+   and at most 1.5 times the segment's median sampling interval, the continuity
+   rule of the Thermal planes census. Gaps never contribute.
 3. Split each edge's duration across the 50 x 50 m ground pixels it traverses,
    assuming linear motion. A stationary edge contributes all its time to one pixel.
 4. Sum seconds across all flights and divide by 3600 and the pixel's area in km².
@@ -224,8 +226,10 @@ The cache lives alongside the existing viewer cache on the archive disk:
   including request URL, retrieval date and SHA-256, checked on reuse.
 - `route-terrain/ign-aerial-*.npz`: aerial overview responses and the same integrity
   and georeferencing checks, plus imagery attribution.
-- `route-thermal-duration.npz`: sparse all-flight 50 m thermal seconds, with source
-  signatures and complete-build checks. Each scene retains only bounded overviews.
+- `route-thermal-duration-vilpellet.npz`: sparse all-flight 50 m Vilpellet thermal
+  seconds, with an explicit calculation version, input signatures and
+  complete-build checks. Each scene retains only bounded overviews. The older
+  `route-thermal-duration.npz` holds the HMM version and is no longer read.
 
 The existing `SOARING_VIEWER_CACHE_DIR` override is respected. No full trajectory
 archive is copied: only necessary row groups are read, once each per scene, and
