@@ -1,0 +1,22 @@
+{
+  "satellite-cover.png": {
+    "tool": "built-in image_gen",
+    "purpose": "Decorative, stylized satellite and clouds for the title slide; not an instrument model or scientific image.",
+    "generation_prompt": "Use case: stylized-concept. Asset type: small decorative illustration for an academic presentation cover titled Satellite cloud data over France. Create one elegant, simple, charming stylized weather satellite hovering above two small soft cloud shapes. Transparent background, no text at all. The illustration will sit centered above a title on a muted slate blue slide (#4A6079), so every silhouette and line must read clearly against that dark blue. Use a restrained palette of warm white, very pale ice blue (#C0CEDC), medium blue for solar-panel cells, and only a tiny warm ochre accent on the satellite body. Flat vector-like editorial illustration with crisp confident slightly rounded contours, clean shapes, very sparse detail, no gradients, no texture, no shadows, no glow. Satellite in a gentle diagonal pose with a compact warm-white body, two rectangular solar wings with just a few neat cells, one small dish pointing down toward the clouds. Two small ivory clouds below complete a compact airy composition, one slightly larger than the other. No planet, no globe, no map, no stars, no labels, no orbit ring, no big surrounding frame. Landscape composition about 3:2, with the artwork occupying most of its bounds but a small transparent safety margin. It should feel tasteful and friendly, suitable for a research seminar, not a toy or mascot.",
+    "final_edit_prompt": "Edit this satellite and two clouds illustration for a small academic slide decoration. Preserve the silhouette, compact composition, diagonal satellite pose and palette exactly. Remove ALL surrounding white/blue glow, fog, bloom, shadows and haze completely: the space outside the actual satellite and actual cloud silhouettes must be fully transparent alpha zero right up to their crisp anti-aliased edges. Flatten the rendering to clean simple solid-color shapes: no gradients, no lighting, no glossy or 3D shading. Keep just warm-white satellite body and clouds, ice-blue secondary solid shape accents, medium-blue solar panels and the one little ochre square. Do not add anything, no stars, no text. Output true transparency."
+  },
+  "orbits/orbits.gif": {
+    "credit": "NASA Space Place",
+    "source_page": "https://spaceplace.nasa.gov/orbits/en/",
+    "source_asset": "https://spaceplace.nasa.gov/orbits/en/geostationary-and-polar-orbits.en.gif",
+    "retrieved": "2026-10-07",
+    "changes": "Original NASA frames, slowed from 70 to 100 ms per frame (70 percent of the original playback speed). The PDF uses the same 10 fps timing.",
+    "frame_count": 72,
+    "frame_duration_ms": 100,
+    "original_frame_duration_ms": 70,
+    "poster_frame": 18,
+    "caveat": "Schematic: distances, spacecraft sizes and relative speeds are not to scale.",
+    "extract_frames": "magick assets/orbits/orbits.gif -coalesce assets/orbits/frames/frame-%02d.png",
+    "orbital_reference": "https://www.esa.int/Enabling_Support/Space_Transportation/Types_of_orbits"
+  }
+}
