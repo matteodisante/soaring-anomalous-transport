@@ -134,7 +134,7 @@ def test_fullscreen_exit_after_resize_and_single_map_focus(window, qapp, monkeyp
     window.show()
     qapp.processEvents()
     _click_map_toggle(window._fullscreen_button, qapp)
-    view._view.setCurrentIndex(view._view.findData("midday"))
+    view._view.setCurrentIndex(view._view.findData("planes"))
     window.resize(1920, 1080)
     qapp.processEvents()
     # Qt can clear its fullscreen flag on resize without a WindowStateChange event.
@@ -142,8 +142,8 @@ def test_fullscreen_exit_after_resize_and_single_map_focus(window, qapp, monkeyp
     assert not window.isFullScreen()
     assert not window._picker.isHidden()
     assert window._fullscreen_state is None
-    assert view._view.currentData() == "midday"
-    assert view._panel_indices == [1]
+    assert view._view.currentData() == "planes"
+    assert len(view._plane_axes) == 1 and view._map_ax is None
 
 
 @pytest.mark.parametrize("width,height", [(1000, 700), (800, 600)])

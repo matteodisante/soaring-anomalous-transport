@@ -59,11 +59,12 @@ destination. Re-run this command when inputs or segmentation settings change;
 the viewer deliberately reads the published snapshot without inspecting inputs.
 
 Select one of the three ranked cells in each of the four categories, enter **From** and **To** as calendar dates and
-times in **Paris local time**, choose **This work (HMM)** or **Jérémie (Vilpellet)**, and click
-**Load climb intersections**. The height slider then moves the horizontal plane
-without rereading flights or repeating segmentation. The left map also accepts
-clicks on the cell markers or their labelled callouts. Changing the time interval or segmentation hides
-the previous result until the new selection is loaded.
+times in **Paris local time**, and click **Load climb intersections**. Climb labels
+are Jérémie's Vilpellet segmentation; the viewer no longer offers the HMM. The
+height slider then moves the horizontal plane without rereading flights or
+repeating segmentation. The left map also accepts clicks on the cell markers or
+their labelled callouts. Changing the time interval hides the previous result
+until the new selection is loaded.
 
 ## Vilpellet climb ranking, cell visitors and ground reference
 
@@ -94,7 +95,7 @@ and saved phase products. Missing or stale phase products require rerunning
 Every **distinct visiting flight** is also counted separately, including flights
 that only glide or descend and flights launched elsewhere. Repeated visits by one
 flight count once in that visitor statistic. This count does not determine the
-climb-run ranking. Displaying this work's HMM does not change the Vilpellet-selected cells.
+climb-run ranking.
 
 The **plane ground reference** is the lowest unsmoothed IGN RGE ALTI elevation
 inside the entire 5 × 5 km square. Starting at the lowest ground means every climb
@@ -167,7 +168,9 @@ IGC files; that datum uncertainty remains in the height difference.
 ## Ranked map and shaded terrain
 
 The dropdown and map callouts show category, within-category rank, Vilpellet
-climb runs, and lowest terrain elevation in metres ASL. Cell details show the number
+climb runs, and both minimum and maximum terrain elevations in metres ASL,
+explicitly labelled `min` and `max`. The minimum sets the plane reference;
+the maximum sets the terrain category. Cell details show the number
 of distinct flights contributing climbs and the separate total visitor count.
 Visitor-ranked older snapshots explicitly retain their visitor labels.
 The cell summary also reports the raw support and median before the origin screen, so
@@ -279,10 +282,12 @@ mosaic. Full attribution, layer names, query provenance and retrieval timestamps
 are embedded with the images. The graph’s dates identify source acquisitions,
 not flight observation dates.
 
-**Morning / midday / afternoon** opens three aligned panels at the same z level.
-Defaults are **08–11, 11–15, 15–18 Europe/Paris**; all four boundaries are editable.
-Bands are half-open, so an intersection at 15:00 belongs only to the afternoon.
-Changing hour boundaries only filters points in memory. Each panel reports both
+**Daily hour window** keeps one panel and the same **Paris hours** on every
+selected day; the default is **08:00 to 18:00 Europe/Paris**. The window is
+half-open, so with 08:00 to 15:00 an intersection at 15:00 is excluded; an end of
+00:00 means midnight at the end of the day. Hours are
+clock readings, also on the 23- and 25-hour days of daylight-saving changes.
+Changing the hours only filters points in memory. The panel reports both
 intersections and distinct contributing flights; these differ from the all-time
 cell population. Cell visitors include all altitudes and flight phases, including
 glides and descents. A busy cell can have very few climb intersections at a low
@@ -307,12 +312,22 @@ Choose **Days around a date** to use the reference day with **Days before** and
 **after** instead. Switching back to direct dates retains that computed range.
 **Busiest summer day** selects the recommended day alone in direct-date mode,
 or restores the reference day while retaining the offsets in relative mode.
-These comparison dates do not modify the general From/To interval. Civil days
-and hour bands use Europe/Paris, including daylight-saving transitions. The
-morning, midday and afternoon bands apply on every included day. All storage
-timestamps remain UTC. Reversed dates show an error and cannot load data.
 
-The figure states the actual inclusive day range and number of pooled days.
+Choose **Same dates every year** to pool one season over several years: a first
+and last day and month, and a first and last year. For example, 01 Jun to 31 Aug
+with years 2015 to 2022 pools 736 days, all June, July and August days of those
+eight years. A last day earlier than the first continues into the next year, so
+15 Dec to 15 Jan with 2015 to 2016 covers two winters, starting in December
+2015 and December 2016. A 29 February bound becomes 28 February in common years.
+The loaded interval spans the first to the last pooled day; the days outside the
+season are then removed in memory, together with the hours outside the window.
+
+These comparison dates do not modify the general From/To interval. Civil days
+and hour windows use Europe/Paris, including daylight-saving transitions. The
+hour window applies on every included day. All storage timestamps remain UTC.
+Reversed dates or years show an error and cannot load data.
+
+The figure states the selected days, the number of pooled days and the hours.
 Pooled panels show recurring locations at similar local hours across days; they
 do not track the identity or displacement of individual thermals. The viewer
 reports coverage rather than claiming thermal centres or correcting for uneven
@@ -350,9 +365,9 @@ clipped to that 10 km square. Changing the area reloads the captured dates and
 retains point opacity, point size and surface mode. The camera and kilometre
 grid adapt to the selected area; wheel zoom changes only the camera distance.
 
-The window uses the current **From/To interval**, or the selected pooled civil
-days in daily-comparison mode, and always uses **Vilpellet**. Both disciplines
-contribute. Dates and source are printed above the scene. This is a snapshot of
+The window uses the current **From/To interval**, or in daily-window mode the
+selected pooled civil days and their hour window, and always uses **Vilpellet**.
+Both disciplines contribute. Dates, hours and source are printed above the scene. This is a snapshot of
 that selection: click the 3D button again after changing the cell or dates to
 reload the same window. Area, surface mode, point opacity and point size are retained.
 
@@ -444,11 +459,9 @@ QT_QPA_PLATFORM=cocoa SOARING_TEST_NATIVE_OPENGL=1 uv run --group viewer pytest 
 
 ### 2D views
 
-The daily comparison shows **morning, midday and afternoon in one horizontal
-row**, with matching axes. The **View** selector can show the three periods,
-France alone, or one chosen period alone. In whole-interval mode it offers
-France plus the horizontal plane, France alone, or the horizontal plane alone.
-Changing **View** uses the loaded results and preserves dates, z and segmentation.
+Both time modes draw one horizontal plane. The **View** selector offers France
+plus the horizontal plane, France alone, or the horizontal plane alone.
+Changing **View** uses the loaded results and preserves dates, hours and z.
 
 **Map full screen**, at the top right of the application, enlarges the active map
 and hides the flight-picker sidebar, settings and France overview. The tab strip

@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 
-from .thermal_daily import height_levels
+from .thermal_daily import height_levels, in_windows
 from .thermal_geometry import CELL_M, ThermalCell
 from .thermal_ground import cell_ground, mean_terrain, terrain_reference
 from .thermal_orography import DATA_DIRECTORY
@@ -179,12 +179,13 @@ def read_area_surface(store, cell, check_cancel, progress):
     )
 
 
-def points_every_20m(frame, cell, start, end, *, area_km=5):
+def points_every_20m(frame, cell, start, end, *, area_km=5, windows=None):
     """Select true 20 m levels, including neither odd levels nor an off-grid ceiling.
 
     The saved level is an index, not an altitude. The last 10 m lattice entry
     can be an irregular exact ceiling, so index parity alone is insufficient.
-    Time and cell masks match the 2D plane view. No point is randomly thinned.
+    Time and cell masks match the 2D plane view, including its optional daily
+    hour ``windows``. No point is randomly thinned.
     """
     west, south, east, north = area_bounds(cell, area_km)
     if frame is None:
@@ -207,6 +208,8 @@ def points_every_20m(frame, cell, start, end, *, area_km=5):
         & frame.y.between(south, north, inclusive="left").to_numpy()
         & frame.utc.between(start, end).to_numpy()
     )
+    if windows is not None:
+        keep &= in_windows(frame.utc, windows)
     selected = frame.loc[keep]
     xyz = np.column_stack(
         (
@@ -309,9 +312,20 @@ def read_area_aerial(store, cell, check_cancel):
 
 
 def load_scene(
-    store, cell, start, end, *, area_km=5, progress=lambda _: None, cancel=None
+    store,
+    cell,
+    start,
+    end,
+    *,
+    area_km=5,
+    windows=None,
+    progress=lambda _: None,
+    cancel=None,
 ):
-    """Load the selected saved cell, Vilpellet and the requested UTC interval."""
+    """Load the selected saved cell, Vilpellet and the requested UTC interval.
+
+    ``windows`` optionally keeps only the daily hour windows inside it.
+    """
     area_bounds(cell, area_km)
     if not np.isfinite([start, end]).all() or end < start:
         raise ValueError("Choose a valid time interval in Thermal planes")
@@ -355,7 +369,9 @@ def load_scene(
         if frame is not None and not neighbours.empty:
             frame = pd.concat([frame, neighbours], ignore_index=True)
     check_cancel()
-    points, flights = points_every_20m(frame, cell, start, end, area_km=area_km)
+    points, flights = points_every_20m(
+        frame, cell, start, end, area_km=area_km, windows=windows
+    )
     return TerrainScene(
         cell,
         x,

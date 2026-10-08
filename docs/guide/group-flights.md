@@ -93,7 +93,7 @@ IGN terrain. The France/world locator shows where the group is located.
 **Map full screen** enlarges the main 3D map and hides the locator and flight table;
 the same button restores them. Dragging the divider above the table changes its height.
 
-Thermal density is the same HMM climb-hours-per-km² layer used by
+Thermal density is the same Vilpellet climb-hours-per-km² layer used by
 [Routes](route-comparison.md) and [Thermal density](thermal-density.md), draped on the
 DEM. It uses **all available indexed flights crossing the area, all dates, heights
 and disciplines**, not only the displayed group or selected year. It therefore shows

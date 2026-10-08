@@ -43,14 +43,11 @@ if TYPE_CHECKING:
     from ..analysis.preproc.pipeline import FlightResult
     from ..reporting.disciplines import Discipline
 
-# What a segmentation is called, in the combo box and in the title above its panel.
-SEGMENTATION_LABELS = {
-    "own": "Chapter 4 HMM (this work)",
-    "vilpellet": "Vilpellet (Jérémie)",
-}
+# The title above a phase-coloured trajectory: the only segmentation the viewer shows.
+SEGMENTATION_TITLE = "Vilpellet segmentation (Jérémie)"
 
-# Why a segmenter left a flight unlabelled, in words a status line can carry.  The keys
-# are the `phase_reason` values of both segmenters.
+# Why the segmenter left a flight unlabelled, in words a status line can carry.  The
+# keys are Vilpellet's `phase_reason` values.
 _REASON_TEXT = {
     "flight_shorter_than_author_guard": (
         "shorter than the author's 3600-fix minimum flight"
@@ -63,11 +60,6 @@ _REASON_TEXT = {
     "dropped_flight_tail": "discarded as flight tail",
     "run_shorter_than_minimum": "every run shorter than the configured minimum",
     "search_not_followed_by_climb": "no search run confirmed by a climb",
-    "no_eligible_decisions": "no eligible decision grid",
-    "outside_decision_cells": "outside every decision cell",
-    "unavailable_features": "unavailable features",
-    "quality_masked": "reconstructed altitude or preprocessing edges",
-    "feature_edge": "window edges",
 }
 
 
@@ -95,7 +87,6 @@ class MainWindow(QMainWindow):
         self._raw: data.RawTrack | None = None
         self._cleaned: FlightResult | None = None
         self._phases: data.PhaseTrack | None = None
-        self._vilpellet_phases: data.PhaseTrack | None = None
         self._frame: LocalFrame | None = None
         self._view_key: tuple | None = None
         self._saved_views: dict[tuple, dict] = {}
@@ -117,7 +108,6 @@ class MainWindow(QMainWindow):
         self._figure = Figure(figsize=(7.5, 6.5))
         self._canvas = FigureCanvasQTAgg(self._figure)
         self._toolbar = NavigationToolbar2QT(self._canvas, self)
-        self._canvas.mpl_connect("motion_notify_event", self._on_canvas_drag)
 
         trajectory_tab = QWidget()
         trajectory_layout = QVBoxLayout(trajectory_tab)
@@ -290,9 +280,9 @@ class MainWindow(QMainWindow):
             A sentence naming the classified fraction, or the reason nothing was
             classified when the flight failed the segmenter's own eligibility gate.
         """
-        track = self._vilpellet_phases
+        track = self._phases
         if track is None:
-            return "Vilpellet configuration unavailable; that panel stays empty."
+            return "Vilpellet configuration unavailable; using segment colours."
         classified = track.fixes["phase"].ne("unclassified")
         if not classified.any():
             reasons = track.fixes["phase_reason"].value_counts()
@@ -306,7 +296,7 @@ class MainWindow(QMainWindow):
     def _on_flight_chosen(
         self, igc_path: Path, discipline: Discipline, flight_id: str
     ) -> None:
-        """Load one flight's raw track, cleaned trajectory and both segmentations."""
+        """Load one flight's raw and cleaned tracks and its Vilpellet segmentation."""
         self._saved_views.clear()
         self._view_key = None
         self._igc_path = igc_path
@@ -314,7 +304,6 @@ class MainWindow(QMainWindow):
         self._flight_id = flight_id
         self._cleaned = None
         self._phases = None
-        self._vilpellet_phases = None
         self._frame = None
 
         try:
@@ -351,51 +340,7 @@ class MainWindow(QMainWindow):
 
         if self._cleaned is not None and self._cleaned.kept:
             try:
-                self._phases = data.load_flight_phases(self._cleaned.fixes, discipline)
-                if self._phases is None:
-                    status += " HMM phase model unavailable; using segment colours."
-                elif not self._phases.fixes["phase"].ne("unclassified").any():
-                    status += (
-                        " No HMM-classifiable decision points; cleaned track in grey."
-                    )
-                elif self._phases.mapping_method.startswith("manual"):
-                    status += " HMM phases use the manual train-set calibration."
-                else:
-                    status += " HMM phase names are provisional pending annotation."
-                if self._phases is not None:
-                    coverage = self._phases.coverage
-                    percent = coverage.get("unclassified_fix_percent")
-                    if percent is not None:
-                        status += f" Unclassified: {percent:.1f}% of cleaned fixes."
-                        reasons = coverage.get("fixes_by_reason", {})
-                        names = {
-                            "feature_edge": "window edges",
-                            "quality_masked": (
-                                "reconstructed altitude / preprocessing edges"
-                            ),
-                            "no_eligible_decisions": "no eligible decision grid",
-                            "outside_decision_cells": "outside decision cells",
-                            "unavailable_features": "unavailable features",
-                        }
-                        details = [
-                            f"{names.get(k, k)}: {v}"
-                            for k, v in reasons.items()
-                            if k != "classified"
-                        ]
-                        if details:
-                            status += " (" + "; ".join(details) + ")."
-                    if self._phases.sequence_prior_weight:
-                        status += (
-                            " Search optional; climb-to-transition preferred."
-                            " Names remain provisional."
-                            if self._phases.search_optional
-                            else " Soft phase-cycle preference active (provisional)."
-                        )
-            except Exception as exc:
-                status += f" HMM phases could not be decoded ({exc})."
-
-            try:
-                self._vilpellet_phases = data.load_vilpellet_phases(
+                self._phases = data.load_vilpellet_phases(
                     self._cleaned.fixes, discipline
                 )
                 status += " " + self._vilpellet_status_text()
@@ -413,52 +358,20 @@ class MainWindow(QMainWindow):
         self._redraw()
 
     # -- drawing -----------------------------------------------------------------
-    def _panel_specs(self, mode: str) -> list[tuple[str, data.PhaseTrack | None, str]]:
-        """Which segmentation(s) to draw, one ``(key, phase_track, title)`` per panel.
-
-        Args:
-            mode: ``self._controls.segmentation_source`` -- ``"own"``, ``"vilpellet"``
-                or ``"compare"``.
-
-        Returns:
-            One entry for a single panel, or the two (left then right) a comparison
-            draws.
-        """
-        if mode == "vilpellet":
-            return [
-                ("vilpellet", self._vilpellet_phases, SEGMENTATION_LABELS["vilpellet"])
-            ]
-        if mode == "compare":
-            return [
-                ("own", self._phases, SEGMENTATION_LABELS["own"]),
-                (
-                    "vilpellet",
-                    self._vilpellet_phases,
-                    SEGMENTATION_LABELS["vilpellet"],
-                ),
-            ]
-        return [("own", self._phases, SEGMENTATION_LABELS["own"])]
-
     def _redraw(self) -> None:
         """Draw the current flight under the selected axes, phase filter and camera.
 
-        One panel for ``"own"`` or ``"vilpellet"``; two side by side, sharing their
-        limits and (in 3D) their camera, for ``"compare"``. ``climb_only`` filters
-        every panel to the climb fixes before drawing, and never draws the raw track.
+        ``climb_only`` filters the trajectory to the Vilpellet climb fixes before
+        drawing, and never draws the raw track.
         """
         frame_kind = self._controls.frame_kind
         is_3d = self._controls.is_3d
         x, y = self._controls.x_column, self._controls.y_column
         z = self._controls.z_column if is_3d else None
-        mode = self._controls.segmentation_source
         climb_only = self._controls.climb_only
-        panel_specs = self._panel_specs(mode)
-        panels = len(panel_specs)
-        # Extended with `mode` and `climb_only`, both of which change what is drawn
-        # and how many panels there are: restoring a saved camera from an
-        # incompatible layout (a different panel count) would misplace it, so the
-        # saved-view lookup below keys on the whole tuple, not just the axes.
-        key = (frame_kind, x, y, z, mode, climb_only)
+        # Extended with `climb_only`, which changes what is drawn: the saved-view
+        # lookup below keys on the whole tuple, not just the axes.
+        key = (frame_kind, x, y, z, climb_only)
 
         if self._view_key is not None and self._figure.axes:
             old_primary = self._figure.axes[0]
@@ -474,18 +387,11 @@ class MainWindow(QMainWindow):
             self._saved_views[self._view_key] = view
         saved_view = self._saved_views.get(key)
 
-        reused = (
-            key == self._view_key
-            and len(self._figure.axes) == panels
-            and self._figure.axes
-        )
-        if reused:
-            axes = list(self._figure.axes)
-            for ax in axes:
-                ax.clear()
+        if key == self._view_key and len(self._figure.axes) == 1:
+            ax = self._figure.axes[0]
+            ax.clear()
         else:
-            drawn = plotting.make_axes(self._figure, is_3d=is_3d, panels=panels)
-            axes = drawn if isinstance(drawn, list) else [drawn]
+            ax = plotting.make_axes(self._figure, is_3d=is_3d)
             self._toolbar.update()
         self._view_key = key
 
@@ -493,7 +399,7 @@ class MainWindow(QMainWindow):
         self._has_3d_data = False
 
         if self._raw is None and self._cleaned is None:
-            plotting.center_message(axes, "Pick a flight to plot.", is_3d=is_3d)
+            plotting.center_message(ax, "Pick a flight to plot.", is_3d=is_3d)
             self._canvas.draw_idle()
             return
 
@@ -501,7 +407,7 @@ class MainWindow(QMainWindow):
             # Only reachable when even raw's own fallback frame failed: an IGC file
             # with no decodable position fix at all (data.raw_only_frame).
             plotting.center_message(
-                axes,
+                ax,
                 "No usable position fixes in this file — switch to the geographic "
                 "frame, or pick another flight.",
                 is_3d=is_3d,
@@ -524,33 +430,22 @@ class MainWindow(QMainWindow):
             if self._discipline is not None
             else DISCIPLINE_COLORS["paragliders"]
         )
-        drawn_any = False
-        for ax, (source_key, phase_track, title) in zip(axes, panel_specs, strict=True):
-            drawn_any |= self._draw_panel(
-                ax,
-                source_key=source_key,
-                phase_track=phase_track,
-                title=title,
-                panels=panels,
-                raw_table=raw_table,
-                x=x,
-                y=y,
-                z=z,
-                climb_only=climb_only,
-                color=color,
-            )
-        self._has_3d_data = is_3d and drawn_any
+        drawn = self._draw_panel(
+            ax,
+            raw_table=raw_table,
+            x=x,
+            y=y,
+            z=z,
+            climb_only=climb_only,
+            color=color,
+        )
+        self._has_3d_data = is_3d and drawn
 
-        # A comparison that scales its two panels differently makes the same flight
-        # look like two different ones, so this runs before either camera is set --
-        # a camera then orients the (now-shared) view, it never re-scales it.
-        if panels > 1:
-            plotting.equalise_limits(axes)
         if saved_view is not None:
-            axes[0].set_xlim(saved_view["xlim"])
-            axes[0].set_ylim(saved_view["ylim"])
+            ax.set_xlim(saved_view["xlim"])
+            ax.set_ylim(saved_view["ylim"])
             if is_3d:
-                primary3d = cast("Axes3D", axes[0])
+                primary3d = cast("Axes3D", ax)
                 primary3d.set_zlim(saved_view["zlim"])
                 primary3d.view_init(
                     elev=saved_view["elev"],
@@ -558,16 +453,14 @@ class MainWindow(QMainWindow):
                     roll=saved_view["roll"],
                 )
         elif is_3d:
-            primary3d = cast("Axes3D", axes[0])
+            primary3d = cast("Axes3D", ax)
             primary3d.view_init(
                 elev=self._controls.elev_deg, azim=self._controls.azim_deg
             )
             factor = 100.0 / self._controls.zoom_percent
-            axes[0].set_xlim(self._scaled(axes[0].get_xlim(), factor))
-            axes[0].set_ylim(self._scaled(axes[0].get_ylim(), factor))
+            ax.set_xlim(self._scaled(ax.get_xlim(), factor))
+            ax.set_ylim(self._scaled(ax.get_ylim(), factor))
             primary3d.set_zlim(self._scaled(primary3d.get_zlim(), factor))
-        if panels > 1 and is_3d:
-            plotting.link_3d_axes(axes, source=axes[0])
         self._last_view_controls = (
             self._controls.azim_deg,
             self._controls.elev_deg,
@@ -579,10 +472,6 @@ class MainWindow(QMainWindow):
         self,
         ax,
         *,
-        source_key: str,
-        phase_track: data.PhaseTrack | None,
-        title: str,
-        panels: int,
         raw_table,
         x: str,
         y: str,
@@ -590,18 +479,10 @@ class MainWindow(QMainWindow):
         climb_only: bool,
         color: str,
     ) -> bool:
-        """Draw one segmentation's trajectory on ``ax``.
+        """Draw the flight's trajectory, phase-coloured by Vilpellet on request.
 
         Args:
-            ax: The panel's axes.
-            source_key: ``"own"`` or ``"vilpellet"`` -- which segmenter this panel
-                shows, for the phase-mode title wording.
-            phase_track: That segmentation's decoded track, or ``None`` when it could
-                not be decoded (the panel then falls back to plain segment colours,
-                the same fallback the single-panel Chapter 4 view has always used).
-            title: The panel's segmentation name.
-            panels: Total panel count. A single panel keeps this viewer's original,
-                unlabelled style; a comparison always shows both panel titles.
+            ax: The plot's axes.
             raw_table: The raw track to overlay, or ``None``.
             x: Column to plot on the x-axis.
             y: Column to plot on the y-axis.
@@ -610,8 +491,9 @@ class MainWindow(QMainWindow):
             color: The cleaned trajectory's fallback colour.
 
         Returns:
-            Whether this panel actually plotted a non-empty trajectory.
+            Whether a non-empty trajectory was actually plotted.
         """
+        phase_track = self._phases
         cleaned_table = None
         color_by: str | None = "segment_id"
         group_by: str | None = None
@@ -657,26 +539,7 @@ class MainWindow(QMainWindow):
             (raw_table is not None and len(raw_table))
             or (cleaned_table is not None and len(cleaned_table))
         )
-        displayed_title = title
-        if color_by == "phase" and phase_track is not None:
-            qualifier = (
-                "manual calibration"
-                if phase_track.mapping_method.startswith("manual")
-                else "provisional state names"
-            )
-            if phase_track.sequence_prior_weight:
-                qualifier += (
-                    "; search optional"
-                    if phase_track.search_optional
-                    else "; soft cycle prior"
-                )
-            displayed_title = (
-                f"{title} — {qualifier}"
-                if panels > 1
-                else f"Viterbi flight-phase segmentation — {qualifier}"
-                if source_key == "own"
-                else f"{title} segmentation — {qualifier}"
-            )
+        title = SEGMENTATION_TITLE if color_by == "phase" else ""
         if climb_only and cleaned_table is not None and len(cleaned_table):
             n_thermals = (
                 cleaned_table["phase_run"].nunique()
@@ -690,13 +553,13 @@ class MainWindow(QMainWindow):
                     .apply(lambda s: s.max() - s.min())
                     .sum()
                 )
-            displayed_title += f" — {n_thermals} thermals, {total_s / 60:.0f} min"
-        if panels > 1 or displayed_title != title:
-            ax.set_title(displayed_title)
+            title += f" — {n_thermals} thermals, {total_s / 60:.0f} min"
+        if title:
+            ax.set_title(title)
 
         if climb_only and not has_data:
             plotting.center_message(
-                ax, f"{title}: no climb fixes to show.", is_3d=z is not None
+                ax, "No Vilpellet climb fixes to show.", is_3d=z is not None
             )
             return False
 
@@ -714,28 +577,6 @@ class MainWindow(QMainWindow):
             color_map=color_map,
         )
         return has_data
-
-    def _on_canvas_drag(self, event) -> None:
-        """Mirror a dragged 3D camera onto the other panel while comparing.
-
-        mplot3d has no built-in way to link two independent ``Axes3D``, so a
-        comparison keeps them in sync by copying whichever panel the mouse is
-        currently rotating onto the other one, on every drag step.
-
-        Args:
-            event: The Matplotlib ``motion_notify_event``.
-        """
-        if (
-            not self._has_3d_data
-            or len(self._figure.axes) != 2
-            or event.inaxes is None
-            or event.button is None
-        ):
-            return
-        if event.inaxes not in self._figure.axes:
-            return
-        plotting.link_3d_axes(self._figure.axes, source=event.inaxes)
-        self._canvas.draw_idle()
 
     def _reset_view(self) -> None:
         """Reset the camera only when the user explicitly requests it."""
@@ -773,8 +614,6 @@ class MainWindow(QMainWindow):
             ax.set_ylim(self._scaled(ax.get_ylim(), factor))
             ax.set_zlim(self._scaled(ax.get_zlim(), factor))
         self._last_view_controls = (azim, elev, zoom)
-        if len(self._figure.axes) > 1:
-            plotting.link_3d_axes(self._figure.axes, source=ax)
         self._canvas.draw_idle()
 
     @staticmethod

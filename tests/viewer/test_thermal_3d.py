@@ -78,6 +78,16 @@ def test_20m_levels_exclude_irregular_ceiling_and_keep_absolute_altitude(cell, p
     assert empty.shape == (0, 3) and flights == 0
 
 
+def test_daily_windows_keep_only_their_points(cell, points):
+    # Levels 0 and 2 are 20 m planes, at utc 100 and 120.
+    xyz, _ = points_every_20m(
+        points, cell, 100, 200, windows=np.array([[115.0, 125.0]])
+    )
+    np.testing.assert_allclose(xyz, [[-2400, -2300, 1570.25]])
+    empty, _ = points_every_20m(points, cell, 100, 200, windows=np.empty((0, 2)))
+    assert empty.shape == (0, 3)
+
+
 def test_regular_ceiling_is_kept_and_invalid_level_is_rejected(cell, points):
     exact = replace(cell, max_alt_m=cell.ground_m + 40)
     xyz, _ = points_every_20m(points, exact, 100, 200)

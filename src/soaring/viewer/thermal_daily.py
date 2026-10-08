@@ -6,6 +6,7 @@ import hashlib
 import io
 import json
 import sqlite3
+from calendar import monthrange
 from collections import Counter
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
@@ -135,6 +136,62 @@ def local_bounds(day, hours=(0, 24)):
         (datetime.combine(day, time(), PARIS) + timedelta(hours=h)).timestamp()
         for h in hours
     )
+
+
+def season_days(first, last, years):
+    """Civil days from ``first`` to ``last`` (month, day) in each start year.
+
+    A season whose end precedes its start runs into the next year. A 29 February
+    bound becomes 28 February in common years.
+    """
+
+    def on(year, month_day):
+        month, number = month_day
+        return date(year, month, min(number, monthrange(year, month)[1]))
+
+    days = set()
+    for year in years:
+        start, end = on(year, first), on(year + (last < first), last)
+        days.update(start + timedelta(days=i) for i in range((end - start).days + 1))
+    return sorted(days)
+
+
+def wall_windows(days, hours):
+    """UTC ``[start, end)`` of the same Paris clock hours on each civil day.
+
+    ``hours`` are fractional; 24 is the next midnight. Unlike ``local_bounds``, an
+    hour is a clock reading, also on the 23/25-hour days of DST changes.
+    """
+    return np.array(
+        [
+            [
+                (datetime.combine(day, time()) + timedelta(hours=h))
+                .replace(tzinfo=PARIS)
+                .timestamp()
+                for h in hours
+            ]
+            for day in days
+        ],
+        dtype=float,
+    ).reshape(-1, 2)
+
+
+def in_windows(utc, windows):
+    """Epoch seconds inside any of the sorted, disjoint ``[start, end)`` windows."""
+    utc = np.asarray(utc, dtype=float)
+    if not len(windows):
+        return np.zeros(len(utc), dtype=bool)
+    k = np.searchsorted(windows[:, 0], utc, side="right") - 1
+    return (k >= 0) & (utc < windows[np.maximum(k, 0), 1])
+
+
+def overlaps_windows(start, end, windows):
+    """Closed spans ``[start, end]`` that overlap any sorted, disjoint window."""
+    start, end = np.asarray(start, float), np.asarray(end, float)
+    if not len(windows):
+        return np.zeros(len(start), dtype=bool)
+    k = np.searchsorted(windows[:, 1], start, side="right")
+    return (k < len(windows)) & (windows[np.minimum(k, len(windows) - 1), 0] <= end)
 
 
 def lattice_points(values, cell):

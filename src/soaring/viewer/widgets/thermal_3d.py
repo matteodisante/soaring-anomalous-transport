@@ -298,34 +298,42 @@ class Thermal3D(QDialog):
         self._fullscreen.clicked.connect(self._toggle_fullscreen)
         self._cancel.clicked.connect(self._cancel_loading)
 
-    def _set_heading(self, label, start, end):
+    def _set_heading(self, label, start, end, selection=None):
         """Identify the displayed cell and dates in the window and scene titles."""
         self.setWindowTitle(f"3D terrain · {label} · Vilpellet")
-        dates = [
-            datetime.fromtimestamp(t, PARIS).strftime("%Y-%m-%d %H:%M:%S")
-            for t in (start, end)
-        ]
+        if selection is None:
+            dates = [
+                datetime.fromtimestamp(t, PARIS).strftime("%Y-%m-%d %H:%M:%S")
+                for t in (start, end)
+            ]
+            selection = f"{dates[0]} → {dates[1]} · Europe/Paris"
         self._heading.setText(
             f"{label} · {self._area.currentText()} · Vilpellet · planes every 20 m\n"
-            f"{dates[0]} → {dates[1]} · Europe/Paris"
+            f"{selection}"
         )
 
-    def load(self, store, cell, start, end):
-        """Replace the displayed snapshot with an explicit cell and date selection."""
+    def load(self, store, cell, start, end, *, windows=None, selection=None):
+        """Replace the displayed snapshot with an explicit cell and date selection.
+
+        ``windows`` keeps only the daily hour windows of Thermal planes, and
+        ``selection`` describes them in the heading.
+        """
         self.shutdown()
         self._view.clear()
         self._cloud = self._surface = self._scene = None
         self._surface_mode.setEnabled(False)
-        self._request = (store, cell, start, end)
+        self._request = (store, cell, start, end, windows, selection)
         self._area.setEnabled(True)
         area_km = self._area.currentData()
-        self._set_heading(cell_label(store, cell), start, end)
+        self._set_heading(cell_label(store, cell), start, end, selection)
         self._summary.setText("Loading the selected interval from the SSD…")
         self._source.clear()
         self._status.clear()
         self._cancel.setEnabled(True)
         worker = self._worker = _Worker(
-            lambda **kw: load_scene(store, cell, start, end, area_km=area_km, **kw),
+            lambda **kw: load_scene(
+                store, cell, start, end, area_km=area_km, windows=windows, **kw
+            ),
             self,
         )
         worker.progress.connect(self._progress)
@@ -337,7 +345,8 @@ class Thermal3D(QDialog):
     def _area_changed(self, *_):
         """Reload the captured cell and dates at the chosen geographic extent."""
         if self._request is not None:
-            self.load(*self._request)
+            store, cell, start, end, windows, selection = self._request
+            self.load(store, cell, start, end, windows=windows, selection=selection)
 
     def _progress(self, message):
         """Ignore progress queued by a superseded request."""

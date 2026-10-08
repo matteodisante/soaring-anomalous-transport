@@ -5,7 +5,6 @@ from __future__ import annotations
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
-from ...analysis.segmentation.config import load_segmentation_config
 from ..thermal_geometry import CELL_M
 from ..thermal_imagery import SERVICE as IGN_WMS
 from ..thermal_ridges import DATASET_URL as RGE_ALTI_URL
@@ -84,7 +83,7 @@ coastlines and borders at 1:50 million and 1:10 million respectively.
 to locate launches and selected cells.
 They provide geographic context; region filters use rectangular bounds.</td></tr>
 </table>
-<p><b>Derived here:</b> cleaned trajectories, HMM / Vilpellet phase labels,
+<p><b>Derived here:</b> cleaned trajectories, Vilpellet phase labels,
 cell rankings, crossings and time grids. These are computed from the archive.</p>
 """
 
@@ -114,13 +113,13 @@ Natural Earth: public domain. Hillshade: Esri and data contributors.</p>
 
 
 def _views() -> str:
-    return f"""
+    return """
 <a name="views"></a><h3>Screen summary</h3>
 <table border="1" cellspacing="0" cellpadding="8" width="100%">
 <tr><th width="23%">Screen</th><th>What is measured and how</th></tr>
 <tr><td><a name="tab-trajectory"></a><b>Trajectory</b></td><td>
 One IGC flight, raw and reprocessed with the current configuration.
-Compare HMM and Vilpellet phase labels on the cleaned path. Gaps remain separate.
+Vilpellet phase labels colour the cleaned path. Gaps remain separate.
 Climb runs describe the segmentation, not distinct thermals.</td></tr>
 <tr><td><a name="tab-map"></a><b>Map</b></td><td>
 One first free-flight position per retained flight. An adaptive degree grid counts
@@ -130,14 +129,14 @@ use launch altitude.</td></tr>
 <a name="thermal-points"></a>Intersection points</td><td>
 Twelve fixed 5 &times; 5 km cells: three per highest-ground-elevation category, ranked
 by continuous Vilpellet climb runs. Dots interpolate climb crossings of
-H = lowest IGN terrain + z, within the selected dates. One flight may add many dots;
+H = lowest IGN terrain + z, within the selected dates, optionally restricted to the
+same Paris hours on each day. One flight may add many dots;
 unique contributing flights are counted separately. Ranking stays fixed.</td></tr>
 <tr><td><a name="tab-density"></a><b>Thermal density</b></td><td>
 Cumulative climb hours/km² over all dates and heights. Split edge durations over
-50 m pixels, then divide seconds by 3600 and pixel area. Regions use HMM decisions,
-one every {load_segmentation_config().decision_step_s:g} s; cells offer HMM or
-Vilpellet. Both disciplines contribute. This is residence time, not thermal
-counts.</td></tr>
+50 m pixels, then divide seconds by 3600 and pixel area. Regions and cells use
+Vilpellet climb runs on the native fixes. Both disciplines contribute.
+This is residence time, not thermal counts.</td></tr>
 <tr><td><a name="tab-routes"></a><b>Routes · 50&ndash;300 km</b></td><td>
 Cleaned flights sharing directed 10 &times; 10 km endpoint cells. Distance is between
 cell centres; ranks use retained elapsed duration. At most 300 flights preserve

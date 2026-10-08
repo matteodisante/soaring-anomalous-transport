@@ -330,20 +330,15 @@ figure, its timeline, its numerical macros and a JSON provenance record.
 ## Seeing it in the viewer
 
 The viewer (`uv run --group viewer soaring-viewer`) draws the selected cleaned flight and
-can colour it by either segmenter. Set **Cleaned colour** to `Flight phase (HMM)` first:
-the two controls below are enabled exactly while phase colouring is selected, and they
-mean nothing under the segment or single-colour modes.
+colours it with this segmenter; the Chapter 4 HMM is no longer offered there. Set
+**Cleaned colour** to `Flight phase (Vilpellet)`: the control below is enabled exactly
+while phase colouring is selected.
 
 | Control | Options and effect |
 | --- | --- |
-| **Segmentation** combo | `Chapter 4 HMM (this work)` colours the trajectory with the Gaussian model of [the segmentation guide](flight-phase-segmentation.md). `Vilpellet (Jérémie)` colours it with the transcribed model of this page. `Compare side by side` puts the two in adjacent panels on the same flight |
 | **Thermals only (climb)** | Keeps the climb fixes and hides the rest of the flight, which is the selection `get_thermal_segment.py` makes in the reference package |
 | **Full screen** | Gives the plot canvas the whole window |
-| **Save PDF…** | Writes whatever is currently drawn, including a comparison |
-
-The comparison panels share axes and geometry, so a disagreement between the two models
-reads off one screen. Reading it that way shows where the two differ. It does not show
-which one is right, because neither panel carries a human label.
+| **Save PDF…** | Writes whatever is currently drawn |
 
 The viewer decodes only the flight currently selected, preserves native coordinates and
 keeps acquisition gaps visible. Its percentage of classified native fixes has a different

@@ -50,11 +50,10 @@ to return to the initial framing. Save PDF exports the current figure.</li>
 detect individual thermal centres.</li>
 </ul>
 <h3>Where the phase labels come from</h3>
-<p><b>Chapter 4 HMM:</b> the saved model from this work labels the processed
-flight. <b>Vilpellet:</b> the transferred segmentation rules label the same
-processed flight. <b>Compare side by side</b> shows both results. Unclassified
-parts or unavailable models are reported instead of inventing labels.</p>
-<p>Run counts and durations describe the selected segmentation; they are not
+<p><b>Vilpellet:</b> Jérémie's transferred segmentation labels the processed
+flight as climb, transition or search. Unclassified parts or an unavailable
+configuration are reported instead of inventing labels.</p>
+<p>Run counts and durations describe the Vilpellet segmentation; they are not
 counts of distinct atmospheric thermals. This view reprocesses the selected
 recording; archive-based views use their saved products and may reflect a
 different preprocessing version.</p>
@@ -176,12 +175,13 @@ Circle = first retained fix; square = last. Drag to orbit, Shift + drag to pan,
 scroll/pinch to zoom; Top view and Reset view restore useful camera positions.</li>
 </ul>
 <h3>What the thermal colours measure</h3>
-<p><b>Thermal hours · all flights</b> uses all HMM-classified flights crossing
-the area, both disciplines and all dates/heights. It is independent of the
+<p><b>Thermal hours · all flights</b> uses all Vilpellet-classified flights
+crossing the area, both disciplines and all dates/heights. It is independent of the
 selected endpoint pair and fastest/slowest filters.</p>
-<p>Consecutive climb decisions in one continuous segment contribute their elapsed
-time to the 50 &times; 50 m pixels crossed, assuming linear motion. Gaps beyond
-1.5 decision steps are excluded. Density = seconds / (3600 &times; area in km²).
+<p>Consecutive fixes in one Vilpellet climb run contribute their elapsed time to
+the 50 &times; 50 m pixels crossed, assuming linear motion. Data gaps, longer than
+1.5 times the segment's median sampling interval, are excluded.
+Density = seconds / (3600 &times; area in km²).
 Thus 36 seconds in a 50 m pixel gives <b>4 h/km²</b>. Coarser display pixels sum
 seconds and divide by their larger area; they do not create observations.</p>
 <p>This is recorded climb residence time, not thermal counts or a probability.
@@ -214,10 +214,11 @@ def terrain_html():
 It shows the terrain and climb intersections at horizontal levels every 20 m.</p>
 <h3>How the points are obtained</h3>
 <ol>
-<li>Use the saved <b>Vilpellet</b> climb intersections, even when the parent
-2D view displays HMM. For each level, H = central cell lowest terrain + z.</li>
+<li>Use the saved <b>Vilpellet</b> climb intersections, as the 2D view does.
+For each level, H = central cell lowest terrain + z.</li>
 <li>Linearly interpolate crossings of consecutive climb fixes with each plane.
-Keep the selected date interval and the 5 &times; 5 or 10 &times; 10 km area
+Keep the selected dates, the daily hour window when one is selected,
+and the 5 &times; 5 or 10 &times; 10 km area
 centred on the cell. Neighbouring points use the same absolute reference planes.</li>
 <li>Draw every retained intersection, without random thinning. A point is a
 crossing, not a whole flight or a detected thermal centre; the same flight can

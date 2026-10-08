@@ -47,7 +47,8 @@ Tick or untick Show / order to show or hide individual paths and endpoint marker
 Hidden flights stay in the list. Show all flights checks every row and restores the
 All view; Hide all flights clears the checkboxes. A newly loaded group starts checked.
 Path distance sums supported horizontal Lambert-93 edges; gaps are excluded.
-The heat layer uses <b>all available HMM flights crossing the area, all dates</b>,
+The heat layer uses <b>all available Vilpellet-classified flights crossing the
+area, all dates</b>,
 exactly like Routes. It does not describe weather on the selected group's day.</p>
 <p>Sharing a launch window identifies a comparison cohort. It does not establish
 that pilots flew together throughout the flight. Different grid sizes can merge or

@@ -158,8 +158,8 @@ def test_button_captures_selected_cell_and_dates_and_reuses_window(
         def __init__(self, parent):
             self.parent = parent
 
-        def load(self, store, cell, start, end):
-            calls.append((store, cell, start, end))
+        def load(self, store, cell, start, end, *, windows, selection):
+            calls.append((store, cell, start, end, windows, selection))
 
         def show(self):
             pass
@@ -190,7 +190,10 @@ def test_button_captures_selected_cell_and_dates_and_reuses_window(
         monkeypatch.setattr(view, "_read_bounds", lambda: (300, 400))
         view._terrain_3d.click()
         assert view._terrain_3d_panel is panel
-        assert calls == [(store, cells[0], 100, 200), (store, cells[1], 300, 400)]
+        assert calls == [
+            (store, cells[0], 100, 200, None, None),
+            (store, cells[1], 300, 400, None, None),
+        ]
     finally:
         view.shutdown()
         view.close()

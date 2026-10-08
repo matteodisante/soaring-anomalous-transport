@@ -73,8 +73,8 @@ plus the exact highest level; the same z always gives the same dots.</li>
 
 <a name="thermal-points"></a><h3>Intersection points</h3>
 <ol>
-<li>Take consecutive processed fixes labelled <b>climb</b> by the selected
-HMM or Vilpellet method, within one continuous climb run.</li>
+<li>Take consecutive processed fixes labelled <b>climb</b> by Vilpellet,
+within one continuous climb run.</li>
 <li>For endpoint altitudes z<sub>0</sub>, z<sub>1</sub>, calculate
 <b>f = (H &minus; z<sub>0</sub>) / (z<sub>1</sub> &minus; z<sub>0</sub>)</b>.
 Keep 0 &le; f &le; 1; skip horizontal edges.</li>
@@ -107,13 +107,14 @@ For a lowest terrain of 289 m and z = 100 m, only crossings at H = 389 m count.<
 <ul>
 <li><b>3D terrain · selected cell:</b> opens the cell selected in this tab,
 with IGN terrain and all intersections every 20 m above the cell's
-lowest terrain. It uses the selected dates and always Vilpellet. Choose a 5 or
+lowest terrain. It uses the selected dates and daily hour window, when enabled,
+and always Vilpellet. Choose a 5 or
 10 km square centred on the cell. Left drag rotates, Shift + drag (or right
 drag) pans, and scroll/pinch zooms. Point opacity and size are adjustable; turning off
 Terrain reveals points behind it. All axes use metres without vertical
 exaggeration. Choose Terrain colours or Aerial photo · IGN to change the surface
 appearance. Both use existing offline data. Click the 3D button again to apply
-a changed cell or date selection. The 3D window's own <b>Info</b> explains
+a changed cell, date or hour selection. The 3D window's own <b>Info</b> explains
 its point selection, terrain, snapshot behaviour and navigation.</li>
 <li><b>Zoom + / &minus;:</b> visible width 0.5&ndash;10 km. Drag with the toolbar's
 hand tool. Navigation covers the selected cell and its eight neighbours.
@@ -124,20 +125,26 @@ and background changes.</li>
 <li><b>Calendar:</b> Europe/Paris time. UTC comes from the IGC header, first fix
 and trimming offset. Flights without recoverable UTC remain in the cell population
 but cannot enter a calendar interval.</li>
-<li><b>Daily panels:</b> default bands 08&ndash;11, 11&ndash;15, 15&ndash;18,
-end excluded, at the same z. <b>Start / end dates</b> offers <b>From day</b> and
+<li><b>Daily hour window:</b> one panel with the same Paris clock hours on every
+selected day; the default is 08:00 to 18:00, end excluded. An end of 00:00 means
+midnight at the end of the day. Changing hours filters the loaded points.
+<b>Start / end dates</b> offers <b>From day</b> and
 <b>To day</b>, both included. Set both dates, then click <b>Load climb
-intersections</b>; the hour bands repeat on each day. The range is remembered
+intersections</b>; the hour window repeats on each day. The range is remembered
 per cell and is independent of Whole interval.</li>
 <li><b>Days around a date:</b> retains the reference day and before/after offsets.
 <b>Busiest summer day</b> selects the recommended June&ndash;August day alone
 in direct-date mode, or resets the reference day in relative mode.</li>
+<li><b>Same dates every year:</b> pool a season over the selected start years.
+An end before the start day continues into the next year. A 29 February bound
+becomes 28 February in common years. Only the selected seasonal days and their
+Paris hour windows contribute.</li>
 </ul>
 
 <h3>Flight data and limits</h3>
 <ul>
 <li><b>Source:</b> {FLIGHT_SOURCE_HTML}. IGC positions, GNSS altitudes and times
-supply the trajectories. This work's HMM or Vilpellet supplies the climb labels.</li>
+supply the trajectories. Vilpellet supplies the climb labels.</li>
 <li><b>Altitude:</b> recorder GNSS datums are not harmonised with IGN normal
 heights. The height difference retains this uncertainty.</li>
 <li><b>Interpolation:</b> straight segments approximate curved paths;

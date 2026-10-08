@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timedelta
+from datetime import date, datetime
 from html import escape
-from itertools import pairwise
 from threading import Event
 
 import numpy as np
@@ -30,7 +29,15 @@ from PyQt6.QtWidgets import (
 )
 
 from .. import geography
-from ..thermal_daily import PARIS, height_levels, local_bounds
+from ..thermal_daily import (
+    PARIS,
+    height_levels,
+    in_windows,
+    local_bounds,
+    overlaps_windows,
+    season_days,
+    wall_windows,
+)
 from ..thermal_geometry import plane_intersections, unproject
 from ..thermal_store import (
     CancelledError,
@@ -46,17 +53,8 @@ NEIGHBOURS_MISSING = (
     "Neighbouring cells are not prepared on the SSD. Run "
     "scripts/pipeline/prepare_thermal_neighbours.py."
 )
-
-
-def _paris_hours(utc):
-    """Fractional Paris wall-clock hour of each UTC epoch second."""
-    clock = pd.to_datetime(utc, unit="s", utc=True).dt.tz_convert(PARIS)
-    return (
-        clock.dt.hour
-        + clock.dt.minute / 60
-        + clock.dt.second / 3600
-        + clock.dt.microsecond / 3.6e9
-    )
+# The only climb labels shown: Jérémie's Vilpellet segmentation.
+SOURCE = "vilpellet"
 
 
 def _read_backdrop(index, cell, kind):
@@ -183,6 +181,7 @@ class ThermalPlane(QWidget):
         self._plane_limits = ((0, 5), (0, 5))
         self._pending_limits = None
         self._focused_axes = None
+        self._window_cache = (None, np.empty((0, 2)))
         self._build = QPushButton("Reload SSD data")
         self._build.setToolTip(
             "Read the completed thermal-planes.sqlite3 file from the SSD."
@@ -197,10 +196,6 @@ class ThermalPlane(QWidget):
             "and in any flight phase. This is not the number of climbing flights "
             "or intersections at the selected height."
         )
-        self._source = QComboBox()
-        self._source.addItem("This work (HMM)", "own")
-        self._source.addItem("Jérémie (Vilpellet)", "vilpellet")
-        self._source.setCurrentIndex(1)
         self._start, self._end = QDateTimeEdit(), QDateTimeEdit()
         for edit in (self._start, self._end):
             edit.setTimeZone(QTimeZone(b"Europe/Paris"))
@@ -238,7 +233,11 @@ class ThermalPlane(QWidget):
         self._image_info = QLabel()
         self._image_info.setWordWrap(True)
         self._mode = QComboBox()
-        self._mode.addItems(["Whole interval", "Morning / midday / afternoon"])
+        self._mode.addItems(["Whole interval", "Daily hour window"])
+        self._mode.setToolTip(
+            "Whole interval: one continuous Paris time span. Daily hour window: "
+            "the same Paris clock hours on every selected day."
+        )
         self._day = QDateEdit(QDate.currentDate())
         self._daily_start = QDateEdit(QDate.currentDate())
         self._daily_end = QDateEdit(QDate.currentDate())
@@ -249,8 +248,33 @@ class ThermalPlane(QWidget):
         self._daily_date_mode = QComboBox()
         self._daily_date_mode.addItem("Start / end dates", "range")
         self._daily_date_mode.addItem("Days around a date", "around")
+        self._daily_date_mode.addItem("Same dates every year", "yearly")
         self._daily_start.setToolTip("First included civil day in Europe/Paris")
         self._daily_end.setToolTip("Last included civil day in Europe/Paris")
+        # Day and month only; the leap year 2000 keeps 29 February selectable.
+        self._season_start = QDateEdit(QDate(2000, 6, 1))
+        self._season_end = QDateEdit(QDate(2000, 8, 31))
+        for edit, tooltip in (
+            (self._season_start, "First included day of each year"),
+            (
+                self._season_end,
+                "Last included day of each year; an earlier date than the first "
+                "day continues into the next year",
+            ),
+        ):
+            edit.setDateRange(QDate(2000, 1, 1), QDate(2000, 12, 31))
+            edit.setDisplayFormat("dd MMM")
+            edit.setKeyboardTracking(False)
+            edit.setToolTip(tooltip)
+        self._first_year, self._last_year = QSpinBox(), QSpinBox()
+        for spin, tooltip in (
+            (self._first_year, "First included year"),
+            (self._last_year, "Last included year"),
+        ):
+            spin.setRange(1990, 2100)
+            spin.setValue(QDate.currentDate().year())
+            spin.setKeyboardTracking(False)
+            spin.setToolTip(tooltip)
         self._best_day = QPushButton("Busiest summer day")
         self._best_day.setToolTip(
             "Select the busiest summer day; in Start / end dates, select that day only"
@@ -258,14 +282,13 @@ class ThermalPlane(QWidget):
         self._before, self._after = QSpinBox(), QSpinBox()
         for spin in (self._before, self._after):
             spin.setRange(0, 365)
-        self._bands = [QTimeEdit(QTime(h, 0)) for h in (8, 11, 15, 18)]
+        self._hours = [QTimeEdit(QTime(h, 0)) for h in (8, 18)]
         for edit, tooltip in zip(
-            self._bands,
+            self._hours,
             (
-                "Morning starts (Paris time)",
-                "Morning ends / midday starts",
-                "Midday ends / afternoon starts",
-                "Afternoon ends",
+                "First included Paris time on each day",
+                "End of the window on each day (Paris time, excluded); "
+                "00:00 is midnight at the end of the day",
             ),
             strict=True,
         ):
@@ -299,7 +322,7 @@ class ThermalPlane(QWidget):
         )
         self._summary.setWordWrap(True)
         self._status = QLabel(
-            "Connect the SSD to read the prepared cells and both segmentations."
+            "Connect the SSD to read the prepared cells and Vilpellet climbs."
         )
         self._status.setWordWrap(True)
         self._view = QComboBox()
@@ -325,7 +348,7 @@ class ThermalPlane(QWidget):
         self._info.clicked.connect(self._show_info)
         self._summary.hide()
         top = FlowLayout()
-        for widget in (self._mode, self._cells, self._source):
+        for widget in (self._mode, self._cells):
             top.addWidget(widget)
         self._time_settings = QWidget()
         times = FlowLayout(self._time_settings)
@@ -345,7 +368,6 @@ class ThermalPlane(QWidget):
             1, 2, width_ratios=[1, 1.5]
         )
         self._plane_axes = [self._plane_ax]
-        self._panel_indices = [0]
         self._canvas = FigureCanvasQTAgg(self._figure)
         layout = QVBoxLayout(self)
         layout.addLayout(top)
@@ -364,18 +386,24 @@ class ThermalPlane(QWidget):
             labeled_control("Days before", self._before),
             labeled_control("after", self._after),
         ]
-        for field in self._daily_relative_fields:
+        self._daily_yearly_fields = [
+            labeled_control("From", self._season_start),
+            labeled_control("To", self._season_end),
+            labeled_control("Years", self._first_year),
+            labeled_control("to", self._last_year),
+        ]
+        for field in (*self._daily_relative_fields, *self._daily_yearly_fields):
             field.hide()
         for item in (
             self._daily_date_mode,
             *self._daily_range_fields,
             *self._daily_relative_fields,
+            *self._daily_yearly_fields,
             self._best_day,
-            QLabel("Paris hours"),
+            labeled_control("Paris hours", self._hours[0]),
+            labeled_control("to", self._hours[1]),
         ):
             daily.addWidget(item)
-        for edit in self._bands:
-            daily.addWidget(edit)
         layout.addWidget(self._daily_settings)
         self._daily_settings.hide()
         layout.addLayout(heights)
@@ -413,7 +441,6 @@ class ThermalPlane(QWidget):
         layout.addWidget(self._status)
         self._build.clicked.connect(self._start_index)
         self._cells.currentIndexChanged.connect(self._cell_changed)
-        self._source.currentIndexChanged.connect(self._invalidate_plane)
         self._start.dateTimeChanged.connect(self._invalidate_plane)
         self._end.dateTimeChanged.connect(self._invalidate_plane)
         self._load.clicked.connect(self._start_plane)
@@ -429,7 +456,11 @@ class ThermalPlane(QWidget):
         self._day.dateChanged.connect(self._daily_changed)
         self._before.valueChanged.connect(self._daily_changed)
         self._after.valueChanged.connect(self._daily_changed)
-        for edit in self._bands:
+        for edit in (self._season_start, self._season_end):
+            edit.dateChanged.connect(self._season_changed)
+        for spin in (self._first_year, self._last_year):
+            spin.valueChanged.connect(self._season_changed)
+        for edit in self._hours:
             edit.timeChanged.connect(self._draw_plane)
         self._slider.valueChanged.connect(self._slider_changed)
         self._height.valueChanged.connect(self._height_changed)
@@ -543,7 +574,6 @@ class ThermalPlane(QWidget):
         for widget in (
             self._mode,
             self._cells,
-            self._source,
             self._start,
             self._end,
             self._load,
@@ -551,6 +581,10 @@ class ThermalPlane(QWidget):
             self._daily_date_mode,
             self._daily_start,
             self._daily_end,
+            self._season_start,
+            self._season_end,
+            self._first_year,
+            self._last_year,
             self._best_day,
             self._before,
             self._after,
@@ -633,7 +667,7 @@ class ThermalPlane(QWidget):
             )
             self._cells.addItem(
                 f"{cell.terrain} #{ranks[cell.terrain]} · "
-                f"{population} · lowest terrain {cell.ground_m:.1f} m",
+                f"{population} · terrain {self._terrain_label(cell)}",
                 cell,
             )
         if getattr(index, "has_climb_ranking", False):
@@ -665,6 +699,13 @@ class ThermalPlane(QWidget):
                     QDateTime.fromSecsSinceEpoch(int(stamp), QTimeZone(b"Europe/Paris"))
                 )
                 edit.blockSignals(False)
+            for spin, edit in (
+                (self._first_year, self._start),
+                (self._last_year, self._end),
+            ):
+                spin.blockSignals(True)
+                spin.setValue(edit.date().year())
+                spin.blockSignals(False)
             self._dates_initialized = True
         self._cell_changed()
         bands = {self._cells.itemData(i).terrain for i in range(self._cells.count())}
@@ -802,40 +843,53 @@ class ThermalPlane(QWidget):
             'Terrain: <a href="https://www.data.gouv.fr/datasets/rge-alti-r">'
             "IGN RGE ALTI</a> · Licence Ouverte 2.0"
             f"{detail}{api}. Flights: FFVL CFD IGC · GNSS altitude · "
-            f"climb labels: {self._source.currentText()}."
+            "climb labels: Vilpellet (Jérémie)."
         )
 
     def _invalidate_plane(self, *_):
-        """Hide stale results immediately when the UTC interval or decoder changes."""
+        """Hide stale results immediately when the selected dates change."""
         self._plane = None
         self._drop_neighbours()
         self._pending_limits = None
         self._update_provenance()
         self._set_busy(self._worker is not None)
         self._status.setText(
-            "The end date must be at or after the start date."
-            if self._read_bounds()[1] < self._read_bounds()[0]
-            else "Selection changed. Load climb intersections for this interval."
+            self._date_error()
+            or "Selection changed. Load climb intersections for this interval."
         )
         self._draw_plane()
 
-    def _start_plane(self):
-        """Read the saved climb edges for the selected source/window."""
-        cell = self._cells.currentData()
+    def _date_error(self):
+        """Explain an unusable date selection, or return an empty string."""
+        yearly = self._daily_date_mode.currentData() == "yearly"
+        if self._mode.currentIndex() and yearly:
+            if self._last_year.value() < self._first_year.value():
+                return "The last year must be at or after the first year."
+            return ""
         start, end = self._read_bounds()
+        if end >= start:
+            return ""
+        if self._mode.currentIndex():
+            return "The end date must be at or after the start date."
+        return "The end time must be at or after the start time."
+
+    def _start_plane(self):
+        """Read the saved climb edges for the selected window."""
+        cell = self._cells.currentData()
         if cell is None or self._index is None:
             return
-        if end < start:
-            self._status.setText("The end time must be at or after the start time.")
+        if self._date_error():
+            self._status.setText(self._date_error())
             return
+        start, end = self._read_bounds()
         if self._needs_neighbors():
             self._start_neighborhood()
             return
-        index, source = self._index, self._source.currentData()
+        index = self._index
         self._plane = None
         self._draw_plane()
         self._run(
-            lambda **kwargs: index.read_plane(cell, start, end, source, **kwargs),
+            lambda **kwargs: index.read_plane(cell, start, end, SOURCE, **kwargs),
             self._plane_ready,
         )
 
@@ -854,20 +908,16 @@ class ThermalPlane(QWidget):
         if index is None or not hasattr(index, "neighbour_flights"):
             self._status.setText(NEIGHBOURS_MISSING)
             return
-        bounds, source, kind = (
-            self._read_bounds(),
-            self._source.currentData(),
-            self._background.currentData(),
-        )
+        bounds, kind = self._read_bounds(), self._background.currentData()
         reload = self._plane is None
 
         def load(progress, cancel):
-            flights = index.neighbour_flights(cell, source)
+            flights = index.neighbour_flights(cell, SOURCE)
             if flights is None:
                 raise ValueError(NEIGHBOURS_MISSING)
             plane = (
                 index.read_plane(
-                    cell, *bounds, source, progress=progress, cancel=cancel
+                    cell, *bounds, SOURCE, progress=progress, cancel=cancel
                 )
                 if reload
                 else None
@@ -899,16 +949,13 @@ class ThermalPlane(QWidget):
         """Saved neighbour crossings on one plane, clipped to the selected interval."""
         if level not in self._neighbour_levels:
             start, end = self._read_bounds()
-            frame = self._index.neighbour_points(
-                cell, self._source.currentData(), level
-            )
+            frame = self._index.neighbour_points(cell, SOURCE, level)
             frame = frame.loc[frame.utc.between(start, end)].reset_index(drop=True)
             disciplines, flight_ids = self._neighbours
             number = frame.pop("flight").to_numpy(dtype=np.int64)
             frame["discipline"] = disciplines[number]
             frame["flight_id"] = flight_ids[number]
             frame["level"] = level
-            frame["local_hour"] = _paris_hours(frame.utc)
             self._neighbour_levels[level] = frame
         self._neighbour_levels.move_to_end(level)
         while len(self._neighbour_levels) > 64:
@@ -959,10 +1006,13 @@ class ThermalPlane(QWidget):
     def _plane_ready(self, plane):
         """Report absent models/UTC explicitly, including an entirely empty slice."""
         self._plane = plane
-        if plane.points is not None and not plane.points.empty:
-            plane.points["local_hour"] = _paris_hours(plane.points.utc)
+        span = (
+            "from the first to the last selected day"
+            if self._mode.currentIndex()
+            else "in the interval"
+        )
         self._status.setText(
-            f"{plane.selected:,} cell visitors in the interval, at any altitude "
+            f"{plane.selected:,} cell visitors {span}, at any altitude "
             f"and in any flight phase; {plane.cached:,} read from SSD; "
             f"{plane.unclassified:,} entirely unclassified by this method; "
             f"{plane.unavailable:,} unavailable. "
@@ -972,27 +1022,18 @@ class ThermalPlane(QWidget):
         )
         self._draw_plane()
 
-    def _cell_flights(self, hours=None):
-        """Distinct flights inside the cell in the window, thermal or not.
+    def _cell_flights(self, windows=None):
+        """Distinct flights inside the cell in the selection, thermal or not.
 
-        A flight counts when its time span in the cell overlaps the window, and
-        with ``hours`` (Paris clock) on at least one pooled day's band.
+        A flight counts when its time span in the cell overlaps the loaded
+        interval, and with ``windows`` at least one of the daily hour windows.
         """
         visits = getattr(self._plane, "visits", None)
         if visits is None:
             return None
-        if hours is None:
+        if windows is None:
             return len(visits)
-        first, last = self._read_bounds()
-        day = datetime.fromtimestamp(first, PARIS).date()
-        inside = np.zeros(len(visits), bool)
-        while local_bounds(day)[0] <= last:
-            lo, hi = local_bounds(day, hours)
-            inside |= (visits.end.to_numpy() >= max(lo, first)) & (
-                visits.start.to_numpy() < min(hi, last)
-            )
-            day += timedelta(days=1)
-        return int(inside.sum())
+        return int(overlaps_windows(visits.start, visits.end, windows).sum())
 
     def _utc_bounds(self):
         """UTC epoch seconds, independent of the computer's local timezone."""
@@ -1002,13 +1043,72 @@ class ThermalPlane(QWidget):
         )
 
     def _read_bounds(self):
-        """Comparison dates are independent of the user's full interval."""
+        """Interval to load: the whole interval, or the span of the selected days."""
         if not self._mode.currentIndex():
             return self._utc_bounds()
-        return (
-            local_bounds(self._daily_start.date().toPyDate())[0],
-            local_bounds(self._daily_end.date().toPyDate())[1] - 1e-6,
-        )
+        if self._daily_date_mode.currentData() == "yearly":
+            days = self._selected_days()
+            if not days:
+                return (0.0, -1.0)
+            first, last = days[0], days[-1]
+        else:
+            first = self._daily_start.date().toPyDate()
+            last = self._daily_end.date().toPyDate()
+        return local_bounds(first)[0], local_bounds(last)[1] - 1e-6
+
+    def _selected_days(self):
+        """Paris civil days pooled by the daily hour window, in calendar order."""
+        if self._daily_date_mode.currentData() == "yearly":
+            first, last = (
+                (edit.date().month(), edit.date().day())
+                for edit in (self._season_start, self._season_end)
+            )
+            years = range(self._first_year.value(), self._last_year.value() + 1)
+            return season_days(first, last, years)
+        first = self._daily_start.date().toPyDate()
+        last = self._daily_end.date().toPyDate()
+        return [
+            date.fromordinal(n) for n in range(first.toordinal(), last.toordinal() + 1)
+        ]
+
+    def _hour_window(self):
+        """Paris clock hours (fractional) of the daily window, or None if empty."""
+        start, end = (e.time().hour() + e.time().minute() / 60 for e in self._hours)
+        end = end or 24.0
+        return (start, end) if start < end else None
+
+    def _windows(self):
+        """UTC [start, end) of the hour window on each selected day.
+
+        None means no daily filter: the whole interval is shown.
+        """
+        if not self._mode.currentIndex():
+            return None
+        hours = self._hour_window()
+        if hours is None:
+            return np.empty((0, 2))
+        days = self._selected_days()
+        # Height redraws reuse the windows; only a new selection recomputes them.
+        key = (tuple(days), hours)
+        if self._window_cache[0] != key:
+            self._window_cache = (key, wall_windows(days, hours))
+        return self._window_cache[1]
+
+    def _selection_text(self):
+        """Describe the pooled days and hours for titles and the 3D window."""
+        hours = " to ".join(e.time().toString("HH:mm") for e in self._hours)
+        if self._daily_date_mode.currentData() == "yearly":
+            dates = (
+                f"{self._season_start.date().toString('dd MMM')} → "
+                f"{self._season_end.date().toString('dd MMM')} of each year "
+                f"{self._first_year.value()}-{self._last_year.value()}"
+            )
+        else:
+            first, last = (
+                datetime.fromtimestamp(t, PARIS).date() for t in self._read_bounds()
+            )
+            dates = f"{first} → {last}"
+        return f"{dates} · {len(self._selected_days())} days pooled · {hours} Paris"
 
     def _select_best_day(self):
         """Restore the recommendation as one day or as the relative anchor."""
@@ -1045,14 +1145,25 @@ class ThermalPlane(QWidget):
         if self._mode.currentIndex():
             self._invalidate_plane()
 
+    def _season_changed(self, *_):
+        """Yearly dates change the loaded span; wait for the user's load request."""
+        if self._mode.currentIndex() and self._daily_date_mode.currentData() == (
+            "yearly"
+        ):
+            self._invalidate_plane()
+
     def _daily_date_mode_changed(self, *_):
-        """Switch between direct dates and the saved reference-day controls."""
-        direct = self._daily_date_mode.currentData() == "range"
-        for field in self._daily_range_fields:
-            field.setVisible(direct)
-        for field in self._daily_relative_fields:
-            field.setVisible(not direct)
-        if not direct:
+        """Show the controls of direct, relative or yearly date selection."""
+        mode = self._daily_date_mode.currentData()
+        for fields, shown in (
+            (self._daily_range_fields, "range"),
+            (self._daily_relative_fields, "around"),
+            (self._daily_yearly_fields, "yearly"),
+        ):
+            for field in fields:
+                field.setVisible(mode == shown)
+        self._best_day.setVisible(mode != "yearly")
+        if mode == "around":
             # Keep the relative controls' own anchor and offsets when returning.
             self._daily_changed()
         elif self._mode.currentIndex():
@@ -1072,32 +1183,9 @@ class ThermalPlane(QWidget):
     def _mode_changed(self, *_):
         """Change time selection independently from the visual layout."""
         daily = bool(self._mode.currentIndex())
-        previous = self._view.currentData()
-        self._view.blockSignals(True)
-        self._view.clear()
-        if daily:
-            for label, value in (
-                ("Three time periods", "planes"),
-                ("France only", "france"),
-                ("Morning only", "morning"),
-                ("Midday only", "midday"),
-                ("Afternoon only", "afternoon"),
-            ):
-                self._view.addItem(label, value)
-        else:
-            for label, value in (
-                ("France + horizontal plane", "overview"),
-                ("France only", "france"),
-                ("Horizontal plane only", "planes"),
-            ):
-                self._view.addItem(label, value)
-        if previous == "france":
-            self._view.setCurrentIndex(self._view.findData(previous))
-        self._view.blockSignals(False)
         self._time_settings.setVisible(not daily)
         self._daily_settings.setVisible(daily)
         self._plane = None
-        self._layout_changed()
         self._invalidate_plane()
         self._start_plane()
 
@@ -1106,24 +1194,14 @@ class ThermalPlane(QWidget):
         self._figure.clear()
         self._map_ax = None
         self._plane_axes = []
-        self._panel_indices = []
         view = self._view.currentData()
         if view == "france":
             self._map_ax = self._figure.subplots()
         elif view == "overview":
             self._map_ax, ax = self._figure.subplots(1, 2, width_ratios=[1, 1.5])
             self._plane_axes = [ax]
-            self._panel_indices = [0]
-        elif view == "planes" and self._mode.currentIndex():
-            self._plane_axes = list(
-                self._figure.subplots(1, 3, sharex=True, sharey=True)
-            )
-            self._panel_indices = [0, 1, 2]
         else:
             self._plane_axes = [self._figure.subplots()]
-            self._panel_indices = [
-                {"morning": 0, "midday": 1, "afternoon": 2}.get(view, 0)
-            ]
         self._plane_ax = self._plane_axes[0] if self._plane_axes else None
         self._toolbar.update()
         self._draw_map()
@@ -1152,14 +1230,18 @@ class ThermalPlane(QWidget):
         self._draw_plane()
 
     def _show_terrain_3d(self):
-        """Open this tab's selected cell and capture its current time interval."""
+        """Open this tab's selected cell and capture its current time selection."""
         cell = self._cells.currentData()
         if self._index is None or cell is None:
             return
-        start, end = self._read_bounds()
-        if end < start:
-            self._status.setText("The end date must be at or after the start date.")
+        if self._date_error():
+            self._status.setText(self._date_error())
             return
+        daily = bool(self._mode.currentIndex())
+        if daily and self._hour_window() is None:
+            self._status.setText("The daily hour window must start before it ends.")
+            return
+        start, end = self._read_bounds()
         try:
             from .thermal_3d import Thermal3D
         except ImportError:
@@ -1170,7 +1252,14 @@ class ThermalPlane(QWidget):
             return
         if self._terrain_3d_panel is None:
             self._terrain_3d_panel = Thermal3D(self)
-        self._terrain_3d_panel.load(self._index, cell, start, end)
+        self._terrain_3d_panel.load(
+            self._index,
+            cell,
+            start,
+            end,
+            windows=self._windows(),
+            selection=self._selection_text() if daily else None,
+        )
         self._terrain_3d_panel.show()
         self._terrain_3d_panel.raise_()
 
@@ -1189,6 +1278,17 @@ class ThermalPlane(QWidget):
             if self._cells.itemData(i).terrain == cell.terrain
         ]
         return peers.index(cell) + 1
+
+    def _terrain_label(self, cell):
+        """Show both terrain extrema, with an explicit unavailable maximum."""
+        reference = (
+            self._index.terrain_reference(cell)
+            if hasattr(self._index, "terrain_reference")
+            else None
+        )
+        highest = (reference or {}).get("maximum_m")
+        maximum = f"{highest:.0f}" if highest is not None else "n/a"
+        return f"min {cell.ground_m:.0f} · max {maximum} m ASL"
 
     def _saved_relief(self, cell=None):
         """Decode each SSD image once; slider redraws use only in-memory arrays."""
@@ -1318,7 +1418,7 @@ class ThermalPlane(QWidget):
             tx = 0.01 if band < 2 else 0.59
             ty = 0.93 - (band % 2) * 0.32 - (rank - 1) * 0.073
             annotation = ax.annotate(
-                f"{codes[cell.terrain]}{rank} · {score:,} · {cell.ground_m:.0f} m",
+                f"{codes[cell.terrain]}{rank} · {score:,}\n{self._terrain_label(cell)}",
                 (cx, cy),
                 xytext=(tx, ty),
                 textcoords="axes fraction",
@@ -1345,10 +1445,11 @@ class ThermalPlane(QWidget):
             0.02,
             "P: Plains   H: Hills\nL: Low mountains   M: High mountains\n"
             + (
-                "Count = Vilpellet climb runs; m = lowest terrain\n"
+                "Count = Vilpellet climb runs\n"
                 if getattr(self._index, "has_climb_ranking", False)
-                else "Count = cell visitors; m = lowest terrain\n"
+                else "Count = cell visitors\n"
             )
+            + "min / max = terrain elevations (m above sea level)\n"
             + "Number after letter = rank within category",
             transform=ax.transAxes,
             fontsize=7,
@@ -1449,28 +1550,20 @@ class ThermalPlane(QWidget):
                 points = plane_intersections(
                     self._plane.edges, cell, height, *self._read_bounds()
                 )
-                if not points.empty:
-                    clock = pd.to_datetime(
-                        points.utc, unit="s", utc=True
-                    ).dt.tz_convert("Europe/Paris")
-                    points["local_hour"] = (
-                        clock.dt.hour + clock.dt.minute / 60 + clock.dt.second / 3600
-                    )
             if self._neighbours is not None:
                 # Same 10 m lattice index: the neighbours lie on this cell's planes.
                 points = pd.concat(
                     [points, self._neighbour_level(cell, level)], ignore_index=True
                 )
-        bands = [e.time().hour() + e.time().minute() / 60 for e in self._bands]
-        valid_bands = all(a < b for a, b in pairwise(bands))
-        labels = ("Morning", "Midday", "Afternoon")
+        daily = bool(self._mode.currentIndex())
+        windows = self._windows()
         image_cells = (
             [cell, *neighbour_frames(cell)]
             if self._neighbours is not None and cell is not None
             else [cell]
         )
         images = [self._saved_relief(c) for c in image_cells if c is not None]
-        for i, ax in zip(self._panel_indices, self._plane_axes, strict=True):
+        for ax in self._plane_axes:
             ax.clear()
             ax.set(
                 xlim=self._plane_limits[0],
@@ -1544,19 +1637,8 @@ class ThermalPlane(QWidget):
                         zorder=4,
                     )
                 )
-            if (
-                self._mode.currentIndex()
-                and selected is not None
-                and not selected.empty
-            ):
-                selected = (
-                    selected.loc[
-                        (selected.local_hour >= bands[i])
-                        & (selected.local_hour < bands[i + 1])
-                    ]
-                    if valid_bands
-                    else selected.iloc[:0]
-                )
+            if windows is not None and selected is not None and not selected.empty:
+                selected = selected.loc[in_windows(selected.utc, windows)]
             count = len(selected) if selected is not None else 0
             flights = 0
             if count:
@@ -1591,8 +1673,8 @@ class ThermalPlane(QWidget):
                     if points is not None
                     else "Load saved intersections"
                 )
-                if self._mode.currentIndex() and not valid_bands:
-                    message = "Hour boundaries must increase from left to right"
+                if daily and self._hour_window() is None:
+                    message = "The window must start before it ends"
                 ax.text(
                     0.5,
                     0.5,
@@ -1603,15 +1685,13 @@ class ThermalPlane(QWidget):
                     fontsize=9,
                     bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.85},
                 )
-            prefix = ""
-            hours = None
-            if self._mode.currentIndex():
-                prefix = (
-                    f"{labels[i]} {self._bands[i].time().toString('HH:mm')}-"
-                    f"{self._bands[i + 1].time().toString('HH:mm')} Paris\n"
-                )
-                hours = (bands[i], bands[i + 1]) if valid_bands else (0, 0)
-            crossing = self._cell_flights(hours)
+            prefix = (
+                f"{self._hours[0].time().toString('HH:mm')}-"
+                f"{self._hours[1].time().toString('HH:mm')} Paris on each day\n"
+                if daily
+                else ""
+            )
+            crossing = self._cell_flights(windows)
             if crossing is not None:
                 prefix += f"{crossing:,} cell visitors · any altitude / flight phase\n"
             ax.set_title(
@@ -1620,17 +1700,19 @@ class ThermalPlane(QWidget):
                 + f"{count:,} climb intersections · {flights:,} contributing flights",
                 fontsize=10,
             )
-        if self._mode.currentIndex():
-            start, end = self._read_bounds()
-            first = datetime.fromtimestamp(start, PARIS).date()
-            last = datetime.fromtimestamp(end, PARIS).date()
-            days = (last - first).days + 1
+        if daily:
+            error = self._date_error()
             self._figure.suptitle(
                 (
-                    f"{first} → {last} · {days} days pooled"
-                    + (f" · {self._daily_info}" if self._daily_info else "")
-                    if end >= start
-                    else "Invalid date range: end day is before start day"
+                    f"Invalid date range: {error}"
+                    if error
+                    else self._selection_text()
+                    + (
+                        f" · {self._daily_info}"
+                        if self._daily_info
+                        and self._daily_date_mode.currentData() != "yearly"
+                        else ""
+                    )
                 ),
                 fontsize=10,
             )

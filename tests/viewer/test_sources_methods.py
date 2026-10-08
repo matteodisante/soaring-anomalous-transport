@@ -5,7 +5,6 @@ import pytest
 pytest.importorskip("PyQt6")
 pytest.importorskip("pyproj")
 
-from soaring.analysis.segmentation.config import load_segmentation_config
 from soaring.viewer.thermal_imagery import LAYERS
 from soaring.viewer.thermal_ridges import LAYER
 from soaring.viewer.widgets.sources_methods import SourcesMethods, sources_html
@@ -19,9 +18,10 @@ def test_page_names_every_data_and_map_source():
         assert layer in html
 
 
-def test_numbers_follow_the_configuration():
+def test_only_the_vilpellet_segmentation_is_described():
     text = " ".join(sources_html().split())
-    assert f"one every {load_segmentation_config().decision_step_s:g} s" in text
+    assert "Vilpellet climb runs on the native fixes" in text
+    assert "HMM" not in text
 
 
 def test_every_contents_link_has_an_anchor():

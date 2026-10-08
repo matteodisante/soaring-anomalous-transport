@@ -1,4 +1,4 @@
-"""Interactive height, source and UTC controls must refer to the same loaded slice."""
+"""Interactive height and time controls must refer to the same loaded slice."""
 
 from datetime import UTC, datetime
 from types import SimpleNamespace
@@ -114,21 +114,13 @@ def test_neighbour_zoom_uses_one_absolute_plane_and_limits_counts_to_view(widget
     widget._height.setValue(600)
     widget._height.setValue(500)
     assert reads == [50, 60]
-    before = (
-        widget._height.value(),
-        widget._utc_bounds(),
-        widget._source.currentData(),
-    )
+    before = (widget._height.value(), widget._utc_bounds())
     widget._zoom_plane(2)
     assert widget._plane_ax.get_xlim() == (-2.5, 7.5)
     widget._reset_plane_view()
     assert widget._plane_ax.get_xlim() == (0, 5)
     assert widget._plane_ax.collections[0].get_offsets().tolist() == [[1.5, 1.5]]
-    assert before == (
-        widget._height.value(),
-        widget._utc_bounds(),
-        widget._source.currentData(),
-    )
+    assert before == (widget._height.value(), widget._utc_bounds())
     for _ in range(8):
         widget._zoom_plane(0.5)
     assert widget._plane_ax.get_xlim()[1] - widget._plane_ax.get_xlim()[0] == 0.5
@@ -165,9 +157,9 @@ def test_vilpellet_climb_counts_are_separate_from_visitors(widget, monkeypatch):
     assert "40 Vilpellet climb runs from 3 flights" in widget._summary.text()
     assert "5 distinct crossing flights" in widget._summary.text()
     assert "40" in widget._map_labels[0][0].get_text()
-    assert "Vilpellet climb" in widget._map_ax.get_title()
-    widget._source.setCurrentIndex(0)
-    assert "40 Vilpellet climbs" in widget._cells.currentText()
+    # paper_style() elsewhere in the run moves untitled-loc titles to the left.
+    titles = [widget._map_ax.get_title(loc=loc) for loc in ("left", "center")]
+    assert any("Vilpellet climb" in title for title in titles)
 
 
 def test_dem_ranked_cell_without_internal_starts_can_be_selected(widget, monkeypatch):
@@ -225,15 +217,10 @@ def test_height_does_not_change_the_loaded_climbs(widget):
     pd.testing.assert_frame_equal(widget._plane.edges, edges)
 
 
-def test_source_switch_hides_old_points_and_preserves_cell_and_height_range(widget):
-    cell = widget._cells.currentData()
-    assert widget._source.currentData() == "vilpellet"
-    widget._source.setCurrentIndex(0)
-    assert widget._source.currentData() == "own"
-    assert widget._plane is None
-    assert widget._cells.currentData() == cell
-    assert widget._height.maximum() == 1000
-    assert len(widget._plane_ax.collections) == 0
+def test_only_vilpellet_climbs_are_offered(widget):
+    assert not hasattr(widget, "_source")
+    assert "Vilpellet" in widget._provenance.text()
+    assert "HMM" not in widget._provenance.text()
 
 
 def test_datetime_controls_use_real_utc_and_invalidate_cached_slice(widget):
@@ -321,9 +308,7 @@ def test_daily_range_survives_cell_switch_reload_and_relative_shortcuts(
         disciplines=("paragliders",),
         cells=lambda: [first, second],
         defaults=lambda _: (widget._utc_bounds()[0], 500),
-        summer_days=lambda cell: [
-            ("2024-06-15" if cell == first else "2024-07-10", 5)
-        ],
+        summer_days=lambda cell: [("2024-06-15" if cell == first else "2024-07-10", 5)],
     )
     monkeypatch.setattr(widget, "_start_plane", lambda: None)
     widget._index_ready(index)
@@ -425,10 +410,9 @@ def test_twelve_category_ranks_clickable_labels_and_relief_do_not_change_points(
         assert widget._plane_ax.images[0].get_alpha() == 0.6
 
 
-def test_dates_and_source_survive_other_controls_and_reload(widget, monkeypatch):
+def test_dates_survive_other_controls_and_reload(widget, monkeypatch):
     from PyQt6.QtCore import QTime
 
-    widget._source.setCurrentIndex(0)
     widget._start.setDateTime(widget._start.dateTime().addDays(-20))
     widget._end.setDateTime(widget._end.dateTime().addDays(20))
     bounds = widget._utc_bounds()
@@ -441,63 +425,101 @@ def test_dates_and_source_survive_other_controls_and_reload(widget, monkeypatch)
         widget._relief_strength.setValue(70)
         widget._before.setValue(3)
         widget._after.setValue(5)
-        widget._bands[2].setTime(QTime(16, 0))
+        widget._hours[1].setTime(QTime(16, 0))
         widget._mode.setCurrentIndex(1)
         widget._index_ready(widget._index)
         assert widget._utc_bounds() == bounds
-        assert widget._source.currentData() == "own"
-        assert len(widget._plane_axes) == 3
-        assert widget._bands[2].time() == QTime(16, 0)
+        assert len(widget._plane_axes) == 1
+        assert widget._hours[1].time() == QTime(16, 0)
         start, end = widget._read_bounds()
         assert end - start == pytest.approx(9 * 86400)
 
 
-def test_daily_panels_share_one_row_and_focus_preserves_selection(widget, monkeypatch):
+def test_daily_window_draws_one_panel_and_focus_preserves_selection(
+    widget, monkeypatch
+):
     plane = widget._plane
     dates = widget._utc_bounds()
-    source, height = widget._source.currentData(), widget._height.value()
+    height = widget._height.value()
     monkeypatch.setattr(widget, "_start_plane", lambda: None)
     widget._mode.setCurrentIndex(1)
     widget._plane_ready(plane)
-    widget.resize(1600, 900)
-    widget._canvas.draw()
-    assert widget._map_ax is None
-    assert len(widget._plane_axes) == 3
-    boxes = [ax.get_position() for ax in widget._plane_axes]
-    assert [b.y0 for b in boxes] == pytest.approx([boxes[0].y0] * 3)
-    assert boxes[0].x1 < boxes[1].x0 < boxes[1].x1 < boxes[2].x0
+    assert widget._map_ax is not None
+    assert len(widget._plane_axes) == 1
     assert widget._time_settings.isHidden()
     assert not widget._daily_settings.isHidden()
-    for focus in ("midday", "afternoon", "france", "morning", "planes"):
+    for focus in ("planes", "france", "overview"):
         widget._view.setCurrentIndex(widget._view.findData(focus))
         assert widget._plane is plane
         assert widget._utc_bounds() == dates
-        assert widget._source.currentData() == source
         assert widget._height.value() == height
-        if focus == "france":
-            assert len(widget._figure.axes) == 1
-            assert widget._map_ax is not None
-        elif focus != "planes":
-            assert len(widget._figure.axes) == 1
-            # The panel title's `set_title` call in thermal_plane.py names no
-            # explicit `loc`, so it lands under whichever alignment the ambient
-            # `axes.titlelocation` rcParam holds at the time -- 'center' by
-            # matplotlib's own default, but 'left' for the rest of any process
-            # where `soaring.reporting.style.paper_style()` has already run (it
-            # sets that rcParam globally and never restores it). Checking every
-            # slot is what makes this assertion true regardless of test order.
-            ax = widget._plane_ax
-            title = (
-                ax.get_title(loc="left") or ax.get_title() or ax.get_title(loc="right")
-            )
-            assert title.startswith(focus.capitalize())
-    assert widget._panel_indices == [0, 1, 2]
+        assert len(widget._plane_axes) == (focus != "france")
+        assert (widget._map_ax is not None) == (focus != "planes")
 
 
-def test_cell_flights_counts_every_visit_overlapping_the_paris_band(
-    widget, monkeypatch
-):
+def test_daily_hour_window_filters_points_on_the_paris_clock(widget, monkeypatch):
+    from PyQt6.QtCore import QDate, QTime
+
+    # The fixture's climb crosses z = 500 m at 14:01:20 Paris time (CEST).
+    plane = widget._plane
+    monkeypatch.setattr(widget, "_start_plane", lambda: None)
+    widget._mode.setCurrentIndex(1)
+    widget._daily_start.setDate(QDate(2024, 6, 15))
+    widget._daily_end.setDate(QDate(2024, 6, 15))
+    widget._plane_ready(plane)
+    widget._height.setValue(500)
+    for start, end, count in ((8, 18, 1), (14, 15, 1), (15, 18, 0), (8, 14, 0)):
+        widget._hours[0].setTime(QTime(start, 0))
+        widget._hours[1].setTime(QTime(end, 0))
+        assert len(widget._plane_ax.collections) == count
+    widget._hours[0].setTime(QTime(14, 0))
+    widget._hours[1].setTime(QTime(0, 0))  # Midnight at the end of the day.
+    assert len(widget._plane_ax.collections) == 1
+    widget._hours[0].setTime(QTime(18, 0))
+    widget._hours[1].setTime(QTime(17, 0))
+    assert "start before it ends" in widget._plane_ax.texts[-1].get_text()
+
+
+def test_same_dates_every_year_pool_only_the_season(widget, monkeypatch):
+    from datetime import date
+
+    from PyQt6.QtCore import QDate
+
     from soaring.viewer.thermal_daily import local_bounds
+
+    operations, reads = [], []
+    monkeypatch.setattr(widget, "_run", lambda op, _: operations.append(op))
+    widget._index.read_plane = lambda *args, **kw: reads.append(args)
+    widget._mode.setCurrentIndex(1)
+    operations.clear()
+    widget._daily_date_mode.setCurrentIndex(widget._daily_date_mode.findData("yearly"))
+    assert widget._season_start.isVisibleTo(widget)
+    assert not widget._daily_start.isVisibleTo(widget)
+    assert widget._best_day.isHidden()
+    widget._season_start.setDate(QDate(2000, 6, 1))
+    widget._season_end.setDate(QDate(2000, 8, 31))
+    widget._first_year.setValue(2015)
+    widget._last_year.setValue(2022)
+    assert operations == []
+    days = widget._selected_days()
+    assert len(days) == 8 * 92
+    assert days[0] == date(2015, 6, 1) and days[-1] == date(2022, 8, 31)
+    assert date(2016, 1, 1) not in days
+    start, end = widget._read_bounds()
+    assert start == local_bounds("2015-06-01")[0]
+    assert end == local_bounds("2022-08-31")[1] - 1e-6
+    title = widget._figure._suptitle.get_text()
+    assert "of each year 2015-2022" in title and "736 days pooled" in title
+    widget._load.click()
+    operations[0]()
+    assert reads == [(widget._cells.currentData(), start, end, "vilpellet")]
+    widget._last_year.setValue(2014)
+    assert "last year" in widget._status.text()
+    assert "Invalid date range" in widget._figure._suptitle.get_text()
+
+
+def test_cell_flights_counts_every_visit_overlapping_the_paris_window(widget):
+    from soaring.viewer.thermal_daily import local_bounds, wall_windows
 
     day = datetime(2024, 6, 15).date()
 
@@ -509,11 +531,10 @@ def test_cell_flights_counts_every_visit_overlapping_the_paris_band(
         {"start": [at(a) for a, _ in spans], "end": [at(b) for _, b in spans]}
     )
     widget._plane = PlaneData(pd.DataFrame(), 4, 4, 0, 0, 0, visits=visits)
-    monkeypatch.setattr(widget, "_read_bounds", lambda: local_bounds(day))
     assert widget._cell_flights() == 4
-    assert widget._cell_flights((13, 14)) == 2
-    assert widget._cell_flights((14, 18)) == 2
-    assert widget._cell_flights((18, 19)) == 0
+    assert widget._cell_flights(wall_windows([day], (13, 14))) == 2
+    assert widget._cell_flights(wall_windows([day], (14, 18))) == 2
+    assert widget._cell_flights(wall_windows([day], (18, 19))) == 0
     widget._plane = PlaneData(pd.DataFrame(), 0, 0, 0, 0, 0)
     assert widget._cell_flights() is None
 

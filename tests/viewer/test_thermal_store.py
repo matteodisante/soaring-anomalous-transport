@@ -228,7 +228,6 @@ def test_real_worker_auto_load_and_reload_button(qapp, store, monkeypatch):
         assert view._build.text() == "Reload SSD data"
         view._build.click()
         drain()
-        view._source.setCurrentIndex(1)
         view._load.click()
         drain()
     finally:
