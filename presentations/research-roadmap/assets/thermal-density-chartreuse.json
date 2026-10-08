@@ -1,0 +1,43 @@
+{
+  "source": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/viewer/thermal-planes/thermal-duration.npz",
+  "product_created": "2026-10-07T16:16:57.396726+00:00",
+  "grid": "region/Alps/vilpellet",
+  "bounds_epsg2154": [
+    925000,
+    6475000,
+    930000,
+    6480000
+  ],
+  "pixel_m": 50.0,
+  "climb_hours": 616.225803287811,
+  "maximum_hours_per_km2": 539.2614371212214,
+  "colour_scale": {
+    "cmap": "magma_r",
+    "log_min": 0.01,
+    "log_max": 12534.391748100801,
+    "density_alpha": 0.8,
+    "background_alpha": 0.85
+  },
+  "scope": "All archived dates and heights; paragliders and hang gliders; Vilpellet climbs.",
+  "quantity": "Cumulative recorded climb time divided by horizontal pixel area.",
+  "background": {
+    "extent": [
+      925000.0,
+      6475000.0,
+      930000.0,
+      6480000.0
+    ],
+    "crs": "EPSG:2154",
+    "size": [
+      4000,
+      4000
+    ],
+    "attribution": "\u00a9 IGN / G\u00e9oplateforme \u00b7 Plan IGN",
+    "source_url": "https://data.geopf.fr/wms-r",
+    "request_url": "https://data.geopf.fr/wms-r?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLES=normal&CRS=EPSG%3A2154&BBOX=925000.0%2C6475000.0%2C930000.0%2C6480000.0&WIDTH=4000&HEIGHT=4000&FORMAT=image%2Fjpeg",
+    "layer": "GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2",
+    "retrieved": "2026-09-24T14:19:44.189853+00:00",
+    "note": "Mosaic acquisition dates vary spatially and differ from flight dates."
+  },
+  "background_pixels_sha256": "60578efda49247eb3e2fabd53dfee83069af6d47a27d9c526e5310d30b00ed01"
+}
