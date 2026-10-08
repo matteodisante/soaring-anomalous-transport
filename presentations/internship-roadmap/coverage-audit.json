@@ -1,0 +1,67 @@
+{
+  "checked_on": "2026-10-07",
+  "archive_snapshot": "2026-09-16",
+  "denominator": "All preprocessing segments in each archived phase_coverage.parquet",
+  "time_definition": "sum(t_end - t_start), excluding unsupported gaps",
+  "flights_definition": "Distinct flight_id, retained if at least one segment qualifies",
+  "groups": {
+    "paragliders": {
+      "source": "/Volumes/SSD_DISANTE/paragliders/ffvl_cfd_igc/derived/segmentation/vilpellet/phase_coverage.parquet",
+      "sha256": "010f2bb3ef01fbe640c8ea2a800d6445ba550dedca4d8fa19b6002b8b668d893",
+      "total_flights": 156406,
+      "total_fixes": 1369807970,
+      "total_supported_seconds": 1729380446.5,
+      "cadence_eligible": {
+        "flights": 109364,
+        "flight_percent": 69.92314872830966,
+        "fixes": 1222634326,
+        "fix_percent": 89.25589226933758,
+        "seconds": 1222499531.0,
+        "time_percent": 70.69002852866475
+      },
+      "classified": {
+        "flights": 104636,
+        "flight_percent": 66.90024679360127,
+        "fixes": 1208462115,
+        "fix_percent": 88.22127929362244,
+        "seconds": 1208332530.0,
+        "time_percent": 69.87083336379101
+      },
+      "reason_fix_counts": {
+        "cadence_above_gate": 86284349,
+        "classified": 1208462115,
+        "flight_shorter_than_author_guard": 75060827,
+        "segment_shorter_than_persistence_window": 679
+      }
+    },
+    "hang_gliders": {
+      "source": "/Volumes/SSD_DISANTE/hang_gliders/delta_cfd_igc/derived/segmentation/vilpellet/phase_coverage.parquet",
+      "sha256": "3b7f2d1e78412dcf1f39ae6a1da4ab5f69a6d6c3b1ceda5ab5ccb25ef6024d09",
+      "total_flights": 6094,
+      "total_fixes": 34567535,
+      "total_supported_seconds": 73340052.0,
+      "cadence_eligible": {
+        "flights": 1709,
+        "flight_percent": 28.04397768296685,
+        "fixes": 21442723,
+        "fix_percent": 62.031391593297,
+        "seconds": 21440171.0,
+        "time_percent": 29.233918459725118
+      },
+      "classified": {
+        "flights": 1670,
+        "flight_percent": 27.40400393829997,
+        "fixes": 21321369,
+        "fix_percent": 61.680328088190265,
+        "seconds": 21318877.0,
+        "time_percent": 29.06853270297654
+      },
+      "reason_fix_counts": {
+        "cadence_above_gate": 7383935,
+        "classified": 21321369,
+        "flight_shorter_than_author_guard": 5862102,
+        "segment_shorter_than_persistence_window": 129
+      }
+    }
+  }
+}
