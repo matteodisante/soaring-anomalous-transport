@@ -15,6 +15,7 @@ rather than a red one. They are a real part of the suite: run them with
 
 from __future__ import annotations
 
+import gc
 import importlib.util
 import os
 
@@ -39,3 +40,18 @@ def qapp():
         configure_graphics()
         app = qt_widgets.QApplication([])
     yield app
+
+
+@pytest.fixture(autouse=True)
+def _collect_widgets_between_tests(request):
+    """Free widgets left in reference cycles here, never during event delivery.
+
+    A closed widget kept alive only by a cycle (a signal connected to a lambda or a
+    bound method) still has its creation-time PolishRequest queued. When a later
+    test processes events, Python's cyclic collector can free that dialog in the
+    middle of polishing it, and Qt then segfaults in ``QWidget::ensurePolished``.
+    Only tests using ``qapp`` can create widgets, so only they pay for a collection.
+    """
+    yield
+    if "qapp" in request.fixturenames:
+        gc.collect()
